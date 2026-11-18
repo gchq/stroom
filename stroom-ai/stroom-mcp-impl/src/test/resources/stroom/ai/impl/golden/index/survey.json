@@ -1,0 +1,167 @@
+{
+ "survey": {
+  "index": {
+   "type": "ElasticIndex",
+   "uuid": "i",
+   "name": "legacy-web",
+   "path": "System/Prod/legacy-web"
+  },
+  "backend": "elasticsearch",
+  "index_name": "legacy-web",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "long"
+   },
+   {
+    "name": "message",
+    "type": "text"
+   },
+   {
+    "name": "@timestamp",
+    "type": "date"
+   },
+   {
+    "name": "user.name",
+    "type": "keyword"
+   },
+   {
+    "name": "http.status",
+    "type": "long"
+   },
+   {
+    "name": "source.ip",
+    "type": "ip"
+   },
+   {
+    "name": "secret",
+    "type": "keyword",
+    "stored": false
+   },
+   {
+    "name": "user.role",
+    "type": "keyword"
+   }
+  ],
+  "documents": [
+   {
+    "@timestamp": [
+     "2026-09-23T11:45:00.000Z"
+    ],
+    "user.name": [
+     "alice"
+    ],
+    "source.ip": [
+     "10.3.0.1"
+    ],
+    "http.status": [],
+    "message": [
+     "health check"
+    ],
+    "StreamId": [
+     "7"
+    ]
+   },
+   {
+    "@timestamp": [
+     "2026-09-20T08:00:00.000Z"
+    ],
+    "user.name": [
+     "bob"
+    ],
+    "source.ip": [
+     "10.3.0.2"
+    ],
+    "http.status": [
+     "200"
+    ],
+    "message": [
+     "GET /"
+    ],
+    "StreamId": [
+     "7"
+    ]
+   },
+   {
+    "@timestamp": [
+     "2026-09-21T08:00:00.000Z"
+    ],
+    "user.name": [
+     "bob",
+     "eve"
+    ],
+    "http.status": [
+     "404"
+    ]
+   }
+  ],
+  "surveyed_fields": [
+   "StreamId",
+   "message",
+   "@timestamp",
+   "user.name",
+   "http.status",
+   "source.ip",
+   "secret"
+  ],
+  "earliest": "2026-09-20T08:00:00.000Z",
+  "latest": "2026-09-23T11:45:00.000Z",
+  "fed_by": [
+   {
+    "name": "Web - Indexing",
+    "uuid": "p",
+    "plan": {
+     "fields": []
+    }
+   },
+   {
+    "name": "Other",
+    "uuid": "q"
+   }
+  ],
+  "documents_sampled": 3,
+  "sampled_from": "the last 30 days",
+  "profile": {
+   "documents": 1,
+   "earliest": "2026-01-01T00:00:00.000Z",
+   "latest": "2026-09-23T11:45:00.000Z",
+   "streams": 1,
+   "streams_examined": 1,
+   "sources": [
+    {
+     "feed": "WEB-ACCESS",
+     "type": "Events",
+     "streams": 1,
+     "documents": 900
+    }
+   ]
+  }
+ },
+ "planned": {
+  "user.name": {
+   "name": "user.name",
+   "type": "keyword",
+   "source": "EventSource/User/Id",
+   "description": "",
+   "transform": null,
+   "multiple": false
+  },
+  "user.role": {
+   "name": "user.role",
+   "type": "keyword",
+   "source": "EventSource/User/Role",
+   "description": "The role the user acted in.",
+   "transform": null,
+   "multiple": false
+  },
+  "gone": {
+   "name": "gone",
+   "type": "keyword",
+   "source": "EventDetail/Authenticate/User/Id",
+   "description": "",
+   "transform": null,
+   "multiple": false
+  }
+ }
+}

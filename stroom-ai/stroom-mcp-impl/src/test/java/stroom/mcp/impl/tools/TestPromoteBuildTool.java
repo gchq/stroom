@@ -1,0 +1,1385 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.feed.shared.FeedDoc;
+import stroom.index.shared.IndexResource;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.util.shared.ResultPage;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
+
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+
+/// promote_build: the layout, the documents moved, the versions consolidated, and what `TestE2ePlanWalk` and
+/// `TestE2eSourceDocs` (stroom-app) expect of it.
+class TestPromoteBuildTool {
+
+    private static final String BUILD = "bb";
+    // A Documentation doc's text, whose working copies are still written back (decided by the user, 2026-11-17: a
+    // pipeline's code and an aggregated feed's shared modules change only by a new version).
+    private static final String NOTES_V1 = "# ACME notes\n\nDoors, v1.\n";
+    private static final String NOTES_V2 = "# ACME notes\n\nDoors, v2.\n";
+    private static final String NOTES_BY_HAND = "# ACME notes\n\nDoors, v1 by hand.\n";
+    // An unchanged XSLT working copy, only discarded.
+    private static final String PLAIN_XSLT = "<xsl:stylesheet>plain-v1</xsl:stylesheet>";
+
+    private final DocumentationWorld docs = new DocumentationWorld();
+    private final BuildWorld world = docs.world;
+    private final PromotionProcessing processing = Mockito.mock(PromotionProcessing.class);
+    private final ProcessorFilterWrites filterWrites = Mockito.mock(ProcessorFilterWrites.class);
+    // The tidy-up's view of Stroom: what reads a test feed, its streams, a test index's shards, what uses either.
+    private final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);
+    private final MetaService metaService = Mockito.mock(MetaService.class);
+    private final IndexResource indexResource = Mockito.mock(IndexResource.class);
+    private final DocDependencyService dependencies = Mockito.mock(DocDependencyService.class);
+    private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
+            docs.places, world.guard(), world.records(), docs.translation.consent, processing,
+            filterWrites, Mockito.mock(OutputFeeds.class), docs.writes,
+            world.documentAccess, docs.translation.history, docs.pendingDocs,
+            new PromotionTidyUp(world.guard(), world.records(), world.documentAccess, () -> processorFilters,
+                    () -> metaService, () -> indexResource, () -> dependencies));
+
+    @BeforeEach
+    void setUp() {
+        // The user may manage processors, as promote_build needs.
+        Mockito.when(processorFilters.canManageProcessors()).thenReturn(true);
+    }
+
+    @Test
+    void aBuildIsNotPromotedWhileADocItWroteIsPending() {
+        // Seen in testing (chat 144): the agent said the documentation was done and went on with nothing written.
+        final ToolCallContext context = BuildToolCalls.context();
+        docs.pendingDocs.remember(context.session(), "p", "Acme-Events", "## Purpose and data\n\nx\n", Map.of());
+
+        assertThat(docs.refusal(tool, context, DocumentationWorld.args(Map.of("build", BUILD))))
+                .contains("pipeline 'Acme-Events'", "not written yet");
+    }
+
+    @Test
+    void eachRolesDocumentsGoInTheirRoleThenVersionFolderUnderTheFeed() {
+        // Decided by the user (2026-11-17): <root>/<feed>/<Role>/<version>, role folders always, the version from
+        // the pipeline's name.
+        exists("System/Feeds/Acme/Events", "System/Feeds/Acme/Indexing", "System/Elastic Indices/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(XsltDoc.TYPE, "x", "ACME-V1.0-Events", "Events"), doc(PipelineDoc.TYPE, "ix",
+                        "ACME-V1.0-Indexing", "Indexing"));
+        final Map<String, Object> destinations = Map.of("Feed", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme",
+                "XSLT", "System/Feeds/Acme");
+
+        final Map<String, Object> shown = review(destinations);
+
+        assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
+                                                  + "├── ACME  (Feed)\n"
+                                                  + "├── Events/\n"
+                                                  + "│   └── V1.0/  (new)\n"
+                                                  + "│       ├── ACME-V1.0-Events  (Pipeline)\n"
+                                                  + "│       └── ACME-V1.0-Events  (XSLT)\n"
+                                                  + "└── Indexing/\n"
+                                                  + "    └── V1.0/  (new)\n"
+                                                  + "        └── ACME-V1.0-Indexing  (Pipeline)\n\n"
+                                                  + "Where each role goes (destinations keyed by the role change "
+                                                  + "it):\n"
+                                                  + "- Events: System/Feeds (proposed: the feed's own location)\n"
+                                                  + "- Indexing: System/Feeds (proposed: the feed's own location)");
+        // Without forms, the agent asks in the chat: each role's options, the proposal first.
+        assertThat(shown.get("role_locations")).asList().hasSize(2).first().isEqualTo(Map.of("role", "Events",
+                "location", "System/Feeds", "why", "proposed: the feed's own location", "options",
+                List.of("System/Feeds")));
+        assertThat(String.valueOf(shown.get("hint"))).contains("where each role's documents go")
+                .contains("destinations keyed by the role");
+        assertThat(tool.definition().toString()).doesNotContain("role_subfolders");
+
+        // A folder given for one document is where it goes, as given.
+        final Map<String, Object> given = new LinkedHashMap<>(destinations);
+        given.put("ix", "System/Elastic Indices/Acme");
+        assertThat(String.valueOf(review(given).get("layout")))
+                .contains("Elastic Indices/\n    └── Acme/\n        └── ACME-V1.0-Indexing  (Pipeline)");
+    }
+
+    @Test
+    void aRolesLocationElsewhereHasNoRoleFolderAndIsCoveredByTheReview() {
+        // Decided by the user (2026-11-17): a role whose root isn't the feed's has no role folder,
+        // <root>/<feed>/<version>; the layout the approval is bound to says each role's location.
+        exists("System/Feeds/Acme", "System/Elastic Indices");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"),
+                doc(ElasticIndexDoc.TYPE, "ei", "ACME-V1.0-Index", "Indexing"));
+        final Map<String, Object> destinations = new LinkedHashMap<>(Map.of("Feed", "/Feeds/Acme"));
+
+        final Map<String, Object> feedsOwn = review(destinations);
+        destinations.put("indexing", "/Elastic Indices");
+        final Map<String, Object> elsewhere = review(destinations);
+
+        assertThat(String.valueOf(elsewhere.get("layout")))
+                .contains("Elastic Indices/\n    └── Acme/  (new)\n        └── V1.0/  (new)\n"
+                          + "            ├── ACME-V1.0-Index  (ElasticIndex)\n"
+                          + "            └── ACME-V1.0-Indexing  (Pipeline)")
+                .contains("Feeds/\n│   └── Acme/\n│       ├── ACME  (Feed)\n│       └── Events/  (new)\n")
+                .contains("- Indexing: System/Elastic Indices (as given)")
+                .doesNotContain("Acme/Indexing");
+        assertThat(elsewhere.get("review_id")).isNotEqualTo(feedsOwn.get("review_id"));
+    }
+
+    @Test
+    void eachRolesLocationIsAskedInOneFormWithTheProposalFirstAndKeptForTheApproval() {
+        // Decided by the user (2026-11-17): per role, (1) where the sibling feeds' pipelines of that role are,
+        // pre-selected, (2) the feed's own location where it differs, (3) a folder the user types.
+        siblingWithIndexingElsewhere();
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"));
+        final Map<String, Object> destinations = Map.of("Feed", "/Feeds/Acme");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("a1", "", "a2", "/Custom Indices"));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+
+        assertThat(user.forms()).hasSize(1);
+        assertThat(String.valueOf(user.forms().getFirst())).contains("Events: System/Feeds",
+                "Indexing: System/Elastic Indices, where the sibling feeds' Indexing pipelines are");
+        assertThat(String.valueOf(shown.get("layout")))
+                .contains("Custom Indices/  (new)\n    └── Acme/  (new)\n        └── V1.0/  (new)\n"
+                          + "            └── ACME-V1.0-Indexing  (Pipeline)")
+                .contains("- Events: System/Feeds (as the user chose)")
+                .contains("- Indexing: System/Custom Indices (as the user chose)");
+        // Kept: the approval's call lays out what was reviewed, and asks no more.
+        final BuildToolCalls.FormUser later = BuildToolCalls.declining();
+        assertThat(docs.refusal(tool, later.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("The user did not agree to: Promote build");
+        assertThat(later.forms()).hasSize(1);
+        assertThat(String.valueOf(later.forms().getFirst())).contains("Indexing: System/Custom Indices");
+    }
+
+    @Test
+    void withoutFormsTheSiblingsLocationIsProposedAndTheFeedsOwnOffered() {
+        siblingWithIndexingElsewhere();
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"));
+
+        final Map<String, Object> shown = review(Map.of("Feed", "/Feeds/Acme"));
+
+        assertThat(shown.get("role_locations")).isEqualTo(List.of(Map.of("role", "Indexing", "location",
+                "System/Elastic Indices", "why", "proposed: where the sibling feeds' Indexing pipelines are",
+                "options", List.of("System/Elastic Indices", "System/Feeds"))));
+        assertThat(String.valueOf(shown.get("layout"))).contains("└── Elastic Indices/\n    └── Acme/  (new)\n"
+                                                                 + "        └── V1.0/  (new)\n"
+                                                                 + "            └── ACME-V1.0-Indexing  (Pipeline)");
+    }
+
+    @Test
+    void aPipelineWithNoVersionInItsNameGoesInV10WithAWarning() {
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-Events", "Events"));
+
+        assertThat(String.valueOf(review(Map.of("Feed", "/Feeds/Acme")).get("layout")))
+                .contains("Events/  (new)\n    └── V1.0/  (new)\n        └── ACME-Events  (Pipeline)")
+                .contains("Pipeline 'ACME-Events' has no version in its name (e.g. -V1.0-): placed in V1.0.");
+    }
+
+    @Test
+    void aVersionTokenOfTheFeedsOwnNameIsNotThePipelinesVersion() {
+        // Found in review (2026-11-18): CISCO-ASA-V9-EVENTS of feed CISCO-ASA-V9 was filed in V9.
+        exists("System/Feeds/Cisco");
+        listed(doc(FeedDoc.TYPE, "f", "CISCO-ASA-V9", null), doc(PipelineDoc.TYPE, "ev", "CISCO-ASA-V9-EVENTS",
+                "Events"));
+
+        assertThat(String.valueOf(review(Map.of("Feed", "/Feeds/Cisco")).get("layout")))
+                .contains("Events/  (new)\n    └── V1.0/  (new)\n        └── CISCO-ASA-V9-EVENTS  (Pipeline)")
+                .contains("Pipeline 'CISCO-ASA-V9-EVENTS' has no version in its name (e.g. -V1.0-): placed in V1.0.")
+                .doesNotContain("V9/");
+    }
+
+    @Test
+    void aCefPipelineAndAReferenceLoaderGoInTheirRolesFolders() {
+        // A CEF flattener (Events in, CEF to Kafka) is classed forwarding, filed under CEF; a loader under Reference.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "cef", "ACME-V1.0-CEF", null),
+                doc(XsltDoc.TYPE, "cx", "ACME-V1.0-CEF", "CEF"), doc(PipelineDoc.TYPE, "ref",
+                        "ACME-V1.0-Reference", null));
+        docs.facts.stages.put("cef", PipelineShapes.classify(Map.of("kafka", "StandardKafkaProducer", "xslt",
+                "XSLTFilter", "parser", "XMLParser"), Map.of(), Map.of(), () -> false).stage());
+        docs.facts.stages.put("ref", "loader");
+
+        assertThat(String.valueOf(review(Map.of("Feed", "/Feeds/Acme")).get("layout")))
+                .contains("├── CEF/  (new)\n│   └── V1.0/  (new)\n│       ├── ACME-V1.0-CEF  (Pipeline)\n"
+                          + "│       └── ACME-V1.0-CEF  (XSLT)\n")
+                .contains("└── Reference/  (new)\n    └── V1.0/  (new)\n        └── ACME-V1.0-Reference  (Pipeline)");
+    }
+
+    @Test
+    void aBuildOnAnExistingFeedLeavesItsTestFeedInTheWorkspace() {
+        // Seen in VS Code: onboarding from a feed already in Stroom, the agent copied records into a test feed
+        // (named like any other), and promotion would have made it production with the pipeline's filter selecting
+        // it.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME-COPY", null), doc(PipelineDoc.TYPE, "ev", "ACME-Events", "Events"));
+        docs.facts.sources = List.of("ACME");
+
+        assertThat(String.valueOf(review(Map.of("Feed", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme"))
+                .get("layout"))).contains("Left in the workspace: ACME-COPY (Feed)");
+        // Promoted when the user gives it a folder of its own (a new version of the feed, say).
+        assertThat(String.valueOf(review(Map.of("f", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme"))
+                .get("layout"))).doesNotContain("Left in the workspace");
+    }
+
+    @Test
+    void theBuildsTestFeedIsNeverPromotedWhateverTheDestinationsSay() {
+        // Seen in chat 177: the build's test feed was in the layout (under Events), and the agent asked the user
+        // whether to promote it.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "t", "ACME" + OutputFeeds.TEST_FEED, "Events"), doc(PipelineDoc.TYPE, "ev",
+                "ACME-Events", "Events"));
+
+        final String layout = String.valueOf(review(Map.of("t", "System/Feeds/Acme", "Feed", "System/Feeds/Acme",
+                "Pipeline", "System/Feeds/Acme")).get("layout"));
+
+        assertThat(layout).doesNotContain("ACME-MCP-TEST  (Feed)")
+                .contains("Left in the workspace: ACME-MCP-TEST (Feed)")
+                .endsWith("The build's test feed ACME-MCP-TEST stays in the build's workspace: it holds only the "
+                          + "sample's Events and is never promoted.");
+    }
+
+    @Test
+    void aSourceDirectlyInAParentOfSourcesGetsAFolderOfItsOwn() {
+        // Seen in chat 177: the feed sat directly in /Feeds, its siblings each in a folder of their own; the
+        // registry went to /Feeds/<feed>, the output feed and notes to /Feeds, and the rest to /Feeds/Events and
+        // /Feeds/Indexing, role folders every source would share.
+        final BuildWorld.Node feeds = world.folder("System/Feeds");
+        world.add(FeedDoc.TYPE, "NETSKOPE", world.folder("System/Feeds/Netskope").uuid, "n");
+        world.add(FeedDoc.TYPE, "AZURE", feeds.uuid, "az");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "AZURE", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "az", "AZURE")));
+        docs.facts.sources = List.of("AZURE");
+        listed(doc(FeedDoc.TYPE, "t", "AZURE" + OutputFeeds.TEST_FEED, null),
+                doc(PipelineDoc.TYPE, "ev", "AZURE Messaging", "Events"),
+                doc(XsltDoc.TYPE, "x", "AZURE Messaging", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "AZURE Messaging Indexing", "Indexing"),
+                doc(DocumentationDoc.TYPE, "r", "AZURE source types", null),
+                doc(DocumentationDoc.TYPE, "sn", "azure source notes", null));
+        final String expected = "System/Feeds/AZURE/  (new)\n"
+                                + "├── Events/  (new)\n"
+                                + "│   └── V1.0/  (new)\n"
+                                + "│       ├── AZURE Messaging  (Pipeline)\n"
+                                + "│       └── AZURE Messaging  (XSLT)\n"
+                                + "├── Indexing/  (new)\n"
+                                + "│   └── V1.0/  (new)\n"
+                                + "│       └── AZURE Messaging Indexing  (Pipeline)\n"
+                                + "├── AZURE source types  (Documentation)\n"
+                                + "└── azure source notes  (Documentation)";
+
+        // The parent of the sources given by type, as the agent gave it: a folder of the source's own in it.
+        assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds")).get("layout")))
+                .startsWith(expected);
+        // None given: each role's documents laid out under the source's own folder all the same (decided by the user,
+        // 2026-11-17: a default layout, shown for the user to change).
+        assertThat(String.valueOf(review(Map.of()).get("layout"))).startsWith(expected);
+        // A folder given for one document is where it goes, as given.
+        assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ix",
+                "/Feeds/Elsewhere")).get("layout")))
+                .contains("Elsewhere/");
+    }
+
+    @Test
+    void anAggregatedFeedsGroupGetsAFolderOfItsOwnBesideTheFeedsSharedDocuments() {
+        // Asked for by the user: <feed>/<group>/<role>, the group's XSLT with its pipeline (seen at the feed's folder
+        // beside the common module and helpers), the feed's shared documents beside the feed.
+        final String feed = "Azure-Audit-V1.0-EVENTS";
+        final BuildWorld.Node feeds = world.folder("System/Feeds");
+        world.add(FeedDoc.TYPE, "NETSKOPE", world.folder("System/Feeds/Netskope").uuid, "n");
+        world.add(FeedDoc.TYPE, feed, feeds.uuid, "az");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, feed, 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "az", feed)));
+        docs.facts.sources = List.of(feed);
+        module("gx", feed + " M365 Messaging", "group", "M365 Messaging");
+        module("cx", feed + " common", "common", null);
+        module("hx", feed + " helpers", "helpers", null);
+        world.inBuild(BUILD, FeedDoc.TYPE, feed + OutputFeeds.TEST_FEED, "t");
+        final DocRef output = world.inBuild(BUILD, FeedDoc.TYPE, "AZURE-M365-MESSAGING-EVENTS", "of");
+        world.records().update(BUILD, output, entry -> entry.put(BuildFeeds.GROUP_OUTPUT, "M365 Messaging"));
+        world.inBuild(BUILD, DashboardDoc.TYPE, "Azure M365 Messaging-VERIFY", "dash");
+        world.docs.put("dash", DashboardDoc.builder().uuid("dash").name("Azure M365 Messaging-VERIFY").version("v0")
+                .dashboardConfig(DashboardConfig.builder().components(List.of(ComponentConfig.builder()
+                        .type("query").id("query").name("Query")
+                        .settings(QueryComponentSettings.builder()
+                                .dataSource(new DocRef(ElasticIndexDoc.TYPE, "ei")).build())
+                        .build())).build())
+                .build());
+        listed(doc(FeedDoc.TYPE, "t", feed + OutputFeeds.TEST_FEED, null),
+                doc(FeedDoc.TYPE, "of", "AZURE-M365-MESSAGING-EVENTS", null),
+                doc(XsltDoc.TYPE, "gx", feed + " M365 Messaging", "Events"),
+                doc(XsltDoc.TYPE, "cx", feed + " common", "Events"),
+                doc(XsltDoc.TYPE, "hx", feed + " helpers", "Events"),
+                doc(PipelineDoc.TYPE, "ev", "Azure M365 Messaging", "Events"),
+                doc(DocumentationDoc.TYPE, "evd", "Azure M365 Messaging", "Events"),
+                doc(ElasticIndexDoc.TYPE, "ei", "Azure M365 Messaging Index", "Indexing"),
+                doc(DocumentationDoc.TYPE, "eid", "Azure M365 Messaging Index", "Indexing"),
+                doc(PipelineDoc.TYPE, "ix", "Azure M365 Messaging Indexing", "Indexing"),
+                doc(XsltDoc.TYPE, "ixx", "Azure M365 Messaging Indexing", "Indexing"),
+                doc(DocumentationDoc.TYPE, "ixd", "Azure M365 Messaging Indexing", "Indexing"),
+                doc(DashboardDoc.TYPE, "dash", "Azure M365 Messaging-VERIFY", "Indexing"),
+                doc(DocumentationDoc.TYPE, "r", feed + " source types", null),
+                doc(DocumentationDoc.TYPE, "sn", feed + " source notes", null));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ElasticIndex",
+                "/Feeds", "Documentation", "/Feeds", "Dashboard", "/Feeds");
+
+        assertThat(review(destinations).get("layout")).isEqualTo(
+                "System/Feeds/Azure-Audit-V1.0-EVENTS/  (new)\n"
+                + "├── M365 Messaging/  (new)\n"
+                + "│   ├── AZURE-M365-MESSAGING-EVENTS  (Feed)\n"
+                + "│   ├── Events/  (new)\n"
+                + "│   │   └── V1.0/  (new)\n"
+                + "│   │       ├── Azure M365 Messaging  (Documentation)\n"
+                + "│   │       ├── Azure M365 Messaging  (Pipeline)\n"
+                + "│   │       └── Azure-Audit-V1.0-EVENTS M365 Messaging  (XSLT)\n"
+                + "│   └── Indexing/  (new)\n"
+                + "│       └── V1.0/  (new)\n"
+                + "│           ├── Azure M365 Messaging Index  (Documentation)\n"
+                + "│           ├── Azure M365 Messaging Index  (ElasticIndex)\n"
+                + "│           ├── Azure M365 Messaging Indexing  (Documentation)\n"
+                + "│           ├── Azure M365 Messaging Indexing  (Pipeline)\n"
+                + "│           ├── Azure M365 Messaging Indexing  (XSLT)\n"
+                + "│           └── Azure M365 Messaging-VERIFY  (Dashboard)\n"
+                + "├── Common/  (new)\n"
+                + "│   └── V1.0/  (new)\n"
+                + "│       └── Azure-Audit-V1.0-EVENTS common  (XSLT)\n"
+                + "├── Helpers/  (new)\n"
+                + "│   └── V1.0/  (new)\n"
+                + "│       └── Azure-Audit-V1.0-EVENTS helpers  (XSLT)\n"
+                + "├── Azure-Audit-V1.0-EVENTS source notes  (Documentation)\n"
+                + "└── Azure-Audit-V1.0-EVENTS source types  (Documentation)\n\n"
+                + "Left in the workspace: Azure-Audit-V1.0-EVENTS-MCP-TEST (Feed)\n\n"
+                + "Where each role goes (destinations keyed by the role change it):\n"
+                + "- Events: System/Feeds (proposed: the feed's own location)\n"
+                + "- Indexing: System/Feeds (proposed: the feed's own location)\n\n"
+                + "Pipeline 'Azure M365 Messaging' has no version in its name (e.g. -V1.0-): placed in V1.0.\n"
+                + "Pipeline 'Azure M365 Messaging Indexing' has no version in its name (e.g. -V1.0-): placed in "
+                + "V1.0.\n\n"
+                + "Tidy-up after promotion (the user can untick it in the approval):\n"
+                + "- test feed 'Azure-Audit-V1.0-EVENTS-MCP-TEST': its 0 stream(s) (0B) marked deleted, as Stroom's "
+                + "Data screen deletes them (data retention purges them later), then the feed deleted");
+        // A role's location elsewhere: <root>/<feed>/<group>/<version>, the shared modules still under the feed.
+        final Map<String, Object> elsewhere = new LinkedHashMap<>(destinations);
+        elsewhere.put("Indexing", "/Elastic Indices");
+        assertThat(String.valueOf(review(elsewhere).get("layout")))
+                .contains("Elastic Indices/  (new)\n    └── Azure-Audit-V1.0-EVENTS/  (new)\n"
+                          + "        └── M365 Messaging/  (new)\n            └── V1.0/  (new)\n")
+                .contains("├── Common/  (new)\n");
+    }
+
+    @Test
+    void aPipelinesDocumentationGoesWhereThePipelineGoesWhenGivenByUuid() {
+        // A pipeline given a folder by uuid (a parent of sources): its Documentation goes beside it, not by type into
+        // the source's own folder.
+        final BuildWorld.Node feeds = world.folder("System/Feeds");
+        world.add(FeedDoc.TYPE, "NETSKOPE", world.folder("System/Feeds/Netskope").uuid, "n");
+        world.add(FeedDoc.TYPE, "AZURE", feeds.uuid, "az");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "AZURE", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "az", "AZURE")));
+        docs.facts.sources = List.of("AZURE");
+        listed(doc(PipelineDoc.TYPE, "ev", "AZURE Messaging", "Events"),
+                doc(DocumentationDoc.TYPE, "d", "AZURE Messaging", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "AZURE Messaging Indexing", "Indexing"),
+                doc(DocumentationDoc.TYPE, "di", "AZURE Messaging Indexing", "Indexing"));
+
+        final String layout = String.valueOf(review(Map.of("ev", "/Feeds", "Pipeline", "/Feeds",
+                "Documentation", "/Feeds")).get("layout"));
+
+        assertThat(layout).startsWith("System/Feeds/\n"
+                                      + "├── AZURE Messaging  (Documentation)\n"
+                                      + "├── AZURE Messaging  (Pipeline)\n"
+                                      + "└── AZURE/  (new)\n"
+                                      + "    └── Indexing/  (new)\n"
+                                      + "        └── V1.0/  (new)\n"
+                                      + "            ├── AZURE Messaging Indexing  (Documentation)\n"
+                                      + "            └── AZURE Messaging Indexing  (Pipeline)\n\n");
+    }
+
+    @Test
+    void aDashboardOnAnIndexFromElsewhereGoesWithTheBuildsIndexingPipeline() {
+        // Seen in production: a new indexing version verified through the existing index doc; its dashboard had no
+        // place.
+        world.add(PipelineDoc.TYPE, "ACME-V1-Indexing", world.folder("System/Indices/Acme").uuid, "v1");
+        exists("System/Indices/Acme/V2");
+        final Map<String, Object> indexing = doc(PipelineDoc.TYPE, "ix", "ACME-V2-Indexing", "Indexing");
+        indexing.put("version_of", "v1");
+        listed(doc(DashboardDoc.TYPE, "dash", "ACME-VERIFY", "Indexing"), indexing);
+        final DocRef dashboard = world.inBuild(BUILD, DashboardDoc.TYPE, "ACME-VERIFY", "dash");
+        world.docs.put(dashboard.getUuid(), DashboardDoc.builder().uuid("dash").name("ACME-VERIFY").version("v0")
+                .dashboardConfig(DashboardConfig.builder().components(List.of(ComponentConfig.builder()
+                        .type("query").id("query").name("Query")
+                        .settings(QueryComponentSettings.builder()
+                                .dataSource(new DocRef(ElasticIndexDoc.TYPE, "prod-index")).build())
+                        .build())).build())
+                .build());
+        docs.facts.stages.put("ix", "indexing");
+
+        // The predecessor alone in its feed's folder: the new version in a role folder there.
+        assertThat(review(Map.of()).get("layout")).isEqualTo("System/Indices/Acme/Indexing/V2/  (new)\n"
+                                                             + "├── ACME-V2-Indexing  (Pipeline)\n"
+                                                             + "└── ACME-VERIFY  (Dashboard)");
+    }
+
+    @Test
+    void aBuildOfOneRoleStillGetsItsRoleFolder() {
+        // Decided by the user (2026-11-17): role folders always, even when one role moves (before, a build of one
+        // role got none, so where a version's documents went depended on what else the build held).
+        exists("System/Docs");
+        listed(doc(DocumentationDoc.TYPE, "d", "ACME-V1.0-Indexing", "Indexing"), doc(PipelineDoc.TYPE, "ix",
+                "ACME-V1.0-Indexing", "Indexing"));
+
+        final Map<String, Object> shown = review(Map.of("Documentation", "System/Docs", "Pipeline", "System/Docs"));
+
+        assertThat(String.valueOf(shown.get("layout"))).startsWith("System/Docs/Indexing/V1.0/  (new)\n"
+                                                                   + "├── ACME-V1.0-Indexing  (Documentation)\n"
+                                                                   + "└── ACME-V1.0-Indexing  (Pipeline)");
+    }
+
+    @Test
+    void aBuildWithNoDocumentsIsRefused() {
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), "{\"build\": \"bb\"}"))
+                .isEqualTo("Build 'bb' has no documents");
+    }
+
+    @Test
+    void aPipelinesDocumentationFollowsThePipelinePromotedWithIt() {
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events",
+                null));
+
+        final Map<String, Object> shown = review(Map.of("Pipeline", "System/Feeds/Acme"));
+
+        // Every doc had a destination: on to the folders, to be made.
+        assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/  (new)\n"
+                                                  + "├── ACME-Events  (Documentation)\n"
+                                                  + "└── ACME-Events  (Pipeline)");
+    }
+
+    @Test
+    void theSourcesNotesAndReferenceDocsGoBesideTheFeed() {
+        // As TestE2eSourceDocs has it: promoted beside the feed, where later work on it looks.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME-DIR", null), doc(DocumentationDoc.TYPE, "n",
+                "Acme directory source notes", null), doc(DocumentationDoc.TYPE, "r",
+                "Acme directory reference - audit log reference", null));
+
+        assertThat(review(Map.of("Feed", "System/Feeds/Acme")).get("layout"))
+                .isEqualTo("System/Feeds/Acme/\n"
+                           + "├── ACME-DIR  (Feed)\n"
+                           + "├── Acme directory reference - audit log reference  (Documentation)\n"
+                           + "└── Acme directory source notes  (Documentation)");
+    }
+
+    @Test
+    void theSurveyDocStaysInTheBuildAndTheRegistryGoesBesideTheFeed() {
+        // Decided 2026-11-13: the survey doc always stays in the build, unasked; the registry goes beside the feed.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME-DIR", null), doc(DocumentationDoc.TYPE, "s", "ACME-DIR - Survey", null),
+                doc(DocumentationDoc.TYPE, "r", "ACME-DIR source types", null));
+
+        final Map<String, Object> shown = review(Map.of("Feed", "System/Feeds/Acme"));
+
+        assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
+                                                  + "├── ACME-DIR  (Feed)\n"
+                                                  + "└── ACME-DIR source types  (Documentation)\n\n"
+                                                  + "Left in the workspace: ACME-DIR - Survey (Documentation)");
+        assertThat(shown).doesNotContainKey("registries");
+    }
+
+    @Test
+    void aDocumentCanBeKeptInTheWorkspaceRatherThanPromoted() {
+        // Eval workflow fix_errors (Haiku): a test feed made while fixing had nowhere to go but production, so the
+        // agent never promoted the fix.
+        exists("System/Feeds/Acme");
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(FeedDoc.TYPE, "f", "ACME-TEST", null));
+
+        final Map<String, Object> shown = call(Map.of("Pipeline", "System/Feeds/Acme", "f", "keep"), null);
+
+        // First the layout, a tree for the chat (asked for by the user: a list in a form was hard to read).
+        assertThat(shown).containsEntry("status", "needs_review").containsEntry("layout", "System/Feeds/Acme/\n└── "
+                                                                                          + "ACME-Events  "
+                                                                                          + "(Pipeline)\n\nLeft in the "
+                                                                                          + "workspace: ACME-TEST "
+                                                                                          + "(Feed)");
+        // The same folder, written as Stroom's own folder tools write it.
+        final Map<String, Object> gate = approvalForm(Map.of("Pipeline", "/Feeds/Acme", "f", "keep"),
+                shown.get("review_id"));
+
+        assertThat(gate).containsEntry("status", "needs_approval");
+        final Map<?, ?> asked = (Map<?, ?>) gate.get("details");
+        assertThat(asked.get("folders")).isEqualTo("System/Feeds/Acme");
+        // Without the review id, which meant nothing to the user: the approval is bound to it unseen.
+        assertThat(String.valueOf(asked.get("layout"))).isEqualTo("1 document(s), as shown in the chat");
+    }
+
+    @Test
+    void theLayoutCantBeSkippedOnlyReviewedAsShown() {
+        // Seen (Delinea SecretServer): reviewed=true on promote_build's first call, so the user approved a form
+        // whose layout was never shown in the chat.
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+
+        final Map<String, Object> upFront = call(Map.of("Pipeline", "/Feeds/Acme"), true);
+
+        assertThat(upFront).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(upFront.get("hint"))).contains("true is not one");
+        // Another layout since (the user moved it): reviewed again, not approved on the first one's id.
+        final Map<String, Object> moved = call(Map.of("Pipeline", "/Feeds/Elsewhere"), upFront.get("review_id"));
+        assertThat(moved).containsEntry("status", "needs_review");
+        assertThat(moved.get("review_id")).isNotEqualTo(upFront.get("review_id"));
+        assertThat(String.valueOf(moved.get("hint"))).contains("changed since");
+        assertThat(approvalForm(Map.of("Pipeline", "/Feeds/Elsewhere"), moved.get("review_id")))
+                .containsEntry("status", "needs_approval");
+    }
+
+    @Test
+    void everyDocumentWithoutADestinationIsNamedAtOnce() {
+        // Seen (Delinea SecretServer): the Dashboard's, then the TextConverter's, a failed call each.
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DashboardDoc.TYPE, "d", "ACME-VERIFY", null),
+                doc(TextConverterDoc.TYPE, "t", "ACME wrapper", null));
+
+        final String said = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build",
+                BUILD, "destinations", Map.of("XSLT", "Feeds/Acme"))));
+
+        assertThat(said).contains("Pipeline 'ACME-Events' (p); Dashboard 'ACME-VERIFY' (d); TextConverter 'ACME "
+                                  + "wrapper' (t)")
+                .contains("by type (Dashboard, Pipeline, TextConverter")
+                .contains("'keep'")
+                .endsWith("Nothing was changed.");
+    }
+
+    @Test
+    void documentationTheBuildsOwnChangeLeftBehindHoldsPromotionUpAndAHandEditOnlyWarns() {
+        // As TestE2ePlanWalk has it: written before the build's change, the documentation holds promotion up,
+        // naming the call; after a hand edit of the XSLT, it is a warning in the approval.
+        exists("System/Feeds/Acme");
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        final String stale = "Pipeline 'ACME-Events': the documentation's Field mapping predates the current mapping "
+                             + "or XSLT (write_documentation build=<this build> pipeline_uuid='p' "
+                             + "stream_ids=<its sample streams> change=<what changed>)";
+        docs.facts.checks = List.of(stale + BuildChecks.BLOCKS);
+
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build", BUILD,
+                "destinations", Map.of("Pipeline", "/Feeds/Acme")))))
+                .startsWith("Not promoted: " + stale)
+                .contains("once promoted, the pipeline's documentation can only change through a working copy");
+
+        docs.facts.checks = List.of(stale);
+        final Map<String, Object> shown = call(Map.of("Pipeline", "/Feeds/Acme"), null);
+        assertThat(shown.get("warnings")).isEqualTo(List.of(stale));
+        final Map<String, Object> gate = approvalForm(Map.of("Pipeline", "/Feeds/Acme"), shown.get("review_id"));
+        // As the form shows it: cut short.
+        assertThat(String.valueOf(((Map<?, ?>) gate.get("details")).get("warnings")))
+                .startsWith(stale.substring(0, 100));
+    }
+
+    @Test
+    void anUnchangedWorkingCopyIsShownAndReportedAsDiscardedNotUpdated() {
+        // Seen in an eval: an unchanged working copy XSLT was listed "updated from its working copy" in the layout
+        // and updated_in_place while promotion discarded it unchanged.
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
+        world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v0")
+                .data(PLAIN_XSLT).build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
+        world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
+                .data(PLAIN_XSLT).build());
+        world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+
+        final Map<String, Object> shown = call(destinations, null);
+        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy");
+
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(promoted).doesNotContainKey("updated_in_place");
+        assertThat(promoted.get("promoted")).asList().contains("discarded unchanged working copy XSLT 'ACME-XSLT'");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(PLAIN_XSLT);
+        assertThat(world.nodes).doesNotContainKey("x-copy");
+    }
+
+    @Test
+    void promotionMovesTheBuildIntoPlaceAndWritesItsWorkingCopiesBackAfterABackup() {
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(DocumentationDoc.TYPE, "ACME notes", prodFolder, "x-prod");
+        world.docs.put("x-prod", DocumentationDoc.builder().uuid("x-prod").name("ACME notes").version("v0")
+                .data(NOTES_V1).build());
+        final DocRef pipeline = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        final DocRef copy = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME notes", "x-copy");
+        world.docs.put("x-copy", DocumentationDoc.builder().uuid("x-copy").name("ACME notes").version("v0")
+                .data(NOTES_V2).build());
+        world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(DocumentationDoc.TYPE, "x-copy", "ACME notes", "working_copy_of",
+                "x-prod"));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+
+        final Map<String, Object> shown = call(destinations, null);
+        assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
+                                                  + "├── ACME notes  (Documentation: updated from its working copy, "
+                                                  + "backed up first)\n"
+                                                  + "├── ACME-Events  (Documentation)\n"
+                                                  + "└── ACME-Events  (Pipeline)");
+        assertThat(approvalForm(destinations, shown.get("review_id"))).containsEntry("status", "needs_approval");
+        // Nothing changed until the user approves, which they can't without a form.
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("Not done: Promote build '" + BUILD + "' as shown in the chat.");
+        assertThat(world.guard().buildOf(pipeline)).contains(BUILD);
+
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(promoted).containsEntry("layout", shown.get("layout"));
+        assertThat(promoted.get("promoted")).asList().contains(
+                "recorded the build's changes as version 1 of documentation 'ACME-Events'",
+                "wrote Documentation 'ACME notes' back over 'ACME notes' (backup kept)",
+                "moved Pipeline 'ACME-Events' to System/Feeds/Acme",
+                "moved Documentation 'ACME-Events' to System/Feeds/Acme",
+                "removed the build's workspace folder, now empty");
+        // Moved into production: no longer the agent's to change, still known as the tools' own.
+        assertThat(world.documentAccess.path(pipeline)).isEqualTo("/Feeds/Acme");
+        assertThat(world.tags("p")).containsExactly(WriteGuard.GENERATED);
+        assertThat(DocumentationVersions.rowsOf(world.body(documentation.getUuid()))).singleElement()
+                .satisfies(row -> assertThat(row).containsEntry("version", "1").containsEntry("change", "Created"));
+        // The working copy written back over its original, after a backup, then deleted.
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
+        assertThat(world.nodes).doesNotContainKey("x-copy");
+        assertThat(world.nodes.values()).anySatisfy(node -> {
+            assertThat(node.name).isEqualTo("ACME notes backup 20261022000000");
+            assertThat(node.tags).contains(WriteGuard.GENERATED);
+            assertThat(world.documentAccess.path(node.docRef())).isEqualTo("/MCP Workspace/backups");
+        });
+        assertThat(world.guard().buildFolder(BUILD, false)).isEmpty();
+        assertThat(((List<?>) promoted.get("updated_in_place")).stream().map(entry -> String.valueOf(((Map<?, ?>) entry)
+                .get("document")))).containsExactly("ACME notes (Documentation)");
+        assertThat(((List<?>) promoted.get("folders")).stream()
+                .map(entry -> String.valueOf(((Map<?, ?>) entry).get("folder"))))
+                .containsExactly("System/Feeds/Acme");
+        // Over /mcp, whose sessions are no evidence, no standing instructions are offered.
+        assertThat(promoted).doesNotContainKey("standing_instructions");
+    }
+
+    @Test
+    void aChangedWorkingCopyOfAPromotedPipelinesCodeIsRefusedAtPromotion() {
+        // Decided by the user (2026-11-17): a promoted pipeline and the code it runs change only by a new version. A
+        // build opened before keeps its working copies: not written back, refused saying what to do.
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
+        world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>plain-v1</xsl:stylesheet>").build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
+        world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>plain-v2</xsl:stylesheet>").build());
+        world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
+
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(Map.of("Pipeline",
+                "/Feeds/Acme"), null))))
+                .contains("XSLT 'ACME-XSLT' is a working copy of a promoted pipeline's code")
+                .contains("make a new version")
+                .contains("Nothing was changed");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData())
+                .isEqualTo("<xsl:stylesheet>plain-v1</xsl:stylesheet>");
+    }
+
+    @Test
+    void aWorkingCopyOverAnOriginalChangedSinceItWasTakenIsWrittenBackOnlyIfTheUserSays() {
+        // Found reviewing the tools: an XSLT edited by hand in production after its working copy was taken lost
+        // the edit when the copy was promoted (kept only in the backup). The user is asked, told the difference.
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
+                PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        // Asked once, before the layout was shown, not again at the approval.
+        assertThat(user.shown()).filteredOn(form -> form.contains("was changed in production")).hasSize(1);
+        assertThat(user.shown().getFirst())
+                .startsWith("Documentation 'ACME notes' was changed in production since its working copy was taken by "
+                            + "john.smith")
+                .contains("Overwriting it loses from production: Doors, v1 by hand.",
+                        "The working copy brings: Doors, v2.",
+                        PromoteBuildTool.OVERWRITE_ORIGINAL, "kept only in its backup");
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
+    }
+
+    @Test
+    void aWorkingCopyOverAChangedOriginalTheUserKeepsStaysInTheBuild() {
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
+                PromoteBuildTool.KEEP_ORIGINAL, "value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        // The layout shown says the copy stays, as the user chose before it was shown.
+        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy");
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData())
+                .isEqualTo(NOTES_BY_HAND);
+        assertThat(world.nodes).containsKey("x-copy");
+        assertThat(promoted.get("promoted")).asList().contains("left Documentation 'ACME notes' in the workspace");
+
+        // Promoted again, it is asked again: the choice held for that promotion only.
+        final BuildToolCalls.FormUser later = BuildToolCalls.user(Map.of("choice",
+                PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
+        final Map<String, Object> again = docs.call(tool, later.context(), DocumentationWorld.args(args(
+                destinations, null)));
+        docs.call(tool, later.context(), DocumentationWorld.args(args(destinations, again.get("review_id"))));
+        assertThat(later.shown()).anyMatch(form -> form.contains("was changed in production"));
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
+    }
+
+    @Test
+    void aWorkingCopyOverAnUnchangedOriginalAsksNothingMore() {
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        // As it was when copied.
+        world.docs.put("x-prod", ((DocumentationDoc) world.docs.get("x-prod")).copy().version("v0").build());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(user.shown()).noneMatch(form -> form.contains("was changed in production"));
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
+    }
+
+    // A build whose working copy of production Documentation 'ACME notes' (copied at version v0) is v2, while
+    // production was edited by hand since (v1, by john.smith): the destinations to promote it with.
+    private Map<String, Object> workingCopyOfAChangedOriginal() {
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(DocumentationDoc.TYPE, "ACME notes", prodFolder, "x-prod");
+        world.docs.put("x-prod", DocumentationDoc.builder().uuid("x-prod").name("ACME notes").version("v1")
+                .updateUser("john.smith").data(NOTES_BY_HAND).build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        final DocRef copy = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME notes", "x-copy");
+        world.docs.put("x-copy", DocumentationDoc.builder().uuid("x-copy").name("ACME notes").version("v0")
+                .data(NOTES_V2).build());
+        world.records().update(BUILD, copy, entry -> {
+            entry.put("copy_of", "x-prod");
+            entry.put(BuildRecords.COPY_OF_VERSION, "v0");
+        });
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(DocumentationDoc.TYPE, "x-copy", "ACME notes", "working_copy_of",
+                "x-prod"));
+        assertThat(documentation).isNotNull();
+        return Map.of("Pipeline", "/Feeds/Acme");
+    }
+
+    @Test
+    void theTidyUpIsListedInTheReviewAndOnByDefaultInTheApproval() {
+        // Decided by the user (2026-11-17): the review lists everything the tidy-up will do; the approval refers to
+        // it and offers it as a choice, ticked to start.
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+
+        assertThat(shown.get("tidy_up")).isEqualTo(List.of(
+                "test feed 'ACME-MCP-TEST': its 2 stream(s) (3K) marked deleted, as Stroom's Data screen deletes "
+                + "them (data retention purges them later), then the feed deleted",
+                "test index 'ACME-INDEX-MCP-TEST': its 3 shard(s) deleted, then the index doc deleted",
+                "verification dashboard 'ACME-INDEX-MCP-TEST-VERIFY': deleted"));
+        assertThat(String.valueOf(shown.get("layout")))
+                .contains("Left in the workspace: ACME-MCP-TEST (Feed), ACME-INDEX-MCP-TEST (Index), "
+                          + "ACME-INDEX-MCP-TEST-VERIFY (Dashboard), ACME - Survey (Documentation)")
+                .contains("Tidy-up after promotion (the user can untick it in the approval):\n- test feed "
+                          + "'ACME-MCP-TEST': its 2 stream(s)")
+                .doesNotContain("stays in the build's workspace");
+        assertThat(String.valueOf(shown.get("hint"))).contains("Say the tidy_up too");
+
+        assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("The user did not agree to: Promote build");
+        assertThat(user.forms().getLast().get("details")).isEqualTo(Map.of("build", BUILD, "layout",
+                "2 document(s), as shown in the chat", "folders", "System/Feeds/Acme",
+                "tidy-up after promotion", "3 test document(s), as listed in the chat (stream counts and sizes as "
+                                           + "of the review)"));
+        final Map<String, Object> fields = asMap(user.schemas().getLast().get("properties"));
+        assertThat(asMap(fields.get(PromotionTidyUp.TIDY_UP))).containsEntry("type", "boolean")
+                .containsEntry("title", PromotionTidyUp.CHOICE_TITLE).containsEntry("default", true);
+        // Declined: nothing tidied.
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(world.nodes).containsKeys("t", "ti", "vd");
+    }
+
+    @Test
+    void approvedTheTestDataIsTidiedStreamsThenShardsThenDocumentsAndNothingElseTouched() {
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> promoted = promote(user, destinations);
+
+        assertThat(promoted.get("tidied_up")).isEqualTo(List.of(
+                Map.of("document", "Feed 'ACME-MCP-TEST'", "streams_marked_deleted", 2, "deleted", true),
+                Map.of("document", "Index 'ACME-INDEX-MCP-TEST'", "shards_deleted", 3, "deleted", true),
+                Map.of("document", "Dashboard 'ACME-INDEX-MCP-TEST-VERIFY'", "deleted", true)));
+        assertThat(String.valueOf(promoted.get("hint"))).contains("Say what the tidy-up did (tidied_up)");
+        // Streams, then shards, then the documents (a dashboard before the index it searches).
+        final InOrder order = Mockito.inOrder(metaService, indexResource, world.explorerService);
+        order.verify(metaService).updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED));
+        order.verify(indexResource).reset("ti");
+        order.verify(world.explorerService).delete(Mockito.argThat(nodes -> "vd".equals(nodes.getFirst()
+                .getUuid())));
+        order.verify(world.explorerService).delete(Mockito.argThat(nodes -> "ti".equals(nodes.getFirst()
+                .getUuid())));
+        order.verify(world.explorerService).delete(Mockito.argThat(nodes -> "t".equals(nodes.getFirst()
+                .getUuid())));
+        // Only the test feed's streams, and only marked deleted, as the Data screen marks them.
+        final ArgumentCaptor<FindMetaCriteria> criteria = ArgumentCaptor.forClass(FindMetaCriteria.class);
+        Mockito.verify(metaService).updateStatus(criteria.capture(), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED));
+        assertThat(criteria.getValue().getExpression()).isEqualTo(MetaExpressionUtil.createFeedExpression(
+                new DocRef(FeedDoc.TYPE, "t", "ACME-MCP-TEST")));
+        Mockito.verify(metaService, Mockito.never()).delete(Mockito.anyLong());
+        Mockito.verify(indexResource, Mockito.times(1)).reset(any());
+        assertThat(world.nodes).doesNotContainKeys("t", "ti", "vd");
+        // The promoted documents, production and the survey doc and the build's record stay.
+        assertThat(world.documentAccess.path(new DocRef(PipelineDoc.TYPE, "p"))).isEqualTo("/Feeds/Acme");
+        assertThat(world.nodes).containsKeys("p", "d", "prod-feed", "prod-p", "s");
+        assertThat(world.guard().folderContents(BUILD, true)).extracting(WriteGuard.BuildDoc::uuid)
+                .contains("s").anyMatch(uuid -> !"s".equals(uuid));
+        // The record keeps nothing of what was tidied.
+        assertThat(world.records().entry(BUILD, "ti")).doesNotContainKey(BuildTestIndexes.TEST_INDEX_FOR);
+    }
+
+    @Test
+    void untickedInTheApprovalNothingIsTidied() {
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, PromotionTidyUp.TIDY_UP,
+                false));
+
+        final Map<String, Object> promoted = promote(user, destinations);
+
+        assertThat(promoted).doesNotContainKey("tidied_up").containsEntry("tidy_up", "not done, as the user chose: "
+                                                                                    + "the build's test data stays "
+                                                                                    + "in the workspace");
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        Mockito.verify(indexResource, Mockito.never()).reset(any());
+        assertThat(world.nodes).containsKeys("t", "ti", "vd");
+        assertThat(world.documentAccess.path(new DocRef(PipelineDoc.TYPE, "p"))).isEqualTo("/Feeds/Acme");
+    }
+
+    @Test
+    void theToolArgumentTurnsTheTidyUpOffAndTheReviewChangesWithIt() {
+        // Without forms the user can't untick it: tidy_up=false keeps the test data, and is another layout to review.
+        final Map<String, Object> destinations = buildWithTestData();
+        final Map<String, Object> on = review(destinations);
+        final Map<String, Object> args = new LinkedHashMap<>(args(destinations, null));
+        args.put(PromotionTidyUp.TIDY_UP, false);
+        final Map<String, Object> off = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args));
+
+        assertThat(off).doesNotContainKey("tidy_up");
+        assertThat(String.valueOf(off.get("layout"))).doesNotContain("Tidy-up")
+                .endsWith("The build's test feed ACME-MCP-TEST stays in the build's workspace: it holds only the "
+                          + "sample's Events and is never promoted.");
+        assertThat(off.get("review_id")).isNotEqualTo(on.get("review_id"));
+        assertThat(tool.definition().toString()).contains(PromotionTidyUp.TIDY_UP);
+
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        args.put("reviewed", off.get("review_id"));
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args));
+
+        assertThat(promoted).doesNotContainKeys("tidied_up", "tidy_up");
+        assertThat(asMap(user.schemas().getLast().get("properties"))).doesNotContainKey(PromotionTidyUp.TIDY_UP);
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(world.nodes).containsKeys("t", "ti", "vd");
+    }
+
+    @Test
+    void theApprovalIsBoundToTheTidyUpsItemsNotTheirLiveCounts() {
+        // Found in review (2026-11-18): bound to the stream counts, a test feed still being written to gave a new
+        // review id on every call, and the promotion was never approved. A test feed with more streams since the
+        // review is the same tidy-up: approved as reviewed, the counts said as of the review.
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        assertThat(shown).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(shown.get("tidy_up"))).contains("stream(s)");
+        Mockito.when(metaService.findRows(any())).thenReturn(new ResultPage<>(List.of(row(1, "1024"), row(2, "2048"),
+                row(3, "10"))));
+
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        assertThat(promoted.get("status")).isNotEqualTo("needs_review");
+        assertThat(promoted).containsKey("tidied_up");
+        assertThat(String.valueOf(user.forms().getLast())).contains("as of the review");
+    }
+
+    @Test
+    void anotherTidyUpItemSinceTheReviewIsReviewedAgain() {
+        final Map<String, Object> destinations = buildWithTestData();
+        final Map<String, Object> shown = review(destinations);
+        world.inBuild(BUILD, FeedDoc.TYPE, "ACME2" + OutputFeeds.TEST_FEED, "t2");
+        listed(doc(FeedDoc.TYPE, "t2", "ACME2" + OutputFeeds.TEST_FEED, null));
+
+        final Map<String, Object> again = call(destinations, shown.get("review_id"));
+
+        assertThat(again).containsEntry("status", "needs_review");
+        assertThat(again.get("review_id")).isNotEqualTo(shown.get("review_id"));
+        assertThat(String.valueOf(again.get("layout"))).contains("ACME2" + OutputFeeds.TEST_FEED);
+    }
+
+    @Test
+    void aFailedItemIsSaidAndKeptWhileTheOthersAreTidiedAndThePromotionStands() {
+        final Map<String, Object> destinations = buildWithTestData();
+        Mockito.when(metaService.updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                        Mockito.eq(Status.DELETED)))
+                .thenThrow(new RuntimeException("You do not have permission to delete data"));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> promoted = promote(user, destinations);
+
+        assertThat(promoted.get("tidied_up")).asList().first().isEqualTo(Map.of("document", "Feed 'ACME-MCP-TEST'",
+                "deleted", false, "failed", "marking its streams deleted: You do not have permission to delete data "
+                                            + "(its later steps were skipped; it is left in the workspace)"));
+        assertThat(world.nodes).containsKey("t").doesNotContainKeys("ti", "vd");
+        assertThat(world.documentAccess.path(new DocRef(PipelineDoc.TYPE, "p"))).isEqualTo("/Feeds/Acme");
+    }
+
+    @Test
+    void aTestFeedAProductionPipelineReadsOrOneOutsideTheBuildIsNeverTidied() {
+        // A feed a pipeline outside the build reads, or one not in the build's workspace, is never a test feed.
+        final Map<String, Object> destinations = buildWithTestData();
+        Mockito.when(processorFilters.pipelinesReading("ACME-MCP-TEST")).thenReturn(List.of(Map.of("uuid",
+                "prod-p", "name", "ACME-Prod", "reads_events", true)));
+        world.add(FeedDoc.TYPE, "OTHER-MCP-TEST", world.folder("System/Feeds/Acme").uuid, "o");
+        listed(doc(FeedDoc.TYPE, "o", "OTHER-MCP-TEST", null));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+
+        assertThat(String.valueOf(shown.get("layout"))).contains("Not tidied up, left in the workspace:\n"
+                + "- test feed 'ACME-MCP-TEST': used outside the build, by pipeline 'ACME-Prod' (its processor "
+                + "filter reads it)\n"
+                + "- test feed 'OTHER-MCP-TEST': it isn't in the build's workspace")
+                .endsWith("The build's test feed ACME-MCP-TEST, OTHER-MCP-TEST stays in the build's workspace: it "
+                          + "holds only the sample's Events and is never promoted.");
+        assertThat(shown.get("tidy_up")).asList().hasSize(2).noneMatch(line -> String.valueOf(line)
+                .contains("test feed"));
+
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(promoted.get("tidied_up")).asList().hasSize(2);
+        assertThat(world.nodes).containsKeys("t", "o", "prod-feed", "prod-p").doesNotContainKeys("ti", "vd");
+    }
+
+    @Test
+    void aWorkingCopyOfAFeedsCommonModuleIsRefusedAtPromotion() {
+        // Decided by the user (2026-11-17): an aggregated feed's shared modules change only by a new version too. A
+        // build opened before keeps its working copy of one: not written back, refused saying what to do.
+        exists("System/Feeds/Acme");
+        world.add(XsltDoc.TYPE, "ACME common", world.folder("System/Feeds/Acme").uuid, "x-prod");
+        world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME common").version("v0")
+                .data(commonModule("v1")).build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME common", "x-copy");
+        world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME common").version("v0")
+                .data(commonModule("v2")).build());
+        world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME common", "working_copy_of", "x-prod"));
+
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(Map.of("Pipeline",
+                "/Feeds/Acme"), null))))
+                .contains("XSLT 'ACME common' is a working copy")
+                .contains("build_translation_xslt of the build's group makes the new version of it")
+                .contains("Nothing was changed");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(commonModule("v1"));
+    }
+
+    @Test
+    void aNewVersionOfAFeedsCommonModuleGoesBesideItsPredecessorAndNothingPromotedIsWritten() {
+        // Decided by the user (2026-11-17): a promoted module changes only by a new version, placed beside its
+        // predecessor in a version folder as a pipeline's new version is. The build's other documents don't join
+        // it there: they aren't the module's.
+        exists("System/Feeds/Acme");
+        world.add(XsltDoc.TYPE, "ACME common", world.folder("System/Feeds/Acme").uuid, "x-common");
+        world.docs.put("x-common", XsltDoc.builder().uuid("x-common").name("ACME common").version("v0")
+                .data(commonModule("v1")).build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef version = world.inBuild(BUILD, XsltDoc.TYPE, "ACME common V1.1", "x-v11");
+        world.docs.put("x-v11", XsltDoc.builder().uuid("x-v11").name("ACME common V1.1").version("v0")
+                .data(commonModule("v2")).build());
+        world.records().update(BUILD, version, entry -> entry.put("version_of", "x-common"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-v11", "ACME common V1.1", "version_of",
+                "x-common"));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+
+        final Map<String, Object> shown = call(destinations, null);
+        assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
+                                                  + "├── ACME-Events  (Pipeline)\n"
+                                                  + "└── Common/  (new)\n"
+                                                  + "    └── V1.1/  (new)\n"
+                                                  + "        └── ACME common V1.1  (XSLT)");
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(promoted.get("promoted")).asList().contains(
+                "moved XSLT 'ACME common V1.1' to System/Feeds/Acme/Common/V1.1",
+                "moved Pipeline 'ACME-Events' to System/Feeds/Acme");
+        assertThat(promoted).doesNotContainKey("updated_in_place");
+        assertThat(((XsltDoc) world.docs.get("x-common")).getData()).isEqualTo(commonModule("v1"));
+        assertThat(world.documentAccess.path(version)).isEqualTo("/Feeds/Acme/Common/V1.1");
+    }
+
+    @Test
+    void aGroupsNewXsltGoesInItsPipelinesVersionFolderWhateverItsOwnName() {
+        // Seen in e2e: the group's new XSLT, named for its pipeline's next version before the user settled the
+        // pipeline's name (PEGA security-V2, the pipeline given 'v2'), went in a V2 folder of its own, apart from its
+        // pipeline in v2.
+        exists("System/Feeds/Acme/Messaging");
+        final String folder = world.folder("System/Feeds/Acme/Messaging").uuid;
+        world.add(PipelineDoc.TYPE, "Acme Messaging", folder, "p-prod");
+        world.add(XsltDoc.TYPE, "Messaging", folder, "x-prod");
+        final DocRef pipeline = world.inBuild(BUILD, PipelineDoc.TYPE, "Acme Messaging v2", "p-v2");
+        world.records().update(BUILD, pipeline, entry -> entry.put("version_of", "p-prod"));
+        module("x-v2", "Messaging-V2", "group", "Messaging");
+        world.records().update(BUILD, new DocRef(XsltDoc.TYPE, "x-v2", "Messaging-V2"),
+                entry -> entry.put("version_of", "x-prod"));
+        final Map<String, Object> listedPipeline = FakeBuildFacts.doc(PipelineDoc.TYPE, "p-v2", "Acme Messaging v2",
+                "version_of", "p-prod");
+        listedPipeline.put("role", "Events");
+        docs.facts.docs.add(listedPipeline);
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-v2", "Messaging-V2", "version_of", "x-prod"));
+
+        assertThat(call(Map.of("XSLT", "/Feeds/Acme/Messaging"), null).get("layout")).isEqualTo(
+                "System/Feeds/Acme/Messaging/Events/v2/  (new)\n"
+                + "├── Acme Messaging v2  (Pipeline)\n"
+                + "└── Messaging-V2  (XSLT)");
+    }
+
+    @Test
+    void aNewEventsVersionGoesBesideItsPredecessorAndItsFollowOnsGainFiltersTheAdminRetiresTheOldOnes() {
+        // Decided by the user (2026-11-17): the new version in a sibling version folder; each promoted pipeline
+        // reading the predecessor's Events gains a new filter, disabled, reading the new version's (listed in the
+        // approval); no buttons disabling the earlier filters: the next steps say what to enable, then what the
+        // admin disables or removes once the new version's output is right.
+        final DocRef before = world.add(PipelineDoc.TYPE, "ACME-V1.0-Events",
+                world.folder("System/Feeds/Acme/Events/V1.0").uuid, "ev1").docRef();
+        final DocRef version = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-Events", "ev2");
+        world.records().update(BUILD, version, entry -> entry.put("version_of", "ev1"));
+        final Map<String, Object> listed = FakeBuildFacts.doc(PipelineDoc.TYPE, "ev2", "ACME-V1.1-Events", "version_of",
+                "ev1");
+        listed.put("role", "Events");
+        docs.facts.docs.add(listed);
+        final DocRef cef = new DocRef(PipelineDoc.TYPE, "cef", "ACME-CEF");
+        final ProcessorFilter reading = ProcessorFilter.builder().id(5).pipelineUuid("cef").enabled(true).build();
+        final PromotionProcessing.FollowOn followOn = new PromotionProcessing.FollowOn(cef, reading,
+                new DocRef(PipelineDoc.TYPE, "ev1", "ACME-V1.0-Events"), version);
+        Mockito.when(processing.followOns(any(), any())).thenReturn(List.of(followOn));
+        Mockito.when(processing.createPromotionFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
+                Map.of("filter_id", 40, "pipeline", "ACME-V1.1-Events", "enabled", false))));
+        Mockito.when(processing.createFollowOnFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
+                Map.of("filter_id", 41, "pipeline", "ACME-CEF", "reads", "ACME-V1.1-Events", "in_place_of",
+                        "ACME-V1.0-Events", "copied_from", 5, "enabled", false))));
+        Mockito.when(filterWrites.filters(any())).thenReturn(List.of(ProcessorFilter.builder().id(3)
+                .pipelineUuid("ev1").enabled(true).build()));
+        final Map<String, Object> destinations = Map.of();
+
+        final Map<String, Object> shown = call(destinations, null);
+        assertThat(String.valueOf(shown.get("layout"))).startsWith("System/Feeds/Acme/Events/V1.1/  (new)\n"
+                                                                   + "└── ACME-V1.1-Events  (Pipeline)");
+        assertThat(String.valueOf(shown.get("follow_on_filters"))).contains("'ACME-CEF': a new filter, disabled");
+        assertThat(String.valueOf(approvalForm(destinations, shown.get("review_id"))))
+                .contains("follow-on filters");
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(world.documentAccess.path(version)).isEqualTo("/Feeds/Acme/Events/V1.1");
+        assertThat(world.documentAccess.path(before)).isEqualTo("/Feeds/Acme/Events/V1.0");
+        assertThat(promoted.get("follow_on_filters")).asList().hasSize(1);
+        assertThat(promoted.get("next_steps")).isEqualTo(List.of(
+                "1. Enable the new version's filters when ready: filter 40 ('ACME-V1.1-Events'); filter 41 "
+                + "('ACME-CEF', reading the Events of 'ACME-V1.1-Events').",
+                "2. Once the new version's output is right, the admin disables or removes the earlier version's "
+                + "filters (the tools never do): 'ACME-V1.0-Events': filter 3; 'ACME-CEF': filter 5 (reading the "
+                + "Events of 'ACME-V1.0-Events')."));
+        assertThat(String.valueOf(promoted.get("user_actions"))).doesNotContain("disable");
+    }
+
+    @Test
+    void aFollowOnWithItsOwnNewVersionInTheBuildGainsNoFilterReadingTheNewEvents() {
+        // A build making new versions of both the events pipeline and the CEF flattener reading its Events: the CEF
+        // flattener's new version reads the new Events by its own filter, so its predecessor gains none (two filters
+        // would make the CEF output twice once both were enabled).
+        world.add(PipelineDoc.TYPE, "ACME-V1.0-Events", world.folder("System/Feeds/Acme/Events/V1.0").uuid, "ev1");
+        world.add(PipelineDoc.TYPE, "ACME-V1.0-CEF", world.folder("System/Feeds/Acme/CEF/V1.0").uuid, "cef1");
+        final DocRef events = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-Events", "ev2");
+        world.records().update(BUILD, events, entry -> entry.put("version_of", "ev1"));
+        final DocRef cef = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-CEF", "cef2");
+        world.records().update(BUILD, cef, entry -> entry.put("version_of", "cef1"));
+        final Map<String, Object> listedEvents = FakeBuildFacts.doc(PipelineDoc.TYPE, "ev2", "ACME-V1.1-Events",
+                "version_of", "ev1");
+        listedEvents.put("role", "Events");
+        docs.facts.docs.add(listedEvents);
+        final Map<String, Object> listedCef = FakeBuildFacts.doc(PipelineDoc.TYPE, "cef2", "ACME-V1.1-CEF",
+                "version_of", "cef1");
+        listedCef.put("role", "CEF");
+        docs.facts.docs.add(listedCef);
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Predicate<DocRef>> outside =
+                ArgumentCaptor.forClass(Predicate.class);
+        Mockito.when(processing.followOns(any(), outside.capture())).thenReturn(List.of());
+
+        call(Map.of(), null);
+
+        assertThat(outside.getValue().test(new DocRef(PipelineDoc.TYPE, "cef1", "ACME-V1.0-CEF"))).isFalse();
+        assertThat(outside.getValue().test(new DocRef(PipelineDoc.TYPE, "other", "OTHER-Indexing"))).isTrue();
+    }
+
+    @Test
+    void inTheChatPromotionOffersStandingInstructionsFromTheUsersChats() {
+        exists("System/Feeds/Acme");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.chatContext(),
+                DocumentationWorld.args(args(destinations, null)));
+        final Map<String, Object> promoted = docs.call(tool, user.chatContext(),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(world.documentAccess.path(documentation)).isEqualTo("/Feeds/Acme");
+        assertThat(String.valueOf(promoted.get("standing_instructions")))
+                .contains("call instruction_evidence", "offer once", "propose_instructions", "Don't offer if it "
+                                                                                           + "finds none");
+    }
+
+    @Test
+    void itAsksTheUserItselfBeforeEveryChange() {
+        // promote_build is no read-only tool, and confirms itself, so /mcp doesn't approve the call as a whole as
+        // well.
+        assertThat(tool.isReadOnly()).isFalse();
+        assertThat(tool.confirmsItself()).isTrue();
+        assertThat(tool.definition().description()).startsWith("Onboarding step 18 of 18 (promoted): ");
+    }
+
+    // A build with test data, and the destinations to promote it with: its test feed (2 streams, 3 KiB), its Lucene
+    // test index (3 shards) standing in for a production index, the -VERIFY dashboard on it, a pipeline and its
+    // documentation to promote, its survey doc, and a production feed and pipeline beside where it goes.
+    private Map<String, Object> buildWithTestData() {
+        exists("System/Feeds/Acme");
+        final String production = world.folder("System/Feeds/Acme").uuid;
+        world.add(FeedDoc.TYPE, "ACME", production, "prod-feed");
+        world.add(PipelineDoc.TYPE, "ACME-Prod", production, "prod-p");
+        world.inBuild(BUILD, FeedDoc.TYPE, "ACME" + OutputFeeds.TEST_FEED, "t");
+        final DocRef index = world.inBuild(BUILD, LuceneIndexDoc.TYPE, "ACME-INDEX" + BuildTestIndexes.TEST_INDEX,
+                "ti");
+        world.records().update(BUILD, index, entry -> entry.put(BuildTestIndexes.TEST_INDEX_FOR, "prod-ix"));
+        world.inBuild(BUILD, DashboardDoc.TYPE, "ACME-INDEX-MCP-TEST-VERIFY", "vd");
+        world.docs.put("vd", DashboardDoc.builder().uuid("vd").name("ACME-INDEX-MCP-TEST-VERIFY").version("v0")
+                .dashboardConfig(DashboardConfig.builder().components(List.of(ComponentConfig.builder()
+                        .type("query").id("query").name("Query")
+                        .settings(QueryComponentSettings.builder()
+                                .dataSource(new DocRef(LuceneIndexDoc.TYPE, "ti")).build())
+                        .build())).build())
+                .build());
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME - Survey", "s");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        listed(doc(FeedDoc.TYPE, "t", "ACME" + OutputFeeds.TEST_FEED, null),
+                doc(LuceneIndexDoc.TYPE, "ti", "ACME-INDEX" + BuildTestIndexes.TEST_INDEX, null),
+                doc(DashboardDoc.TYPE, "vd", "ACME-INDEX-MCP-TEST-VERIFY", null),
+                doc(DocumentationDoc.TYPE, "s", "ACME - Survey", null),
+                doc(PipelineDoc.TYPE, "p", "ACME-Events", null),
+                doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        final BuildTestIndexes testIndexes = Mockito.mock(BuildTestIndexes.class);
+        Mockito.when(testIndexes.testIndexes(BUILD)).thenReturn(Map.of("ti", "prod-ix"));
+        tool.setTestIndexes(() -> testIndexes);
+        Mockito.when(metaService.findRows(any())).thenReturn(new ResultPage<>(List.of(row(1, "1024"),
+                row(2, "2048"))));
+        Mockito.when(metaService.updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED))).thenReturn(2);
+        Mockito.when(indexResource.find(any())).thenReturn(new ResultPage<>(List.of(shard(1), shard(2), shard(3))));
+        Mockito.when(indexResource.reset("ti")).thenReturn(3L);
+        return Map.of("Pipeline", "/Feeds/Acme");
+    }
+
+    // Reviewed, then approved in the user's form: the promotion's result.
+    private Map<String, Object> promote(final BuildToolCalls.FormUser user, final Map<String, Object> destinations) {
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        return docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+    }
+
+    // A stream of the size given (its File Size attribute).
+    private static MetaRow row(final long id, final String size) {
+        return new MetaRow(Meta.builder().id(id).build(), null, Map.of(MetaFields.FILE_SIZE.getFldName(), size));
+    }
+
+    private static IndexShard shard(final long id) {
+        return IndexShard.builder().id(id).indexUuid("ti").status(IndexShard.IndexShardStatus.CLOSED).build();
+    }
+
+    private Map<String, Object> review(final Map<String, Object> destinations) {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        args.put("build", BUILD);
+        args.put("destinations", destinations);
+        final Map<String, Object> shown = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args));
+        assertThat(shown).containsEntry("status", "needs_review");
+        return shown;
+    }
+
+    // A call from a client without forms: the layout to review, or the refusal to promote without a form.
+    private Map<String, Object> call(final Map<String, Object> destinations, final Object reviewed) {
+        return docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args(destinations, reviewed)));
+    }
+
+    // The approval form a reviewed call shows, as the round it once was; the user declines it, so nothing is
+    // promoted.
+    private Map<String, Object> approvalForm(final Map<String, Object> destinations, final Object reviewed) {
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
+        assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations, reviewed))))
+                .startsWith("The user did not agree to: Promote build");
+        assertThat(user.forms()).hasSize(1);
+        return user.forms().getFirst();
+    }
+
+    private static Map<String, Object> args(final Map<String, Object> destinations, final Object reviewed) {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        args.put("build", BUILD);
+        args.put("destinations", destinations);
+        if (reviewed != null) {
+            args.put("reviewed", reviewed);
+        }
+        return args;
+    }
+
+    // A module XSLT in the build, marked as the generator marks it.
+    private void module(final String uuid, final String name, final String kind, final String group) {
+        world.inBuild(BUILD, XsltDoc.TYPE, name, uuid);
+        world.docs.put(uuid, XsltDoc.builder().uuid(uuid).name(name).version("v0")
+                .data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:mcp=\""
+                      + MappingFacts.MCP_NS + "\" version=\"3.0\"><mcp:module kind=\"" + kind + "\""
+                      + (group == null
+                        ? ""
+                        : " name=\"" + group + "\" mode=\"m365\"") + "/></xsl:stylesheet>")
+                .build());
+    }
+
+    // A feed's common module, marked as the generator marks it, with the text given.
+    private static String commonModule(final String text) {
+        return "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:mcp=\"" + MappingFacts.MCP_NS
+               + "\" version=\"3.0\"><mcp:module kind=\"common\"/>\n<xsl:variable name=\"v\">" + text
+               + "</xsl:variable>\n</xsl:stylesheet>";
+    }
+
+    // A sibling feed beside ACME's folder (System/Feeds/Acme), its events pipeline under its own folder and its
+    // indexing pipeline under System/Elastic Indices.
+    private void siblingWithIndexingElsewhere() {
+        exists("System/Feeds/Acme", "System/Elastic Indices/Beta/V1.0", "System/Feeds/Beta/Events/V1.0");
+        world.add(FeedDoc.TYPE, "BETA", world.folder("System/Feeds/Beta").uuid, "beta");
+        Mockito.when(docs.pipelineIndex.read()).thenReturn(Map.of(
+                "beta-ev", new PipelineIndex.Entry("beta-ev", "BETA-V1.0-Events", "System/Feeds/Beta/Events/V1.0",
+                        "template", null),
+                "beta-ix", new PipelineIndex.Entry("beta-ix", "BETA-V1.0-Indexing", "System/Elastic Indices/Beta/V1.0",
+                        "template", null)));
+        docs.facts.stages.put("beta-ev", "translation");
+        docs.facts.stages.put("beta-ix", "indexing");
+    }
+
+    // The folders, made.
+    private void exists(final String... folders) {
+        for (final String folder : folders) {
+            world.folder(folder);
+        }
+    }
+
+    @SafeVarargs
+    private void listed(final Map<String, Object>... listedDocs) {
+        docs.facts.docs.addAll(List.of(listedDocs));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(final Object value) {
+        return (Map<String, Object>) value;
+    }
+
+    private static Map<String, Object> doc(final String type, final String uuid, final String name, final String role) {
+        return FakeBuildFacts.doc(type, uuid, name, "role", role);
+    }
+}

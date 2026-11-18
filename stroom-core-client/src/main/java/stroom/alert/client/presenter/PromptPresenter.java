@@ -17,7 +17,13 @@
 package stroom.alert.client.presenter;
 
 import stroom.alert.client.event.PromptEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DialogAction;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -37,8 +43,21 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, Pro
     @ProxyEvent
     @Override
     public void onPrompt(final PromptEvent event) {
-        final String result = getView().prompt(event.getMessage(), event.getInitialValue());
-        event.getCallback().onResult(result);
+        getView().setPrompt(event.getMessage(), event.getInitialValue());
+        // Enter in the text box is the same as OK.
+        getView().setOnEnter(() -> HidePopupRequestEvent.builder(this).action(DialogAction.OK).fire());
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(PopupSize.resizable(450, 190))
+                .caption(event.getCaption())
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    e.hide();
+                    event.getCallback().onResult(e.isOk()
+                            ? getView().getValue()
+                            : null);
+                })
+                .fire();
     }
 
     @Override
@@ -51,8 +70,21 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, Pro
 
     }
 
-    public interface PromptView extends View {
+    public interface PromptView extends View, Focus {
 
-        String prompt(String message, String initialValue);
+        /**
+         * Shows what to ask, and the value to start with.
+         */
+        void setPrompt(String message, String initialValue);
+
+        /**
+         * @return The value the user entered.
+         */
+        String getValue();
+
+        /**
+         * Sets what to do when the user presses Enter in the text box.
+         */
+        void setOnEnter(Runnable onEnter);
     }
 }

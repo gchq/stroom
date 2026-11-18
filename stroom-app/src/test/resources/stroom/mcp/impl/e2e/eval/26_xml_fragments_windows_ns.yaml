@@ -1,0 +1,90 @@
+name: Windows Security events (XML fragments in the Windows event namespace)
+template: Event Data (XML)
+capabilities: [format_recognition, nesting]
+request: >
+  Onboard the domain controllers' Security events, forwarded as Windows event XML: one <Event> per line with no
+  root element, each in the Windows event namespace. System holds the time, the computer and the event id; EventData
+  holds named Data values. The ids are 4624 (logon), 4625 (failed logon), 4634 (logoff), 4672 (special privileges
+  assigned to a new logon), 4720 (a user account created) and 4740 (an account locked out). Index the events.
+expected:
+  records: 8
+  event_types: [Authenticate, Create]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]
+  values:
+    EventSource/Device/HostName: [dc01.corp.example.org, dc02.corp.example.org]
+    EventDetail/Create/User/Id: [newstarter]
+    EventDetail/Authenticate/User/Id: [alice, bob, svc_backup]
+sample: |
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4624</EventID><TimeCreated SystemTime="2026-10-02T08:00:00.1234567Z"/><Computer>dc01.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">alice</Data><Data Name="TargetDomainName">CORP</Data><Data Name="LogonType">2</Data><Data Name="IpAddress">10.0.0.5</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4672</EventID><TimeCreated SystemTime="2026-10-02T08:00:00.1250000Z"/><Computer>dc01.corp.example.org</Computer></System><EventData><Data Name="SubjectUserName">alice</Data><Data Name="SubjectDomainName">CORP</Data><Data Name="PrivilegeList">SeBackupPrivilege SeDebugPrivilege</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4625</EventID><TimeCreated SystemTime="2026-10-02T08:03:12.0000000Z"/><Computer>dc02.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">bob</Data><Data Name="TargetDomainName">CORP</Data><Data Name="LogonType">10</Data><Data Name="IpAddress">203.0.113.9</Data><Data Name="FailureReason">%%2313</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4625</EventID><TimeCreated SystemTime="2026-10-02T08:03:20.0000000Z"/><Computer>dc02.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">bob</Data><Data Name="TargetDomainName">CORP</Data><Data Name="LogonType">10</Data><Data Name="IpAddress">203.0.113.9</Data><Data Name="FailureReason">%%2313</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4740</EventID><TimeCreated SystemTime="2026-10-02T08:03:21.0000000Z"/><Computer>dc02.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">bob</Data><Data Name="TargetDomainName">CORP</Data><Data Name="SubjectUserName">DC02$</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4720</EventID><TimeCreated SystemTime="2026-10-02T09:15:00.0000000Z"/><Computer>dc01.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">newstarter</Data><Data Name="TargetDomainName">CORP</Data><Data Name="SubjectUserName">alice</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4624</EventID><TimeCreated SystemTime="2026-10-02T09:30:00.0000000Z"/><Computer>dc01.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">svc_backup</Data><Data Name="TargetDomainName">CORP</Data><Data Name="LogonType">5</Data><Data Name="IpAddress">-</Data></EventData></Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4634</EventID><TimeCreated SystemTime="2026-10-02T10:00:00.0000000Z"/><Computer>dc01.corp.example.org</Computer></System><EventData><Data Name="TargetUserName">alice</Data><Data Name="TargetDomainName">CORP</Data><Data Name="LogonType">2</Data></EventData></Event>
+reference:
+  # The XMLFragmentParser's wrapper as profile_sample gives it, in place of the template's XMLParser.
+  converter_type: XML_FRAGMENT
+  converter: profile
+  replace_parser: XMLFragmentParser
+  mapping:
+    input: xml_fragments
+    xml_namespace: http://schemas.microsoft.com/win/2004/08/events/event
+    record: Event
+    nil_values: ['-']
+    common:
+      # Windows writes seven fraction digits: the first three are milliseconds.
+      - {path: EventTime/TimeCreated, xpath: "replace(System/TimeCreated/@SystemTime, '(\\.\\d{3})\\d*Z$', '$1Z')", time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: Active Directory}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: System/Provider/@Name}
+      - {path: EventSource/Device/HostName, field: System/Computer}
+      - {path: EventDetail/TypeId, field: System/EventID}
+    events:
+      - name: logon
+        when: [{field: System/EventID, equals: '4624'}]
+        fields:
+          - {path: EventSource/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+          - {path: EventSource/Client/IPAddress, field: "EventData/Data[@Name='IpAddress']"}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+          - {path: EventDetail/Authenticate/User/Domain, field: "EventData/Data[@Name='TargetDomainName']"}
+          - {path: EventDetail/Authenticate/LogonType, field: "EventData/Data[@Name='LogonType']", map: {'2': Interactive, '3': Network, '4': Batch, '5': Service, '10': RemoteInteractive, '11': CachedInteractive}, default: Other}
+      - name: failed logon
+        when: [{field: System/EventID, equals: '4625'}]
+        fields:
+          - {path: EventSource/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+          - {path: EventSource/Client/IPAddress, field: "EventData/Data[@Name='IpAddress']"}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+          - {path: EventDetail/Authenticate/User/Domain, field: "EventData/Data[@Name='TargetDomainName']"}
+          - {path: EventDetail/Authenticate/LogonType, field: "EventData/Data[@Name='LogonType']", map: {'2': Interactive, '3': Network, '4': Batch, '5': Service, '10': RemoteInteractive, '11': CachedInteractive}, default: Other}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
+          - {path: EventDetail/Authenticate/Outcome/Description, field: "EventData/Data[@Name='FailureReason']"}
+      - name: logoff
+        when: [{field: System/EventID, equals: '4634'}]
+        fields:
+          - {path: EventSource/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+      - name: special privileges
+        when: [{field: System/EventID, equals: '4672'}]
+        fields:
+          - {path: EventSource/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
+          - {path: EventDetail/Authenticate/Action, value: ElevatePrivilege}
+          - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
+          - {path: EventDetail/Authenticate/Data, data_name: privileges, field: "EventData/Data[@Name='PrivilegeList']"}
+      - name: account locked
+        when: [{field: System/EventID, equals: '4740'}]
+        fields:
+          - {path: EventSource/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
+          - {path: EventDetail/Authenticate/Action, value: AccountLock}
+          - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+      - name: account created
+        when: [{field: System/EventID, equals: '4720'}]
+        fields:
+          - {path: EventSource/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
+          - {path: EventDetail/Create/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
+          - {path: EventDetail/Create/User/Domain, field: "EventData/Data[@Name='TargetDomainName']"}

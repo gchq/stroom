@@ -1,0 +1,92 @@
+name: Windows security events aggregated by a proxy (JSON lines, a part a host, told apart by a receipt header)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, stream_meta]
+# An aggregated feed whose source is said by a header, not a record's field: hosts' Windows security events as JSON
+# lines (aggregated/windows-meta, made by its windows-meta-generator.py), aggregated by a proxy into two streams of
+# five parts, a part a host, each part with the receipt headers its host sent. A server's
+# WindowsServerInstalledServedRoles lists its roles ("DNS Server, Active Directory Domain Services, File Server"); a
+# workstation sends none. The data is in the feed already (`streams`), nothing to upload. The user wants the domain
+# controllers' events: the survey never looks for a meta attribute itself, so the agent must pass
+# source_type_field=meta:WindowsServerInstalledServedRoles as the user names it; the values are lists, so the row is a
+# list member (`AD DS ∈ Active Directory Domain Services`), put before any DNS Server row as a controller's list holds
+# both. 43 records become Events; the other parts' 153 are passed over whole (counted, INFO), not errors.
+request: >
+  Onboard the Windows security events in our feed (they are in Stroom already, nothing to upload: our proxy aggregates
+  every host's events into the feed, each host's events a part of a stream). The records don't say what kind of server
+  they came from, but each part has a receipt header, WindowsServerInstalledServedRoles, listing the server's roles;
+  use that attribute to tell the sources apart. For now I want only the domain controllers: the servers whose roles
+  include Active Directory Domain Services. Index their events.
+user_knows: >
+  Use the stream meta attribute WindowsServerInstalledServedRoles to tell sources apart; it is a comma-separated list
+  of roles. This build's group holds the servers whose roles include "Active Directory Domain Services"; call it
+  Domain controllers. A controller's list also holds DNS Server; other servers (file, DNS, web) are for later builds,
+  and workstations send no roles at all. The parts of other hosts being passed over by the group's pipeline is
+  expected; they are not errors. The system is Windows.
+expected:
+  records: 43
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName|EventSource/Device/Name]
+  values:
+    EventSource/Device/HostName|EventSource/Device/Name: [dc01.corp.example, dc02.corp.example]
+  # The other hosts' parts are passed over whole: none of their records become Events.
+  forbidden_values:
+    EventSource/Device/HostName|EventSource/Device/Name: [fs01.corp.example, ws-0142.corp.example, web01.corp.example,
+                                                          ws-0187.corp.example, dns02.corp.example,
+                                                          ws-0203.corp.example]
+    EventDetail/TypeId: ["4688", "4663"]
+  source_types:
+    field: meta:WindowsServerInstalledServedRoles
+    group:
+      values: ["DNS Server, Active Directory Domain Services, File Server",
+               "Active Directory Domain Services, DNS Server"]
+      others: [File Server, "DNS Server, File Server", Web Server (IIS)]
+    rows:
+      - {match: member, value: Active Directory Domain Services}
+    passed_over: 153
+streams: {resource: aggregated/windows-meta/windows-meta.json}
+reference:
+  source_types:
+    field: meta:WindowsServerInstalledServedRoles
+    system_name: Windows
+    rows: ["AD DS ∈ Active Directory Domain Services", "DNS ∈ DNS Server"]
+    group: Domain controllers
+    source_types: [AD DS]
+  mapping:
+    input: json
+    json_layout: lines
+    ignored_fields: [Channel]
+    common:
+      - {path: EventTime/TimeCreated, field: EventTime, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: Windows}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: Provider}
+      - {path: EventSource/Device/HostName, field: Hostname}
+      - {path: EventSource/User/Id, field: TargetUserName}
+      - {path: EventSource/Client/IPAddress, field: IpAddress}
+      - {path: EventDetail/TypeId, field: EventID}
+      - {path: EventDetail/Description, field: Message}
+    events:
+      - name: logon
+        when: [{field: EventID, equals: "4624"}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: "true"}
+      - name: logon_failed
+        when: [{field: EventID, equals: "4625"}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: "false"}
+      - name: ticket_granting_ticket
+        when: [{field: EventID, equals: "4768"}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
+          - {path: EventDetail/Authenticate/Data, data_name: ticket, value: TGT}
+      - name: service_ticket
+        when: [{field: EventID, equals: "4769"}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
+          - {path: EventDetail/Authenticate/Data, data_name: ticket, value: service}

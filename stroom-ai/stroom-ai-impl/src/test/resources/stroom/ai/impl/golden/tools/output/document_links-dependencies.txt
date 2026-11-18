@@ -1,0 +1,7 @@
+Arguments: {"uuids":["pipeline","hidden-pipeline"],"direction":"dependencies","depth":2}
+
+=== Output ===
+Followed the dependencies of Pipeline 'Windows pipeline', up to 2 link(s): 2 document(s) found. Not found, or you don't have permission to view them: hidden-pipeline.
+
+- XSLT 'Windows XSLT' (xslt) in /Lookups: 1 link(s) away, via Pipeline 'Windows pipeline' → uses XSLT 'Windows XSLT'
+- Dictionary 'Admins' (dictionary) in /Lookups: 2 link(s) away, via Pipeline 'Windows pipeline' → uses XSLT 'Windows XSLT' → uses Dictionary 'Admins'

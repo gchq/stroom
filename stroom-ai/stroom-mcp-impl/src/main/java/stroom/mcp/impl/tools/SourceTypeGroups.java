@@ -1,0 +1,1873 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.generation.HelpersXslt;
+import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SeenSourceTypes;
+import stroom.ai.impl.tools.generation.SharedTemplate;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.generation.XsltNames;
+import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeReading;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.sample.SurveyDoc;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentActionHandler;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/// An aggregated feed's source type groups, as `build_translation_xslt group=` builds them: each group the XSLT of a
+/// pipeline of its own, translating its source types' records and passing over the rest. The group's mapping is
+/// split from the feed's common module (the wrapper's entries every group writes one way, its parts, and the site's
+/// shared calls); the common module and the feed's helpers are made when the feed has none. Imports form a chain:
+/// the group imports the common module, which imports the helpers and the site's libraries. Once the group is saved,
+/// the registry's rows for its source types are set `translated`, naming the group and its XSLT, its pipeline
+/// (`<feed> <group>` until create_pipeline makes it) and its output feed (absent for the feed's own Events).
+///
+/// A later build finds the modules a group imports through its XSLT's imports (a new group's through the registry,
+/// which names the feed's newest), beside the feed. A promoted module is never changed in place (decided by the user,
+/// 2026-11-17): a change to it makes a new version of it in the build ([#newModuleVersion]: its version bumped,
+/// `<feed> common V1.1` after `<feed> common`), imported only by the build's group, so the feed's other groups keep
+/// importing the version they import now. Each module versions on its own, but the chain is by UUID: a common module
+/// importing a helpers' new version is a new version too. Working copies of modules from builds opened before this
+/// are refused at promotion; [#toOriginals] still points the build's modules at the originals of unchanged copies.
+class SourceTypeGroups {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceTypeGroups.class);
+
+    /// What a feed's common module is named after: `<feed> common`.
+    static final String COMMON_SUFFIX = " common";
+    // The registry's keys of the feed's modules.
+    private static final String HELPERS_KEY = "helpers";
+    private static final String COMMON_KEY = "common";
+    // The UUID in an import's href.
+    private static final Pattern HREF_UUID = Pattern.compile("uuid='([^']+)'");
+    // The kept mapping's rule of the common module, which has none of its own.
+    private static final String COMMON_RULE = "common";
+    private static final String SYSTEM_NAME = "EventSource/System/Name";
+    private static final String ENVIRONMENT = "EventSource/System/Environment";
+    /// A build changing a group whose pipeline is promoted makes a new version of it (copy_pipeline): the only way a
+    /// promoted pipeline changes (decided by the user, 2026-11-17).
+    static final String NEW_VERSION = "new_version";
+    // A row's keys: where it is translated, and its group's reference data.
+    static final String PIPELINE = "pipeline";
+    static final String OUTPUT_FEED = "output_feed";
+    static final String REFERENCES = "references";
+    private static final String MODULES = "modules";
+    private static final String GROUP_XSLT = "group_xslt";
+    // A build record's key naming the promoted document a build's document is a new version of.
+    private static final String VERSION_OF = "version_of";
+
+    private final WriteGuard guard;
+    private final DocumentAccess documentAccess;
+    private final SourceTypeRegistries registries;
+    private final TranslationDocs translationDocs;
+    private final TranslationBuilds builds;
+    private final BuildRecords records;
+
+    @Inject
+    SourceTypeGroups(final WriteGuard guard,
+                     final DocumentAccess documentAccess,
+                     final SourceTypeRegistries registries,
+                     final TranslationDocs translationDocs,
+                     final TranslationBuilds builds,
+                     final BuildRecords records) {
+        this.guard = guard;
+        this.documentAccess = documentAccess;
+        this.registries = registries;
+        this.translationDocs = translationDocs;
+        this.builds = builds;
+        this.records = records;
+    }
+
+    /// @param feed A feed's name.
+    /// @return The name of its common module.
+    static String commonName(final String feed) {
+        return feed + COMMON_SUFFIX;
+    }
+
+    /// @param name An XSLT's name.
+    /// @return The feed whose common module it is, by its name (`<feed> common`, or a version of it,
+    /// `<feed> common V1.1`); empty for any other name.
+    static Optional<String> feedOfCommon(final String name) {
+        if (name == null) {
+            return Optional.empty();
+        }
+        int at = name.lastIndexOf(COMMON_SUFFIX);
+        while (at > 0) {
+            final String feed = name.substring(0, at);
+            if (VersionNames.isModuleName(commonName(feed), name)) {
+                return Optional.of(feed);
+            }
+            at = name.lastIndexOf(COMMON_SUFFIX, at - 1);
+        }
+        return Optional.empty();
+    }
+
+    /// @param uuid A document's UUID.
+    /// @param name Its name.
+    /// @return The href importing it by UUID, as Stroom resolves `uuid='…', name='…'` (a rename doesn't break it,
+    /// and a name two XSLTs share can't be imported by name).
+    static String href(final String uuid, final String name) {
+        return "uuid='" + uuid + "', name='" + name.replace("'", "") + "'";
+    }
+
+    /// @param uuid An XSLT's UUID.
+    /// @return The build it is in; empty outside a build.
+    Optional<String> buildOf(final String uuid) {
+        return guard.buildOf(new DocRef(XsltDoc.TYPE, uuid));
+    }
+
+    /// @param build A build.
+    /// @param name  A name.
+    /// @return The UUID of the build's XSLT of that name, if it has one.
+    Optional<String> xsltNamed(final String build, final String name) {
+        return Optional.ofNullable(xsltInBuild(build, name)).map(WriteGuard.BuildDoc::uuid);
+    }
+
+    /// The source types a whole translation's survey saw (no source type group), for its XSLT to log a value outside
+    /// them once a stream: the build's survey confirmed a source type field; the registry's rows where the build has
+    /// a registry for the feed, else the values the survey read. None for a feed without a source type field, or a
+    /// survey whose values were too many to keep each (some counted together), where a value outside them can't be
+    /// told.
+    ///
+    /// @param build The build, or null.
+    /// @return The source types seen, if the build's survey confirmed a source type field.
+    Optional<SeenSourceTypes> seenSourceTypes(final String build) {
+        if (build == null) {
+            return Optional.empty();
+        }
+        for (final Map<String, Object> state : builds.surveyStatesInBuild(build)) {
+            final Map<String, Object> sources = JsonValues.mapOrEmpty(state.get(SourceTypeProfiles.STATE_KEY));
+            if (!(sources.get(SourceTypeProfiles.FIELD) instanceof final String field) || field.isBlank()) {
+                continue;
+            }
+            final String feed = JsonValues.text(state.get("feed"));
+            final Optional<SourceTypeRegistries.Found> registry = feed.isBlank()
+                    ? Optional.empty()
+                    : registries.registry(build, feed);
+            final List<SourceTypeRows.Row> rows = registry.map(found -> SourceTypeRegistry.rows(found.state()))
+                    .orElse(List.of());
+            if (!rows.isEmpty()) {
+                return Optional.of(SeenSourceTypes.ofRows(field, rows));
+            }
+            if (SourceTypeProfiles.valuesCapped(sources)) {
+                return Optional.empty();
+            }
+            return Optional.of(new SeenSourceTypes(field, List.copyOf(SourceTypeProfiles.valueCounts(sources)
+                    .keySet()), List.of()));
+        }
+        return Optional.empty();
+    }
+
+    /// The registry of the build's aggregated feed.
+    ///
+    /// @param build The build.
+    /// @param feeds The feeds given, or none: then the feed whose registry the build holds.
+    /// @return The feed and its registry.
+    /// @throws ToolRefusal if no feed of the build has a registry.
+    Registry registry(final String build, final List<String> feeds) {
+        final List<String> candidates = new ArrayList<>(NullSafe.list(feeds));
+        if (candidates.isEmpty()) {
+            guard.folderContents(build).stream()
+                    .filter(doc -> DocumentationDoc.TYPE.equals(doc.type())
+                                   && doc.name().endsWith(SourceTypeRegistry.SUFFIX))
+                    .map(doc -> doc.name().substring(0, doc.name().length() - SourceTypeRegistry.SUFFIX.length()))
+                    .forEach(candidates::add);
+        }
+        for (final String feed : candidates) {
+            final Optional<SourceTypeRegistries.Found> found = registries.registry(build, feed);
+            if (found.isPresent()) {
+                if (found.get().promoted()) {
+                    // The build starts work on the feed from the registry beside it: one open build per feed.
+                    registries.refuseOpenBuild(feed, build, true);
+                }
+                return new Registry(feed, found.get());
+            }
+        }
+        throw new ToolRefusal("group= translates some of an aggregated feed's source types, and build '" + build
+                              + "' has no source type registry" + (candidates.isEmpty()
+                ? ""
+                : " for " + ToolText.list(candidates)) + ": record_source_types writes it (give feeds= when the "
+                              + "build has several feeds)");
+    }
+
+    /// The source type group a build's scope names: a build makes one group ([RecordSourceTypesTool] records its
+    /// name with the scope, in the build's registry).
+    ///
+    /// @param build A build.
+    /// @param feeds The feeds given, or none: then the feed whose registry the build holds.
+    /// @return The group's name; empty for a build without a registry of its own, or whose scope names none (a
+    /// scope recorded before scopes named their group).
+    Optional<String> scopedGroup(final String build, final List<String> feeds) {
+        final List<String> candidates = new ArrayList<>(NullSafe.list(feeds));
+        if (candidates.isEmpty()) {
+            guard.folderContents(build).stream()
+                    .filter(doc -> DocumentationDoc.TYPE.equals(doc.type())
+                                   && doc.name().endsWith(SourceTypeRegistry.SUFFIX))
+                    .map(doc -> doc.name().substring(0, doc.name().length() - SourceTypeRegistry.SUFFIX.length()))
+                    .forEach(candidates::add);
+        }
+        for (final String feed : candidates) {
+            final Optional<String> group = registries.registry(build, feed)
+                    .filter(found -> !found.promoted())
+                    .flatMap(found -> scopedGroup(build, found.state()));
+            if (group.isPresent()) {
+                return group;
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The group the registry's scope names, where the scope is the build's.
+    private static Optional<String> scopedGroup(final String build, final Map<String, Object> state) {
+        final Map<String, Object> scope = JsonValues.mapOrEmpty(state.get("scope"));
+        if (!build.equals(JsonValues.text(scope.get(SourceTypeScope.BUILD)))) {
+            return Optional.empty();
+        }
+        final String group = JsonValues.text(scope.get(RecordSourceTypesTool.SCOPE_GROUP)).strip();
+        return group.isEmpty()
+                ? Optional.empty()
+                : Optional.of(group);
+    }
+
+    // The source types the registry's scope names, where the scope is the build's.
+    private static Optional<Set<String>> scopedSourceTypes(final String build, final Map<String, Object> state) {
+        final Map<String, Object> scope = JsonValues.mapOrEmpty(state.get("scope"));
+        if (!build.equals(JsonValues.text(scope.get(SourceTypeScope.BUILD)))) {
+            return Optional.empty();
+        }
+        final List<String> types = JsonValues.strings(scope.get(SourceTypeScope.SOURCE_TYPES));
+        return types.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new LinkedHashSet<>(types));
+    }
+
+    /// Splits a mapping into a source type group's and the feed's common module's.
+    ///
+    /// The common module, where the feed has one (the build's, or promoted beside the feed), is kept: a group's
+    /// entries for one of its parts that are the same as the module's (the System Name and Environment aside) are
+    /// left to it; different ones are the group's own, overriding the part for the group. A shared call of the
+    /// group's that the module lacks is added to the module (a group imports only the common module, so a site
+    /// library is never imported twice in its stylesheet), and the module is saved again with it. Where the feed
+    /// has none, it is made from the mapping's common entries for its parts (EventTime, System, Generator, Device)
+    /// that read only the record's own fields or constants (never a field held in a message, an extraction, an
+    /// xpath), and the mapping's shared calls; the registry's Environment and default System Name replacing the
+    /// mapping's.
+    ///
+    /// @param build       The build.
+    /// @param registry    The feed's registry.
+    /// @param group       The group's name.
+    /// @param sourceTypes The source types it translates; none for the build's scope's.
+    /// @param keptTypes   The source types the group's saved mapping names (a saved group regenerated or changed),
+    ///                    or none: where the build's scope names the group, the scope's join them.
+    /// @param given       The mapping given for the group.
+    /// @param schema      The event-logging schema the Events are written in.
+    /// @param version     Its version.
+    /// @return The plan.
+    /// @throws ToolRefusal if a source type isn't the registry's, the group is a second one in the build (a build
+    /// makes one source type group), or the source types given leave out one the build's scope puts in the group.
+    Plan plan(final String build,
+              final Registry registry,
+              final String group,
+              final List<String> sourceTypes,
+              final List<String> keptTypes,
+              final TranslationMapping given,
+              final EventSchema schema,
+              final String version) {
+        final Map<String, Object> state = registry.found().state();
+        final String feed = registry.feed();
+        final String field = JsonValues.text(state.get("field"));
+        refuseSecondGroup(build, state, group);
+        final List<String> types = sourceTypes(build, state, group, sourceTypes, keptTypes);
+        final String naming = given.style().naming();
+        final String mode = XsltNames.styleName(group, naming);
+        if (mode.equals(XsltNames.styleName(feed + "-common", naming))) {
+            throw new ToolRefusal("The group's name '" + group + "' makes the mode of the feed's common module: name "
+                                  + "it for its source types");
+        }
+        // The versions the group imports (a new group: the feed's newest), not "the" feed's: its groups may import
+        // different ones.
+        final Modules modules = modules(build, state, group, feed);
+        final Module helpersDoc = modules.helpers();
+        final Module commonDoc = modules.common();
+        final String helpersHref = helpersDoc == null
+                ? HelpersXslt.docName(feed)
+                : href(helpersDoc.uuid(), helpersDoc.name());
+        final String commonHref = commonDoc == null
+                ? commonName(feed)
+                : href(commonDoc.uuid(), commonDoc.name());
+        final List<String> notes = new ArrayList<>();
+        final String systemName = systemName(state, types, given);
+        final Split split = commonDoc == null
+                ? firstSplit(given, state, feed, naming, helpersHref)
+                : leftToCommon(given, keptCommon(commonDoc), helpersHref, commonSaid(commonDoc));
+        final TranslationMapping common = split.common();
+        final TranslationMapping groupMapping = split.group();
+        notes.addAll(split.notes());
+        final boolean commonChanged = commonDoc != null && split.commonChanged();
+        final SourceTypeModule module = new SourceTypeModule(SourceTypeModule.GROUP, group, mode, types, commonHref,
+                null, SourceTypeModule.commonParts(common), systemName, field, rows(state));
+        final Map<String, String> unsaved = new LinkedHashMap<>();
+        final List<String> problems = new ArrayList<>();
+        if (helpersDoc == null) {
+            unsaved.put(helpersHref, HelpersXslt.generate());
+        }
+        if (commonDoc == null || commonChanged) {
+            final XsltGenerator.Generated generated = XsltGenerator.generate(common, schema, version);
+            generated.problems().forEach(problem -> problems.add("the feed's common module: " + problem));
+            if (generated.ok()) {
+                unsaved.put(commonHref, generated.xslt());
+            }
+        }
+        return new Plan(feed, group, mode, types, field, systemName, registry, helpersDoc, commonDoc, common,
+                commonChanged, groupMapping.withModule(module), effective(groupMapping, common, systemName, field),
+                notes, unsaved, problems);
+    }
+
+    // The common module as a note names it: a promoted one's change goes to a new version of it.
+    private static String commonSaid(final Module common) {
+        return "'" + common.name() + "'" + (common.inBuild()
+                ? ""
+                : " (as a new version of it in this build: a promoted module changes only by a new version, and "
+                  + "only this group imports it)");
+    }
+
+    // The registry's rows, in the order they are tried, as a group tells its records by them.
+    private static List<SourceTypeModule.Row> rows(final Map<String, Object> state) {
+        return JsonValues.maps(state.get("rows")).stream()
+                .map(row -> SourceTypeModule.Row.of(SourceTypeRows.Row.of(row)))
+                .toList();
+    }
+
+    /// Saves what the group's XSLT imports before it: the feed's helpers (made, or written again when the generator
+    /// writes them otherwise now: a promoted one as a new version) and its common module (made, where the feed has
+    /// none; written again with a shared call the group added to it, or importing the helpers' new version: a
+    /// promoted one as a new version). A promoted module is never changed in place (decided by the user, 2026-11-17),
+    /// and only the build's group imports its new version: the feed's other groups import what they import now.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param plan    The plan.
+    /// @param schema  The event-logging schema the Events are written in.
+    /// @param version Its version.
+    /// @return The group's mapping importing them by their UUIDs, and what was saved.
+    Imports saveImports(final ToolCallContext context,
+                        final String build,
+                        final Plan plan,
+                        final EventSchema schema,
+                        final String version) {
+        final Map<String, Object> saved = new LinkedHashMap<>();
+        final Map<String, Object> state = plan.registry().found().state();
+        final Module helpersDoc = plan.helpersDoc();
+        final Map<String, Object> helpers;
+        if (helpersDoc != null && !helpersDoc.inBuild() && HelpersXslt.isCurrent(readXsltData(helpersDoc.uuid()))) {
+            helpers = moduleSaid(helpersDoc, false);
+        } else {
+            final String into = helpersDoc == null
+                    ? null
+                    : helpersDoc.inBuild()
+                            ? helpersDoc.uuid()
+                            : newModuleVersion(context, build, state, HELPERS_KEY, helpersDoc,
+                                    HelpersXslt.docName(plan.feed()));
+            helpers = translationDocs.saveModule(context, build, HelpersXslt.docName(plan.feed()), into,
+                    HelpersXslt.generate(), TranslationDocs.Source.NONE, "The generator's helpers, version "
+                                                                         + HelpersXslt.VERSION);
+        }
+        saved.put(HELPERS_KEY, helpers);
+        final String helpersUuid = String.valueOf(helpers.get("uuid"));
+        final String helpersHref = href(helpersUuid, String.valueOf(helpers.get("name")));
+        final Module commonDoc = plan.commonDoc();
+        final Map<String, Object> made;
+        if (commonDoc == null || plan.commonChanged()) {
+            final TranslationMapping common = plan.common().withModule(plan.common().module().withImports(null,
+                    helpersHref));
+            final XsltGenerator.Generated generated = XsltGenerator.generate(common, schema, version);
+            if (!generated.ok()) {
+                throw new ToolRefusal("The feed's common module doesn't generate: " + String.join("; ",
+                        generated.problems()));
+            }
+            // The build's own where it has one (made in it, or a new version of the promoted one), else a new
+            // version of the promoted one; a new one for a feed with none.
+            final String into = commonDoc == null
+                    ? null
+                    : commonDoc.inBuild()
+                            ? commonDoc.uuid()
+                            : newModuleVersion(context, build, state, COMMON_KEY, commonDoc, commonName(plan.feed()));
+            made = translationDocs.saveModule(context, build, commonName(plan.feed()), into, generated.xslt(),
+                    TranslationDocs.Source.of(common), commonDoc == null
+                            ? "The parts every source type group of " + plan.feed() + " writes one way"
+                            : "The shared calls of group '" + plan.group() + "' added");
+        } else {
+            final Optional<String> imported = importedHref(commonDoc.uuid(), ModuleChecks.HELPERS);
+            if (imported.isPresent() && !imported.get().contains("uuid='" + helpersUuid + "'")) {
+                // The helpers' new version, imported by UUID: the common module importing it is a new version too
+                // (seen in testing when the helpers were regenerated: the chain is by UUID).
+                final String into = commonDoc.inBuild()
+                        ? commonDoc.uuid()
+                        : newModuleVersion(context, build, state, COMMON_KEY, commonDoc, commonName(plan.feed()));
+                translationDocs.rewriteModule(context, into, readXsltData(into).replace(imported.get(), helpersHref),
+                        description -> NullSafe.string(description).replace(imported.get(), helpersHref),
+                        "Imports the helpers' new version");
+                made = moduleSaid(new Module(into, nameOf(into), true), true);
+            } else {
+                made = moduleSaid(commonDoc, false);
+            }
+        }
+        saved.put(COMMON_KEY, made);
+        final String commonHref = href(String.valueOf(made.get("uuid")), String.valueOf(made.get("name")));
+        // The group imports the common module alone, which imports the helpers: a chain.
+        final TranslationMapping group = plan.groupMapping().withModule(plan.groupMapping().module()
+                .withImports(commonHref, null));
+        return new Imports(group, helpersHref, saved);
+    }
+
+    // A new version of a promoted module of the feed, in the build: its content as the original's, named for the
+    // next version after the highest the feed has (the module's own, the registry's newest), promoted beside its
+    // predecessor. Only the build's group imports it.
+    private String newModuleVersion(final ToolCallContext context,
+                                    final String build,
+                                    final Map<String, Object> state,
+                                    final String key,
+                                    final Module original,
+                                    final String base) {
+        final List<String> names = new ArrayList<>(List.of(original.name()));
+        names.add(JsonValues.text(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(state.get(MODULES)).get(key))
+                .get("name")));
+        return versionOf(original.uuid(), VersionNames.nextModule(base, names), build);
+    }
+
+    /// The XSLT a group is saved in: the build's own (the one the registry names, or of the group's name), else a
+    /// new version of the group's promoted XSLT made now, promoted beside its predecessor (a promoted group's code is
+    /// never changed in place: decided by the user, 2026-11-17). It imports the build's copies of the feed's modules,
+    /// so the chain stays the build's. A copy made before (an older build's working copy) is used as it is.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param plan    The plan.
+    /// @param name    The name the group's XSLT is saved with.
+    /// @return The XSLT's UUID; empty when a new one is made.
+    Optional<String> groupTarget(final ToolCallContext context,
+                                 final String build,
+                                 final Plan plan,
+                                 final String name) {
+        final Map<String, Object> state = plan.registry().found().state();
+        final String uuid = groupXslt(state, plan.group());
+        if (uuid.isEmpty() || !readable(uuid)) {
+            return xsltNamed(build, name);
+        }
+        if (inBuild(build, uuid)) {
+            return Optional.of(uuid);
+        }
+        final Optional<String> have = copyInBuild(build, uuid).or(() -> versionInBuild(build, uuid));
+        if (have.isPresent()) {
+            return have;
+        }
+        return Optional.of(versionCopy(context, build, uuid, plan));
+    }
+
+    // The UUID of the XSLT the registry names for a group, or "".
+    private static String groupXslt(final Map<String, Object> state, final String group) {
+        return groupRows(state, group).stream()
+                .map(row -> JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")))
+                .filter(uuid -> !uuid.isEmpty())
+                .findFirst()
+                .orElse("");
+    }
+
+    // The registry's rows of a group, in order.
+    private static List<Map<String, Object>> groupRows(final Map<String, Object> state, final String group) {
+        return JsonValues.maps(state.get("rows")).stream()
+                .filter(row -> group.equals(JsonValues.text(row.get("group"))))
+                .toList();
+    }
+
+    /// Whether the user chooses where a group's Events go ([Placement]): for a new group, none of whose rows is
+    /// placed. A source type added to a group placed already joins the group's pipeline and output feed.
+    ///
+    /// @param plan A group's plan.
+    /// @return True if the user is asked where the group's Events go.
+    static boolean needsPlacement(final Plan plan) {
+        return groupPlacement(plan.registry().found().state(), plan.group()).isEmpty();
+    }
+
+    // Where a group's rows already run: the first of its rows placed (its pipeline and output feed); empty for a
+    // group none of whose rows is placed.
+    private static Optional<Map<String, Object>> groupPlacement(final Map<String, Object> state, final String group) {
+        return groupRows(state, group).stream()
+                .filter(row -> !JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty())
+                .findFirst();
+    }
+
+    /// The group's pipeline, when it is promoted and the build changes the group for the first time: the change then
+    /// goes to a new version of it, nothing asked. Empty once the build has a copy of the group's XSLT (a new
+    /// version's, made by a change or by copy_pipeline).
+    ///
+    /// @param build A build.
+    /// @param plan  A group's plan.
+    /// @return The pipeline (`name`, `uuid`), as the registry names it; empty for a group whose pipeline is still to
+    /// be made or is the build's, or whose change is decided already.
+    Optional<Map<String, Object>> promotedPipeline(final String build, final Plan plan) {
+        final Map<String, Object> state = plan.registry().found().state();
+        final Optional<Map<String, Object>> placed = groupPlacement(state, plan.group())
+                .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)));
+        final String pipeline = placed.map(map -> JsonValues.text(map.get("uuid"))).orElse("");
+        if (pipeline.isEmpty() || guard.buildOf(new DocRef(PipelineDoc.TYPE, pipeline)).isPresent()
+            || !documentAccess.read(new DocRef(PipelineDoc.TYPE, pipeline), PipelineDoc.class).isPresent()) {
+            return Optional.empty();
+        }
+        final String xslt = groupXslt(state, plan.group());
+        if (!xslt.isEmpty() && (inBuild(build, xslt) || copyInBuild(build, xslt).isPresent()
+                                || versionInBuild(build, xslt).isPresent())) {
+            return Optional.empty();
+        }
+        return placed;
+    }
+
+    // The registry of the build's aggregated feed: the one the build holds, else the one beside a feed the build
+    // works from; empty when there is none (or another build is open on it).
+    private Optional<Registry> buildRegistry(final String build) {
+        try {
+            return Optional.of(registry(build, List.of()));
+        } catch (final ToolRefusal e) {
+            LOGGER.debug(() -> LogUtil.message("No registry in build {}: {}", build, e.getMessage()));
+        }
+        try {
+            final List<String> feeds = JsonValues.strings(records.load(build).get(BuildRecords.SOURCE_FEEDS));
+            return feeds.isEmpty()
+                    ? Optional.empty()
+                    : Optional.of(registry(build, feeds));
+        } catch (final ToolRefusal e) {
+            LOGGER.debug(() -> LogUtil.message("No registry for build {}'s feeds: {}", build, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    /// @param feed  An aggregated feed's name.
+    /// @param group One of its source type groups.
+    /// @return The name its pipeline is given by default: `<feed> <group>`, with ` V1.0` after it where it holds no
+    /// version of its own (decided by the user, 2026-11-17: promotion files a pipeline by the version in its name,
+    /// and a later version's name is proposed from it). A version token of the feed's or the group's own name is
+    /// theirs, not the pipeline's (found in review, 2026-11-18).
+    static String pipelineName(final String feed, final String group) {
+        final String name = feed + " " + group;
+        return VersionNames.token(name, List.of(feed, group)).isPresent()
+                ? name
+                : name + " " + PromotionLayout.FIRST_VERSION;
+    }
+
+    /// Saves the group in the registry: its rows set `translated`, naming the group, its XSLT, its pipeline (by the
+    /// name it is to be made with, for a new group), the output feed and its reference data; and the feed's modules
+    /// (helpers, common).
+    ///
+    /// @param context    The call's context.
+    /// @param build      The build.
+    /// @param plan       The plan.
+    /// @param imports    What the group imports, as saved.
+    /// @param groupUuid  The group's XSLT's UUID.
+    /// @param groupName  Its name.
+    /// @param placement  Where a new group's Events go, or null for one placed already.
+    /// @param choice     [#NEW_VERSION] when the user chose a new version of the group's promoted pipeline, else
+    ///                   null.
+    /// @param references The reference data its mapping looks up, or null to keep what the registry has.
+    /// @return What was saved: the registry, and where the group runs.
+    Map<String, Object> markTranslated(final ToolCallContext context,
+                                       final String build,
+                                       final Plan plan,
+                                       final Imports imports,
+                                       final String groupUuid,
+                                       final String groupName,
+                                       final Placement placement,
+                                       final String choice,
+                                       final List<Map<String, Object>> references) {
+        final Map<String, Object> state = JsonValues.deepCopy(plan.registry().found().state());
+        final Map<String, Object> modules = new LinkedHashMap<>(JsonValues.mapOrEmpty(state.get(MODULES)));
+        for (final String key : List.of(HELPERS_KEY, COMMON_KEY)) {
+            final Map<String, Object> saved = JsonValues.mapOrEmpty(imports.saved().get(key));
+            if (saved.get("uuid") != null) {
+                modules.put(key, Map.of("uuid", String.valueOf(saved.get("uuid")), "name",
+                        String.valueOf(saved.get("name"))));
+            }
+        }
+        state.put(MODULES, modules);
+        final String now = SurveyDoc.at(Instant.now());
+        // A group placed already: the source types added to it join its pipeline and output feed.
+        final Optional<Map<String, Object>> joined = placement == null
+                ? groupPlacement(state, plan.group()).map(JsonValues::deepCopy)
+                : Optional.empty();
+        final List<String> joining = new ArrayList<>();
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
+            final Map<String, Object> row = new LinkedHashMap<>(given);
+            final boolean ours = plan.sourceTypes().contains(JsonValues.text(row.get("name")));
+            if (ours) {
+                row.put("status", SourceTypeRegistry.TRANSLATED);
+                row.put("group", plan.group());
+                row.put(GROUP_XSLT, Map.of("uuid", groupUuid, "name", groupName));
+                if (placement != null) {
+                    row.put(PIPELINE, Map.of("name", pipelineName(plan.feed(), plan.group())));
+                    if (placement.ownOutputFeed()) {
+                        row.put(OUTPUT_FEED, "");
+                    } else {
+                        row.remove(OUTPUT_FEED);
+                    }
+                } else if (joined.isPresent() && JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty()) {
+                    row.put(PIPELINE, JsonValues.deepCopy(joined.get().get(PIPELINE)));
+                    if (joined.get().get(OUTPUT_FEED) != null) {
+                        row.put(OUTPUT_FEED, joined.get().get(OUTPUT_FEED));
+                    } else {
+                        row.remove(OUTPUT_FEED);
+                    }
+                    joining.add(JsonValues.text(row.get("name")));
+                }
+                if (references != null) {
+                    row.put(REFERENCES, JsonValues.deepCopy(references));
+                }
+                final Map<String, Object> decided = new LinkedHashMap<>();
+                decided.put("by", BuildTranslationXsltTool.NAME);
+                decided.put("at", now);
+                decided.put("reason", "translated by source type group '" + plan.group() + "' in build '" + build
+                                      + "'");
+                row.put("decided", decided);
+            }
+            if ((ours || plan.group().equals(JsonValues.text(row.get("group")))) && NEW_VERSION.equals(choice)) {
+                // Every row of the group: its pipeline's new version is still to be copied (copy_pipeline).
+                final Map<String, Object> pipeline = new LinkedHashMap<>(JsonValues.mapOrEmpty(row.get(PIPELINE)));
+                pipeline.put(NEW_VERSION, true);
+                row.put(PIPELINE, pipeline);
+            }
+            rows.add(row);
+        }
+        state.put("rows", rows);
+        state.put("updated", now);
+        final SurveyRecord written = registries.writeRegistry(context.session(), build, plan.feed(),
+                plan.registry().found(), SourceTypeRegistry.render(state));
+        final Map<String, Object> out = new LinkedHashMap<>();
+        final Map<String, Object> row = rows.stream()
+                .filter(each -> plan.sourceTypes().contains(JsonValues.text(each.get("name"))))
+                .findFirst()
+                .orElse(Map.of());
+        out.put("pipeline", JsonValues.mapOrEmpty(row.get(PIPELINE)));
+        if (row.get(OUTPUT_FEED) != null) {
+            out.put(OUTPUT_FEED, row.get(OUTPUT_FEED));
+        }
+        if (!joining.isEmpty()) {
+            final String pipeline = JsonValues.text(JsonValues.mapOrEmpty(joined.get().get(PIPELINE)).get("name"));
+            final String outputFeed = JsonValues.text(joined.get().get(OUTPUT_FEED));
+            out.put("notes", List.of("Source type(s) " + ToolText.list(joining) + " joined group '" + plan.group()
+                                     + "' where it runs: its pipeline" + (pipeline.isEmpty()
+                    ? ""
+                    : " '" + pipeline + "'") + (joined.get().get(OUTPUT_FEED) != null
+                    ? ", output feed " + (outputFeed.isEmpty()
+                            ? "(still to be made)"
+                            : "'" + outputFeed + "'")
+                    : ", into the feed's Events") + ". Nothing was asked: where the group's Events go is theirs."));
+        }
+        final Map<String, Object> registry = new LinkedHashMap<>();
+        registry.put("uuid", written.uuid());
+        registry.put("name", written.name());
+        registry.put("translated", plan.sourceTypes());
+        out.put("registry", registry);
+        return out;
+    }
+
+    // A new version of a promoted group's XSLT, in the build: its content as the original's (so a later save is
+    // checked for hand edits as a working copy is), named for its pipeline's new version as copy_pipeline names the
+    // documents it copies (seen in testing: under the original's name, it was told apart only by its version
+    // folder), promoted beside its predecessor, importing the build's copies of the feed's modules.
+    private String versionCopy(final ToolCallContext context,
+                               final String build,
+                               final String original,
+                               final Plan plan) {
+        final String pipeline = groupPlacement(plan.registry().found().state(), plan.group())
+                .map(row -> JsonValues.text(JsonValues.mapOrEmpty(row.get(PIPELINE)).get("name")))
+                .orElse("");
+        final String name = versionName(nameOf(original), pipeline, plan.feed(), plan.group());
+        final String uuid = versionOf(original, name, build);
+        chainCopies(context, build);
+        return uuid;
+    }
+
+    /// The name of a new version of a group's XSLT: its version token following its pipeline's next version's, as
+    /// copy_pipeline proposes the documents it copies ([VersionNames#following]), else its own bumped.
+    ///
+    /// A version token of the feed's or the group's own name is theirs, never changed (found in review, 2026-11-18).
+    ///
+    /// @param xslt     The group's XSLT's name.
+    /// @param pipeline Its pipeline's name, or "" when it has none.
+    /// @param feed     The aggregated feed's name.
+    /// @param group    The group's name.
+    /// @return The new version's name: never the original's.
+    static String versionName(final String xslt, final String pipeline, final String feed, final String group) {
+        final List<String> held = new ArrayList<>();
+        NullSafe.consumeNonBlankString(feed, held::add);
+        NullSafe.consumeNonBlankString(group, held::add);
+        if (pipeline == null || pipeline.isBlank()) {
+            return VersionNames.next(xslt, held);
+        }
+        return VersionNames.following(xslt, VersionNames.token(pipeline, held).orElse(null),
+                VersionNames.token(VersionNames.next(pipeline, held), held).orElse(null), held);
+    }
+
+    // A new version of a promoted XSLT in the build, under the name given: its content and description as the
+    // original's, its kept mapping's tag too, recorded as the original's new version.
+    private String versionOf(final String original, final String name, final String build) {
+        final XsltDoc doc = documentAccess.read(new DocRef(XsltDoc.TYPE, original), XsltDoc.class)
+                .orElseThrow(() -> new ToolRefusal("XSLT " + original + " can't be read: it doesn't exist, or you "
+                                                   + "don't have permission to view it"));
+        final DocRef ref = guard.create(XsltDoc.TYPE, name, build, null, false, "Events");
+        records.update(build, ref, entry -> entry.put(VERSION_OF, original));
+        final XsltDoc made = documentAccess.read(ref, XsltDoc.class)
+                .orElseThrow(() -> new ToolRefusal("The new version of '" + doc.getName() + "' can't be read"));
+        writeXslt(made.copy().data(doc.getData()).description(doc.getDescription()).build());
+        if (guard.tags(new DocRef(XsltDoc.TYPE, original)).contains(WriteGuard.KEPT_MAPPING)) {
+            guard.tag(List.of(ref), Set.of(WriteGuard.KEPT_MAPPING));
+        }
+        return ref.getUuid();
+    }
+
+    /// Keeps the build's chain of imports its own: every module of the build importing a promoted module the build
+    /// has a working copy of imports the copy instead (a group copied by copy_pipeline imports the build's copy of
+    /// the common module, which imports the build's copy of the helpers, where those are copied).
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return The names of the XSLTs changed.
+    List<String> chainCopies(final ToolCallContext context, final String build) {
+        final Map<String, Object> docs = BuildRecords.docs(records.load(build));
+        // An aggregated feed's modules only (the generator's mark in each): other XSLTs are left as they are.
+        final List<WriteGuard.BuildDoc> xslts = guard.folderContents(build).stream()
+                .filter(doc -> XsltDoc.TYPE.equals(doc.type())
+                               && ModuleChecks.marker(readXsltData(doc.uuid())).isPresent())
+                .toList();
+        final Map<String, String> copies = new LinkedHashMap<>();
+        for (final WriteGuard.BuildDoc doc : xslts) {
+            if (docs.get(doc.uuid()) instanceof final Map<?, ?> entry && entry.get("copy_of") != null) {
+                copies.put(String.valueOf(entry.get("copy_of")), doc.uuid());
+            }
+        }
+        final List<String> changed = new ArrayList<>();
+        if (copies.isEmpty()) {
+            return changed;
+        }
+        for (final WriteGuard.BuildDoc doc : xslts) {
+            if (translationDocs.rewriteImports(context, doc.uuid(), copies, "Imports the build's working copies")) {
+                changed.add(doc.name());
+            }
+        }
+        return changed;
+    }
+
+    /// @param build    A build.
+    /// @param xsltUuid An XSLT's UUID.
+    /// @return The source type group whose XSLT it is (by the module mark the generator writes in it), with its
+    /// registry's rows; empty for any other XSLT, or a build with no registry naming the group.
+    Optional<GroupRun> groupOf(final String build, final String xsltUuid) {
+        final Optional<ModuleChecks.Marker> marker = documentAccess.read(new DocRef(XsltDoc.TYPE, xsltUuid),
+                        XsltDoc.class)
+                .map(XsltDoc::getData)
+                .flatMap(ModuleChecks::marker)
+                .filter(found -> SourceTypeModule.GROUP.equals(found.kind()) && found.name() != null);
+        if (marker.isEmpty()) {
+            return Optional.empty();
+        }
+        final Registry registry;
+        try {
+            registry = registry(build, List.of());
+        } catch (final ToolRefusal e) {
+            return Optional.empty();
+        }
+        final List<Map<String, Object>> rows = groupRows(registry.found().state(), marker.get().name());
+        return rows.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new GroupRun(registry.feed(), marker.get().name(), xsltUuid, rows));
+    }
+
+    /// @param build A build.
+    /// @param group A source type group of its registry.
+    /// @return The group, with its rows.
+    /// @throws ToolRefusal if the build's registry has no such group, or it has no XSLT yet.
+    GroupRun groupNamed(final String build, final String group) {
+        final Registry registry = registry(build, List.of());
+        final List<Map<String, Object>> rows = groupRows(registry.found().state(), group);
+        if (rows.isEmpty()) {
+            throw new ToolRefusal("The registry of " + registry.feed() + " has no source type group '" + group
+                                  + "': build_translation_xslt group= saves it first");
+        }
+        final String xslt = groupXslt(registry.found().state(), group);
+        if (xslt.isEmpty()) {
+            throw new ToolRefusal("Group '" + group + "' has no XSLT yet: build_translation_xslt group= saves it");
+        }
+        return new GroupRun(registry.feed(), group, xslt, rows);
+    }
+
+    /// The pipeline made in the build for a group, named in the registry's rows of the group.
+    ///
+    /// @param context  The call's context.
+    /// @param build    The build.
+    /// @param group    The group.
+    /// @param pipeline The pipeline made.
+    /// @return The source types it translates.
+    List<String> pipelineMade(final ToolCallContext context,
+                              final String build,
+                              final String group,
+                              final DocRef pipeline) {
+        return movePipeline(context, build, row -> group.equals(JsonValues.text(row.get("group"))), pipeline,
+                Map.of());
+    }
+
+    /// A new version of a group's promoted pipeline copied into the build (copy_pipeline): the group's rows move to
+    /// it, naming the copy of the group's XSLT it runs.
+    ///
+    /// @param context  The call's context.
+    /// @param build    The build.
+    /// @param original The pipeline copied.
+    /// @param copies   The copies of the documents it owns, by the original's UUID.
+    /// @param pipeline The new version.
+    /// @return The source types it translates; none when the registry names no group in the pipeline copied.
+    List<String> newVersion(final ToolCallContext context,
+                            final String build,
+                            final String original,
+                            final Map<String, DocRef> copies,
+                            final DocRef pipeline) {
+        final Registry registry;
+        try {
+            registry = registry(build, List.of());
+        } catch (final ToolRefusal e) {
+            return List.of();
+        }
+        final boolean named = JsonValues.maps(registry.found().state().get("rows")).stream()
+                .anyMatch(row -> original.equals(JsonValues.text(JsonValues.mapOrEmpty(row.get(PIPELINE))
+                        .get("uuid"))));
+        if (!named) {
+            return List.of();
+        }
+        return movePipeline(context, build, row -> original.equals(JsonValues.text(JsonValues.mapOrEmpty(
+                row.get(PIPELINE)).get("uuid"))), pipeline, copies);
+    }
+
+    // The rows chosen run by the pipeline given: its name and UUID (a new version still to be copied no longer),
+    // and the copy of the group's XSLT where the copies have one.
+    private List<String> movePipeline(final ToolCallContext context,
+                                      final String build,
+                                      final Predicate<Map<String, Object>> chosen,
+                                      final DocRef pipeline,
+                                      final Map<String, DocRef> copies) {
+        final Registry registry = registry(build, List.of());
+        final Map<String, Object> state = JsonValues.deepCopy(registry.found().state());
+        final List<String> types = new ArrayList<>();
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
+            final Map<String, Object> row = new LinkedHashMap<>(given);
+            if (chosen.test(row)) {
+                final Map<String, Object> placed = new LinkedHashMap<>();
+                placed.put("name", pipeline.getName());
+                placed.put("uuid", pipeline.getUuid());
+                row.put(PIPELINE, placed);
+                final DocRef copy = copies.get(JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")));
+                if (copy != null) {
+                    row.put(GROUP_XSLT, Map.of("uuid", copy.getUuid(), "name", NullSafe.string(copy.getName())));
+                }
+                types.add(JsonValues.text(row.get("name")));
+            }
+            rows.add(row);
+        }
+        if (!rows.equals(JsonValues.maps(state.get("rows")))) {
+            state.put("rows", rows);
+            state.put("updated", SurveyDoc.at(Instant.now()));
+            registries.writeRegistry(context.session(), build, registry.feed(), registry.found(),
+                    SourceTypeRegistry.render(state));
+        }
+        return types;
+    }
+
+    /// Before a build's working copies are written back at promotion: every module of the build imports the originals
+    /// again (each working copy's UUID replaced by its original's, in its code and in the mapping kept with it), and
+    /// the registry names the originals. A working copy the user kept in the build (its original changed in production
+    /// since it was copied) is left as it is: the modules promoted import its original, as production has it
+    /// ([#keptProblems] says when that original lacks what they need of it).
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param docs    The build's documents, as the plan lists them (`working_copy_of`).
+    /// @param kept    The UUIDs of the working copies the user kept in the build.
+    /// @return What was done, said for the promotion's result; none for a build with no working copy of a module.
+    List<String> toOriginals(final ToolCallContext context,
+                             final String build,
+                             final List<Map<String, Object>> docs,
+                             final Set<String> kept) {
+        final Map<String, String> back = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : docs) {
+            if (XsltDoc.TYPE.equals(doc.get("type")) && doc.get("working_copy_of") != null) {
+                back.put(String.valueOf(doc.get("uuid")), String.valueOf(doc.get("working_copy_of")));
+            }
+        }
+        if (back.isEmpty()) {
+            return List.of();
+        }
+        final List<String> done = new ArrayList<>();
+        final String change = "Imports the originals its build's working copies are written back over";
+        for (final Map<String, Object> doc : docs) {
+            final String uuid = String.valueOf(doc.get("uuid"));
+            if (!XsltDoc.TYPE.equals(doc.get("type")) || kept.contains(uuid)) {
+                continue;
+            }
+            if (translationDocs.rewriteImports(context, uuid, back, change)) {
+                done.add("pointed '" + doc.get("name") + "' at the originals it imports");
+            }
+        }
+        for (final Map<String, Object> doc : docs) {
+            final String name = String.valueOf(doc.get("name"));
+            if (DocumentationDoc.TYPE.equals(doc.get("type")) && name.endsWith(SourceTypeRegistry.SUFFIX)) {
+                final String feed = name.substring(0, name.length() - SourceTypeRegistry.SUFFIX.length());
+                registries.registry(build, feed).filter(found -> !found.promoted()).ifPresent(found -> {
+                    String json = ToolJson.dumps(found.state());
+                    for (final Map.Entry<String, String> entry : back.entrySet()) {
+                        json = json.replace(entry.getKey(), entry.getValue());
+                    }
+                    final Map<String, Object> state = JsonValues.mapOrEmpty(ToolJson.loads(json));
+                    if (!state.equals(found.state())) {
+                        registries.writeRegistry(context.session(), build, feed, found,
+                                SourceTypeRegistry.render(state));
+                        done.add("the registry of " + feed + " names the originals");
+                    }
+                });
+            }
+        }
+        return done;
+    }
+
+    /// What stops a promotion that keeps working copies in the build: each module promoted that imports a kept copy
+    /// imports its original instead, as production has it, and the names it uses of the copy (templates, functions,
+    /// variables, modes) must be the original's too.
+    ///
+    /// @param build The build.
+    /// @param docs  The build's documents, as the plan lists them (`working_copy_of`).
+    /// @param kept  The UUIDs of the working copies the user kept in the build.
+    /// @return Each module promoted that would import an original lacking what it uses, saying which; none when
+    /// every original has it.
+    List<String> keptProblems(final String build, final List<Map<String, Object>> docs, final Set<String> kept) {
+        final List<String> out = new ArrayList<>();
+        for (final Map<String, Object> copy : docs) {
+            final String copyUuid = String.valueOf(copy.get("uuid"));
+            if (!XsltDoc.TYPE.equals(copy.get("type")) || !kept.contains(copyUuid)
+                || copy.get("working_copy_of") == null) {
+                continue;
+            }
+            final String original = String.valueOf(copy.get("working_copy_of"));
+            final Set<String> lacking = new LinkedHashSet<>(ModuleChecks.declaredNames(readXsltData(copyUuid)));
+            lacking.removeAll(ModuleChecks.declaredNames(readXsltData(original)));
+            if (lacking.isEmpty()) {
+                continue;
+            }
+            for (final Map<String, Object> importer : docs) {
+                final String uuid = String.valueOf(importer.get("uuid"));
+                if (!XsltDoc.TYPE.equals(importer.get("type")) || kept.contains(uuid)) {
+                    continue;
+                }
+                // Importing the copy, or its original already (pointed back at it).
+                final String code = readXsltData(uuid);
+                if (!code.contains("uuid='" + copyUuid + "'") && !code.contains("uuid='" + original + "'")) {
+                    continue;
+                }
+                final List<String> used = lacking.stream().filter(name -> ModuleChecks.uses(code, name)).toList();
+                if (!used.isEmpty()) {
+                    out.add("'" + importer.get("name") + "' imports '" + copy.get("name") + "', kept in the build: "
+                            + "promoted, it imports production's '" + copy.get("name") + "' (" + original + "), "
+                            + "which lacks " + ToolText.list(used) + " that it uses");
+                }
+            }
+        }
+        return out;
+    }
+
+    /// @param build A build.
+    /// @param group A source type group of its registry.
+    /// @throws ToolRefusal if the registry has no such group, or its Events go into the feed's.
+    void checkOwnOutputFeed(final String build, final String group) {
+        final Registry registry = registry(build, List.of());
+        final List<Map<String, Object>> rows = groupRows(registry.found().state(), group);
+        if (rows.isEmpty()) {
+            throw new ToolRefusal("The registry of " + registry.feed() + " has no source type group '" + group
+                                  + "': build_translation_xslt group= saves it first");
+        }
+        if (rows.stream().noneMatch(row -> row.get(OUTPUT_FEED) != null)) {
+            throw new ToolRefusal(intoFeedsEvents(group));
+        }
+    }
+
+    // Why a group whose Events go into the feed's has no output feed of its own.
+    private static String intoFeedsEvents(final String group) {
+        return "Group '" + group + "''s Events go into the feed's Events, as the user chose when the group was "
+               + "saved: only a group the user gave an output feed of its own has one";
+    }
+
+    /// Sets the output feed of a group whose Events go to a feed of its own, made in the build.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param group   The group.
+    /// @param feed    The output feed's name.
+    /// @return The source types whose Events go there.
+    /// @throws ToolRefusal if the build's registry has no such group, or its Events go into the feed's.
+    List<String> outputFeed(final ToolCallContext context,
+                            final String build,
+                            final String group,
+                            final String feed) {
+        final Registry registry = registry(build, List.of());
+        final Map<String, Object> state = JsonValues.deepCopy(registry.found().state());
+        final List<String> types = new ArrayList<>();
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        boolean own = false;
+        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
+            final Map<String, Object> row = new LinkedHashMap<>(given);
+            if (group.equals(JsonValues.text(row.get("group")))) {
+                own |= row.get(OUTPUT_FEED) != null;
+                row.put(OUTPUT_FEED, feed);
+                types.add(JsonValues.text(row.get("name")));
+            }
+            rows.add(row);
+        }
+        if (types.isEmpty()) {
+            throw new ToolRefusal("The registry of " + registry.feed() + " has no source type group '" + group
+                                  + "'");
+        }
+        if (!own) {
+            throw new ToolRefusal(intoFeedsEvents(group));
+        }
+        state.put("rows", rows);
+        registries.writeRegistry(context.session(), build, registry.feed(), registry.found(),
+                SourceTypeRegistry.render(state));
+        return types;
+    }
+
+    /// The answers the feed's promoted source type groups give the question whether to split the domain off users'
+    /// Ids: a feed-level answer, so one feed's groups write their Ids one way (seen in an eval: a later build's
+    /// group was asked again, "Split" first, though the feed's promoted group kept the Ids whole). Each promoted
+    /// group's XSLT and the feed's common module is read: the answers kept with it, else what its kept mapping
+    /// writes for these fields' Ids. The build's own documents are not read: their answers are the caller's.
+    ///
+    /// @param build  The build.
+    /// @param plan   The group's plan, whose registry names the feed's group XSLTs and modules.
+    /// @param fields The fields whose values carry a domain in this build's sample.
+    /// @return Each answer given ([DomainSplits#SPLIT], [DomainSplits#KEEP]), with the documents giving it; empty
+    /// when none has answered.
+    Map<String, List<String>> domainAnswers(final String build, final Plan plan, final Set<String> fields) {
+        final Map<String, Object> state = plan.registry().found().state();
+        final Set<String> uuids = new LinkedHashSet<>();
+        JsonValues.maps(state.get("rows")).forEach(row ->
+                uuids.add(JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid"))));
+        JsonValues.mapOrEmpty(state.get(MODULES)).values().forEach(module ->
+                uuids.add(JsonValues.text(JsonValues.mapOrEmpty(module).get("uuid"))));
+        final Map<String, List<String>> answers = new TreeMap<>();
+        for (final String uuid : uuids) {
+            if (uuid.isEmpty() || inBuild(build, uuid)) {
+                continue;
+            }
+            try {
+                documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class).ifPresent(xslt -> {
+                    final Set<String> given = new TreeSet<>();
+                    KeptMapping.readBlock(xslt.getDescription(), TranslationBuilds.DOMAIN_CHOSEN)
+                            .ifPresent(kept -> kept.values().forEach(answer -> given.add(String.valueOf(answer))));
+                    if (given.isEmpty()) {
+                        KeptMapping.readMapping(xslt.getDescription())
+                                .filter(kept -> "translation".equals(kept.kind()))
+                                .ifPresent(kept -> given.addAll(DomainSplits.answersIn(kept.payload().get("mapping"),
+                                        fields)));
+                    }
+                    given.forEach(answer -> answers.computeIfAbsent(answer, key -> new ArrayList<>())
+                            .add(xslt.getName()));
+                });
+            } catch (final RuntimeException e) {
+                // Advice: an XSLT that can't be read gives no answer, and the user is asked.
+                LOGGER.debug(() -> LogUtil.message("No domain answer read from XSLT {}: {}", uuid, e.getMessage()));
+            }
+        }
+        return answers;
+    }
+
+    // The feed's modules a group imports: the common module its XSLT imports (the build's copy of the XSLT where it
+    // has one), and the helpers that module imports. For a group with no XSLT yet, the registry's (the feed's
+    // newest), else the build's own of their names (a feed's first group). A promoted module the build has a new
+    // version of is that version.
+    private Modules modules(final String build,
+                            final Map<String, Object> state,
+                            final String group,
+                            final String feed) {
+        final String xslt = groupXslt(state, group);
+        Module common = null;
+        if (!xslt.isEmpty() && readable(xslt)) {
+            final String runs = inBuild(build, xslt)
+                    ? xslt
+                    : buildCopyOf(build, xslt).orElse(xslt);
+            common = importedHref(runs, SourceTypeModule.COMMON).flatMap(SourceTypeGroups::uuidOf)
+                    .map(uuid -> moduleOf(build, uuid))
+                    .orElse(null);
+        }
+        if (common == null) {
+            common = registryModule(build, state, COMMON_KEY, commonName(feed));
+        }
+        Module helpers = common == null
+                ? null
+                : importedHref(common.uuid(), ModuleChecks.HELPERS).flatMap(SourceTypeGroups::uuidOf)
+                        .map(uuid -> moduleOf(build, uuid))
+                        .orElse(null);
+        if (helpers == null) {
+            helpers = registryModule(build, state, HELPERS_KEY, HelpersXslt.docName(feed));
+        }
+        return new Modules(helpers, common);
+    }
+
+    // A module of the feed as the registry names it (the feed's newest), else the build's own of its name or a
+    // version of it; null for none.
+    private Module registryModule(final String build,
+                                  final Map<String, Object> state,
+                                  final String key,
+                                  final String base) {
+        final Map<String, Object> named = JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(state.get(MODULES)).get(key));
+        final Module found = moduleOf(build, JsonValues.text(named.get("uuid")));
+        if (found != null || build == null) {
+            return found;
+        }
+        return guard.folderContents(build).stream()
+                .filter(doc -> XsltDoc.TYPE.equals(doc.type()) && VersionNames.isModuleName(base, doc.name()))
+                .findFirst()
+                .map(doc -> new Module(doc.uuid(), doc.name(), true))
+                .orElse(null);
+    }
+
+    // A module by UUID: the build's own, else the build's new version of it (or its working copy, from a build
+    // opened before new versions), else the promoted one; null for one that can't be read.
+    private Module moduleOf(final String build, final String uuid) {
+        if (uuid == null || uuid.isEmpty() || !readable(uuid)) {
+            return null;
+        }
+        if (inBuild(build, uuid)) {
+            return new Module(uuid, nameOf(uuid), true);
+        }
+        return versionInBuild(build, uuid).or(() -> copyInBuild(build, uuid))
+                .map(copy -> new Module(copy, nameOf(copy), true))
+                .orElseGet(() -> new Module(uuid, nameOf(uuid), false));
+    }
+
+    // The href of an XSLT's import of a module of that kind (by the module's mark), if it has one.
+    private Optional<String> importedHref(final String uuid, final String kind) {
+        for (final String href : ModuleChecks.hrefs(readXsltData(uuid))) {
+            final Optional<String> imported = uuidOf(href);
+            if (imported.isPresent() && ModuleChecks.marker(readXsltData(imported.get()))
+                    .filter(marker -> kind.equals(marker.kind()))
+                    .isPresent()) {
+                return Optional.of(href);
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The UUID an href imports by.
+    private static Optional<String> uuidOf(final String href) {
+        final Matcher matcher = HREF_UUID.matcher(NullSafe.string(href));
+        return matcher.find()
+                ? Optional.of(matcher.group(1))
+                : Optional.empty();
+    }
+
+    /// When the build's aggregated feed's groups import different versions of its common module (or helpers): one
+    /// line for each ([#mixedModuleVersions(String, String)]).
+    ///
+    /// @param build A build.
+    /// @return The lines; none for a build with no registry, or a feed whose groups import one version of each.
+    List<String> mixedModuleVersions(final String build) {
+        return buildRegistry(build).map(registry -> mixedModuleVersions(build, registry.feed(),
+                registry.found().state())).orElse(List.of());
+    }
+
+    /// When the feed of a source type group's XSLT has groups importing different versions of its common module
+    /// (or helpers): one line for each ([#mixedModuleVersions(String, String)]).
+    ///
+    /// @param build The build the XSLT is in, or null for a promoted one.
+    /// @param xslt  A group's XSLT's UUID.
+    /// @return The lines; none for an XSLT importing no common module, or a feed whose groups import one version
+    /// of each.
+    List<String> mixedModuleVersionsOf(final String build, final String xslt) {
+        // The common module's mark names its feed.
+        final Optional<String> feed = importedHref(xslt, SourceTypeModule.COMMON).flatMap(SourceTypeGroups::uuidOf)
+                .flatMap(uuid -> ModuleChecks.marker(readXsltData(uuid)))
+                .map(ModuleChecks.Marker::name)
+                .filter(NullSafe::isNonBlankString);
+        return feed.map(name -> mixedModuleVersions(build, name)).orElse(List.of());
+    }
+
+    /// When a feed's groups import different versions of its common module (or helpers): one line for each,
+    /// naming the groups and the versions they import (informational: each group keeps the version it imports
+    /// until a build of it changes it). The build's group is read as the build has it.
+    ///
+    /// @param build The build, or null to read the registry beside the feed.
+    /// @param feed  The aggregated feed.
+    /// @return The lines; none for a feed with no registry, or whose groups import one version of each.
+    List<String> mixedModuleVersions(final String build, final String feed) {
+        return registries.registry(build, feed)
+                .map(found -> mixedModuleVersions(build, feed, found.state()))
+                .orElse(List.of());
+    }
+
+    // The lines for a feed's registry.
+    private List<String> mixedModuleVersions(final String build, final String feed, final Map<String, Object> state) {
+        final Map<String, Map<String, List<String>>> byKind = new LinkedHashMap<>();
+        byKind.put(COMMON_KEY, new TreeMap<>());
+        byKind.put(HELPERS_KEY, new TreeMap<>());
+        final Set<String> named = new LinkedHashSet<>();
+        JsonValues.maps(state.get("rows")).forEach(row -> named.add(JsonValues.text(row.get("group"))));
+        for (final String group : named) {
+            if (group.isEmpty() || groupXslt(state, group).isEmpty()) {
+                continue;
+            }
+            // A group the build changes is read as the build has it; any other as production has it (the build's
+            // new version of a module is its group's alone).
+            final String xslt = groupXslt(state, group);
+            final boolean changed = inBuild(build, xslt) || buildCopyOf(build, xslt).isPresent();
+            final Modules modules = modules(changed
+                    ? build
+                    : null, state, group, feed);
+            if (modules.common() != null) {
+                byKind.get(COMMON_KEY).computeIfAbsent(modules.common().name(), key -> new ArrayList<>())
+                        .add(group);
+            }
+            if (modules.helpers() != null) {
+                byKind.get(HELPERS_KEY).computeIfAbsent(modules.helpers().name(), key -> new ArrayList<>())
+                        .add(group);
+            }
+        }
+        final List<String> out = new ArrayList<>();
+        byKind.forEach((kind, versions) -> {
+            if (versions.size() > 1) {
+                final List<String> each = new ArrayList<>();
+                versions.forEach((name, groups) -> each.add("'" + name + "' (" + String.join(", ", groups) + ")"));
+                out.add("The groups of " + feed + " import different versions of its "
+                        + (COMMON_KEY.equals(kind)
+                        ? "common module"
+                        : "helpers") + ": " + String.join(", ", each) + ". Each keeps the version it imports "
+                        + "until a build of the group changes it (a promoted module changes only by a new "
+                        + "version).");
+            }
+        });
+        return out;
+    }
+
+    /// The build's working copy of a promoted XSLT, else its new version in the build: what the build changes of
+    /// it, and so whose kept mapping a later call in the build starts from.
+    ///
+    /// @param build    The build.
+    /// @param original The promoted XSLT's UUID.
+    /// @return The UUID of the build's copy; empty when the build has none.
+    Optional<String> buildCopyOf(final String build, final String original) {
+        if (build == null || original == null || inBuild(build, original)) {
+            return Optional.empty();
+        }
+        return copyInBuild(build, original).or(() -> versionInBuild(build, original));
+    }
+
+    /// @param build A build.
+    /// @param uuid  An XSLT.
+    /// @return True if the XSLT is in the build's folder.
+    boolean isInBuild(final String build, final String uuid) {
+        return inBuild(build, uuid);
+    }
+
+    // The build's working copy of a document.
+    private Optional<String> copyInBuild(final String build, final String original) {
+        if (build == null) {
+            return Optional.empty();
+        }
+        final Map<String, Object> docs = BuildRecords.docs(records.load(build));
+        for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+            if (docs.get(doc.uuid()) instanceof final Map<?, ?> entry && original.equals(entry.get("copy_of"))) {
+                return Optional.of(doc.uuid());
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The build's new version of a document.
+    private Optional<String> versionInBuild(final String build, final String original) {
+        if (build == null) {
+            return Optional.empty();
+        }
+        final Map<String, Object> docs = BuildRecords.docs(records.load(build));
+        for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+            if (docs.get(doc.uuid()) instanceof final Map<?, ?> entry && original.equals(entry.get(VERSION_OF))) {
+                return Optional.of(doc.uuid());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean inBuild(final String build, final String uuid) {
+        return build != null && guard.buildOf(new DocRef(XsltDoc.TYPE, uuid)).filter(build::equals).isPresent();
+    }
+
+    private boolean readable(final String uuid) {
+        return documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class).isPresent();
+    }
+
+    // An XSLT's name, or "" for one that can't be read.
+    private String nameOf(final String uuid) {
+        return documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class)
+                .map(XsltDoc::getName)
+                .map(NullSafe::string)
+                .orElse("");
+    }
+
+    private String readXsltData(final String uuid) {
+        return documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class)
+                .map(XsltDoc::getData)
+                .map(NullSafe::string)
+                .orElse("");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void writeXslt(final XsltDoc doc) {
+        final DocumentActionHandler<XsltDoc> handler = documentAccess.handler(XsltDoc.TYPE)
+                .orElseThrow(() -> new ToolRefusal("Stroom has no XSLT store"));
+        handler.writeDocument(doc);
+    }
+
+    private static Map<String, Object> moduleSaid(final Module module, final boolean changed) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("uuid", module.uuid());
+        out.put("name", module.name());
+        out.put("changed", changed);
+        if (!module.inBuild()) {
+            out.put("promoted", true);
+        }
+        return out;
+    }
+
+    // One source type group a build: the group the build's scope names (a scope kept before scopes named their group
+    // names none, and is not held to one).
+    private static void refuseSecondGroup(final String build, final Map<String, Object> state, final String group) {
+        scopedGroup(build, state)
+                .filter(scoped -> !scoped.equals(group))
+                .ifPresent(scoped -> {
+                    throw new ToolRefusal("Build '" + build + "' makes source type group '" + scoped + "', the one "
+                                          + "its scope names: one source type group a build. Build '" + group
+                                          + "' in a later build, after promoting this one (record_source_types in "
+                                          + "it chooses its source types). Nothing was saved.");
+                });
+    }
+
+    // The group's source types: those given, else the build's scope's with those the group translates already (a
+    // group named again adds the scope's to its own); each a row of the registry, and translated by no other group.
+    // A saved group's own (its kept mapping's) stand for those it translates, the scope's joining them where the
+    // scope names the group (seen in eval case 61: OneDrive joining the promoted Messaging group was left out, as the
+    // group's kept mapping named only its first two, so the sample check never read a OneDrive record). Source types
+    // given must hold every one the scope puts in the group: the sample, the XSLT and the registry all follow them.
+    private List<String> sourceTypes(final String build,
+                                     final Map<String, Object> state,
+                                     final String group,
+                                     final List<String> given,
+                                     final List<String> kept) {
+        final List<String> names = JsonValues.maps(state.get("rows")).stream()
+                .map(row -> JsonValues.text(row.get("name")))
+                .toList();
+        final boolean scopeNamesGroup = scopedGroup(build, state).filter(group::equals).isPresent();
+        final Set<String> scope = scopedSourceTypes(build, state)
+                .or(() -> builds.scope(build).map(SourceTypeScope::names))
+                .orElse(Set.of());
+        final List<String> types = new ArrayList<>(NullSafe.list(given));
+        if (types.isEmpty()) {
+            if (NullSafe.isEmptyCollection(kept)) {
+                groupRows(state, group).stream()
+                        .filter(row -> SourceTypeRegistry.TRANSLATED.equals(row.get("status")))
+                        .map(row -> JsonValues.text(row.get("name")))
+                        .forEach(types::add);
+            } else {
+                types.addAll(kept);
+            }
+            if (NullSafe.isEmptyCollection(kept) || scopeNamesGroup) {
+                names.stream()
+                        .filter(scope::contains)
+                        .filter(name -> !types.contains(name))
+                        .forEach(types::add);
+            }
+        } else if (scopeNamesGroup) {
+            final List<String> missing = names.stream()
+                    .filter(scope::contains)
+                    .filter(name -> !types.contains(name))
+                    .toList();
+            if (!missing.isEmpty()) {
+                throw new ToolRefusal("source_types leaves out " + ToolText.list(missing) + ", which the build's "
+                                      + "scope puts in group '" + group + "' (record_source_types): the group "
+                                      + "translates " + ToolText.list(names.stream().filter(name -> types.contains(
+                        name) || missing.contains(name)).toList()) + ". Leave source_types out to take them from "
+                                      + "the scope, or give them all; to leave one out, record_source_types "
+                                      + "changes the scope first. Nothing was saved.");
+            }
+        }
+        if (types.isEmpty()) {
+            throw new ToolRefusal("Give source_types: the registry's source types the group translates (the build "
+                                  + "has no scope to take them from)");
+        }
+        final List<String> unknown = types.stream().filter(type -> !names.contains(type)).toList();
+        if (!unknown.isEmpty()) {
+            throw new ToolRefusal("source_types " + ToolText.list(unknown) + " are not the registry's: it has "
+                                  + ToolText.list(names));
+        }
+        final List<String> theirs = new ArrayList<>();
+        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
+            final String other = JsonValues.text(row.get("group"));
+            if (types.contains(JsonValues.text(row.get("name")))
+                && SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !other.isEmpty()
+                && !other.equals(group)) {
+                theirs.add("'" + row.get("name") + "' (group '" + other + "')");
+            }
+        }
+        if (!theirs.isEmpty()) {
+            throw new ToolRefusal("Source type(s) " + String.join(", ", theirs) + " are translated by another group "
+                                  + "already: a source type belongs to one group. Leave them out of source_types, or "
+                                  + "change that group first. Nothing was saved.");
+        }
+        return List.copyOf(new LinkedHashSet<>(types));
+    }
+
+    // The group's System Name: its source types' own where they all have the same, else the mapping's (a value).
+    private static String systemName(final Map<String, Object> state,
+                                     final List<String> types,
+                                     final TranslationMapping given) {
+        final Set<String> named = new HashSet<>();
+        JsonValues.maps(state.get("rows")).stream()
+                .filter(row -> types.contains(JsonValues.text(row.get("name"))))
+                .map(row -> row.get("system_name"))
+                .filter(Objects::nonNull)
+                .map(JsonValues::text)
+                .filter(name -> !name.isBlank())
+                .forEach(named::add);
+        if (named.size() == 1) {
+            return named.iterator().next();
+        }
+        return given.common().stream()
+                .filter(entry -> SYSTEM_NAME.equals(entry.strippedPath()) && entry.value() != null)
+                .map(FieldMapping::value)
+                .filter(name -> !name.strip().startsWith("TODO"))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // The first group of a feed: the common module made from the mapping's common entries for its parts that read
+    // the record's own fields or constants, and the mapping's shared calls; the rest stays the group's.
+    private static Split firstSplit(final TranslationMapping given,
+                                    final Map<String, Object> state,
+                                    final String feed,
+                                    final String naming,
+                                    final String helpersHref) {
+        final Set<String> moving = new LinkedHashSet<>();
+        for (final String root : SourceTypeModule.PART_ROOTS) {
+            final List<FieldMapping> entries = given.common().stream()
+                    .filter(entry -> root.equals(SourceTypeModule.partOf(entry.strippedPath())))
+                    .toList();
+            if (!entries.isEmpty() && entries.stream().allMatch(entry -> recordLevel(entry, given))) {
+                moving.add(root);
+            }
+        }
+        final List<Map<String, Object>> commonEntries = new ArrayList<>();
+        final List<FieldMapping> kept = new ArrayList<>();
+        for (final FieldMapping entry : given.common()) {
+            if (moving.contains(SourceTypeModule.partOf(entry.strippedPath()))) {
+                commonEntries.add(new LinkedHashMap<>(entry.toJson(DumpMode.COMPACT)));
+            } else {
+                kept.add(entry);
+            }
+        }
+        if (moving.contains("EventSource/System")) {
+            // The feed's shared decisions: its Environment, and its System Name by default.
+            replaceValue(commonEntries, ENVIRONMENT, JsonValues.text(state.get("environment")));
+            replaceValue(commonEntries, SYSTEM_NAME, JsonValues.text(state.get("system_name")));
+        }
+        final Map<String, Object> json = new LinkedHashMap<>(given.toJson(DumpMode.COMPACT));
+        for (final String key : List.of("pairs", "extract", "json_fields", "xml_fields", "for_each", "drop_when",
+                "ignored_fields", "unmatched", "log_unmapped_fields", "imports", "functions", "module")) {
+            json.remove(key);
+        }
+        json.put("common", commonEntries);
+        json.put("events", List.of(Map.of("name", COMMON_RULE)));
+        final Map<String, Object> module = new LinkedHashMap<>();
+        module.put("kind", SourceTypeModule.COMMON);
+        module.put("name", feed);
+        module.put("mode", XsltNames.styleName(feed + "-common", naming));
+        module.put("helpers", helpersHref);
+        json.put("module", module);
+        final TranslationMapping common = TranslationMapping.parse(json);
+        final List<String> notes = new ArrayList<>();
+        if (!moving.isEmpty() || !given.shared().isEmpty()) {
+            notes.add("The feed's common module '" + commonName(feed) + "' is made from this mapping's "
+                      + ToolText.list(new ArrayList<>(moving)) + (given.shared().isEmpty()
+                    ? ""
+                    : " and its shared calls") + ": every group of the feed calls them, and a rule mapping one of "
+                      + "those elements itself writes its own");
+        }
+        return new Split(common, given.withCommonAndShared(kept, List.of()), notes, true);
+    }
+
+    // The group's entries the build's common module writes the same way left to it; different ones are the group's.
+    // The group's shared calls the module lacks are added to it: a group imports only the common module, which
+    // imports the site's libraries, so none is imported twice in the group's stylesheet.
+    private static Split leftToCommon(final TranslationMapping given,
+                                      final TranslationMapping common,
+                                      final String helpersHref,
+                                      final String commonSaid) {
+        final List<String> notes = new ArrayList<>();
+        final List<FieldMapping> kept = new ArrayList<>(given.common());
+        for (final SourceTypeModule.CommonPart part : SourceTypeModule.commonParts(common)) {
+            final List<FieldMapping> theirs = given.common().stream()
+                    .filter(entry -> part.at().equals(SourceTypeModule.partOf(entry.strippedPath())))
+                    .toList();
+            if (theirs.isEmpty()) {
+                continue;
+            }
+            final List<FieldMapping> commons = common.common().stream()
+                    .filter(entry -> part.at().equals(SourceTypeModule.partOf(entry.strippedPath())))
+                    .toList();
+            if (compared(theirs).equals(compared(commons))) {
+                kept.removeAll(theirs);
+            } else {
+                notes.add(part.at() + ": this group writes its own (its mapping's differs from the feed's common "
+                          + "module's), so the common module's part isn't called for it");
+            }
+        }
+        final List<SharedTemplate> added = given.shared().stream()
+                .filter(use -> common.shared().stream().noneMatch(theirs -> theirs.template().equals(use.template())
+                                                                           && theirs.at().equals(use.at())))
+                .toList();
+        if (added.isEmpty()) {
+            return new Split(common, given.withCommonAndShared(kept, List.of()), notes, false);
+        }
+        final List<SharedTemplate> shared = new ArrayList<>(common.shared());
+        shared.addAll(added);
+        final TranslationMapping withCalls = common.withCommonAndShared(common.common(), shared)
+                .withModule(common.module().withImports(null, helpersHref));
+        notes.add("Shared call(s) " + ToolText.list(added.stream().map(SharedTemplate::template).toList())
+                  + " added to the feed's common module " + commonSaid + ", which imports their libraries: a group "
+                  + "imports only the common module, and calls them through it");
+        return new Split(withCalls, given.withCommonAndShared(kept, List.of()), notes, true);
+    }
+
+    // Entries compared as JSON, in any order, the System Name and Environment aside: each group passes its own name,
+    // and the Environment is the feed's.
+    private static Set<String> compared(final List<FieldMapping> entries) {
+        final Set<String> out = new HashSet<>();
+        entries.stream()
+                .filter(entry -> !SYSTEM_NAME.equals(entry.strippedPath()) && !ENVIRONMENT.equals(entry.strippedPath()))
+                .forEach(entry -> out.add(ToolJson.dumps(entry.toJson(DumpMode.COMPACT))));
+        return out;
+    }
+
+    // An entry reading only the record's own fields, or a constant: one the common module can write for every group.
+    private static boolean recordLevel(final FieldMapping entry, final TranslationMapping mapping) {
+        if (entry.isGroup() || entry.repeat() || entry.lookup() != null || entry.xpath() != null
+            || entry.anyOf() != null || entry.join() != null || NullSafe.isNonBlankString(entry.dictionary())) {
+            return false;
+        }
+        if (entry.value() != null) {
+            return true;
+        }
+        final String field = entry.field();
+        if (field == null) {
+            return false;
+        }
+        final Set<String> derived = new HashSet<>();
+        mapping.extract().forEach(extraction -> derived.addAll(extraction.names()));
+        final List<String> held = new ArrayList<>(mapping.jsonFields());
+        held.addAll(mapping.xmlFields());
+        return !derived.contains(field) && held.stream().noneMatch(name -> field.equals(name)
+                                                                          || field.startsWith(name + ".")
+                                                                          || field.startsWith(name + "/"));
+    }
+
+    private static void replaceValue(final List<Map<String, Object>> entries, final String path, final String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        for (final Map<String, Object> entry : entries) {
+            if (path.equals(ToolText.strip(JsonValues.text(entry.get("path")), "/"))
+                || ("Event/" + path).equals(JsonValues.text(entry.get("path")))) {
+                entry.keySet().retainAll(Set.of("path"));
+                entry.put("value", value);
+                return;
+            }
+        }
+        final Map<String, Object> added = new LinkedHashMap<>();
+        added.put("path", path);
+        added.put("value", value);
+        entries.add(added);
+    }
+
+    // The feed's common module's mapping, kept with it.
+    private TranslationMapping keptCommon(final Module doc) {
+        final XsltDoc xslt = documentAccess.read(new DocRef(XsltDoc.TYPE, doc.uuid(), doc.name()), XsltDoc.class)
+                .orElseThrow(() -> new ToolRefusal("The feed's common module '" + doc.name() + "' can't be read"));
+        final Object mapping = KeptMapping.readMapping(xslt.getDescription())
+                .map(kept -> kept.payload().get("mapping"))
+                .orElseThrow(() -> new ToolRefusal("The feed's common module '" + doc.name() + "' keeps no mapping: "
+                                                   + "it can't be read to call its parts"));
+        final TranslationMapping common = TranslationMapping.parse(mapping);
+        if (common.module() == null || !common.module().isCommon()) {
+            throw new ToolRefusal("'" + doc.name() + "' is not a feed's common module");
+        }
+        return common;
+    }
+
+    // What the group writes, as one translation reads: the common module's entries for the parts the group leaves to
+    // it (with its System Name), and its shared calls, with the group's own.
+    private static TranslationMapping effective(final TranslationMapping group,
+                                                final TranslationMapping common,
+                                                final String systemName,
+                                                final String field) {
+        final List<FieldMapping> entries = new ArrayList<>();
+        for (final FieldMapping entry : common.common()) {
+            final String part = SourceTypeModule.partOf(entry.strippedPath());
+            final boolean own = group.common().stream()
+                    .anyMatch(theirs -> Objects.equals(part, SourceTypeModule.partOf(theirs.strippedPath())));
+            if (own) {
+                continue;
+            }
+            if (SYSTEM_NAME.equals(entry.strippedPath()) && systemName != null) {
+                final Map<String, Object> json = new LinkedHashMap<>(entry.toJson(DumpMode.WITHOUT_NONE));
+                json.keySet().retainAll(Set.of("path"));
+                json.put("value", systemName);
+                entries.add(FieldMapping.fromJson(json));
+            } else {
+                entries.add(entry);
+            }
+        }
+        entries.addAll(group.common());
+        final List<SharedTemplate> shared = new ArrayList<>(common.shared());
+        shared.addAll(group.shared());
+        final TranslationMapping effective = group.withCommonAndShared(entries, shared).withModule(null);
+        if (field == null || field.isBlank() || SourceTypeMeta.isMeta(field)) {
+            // None, or a part's meta attribute: no field of the records.
+            return effective;
+        }
+        // The source type field is read to tell the group's records from the rest, not a field the group leaves
+        // unread. A field holding the record's data, read into for its source type (a reading's held field), is the
+        // group's rules' to read like any other.
+        final SourceTypeReading reading = SourceTypeReading.cached(field);
+        final List<String> read = reading == null
+                ? List.of(field)
+                : reading.paths().stream()
+                        .filter(path -> path.held().isEmpty())
+                        .map(SourceTypeReading.Path::field)
+                        .toList();
+        if (read.isEmpty()) {
+            return effective;
+        }
+        final Map<String, Object> json = new LinkedHashMap<>(effective.toJson(DumpMode.COMPACT));
+        final Set<String> ignored = new LinkedHashSet<>(effective.ignoredFields());
+        read.forEach(each -> ignored.add(ToolText.split(ToolText.split(each, ".").getFirst(), "/").getFirst()));
+        json.put("ignored_fields", new ArrayList<>(ignored));
+        return TranslationMapping.parse(json);
+    }
+
+    // The build's XSLT of that name.
+    private WriteGuard.BuildDoc xsltInBuild(final String build, final String name) {
+        return guard.folderContents(build).stream()
+                .filter(doc -> XsltDoc.TYPE.equals(doc.type()) && name.equals(doc.name()))
+                .findFirst()
+                .orElse(null);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The feed of a build whose registry a group is built from.
+    ///
+    /// @param feed  The feed's name.
+    /// @param found Its registry.
+    record Registry(String feed, SourceTypeRegistries.Found found) {
+
+    }
+
+
+
+    /// How a group is built.
+    ///
+    /// @param feed         The feed.
+    /// @param group        The group's name.
+    /// @param mode         Its mode.
+    /// @param sourceTypes  Its source types.
+    /// @param field        The source type field.
+    /// @param systemName   Its System Name, or null for the common module's default.
+    /// @param registry     The feed's registry.
+    /// @param helpersDoc   The feed's helpers module (the build's, or promoted), or null.
+    /// @param commonDoc    The feed's common module (the build's, or promoted), or null.
+    /// @param common       The common module's mapping.
+    /// @param commonChanged True when the build's or promoted common module is saved again (a shared call of the
+    ///                     group's added to it).
+    /// @param groupMapping The group's mapping (its module importing the modules as they are now).
+    /// @param effective    What the group writes, as one translation's mapping: for the sample check and the docs.
+    /// @param notes        What was left to the common module, or kept the group's own.
+    /// @param unsaved      The code of the modules not saved yet, by the href importing them.
+    /// @param problems     What stops the common module made now being generated.
+    record Plan(String feed,
+                String group,
+                String mode,
+                List<String> sourceTypes,
+                String field,
+                String systemName,
+                Registry registry,
+                Module helpersDoc,
+                Module commonDoc,
+                TranslationMapping common,
+                boolean commonChanged,
+                TranslationMapping groupMapping,
+                TranslationMapping effective,
+                List<String> notes,
+                Map<String, String> unsaved,
+                List<String> problems) {
+
+        /// @param mapping The group's mapping as changed since (a domain split, a placeholder left out).
+        /// @return This plan with it, its module kept.
+        Plan withGroupMapping(final TranslationMapping mapping) {
+            final TranslationMapping withModule = mapping.module() == null
+                    ? mapping.withModule(groupMapping.module())
+                    : mapping;
+            return new Plan(feed, group, mode, sourceTypes, field, systemName, registry, helpersDoc, commonDoc,
+                    common, commonChanged, withModule, SourceTypeGroups.effective(withModule.withModule(null), common,
+                    systemName, field), notes, unsaved, problems);
+        }
+    }
+
+    /// One of the feed's modules.
+    ///
+    /// @param uuid    Its UUID.
+    /// @param name    Its name.
+    /// @param inBuild True for the build's own (made in it, or its new version of a promoted one); false for one
+    ///                promoted beside the feed, which the build changes only by a new version of it.
+    record Module(String uuid, String name, boolean inBuild) {
+
+    }
+
+    /// The feed's modules a group imports.
+    ///
+    /// @param helpers The helpers, or null.
+    /// @param common  The common module, or null.
+    record Modules(Module helpers, Module common) {
+
+    }
+
+    /// Where a new group's Events go, as the user chose in the placement form.
+    ///
+    /// @param ownOutputFeed True for an output feed of its own; false for the feed's Events.
+    record Placement(boolean ownOutputFeed) {
+
+    }
+
+    /// A source type group, as a pipeline runs it.
+    ///
+    /// @param feed  The aggregated feed.
+    /// @param group The group's name.
+    /// @param xslt  Its XSLT's UUID.
+    /// @param rows  The registry's rows of the group.
+    record GroupRun(String feed, String group, String xslt, List<Map<String, Object>> rows) {
+
+        /// @return The feed its Events go to, where it has one of its own: its name, or "" while it is still to be
+        /// made; empty for the feed's own Events.
+        Optional<String> outputFeed() {
+            return rows.stream()
+                    .map(row -> row.get(OUTPUT_FEED))
+                    .filter(Objects::nonNull)
+                    .map(JsonValues::text)
+                    .findFirst();
+        }
+
+        /// @return The reference data the group's lookups read, each once.
+        List<Map<String, Object>> references() {
+            final List<Map<String, Object>> out = new ArrayList<>();
+            rows.forEach(row -> JsonValues.maps(row.get(REFERENCES)).forEach(reference -> {
+                if (!out.contains(reference)) {
+                    out.add(reference);
+                }
+            }));
+            return out;
+        }
+
+        /// @return The pipeline the registry names for the group (`name`, `uuid` once made), or empty.
+        Map<String, Object> pipeline() {
+            return rows.stream()
+                    .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)))
+                    .filter(pipeline -> !pipeline.isEmpty())
+                    .findFirst()
+                    .orElse(Map.of());
+        }
+    }
+
+    /// The group's mapping importing the saved modules.
+    ///
+    /// @param group       The group's mapping.
+    /// @param helpersHref The helpers module's href.
+    /// @param saved       What was saved: `helpers` and `common`.
+    record Imports(TranslationMapping group, String helpersHref, Map<String, Object> saved) {
+
+    }
+
+    private record Split(TranslationMapping common,
+                         TranslationMapping group,
+                         List<String> notes,
+                         boolean commonChanged) {
+
+    }
+}

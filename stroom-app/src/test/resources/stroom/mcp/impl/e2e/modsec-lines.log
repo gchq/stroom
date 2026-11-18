@@ -1,0 +1,752 @@
+--e9c3d307-A--
+[11/Oct/2026:11:17:07 +0000] YzAb0000CdEf 203.0.113.42 19633 10.1.2.3 443
+
+--e9c3d307-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--e9c3d307-F--
+HTTP/1.1 200 OK
+Content-Length: 726
+Content-Type: text/html
+
+--e9c3d307-Z--
+
+--2f378ba1-A--
+[11/Oct/2026:11:17:12 +0000] YzAb0001CdEf 203.0.113.172 4701 10.1.2.3 443
+
+--2f378ba1-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--2f378ba1-F--
+HTTP/1.1 200 OK
+Content-Length: 124
+Content-Type: text/html
+
+--2f378ba1-Z--
+
+--a908fed4-A--
+[11/Oct/2026:11:17:16 +0000] YzAb0002CdEf 203.0.113.9 32126 10.1.2.3 443
+
+--a908fed4-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--a908fed4-F--
+HTTP/1.1 200 OK
+Content-Length: 768
+Content-Type: text/html
+
+--a908fed4-Z--
+
+--e31a5f96-A--
+[11/Oct/2026:11:17:19 +0000] YzAb0003CdEf 203.0.113.57 38912 10.1.2.3 443
+
+--e31a5f96-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--e31a5f96-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 440
+Content-Type: text/html
+
+--e31a5f96-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717439000000 578 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--e31a5f96-Z--
+
+--be786908-A--
+[11/Oct/2026:11:17:23 +0000] YzAb0004CdEf 203.0.113.41 27980 10.1.2.3 443
+
+--be786908-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--be786908-F--
+HTTP/1.1 200 OK
+Content-Length: 112
+Content-Type: text/html
+
+--be786908-Z--
+
+--bed0cc66-A--
+[11/Oct/2026:11:17:27 +0000] YzAb0005CdEf 203.0.113.225 47617 10.1.2.3 443
+
+--bed0cc66-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--bed0cc66-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 191
+Content-Type: text/html
+
+--bed0cc66-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717447000000 672 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--bed0cc66-Z--
+
+--d4394c09-A--
+[11/Oct/2026:11:17:30 +0000] YzAb0006CdEf 203.0.113.85 13457 10.1.2.3 443
+
+--d4394c09-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--d4394c09-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 389
+Content-Type: text/html
+
+--d4394c09-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717450000000 2368 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--d4394c09-Z--
+
+--3130e4b3-A--
+[11/Oct/2026:11:17:31 +0000] YzAb0007CdEf 203.0.113.8 46399 10.1.2.3 443
+
+--3130e4b3-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--3130e4b3-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 243
+Content-Type: text/html
+
+--3130e4b3-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717451000000 2077 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--3130e4b3-Z--
+
+--615f24f3-A--
+[11/Oct/2026:11:17:32 +0000] YzAb0008CdEf 203.0.113.41 3993 10.1.2.3 443
+
+--615f24f3-B--
+GET /index.html HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--615f24f3-F--
+HTTP/1.1 200 OK
+Content-Length: 348
+Content-Type: text/html
+
+--615f24f3-Z--
+
+--65209264-A--
+[11/Oct/2026:11:17:33 +0000] YzAb0009CdEf 203.0.113.22 3587 10.1.2.3 443
+
+--65209264-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--65209264-F--
+HTTP/1.1 200 OK
+Content-Length: 785
+Content-Type: text/html
+
+--65209264-Z--
+
+--9c89f122-A--
+[11/Oct/2026:11:17:36 +0000] YzAb0010CdEf 203.0.113.238 57393 10.1.2.3 443
+
+--9c89f122-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--9c89f122-F--
+HTTP/1.1 200 OK
+Content-Length: 380
+Content-Type: text/html
+
+--9c89f122-Z--
+
+--ab07efe5-A--
+[11/Oct/2026:11:17:38 +0000] YzAb0011CdEf 203.0.113.46 10322 10.1.2.3 443
+
+--ab07efe5-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--ab07efe5-F--
+HTTP/1.1 200 OK
+Content-Length: 365
+Content-Type: text/html
+
+--ab07efe5-Z--
+
+--4e2a9441-A--
+[11/Oct/2026:11:17:39 +0000] YzAb0012CdEf 203.0.113.212 14321 10.1.2.3 443
+
+--4e2a9441-B--
+GET /index.html HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--4e2a9441-F--
+HTTP/1.1 200 OK
+Content-Length: 164
+Content-Type: text/html
+
+--4e2a9441-Z--
+
+--e45359a9-A--
+[11/Oct/2026:11:17:41 +0000] YzAb0013CdEf 203.0.113.68 16149 10.1.2.3 443
+
+--e45359a9-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--e45359a9-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 465
+Content-Type: text/html
+
+--e45359a9-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717461000000 4746 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--e45359a9-Z--
+
+--9b2f1532-A--
+[11/Oct/2026:11:17:44 +0000] YzAb0014CdEf 203.0.113.201 37955 10.1.2.3 443
+
+--9b2f1532-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--9b2f1532-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 785
+Content-Type: text/html
+
+--9b2f1532-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717464000000 762 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--9b2f1532-Z--
+
+--5daf59df-A--
+[11/Oct/2026:11:17:45 +0000] YzAb0015CdEf 203.0.113.45 52212 10.1.2.3 443
+
+--5daf59df-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--5daf59df-F--
+HTTP/1.1 200 OK
+Content-Length: 350
+Content-Type: text/html
+
+--5daf59df-Z--
+
+--c07fde6b-A--
+[11/Oct/2026:11:17:46 +0000] YzAb0016CdEf 203.0.113.37 17433 10.1.2.3 443
+
+--c07fde6b-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--c07fde6b-F--
+HTTP/1.1 200 OK
+Content-Length: 394
+Content-Type: text/html
+
+--c07fde6b-Z--
+
+--6c1c0133-A--
+[11/Oct/2026:11:17:47 +0000] YzAb0017CdEf 203.0.113.185 31991 10.1.2.3 443
+
+--6c1c0133-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--6c1c0133-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 396
+Content-Type: text/html
+
+--6c1c0133-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717467000000 4934 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--6c1c0133-Z--
+
+--ecb789d0-A--
+[11/Oct/2026:11:17:49 +0000] YzAb0018CdEf 203.0.113.191 55249 10.1.2.3 443
+
+--ecb789d0-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--ecb789d0-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 162
+Content-Type: text/html
+
+--ecb789d0-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717469000000 3387 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--ecb789d0-Z--
+
+--382222d4-A--
+[11/Oct/2026:11:17:50 +0000] YzAb0019CdEf 203.0.113.68 36180 10.1.2.3 443
+
+--382222d4-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--382222d4-F--
+HTTP/1.1 200 OK
+Content-Length: 685
+Content-Type: text/html
+
+--382222d4-Z--
+
+--6ccec956-A--
+[11/Oct/2026:11:17:54 +0000] YzAb0020CdEf 203.0.113.157 49868 10.1.2.3 443
+
+--6ccec956-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--6ccec956-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 829
+Content-Type: text/html
+
+--6ccec956-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717474000000 1905 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--6ccec956-Z--
+
+--664f729c-A--
+[11/Oct/2026:11:17:58 +0000] YzAb0021CdEf 203.0.113.245 49401 10.1.2.3 443
+
+--664f729c-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--664f729c-F--
+HTTP/1.1 200 OK
+Content-Length: 129
+Content-Type: text/html
+
+--664f729c-Z--
+
+--c07161ae-A--
+[11/Oct/2026:11:18:01 +0000] YzAb0022CdEf 203.0.113.17 56602 10.1.2.3 443
+
+--c07161ae-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--c07161ae-F--
+HTTP/1.1 200 OK
+Content-Length: 475
+Content-Type: text/html
+
+--c07161ae-Z--
+
+--e5f4506c-A--
+[11/Oct/2026:11:18:02 +0000] YzAb0023CdEf 203.0.113.84 42225 10.1.2.3 443
+
+--e5f4506c-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--e5f4506c-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 227
+Content-Type: text/html
+
+--e5f4506c-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717482000000 3386 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--e5f4506c-Z--
+
+--87e3b459-A--
+[11/Oct/2026:11:18:04 +0000] YzAb0024CdEf 203.0.113.188 41568 10.1.2.3 443
+
+--87e3b459-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--87e3b459-F--
+HTTP/1.1 200 OK
+Content-Length: 304
+Content-Type: text/html
+
+--87e3b459-Z--
+
+--ba6ee4e3-A--
+[11/Oct/2026:11:18:07 +0000] YzAb0025CdEf 203.0.113.145 19437 10.1.2.3 443
+
+--ba6ee4e3-B--
+GET /index.html HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--ba6ee4e3-F--
+HTTP/1.1 200 OK
+Content-Length: 161
+Content-Type: text/html
+
+--ba6ee4e3-Z--
+
+--9e8b3185-A--
+[11/Oct/2026:11:18:09 +0000] YzAb0026CdEf 203.0.113.25 24150 10.1.2.3 443
+
+--9e8b3185-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--9e8b3185-F--
+HTTP/1.1 200 OK
+Content-Length: 617
+Content-Type: text/html
+
+--9e8b3185-Z--
+
+--930e4bc8-A--
+[11/Oct/2026:11:18:13 +0000] YzAb0027CdEf 203.0.113.40 50267 10.1.2.3 443
+
+--930e4bc8-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--930e4bc8-F--
+HTTP/1.1 200 OK
+Content-Length: 107
+Content-Type: text/html
+
+--930e4bc8-Z--
+
+--f9e01f75-A--
+[11/Oct/2026:11:18:14 +0000] YzAb0028CdEf 203.0.113.162 16208 10.1.2.3 443
+
+--f9e01f75-B--
+GET /index.html HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--f9e01f75-F--
+HTTP/1.1 200 OK
+Content-Length: 133
+Content-Type: text/html
+
+--f9e01f75-Z--
+
+--bb8108af-A--
+[11/Oct/2026:11:18:19 +0000] YzAb0029CdEf 203.0.113.144 36053 10.1.2.3 443
+
+--bb8108af-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--bb8108af-F--
+HTTP/1.1 200 OK
+Content-Length: 813
+Content-Type: text/html
+
+--bb8108af-Z--
+
+--8edd7b8c-A--
+[11/Oct/2026:11:18:22 +0000] YzAb0030CdEf 203.0.113.147 35021 10.1.2.3 443
+
+--8edd7b8c-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--8edd7b8c-F--
+HTTP/1.1 200 OK
+Content-Length: 187
+Content-Type: text/html
+
+--8edd7b8c-Z--
+
+--3a1dcf74-A--
+[11/Oct/2026:11:18:25 +0000] YzAb0031CdEf 203.0.113.105 27385 10.1.2.3 443
+
+--3a1dcf74-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--3a1dcf74-F--
+HTTP/1.1 200 OK
+Content-Length: 452
+Content-Type: text/html
+
+--3a1dcf74-Z--
+
+--62ae52cc-A--
+[11/Oct/2026:11:18:28 +0000] YzAb0032CdEf 203.0.113.79 49793 10.1.2.3 443
+
+--62ae52cc-B--
+GET /index.html HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--62ae52cc-F--
+HTTP/1.1 200 OK
+Content-Length: 439
+Content-Type: text/html
+
+--62ae52cc-Z--
+
+--96134c47-A--
+[11/Oct/2026:11:18:30 +0000] YzAb0033CdEf 203.0.113.100 23202 10.1.2.3 443
+
+--96134c47-B--
+GET / HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--96134c47-F--
+HTTP/1.1 200 OK
+Content-Length: 472
+Content-Type: text/html
+
+--96134c47-Z--
+
+--94f9211d-A--
+[11/Oct/2026:11:18:31 +0000] YzAb0034CdEf 203.0.113.111 62090 10.1.2.3 443
+
+--94f9211d-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--94f9211d-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 284
+Content-Type: text/html
+
+--94f9211d-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717511000000 4792 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--94f9211d-Z--
+
+--6e149656-A--
+[11/Oct/2026:11:18:36 +0000] YzAb0035CdEf 203.0.113.203 64767 10.1.2.3 443
+
+--6e149656-B--
+GET /api/orders HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--6e149656-F--
+HTTP/1.1 200 OK
+Content-Length: 233
+Content-Type: text/html
+
+--6e149656-Z--
+
+--fe3bc063-A--
+[11/Oct/2026:11:18:41 +0000] YzAb0036CdEf 203.0.113.126 50923 10.1.2.3 443
+
+--fe3bc063-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--fe3bc063-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 461
+Content-Type: text/html
+
+--fe3bc063-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717521000000 3252 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--fe3bc063-Z--
+
+--89c876db-A--
+[11/Oct/2026:11:18:46 +0000] YzAb0037CdEf 203.0.113.5 21812 10.1.2.3 443
+
+--89c876db-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--89c876db-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 636
+Content-Type: text/html
+
+--89c876db-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717526000000 4676 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--89c876db-Z--
+
+--66a780f0-A--
+[11/Oct/2026:11:18:48 +0000] YzAb0038CdEf 203.0.113.167 3272 10.1.2.3 443
+
+--66a780f0-B--
+GET /index.html HTTP/1.1
+Host: www.acme.org
+User-Agent: Mozilla/5.0
+Accept: */*
+
+--66a780f0-F--
+HTTP/1.1 200 OK
+Content-Length: 295
+Content-Type: text/html
+
+--66a780f0-Z--
+
+--ed5280a2-A--
+[11/Oct/2026:11:18:49 +0000] YzAb0039CdEf 203.0.113.148 7737 10.1.2.3 443
+
+--ed5280a2-B--
+GET /login.php?user=admin%27%20OR%201%3D1-- HTTP/1.1
+Host: www.acme.org
+User-Agent: sqlmap/1.7
+Accept: */*
+
+--ed5280a2-F--
+HTTP/1.1 403 Forbidden
+Content-Length: 831
+Content-Type: text/html
+
+--ed5280a2-H--
+Message: Access denied with code 403 (phase 2). detected SQLi using libinjection. [file "/etc/modsecurity/crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf"] [line "65"] [id "942100"] [msg "SQL Injection Attack Detected via libinjection"] [severity "CRITICAL"]
+Action: Intercepted (phase 2)
+Stopwatch: 1791717529000000 2274 (- - -)
+Producer: ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/); OWASP_CRS/3.3.4.
+Server: Apache
+Engine-Mode: "ENABLED"
+
+--ed5280a2-Z--
+

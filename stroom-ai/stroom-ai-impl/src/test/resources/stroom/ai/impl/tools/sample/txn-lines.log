@@ -1,0 +1,268 @@
+ts=2026-10-11T10:00:04.452Z txn=8f2c00 step=begin user=alice app=orders
+ts=2026-10-11T10:00:07.249Z txn=8f2c00 step=query table=orders rows=44 duration_ms=5
+ts=2026-10-11T10:00:10.066Z txn=8f2c00 step=commit status=ok duration_ms=24
+ts=2026-10-11T10:00:11.289Z txn=8f2c07 step=begin user=alice app=orders
+ts=2026-10-11T10:00:13.563Z txn=8f2c07 step=query table=orders rows=18 duration_ms=12
+ts=2026-10-11T10:00:17.845Z txn=8f2c07 step=query table=stock rows=41 duration_ms=39
+ts=2026-10-11T10:00:18.849Z txn=8f2c07 step=commit status=ok duration_ms=88
+ts=2026-10-11T10:00:20.242Z txn=8f2c0e step=begin user=alice app=orders
+ts=2026-10-11T10:00:24.999Z txn=8f2c0e step=query table=stock rows=3 duration_ms=29
+ts=2026-10-11T10:00:26.630Z txn=8f2c0e step=query table=stock rows=8 duration_ms=9
+ts=2026-10-11T10:00:27.996Z txn=8f2c0e step=query table=customers rows=41 duration_ms=27
+ts=2026-10-11T10:00:28.958Z txn=8f2c0e step=commit status=ok duration_ms=64
+ts=2026-10-11T10:00:30.137Z txn=8f2c15 step=begin user=alice app=orders
+ts=2026-10-11T10:00:34.226Z txn=8f2c15 step=query table=orders rows=0 duration_ms=17
+ts=2026-10-11T10:00:37.324Z txn=8f2c15 step=query table=stock rows=23 duration_ms=37
+ts=2026-10-11T10:00:41.959Z txn=8f2c15 step=query table=stock rows=1 duration_ms=19
+ts=2026-10-11T10:00:42.004Z txn=8f2c15 step=commit status=ok duration_ms=36
+ts=2026-10-11T10:00:44.666Z txn=8f2c1c step=begin user=alice app=orders
+ts=2026-10-11T10:00:48.714Z txn=8f2c1c step=query table=stock rows=8 duration_ms=17
+ts=2026-10-11T10:00:50.456Z txn=8f2c1c step=query table=orders rows=6 duration_ms=1
+ts=2026-10-11T10:00:53.975Z txn=8f2c1c step=commit status=ok duration_ms=38
+ts=2026-10-11T10:00:54.432Z txn=8f2c23 step=begin user=bob app=orders
+ts=2026-10-11T10:00:56.579Z txn=8f2c23 step=query table=stock rows=47 duration_ms=6
+ts=2026-10-11T10:00:57.776Z txn=8f2c23 step=query table=orders rows=27 duration_ms=37
+ts=2026-10-11T10:00:58.724Z txn=8f2c23 step=commit status=ok duration_ms=44
+ts=2026-10-11T10:00:59.315Z txn=8f2c2a step=begin user=bob app=orders
+ts=2026-10-11T10:01:00.429Z txn=8f2c2a step=query table=stock rows=31 duration_ms=17
+ts=2026-10-11T10:01:01.013Z txn=8f2c2a step=query table=stock rows=1 duration_ms=13
+ts=2026-10-11T10:01:03.626Z txn=8f2c2a step=query table=stock rows=6 duration_ms=25
+ts=2026-10-11T10:01:07.280Z txn=8f2c2a step=commit status=ok duration_ms=87
+ts=2026-10-11T10:01:09.064Z txn=8f2c31 step=begin user=bob app=orders
+ts=2026-10-11T10:01:10.662Z txn=8f2c31 step=query table=stock rows=49 duration_ms=26
+ts=2026-10-11T10:01:12.967Z txn=8f2c31 step=query table=stock rows=13 duration_ms=10
+ts=2026-10-11T10:01:15.499Z txn=8f2c31 step=commit status=ok duration_ms=25
+ts=2026-10-11T10:01:17.331Z txn=8f2c38 step=begin user=alice app=orders
+ts=2026-10-11T10:01:18.630Z txn=8f2c38 step=query table=stock rows=24 duration_ms=11
+ts=2026-10-11T10:01:21.921Z txn=8f2c38 step=query table=orders rows=33 duration_ms=28
+ts=2026-10-11T10:01:22.431Z txn=8f2c38 step=query table=customers rows=25 duration_ms=33
+ts=2026-10-11T10:01:25.298Z txn=8f2c38 step=commit status=ok duration_ms=37
+ts=2026-10-11T10:01:27.759Z txn=8f2c3f step=begin user=carol app=orders
+ts=2026-10-11T10:01:30.854Z txn=8f2c3f step=query table=customers rows=48 duration_ms=22
+ts=2026-10-11T10:01:34.743Z txn=8f2c3f step=commit status=ok duration_ms=35
+ts=2026-10-11T10:01:36.407Z txn=8f2c46 step=ping app=orders
+ts=2026-10-11T10:01:40.045Z txn=8f2c4d step=begin user=alice app=orders
+ts=2026-10-11T10:01:43.010Z txn=8f2c4d step=query table=orders rows=14 duration_ms=14
+ts=2026-10-11T10:01:47.705Z txn=8f2c4d step=query table=customers rows=40 duration_ms=20
+ts=2026-10-11T10:01:50.856Z txn=8f2c4d step=commit status=ok duration_ms=88
+ts=2026-10-11T10:01:51.792Z txn=8f2c54 step=begin user=bob app=orders
+ts=2026-10-11T10:01:54.709Z txn=8f2c54 step=query table=orders rows=14 duration_ms=16
+ts=2026-10-11T10:01:55.444Z txn=8f2c54 step=query table=orders rows=3 duration_ms=5
+ts=2026-10-11T10:01:59.474Z txn=8f2c54 step=query table=orders rows=5 duration_ms=6
+ts=2026-10-11T10:02:00.615Z txn=8f2c54 step=rollback status=error duration_ms=90
+ts=2026-10-11T10:02:03.069Z txn=8f2c5b step=begin user=alice app=orders
+ts=2026-10-11T10:02:05.167Z txn=8f2c5b step=query table=orders rows=12 duration_ms=25
+ts=2026-10-11T10:02:06.558Z txn=8f2c5b step=query table=customers rows=50 duration_ms=6
+ts=2026-10-11T10:02:08.784Z txn=8f2c5b step=query table=stock rows=35 duration_ms=31
+ts=2026-10-11T10:02:12.323Z txn=8f2c5b step=rollback status=error duration_ms=28
+ts=2026-10-11T10:02:16.939Z txn=8f2c62 step=begin user=carol app=orders
+ts=2026-10-11T10:02:20.660Z txn=8f2c62 step=query table=customers rows=37 duration_ms=33
+ts=2026-10-11T10:02:21.794Z txn=8f2c62 step=query table=orders rows=46 duration_ms=15
+ts=2026-10-11T10:02:24.478Z txn=8f2c62 step=query table=orders rows=33 duration_ms=39
+ts=2026-10-11T10:02:25.046Z txn=8f2c62 step=commit status=ok duration_ms=11
+ts=2026-10-11T10:02:29.745Z txn=8f2c69 step=ping app=orders
+ts=2026-10-11T10:02:33.353Z txn=8f2c70 step=begin user=bob app=orders
+ts=2026-10-11T10:02:35.818Z txn=8f2c70 step=query table=orders rows=45 duration_ms=7
+ts=2026-10-11T10:02:37.180Z txn=8f2c70 step=query table=customers rows=16 duration_ms=25
+ts=2026-10-11T10:02:40.878Z txn=8f2c70 step=commit status=ok duration_ms=37
+ts=2026-10-11T10:02:41.293Z txn=8f2c77 step=begin user=alice app=orders
+ts=2026-10-11T10:02:42.287Z txn=8f2c77 step=query table=customers rows=10 duration_ms=17
+ts=2026-10-11T10:02:43.955Z txn=8f2c77 step=query table=stock rows=22 duration_ms=30
+ts=2026-10-11T10:02:47.187Z txn=8f2c77 step=commit status=ok duration_ms=31
+ts=2026-10-11T10:02:49.478Z txn=8f2c7e step=begin user=carol app=orders
+ts=2026-10-11T10:02:51.064Z txn=8f2c7e step=query table=stock rows=17 duration_ms=16
+ts=2026-10-11T10:02:53.166Z txn=8f2c7e step=commit status=ok duration_ms=70
+ts=2026-10-11T10:02:54.621Z txn=8f2c85 step=begin user=bob app=orders
+ts=2026-10-11T10:02:58.463Z txn=8f2c85 step=query table=customers rows=24 duration_ms=36
+ts=2026-10-11T10:03:02.027Z txn=8f2c85 step=query table=stock rows=15 duration_ms=23
+ts=2026-10-11T10:03:06.822Z txn=8f2c85 step=commit status=ok duration_ms=66
+ts=2026-10-11T10:03:08.503Z txn=8f2c8c step=begin user=alice app=orders
+ts=2026-10-11T10:03:12.604Z txn=8f2c8c step=query table=orders rows=34 duration_ms=25
+ts=2026-10-11T10:03:14.279Z txn=8f2c8c step=query table=stock rows=0 duration_ms=31
+ts=2026-10-11T10:03:15.295Z txn=8f2c8c step=commit status=ok duration_ms=77
+ts=2026-10-11T10:03:17.204Z txn=8f2c93 step=ping app=orders
+ts=2026-10-11T10:03:18.292Z txn=8f2c9a step=ping app=orders
+ts=2026-10-11T10:03:19.429Z txn=8f2ca1 step=begin user=alice app=orders
+ts=2026-10-11T10:03:22.472Z txn=8f2ca1 step=query table=customers rows=3 duration_ms=7
+ts=2026-10-11T10:03:26.478Z txn=8f2ca1 step=query table=orders rows=16 duration_ms=25
+ts=2026-10-11T10:03:30.833Z txn=8f2ca1 step=query table=stock rows=12 duration_ms=5
+ts=2026-10-11T10:03:33.060Z txn=8f2ca1 step=commit status=ok duration_ms=10
+ts=2026-10-11T10:03:34.847Z txn=8f2ca8 step=ping app=orders
+ts=2026-10-11T10:03:35.593Z txn=8f2caf step=begin user=bob app=orders
+ts=2026-10-11T10:03:38.617Z txn=8f2caf step=query table=orders rows=12 duration_ms=10
+ts=2026-10-11T10:03:41.912Z txn=8f2caf step=commit status=ok duration_ms=60
+ts=2026-10-11T10:03:43.165Z txn=8f2cb6 step=begin user=bob app=orders
+ts=2026-10-11T10:03:47.891Z txn=8f2cb6 step=query table=orders rows=17 duration_ms=10
+ts=2026-10-11T10:03:48.428Z txn=8f2cb6 step=commit status=ok duration_ms=80
+ts=2026-10-11T10:03:51.287Z txn=8f2cbd step=begin user=carol app=orders
+ts=2026-10-11T10:03:52.873Z txn=8f2cbd step=query table=stock rows=14 duration_ms=29
+ts=2026-10-11T10:03:56.629Z txn=8f2cbd step=query table=orders rows=37 duration_ms=28
+ts=2026-10-11T10:04:00.278Z txn=8f2cbd step=commit status=ok duration_ms=79
+ts=2026-10-11T10:04:04.968Z txn=8f2cc4 step=begin user=carol app=orders
+ts=2026-10-11T10:04:07.774Z txn=8f2cc4 step=query table=orders rows=5 duration_ms=31
+ts=2026-10-11T10:04:09.342Z txn=8f2cc4 step=commit status=ok duration_ms=64
+ts=2026-10-11T10:04:10.180Z txn=8f2ccb step=begin user=bob app=orders
+ts=2026-10-11T10:04:12.633Z txn=8f2ccb step=query table=customers rows=8 duration_ms=7
+ts=2026-10-11T10:04:16.935Z txn=8f2ccb step=query table=stock rows=38 duration_ms=8
+ts=2026-10-11T10:04:19.750Z txn=8f2ccb step=commit status=ok duration_ms=29
+ts=2026-10-11T10:04:21.245Z txn=8f2cd2 step=begin user=bob app=orders
+ts=2026-10-11T10:04:23.820Z txn=8f2cd2 step=query table=stock rows=34 duration_ms=7
+ts=2026-10-11T10:04:24.968Z txn=8f2cd2 step=commit status=ok duration_ms=55
+ts=2026-10-11T10:04:26.179Z txn=8f2cd9 step=ping app=orders
+ts=2026-10-11T10:04:29.121Z txn=8f2ce0 step=begin user=carol app=orders
+ts=2026-10-11T10:04:32.940Z txn=8f2ce0 step=query table=stock rows=32 duration_ms=32
+ts=2026-10-11T10:04:35.011Z txn=8f2ce0 step=query table=customers rows=29 duration_ms=20
+ts=2026-10-11T10:04:36.297Z txn=8f2ce0 step=commit status=ok duration_ms=48
+ts=2026-10-11T10:04:38.388Z txn=8f2ce7 step=ping app=orders
+ts=2026-10-11T10:04:40.896Z txn=8f2cee step=begin user=alice app=orders
+ts=2026-10-11T10:04:42.958Z txn=8f2cee step=query table=customers rows=18 duration_ms=23
+ts=2026-10-11T10:04:44.241Z txn=8f2cee step=query table=orders rows=30 duration_ms=19
+ts=2026-10-11T10:04:48.644Z txn=8f2cee step=commit status=ok duration_ms=69
+ts=2026-10-11T10:04:52.821Z txn=8f2cf5 step=begin user=carol app=orders
+ts=2026-10-11T10:04:53.282Z txn=8f2cf5 step=query table=orders rows=34 duration_ms=17
+ts=2026-10-11T10:04:55.229Z txn=8f2cf5 step=query table=orders rows=36 duration_ms=2
+ts=2026-10-11T10:04:58.764Z txn=8f2cf5 step=commit status=ok duration_ms=17
+ts=2026-10-11T10:05:01.579Z txn=8f2cfc step=begin user=bob app=orders
+ts=2026-10-11T10:05:02.526Z txn=8f2cfc step=query table=stock rows=2 duration_ms=35
+ts=2026-10-11T10:05:06.799Z txn=8f2cfc step=query table=stock rows=49 duration_ms=34
+ts=2026-10-11T10:05:07.799Z txn=8f2cfc step=query table=stock rows=4 duration_ms=11
+ts=2026-10-11T10:05:10.447Z txn=8f2cfc step=commit status=ok duration_ms=70
+ts=2026-10-11T10:05:14.069Z txn=8f2d03 step=ping app=orders
+ts=2026-10-11T10:05:16.343Z txn=8f2d0a step=begin user=bob app=orders
+ts=2026-10-11T10:05:19.694Z txn=8f2d0a step=query table=stock rows=19 duration_ms=14
+ts=2026-10-11T10:05:20.887Z txn=8f2d0a step=query table=stock rows=23 duration_ms=1
+ts=2026-10-11T10:05:24.306Z txn=8f2d0a step=query table=orders rows=8 duration_ms=20
+ts=2026-10-11T10:05:26.300Z txn=8f2d0a step=commit status=ok duration_ms=47
+ts=2026-10-11T10:05:28.041Z txn=8f2d11 step=begin user=carol app=orders
+ts=2026-10-11T10:05:32.229Z txn=8f2d11 step=query table=stock rows=22 duration_ms=29
+ts=2026-10-11T10:05:35.296Z txn=8f2d11 step=query table=customers rows=23 duration_ms=23
+ts=2026-10-11T10:05:38.571Z txn=8f2d11 step=query table=customers rows=24 duration_ms=3
+ts=2026-10-11T10:05:42.538Z txn=8f2d11 step=commit status=ok duration_ms=37
+ts=2026-10-11T10:05:45.424Z txn=8f2d18 step=begin user=bob app=orders
+ts=2026-10-11T10:05:48.173Z txn=8f2d18 step=query table=orders rows=12 duration_ms=37
+ts=2026-10-11T10:05:49.145Z txn=8f2d18 step=query table=customers rows=47 duration_ms=5
+ts=2026-10-11T10:05:53.146Z txn=8f2d18 step=query table=customers rows=8 duration_ms=10
+ts=2026-10-11T10:05:55.128Z txn=8f2d18 step=commit status=ok duration_ms=64
+ts=2026-10-11T10:05:58.573Z txn=8f2d1f step=ping app=orders
+ts=2026-10-11T10:06:01.341Z txn=8f2d26 step=begin user=carol app=orders
+ts=2026-10-11T10:06:05.659Z txn=8f2d26 step=query table=customers rows=30 duration_ms=35
+ts=2026-10-11T10:06:09.046Z txn=8f2d26 step=query table=stock rows=5 duration_ms=9
+ts=2026-10-11T10:06:11.959Z txn=8f2d26 step=query table=stock rows=45 duration_ms=16
+ts=2026-10-11T10:06:14.630Z txn=8f2d26 step=rollback status=error duration_ms=54
+ts=2026-10-11T10:06:17.173Z txn=8f2d2d step=begin user=alice app=orders
+ts=2026-10-11T10:06:18.297Z txn=8f2d2d step=query table=customers rows=46 duration_ms=12
+ts=2026-10-11T10:06:21.028Z txn=8f2d2d step=query table=customers rows=44 duration_ms=32
+ts=2026-10-11T10:06:24.909Z txn=8f2d2d step=commit status=ok duration_ms=41
+ts=2026-10-11T10:06:25.700Z txn=8f2d34 step=begin user=alice app=orders
+ts=2026-10-11T10:06:27.284Z txn=8f2d34 step=query table=customers rows=22 duration_ms=31
+ts=2026-10-11T10:06:29.516Z txn=8f2d34 step=query table=stock rows=22 duration_ms=7
+ts=2026-10-11T10:06:32.135Z txn=8f2d34 step=commit status=ok duration_ms=72
+ts=2026-10-11T10:06:33.736Z txn=8f2d3b step=begin user=alice app=orders
+ts=2026-10-11T10:06:35.098Z txn=8f2d3b step=query table=stock rows=36 duration_ms=26
+ts=2026-10-11T10:06:39.583Z txn=8f2d3b step=query table=customers rows=4 duration_ms=25
+ts=2026-10-11T10:06:43.961Z txn=8f2d3b step=rollback status=error duration_ms=67
+ts=2026-10-11T10:06:44.120Z txn=8f2d42 step=begin user=alice app=orders
+ts=2026-10-11T10:06:48.136Z txn=8f2d42 step=query table=stock rows=1 duration_ms=40
+ts=2026-10-11T10:06:52.084Z txn=8f2d42 step=rollback status=error duration_ms=69
+ts=2026-10-11T10:06:53.058Z txn=8f2d49 step=begin user=carol app=orders
+ts=2026-10-11T10:06:55.334Z txn=8f2d49 step=query table=orders rows=29 duration_ms=1
+ts=2026-10-11T10:06:56.651Z txn=8f2d49 step=rollback status=error duration_ms=66
+ts=2026-10-11T10:07:00.603Z txn=8f2d50 step=begin user=alice app=orders
+ts=2026-10-11T10:07:04.690Z txn=8f2d50 step=query table=stock rows=18 duration_ms=15
+ts=2026-10-11T10:07:05.367Z txn=8f2d50 step=query table=customers rows=19 duration_ms=9
+ts=2026-10-11T10:07:06.063Z txn=8f2d50 step=commit status=ok duration_ms=62
+ts=2026-10-11T10:07:07.227Z txn=8f2d57 step=begin user=carol app=orders
+ts=2026-10-11T10:07:11.164Z txn=8f2d57 step=query table=orders rows=10 duration_ms=21
+ts=2026-10-11T10:07:12.266Z txn=8f2d57 step=query table=orders rows=23 duration_ms=9
+ts=2026-10-11T10:07:14.035Z txn=8f2d57 step=rollback status=error duration_ms=37
+ts=2026-10-11T10:07:18.291Z txn=8f2d5e step=begin user=carol app=orders
+ts=2026-10-11T10:07:19.751Z txn=8f2d5e step=query table=customers rows=26 duration_ms=25
+ts=2026-10-11T10:07:20.528Z txn=8f2d5e step=query table=customers rows=5 duration_ms=29
+ts=2026-10-11T10:07:22.842Z txn=8f2d5e step=rollback status=error duration_ms=7
+ts=2026-10-11T10:07:23.750Z txn=8f2d65 step=ping app=orders
+ts=2026-10-11T10:07:27.186Z txn=8f2d6c step=ping app=orders
+ts=2026-10-11T10:07:28.577Z txn=8f2d73 step=ping app=orders
+ts=2026-10-11T10:07:29.558Z txn=8f2d7a step=begin user=carol app=orders
+ts=2026-10-11T10:07:32.205Z txn=8f2d7a step=query table=customers rows=3 duration_ms=30
+ts=2026-10-11T10:07:33.391Z txn=8f2d7a step=query table=stock rows=40 duration_ms=3
+ts=2026-10-11T10:07:34.100Z txn=8f2d7a step=commit status=ok duration_ms=69
+ts=2026-10-11T10:07:37.160Z txn=8f2d81 step=begin user=bob app=orders
+ts=2026-10-11T10:07:38.392Z txn=8f2d81 step=query table=customers rows=46 duration_ms=25
+ts=2026-10-11T10:07:39.410Z txn=8f2d81 step=rollback status=error duration_ms=51
+ts=2026-10-11T10:07:43.905Z txn=8f2d88 step=begin user=carol app=orders
+ts=2026-10-11T10:07:44.872Z txn=8f2d88 step=query table=stock rows=12 duration_ms=11
+ts=2026-10-11T10:07:47.379Z txn=8f2d88 step=query table=orders rows=23 duration_ms=23
+ts=2026-10-11T10:07:50.778Z txn=8f2d88 step=rollback status=error duration_ms=75
+ts=2026-10-11T10:07:53.797Z txn=8f2d8f step=begin user=alice app=orders
+ts=2026-10-11T10:07:56.114Z txn=8f2d8f step=query table=orders rows=38 duration_ms=28
+ts=2026-10-11T10:07:59.474Z txn=8f2d8f step=rollback status=error duration_ms=16
+ts=2026-10-11T10:08:00.815Z txn=8f2d96 step=ping app=orders
+ts=2026-10-11T10:08:03.385Z txn=8f2d9d step=ping app=orders
+ts=2026-10-11T10:08:05.176Z txn=8f2da4 step=begin user=bob app=orders
+ts=2026-10-11T10:08:09.792Z txn=8f2da4 step=query table=stock rows=33 duration_ms=40
+ts=2026-10-11T10:08:13.234Z txn=8f2da4 step=commit status=ok duration_ms=14
+ts=2026-10-11T10:08:14.132Z txn=8f2dab step=begin user=alice app=orders
+ts=2026-10-11T10:08:16.919Z txn=8f2dab step=query table=customers rows=48 duration_ms=37
+ts=2026-10-11T10:08:18.648Z txn=8f2dab step=query table=orders rows=48 duration_ms=23
+ts=2026-10-11T10:08:21.725Z txn=8f2dab step=query table=orders rows=32 duration_ms=19
+ts=2026-10-11T10:08:23.896Z txn=8f2dab step=commit status=ok duration_ms=60
+ts=2026-10-11T10:08:26.900Z txn=8f2db2 step=begin user=carol app=orders
+ts=2026-10-11T10:08:28.671Z txn=8f2db2 step=query table=orders rows=7 duration_ms=7
+ts=2026-10-11T10:08:29.656Z txn=8f2db2 step=commit status=ok duration_ms=13
+ts=2026-10-11T10:08:30.466Z txn=8f2db9 step=begin user=bob app=orders
+ts=2026-10-11T10:08:34.392Z txn=8f2db9 step=query table=customers rows=24 duration_ms=22
+ts=2026-10-11T10:08:38.059Z txn=8f2db9 step=rollback status=error duration_ms=9
+ts=2026-10-11T10:08:42.352Z txn=8f2dc0 step=begin user=bob app=orders
+ts=2026-10-11T10:08:45.388Z txn=8f2dc0 step=query table=customers rows=44 duration_ms=36
+ts=2026-10-11T10:08:47.594Z txn=8f2dc0 step=query table=stock rows=38 duration_ms=8
+ts=2026-10-11T10:08:50.052Z txn=8f2dc0 step=query table=stock rows=2 duration_ms=11
+ts=2026-10-11T10:08:54.120Z txn=8f2dc0 step=rollback status=error duration_ms=74
+ts=2026-10-11T10:08:57.235Z txn=8f2dc7 step=begin user=alice app=orders
+ts=2026-10-11T10:08:58.460Z txn=8f2dc7 step=query table=orders rows=15 duration_ms=12
+ts=2026-10-11T10:09:02.883Z txn=8f2dc7 step=commit status=ok duration_ms=12
+ts=2026-10-11T10:09:04.915Z txn=8f2dce step=begin user=alice app=orders
+ts=2026-10-11T10:09:07.329Z txn=8f2dce step=query table=orders rows=38 duration_ms=18
+ts=2026-10-11T10:09:09.784Z txn=8f2dce step=query table=stock rows=42 duration_ms=38
+ts=2026-10-11T10:09:11.291Z txn=8f2dce step=query table=customers rows=23 duration_ms=38
+ts=2026-10-11T10:09:14.721Z txn=8f2dce step=commit status=ok duration_ms=32
+ts=2026-10-11T10:09:15.342Z txn=8f2dd5 step=begin user=carol app=orders
+ts=2026-10-11T10:09:16.559Z txn=8f2dd5 step=query table=orders rows=38 duration_ms=1
+ts=2026-10-11T10:09:19.591Z txn=8f2dd5 step=query table=stock rows=22 duration_ms=3
+ts=2026-10-11T10:09:22.494Z txn=8f2dd5 step=commit status=ok duration_ms=54
+ts=2026-10-11T10:09:25.654Z txn=8f2ddc step=begin user=carol app=orders
+ts=2026-10-11T10:09:28.895Z txn=8f2ddc step=query table=orders rows=34 duration_ms=24
+ts=2026-10-11T10:09:30.809Z txn=8f2ddc step=rollback status=error duration_ms=84
+ts=2026-10-11T10:09:33.951Z txn=8f2de3 step=begin user=bob app=orders
+ts=2026-10-11T10:09:37.750Z txn=8f2de3 step=query table=stock rows=39 duration_ms=39
+ts=2026-10-11T10:09:38.898Z txn=8f2de3 step=commit status=ok duration_ms=77
+ts=2026-10-11T10:09:42.988Z txn=8f2dea step=begin user=alice app=orders
+ts=2026-10-11T10:09:44.331Z txn=8f2dea step=query table=orders rows=11 duration_ms=39
+ts=2026-10-11T10:09:46.091Z txn=8f2dea step=commit status=ok duration_ms=30
+ts=2026-10-11T10:09:48.616Z txn=8f2df1 step=begin user=carol app=orders
+ts=2026-10-11T10:09:52.143Z txn=8f2df1 step=query table=orders rows=49 duration_ms=24
+ts=2026-10-11T10:09:56.404Z txn=8f2df1 step=commit status=ok duration_ms=22
+ts=2026-10-11T10:09:58.278Z txn=8f2df8 step=begin user=carol app=orders
+ts=2026-10-11T10:10:00.810Z txn=8f2df8 step=query table=stock rows=50 duration_ms=11
+ts=2026-10-11T10:10:02.755Z txn=8f2df8 step=commit status=ok duration_ms=21
+ts=2026-10-11T10:10:04.319Z txn=8f2dff step=begin user=carol app=orders
+ts=2026-10-11T10:10:06.351Z txn=8f2dff step=query table=stock rows=50 duration_ms=27
+ts=2026-10-11T10:10:07.510Z txn=8f2dff step=query table=orders rows=35 duration_ms=25
+ts=2026-10-11T10:10:08.638Z txn=8f2dff step=commit status=ok duration_ms=78
+ts=2026-10-11T10:10:11.997Z txn=8f2e06 step=begin user=alice app=orders
+ts=2026-10-11T10:10:12.932Z txn=8f2e06 step=query table=stock rows=49 duration_ms=20
+ts=2026-10-11T10:10:14.116Z txn=8f2e06 step=commit status=ok duration_ms=29
+ts=2026-10-11T10:10:16.772Z txn=8f2e0d step=ping app=orders
+ts=2026-10-11T10:10:17.245Z txn=8f2e14 step=begin user=alice app=orders
+ts=2026-10-11T10:10:18.134Z txn=8f2e14 step=query table=stock rows=35 duration_ms=13
+ts=2026-10-11T10:10:21.874Z txn=8f2e14 step=query table=stock rows=12 duration_ms=29
+ts=2026-10-11T10:10:22.852Z txn=8f2e14 step=commit status=ok duration_ms=78
+ts=2026-10-11T10:10:24.582Z txn=8f2e1b step=begin user=bob app=orders
+ts=2026-10-11T10:10:26.178Z txn=8f2e1b step=query table=stock rows=27 duration_ms=32
+ts=2026-10-11T10:10:27.711Z txn=8f2e1b step=commit status=ok duration_ms=77
+ts=2026-10-11T10:10:30.609Z txn=8f2e22 step=begin user=carol app=orders
+ts=2026-10-11T10:10:31.022Z txn=8f2e22 step=query table=stock rows=27 duration_ms=4
+ts=2026-10-11T10:10:35.923Z txn=8f2e22 step=commit status=ok duration_ms=29
+ts=2026-10-11T10:10:39.760Z txn=8f2e29 step=begin user=alice app=orders
+ts=2026-10-11T10:10:43.502Z txn=8f2e29 step=query table=customers rows=24 duration_ms=12
+ts=2026-10-11T10:10:46.395Z txn=8f2e29 step=query table=stock rows=14 duration_ms=38
+ts=2026-10-11T10:10:50.641Z txn=8f2e29 step=rollback status=error duration_ms=56

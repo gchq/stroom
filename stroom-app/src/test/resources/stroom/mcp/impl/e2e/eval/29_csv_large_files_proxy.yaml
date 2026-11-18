@@ -1,0 +1,41 @@
+name: Web proxy access logs (two large files on the user's disk)
+template: Event Data (Text)
+capabilities: [large_samples]
+request: >
+  Onboard our web proxy's access logs: one CSV file a day, with a header. Each record is a request: the client
+  address, the signed-in user, the method, URL, HTTP status, bytes sent, the URL's category and whether the proxy
+  allowed or blocked it. Times are UTC. I've two days' files here, about 1.7 MB each: below are their first lines.
+  All of both files must go to Stroom, not just these lines. Index the events.
+# The trap: the files are too large to pass through the chat. upload_sample files= gives a command per file for the
+# user's terminal (run here by the harness, as the user would), which sends each file whole.
+expected:
+  records: 32000
+  event_types: [Network]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Network/*/Source/Device/IPAddress]
+files:
+  - {name: proxy-2026-10-01.csv, generate: {kind: proxy_access, day: '2026-10-01', records: 16000, seed: 1}}
+  - {name: proxy-2026-10-02.csv, generate: {kind: proxy_access, day: '2026-10-02', records: 16000, seed: 2}}
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Web Proxy}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: proxy}
+      - {path: EventSource/Device/HostName, value: proxy01.example.org}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventSource/Client/IPAddress, field: client_ip}
+      - {path: EventDetail/TypeId, field: action}
+    events:
+      - name: request
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: client_ip}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: url, field: url}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: category, field: category}
+          - {path: EventDetail/Network/Open/Data, data_name: method, field: method}
+          - {path: EventDetail/Network/Open/Data, data_name: status, field: status}
+          - {path: EventDetail/Network/Open/Data, data_name: bytes, field: bytes}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: action, map: {allowed: 'true', blocked: 'false'}}

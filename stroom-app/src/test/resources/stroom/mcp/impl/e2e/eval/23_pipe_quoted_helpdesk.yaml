@@ -1,0 +1,54 @@
+name: Helpdesk audit (pipe-delimited, quoted values)
+template: Event Data (Text)
+capabilities: [delimiters, escaping]
+request: >
+  Onboard the helpdesk system's audit export. It's pipe-delimited with a header; values that hold a pipe are in
+  double quotes, and a quote inside them is doubled. Each record is an agent creating, viewing or updating a
+  ticket, or closing it (an update too). Keep the comment as the description, exactly as the agent typed it. Times
+  are UTC. Index the events.
+expected:
+  records: 5
+  event_types: [Create, View, Update]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [jdoe, msmith]
+    EventDetail/Description: ['Customer says "urgent" | escalate', 'Printer offline | 3rd floor', Resolved]
+sample: |
+  time|agent|ticket|action|customer|comment
+  2026-10-02T09:00:00Z|jdoe|INC-1001|create|"Smith | Jones Ltd"|"Customer says ""urgent"" | escalate"
+  2026-10-02T09:01:30Z|msmith|INC-1001|view|"Smith | Jones Ltd"|
+  2026-10-02T09:10:00Z|msmith|INC-1001|update|"Smith | Jones Ltd"|Called back
+  2026-10-02T09:20:00Z|jdoe|INC-1002|create|Acme Corp|"Printer offline | 3rd floor"
+  2026-10-02T09:45:00Z|jdoe|INC-1001|close|"Smith | Jones Ltd"|Resolved
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Helpdesk}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: helpdesk-audit}
+      - {path: EventSource/Device/HostName, value: helpdesk.example.org}
+      - {path: EventSource/User/Id, field: agent}
+      - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Description, field: comment, transform: unescape_quotes}
+    events:
+      - name: created
+        when: [{field: action, equals: create}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: Ticket}
+          - {path: EventDetail/Create/Object/Id, field: ticket}
+          - {path: EventDetail/Create/Object/Data, data_name: customer, field: customer, transform: unescape_quotes}
+      - name: viewed
+        when: [{field: action, equals: view}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Ticket}
+          - {path: EventDetail/View/Object/Id, field: ticket}
+      - name: updated
+        when: [{field: action, one_of: [update, close]}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Ticket}
+          - {path: EventDetail/Update/After/Object/Id, field: ticket}
+          - {path: EventDetail/Update/After/Object/State, field: action, map: {close: Closed, update: Open}}

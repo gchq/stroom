@@ -1,0 +1,360 @@
+<134>Oct 11 10:53:25 ldap01 slapd[812]: conn=1000 fd=10 ACCEPT from IP=10.1.4.118:54710 (IP=0.0.0.0:389)
+<134>Oct 11 10:53:27 ldap01 slapd[812]: conn=1000 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:53:31 ldap01 slapd[812]: conn=1000 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:53:34 ldap01 slapd[812]: conn=1001 fd=11 ACCEPT from IP=10.1.9.53:27373 (IP=0.0.0.0:389)
+<134>Oct 11 10:53:35 ldap01 slapd[812]: conn=1003 fd=13 ACCEPT from IP=10.1.1.141:44378 (IP=0.0.0.0:389)
+<134>Oct 11 10:53:39 ldap01 slapd[812]: conn=1003 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:53:41 ldap01 slapd[812]: conn=1004 fd=14 ACCEPT from IP=10.1.9.135:13090 (IP=0.0.0.0:389)
+<134>Oct 11 10:53:46 ldap01 slapd[812]: conn=1005 fd=15 ACCEPT from IP=10.1.8.203:48883 (IP=0.0.0.0:389)
+<134>Oct 11 10:53:48 ldap01 slapd[812]: conn=1006 fd=16 ACCEPT from IP=10.1.7.112:27037 (IP=0.0.0.0:389)
+<134>Oct 11 10:53:51 ldap01 slapd[812]: conn=1005 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:53:56 ldap01 slapd[812]: conn=1006 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:53:58 ldap01 slapd[812]: conn=1006 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:54:00 ldap01 slapd[812]: conn=1005 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:54:05 ldap01 slapd[812]: conn=1005 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:54:07 ldap01 slapd[812]: conn=1005 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 10:54:10 ldap01 slapd[812]: conn=1006 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 10:54:13 ldap01 slapd[812]: conn=1006 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 10:54:16 ldap01 slapd[812]: conn=1005 op=1 SRCH attr=cn mail
+<134>Oct 11 10:54:18 ldap01 slapd[812]: conn=1006 op=1 SRCH attr=cn mail
+<134>Oct 11 10:54:23 ldap01 slapd[812]: conn=1005 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:54:27 ldap01 slapd[812]: conn=1005 op=2 UNBIND
+<134>Oct 11 10:54:28 ldap01 slapd[812]: conn=1006 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:54:32 ldap01 slapd[812]: conn=1007 fd=17 ACCEPT from IP=10.1.1.67:51615 (IP=0.0.0.0:389)
+<134>Oct 11 10:54:37 ldap01 slapd[812]: conn=1006 op=2 UNBIND
+<134>Oct 11 10:54:41 ldap01 slapd[812]: conn=1007 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:54:43 ldap01 slapd[812]: conn=1007 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:54:48 ldap01 slapd[812]: conn=1007 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:54:52 ldap01 slapd[812]: conn=1007 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 10:54:57 ldap01 slapd[812]: conn=1008 fd=18 ACCEPT from IP=10.1.8.55:26645 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:00 ldap01 slapd[812]: conn=1009 fd=19 ACCEPT from IP=10.1.7.51:2645 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:03 ldap01 slapd[812]: conn=1010 fd=20 ACCEPT from IP=10.1.4.249:60023 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:06 ldap01 slapd[812]: conn=1010 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:55:09 ldap01 slapd[812]: conn=1010 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:55:14 ldap01 slapd[812]: conn=1011 fd=21 ACCEPT from IP=10.1.5.135:23174 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:16 ldap01 slapd[812]: conn=1011 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:55:19 ldap01 slapd[812]: conn=1011 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:55:24 ldap01 slapd[812]: conn=1012 fd=22 ACCEPT from IP=10.1.2.176:50230 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:26 ldap01 slapd[812]: conn=1014 fd=24 ACCEPT from IP=10.1.6.243:35666 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:27 ldap01 slapd[812]: conn=1013 fd=23 ACCEPT from IP=10.1.6.175:13710 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:32 ldap01 slapd[812]: conn=1014 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:55:36 ldap01 slapd[812]: conn=1016 fd=26 ACCEPT from IP=10.1.6.172:29783 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:40 ldap01 slapd[812]: conn=1018 fd=28 ACCEPT from IP=10.1.5.219:32676 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:45 ldap01 slapd[812]: conn=1018 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:55:49 ldap01 slapd[812]: conn=1017 fd=27 ACCEPT from IP=10.1.7.206:57883 (IP=0.0.0.0:389)
+<134>Oct 11 10:55:54 ldap01 slapd[812]: conn=1017 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:55:58 ldap01 slapd[812]: conn=1017 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:56:02 ldap01 slapd[812]: conn=1018 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:56:05 ldap01 slapd[812]: conn=1021 fd=11 ACCEPT from IP=10.1.2.147:13810 (IP=0.0.0.0:389)
+<134>Oct 11 10:56:07 ldap01 slapd[812]: conn=1022 fd=12 ACCEPT from IP=10.1.0.39:56109 (IP=0.0.0.0:389)
+<134>Oct 11 10:56:12 ldap01 slapd[812]: conn=1023 fd=13 ACCEPT from IP=10.1.1.33:33222 (IP=0.0.0.0:389)
+<134>Oct 11 10:56:17 ldap01 slapd[812]: conn=1023 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:56:22 ldap01 slapd[812]: conn=1024 fd=14 ACCEPT from IP=10.1.3.222:61888 (IP=0.0.0.0:389)
+<134>Oct 11 10:56:27 ldap01 slapd[812]: conn=1023 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:56:30 ldap01 slapd[812]: conn=1024 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:56:31 ldap01 slapd[812]: conn=1027 fd=17 ACCEPT from IP=10.1.2.55:44662 (IP=0.0.0.0:389)
+<134>Oct 11 10:56:32 ldap01 slapd[812]: conn=1026 fd=16 ACCEPT from IP=10.1.4.215:36066 (IP=0.0.0.0:389)
+<134>Oct 11 10:56:36 ldap01 slapd[812]: conn=1027 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:56:40 ldap01 slapd[812]: conn=1026 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:56:42 ldap01 slapd[812]: conn=1026 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:56:46 ldap01 slapd[812]: conn=1026 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:56:49 ldap01 slapd[812]: conn=1027 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:56:53 ldap01 slapd[812]: conn=1027 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:56:58 ldap01 slapd[812]: conn=1029 fd=19 ACCEPT from IP=10.1.1.127:3788 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:00 ldap01 slapd[812]: conn=1031 fd=21 ACCEPT from IP=10.1.3.188:24202 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:04 ldap01 slapd[812]: conn=1031 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:57:09 ldap01 slapd[812]: conn=1031 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:57:14 ldap01 slapd[812]: conn=1032 fd=22 ACCEPT from IP=10.1.9.55:11192 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:17 ldap01 slapd[812]: conn=1035 fd=25 ACCEPT from IP=10.1.6.26:16966 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:20 ldap01 slapd[812]: conn=1035 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:57:22 ldap01 slapd[812]: conn=1034 fd=24 ACCEPT from IP=10.1.0.48:43343 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:23 ldap01 slapd[812]: conn=1035 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:57:26 ldap01 slapd[812]: conn=1034 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:57:31 ldap01 slapd[812]: conn=1035 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:57:33 ldap01 slapd[812]: conn=1037 fd=27 ACCEPT from IP=10.1.2.116:54436 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:35 ldap01 slapd[812]: conn=1038 fd=28 ACCEPT from IP=10.1.4.48:17591 (IP=0.0.0.0:389)
+<134>Oct 11 10:57:38 ldap01 slapd[812]: conn=1038 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:57:41 ldap01 slapd[812]: conn=1000 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 10:57:43 ldap01 slapd[812]: conn=1000 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 10:57:45 ldap01 slapd[812]: conn=1000 op=1 SRCH attr=cn mail
+<134>Oct 11 10:57:47 ldap01 slapd[812]: conn=1000 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:57:48 ldap01 slapd[812]: conn=1000 op=2 UNBIND
+<134>Oct 11 10:57:51 ldap01 slapd[812]: conn=1000 fd=10 closed
+<134>Oct 11 10:57:53 ldap01 slapd[812]: conn=1001 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:57:55 ldap01 slapd[812]: conn=1001 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:57:58 ldap01 slapd[812]: conn=1001 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:58:00 ldap01 slapd[812]: conn=1001 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 10:58:03 ldap01 slapd[812]: conn=1001 op=1 SRCH attr=cn mail
+<134>Oct 11 10:58:06 ldap01 slapd[812]: conn=1001 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:58:08 ldap01 slapd[812]: conn=1001 op=2 UNBIND
+<134>Oct 11 10:58:09 ldap01 slapd[812]: conn=1001 fd=11 closed
+<134>Oct 11 10:58:14 ldap01 slapd[812]: conn=1002 fd=12 ACCEPT from IP=10.1.5.133:34552 (IP=0.0.0.0:389)
+<134>Oct 11 10:58:19 ldap01 slapd[812]: conn=1002 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:58:20 ldap01 slapd[812]: conn=1002 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:58:22 ldap01 slapd[812]: conn=1002 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 10:58:25 ldap01 slapd[812]: conn=1002 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 10:58:29 ldap01 slapd[812]: conn=1002 op=1 SRCH attr=cn mail
+<134>Oct 11 10:58:33 ldap01 slapd[812]: conn=1002 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:58:36 ldap01 slapd[812]: conn=1002 op=2 UNBIND
+<134>Oct 11 10:58:37 ldap01 slapd[812]: conn=1002 fd=12 closed
+<134>Oct 11 10:58:39 ldap01 slapd[812]: conn=1003 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:58:43 ldap01 slapd[812]: conn=1003 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 10:58:47 ldap01 slapd[812]: conn=1003 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 10:58:49 ldap01 slapd[812]: conn=1003 op=1 SRCH attr=cn mail
+<134>Oct 11 10:58:51 ldap01 slapd[812]: conn=1003 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:58:53 ldap01 slapd[812]: conn=1003 op=2 UNBIND
+<134>Oct 11 10:58:57 ldap01 slapd[812]: conn=1003 fd=13 closed
+<134>Oct 11 10:59:02 ldap01 slapd[812]: conn=1004 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:59:03 ldap01 slapd[812]: conn=1004 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:59:07 ldap01 slapd[812]: conn=1004 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:59:12 ldap01 slapd[812]: conn=1004 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 10:59:14 ldap01 slapd[812]: conn=1004 op=1 SRCH attr=cn mail
+<134>Oct 11 10:59:18 ldap01 slapd[812]: conn=1004 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:59:22 ldap01 slapd[812]: conn=1004 op=2 UNBIND
+<134>Oct 11 10:59:26 ldap01 slapd[812]: conn=1004 fd=14 closed
+<134>Oct 11 10:59:30 ldap01 slapd[812]: conn=1005 fd=15 closed
+<134>Oct 11 10:59:31 ldap01 slapd[812]: conn=1006 fd=16 closed
+<134>Oct 11 10:59:34 ldap01 slapd[812]: conn=1007 op=1 SRCH attr=cn mail
+<134>Oct 11 10:59:36 ldap01 slapd[812]: conn=1007 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 10:59:38 ldap01 slapd[812]: conn=1007 op=2 UNBIND
+<134>Oct 11 10:59:40 ldap01 slapd[812]: conn=1007 fd=17 closed
+<134>Oct 11 10:59:45 ldap01 slapd[812]: conn=1008 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 10:59:47 ldap01 slapd[812]: conn=1008 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 10:59:51 ldap01 slapd[812]: conn=1008 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 10:59:55 ldap01 slapd[812]: conn=1008 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 10:59:57 ldap01 slapd[812]: conn=1008 op=1 SRCH attr=cn mail
+<134>Oct 11 11:00:02 ldap01 slapd[812]: conn=1008 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:00:03 ldap01 slapd[812]: conn=1008 op=2 UNBIND
+<134>Oct 11 11:00:07 ldap01 slapd[812]: conn=1008 fd=18 closed
+<134>Oct 11 11:00:09 ldap01 slapd[812]: conn=1009 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:00:10 ldap01 slapd[812]: conn=1009 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:00:14 ldap01 slapd[812]: conn=1009 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:00:16 ldap01 slapd[812]: conn=1009 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:00:21 ldap01 slapd[812]: conn=1009 op=1 SRCH attr=cn mail
+<134>Oct 11 11:00:24 ldap01 slapd[812]: conn=1009 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:00:26 ldap01 slapd[812]: conn=1009 op=2 UNBIND
+<134>Oct 11 11:00:28 ldap01 slapd[812]: conn=1009 fd=19 closed
+<134>Oct 11 11:00:33 ldap01 slapd[812]: conn=1010 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:00:36 ldap01 slapd[812]: conn=1010 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:00:37 ldap01 slapd[812]: conn=1010 op=1 SRCH attr=cn mail
+<134>Oct 11 11:00:42 ldap01 slapd[812]: conn=1010 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:00:47 ldap01 slapd[812]: conn=1010 op=2 UNBIND
+<134>Oct 11 11:00:50 ldap01 slapd[812]: conn=1010 fd=20 closed
+<134>Oct 11 11:00:55 ldap01 slapd[812]: conn=1011 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:00:56 ldap01 slapd[812]: conn=1011 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:01:01 ldap01 slapd[812]: conn=1011 op=1 SRCH attr=cn mail
+<134>Oct 11 11:01:06 ldap01 slapd[812]: conn=1011 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:01:07 ldap01 slapd[812]: conn=1011 op=2 UNBIND
+<134>Oct 11 11:01:09 ldap01 slapd[812]: conn=1011 fd=21 closed
+<134>Oct 11 11:01:10 ldap01 slapd[812]: conn=1012 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:01:15 ldap01 slapd[812]: conn=1012 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:01:17 ldap01 slapd[812]: conn=1012 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:01:22 ldap01 slapd[812]: conn=1012 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 11:01:23 ldap01 slapd[812]: conn=1012 op=1 SRCH attr=cn mail
+<134>Oct 11 11:01:28 ldap01 slapd[812]: conn=1012 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:01:31 ldap01 slapd[812]: conn=1012 op=2 UNBIND
+<134>Oct 11 11:01:34 ldap01 slapd[812]: conn=1012 fd=22 closed
+<134>Oct 11 11:01:38 ldap01 slapd[812]: conn=1013 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:01:40 ldap01 slapd[812]: conn=1013 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:01:42 ldap01 slapd[812]: conn=1013 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:01:47 ldap01 slapd[812]: conn=1013 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:01:50 ldap01 slapd[812]: conn=1013 op=1 SRCH attr=cn mail
+<134>Oct 11 11:01:52 ldap01 slapd[812]: conn=1013 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:01:55 ldap01 slapd[812]: conn=1013 op=2 UNBIND
+<134>Oct 11 11:01:56 ldap01 slapd[812]: conn=1013 fd=23 closed
+<134>Oct 11 11:01:57 ldap01 slapd[812]: conn=1014 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:02:02 ldap01 slapd[812]: conn=1014 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:02:04 ldap01 slapd[812]: conn=1014 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:02:06 ldap01 slapd[812]: conn=1014 op=1 SRCH attr=cn mail
+<134>Oct 11 11:02:09 ldap01 slapd[812]: conn=1014 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:02:11 ldap01 slapd[812]: conn=1014 op=2 UNBIND
+<134>Oct 11 11:02:15 ldap01 slapd[812]: conn=1014 fd=24 closed
+<134>Oct 11 11:02:19 ldap01 slapd[812]: conn=1015 fd=25 ACCEPT from IP=10.1.4.236:62479 (IP=0.0.0.0:389)
+<134>Oct 11 11:02:23 ldap01 slapd[812]: conn=1015 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:02:25 ldap01 slapd[812]: conn=1015 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:02:29 ldap01 slapd[812]: conn=1015 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:02:30 ldap01 slapd[812]: conn=1015 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:02:35 ldap01 slapd[812]: conn=1015 op=1 SRCH attr=cn mail
+<134>Oct 11 11:02:36 ldap01 slapd[812]: conn=1015 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:02:40 ldap01 slapd[812]: conn=1015 op=2 UNBIND
+<134>Oct 11 11:02:41 ldap01 slapd[812]: conn=1015 fd=25 closed
+<134>Oct 11 11:02:43 ldap01 slapd[812]: conn=1016 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:02:47 ldap01 slapd[812]: conn=1016 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:02:51 ldap01 slapd[812]: conn=1016 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:02:54 ldap01 slapd[812]: conn=1016 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:02:56 ldap01 slapd[812]: conn=1016 op=1 SRCH attr=cn mail
+<134>Oct 11 11:03:01 ldap01 slapd[812]: conn=1016 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:03:02 ldap01 slapd[812]: conn=1016 op=2 UNBIND
+<134>Oct 11 11:03:03 ldap01 slapd[812]: conn=1016 fd=26 closed
+<134>Oct 11 11:03:07 ldap01 slapd[812]: conn=1017 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:03:09 ldap01 slapd[812]: conn=1017 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:03:10 ldap01 slapd[812]: conn=1017 op=1 SRCH attr=cn mail
+<134>Oct 11 11:03:12 ldap01 slapd[812]: conn=1017 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:03:16 ldap01 slapd[812]: conn=1017 op=2 UNBIND
+<134>Oct 11 11:03:20 ldap01 slapd[812]: conn=1017 fd=27 closed
+<134>Oct 11 11:03:22 ldap01 slapd[812]: conn=1018 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:03:24 ldap01 slapd[812]: conn=1018 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:03:29 ldap01 slapd[812]: conn=1018 op=1 SRCH attr=cn mail
+<134>Oct 11 11:03:30 ldap01 slapd[812]: conn=1018 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:03:31 ldap01 slapd[812]: conn=1018 op=2 UNBIND
+<134>Oct 11 11:03:32 ldap01 slapd[812]: conn=1018 fd=28 closed
+<134>Oct 11 11:03:34 ldap01 slapd[812]: conn=1019 fd=29 ACCEPT from IP=10.1.2.187:7699 (IP=0.0.0.0:389)
+<134>Oct 11 11:03:39 ldap01 slapd[812]: conn=1019 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:03:43 ldap01 slapd[812]: conn=1019 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:03:44 ldap01 slapd[812]: conn=1019 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:03:49 ldap01 slapd[812]: conn=1019 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:03:50 ldap01 slapd[812]: conn=1019 op=1 SRCH attr=cn mail
+<134>Oct 11 11:03:51 ldap01 slapd[812]: conn=1019 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:03:53 ldap01 slapd[812]: conn=1019 op=2 UNBIND
+<134>Oct 11 11:03:55 ldap01 slapd[812]: conn=1019 fd=29 closed
+<134>Oct 11 11:03:56 ldap01 slapd[812]: conn=1020 fd=10 ACCEPT from IP=10.1.4.82:1861 (IP=0.0.0.0:389)
+<134>Oct 11 11:03:59 ldap01 slapd[812]: conn=1020 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:04:03 ldap01 slapd[812]: conn=1020 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:04:05 ldap01 slapd[812]: conn=1020 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:04:07 ldap01 slapd[812]: conn=1020 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:04:12 ldap01 slapd[812]: conn=1020 op=1 SRCH attr=cn mail
+<134>Oct 11 11:04:17 ldap01 slapd[812]: conn=1020 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:04:20 ldap01 slapd[812]: conn=1020 op=2 UNBIND
+<134>Oct 11 11:04:23 ldap01 slapd[812]: conn=1020 fd=10 closed
+<134>Oct 11 11:04:27 ldap01 slapd[812]: conn=1021 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:04:31 ldap01 slapd[812]: conn=1021 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:04:33 ldap01 slapd[812]: conn=1021 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:04:36 ldap01 slapd[812]: conn=1021 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:04:38 ldap01 slapd[812]: conn=1021 op=1 SRCH attr=cn mail
+<134>Oct 11 11:04:40 ldap01 slapd[812]: conn=1021 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:04:44 ldap01 slapd[812]: conn=1021 op=2 UNBIND
+<134>Oct 11 11:04:47 ldap01 slapd[812]: conn=1021 fd=11 closed
+<134>Oct 11 11:04:50 ldap01 slapd[812]: conn=1022 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:04:53 ldap01 slapd[812]: conn=1022 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:04:54 ldap01 slapd[812]: conn=1022 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:04:57 ldap01 slapd[812]: conn=1022 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:05:01 ldap01 slapd[812]: conn=1022 op=1 SRCH attr=cn mail
+<134>Oct 11 11:05:04 ldap01 slapd[812]: conn=1022 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:05:06 ldap01 slapd[812]: conn=1022 op=2 UNBIND
+<134>Oct 11 11:05:09 ldap01 slapd[812]: conn=1022 fd=12 closed
+<134>Oct 11 11:05:12 ldap01 slapd[812]: conn=1023 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:05:17 ldap01 slapd[812]: conn=1023 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:05:19 ldap01 slapd[812]: conn=1023 op=1 SRCH attr=cn mail
+<134>Oct 11 11:05:20 ldap01 slapd[812]: conn=1023 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:05:25 ldap01 slapd[812]: conn=1023 op=2 UNBIND
+<134>Oct 11 11:05:27 ldap01 slapd[812]: conn=1023 fd=13 closed
+<134>Oct 11 11:05:29 ldap01 slapd[812]: conn=1024 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:05:31 ldap01 slapd[812]: conn=1024 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:05:33 ldap01 slapd[812]: conn=1024 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:05:38 ldap01 slapd[812]: conn=1024 op=1 SRCH attr=cn mail
+<134>Oct 11 11:05:39 ldap01 slapd[812]: conn=1024 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:05:42 ldap01 slapd[812]: conn=1024 op=2 UNBIND
+<134>Oct 11 11:05:44 ldap01 slapd[812]: conn=1024 fd=14 closed
+<134>Oct 11 11:05:48 ldap01 slapd[812]: conn=1025 fd=15 ACCEPT from IP=10.1.4.36:17003 (IP=0.0.0.0:389)
+<134>Oct 11 11:05:52 ldap01 slapd[812]: conn=1025 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:05:53 ldap01 slapd[812]: conn=1025 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:05:58 ldap01 slapd[812]: conn=1025 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:06:03 ldap01 slapd[812]: conn=1025 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:06:08 ldap01 slapd[812]: conn=1025 op=1 SRCH attr=cn mail
+<134>Oct 11 11:06:12 ldap01 slapd[812]: conn=1025 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:06:17 ldap01 slapd[812]: conn=1025 op=2 UNBIND
+<134>Oct 11 11:06:20 ldap01 slapd[812]: conn=1025 fd=15 closed
+<134>Oct 11 11:06:25 ldap01 slapd[812]: conn=1026 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:06:28 ldap01 slapd[812]: conn=1026 op=1 SRCH attr=cn mail
+<134>Oct 11 11:06:32 ldap01 slapd[812]: conn=1026 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:06:34 ldap01 slapd[812]: conn=1026 op=2 UNBIND
+<134>Oct 11 11:06:37 ldap01 slapd[812]: conn=1026 fd=16 closed
+<134>Oct 11 11:06:41 ldap01 slapd[812]: conn=1027 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 11:06:42 ldap01 slapd[812]: conn=1027 op=1 SRCH attr=cn mail
+<134>Oct 11 11:06:47 ldap01 slapd[812]: conn=1027 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:06:49 ldap01 slapd[812]: conn=1027 op=2 UNBIND
+<134>Oct 11 11:06:51 ldap01 slapd[812]: conn=1027 fd=17 closed
+<134>Oct 11 11:06:54 ldap01 slapd[812]: conn=1028 fd=18 ACCEPT from IP=10.1.8.136:11443 (IP=0.0.0.0:389)
+<134>Oct 11 11:06:56 ldap01 slapd[812]: conn=1028 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:06:57 ldap01 slapd[812]: conn=1028 op=0 BIND dn="uid=carol,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:06:59 ldap01 slapd[812]: conn=1028 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:07:02 ldap01 slapd[812]: conn=1028 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:07:03 ldap01 slapd[812]: conn=1028 op=1 SRCH attr=cn mail
+<134>Oct 11 11:07:08 ldap01 slapd[812]: conn=1028 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:07:13 ldap01 slapd[812]: conn=1028 op=2 UNBIND
+<134>Oct 11 11:07:15 ldap01 slapd[812]: conn=1028 fd=18 closed
+<134>Oct 11 11:07:19 ldap01 slapd[812]: conn=1029 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:07:20 ldap01 slapd[812]: conn=1029 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:07:21 ldap01 slapd[812]: conn=1029 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:07:25 ldap01 slapd[812]: conn=1029 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 11:07:30 ldap01 slapd[812]: conn=1029 op=1 SRCH attr=cn mail
+<134>Oct 11 11:07:31 ldap01 slapd[812]: conn=1029 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:07:34 ldap01 slapd[812]: conn=1029 op=2 UNBIND
+<134>Oct 11 11:07:36 ldap01 slapd[812]: conn=1029 fd=19 closed
+<134>Oct 11 11:07:40 ldap01 slapd[812]: conn=1030 fd=20 ACCEPT from IP=10.1.5.132:46116 (IP=0.0.0.0:389)
+<134>Oct 11 11:07:45 ldap01 slapd[812]: conn=1030 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:07:46 ldap01 slapd[812]: conn=1030 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:07:49 ldap01 slapd[812]: conn=1030 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:07:52 ldap01 slapd[812]: conn=1030 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:07:55 ldap01 slapd[812]: conn=1030 op=1 SRCH attr=cn mail
+<134>Oct 11 11:07:56 ldap01 slapd[812]: conn=1030 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:08:01 ldap01 slapd[812]: conn=1030 op=2 UNBIND
+<134>Oct 11 11:08:03 ldap01 slapd[812]: conn=1030 fd=20 closed
+<134>Oct 11 11:08:07 ldap01 slapd[812]: conn=1031 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:08:12 ldap01 slapd[812]: conn=1031 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 11:08:13 ldap01 slapd[812]: conn=1031 op=1 SRCH attr=cn mail
+<134>Oct 11 11:08:15 ldap01 slapd[812]: conn=1031 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:08:16 ldap01 slapd[812]: conn=1031 op=2 UNBIND
+<134>Oct 11 11:08:20 ldap01 slapd[812]: conn=1031 fd=21 closed
+<134>Oct 11 11:08:22 ldap01 slapd[812]: conn=1032 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:08:24 ldap01 slapd[812]: conn=1032 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:08:25 ldap01 slapd[812]: conn=1032 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:08:28 ldap01 slapd[812]: conn=1032 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:08:32 ldap01 slapd[812]: conn=1032 op=1 SRCH attr=cn mail
+<134>Oct 11 11:08:37 ldap01 slapd[812]: conn=1032 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:08:42 ldap01 slapd[812]: conn=1032 op=2 UNBIND
+<134>Oct 11 11:08:43 ldap01 slapd[812]: conn=1032 fd=22 closed
+<134>Oct 11 11:08:44 ldap01 slapd[812]: conn=1033 fd=23 ACCEPT from IP=10.1.1.51:1135 (IP=0.0.0.0:389)
+<134>Oct 11 11:08:46 ldap01 slapd[812]: conn=1033 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:08:50 ldap01 slapd[812]: conn=1033 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:08:55 ldap01 slapd[812]: conn=1033 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:08:56 ldap01 slapd[812]: conn=1033 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:08:59 ldap01 slapd[812]: conn=1033 op=1 SRCH attr=cn mail
+<134>Oct 11 11:09:02 ldap01 slapd[812]: conn=1033 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:09:04 ldap01 slapd[812]: conn=1033 op=2 UNBIND
+<134>Oct 11 11:09:09 ldap01 slapd[812]: conn=1033 fd=23 closed
+<134>Oct 11 11:09:14 ldap01 slapd[812]: conn=1034 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:09:19 ldap01 slapd[812]: conn=1034 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:09:20 ldap01 slapd[812]: conn=1034 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=dave)"
+<134>Oct 11 11:09:22 ldap01 slapd[812]: conn=1034 op=1 SRCH attr=cn mail
+<134>Oct 11 11:09:25 ldap01 slapd[812]: conn=1034 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:09:28 ldap01 slapd[812]: conn=1034 op=2 UNBIND
+<134>Oct 11 11:09:31 ldap01 slapd[812]: conn=1034 fd=24 closed
+<134>Oct 11 11:09:35 ldap01 slapd[812]: conn=1035 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:09:36 ldap01 slapd[812]: conn=1035 op=1 SRCH attr=cn mail
+<134>Oct 11 11:09:41 ldap01 slapd[812]: conn=1035 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:09:44 ldap01 slapd[812]: conn=1035 op=2 UNBIND
+<134>Oct 11 11:09:48 ldap01 slapd[812]: conn=1035 fd=25 closed
+<134>Oct 11 11:09:49 ldap01 slapd[812]: conn=1036 fd=26 ACCEPT from IP=10.1.5.60:32537 (IP=0.0.0.0:389)
+<134>Oct 11 11:09:50 ldap01 slapd[812]: conn=1036 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:09:52 ldap01 slapd[812]: conn=1036 op=0 BIND dn="uid=dave,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:09:57 ldap01 slapd[812]: conn=1036 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:09:59 ldap01 slapd[812]: conn=1036 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:10:04 ldap01 slapd[812]: conn=1036 op=1 SRCH attr=cn mail
+<134>Oct 11 11:10:07 ldap01 slapd[812]: conn=1036 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:10:09 ldap01 slapd[812]: conn=1036 op=2 UNBIND
+<134>Oct 11 11:10:11 ldap01 slapd[812]: conn=1036 fd=26 closed
+<134>Oct 11 11:10:13 ldap01 slapd[812]: conn=1037 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:10:17 ldap01 slapd[812]: conn=1037 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:10:19 ldap01 slapd[812]: conn=1037 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:10:23 ldap01 slapd[812]: conn=1037 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=bob)"
+<134>Oct 11 11:10:28 ldap01 slapd[812]: conn=1037 op=1 SRCH attr=cn mail
+<134>Oct 11 11:10:31 ldap01 slapd[812]: conn=1037 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:10:34 ldap01 slapd[812]: conn=1037 op=2 UNBIND
+<134>Oct 11 11:10:36 ldap01 slapd[812]: conn=1037 fd=27 closed
+<134>Oct 11 11:10:38 ldap01 slapd[812]: conn=1038 op=0 BIND dn="uid=alice,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:10:40 ldap01 slapd[812]: conn=1038 op=0 RESULT tag=97 err=0 text=
+<134>Oct 11 11:10:42 ldap01 slapd[812]: conn=1038 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=carol)"
+<134>Oct 11 11:10:46 ldap01 slapd[812]: conn=1038 op=1 SRCH attr=cn mail
+<134>Oct 11 11:10:51 ldap01 slapd[812]: conn=1038 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:10:54 ldap01 slapd[812]: conn=1038 op=2 UNBIND
+<134>Oct 11 11:10:57 ldap01 slapd[812]: conn=1038 fd=28 closed
+<134>Oct 11 11:10:58 ldap01 slapd[812]: conn=1039 fd=29 ACCEPT from IP=10.1.2.56:50761 (IP=0.0.0.0:389)
+<134>Oct 11 11:10:59 ldap01 slapd[812]: conn=1039 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" method=128
+<134>Oct 11 11:11:03 ldap01 slapd[812]: conn=1039 op=0 BIND dn="uid=bob,ou=people,dc=acme,dc=org" mech=SIMPLE ssf=0
+<134>Oct 11 11:11:08 ldap01 slapd[812]: conn=1039 op=0 RESULT tag=97 err=49 text=
+<134>Oct 11 11:11:09 ldap01 slapd[812]: conn=1039 op=1 SRCH base="dc=acme,dc=org" scope=2 deref=0 filter="(uid=alice)"
+<134>Oct 11 11:11:13 ldap01 slapd[812]: conn=1039 op=1 SRCH attr=cn mail
+<134>Oct 11 11:11:14 ldap01 slapd[812]: conn=1039 op=1 SEARCH RESULT tag=101 err=0 nentries=1 text=
+<134>Oct 11 11:11:19 ldap01 slapd[812]: conn=1039 op=2 UNBIND
+<134>Oct 11 11:11:22 ldap01 slapd[812]: conn=1039 fd=29 closed

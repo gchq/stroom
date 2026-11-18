@@ -1,0 +1,48 @@
+name: sudo on web servers (RFC 3164 syslog)
+template: Event Data (Text)
+capabilities: [format_recognition, timestamps]
+request: >
+  Onboard sudo logs from our web servers (classic RFC 3164 syslog, so the timestamp has no year; these are from
+  2026). Each line is a user running a command as another user (usually root). Index the events.
+expected:
+  records: 3
+  event_types: [Process]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Process/Command]
+sample: |
+  <85>Sep 28 14:00:01 web02 sudo:    grace : TTY=pts/0 ; PWD=/home/grace ; USER=root ; COMMAND=/usr/bin/systemctl restart nginx
+  <85>Sep 28 14:10:44 web02 sudo:    henry : TTY=pts/1 ; PWD=/var/www ; USER=www-data ; COMMAND=/usr/bin/git pull
+  <85>Sep  8 09:03:07 web03 sudo:    grace : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/apt-get upgrade
+reference:
+  converter: |
+    <?xml version="1.1" encoding="UTF-8"?>
+    <dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+      <split delimiter="\n">
+        <group>
+          <regex pattern="^&lt;(\d+)&gt;(\w{3} [ \d]\d \d{2}:\d{2}:\d{2}) (\S+) sudo:\s+(\S+) : TTY=(\S+) ; PWD=(\S+) ; USER=(\S+) ; COMMAND=(\S+) ?(.*)$">
+            <data name="pri" value="$1" /><data name="time" value="$2" /><data name="host" value="$3" />
+            <data name="user" value="$4" /><data name="tty" value="$5" /><data name="pwd" value="$6" />
+            <data name="runas" value="$7" /><data name="command" value="$8" /><data name="args" value="$9" />
+          </regex>
+        </group>
+      </split>
+    </dataSplitter>
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, xpath: "concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))", time_format: "yyyy MMM d HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Web}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: sudo}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventSource/RunAs/Id, field: runas}
+    events:
+      - name: sudo command
+        fields:
+          - {path: EventDetail/TypeId, value: Sudo}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Application}
+          - {path: EventDetail/Process/Command, field: command}
+          - {path: EventDetail/Process/Arguments, field: args}
+          - {path: EventDetail/Process/Data, data_name: working_directory, field: pwd}

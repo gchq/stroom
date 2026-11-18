@@ -1,0 +1,537 @@
+{
+ "closed": {
+  "output": "kafka",
+  "topic": "t",
+  "kafka_key": null,
+  "custom_keys": false,
+  "vendor": {
+   "value": null,
+   "source": "EventSource/System/Organisation",
+   "map": {},
+   "default": null
+  },
+  "product": {
+   "value": null,
+   "source": "EventSource/System/Name",
+   "map": {},
+   "default": null
+  },
+  "version": {
+   "value": null,
+   "source": "EventSource/System/Version",
+   "map": {},
+   "default": null
+  },
+  "signature": {
+   "value": null,
+   "source": "(EventDetail/TypeId, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]",
+   "map": {},
+   "default": null
+  },
+  "name": {
+   "value": null,
+   "source": "(EventDetail/Description, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]",
+   "map": {},
+   "default": null
+  },
+  "severity": {
+   "value": "3",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "common": [
+   {
+    "path": "EventSource/Device/HostName",
+    "key": "dvchost",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventTime/TimeCreated",
+    "key": "rt",
+    "label": null,
+    "transform": "epoch_ms"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "key": "cs1",
+    "label": "Client IPAddress",
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "key": "suser",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/Device/IPAddress",
+    "key": "dvc",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "key": "cs2",
+    "label": "System Environment",
+    "transform": "text"
+   }
+  ],
+  "events": {
+   "Authenticate": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d0']/@Value",
+     "key": "cs3",
+     "label": "d0",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d1']/@Value",
+     "key": "cs4",
+     "label": "d1",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d10']/@Value",
+     "key": "cs5",
+     "label": "d10",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d11']/@Value",
+     "key": "cs6",
+     "label": "d11",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d2']/@Value",
+     "key": "flexString1",
+     "label": "d2",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d3']/@Value",
+     "key": "flexString2",
+     "label": "d3",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+     "key": "cn1",
+     "label": "session_id",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Outcome/Success",
+     "key": "outcome",
+     "label": null,
+     "transform": "outcome"
+    },
+    {
+     "path": "EventDetail/Authenticate/User/Id",
+     "key": "duser",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "Network": [
+    {
+     "path": "local-name(EventDetail/Network/*[1])",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "key": "dst",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Port",
+     "key": "dpt",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Device/IPAddress",
+     "key": "src",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Port",
+     "key": "spt",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/TransportProtocol",
+     "key": "proto",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "View": [
+    {
+     "path": "'View'",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Id",
+     "key": "cn1",
+     "label": "View Resource Id",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Name",
+     "key": "cs3",
+     "label": "View Resource Name",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Type",
+     "key": "cs4",
+     "label": "View Resource Type",
+     "transform": "text"
+    }
+   ]
+  },
+  "not_sent": [
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='d4']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='d5']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='d6']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='d7']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='d8']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='d9']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+    "event_type": "Authenticate",
+    "why": "no standard CEF key fits it and the custom slots are all used; keys outside the dictionary are not allowed"
+   }
+  ],
+  "imports": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "closed_notes": [
+  "[every event] EventSource/Client/IPAddress: values like ['192.0.2.45', 'ss-client.domain.com'] don't fit src (ip), so it goes to a custom slot"
+ ],
+ "opened": {
+  "output": "kafka",
+  "topic": "t",
+  "kafka_key": null,
+  "custom_keys": true,
+  "vendor": {
+   "value": null,
+   "source": "EventSource/System/Organisation",
+   "map": {},
+   "default": null
+  },
+  "product": {
+   "value": null,
+   "source": "EventSource/System/Name",
+   "map": {},
+   "default": null
+  },
+  "version": {
+   "value": null,
+   "source": "EventSource/System/Version",
+   "map": {},
+   "default": null
+  },
+  "signature": {
+   "value": null,
+   "source": "(EventDetail/TypeId, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]",
+   "map": {},
+   "default": null
+  },
+  "name": {
+   "value": null,
+   "source": "(EventDetail/Description, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]",
+   "map": {},
+   "default": null
+  },
+  "severity": {
+   "value": "3",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "common": [
+   {
+    "path": "EventSource/Device/HostName",
+    "key": "dvchost",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventTime/TimeCreated",
+    "key": "rt",
+    "label": null,
+    "transform": "epoch_ms"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "key": "cs1",
+    "label": "Client IPAddress",
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "key": "suser",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/Device/IPAddress",
+    "key": "dvc",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "key": "cs2",
+    "label": "System Environment",
+    "transform": "text"
+   }
+  ],
+  "events": {
+   "Authenticate": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d0']/@Value",
+     "key": "cs3",
+     "label": "d0",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d1']/@Value",
+     "key": "cs4",
+     "label": "d1",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d10']/@Value",
+     "key": "cs5",
+     "label": "d10",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d11']/@Value",
+     "key": "cs6",
+     "label": "d11",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d2']/@Value",
+     "key": "flexString1",
+     "label": "d2",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d3']/@Value",
+     "key": "flexString2",
+     "label": "d3",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d4']/@Value",
+     "key": "d4",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d5']/@Value",
+     "key": "d5",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d6']/@Value",
+     "key": "d6",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d7']/@Value",
+     "key": "d7",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d8']/@Value",
+     "key": "d8",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='d9']/@Value",
+     "key": "d9",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+     "key": "note",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+     "key": "cn1",
+     "label": "session_id",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Outcome/Success",
+     "key": "outcome",
+     "label": null,
+     "transform": "outcome"
+    },
+    {
+     "path": "EventDetail/Authenticate/User/Id",
+     "key": "duser",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "Network": [
+    {
+     "path": "local-name(EventDetail/Network/*[1])",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "key": "dst",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Port",
+     "key": "dpt",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Device/IPAddress",
+     "key": "src",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Port",
+     "key": "spt",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/TransportProtocol",
+     "key": "proto",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "View": [
+    {
+     "path": "'View'",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Id",
+     "key": "cn1",
+     "label": "View Resource Id",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Name",
+     "key": "cs3",
+     "label": "View Resource Name",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Type",
+     "key": "cs4",
+     "label": "View Resource Type",
+     "transform": "text"
+    }
+   ]
+  },
+  "not_sent": [],
+  "imports": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "opened_notes": [
+  "[every event] EventSource/Client/IPAddress: values like ['192.0.2.45', 'ss-client.domain.com'] don't fit src (ip), so it goes to a custom slot",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='d4']/@Value -> d4: a key outside the CEF dictionary (allowed by the user)",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='d5']/@Value -> d5: a key outside the CEF dictionary (allowed by the user)",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='d6']/@Value -> d6: a key outside the CEF dictionary (allowed by the user)",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='d7']/@Value -> d7: a key outside the CEF dictionary (allowed by the user)",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='d8']/@Value -> d8: a key outside the CEF dictionary (allowed by the user)",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='d9']/@Value -> d9: a key outside the CEF dictionary (allowed by the user)",
+  "[Authenticate] EventDetail/Authenticate/Data[@Name='note']/@Value -> note: a key outside the CEF dictionary (allowed by the user)"
+ ]
+}

@@ -1,0 +1,174 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs mcp">
+  <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
+       (the mapping's log_unmapped_fields) -->
+  <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
+  <xsl:function name="mcp:json-to-xml" as="node()?">
+    <xsl:param name="text" as="item()*"/>
+    <xsl:variable name="json" select="string(($text)[1])"/>
+    <xsl:if test="normalize-space($json)">
+      <xsl:try>
+        <xsl:variable name="parsed" select="json-to-xml($json)"/>
+        <xsl:sequence select="if ($parsed/*[local-name() = 'string'] and matches($parsed/*, '^\s*[\[{]')) then mcp:json-to-xml(string($parsed/*)) else $parsed"/>
+        <xsl:catch/>
+      </xsl:try>
+    </xsl:if>
+  </xsl:function>
+  <xsl:template match="records">
+    <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
+      <xsl:apply-templates select="record" mode="event"/>
+    </Events>
+  </xsl:template>
+  <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields), but for records left untranslated on purpose -->
+    <xsl:variable name="json_time" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <xsl:if test="not((not($json_time)))">
+      <xsl:call-template name="mcp_unread_fields"/>
+    </xsl:if>
+    <xsl:variable name="json_action" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]"/>
+    <xsl:choose>
+      <xsl:when test="not($json_time)">
+        <!-- drop: damaged lines (not JSON): left untranslated on purpose -->
+      </xsl:when>
+      <xsl:when test="$json_action = 'login'">
+        <xsl:apply-templates select="." mode="event_type_logon"/>
+      </xsl:when>
+      <xsl:when test="$json_action = 'logout'">
+        <xsl:apply-templates select="." mode="event_type_logoff"/>
+      </xsl:when>
+      <xsl:when test="$json_action = 'password_change'">
+        <xsl:apply-templates select="." mode="event_type_password"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string(($json_time)[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  <!-- mcp_unread_fields: a field of the record no rule reads, logged once a stream (ignored_fields: left out on
+       purpose); called by the rules that translate their records -->
+  <xsl:template name="mcp_unread_fields">
+    <xsl:if test="$log_unmapped_fields">
+      <xsl:for-each select="data[@name][not(@name = ('json'))][normalize-space(string(@value))]">
+        <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+        <xsl:if test="not(string(stroom:get($mcp_unread)))">
+          <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+          <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:if>
+  </xsl:template>
+  <!-- Rule 'logon': records where json.action = login. Writes an Authenticate event (TypeId from json.action) from
+       json.user, json.result. -->
+  <xsl:template match="node()" mode="event_type_logon">
+    <Event>
+      <xsl:apply-templates select="." mode="event_time"/>
+      <xsl:apply-templates select="." mode="event_source"/>
+      <EventDetail>
+        <xsl:apply-templates select="." mode="type_id"/>
+        <Authenticate>
+          <Action>Logon</Action>
+          <xsl:apply-templates select="." mode="user"/>
+          <xsl:apply-templates select="." mode="outcome"/>
+        </Authenticate>
+      </EventDetail>
+    </Event>
+  </xsl:template>
+  <!-- Rule 'logoff': records where json.action = logout. Writes an Authenticate event (TypeId from json.action) from
+       json.user. -->
+  <xsl:template match="node()" mode="event_type_logoff">
+    <Event>
+      <xsl:apply-templates select="." mode="event_time"/>
+      <xsl:apply-templates select="." mode="event_source"/>
+      <EventDetail>
+        <xsl:apply-templates select="." mode="type_id"/>
+        <Authenticate>
+          <Action>Logoff</Action>
+          <xsl:apply-templates select="." mode="user"/>
+        </Authenticate>
+      </EventDetail>
+    </Event>
+  </xsl:template>
+  <!-- Rule 'password': records where json.action = password_change. Writes an Authenticate event (TypeId from
+       json.action) from json.user, json.result. -->
+  <xsl:template match="node()" mode="event_type_password">
+    <Event>
+      <xsl:apply-templates select="." mode="event_time"/>
+      <xsl:apply-templates select="." mode="event_source"/>
+      <EventDetail>
+        <xsl:apply-templates select="." mode="type_id"/>
+        <Authenticate>
+          <Action>ChangePassword</Action>
+          <xsl:apply-templates select="." mode="user"/>
+          <xsl:apply-templates select="." mode="outcome"/>
+        </Authenticate>
+      </EventDetail>
+    </Event>
+  </xsl:template>
+  <!-- event_time: shared by the rules 'logon', 'logoff', 'password' -->
+  <xsl:template match="node()" mode="event_time">
+    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]">
+      <EventTime>
+        <TimeCreated>
+          <xsl:value-of select="stroom:format-date((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+        </TimeCreated>
+      </EventTime>
+    </xsl:if>
+  </xsl:template>
+  <!-- event_source: shared by the rules 'logon', 'logoff', 'password' -->
+  <xsl:template match="node()" mode="event_source">
+    <EventSource>
+      <System>
+        <Name>Auth App</Name>
+        <Environment>Eval</Environment>
+      </System>
+      <Generator>auth-app</Generator>
+      <Device>
+        <HostName>auth01</HostName>
+      </Device>
+      <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='ip'][normalize-space(.)]">
+        <Client>
+          <IPAddress>
+            <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='ip'])[1]"/>
+          </IPAddress>
+        </Client>
+      </xsl:if>
+      <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'][normalize-space(.)]">
+        <User>
+          <Id>
+            <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'])[1]"/>
+          </Id>
+        </User>
+      </xsl:if>
+    </EventSource>
+  </xsl:template>
+  <!-- type_id: shared by the rules 'logon', 'logoff', 'password' -->
+  <xsl:template match="node()" mode="type_id">
+    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]">
+      <TypeId>
+        <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])[1]"/>
+      </TypeId>
+    </xsl:if>
+  </xsl:template>
+  <!-- user: shared by the rules 'logon', 'logoff', 'password' -->
+  <xsl:template match="node()" mode="user">
+    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'][normalize-space(.)]">
+      <User>
+        <Id>
+          <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'])[1]"/>
+        </Id>
+      </User>
+    </xsl:if>
+  </xsl:template>
+  <!-- outcome: shared by the rules 'logon', 'password' -->
+  <xsl:template match="node()" mode="outcome">
+    <xsl:if test="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='result'])[1] = ('success', 'failure')">
+      <Outcome>
+        <Success>
+          <xsl:value-of select="if ((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='result'])[1] = 'success') then 'true' else 'false'"/>
+        </Success>
+      </Outcome>
+    </xsl:if>
+  </xsl:template>
+</xsl:stylesheet>

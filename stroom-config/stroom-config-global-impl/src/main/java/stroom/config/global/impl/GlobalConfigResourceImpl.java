@@ -216,21 +216,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     }
 
     private ConfigProperty sanitise(final ConfigProperty configProperty) {
-        final ConfigProperty.Builder builder = configProperty.copy();
-        if (configProperty.isPassword()) {
-            builder.defaultValue(null);
-            if (configProperty.getDatabaseOverrideValue().isHasOverride()) {
-                builder.databaseOverrideValue(OverrideValue.withNullValue(String.class));
-            } else {
-                builder.databaseOverrideValue(OverrideValue.unSet(String.class));
-            }
-            if (configProperty.getYamlOverrideValue().isHasOverride()) {
-                builder.yamlOverrideValue(OverrideValue.withNullValue(String.class));
-            } else {
-                builder.yamlOverrideValue(OverrideValue.unSet(String.class));
-            }
-        }
-        return builder.build();
+        return GlobalConfigReaderImpl.sanitise(configProperty);
     }
 
     @Timed

@@ -1,0 +1,87 @@
+name: Microsoft 365 unified audit log, a later build (a new Identity group beside the promoted Messaging group)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, later_builds]
+# A later build on an aggregated feed: case 56 built and promoted first (its feed, data, registry beside the feed, the
+# Messaging group's pipeline, XSLT and index), then the user asks for the Azure AD records as a new group. The
+# traps: the source type field asked again (the registry beside the feed says it); the new source type put in the
+# Messaging group, or Messaging's pipeline, XSLT or index changed; the group's Events indexed into Messaging's index;
+# the Messaging records (and the parked SharePoint and OneDrive ones) taken for errors in the Identity pipeline,
+# which passes over all 328 of them.
+setup: {from_case: 56}
+request: >
+  Our Microsoft 365 audit log is onboarded already: its feed carries every workload's records, and the Messaging
+  group (Exchange Online and Teams) is built and promoted. Now add the Azure AD records as a new group called
+  "Identity", with its Events indexed in an index of its own. Leave Messaging as it is.
+user_knows: >
+  The Identity group holds exactly one source type: AzureActiveDirectory. SharePoint and OneDrive stay parked for
+  later builds. Messaging (ExchangeOnline and MicrosoftTeams) is promoted and must not change: not its pipeline, its
+  XSLT or its index. The Workload field says which workload a record came from, as before. The other workloads'
+  records being passed over by the Identity pipeline is expected; they are not errors. The system is Microsoft 365.
+  Users' Ids stay whole, with their domain (sam.taylor@contoso.example), as Messaging writes them.
+expected:
+  records: 72
+  event_types: [Authenticate, Authorise|Update]
+  paths: [EventTime/TimeCreated, EventSource/User/Id]
+  values:
+    EventSource/User/Id: [kate.jones@contoso.example, svc-batch@contoso.example, sam.taylor@contoso.example]
+  # The other workloads' operations: their records are passed over, never translated.
+  forbidden_values:
+    EventDetail/TypeId: [FileAccessed, SharingSet, MailItemsAccessed, Send, MessageSent, TeamMemberAdded]
+    EventSource/Generator: [SharePoint, OneDrive, ExchangeOnline, MicrosoftTeams]
+  source_types:
+    field: Workload
+    group:
+      name: Identity
+      values: [AzureActiveDirectory]
+      others: [ExchangeOnline, MicrosoftTeams, SharePoint, OneDrive]
+    groups: [Messaging, Identity]
+    pipeline: new
+    rows:
+      - {match: value, value: SharePoint, status: parked}
+      - {match: value, value: OneDrive, status: parked}
+    passed_over: 328
+  forms:
+    asked: [{message: "go in this build's source type group"}]
+    not_asked: ["Which field says which source"]
+  unchanged: true
+  separate_index: true
+reference:
+  source_types:
+    group: Identity
+    source_types: [AzureActiveDirectory]
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: CreationTime, time_format: "yyyy-MM-dd'T'HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Microsoft 365}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: Workload}
+      - {path: EventSource/Device/Name, value: Microsoft 365}
+      - {path: EventSource/User/Id, field: UserId}
+      - {path: EventSource/Client/IPAddress, field: ClientIP}
+      - {path: EventDetail/TypeId, field: Operation}
+    events:
+      - name: logon
+        when: [{field: Operation, equals: UserLoggedIn}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: UserId}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: 'true'}
+      - name: logon_failed
+        when: [{field: Operation, equals: UserLoginFailed}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: UserId}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
+          - {path: EventDetail/Authenticate/Outcome/Description, field: event.LogonError}
+      - name: password_reset
+        when: [{field: Operation, equals: Reset user password.}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: ResetPassword}
+          - {path: EventDetail/Authenticate/User/Id, field: UserId}
+      - name: role_member_added
+        when: [{field: Operation, equals: Add member to role.}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Role membership}
+          - {path: EventDetail/Update/After/Object/Id, field: UserId}

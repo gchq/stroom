@@ -17,6 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.dashboard.client.vis.VisFrame;
+import stroom.dashboard.client.vis.VisToolbar;
 import stroom.data.grid.client.MessagePanelImpl;
 import stroom.data.pager.client.RefreshButton;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
@@ -37,6 +38,8 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
     private final SimplePanel visContainer;
     private final MessagePanelImpl messagePanel;
     private final RefreshButton refreshButton;
+    // The chart's controls, above it.
+    private final VisToolbar toolbar;
 
     private VisFrame visFrame;
 
@@ -48,8 +51,10 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         visContainer.setStyleName("queryVis-innerLayout");
 
         refreshButton = new RefreshButton();
-        refreshButton.addStyleName("dashboardVis-refresh");
         refreshButton.setAllowPause(true);
+
+        // The refresh button is on the toolbar's right, as a table's is.
+        toolbar = new VisToolbar(refreshButton);
 
         widget = new FlowPanel() {
             @Override
@@ -76,8 +81,11 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         };
         widget.setStyleName("queryVis-outerLayout"); //("dashboardVis-outerLayout");
         widget.add(visContainer);
-        widget.add(refreshButton);
         widget.add(messagePanel);
+        widget.add(toolbar);
+        // The chart's frame is placed over its container, which leaves room for the toolbar above it (see
+        // VisToolbar.layOut).
+        widget.addStyleName("dashboardVis-outerLayout--toolbar");
     }
 
     @Override
@@ -90,13 +98,20 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         return refreshButton;
     }
 
+    public VisToolbar getToolbar() {
+        return toolbar;
+    }
+
+    @Override
     public void setVisFrame(final VisFrame visFrame) {
         this.visFrame = visFrame;
+        toolbar.setVisFrame(visFrame);
         onResize();
     }
 
     @Override
     public void onResize() {
+        toolbar.layOut(widget.getElement(), visContainer.getElement());
         if (visFrame != null) {
             final Element ref = visContainer.getElement();
             //getParentByClass(visContainer.getElement(), "tabLayout-contentOuter");

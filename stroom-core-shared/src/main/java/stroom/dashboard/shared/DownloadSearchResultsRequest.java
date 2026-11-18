@@ -38,20 +38,39 @@ public class DownloadSearchResultsRequest {
     private final boolean sample;
     @JsonProperty
     private final int percent;
+    @JsonProperty
+    private final boolean includeSourceIds;
 
+    public DownloadSearchResultsRequest(final DashboardSearchRequest searchRequest,
+                                        final String componentId,
+                                        final DownloadSearchResultFileType fileType,
+                                        final Boolean downloadAllTables,
+                                        final Boolean sample,
+                                        final Integer percent) {
+        this(searchRequest, componentId, fileType, downloadAllTables, sample, percent, false);
+    }
+
+    /// @param includeSourceIds True to also write each row's stream and event ids (the hidden StreamId and EventId
+    ///                         columns), so each row can be traced to the event it came from.
     @JsonCreator
     public DownloadSearchResultsRequest(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
                                         @JsonProperty("componentId") final String componentId,
                                         @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                                         @JsonProperty("downloadAllTables") final Boolean downloadAllTables,
                                         @JsonProperty("sample") final Boolean sample,
-                                        @JsonProperty("percent") final Integer percent) {
+                                        @JsonProperty("percent") final Integer percent,
+                                        @JsonProperty("includeSourceIds") final Boolean includeSourceIds) {
+        this.includeSourceIds = Objects.requireNonNullElse(includeSourceIds, false);
         this.searchRequest = searchRequest;
         this.componentId = componentId;
         this.fileType = fileType;
         this.downloadAllTables = Objects.requireNonNullElse(downloadAllTables, false);
         this.sample = Objects.requireNonNullElse(sample, false);
         this.percent = Objects.requireNonNullElse(percent, 0);
+    }
+
+    public boolean isIncludeSourceIds() {
+        return includeSourceIds;
     }
 
     public DashboardSearchRequest getSearchRequest() {

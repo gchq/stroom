@@ -17,6 +17,7 @@
 package stroom.contentindex;
 
 import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.contentindex.ContentIndexConfig.StorageType;
 import stroom.docref.DocRef;
@@ -26,13 +27,16 @@ import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.StringMatch;
 import stroom.node.api.NodeInfo;
+import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.PageRequest;
@@ -45,8 +49,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -221,6 +228,52 @@ class TestLuceneContentIndex {
         return count;
     }
 
+
+    @Test
+    void anIndexNotYetBuiltIsNotReady() {
+        final Executor executor = Mockito.mock(Executor.class);
+        final LuceneContentIndex index = notStartedIndex(tempDir.resolve("content_index"), executor);
+
+        assertThat(index.isReady()).isFalse();
+        // Asking never starts building it.
+        Mockito.verifyNoInteractions(executor);
+    }
+
+    @Test
+    void anIndexBeingBuiltIsNotReadyAndIsNotWaitedFor() throws IOException {
+        final Executor executor = Mockito.mock(Executor.class);
+        final Path dir = tempDir.resolve("content_index");
+        Files.createDirectories(dir);
+        Files.writeString(dir.resolve("segments_1"), "x");
+        // An index on disk is rebuilt in the background when the node starts, which this executor never runs.
+        final LuceneContentIndex index = notStartedIndex(dir, executor);
+        Mockito.verify(executor).execute(Mockito.any());
+
+        final long startNanos = System.nanoTime();
+        assertThat(index.isReady()).isFalse();
+        assertThat(index.isReady()).isFalse();
+        // Well under the time a search waits for the index.
+        assertThat(System.nanoTime() - startNanos).isLessThan(1_000_000_000L);
+        Mockito.verifyNoMoreInteractions(executor);
+    }
+
+    // An index whose background work goes to an executor that never runs it.
+    private LuceneContentIndex notStartedIndex(final Path dir, final Executor executor) {
+        final PathCreator pathCreator = Mockito.mock(PathCreator.class);
+        Mockito.when(pathCreator.toAppPath(Mockito.anyString())).thenReturn(dir);
+        final ContentIndexConfig config = new ContentIndexConfig();
+        return new LuceneContentIndex(Mockito.mock(TempDirProvider.class),
+                pathCreator,
+                () -> config,
+                Set.of(),
+                Mockito.mock(SecurityContext.class),
+                Mockito.mock(TaskContextFactory.class),
+                Mockito.mock(ExplorerNodeService.class),
+                new FixedExecutorProvider(executor),
+                Mockito.mock(ClusterLockService.class),
+                Mockito.mock(NodeInfo.class),
+                Mockito.mock(ClusterNodeManager.class));
+    }
 
     // --------------------------------------------------------------------------------
 

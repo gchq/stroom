@@ -22,6 +22,7 @@ import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.openid.api.RevokedTokenChecker;
 import stroom.security.openid.api.TokenInventory;
 import stroom.security.openid.api.TokenRevoker;
+import stroom.security.openid.api.UserTokenIssuer;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -42,6 +43,8 @@ public final class TokenModule extends AbstractModule {
         // ...and how the RP reads what is outstanding, so the admin list can show subjects that
         // hold tokens but have no session.
         bind(TokenInventory.class).to(OAuthTokenInventory.class);
+        // How other modules get tokens for services that act as a user, e.g. MCP servers.
+        bind(UserTokenIssuer.class).to(UserTokenIssuerImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(TokenRevocationResourceImpl.class)

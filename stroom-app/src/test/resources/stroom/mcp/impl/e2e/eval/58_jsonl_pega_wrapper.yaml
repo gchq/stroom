@@ -1,0 +1,89 @@
+name: PEGA platform logs (JSON lines, a wrapper round a message of text, JSON or SOAP, told apart by sourcetype)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, mixed_formats, nesting]
+# An aggregated feed: PEGA's logs as one JSON wrapper a line (aggregated/pega, made by aggregated-feeds-generator.py;
+# its first 600 lines): timestamp, hostname, sourcetype, app, environment, and a message whose format depends on the
+# source type: JSON text (PegaSecurityEvent), plain text (PegaRULES, PegaDB, PegaClusterHeartbeat, PegaALERT) or a
+# SOAP envelope after "Request: " or "Response: " (PegaIntegration). The user wants one group of one source type,
+# PegaIntegration's SOAP calls (52 records). The traps: the message is held XML (read with xml_fields after an
+# extraction of the text after the prefix), namespaced (soapenv:, cus:, crm:); two bodies are cut off (not
+# well-formed), logged a record each (WARN) yet still Events; the 548 other records are passed over, counted, not
+# errors; and the wrapper's environment field is not the Environment.
+request: >
+  Onboard our PEGA platform logs (a JSON lines file on my disk). Each line is PEGA's wrapper round a message, and
+  sourcetype says which PEGA log it came from. Start with the integration calls only (PegaIntegration: the SOAP
+  requests and responses our services exchange) as a group of its own; the other PEGA logs come later. What matters
+  is what each call does: GetCustomer looks a customer up, CreateCase opens a case for a customer and UpdateAddress
+  changes a customer's address. Index the integration events.
+user_knows: >
+  sourcetype says which source a record came from. This build's group holds one source type, PegaIntegration; call
+  it Integration. Every other sourcetype (PegaDB, PegaRULES, PegaClusterHeartbeat, PegaSecurityEvent, PegaALERT) is
+  for later builds (parked). Records of other source types being passed over by the group's pipeline is expected;
+  they are not errors. A few SOAP bodies are cut off by PEGA's logger; keep those records anyway. The system is PEGA.
+expected:
+  records: 52
+  event_types: [View, Create, Update]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName]
+  values:
+    EventSource/User/Id: [sam.taylor, svc-integration, kate.jones]
+  forbidden_values:
+    EventSource/User/Id: [GetCustomer, CreateCase]
+  source_types:
+    field: sourcetype
+    group:
+      values: [PegaIntegration]
+      others: [PegaDB, PegaRULES, PegaClusterHeartbeat, PegaSecurityEvent, PegaALERT]
+    rows:
+      - {match: value, value: PegaSecurityEvent, status: parked}
+    passed_over: 548
+files:
+  - {name: pega.json, resource: aggregated/pega/pega-1.json, lines: 600}
+reference:
+  source_types:
+    field: sourcetype
+    system_name: PEGA
+    group: Integration
+    source_types: [PegaIntegration]
+  mapping:
+    input: json
+    json_layout: lines
+    xml_fields: [soap]
+    extract:
+      - {field: message, regex: '^(Request|Response): (.*)$', names: [direction, soap], flags: s}
+      - {field: message, regex: '^.*?<\w+:Body><\w+:(GetCustomer|CreateCase|UpdateAddress)(?:Request|Response)>.*$',
+         names: [operation], flags: s}
+    common:
+      - {path: EventTime/TimeCreated, field: timestamp, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: PEGA}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: Pega}
+      - {path: EventSource/Device/HostName, field: hostname}
+      - {path: EventSource/User/Id, field: soap//RequestedBy}
+    ignored_fields: [app, environment]
+    events:
+      - name: get_customer
+        when: [{field: operation, equals: GetCustomer}]
+        fields:
+          - {path: EventDetail/TypeId, value: GetCustomer}
+          - {path: EventDetail/View/Object/Type, value: Customer}
+          - {path: EventDetail/View/Object/Id, field: soap//CustomerId}
+          - {path: EventDetail/View/Data, data_name: direction, field: direction}
+          - {path: EventDetail/View/Data, data_name: correlation, field: soap//CorrelationId}
+      - name: create_case
+        when: [{field: operation, equals: CreateCase}]
+        fields:
+          - {path: EventDetail/TypeId, value: CreateCase}
+          - {path: EventDetail/Create/Object/Type, value: Case}
+          - {path: EventDetail/Create/Data, data_name: customer, field: soap//CustomerId}
+          - {path: EventDetail/Create/Data, data_name: correlation, field: soap//CorrelationId}
+      - name: update_address
+        when: [{field: operation, equals: UpdateAddress}]
+        fields:
+          - {path: EventDetail/TypeId, value: UpdateAddress}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer address}
+          - {path: EventDetail/Update/After/Object/Id, field: soap//CustomerId}
+      - name: cut_off
+        allow_unknown: SOAP bodies PEGA's logger cut off, the call unknown
+        fields:
+          - {path: EventDetail/TypeId, field: direction}
+          - {path: EventDetail/Unknown/Data, data_name: message, field: message}

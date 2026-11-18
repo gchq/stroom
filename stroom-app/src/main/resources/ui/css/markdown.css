@@ -3,8 +3,20 @@
 .markdown {
   --markdown-background__color: var(--dashboard-panel__background-color);
   --markdown-tbl__border-color: var(--border-color);
-  --markdown-heading__color: var(--heading-color);
+  /* Headings in the text colour, so they stand out by size and weight rather than a bright colour that is
+     hard on the eyes in the dark theme. */
+  --markdown-heading__color: var(--text-color);
   --markdown-accent__color: var(--heading-color);
+  /* Subtle tints of the text colour, so they suit both themes. */
+  --markdown-code__background-color: rgb(from var(--text-color) r g b / 0.08);
+  --markdown-code__border-color: rgb(from var(--text-color) r g b / 0.14);
+  --markdown-quote__background-color: rgb(from var(--text-color) r g b / 0.04);
+  --markdown-muted__color: rgb(from var(--text-color) r g b / 0.75);
+  /* Courier New, the app's monospace font, is thin and hard to read in long code, so prefer the system's
+     own monospace fonts. */
+  --markdown-code__font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "DejaVu Sans Mono",
+    "Liberation Mono", var(--monospace-font-family), monospace;
+  line-height: 1.6;
 }
 
 .markdown-container {
@@ -22,6 +34,7 @@
   background-color: var(--markdown-background__color);
 }
 
+/* A modest heading scale: clearly a hierarchy, without a top heading that dwarfs the text. */
 .markdown h1,
 .markdown h2,
 .markdown h3,
@@ -29,32 +42,246 @@
 .markdown h5,
 .markdown h6 {
   color: var(--markdown-heading__color);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.4em 0 0.5em;
+}
+
+.markdown > :first-child,
+.markdown-container > :first-child {
+  margin-top: 0;
+}
+
+/* Copying (see MarkdownConverter): a code span by a click, a code block or a table by its button at the top
+   right; "Copied" shown for a moment beside what was clicked. */
+.markdown-copy-code {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Copyable code darkens a little under the pointer: a faint shade over its background, which darkens it in
+   either theme, eased in and out. */
+.markdown-copy-code,
+.markdown-copyable > pre {
+  transition: box-shadow 0.15s ease;
+}
+
+.markdown-copy-code:hover,
+.markdown-copyable:hover > pre {
+  box-shadow: inset 0 0 0 100vmax rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-copy-code,
+  .markdown-copyable > pre {
+    transition: none;
+  }
+}
+
+.markdown-copyable {
+  position: relative;
+}
+
+/* A table's button at the table's own top right, not the page's. */
+.markdown-copyable:has(> .markdown-table-scroll) {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.markdown-copy {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 3px;
+  border: 1px solid var(--markdown-code__border-color);
+  border-radius: 4px;
+  background-color: var(--markdown-background__color);
+  color: var(--text-color);
+  cursor: pointer;
+  opacity: 0.35;
+}
+
+.markdown-copyable:hover > .markdown-copy,
+.markdown-copy:focus-visible {
+  opacity: 1;
+}
+
+.markdown-copy svg {
+  width: 14px;
+  height: 14px;
+}
+
+.markdown-copied::after {
+  content: "Copied";
+  position: absolute;
+  z-index: 1;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background-color: var(--text-color);
+  color: var(--markdown-background__color);
+  font-family: var(--font-family, sans-serif);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.markdown-copy-code.markdown-copied::after {
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -2px);
+}
+
+.markdown-copy.markdown-copied::after {
+  right: 100%;
+  top: 50%;
+  transform: translate(-4px, -50%);
+}
+
+/* Collapsible sections, one a heading (see MarkdownConverter.nativeSections): the heading's arrow sits in a
+   gutter to its left, so the text stays where it was. */
+.markdown:has(> .markdown-section) {
+  padding-left: 1.6em;
+}
+
+.markdown-section__heading {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+}
+
+.markdown-section__heading::-webkit-details-marker {
+  display: none;
+}
+
+.markdown-section__heading > :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+}
+
+.markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)::before {
+  content: "\25BE";
+  position: absolute;
+  left: -1.3em;
+  width: 1em;
+  font-size: 0.85em;
+  text-align: center;
+  color: var(--markdown-muted__color);
+  transition: transform 0.2s ease;
+}
+
+.markdown-section:not([open]) > .markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)::before {
+  transform: rotate(-90deg);
+}
+
+/* Opening and closing slide rather than jump, where the browser can animate a section's content to its own
+   height; elsewhere it opens and closes at once, as before. Clipped vertically only while it moves, so a wide
+   table still scrolls sideways and the "Copied" label above a code span shows. */
+.markdown {
+  interpolate-size: allow-keywords;
+}
+
+.markdown-section::details-content {
+  block-size: 0;
+  overflow-x: visible;
+  overflow-y: clip;
+  overflow-clip-margin: 1.5em;
+  transition: block-size 0.2s ease, content-visibility 0.2s ease allow-discrete;
+}
+
+.markdown-section[open]::details-content {
+  block-size: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-section::details-content,
+  .markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)::before {
+    transition: none;
+  }
+}
+
+/* Pinned headings, where the frame's sections are measured for them (see IFrameViewImpl.pinHeadings): each
+   section's heading stays at the top while its section is in view, below those of the sections it is in, on
+   the page's background (its gutter too, where the arrow is) so the text scrolls out of sight beneath it. */
+.markdown-pinned-headings .markdown-section__heading {
+  position: sticky;
+  /* Out to the page's edges, over its padding: the gutter, or the page's own (see --markdown-page-inset). */
+  margin-right: calc(-1 * var(--markdown-page-inset-right, 0px));
+  margin-left: calc(-1 * var(--markdown-page-inset, 1.6em));
+  padding-right: var(--markdown-page-inset-right, 0px);
+  padding-left: var(--markdown-page-inset, 1.6em);
+  background-color: var(--markdown-background__color);
+  transition: box-shadow 0.15s ease;
+}
+
+/* No rule under a top heading, nor the room above that rule, where headings are pinned: each pinned heading is a
+   plain row, with the shadow beneath the lowest to set them apart. */
+.markdown-pinned-headings .markdown-section__heading > h1 {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* The lowest heading pinned casts a soft shadow on the text scrolling beneath it. */
+.markdown-pinned-headings .markdown-section__heading--lowest-pinned {
+  box-shadow: 0 10px 14px -6px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-pinned-headings .markdown-section__heading {
+    transition: none;
+  }
+}
+
+.markdown-section__heading:hover > :is(h1, h2, h3, h4, h5, h6)::before {
+  color: var(--markdown-heading__color);
+}
+
+/* The first heading sits at the top, as the first child did before it was sectioned. */
+.markdown > .markdown-section:first-child > .markdown-section__heading > :first-child,
+.markdown-container > .markdown-section:first-child > .markdown-section__heading > :first-child {
+  margin-top: 0;
 }
 
 .markdown h1 {
-  font-weight: 700;
-  font-size: 2em;
-  margin-bottom: 12px;
+  font-size: 1.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--markdown-tbl__border-color);
 }
 
 .markdown h2 {
-  font-weight: 600;
-  font-size: 1.5em;
-  margin-bottom: 6px;
+  font-size: 1.3em;
 }
 
 .markdown h3 {
-  font-weight: 500;
-  font-size: 1.3em;
-  margin-bottom: 4px;
+  font-size: 1.15em;
 }
 
-.markdown h4,
+.markdown h4 {
+  font-size: 1em;
+}
+
 .markdown h5,
 .markdown h6 {
-  font-weight: 400;
-  font-size: 1.1em;
-  margin-bottom: 3px;
+  font-size: 0.95em;
+  color: var(--markdown-muted__color);
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown blockquote,
+.markdown table,
+.markdown pre {
+  margin-top: 0;
+  margin-bottom: 0.85em;
+}
+
+.markdown a {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .markdown p {
@@ -64,18 +291,55 @@
   -ms-user-select: text !important;
 }
 
+/* Inline code: a tinted chip in the text colour, which reads better than coloured text on its own. */
 .markdown code {
-  color: var(--code-color);
+  color: var(--text-color);
+}
+
+.markdown :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background-color: var(--markdown-code__background-color);
+  border: 1px solid var(--markdown-code__border-color);
+  white-space: break-spaces;
 }
 
 .markdown hr {
-  border-top: 1px solid var(--text-color);
+  border: none;
+  border-top: 1px solid var(--markdown-tbl__border-color);
+  margin: 1.5em 0;
+}
+
+/* A table fits the width it has where it can, its cells wrapping only at spaces, so a word, a date (2026-10-25)
+   or a path stays whole (asked for by the user); a table wider than that scrolls sideways in its own box. */
+.markdown table {
+  border-collapse: collapse;
+  border: 1px solid var(--markdown-tbl__border-color);
+  max-width: 100%;
+}
+
+.markdown-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* A run of text without a space kept on one line (see MarkdownConverter.nativeKeepCellWordsWhole). */
+.markdown-nowrap {
+  white-space: nowrap;
+}
+
+/* Text outside a table breaks a word only when it is wider than the whole line (e.g. a long URL), so nothing runs
+   past the page's edge, where it would be cut off. */
+.markdown p,
+.markdown li {
+  overflow-wrap: break-word;
 }
 
 .markdown table th {
-  font-weight: bolder;
+  font-weight: 600;
   text-align: left;
   border-bottom: solid 1px var(--markdown-tbl__border-color);
+  background-color: var(--markdown-code__background-color);
 }
 
 .markdown table td {
@@ -90,13 +354,9 @@
   background-color: var(--row__background-color--odd);
 }
 
-.markdown table {
-  margin: 12px 0px;
-}
-
 .markdown table th,
 .markdown table td {
-  padding: 5px 12px;
+  padding: 6px 12px;
 }
 
 .markdown ul li::marker {
@@ -109,14 +369,21 @@
     color: var(--markdown-accent__color);
 }
 
-.markdown ul li,
-.markdown ol li {
-    line-height: 1.5em;
+.markdown ul,
+.markdown ol {
+    padding-left: 1.6em;
 }
 
 .markdown ul li:not(:first-child),
 .markdown ol li:not(:first-child) {
     margin-top: 0.3em;
+}
+
+/* A nested list follows on from its item, rather than standing apart like a new paragraph. */
+.markdown li > ul,
+.markdown li > ol {
+    margin-top: 0.3em;
+    margin-bottom: 0;
 }
 
 /* Showdown renders task lists as disabled checkboxes. This makes them look a bit meh, so
@@ -166,22 +433,32 @@ hide the standard control and replace it with something more fancy that we can c
   /* Sensible max line length for normal text (Note fenced blocks are not wrapped) */
   max-width: 60em;
   white-space: normal;
-  line-height: 1.5em;
 }
 
 .markdown blockquote {
-  border-left-color: var(--markdown-accent__color);
-  border-left-style: solid;
-  border-left-width: 3px;
-  padding-left: 0.7em;
-  margin-left: 0.5em;
-  padding-top: 0.2em;
+  border-left: 3px solid var(--markdown-accent__color);
+  padding: 0.4em 0.9em;
+  margin-left: 0;
+  margin-right: 0;
+  background-color: var(--markdown-quote__background-color);
+  border-radius: 0 4px 4px 0;
+  color: var(--markdown-muted__color);
 }
 
-/* Fenced blocks */
+.markdown blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* Fenced blocks: one box with a subtle tint and border, in both themes, rather than Prism's own dark
+   background that clashes with the page. */
+.markdown pre,
 .markdown pre[class*=language-] {
-  /* The standard prism padding for fenced blocks is 1em so a bit big */
-  padding: 0.3em 0.5em;
+  padding: 0.6em 0.9em;
+  background-color: var(--markdown-code__background-color);
+  border: 1px solid var(--markdown-code__border-color);
+  border-radius: 6px;
+  overflow: auto;
+  text-shadow: none;
 }
 
 /* force the font family/size for inline and fenced blocks,
@@ -189,12 +466,97 @@ hide the standard control and replace it with something more fancy that we can c
 .markdown code,
 .markdown pre code[class*=language-],
 .markdown pre code[class*=language-] span {
-  font-size: var(--font-size-12);
-  font-family: var(--monospace-font-family);
-  line-height: 1em;
+  font-size: 0.9em;
+  font-family: var(--markdown-code__font-family);
+  text-shadow: none;
 }
 
-.markdown p code {
+.markdown pre code,
+.markdown pre code[class*=language-],
+.markdown pre code[class*=language-] span {
   font-size: var(--font-size-13);
-  line-height: 1em;
+  line-height: 1.5;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* A rendered document (e.g. an entity's Documentation tab or its preview): room around the page, so text
+   is not crammed against the panel's edges, and a readable line length, the page's width alone, which the user
+   can change by dragging its right edge (see IFrameViewImpl.resizableWidth). */
+/* The pane beyond the page's right edge is shaded darker than the page. */
+.info-page.markdown-container {
+  box-sizing: border-box;
+  padding: 0;
+  background-color: rgb(0 0 0 / 0.18);
+}
+
+/* The page: its own room around the text (as much on the right as on the left, its arrows' gutter too), on the
+   page's background, at least as tall as the pane so its edge runs from top to bottom, casting a shadow on the
+   shade to its right only (clipped above and below, so it never falls over the pinned headings). */
+.info-page.markdown-container > .markdown {
+  position: relative;
+  box-sizing: border-box;
+  max-width: 80em;
+  min-height: 100%;
+  padding: 10px 4px 20px;
+  background-color: var(--markdown-background__color);
+  box-shadow: 4px 0 12px -2px rgb(0 0 0 / 0.45);
+  clip-path: inset(0 -24px 0 0);
+}
+
+.info-page.markdown-container > .markdown:has(> .markdown-section) {
+  /* How far a pinned heading reaches out to the page's edges. */
+  --markdown-page-inset: calc(1.6em + 4px);
+  --markdown-page-inset-right: calc(1.6em + 4px);
+  padding-right: var(--markdown-page-inset-right);
+  padding-left: var(--markdown-page-inset);
+}
+
+.info-page.markdown-container > .markdown :is(p, li, h1, h2, h3) {
+  max-width: none;
+}
+
+/* The page's right edge: a faint line, always there from the top of the pane to its bottom, a clear bar under
+   the pointer, dragged to change the page's width; over the pinned headings, which would otherwise hide it. */
+.markdown-width-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  width: 8px;
+  cursor: col-resize;
+}
+
+.markdown-width-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--markdown-tbl__border-color);
+  opacity: 0.6;
+  transition: opacity 0.15s ease, width 0.15s ease, background-color 0.15s ease;
+}
+
+/* Under the pointer, and while dragged, a clear bar in the accent colour. */
+.markdown-width-handle:hover::after,
+.markdown-resizing .markdown-width-handle::after {
+  width: 3px;
+  background-color: var(--markdown-accent__color);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-width-handle::after {
+    transition: none;
+  }
+}
+
+.markdown-resizing,
+.markdown-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }

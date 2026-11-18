@@ -107,7 +107,7 @@ class TestElasticClusterResourceImpl {
     private ElasticClusterDoc createCluster(final String uuid) {
         return ElasticClusterDoc.builder()
                 .uuid(uuid)
-                .connection(new ElasticConnectionConfig(List.of("https://evil.example.com"), "foo", null))
+                .connection(new ElasticConnectionConfig(List.of("https://evil.example.com"), "foo", null, null))
                 .build();
     }
 }

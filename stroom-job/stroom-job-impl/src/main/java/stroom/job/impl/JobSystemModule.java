@@ -18,6 +18,7 @@ package stroom.job.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
+import stroom.job.api.JobStates;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
@@ -34,6 +35,7 @@ public class JobSystemModule extends AbstractModule {
     protected void configure() {
 
         bind(JobManager.class).to(JobManagerImpl.class);
+        bind(JobStates.class).to(JobStatesImpl.class);
         bind(JobNodeTrackerCache.class).to(JobNodeTrackerCacheImpl.class);
         bind(DistributedTaskFactoryRegistry.class).to(DistributedTaskFactoryRegistryImpl.class);
 

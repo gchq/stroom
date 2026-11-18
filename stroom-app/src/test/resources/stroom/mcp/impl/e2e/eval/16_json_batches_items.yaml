@@ -1,0 +1,47 @@
+name: Batched JSON with several events per record, role arrays and dropped traffic
+template: Event Data (JSON)
+capabilities: [field_repetition, nesting, event_boundaries]
+request: >
+  Onboard these application audit batches: a JSON array of batches, each with the host and an events array; every
+  item in events is one event (time, user, action, roles). Heartbeats are not events, and batches from QA hosts
+  (names starting qa-) must be left out entirely. Keep every role as a group of the user. Index the events.
+expected:
+  records: 3
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/User/Id, EventSource/User/Groups/Group/Name,
+          EventDetail/Authenticate/Action]
+sample: |
+  [{"host": "app01", "batch": "b1", "events": [
+      {"ts": "2026-10-01T10:00:00Z", "user": "alice", "action": "LOGIN", "roles": ["admin", "dev"]},
+      {"ts": "2026-10-01T10:00:30Z", "user": "monitor", "action": "HEARTBEAT", "roles": []},
+      {"ts": "2026-10-01T10:05:00Z", "user": "bob", "action": "LOGOUT", "roles": ["dev"]}]},
+   {"host": "app02", "batch": "b2", "events": [
+      {"ts": "2026-10-01T10:10:00Z", "user": "carol", "action": "LOGIN", "roles": ["ops"]}]},
+   {"host": "qa-app9", "batch": "b3", "events": [
+      {"ts": "2026-10-01T10:20:00Z", "user": "tester", "action": "LOGIN", "roles": ["qa"]}]}]
+reference:
+  mapping:
+    input: json
+    json_layout: array
+    for_each: events
+    drop_when:
+      - {when: [{field: host, scope: record, matches: '^qa-'}], reason: QA traffic}
+      - {when: [{field: action, equals: HEARTBEAT}], reason: heartbeats are not events}
+    common:
+      - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: App}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: audit}
+      - {path: EventSource/Device/HostName, field: host, scope: record}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventSource/User/Groups/Group/Name, field: roles, repeat: true}
+      - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Authenticate/User/Id, field: user}
+      - {path: EventDetail/Authenticate/Data, data_name: batch, field: batch, scope: record}
+    events:
+      - name: logon
+        when: [{field: action, equals: LOGIN}]
+        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+      - name: logoff
+        when: [{field: action, equals: LOGOUT}]
+        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]

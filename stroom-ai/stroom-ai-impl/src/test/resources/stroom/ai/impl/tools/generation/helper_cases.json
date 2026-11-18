@@ -1,0 +1,2664 @@
+[
+ {
+  "call": "style_name",
+  "args": [
+   "EventSource",
+   "snake_case"
+  ],
+  "result": "event_source"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "EventSource",
+   "camelCase"
+  ],
+  "result": "eventSource"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "EventSource",
+   "PascalCase"
+  ],
+  "result": "EventSource"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "EventSource",
+   "kebab-case"
+  ],
+  "result": "event-source"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "Authenticate-User",
+   "snake_case"
+  ],
+  "result": "authenticate_user"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "Authenticate-User",
+   "camelCase"
+  ],
+  "result": "authenticateUser"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "Authenticate-User",
+   "PascalCase"
+  ],
+  "result": "AuthenticateUser"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "Authenticate-User",
+   "kebab-case"
+  ],
+  "result": "authenticate-user"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "src_ip",
+   "snake_case"
+  ],
+  "result": "src_ip"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "src_ip",
+   "camelCase"
+  ],
+  "result": "srcIp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "src_ip",
+   "PascalCase"
+  ],
+  "result": "SrcIp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "src_ip",
+   "kebab-case"
+  ],
+  "result": "src-ip"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "srcIP",
+   "snake_case"
+  ],
+  "result": "src_ip"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "srcIP",
+   "camelCase"
+  ],
+  "result": "srcIp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "srcIP",
+   "PascalCase"
+  ],
+  "result": "SrcIp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "srcIP",
+   "kebab-case"
+  ],
+  "result": "src-ip"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "IPAddress",
+   "snake_case"
+  ],
+  "result": "ip_address"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "IPAddress",
+   "camelCase"
+  ],
+  "result": "ipAddress"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "IPAddress",
+   "PascalCase"
+  ],
+  "result": "IpAddress"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "IPAddress",
+   "kebab-case"
+  ],
+  "result": "ip-address"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "user.name",
+   "snake_case"
+  ],
+  "result": "user_name"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "user.name",
+   "camelCase"
+  ],
+  "result": "userName"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "user.name",
+   "PascalCase"
+  ],
+  "result": "UserName"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "user.name",
+   "kebab-case"
+  ],
+  "result": "user-name"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "9lives",
+   "snake_case"
+  ],
+  "result": "_9_lives"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "9lives",
+   "camelCase"
+  ],
+  "result": "_9Lives"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "9lives",
+   "PascalCase"
+  ],
+  "result": "_9Lives"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "9lives",
+   "kebab-case"
+  ],
+  "result": "_9-lives"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "",
+   "snake_case"
+  ],
+  "result": "field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "",
+   "camelCase"
+  ],
+  "result": "field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "",
+   "PascalCase"
+  ],
+  "result": "Field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "",
+   "kebab-case"
+  ],
+  "result": "field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "---",
+   "snake_case"
+  ],
+  "result": "field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "---",
+   "camelCase"
+  ],
+  "result": "field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "---",
+   "PascalCase"
+  ],
+  "result": "Field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "---",
+   "kebab-case"
+  ],
+  "result": "field"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "HTTPRequestMethod",
+   "snake_case"
+  ],
+  "result": "http_request_method"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "HTTPRequestMethod",
+   "camelCase"
+  ],
+  "result": "httpRequestMethod"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "HTTPRequestMethod",
+   "PascalCase"
+  ],
+  "result": "HttpRequestMethod"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "HTTPRequestMethod",
+   "kebab-case"
+  ],
+  "result": "http-request-method"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event-type-Logon",
+   "snake_case"
+  ],
+  "result": "event_type_logon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event-type-Logon",
+   "camelCase"
+  ],
+  "result": "eventTypeLogon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event-type-Logon",
+   "PascalCase"
+  ],
+  "result": "EventTypeLogon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event-type-Logon",
+   "kebab-case"
+  ],
+  "result": "event-type-logon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "a1b2",
+   "snake_case"
+  ],
+  "result": "a_1_b_2"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "a1b2",
+   "camelCase"
+  ],
+  "result": "a1B2"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "a1b2",
+   "PascalCase"
+  ],
+  "result": "A1B2"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "a1b2",
+   "kebab-case"
+  ],
+  "result": "a-1-b-2"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "ÉtéCafé",
+   "snake_case"
+  ],
+  "result": "t_caf"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "ÉtéCafé",
+   "camelCase"
+  ],
+  "result": "tCaf"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "ÉtéCafé",
+   "PascalCase"
+  ],
+  "result": "TCaf"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "ÉtéCafé",
+   "kebab-case"
+  ],
+  "result": "t-caf"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "data-run-x-to-y",
+   "snake_case"
+  ],
+  "result": "data_run_x_to_y"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "data-run-x-to-y",
+   "camelCase"
+  ],
+  "result": "dataRunXToY"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "data-run-x-to-y",
+   "PascalCase"
+  ],
+  "result": "DataRunXToY"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "data-run-x-to-y",
+   "kebab-case"
+  ],
+  "result": "data-run-x-to-y"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "x_parts",
+   "snake_case"
+  ],
+  "result": "x_parts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "x_parts",
+   "camelCase"
+  ],
+  "result": "xParts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "x_parts",
+   "PascalCase"
+  ],
+  "result": "XParts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "x_parts",
+   "kebab-case"
+  ],
+  "result": "x-parts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "MyHostName",
+   "snake_case"
+  ],
+  "result": "my_host_name"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "MyHostName",
+   "camelCase"
+  ],
+  "result": "myHostName"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "MyHostName",
+   "PascalCase"
+  ],
+  "result": "MyHostName"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "MyHostName",
+   "kebab-case"
+  ],
+  "result": "my-host-name"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "eventTypeLogon",
+   "snake_case"
+  ],
+  "result": "event_type_logon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "eventTypeLogon",
+   "camelCase"
+  ],
+  "result": "eventTypeLogon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "eventTypeLogon",
+   "PascalCase"
+  ],
+  "result": "EventTypeLogon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "eventTypeLogon",
+   "kebab-case"
+  ],
+  "result": "event-type-logon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event_type_logon",
+   "snake_case"
+  ],
+  "result": "event_type_logon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event_type_logon",
+   "camelCase"
+  ],
+  "result": "eventTypeLogon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event_type_logon",
+   "PascalCase"
+  ],
+  "result": "EventTypeLogon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "event_type_logon",
+   "kebab-case"
+  ],
+  "result": "event-type-logon"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "url.original-parts",
+   "snake_case"
+  ],
+  "result": "url_original_parts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "url.original-parts",
+   "camelCase"
+  ],
+  "result": "urlOriginalParts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "url.original-parts",
+   "PascalCase"
+  ],
+  "result": "UrlOriginalParts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "url.original-parts",
+   "kebab-case"
+  ],
+  "result": "url-original-parts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "text-parts",
+   "snake_case"
+  ],
+  "result": "text_parts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "text-parts",
+   "camelCase"
+  ],
+  "result": "textParts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "text-parts",
+   "PascalCase"
+  ],
+  "result": "TextParts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "text-parts",
+   "kebab-case"
+  ],
+  "result": "text-parts"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "@timestamp",
+   "snake_case"
+  ],
+  "result": "timestamp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "@timestamp",
+   "camelCase"
+  ],
+  "result": "timestamp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "@timestamp",
+   "PascalCase"
+  ],
+  "result": "Timestamp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "@timestamp",
+   "kebab-case"
+  ],
+  "result": "timestamp"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "١٢٣abc",
+   "snake_case"
+  ],
+  "result": "_١٢٣_abc"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "١٢٣abc",
+   "camelCase"
+  ],
+  "result": "_١٢٣Abc"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "١٢٣abc",
+   "PascalCase"
+  ],
+  "result": "_١٢٣Abc"
+ },
+ {
+  "call": "style_name",
+  "args": [
+   "١٢٣abc",
+   "kebab-case"
+  ],
+  "result": "_١٢٣-abc"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server_node",
+   "as_given"
+  ],
+  "result": "server_node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server_node",
+   "snake_case"
+  ],
+  "result": "server_node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server_node",
+   "camelCase"
+  ],
+  "result": "serverNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server_node",
+   "PascalCase"
+  ],
+  "result": "ServerNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server_node",
+   "kebab-case"
+  ],
+  "result": "server-node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "IPAddress",
+   "as_given"
+  ],
+  "result": "IPAddress"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "IPAddress",
+   "snake_case"
+  ],
+  "result": "ip_address"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "IPAddress",
+   "camelCase"
+  ],
+  "result": "ipAddress"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "IPAddress",
+   "PascalCase"
+  ],
+  "result": "IPAddress"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "IPAddress",
+   "kebab-case"
+  ],
+  "result": "ip-address"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "ServerNode",
+   "as_given"
+  ],
+  "result": "ServerNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "ServerNode",
+   "snake_case"
+  ],
+  "result": "server_node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "ServerNode",
+   "camelCase"
+  ],
+  "result": "serverNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "ServerNode",
+   "PascalCase"
+  ],
+  "result": "ServerNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "ServerNode",
+   "kebab-case"
+  ],
+  "result": "server-node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "serverNode",
+   "as_given"
+  ],
+  "result": "serverNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "serverNode",
+   "snake_case"
+  ],
+  "result": "server_node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "serverNode",
+   "camelCase"
+  ],
+  "result": "serverNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "serverNode",
+   "PascalCase"
+  ],
+  "result": "ServerNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "serverNode",
+   "kebab-case"
+  ],
+  "result": "server-node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server-node",
+   "as_given"
+  ],
+  "result": "server-node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server-node",
+   "snake_case"
+  ],
+  "result": "server_node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server-node",
+   "camelCase"
+  ],
+  "result": "serverNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server-node",
+   "PascalCase"
+  ],
+  "result": "ServerNode"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "server-node",
+   "kebab-case"
+  ],
+  "result": "server-node"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "9lives",
+   "as_given"
+  ],
+  "result": "9lives"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "9lives",
+   "snake_case"
+  ],
+  "result": "_9_lives"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "9lives",
+   "camelCase"
+  ],
+  "result": "_9Lives"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "9lives",
+   "PascalCase"
+  ],
+  "result": "_9Lives"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "9lives",
+   "kebab-case"
+  ],
+  "result": "_9-lives"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "x",
+   "as_given"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "x",
+   "snake_case"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "x",
+   "camelCase"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "x",
+   "PascalCase"
+  ],
+  "result": "X"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "x",
+   "kebab-case"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "X",
+   "as_given"
+  ],
+  "result": "X"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "X",
+   "snake_case"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "X",
+   "camelCase"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "X",
+   "PascalCase"
+  ],
+  "result": "X"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "X",
+   "kebab-case"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "a_B",
+   "as_given"
+  ],
+  "result": "a_B"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "a_B",
+   "snake_case"
+  ],
+  "result": "a_b"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "a_B",
+   "camelCase"
+  ],
+  "result": "aB"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "a_B",
+   "PascalCase"
+  ],
+  "result": "AB"
+ },
+ {
+  "call": "data_name_in",
+  "args": [
+   "a_B",
+   "kebab-case"
+  ],
+  "result": "a-b"
+ },
+ {
+  "call": "unique_name",
+  "args": [
+   "event_source",
+   [
+    "event_source",
+    "event_source_2"
+   ],
+   "snake_case"
+  ],
+  "result": "event_source_3"
+ },
+ {
+  "call": "unique_name",
+  "args": [
+   "eventSource",
+   [
+    "eventSource"
+   ],
+   "camelCase"
+  ],
+  "result": "eventSource2"
+ },
+ {
+  "call": "unique_name",
+  "args": [
+   "event-source",
+   [
+    "event-source"
+   ],
+   "kebab-case"
+  ],
+  "result": "event-source-2"
+ },
+ {
+  "call": "unique_name",
+  "args": [
+   "x",
+   [],
+   "snake_case"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "normalize-space(replace(//*:EventData/*:Data, ' \\| ', '; '))"
+  ],
+  "result": "//*:EventData/*:Data"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "(//data)[1]/@value"
+  ],
+  "result": "//data"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "data[@name = /records/@host]"
+  ],
+  "result": "/records/@host"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "string(.) and //x"
+  ],
+  "result": "//x"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   ".//*:EventData/*:Data"
+  ],
+  "result": null
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "data[@name='a']//b"
+  ],
+  "result": null
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "$record//data"
+  ],
+  "result": null
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "concat('//', data, ' / ')"
+  ],
+  "result": null
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "count(data) div 2"
+  ],
+  "result": null
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "/"
+  ],
+  "result": "/"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "a or /b"
+  ],
+  "result": "/b"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "x)/y"
+  ],
+  "result": null
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "f(a, /b)"
+  ],
+  "result": "/b"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "1 to /x"
+  ],
+  "result": "/x"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "(a)or /b"
+  ],
+  "result": "/b"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "{/x}"
+  ],
+  "result": "/x}"
+ },
+ {
+  "call": "rooted_path",
+  "args": [
+   "a |//b[c/d]/e"
+  ],
+  "result": "//b[c/d]/e"
+ },
+ {
+  "call": "variable_reads",
+  "args": [
+   "$kv",
+   [
+    "kv"
+   ]
+  ],
+  "result": [
+   "kv"
+  ]
+ },
+ {
+  "call": "variable_reads",
+  "args": [
+   "for $kv in tokenize(., ' ') return $kv",
+   [
+    "kv"
+   ]
+  ],
+  "result": []
+ },
+ {
+  "call": "variable_reads",
+  "args": [
+   "concat($a, '$b', $c)",
+   [
+    "a",
+    "b",
+    "c"
+   ]
+  ],
+  "result": [
+   "a",
+   "c"
+  ]
+ },
+ {
+  "call": "variable_reads",
+  "args": [
+   "$a.b + $a",
+   [
+    "a",
+    "a.b"
+   ]
+  ],
+  "result": [
+   "a.b",
+   "a"
+  ]
+ },
+ {
+  "call": "variable_reads",
+  "args": [
+   "some $x in y satisfies $x = $z",
+   [
+    "x",
+    "z"
+   ]
+  ],
+  "result": [
+   "z"
+  ]
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "concat(a, '-', b)"
+  ],
+  "result": true
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "a or b"
+  ],
+  "result": false
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "f(x) | g(y)"
+  ],
+  "result": false
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "stroom:meta('X')"
+  ],
+  "result": true
+ },
+ {
+  "call": "is_call",
+  "args": [
+   " f(')') "
+  ],
+  "result": true
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "f(a)(b)"
+  ],
+  "result": false
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "x"
+  ],
+  "result": false
+ },
+ {
+  "call": "is_call",
+  "args": [
+   "fn:f((a))"
+  ],
+  "result": true
+ },
+ {
+  "call": "function_call",
+  "args": [
+   "extract(EventData/Data, 'Action: \\[([^\\]]+)\\]')"
+  ],
+  "result": "is a function call, not an input field. To take values out of a text field with a regular expression, add an entry to the mapping's extract list, {\"field\": \"<the text field>\", \"regex\": \"<one group per value>\", \"names\": [\"<a name per group>\"]}, and use those names as fields."
+ },
+ {
+  "call": "function_call",
+  "args": [
+   "stroom:extract(x, 'y')"
+  ],
+  "result": "is a function call, not an input field. To take values out of a text field with a regular expression, add an entry to the mapping's extract list, {\"field\": \"<the text field>\", \"regex\": \"<one group per value>\", \"names\": [\"<a name per group>\"]}, and use those names as fields."
+ },
+ {
+  "call": "function_call",
+  "args": [
+   "lower-case(name)"
+  ],
+  "result": "is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself."
+ },
+ {
+  "call": "function_call",
+  "args": [
+   "System/Provider/@Name"
+  ],
+  "result": null
+ },
+ {
+  "call": "function_call",
+  "args": [
+   " replace (x)"
+  ],
+  "result": "is a function call, not an input field. To take values out of a text field with a regular expression, add an entry to the mapping's extract list, {\"field\": \"<the text field>\", \"regex\": \"<one group per value>\", \"names\": [\"<a name per group>\"]}, and use those names as fields."
+ },
+ {
+  "call": "function_call",
+  "args": [
+   "a:b:c("
+  ],
+  "result": null
+ },
+ {
+  "call": "function_call",
+  "args": [
+   "user"
+  ],
+  "result": null
+ },
+ {
+  "call": "function_call",
+  "args": [
+   ""
+  ],
+  "result": null
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "EventDetail/Network/Deny/Source/Device"
+  ],
+  "result": "EventDetail/Network/*/Source/Device"
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "EventDetail/Authenticate/Data"
+  ],
+  "result": "EventDetail/*/Data"
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "EventDetail/TypeId"
+  ],
+  "result": "EventDetail/TypeId"
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "EventSource/Client/IPAddress"
+  ],
+  "result": "EventSource/Client/IPAddress"
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "EventDetail/Network"
+  ],
+  "result": "EventDetail/Network"
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "EventDetail/Network/Data"
+  ],
+  "result": "EventDetail/Network/*"
+ },
+ {
+  "call": "action_free",
+  "args": [
+   "/EventDetail/Alert/Type/"
+  ],
+  "result": "EventDetail/*/Type"
+ },
+ {
+  "call": "pattern_problem",
+  "args": [
+   "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+  ],
+  "result": null
+ },
+ {
+  "call": "pattern_problem",
+  "args": [
+   "dd/MMM/yyyy:HH:mm:ss Z"
+  ],
+  "result": null
+ },
+ {
+  "call": "pattern_problem",
+  "args": [
+   "yyyy-MM-ddTHH:mm:ss"
+  ],
+  "result": "time_format 'yyyy-MM-ddTHH:mm:ss' has unquoted letters ['T']; quote them, e.g. \"yyyy-MM-dd'T'HH:mm:ss\""
+ },
+ {
+  "call": "pattern_problem",
+  "args": [
+   "yyyy-MM-dd'T'HH:mm:ssTb"
+  ],
+  "result": "time_format \"yyyy-MM-dd'T'HH:mm:ssTb\" has unquoted letters ['T', 'b']; quote them, e.g. \"yyyy-MM-dd'T'HH:mm:ss'T''b'\""
+ },
+ {
+  "call": "pattern_problem",
+  "args": [
+   "éyyyy"
+  ],
+  "result": "time_format 'éyyyy' has unquoted letters ['é']; quote them, e.g. \"'é'yyyy\""
+ },
+ {
+  "call": "action_home",
+  "args": [
+   [
+    "EventDetail/Authenticate/User/Id"
+   ]
+  ],
+  "result": "EventDetail/Authenticate"
+ },
+ {
+  "call": "action_home",
+  "args": [
+   [
+    "EventDetail/Network/Permit/Source/Port"
+   ]
+  ],
+  "result": "EventDetail/Network/Permit"
+ },
+ {
+  "call": "action_home",
+  "args": [
+   [
+    "EventDetail/Network/Data"
+   ]
+  ],
+  "result": "EventDetail/Network"
+ },
+ {
+  "call": "action_home",
+  "args": [
+   [
+    "EventDetail/TypeId",
+    "EventSource/User/Id"
+   ]
+  ],
+  "result": null
+ },
+ {
+  "call": "action_home",
+  "args": [
+   [
+    "/EventDetail/Alert/Type"
+   ]
+  ],
+  "result": "EventDetail/Alert"
+ },
+ {
+  "call": "action_home",
+  "args": [
+   [
+    "EventDetail/Description/x"
+   ]
+  ],
+  "result": null
+ },
+ {
+  "call": "grouped",
+  "args": [
+   [
+    "[a] required ['EventTime', 'EventDetail/TypeId'] are left out when empty.",
+    "[b] required ['EventTime', 'EventDetail/Update/After'] are left out when empty.",
+    "[c] something else",
+    "plain",
+    "plain",
+    "[d] x\nmore"
+   ]
+  ],
+  "result": [
+   "[a, b] required ['EventTime', 'EventDetail/TypeId', 'EventDetail/Update/After'] are left out when empty.",
+   "[c] something else",
+   "plain",
+   "plain",
+   "[d] x\nmore"
+  ]
+ },
+ {
+  "call": "compact_rules",
+  "args": [
+   {
+    "input": "data_splitter",
+    "events": [
+     {
+      "name": "p",
+      "fields": [
+       {
+        "path": "EventDetail/Network/Permit/Source/Port",
+        "field": "p"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "a",
+        "field": "a"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "b",
+        "field": "c"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "d",
+        "field": "d",
+        "map": {
+         "x": "y"
+        }
+       }
+      ],
+      "data": [
+       "z"
+      ]
+     },
+     {
+      "name": "u",
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "a",
+        "field": "a"
+       }
+      ]
+     },
+     {
+      "name": "n",
+      "fields": [
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "a",
+        "field": "a"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "result": {
+   "input": "data_splitter",
+   "events": [
+    {
+     "name": "p",
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Port",
+       "field": "p"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "data_name": "b",
+       "field": "c"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "data_name": "d",
+       "field": "d",
+       "map": {
+        "x": "y"
+       }
+      }
+     ],
+     "data": [
+      "z",
+      "a"
+     ]
+    },
+    {
+     "name": "u",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "a",
+       "field": "a"
+      }
+     ]
+    },
+    {
+     "name": "n",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "a",
+       "field": "a"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "call": "compact_pairs",
+  "args": [
+   {
+    "input": "json",
+    "extract": [
+     {
+      "field": "msg",
+      "regex": "^(\\S+) (.*)$",
+      "names": [
+       "host",
+       "rest"
+      ]
+     },
+     {
+      "field": "rest",
+      "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
+      "names": [
+       "user"
+      ]
+     },
+     {
+      "field": "body",
+      "regex": "(?:^|[\\s,;])a=([^\\s,;\"]*)",
+      "names": [
+       "a"
+      ],
+      "flags": "i"
+     },
+     {
+      "field": "body",
+      "regex": "(?:^|[\\s,;])b=([^\\s,;\"]*)",
+      "names": [
+       "bee"
+      ]
+     },
+     {
+      "field": "body",
+      "regex": "(?:^|[\\s,;])Source IP=\"([^\"]*)\"",
+      "names": [
+       "source_ip"
+      ]
+     },
+     {
+      "field": "body",
+      "regex": "(?:^|[\\s,;])b=([^\\s,;\"]*)",
+      "names": [
+       "b2"
+      ]
+     }
+    ],
+    "events": []
+   }
+  ],
+  "result": {
+   "input": "json",
+   "events": [],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "b"
+     ],
+     "names": {
+      "b": "bee"
+     }
+    },
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "Source IP"
+     ]
+    }
+   ],
+   "extract": [
+    {
+     "field": "msg",
+     "regex": "^(\\S+) (.*)$",
+     "names": [
+      "host",
+      "rest"
+     ]
+    },
+    {
+     "field": "rest",
+     "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
+     "names": [
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])a=([^\\s,;\"]*)",
+     "names": [
+      "a"
+     ],
+     "flags": "i"
+    },
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])b=([^\\s,;\"]*)",
+     "names": [
+      "b2"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "call": "compact_pairs",
+  "args": [
+   {
+    "input": "json",
+    "extract": [
+     {
+      "field": "msg",
+      "regex": "^(x)$",
+      "names": [
+       "x"
+      ]
+     }
+    ]
+   }
+  ],
+  "result": {
+   "input": "json",
+   "extract": [
+    {
+     "field": "msg",
+     "regex": "^(x)$",
+     "names": [
+      "x"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "colon",
+   "srcip"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*srcip: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*srcip: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+  ],
+  "result": [
+   "colon",
+   "srcip"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "colon",
+   "dst.port"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*dst\\.port: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*dst\\.port: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+  ],
+  "result": [
+   "colon",
+   "dst.port"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "colon",
+   "Source IP"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*Source IP: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*Source IP: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+  ],
+  "result": [
+   "colon",
+   "Source IP"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "colon",
+   "Item Id"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*Item Id: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*Item Id: (.*?)(?:\\s*[;|()]|\\s+-\\s+(?:\\[|[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}: )|\\s*$)"
+  ],
+  "result": [
+   "colon",
+   "Item Id"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "bracketed",
+   "srcip"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*srcip: \\[([^\\]]*)\\]"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*srcip: \\[([^\\]]*)\\]"
+  ],
+  "result": [
+   "bracketed",
+   "srcip"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "bracketed",
+   "dst.port"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*dst\\.port: \\[([^\\]]*)\\]"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*dst\\.port: \\[([^\\]]*)\\]"
+  ],
+  "result": [
+   "bracketed",
+   "dst.port"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "bracketed",
+   "Source IP"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*Source IP: \\[([^\\]]*)\\]"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*Source IP: \\[([^\\]]*)\\]"
+  ],
+  "result": [
+   "bracketed",
+   "Source IP"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "bracketed",
+   "Item Id"
+  ],
+  "result": "(?:^|[;|()\\]]|\\s-)\\s*Item Id: \\[([^\\]]*)\\]"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[;|()\\]]|\\s-)\\s*Item Id: \\[([^\\]]*)\\]"
+  ],
+  "result": [
+   "bracketed",
+   "Item Id"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "equals",
+   "srcip"
+  ],
+  "result": "(?:^|[\\s,;])srcip=([^\\s,;\"]*)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])srcip=([^\\s,;\"]*)"
+  ],
+  "result": [
+   "equals",
+   "srcip"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "equals",
+   "dst.port"
+  ],
+  "result": "(?:^|[\\s,;])dst\\.port=([^\\s,;\"]*)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])dst\\.port=([^\\s,;\"]*)"
+  ],
+  "result": [
+   "equals",
+   "dst.port"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "equals",
+   "Source IP"
+  ],
+  "result": "(?:^|[\\s,;])Source IP=([^\\s,;\"]*)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])Source IP=([^\\s,;\"]*)"
+  ],
+  "result": [
+   "equals",
+   "Source IP"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "equals",
+   "Item Id"
+  ],
+  "result": "(?:^|[\\s,;])Item Id=([^\\s,;\"]*)"
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])Item Id=([^\\s,;\"]*)"
+  ],
+  "result": [
+   "equals",
+   "Item Id"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "quoted",
+   "srcip"
+  ],
+  "result": "(?:^|[\\s,;])srcip=\"([^\"]*)\""
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])srcip=\"([^\"]*)\""
+  ],
+  "result": [
+   "quoted",
+   "srcip"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "quoted",
+   "dst.port"
+  ],
+  "result": "(?:^|[\\s,;])dst\\.port=\"([^\"]*)\""
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])dst\\.port=\"([^\"]*)\""
+  ],
+  "result": [
+   "quoted",
+   "dst.port"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "quoted",
+   "Source IP"
+  ],
+  "result": "(?:^|[\\s,;])Source IP=\"([^\"]*)\""
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])Source IP=\"([^\"]*)\""
+  ],
+  "result": [
+   "quoted",
+   "Source IP"
+  ]
+ },
+ {
+  "call": "pair_regex",
+  "args": [
+   "quoted",
+   "Item Id"
+  ],
+  "result": "(?:^|[\\s,;])Item Id=\"([^\"]*)\""
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])Item Id=\"([^\"]*)\""
+  ],
+  "result": [
+   "quoted",
+   "Item Id"
+  ]
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "^(\\S+) (\\S+)$"
+  ],
+  "result": null
+ },
+ {
+  "call": "pair_of",
+  "args": [
+   "(?:^|[\\s,;])srcip=([^\\s,;\"]*)x"
+  ],
+  "result": null
+ },
+ {
+  "call": "key_name",
+  "args": [
+   "Source IP"
+  ],
+  "result": "source_ip"
+ },
+ {
+  "call": "key_name",
+  "args": [
+   "srcip"
+  ],
+  "result": "srcip"
+ },
+ {
+  "call": "key_name",
+  "args": [
+   "__x__"
+  ],
+  "result": "x"
+ },
+ {
+  "call": "key_name",
+  "args": [
+   "Item-Id"
+  ],
+  "result": "item_id"
+ },
+ {
+  "call": "key_name",
+  "args": [
+   "a.b"
+  ],
+  "result": "a_b"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   "/Envelope/Body/User"
+  ],
+  "result": "/*:Envelope/*:Body/*:User"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   "//User"
+  ],
+  "result": "//*:User"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   "/Login/@id"
+  ],
+  "result": "/*:Login/@*:id"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   "User"
+  ],
+  "result": "/*:User"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   "a/"
+  ],
+  "result": "/*:a"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   "a//b/@c"
+  ],
+  "result": "/*:a//*:b/@*:c"
+ },
+ {
+  "call": "xml_steps",
+  "args": [
+   ""
+  ],
+  "result": ""
+ },
+ {
+  "call": "comment",
+  "args": [
+   "Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid."
+  ],
+  "result": " Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "short"
+  ],
+  "result": " short "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "a--b---c-"
+  ],
+  "result": " a-b-c "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx y"
+  ],
+  "result": " xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n       y "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word"
+  ],
+  "result": " word word word word word word word word word word word word word word word word word word word word word word\n       word word word word word word word word word word word word word word word word word word word word word\n       word word word word word word word word word word word word word word word word word "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "tab\there\nnew line"
+  ],
+  "result": " tab     here new line "
+ },
+ {
+  "call": "comment",
+  "args": [
+   ""
+  ],
+  "result": " "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "-- only --"
+  ],
+  "result": " - only "
+ },
+ {
+  "call": "comment",
+  "args": [
+   "event_source: shared by the rules 'rule_0', 'rule_1', 'rule_2', 'rule_3', 'rule_4', 'rule_5', 'rule_6', 'rule_7', 'rule_8', 'rule_9', 'rule_10', 'rule_11', 'rule_12', 'rule_13', 'rule_14', 'rule_15', 'rule_16', 'rule_17', 'rule_18', 'rule_19', 'rule_20', 'rule_21', 'rule_22', 'rule_23', 'rule_24', 'rule_25', 'rule_26', 'rule_27', 'rule_28', 'rule_29'"
+  ],
+  "result": " event_source: shared by the rules 'rule_0', 'rule_1', 'rule_2', 'rule_3', 'rule_4', 'rule_5', 'rule_6',\n       'rule_7', 'rule_8', 'rule_9', 'rule_10', 'rule_11', 'rule_12', 'rule_13', 'rule_14', 'rule_15',\n       'rule_16', 'rule_17', 'rule_18', 'rule_19', 'rule_20', 'rule_21', 'rule_22', 'rule_23', 'rule_24',\n       'rule_25', 'rule_26', 'rule_27', 'rule_28', 'rule_29' "
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "data_splitter",
+   "user"
+  ],
+  "result": "data[@name='user']/@value"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "data_splitter",
+   "user.name"
+  ],
+  "result": "data[@name='user.name']/@value"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "data_splitter",
+   "a/b"
+  ],
+  "result": "data[@name='a']/data[@name='b']/@value"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "data_splitter",
+   "o'neil"
+  ],
+  "result": "data[@name='o''neil']/@value"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "json",
+   "user"
+  ],
+  "result": "*[@key='user']"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "json",
+   "user.name"
+  ],
+  "result": "*[@key='user']/*[@key='name']"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "json",
+   "a/b"
+  ],
+  "result": "*[@key='a/b']"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "json",
+   "o'neil"
+  ],
+  "result": "*[@key='o''neil']"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "xml",
+   "user"
+  ],
+  "result": "user"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "xml",
+   "user.name"
+  ],
+  "result": "user.name"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "xml",
+   "a/b"
+  ],
+  "result": "a/b"
+ },
+ {
+  "call": "field_text",
+  "args": [
+   "xml",
+   "o'neil"
+  ],
+  "result": "o'neil"
+ },
+ {
+  "call": "lookup_text",
+  "args": [
+   "USER_TO_DEPT",
+   "string((x)[1])",
+   null
+  ],
+  "result": "stroom:lookup('USER_TO_DEPT', string((x)[1]))"
+ },
+ {
+  "call": "lookup_text",
+  "args": [
+   "USER_TO_DEPT",
+   "k",
+   "/department/@id/x:y/./*"
+  ],
+  "result": "stroom:lookup('USER_TO_DEPT', k)//*:department/@id/x:y/./*"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "epoch_ms",
+   null,
+   "$v[1]"
+  ],
+  "result": "stroom:format-date(string($v[1]))"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "epoch_s",
+   null,
+   "$v[1]"
+  ],
+  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) * 1000))))"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "epoch_us",
+   "UTC",
+   "$v[1]"
+  ],
+  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) div 1000))))"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "epoch_ns",
+   null,
+   "$v[1]"
+  ],
+  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) div 1000000))))"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "yyyy-MM-dd'T'HH:mm:ss",
+   "UTC",
+   "$v[1]"
+  ],
+  "result": "stroom:format-date($v[1], 'yyyy-MM-dd''T''HH:mm:ss', 'UTC')"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "yyyy-MM-dd HH:mm:ss.SSSSSS",
+   null,
+   "$v[1]"
+  ],
+  "result": "stroom:format-date($v[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS')"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "yyyy-MM-dd HH:mm:ss.SSSSSS",
+   "+10:00",
+   "$v[1]"
+  ],
+  "result": "stroom:format-date($v[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', '+10:00')"
+ },
+ {
+  "call": "time_expr",
+  "args": [
+   "dd/MM/yyyy",
+   null,
+   "$v[1]"
+  ],
+  "result": "stroom:format-date($v[1], 'dd/MM/yyyy')"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   null,
+   "$v[1]"
+  ],
+  "result": "$v[1]"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "lower",
+   "$v[1]"
+  ],
+  "result": "lower-case($v[1])"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "upper",
+   "$v[1]"
+  ],
+  "result": "upper-case($v[1])"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "trim",
+   "$v[1]"
+  ],
+  "result": "normalize-space($v[1])"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "strip_domain",
+   "$v[1]"
+  ],
+  "result": "replace(replace($v[1], '^[^\\\\]*\\\\', ''), '@.*$', '')"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "domain",
+   "$v[1]"
+  ],
+  "result": "replace($v[1], '^(?:([^\\\\]*)\\\\.*|[^@]*@(.*))$', '$1$2')"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "digits",
+   "$v[1]"
+  ],
+  "result": "replace($v[1], '[^0-9]', '')"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "strip_control",
+   "$v[1]"
+  ],
+  "result": "replace($v[1], '\\p{Cc}\\[[0-9;]*[A-Za-z]|[\\p{Cc}-[\\t\\n\\r]]', '')"
+ },
+ {
+  "call": "transform_expr",
+  "args": [
+   "unescape_quotes",
+   "$v[1]"
+  ],
+  "result": "replace($v[1], '\"\"', '\"')"
+ },
+ {
+  "call": "literal",
+  "args": [
+   "o'neil"
+  ],
+  "result": "'o''neil'"
+ },
+ {
+  "call": "dictionary_text",
+  "args": [
+   "Users",
+   "map"
+  ],
+  "result": "map:merge(for $line in tokenize(stroom:dictionary('Users'), '\\r?\\n')[contains(., '=')] return map{normalize-space(substring-before($line, '=')): normalize-space(substring-after($line, '='))})"
+ },
+ {
+  "call": "dictionary_text",
+  "args": [
+   "Users",
+   "set"
+  ],
+  "result": "tokenize(stroom:dictionary('Users'), '\\r?\\n') ! normalize-space(.)"
+ },
+ {
+  "call": "keys",
+  "args": [
+   "user.name"
+  ],
+  "result": [
+   "name",
+   "user_name"
+  ]
+ },
+ {
+  "call": "keys",
+  "args": [
+   "EventData/Data[@Name='TargetUserName']"
+  ],
+  "result": [
+   "targetusername"
+  ]
+ },
+ {
+  "call": "keys",
+  "args": [
+   "@src_ip"
+  ],
+  "result": [
+   "src_ip"
+  ]
+ },
+ {
+  "call": "keys",
+  "args": [
+   "a/b/c"
+  ],
+  "result": [
+   "c",
+   "b_c"
+  ]
+ },
+ {
+  "call": "keys",
+  "args": [
+   "x..y"
+  ],
+  "result": [
+   "y",
+   "x_y"
+  ]
+ },
+ {
+  "call": "keys",
+  "args": [
+   "Host"
+  ],
+  "result": [
+   "host"
+  ]
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/User/Id",
+   "user.name"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/Client/IPAddress",
+   "src_ip"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/Client/IPAddress",
+   "SourceAddress"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/Device/HostName",
+   "Data[@Name='Computer']"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/Device/HostName",
+   "computer"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/SessionId",
+   "session.id"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventSource/User/Id",
+   "USERNAME"
+  ],
+  "result": true
+ },
+ {
+  "call": "matches",
+  "args": [
+   "EventDetail/Description",
+   "msgs"
+  ],
+  "result": false
+ }
+]

@@ -39,16 +39,64 @@ public class AiChatPollResponse {
     private final AiChatMessage workingMessage;
     @JsonProperty
     private final boolean complete;
+    /**
+     * The chat's latest agent run, or null if it has never had one.
+     */
+    @JsonProperty
+    private final AiChatRun run;
+    /**
+     * How much of the model's context window the chat uses, or null if it has not changed since the last poll.
+     */
+    @JsonProperty
+    private final AiContextUsage contextUsage;
+    /**
+     * The answer and reasoning the model is writing now, as STREAMING_ANSWER and STREAMING_THINKING messages, or
+     * an empty list. Reported on every poll, as they are updated in place.
+     */
+    @JsonProperty
+    private final List<AiChatMessage> streamingMessages;
+    /**
+     * The messages the client asked to watch, as they now stand, or null.
+     */
+    @JsonProperty
+    private final List<AiChatMessage> watchedMessages;
+    /**
+     * False if an administrator has turned off sharing tabs with chats, or null if not known.
+     */
+    @JsonProperty
+    private final Boolean shareActiveTab;
+
+    public AiChatPollResponse(final List<AiChatMessage> newMessages,
+                              final List<AiChatAttachment> attachments,
+                              final AiChatMessage workingMessage,
+                              final Boolean complete,
+                              final AiChatRun run,
+                              final AiContextUsage contextUsage,
+                              final List<AiChatMessage> streamingMessages,
+                              final List<AiChatMessage> watchedMessages) {
+        this(newMessages, attachments, workingMessage, complete, run, contextUsage, streamingMessages,
+                watchedMessages, null);
+    }
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
                               @JsonProperty("attachments") final List<AiChatAttachment> attachments,
                               @JsonProperty("workingMessage") final AiChatMessage workingMessage,
-                              @JsonProperty("complete") final Boolean complete) {
+                              @JsonProperty("complete") final Boolean complete,
+                              @JsonProperty("run") final AiChatRun run,
+                              @JsonProperty("contextUsage") final AiContextUsage contextUsage,
+                              @JsonProperty("streamingMessages") final List<AiChatMessage> streamingMessages,
+                              @JsonProperty("watchedMessages") final List<AiChatMessage> watchedMessages,
+                              @JsonProperty("shareActiveTab") final Boolean shareActiveTab) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
         this.complete = Objects.requireNonNullElse(complete, false);
+        this.run = run;
+        this.contextUsage = contextUsage;
+        this.streamingMessages = streamingMessages;
+        this.watchedMessages = watchedMessages;
+        this.shareActiveTab = shareActiveTab;
     }
 
     public List<AiChatMessage> getNewMessages() {
@@ -63,7 +111,39 @@ public class AiChatPollResponse {
         return workingMessage;
     }
 
+    /**
+     * @return True if nothing more is coming: no agent run is active and no attachment is downloading.
+     */
     public boolean isComplete() {
         return complete;
+    }
+
+    public AiChatRun getRun() {
+        return run;
+    }
+
+    public AiContextUsage getContextUsage() {
+        return contextUsage;
+    }
+
+    /**
+     * @return The answer and reasoning being written now, or null/empty if none.
+     */
+    public List<AiChatMessage> getStreamingMessages() {
+        return streamingMessages;
+    }
+
+    /**
+     * @return The messages the client asked to watch, as they now stand, or null.
+     */
+    public List<AiChatMessage> getWatchedMessages() {
+        return watchedMessages;
+    }
+
+    /**
+     * @return False if an administrator has turned off sharing tabs with chats, or null if not known.
+     */
+    public Boolean getShareActiveTab() {
+        return shareActiveTab;
     }
 }

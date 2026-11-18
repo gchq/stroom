@@ -30,6 +30,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -131,6 +134,9 @@ public class HttpClientConfig {
 
     @JsonProperty
     private final HttpTlsConfig tls;
+    @JsonPropertyDescription("HTTP headers sent with every request, e.g. 'anthropic-version'.")
+    @JsonProperty
+    private final List<HttpHeader> headers;
 
     @SuppressWarnings("unused")
     @JsonCreator
@@ -148,7 +154,8 @@ public class HttpClientConfig {
             @JsonProperty("userAgent") final String userAgent,
             @JsonProperty("proxy") final HttpProxyConfig proxy,
             @JsonProperty("validateAfterInactivityPeriod") final SimpleDuration validateAfterInactivityPeriod,
-            @JsonProperty("tls") final HttpTlsConfig tls) {
+            @JsonProperty("tls") final HttpTlsConfig tls,
+            @JsonProperty("headers") final List<HttpHeader> headers) {
         this.timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
         this.connectionTimeout = Objects.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
         this.connectionRequestTimeout = Objects.requireNonNullElse(
@@ -166,6 +173,7 @@ public class HttpClientConfig {
         this.validateAfterInactivityPeriod = Objects.requireNonNullElse(
                 validateAfterInactivityPeriod, DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD);
         this.tls = Objects.requireNonNullElseGet(tls, () -> HttpTlsConfig.builder().build());
+        this.headers = copyHeaders(headers);
     }
 
     public SimpleDuration getKeepAlive() {
@@ -225,6 +233,11 @@ public class HttpClientConfig {
         return tls;
     }
 
+    /// @return The HTTP headers sent with every request, or null for none.
+    public List<HttpHeader> getHeaders() {
+        return headers;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -247,7 +260,8 @@ public class HttpClientConfig {
                Objects.equals(userAgent, that.userAgent) &&
                Objects.equals(proxy, that.proxy) &&
                Objects.equals(validateAfterInactivityPeriod, that.validateAfterInactivityPeriod) &&
-               Objects.equals(tls, that.tls);
+               Objects.equals(tls, that.tls) &&
+               Objects.equals(headers, that.headers);
     }
 
     @Override
@@ -265,7 +279,8 @@ public class HttpClientConfig {
                 userAgent,
                 proxy,
                 validateAfterInactivityPeriod,
-                tls);
+                tls,
+                headers);
     }
 
     @Override
@@ -285,7 +300,39 @@ public class HttpClientConfig {
                ", proxyConfig=" + proxy +
                ", validateAfterInactivityPeriod=" + validateAfterInactivityPeriod +
                ", tlsConfiguration=" + tls +
+               ", headers=" + headerNames() +
                '}';
+    }
+
+    // Null for none, so that a configuration without headers is serialised as it was before they existed.
+    private static List<HttpHeader> copyHeaders(final List<HttpHeader> headers) {
+        if (headers == null) {
+            return null;
+        }
+        final List<HttpHeader> copy = new ArrayList<>();
+        for (final HttpHeader header : headers) {
+            if (header != null) {
+                copy.add(header);
+            }
+        }
+        return copy.isEmpty()
+                ? null
+                : Collections.unmodifiableList(copy);
+    }
+
+    // Only the names, as a header's value may be a secret.
+    private String headerNames() {
+        if (headers == null) {
+            return "[]";
+        }
+        final StringBuilder sb = new StringBuilder("[");
+        for (final HttpHeader header : headers) {
+            if (sb.length() > 1) {
+                sb.append(", ");
+            }
+            sb.append(header.getName());
+        }
+        return sb.append("]").toString();
     }
 
     public Builder copy() {
@@ -312,6 +359,7 @@ public class HttpClientConfig {
         private HttpProxyConfig proxyConfig;
         private SimpleDuration validateAfterInactivityPeriod = DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD;
         private HttpTlsConfig tlsConfiguration;
+        private List<HttpHeader> headers;
 
         private Builder() {
         }
@@ -331,6 +379,7 @@ public class HttpClientConfig {
             proxyConfig = httpClientConfig.proxy;
             validateAfterInactivityPeriod = httpClientConfig.validateAfterInactivityPeriod;
             tlsConfiguration = httpClientConfig.tls;
+            headers = httpClientConfig.headers;
         }
 
         public Builder timeout(final SimpleDuration timeout) {
@@ -408,6 +457,12 @@ public class HttpClientConfig {
             return this;
         }
 
+        /// @param headers The HTTP headers sent with every request, or null for none.
+        public Builder headers(final List<HttpHeader> headers) {
+            this.headers = headers;
+            return self();
+        }
+
         public HttpClientConfig build() {
             return new HttpClientConfig(
                     timeout,
@@ -423,7 +478,8 @@ public class HttpClientConfig {
                     userAgent,
                     proxyConfig,
                     validateAfterInactivityPeriod,
-                    tlsConfiguration);
+                    tlsConfiguration,
+                    headers);
         }
     }
 }

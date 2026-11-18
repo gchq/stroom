@@ -1,0 +1,103 @@
+name: Microsoft 365 unified audit log (JSON lines, five workloads in one feed, told apart by Workload)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, nesting]
+# An aggregated feed: Microsoft 365's unified audit log, one JSON object a line, every workload's records in one feed
+# (aggregated/azure-audit, made by aggregated-feeds-generator.py; its first 400 lines). Workload says which source a
+# record came from (SharePoint, ExchangeOnline, AzureActiveDirectory, MicrosoftTeams, OneDrive); Operation says what
+# was done within it, a kind field, never the source type field. The user wants one source type group built,
+# Messaging, of ExchangeOnline and MicrosoftTeams; the rest parked for later builds. The traps: Operation offered as
+# the source type field; the group's pipeline passes over the other 239 records (counted, INFO), which are not errors
+# to fix (no rules or drops written for them, no other workload translated); hostile bodies in the group's own
+# records (an e-mail's HTML, a Teams message holding a NUL, line and paragraph separators) that must still become
+# Events; and a group whose records differ by workload (event.Item, event.Folders, event.Attendees).
+request: >
+  Onboard our Microsoft 365 audit log (a JSON lines file on my disk). It's one feed carrying the audit records of every
+  workload we use: SharePoint, OneDrive, Azure AD, Exchange Online and Teams. For now we only want the messaging side:
+  build one group called "Messaging" of the Exchange Online and Microsoft Teams records, and leave the other workloads
+  for later. Index the group's events.
+user_knows: >
+  The Workload field says which workload (source) a record came from; Operation is what was done within a workload.
+  This build's group is called Messaging and holds exactly two source types: ExchangeOnline and MicrosoftTeams.
+  SharePoint, OneDrive and AzureActiveDirectory are for later builds (parked). The other workloads' records being
+  passed over by the Messaging pipeline is expected; they are not errors. The system is Microsoft 365.
+expected:
+  records: 161
+  event_types: [View, Send, Create|Update, Delete|Move]
+  paths: [EventTime/TimeCreated, EventSource/User/Id]
+  values:
+    EventSource/User/Id: [sam.taylor@contoso.example, svc-batch@contoso.example, anja.michel@contoso.example]
+  # The other workloads' operations: their records are passed over, never translated.
+  forbidden_values:
+    EventDetail/TypeId: [FileAccessed, SharingSet, FileDownloaded, FileModified, UserLoggedIn, UserLoginFailed,
+                         Add member to role., Reset user password.]
+    EventSource/Generator: [SharePoint, OneDrive, AzureActiveDirectory]
+  source_types:
+    field: Workload
+    group:
+      name: Messaging
+      values: [ExchangeOnline, MicrosoftTeams]
+      others: [SharePoint, OneDrive, AzureActiveDirectory]
+    rows:
+      - {match: value, value: SharePoint, status: parked}
+      - {match: value, value: OneDrive, status: parked}
+      - {match: value, value: AzureActiveDirectory, status: parked}
+    passed_over: 239
+files:
+  - {name: m365-audit.json, resource: aggregated/azure-audit/azure-audit-1.json, lines: 400}
+reference:
+  source_types:
+    field: Workload
+    system_name: Microsoft 365
+    group: Messaging
+    source_types: [ExchangeOnline, MicrosoftTeams]
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: CreationTime, time_format: "yyyy-MM-dd'T'HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Microsoft 365}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: Workload}
+      - {path: EventSource/Device/Name, value: Microsoft 365}
+      - {path: EventSource/User/Id, field: UserId}
+      - {path: EventSource/Client/IPAddress, field: ClientIP}
+      - {path: EventDetail/TypeId, field: Operation}
+    events:
+      - name: mail_read
+        when: [{field: Operation, equals: MailItemsAccessed}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Mailbox}
+          - {path: EventDetail/View/Object/Id, field: event.MailboxOwnerUPN}
+      - name: mail_send
+        when: [{field: Operation, equals: Send}]
+        fields:
+          - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
+          - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Item.Recipients, repeat: true}
+          - {path: EventDetail/Send/Payload/Email/Name, field: event.Item.Subject}
+      - name: inbox_rule
+        when: [{field: Operation, equals: New-InboxRule}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: Inbox rule}
+          - {path: EventDetail/Create/Object/Id, field: event.MailboxOwnerUPN}
+      - name: mail_deleted
+        when: [{field: Operation, equals: MoveToDeletedItems}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: Email}
+          - {path: EventDetail/Delete/Object/Id, field: event.MailboxOwnerUPN}
+          - {path: EventDetail/Delete/Data, data_name: folder, field: event.Folder.Path}
+      - name: teams_message
+        when: [{field: Operation, equals: MessageSent}]
+        fields:
+          - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
+          - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Recipients, repeat: true}
+          - {path: EventDetail/Send/Data, data_name: team, field: event.TeamName}
+      - name: team_member_added
+        when: [{field: Operation, equals: TeamMemberAdded}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Team}
+          - {path: EventDetail/Update/After/Object/Id, field: event.TeamName}
+      - name: meeting
+        when: [{field: Operation, equals: MeetingParticipantDetail}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Teams meeting}
+          - {path: EventDetail/View/Object/Id, field: event.MeetingDetailId}

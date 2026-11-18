@@ -101,6 +101,8 @@ class SessionResourceImpl implements SessionResource {
                 // Remove the user identity from the current session.
                 UserIdentitySessionUtil.setUserInSession(session, null);
             }
+            // So that anything told the session has ended knows it was a sign out, not an expiry.
+            SessionUtil.markExplicitLogout(session);
             session.invalidate();
         } else {
             LOGGER.info(() -> LogUtil.message(

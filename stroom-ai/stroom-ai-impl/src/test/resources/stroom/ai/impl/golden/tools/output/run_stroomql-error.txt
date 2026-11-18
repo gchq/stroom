@@ -1,0 +1,4 @@
+Arguments: {"query":"from \"Firewall events\" select Hst limit 10","out":"/outputs/hosts-2.md"}
+
+=== Output ===
+Error: The query failed: Unknown field 'Hst'

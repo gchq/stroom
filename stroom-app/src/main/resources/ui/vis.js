@@ -37,6 +37,51 @@ var stroomLink = function(href, target) {
     }
 }
 
+// True once the current visualisation has sent its own render report.
+var visReportsItself = false;
+var lastReportJson = null;
+
+// Send a render report to Stroom, unless it is the same as the last one.
+var postReport = function(report) {
+    var json = JSON.stringify(report);
+    if (json === lastReportJson) {
+        return;
+    }
+    lastReportJson = json;
+
+    if (stroomParent && stroomFrameId && stroomOrigin) {
+        var obj = {
+          frameId : stroomFrameId,
+          functionName : 'report',
+          report : report,
+        };
+
+        var message = JSON.stringify(obj);
+        stroomParent.postMessage(message, stroomOrigin);
+    }
+}
+
+// Send Stroom the controls a visualisation has for its toolbar (null for none), unless the same as the last.
+var lastControlsJson = null;
+var postControls = function(controls) {
+    var json = JSON.stringify(controls);
+    if (json === lastControlsJson) {
+        return;
+    }
+    lastControlsJson = json;
+
+    if (stroomParent && stroomFrameId && stroomOrigin) {
+        var obj = {
+          frameId : stroomFrameId,
+          functionName : 'controls',
+          controls : controls,
+        };
+
+        var message = JSON.stringify(obj);
+        stroomParent.postMessage(message, stroomOrigin);
+    }
+}
+
 !function() {
     var stroom = {};
 
@@ -81,6 +126,33 @@ var stroomLink = function(href, target) {
             var message = JSON.stringify(obj);
             stroomParent.postMessage(message, stroomOrigin);
         }
+    };
+
+    // Send Stroom a report on how the visualisation rendered, e.g. what it drew, what it dropped
+    // or why it failed. Stroom keeps the latest report for the visualisation.
+    // e.g. `stroom.report({status: 'ok', series: 2, points: 40, droppedRows: {}, warnings: []})`
+    stroom.report = function(report) {
+        visReportsItself = true;
+        postReport(report);
+    };
+
+    // Send Stroom the controls the visualisation has, for the toolbar Stroom shows above it; a button in the
+    // toolbar calls the visualisation's command(name) function. Each is optional:
+    //   zoom: it can zoom (shows Reset zoom, enabled while zoomed: true)
+    //   range: it has a range tool (shows Select a time range, on while rangeMode: true)
+    //   selectable: a click selects an item (shows Clear the selection, enabled while selected names it)
+    //   download: it can be saved as an image and its data as CSV (shows Download)
+    //   hiddenSeries: some of its series are hidden, e.g. from its legend (shows Show all series)
+    //   intervals: the intervals its time can be grouped by, Auto first (shows Interval, set to interval)
+    //   layout: its layout moves, e.g. a network graph settling (shows Pause layout, on while layoutPaused: true)
+    //   note: a short note, e.g. that rows were left out
+    // e.g. `stroom.controls({zoom: true, zoomed: false, range: true, rangeMode: false, selectable: true,
+    //     selected: '2026-10-24', note: null})`
+    // The commands are resetZoom, zoomIn, zoomOut, rangeMode (turns the range tool on or off), clearSelection,
+    // showAllSeries, pauseLayout (pauses or resumes it), interval (given the interval chosen), and downloadImage and
+    // downloadData (each given the file's name, without its extension).
+    stroom.controls = function(controls) {
+        postControls(controls || null);
     };
 
     stroom.dashboard = function(uuid, params, queryOnOpen) {
@@ -211,6 +283,16 @@ function ScriptInjector() {
 }
 
 /**
+ * The message of an error, which may be an Error or a plain string.
+ */
+function errorMessage(ex) {
+  if (ex && ex.message) {
+    return ex.message;
+  }
+  return String(ex);
+}
+
+/**
  * AN OBJECT TO LOAD AND INTERACT WITH VISUALISATIONS
  */
 function VisualisationManager() {
@@ -222,8 +304,48 @@ function VisualisationManager() {
 
   var update = function(callback) {
     if (vis && currentData) {
-      vis.setData(currentContext, currentSettings, currentData);
+      try {
+        vis.setData(currentContext, currentSettings, currentData);
+        scheduleDomCheck();
+      } catch (ex) {
+        // Visualisations that don't report their own errors still get one reported: its kind only, as its
+        // message may hold the data that broke it.
+        console.error(ex);
+        postReport({status : "error", error : (ex && ex.name ? ex.name : "Error")
+            + " in the visualisation's script (see the browser console)"});
+      }
     }
+  };
+
+  var domCheckTimer = null;
+
+  // For visualisations that don't send their own report, report what the DOM holds a moment after
+  // each update: whether anything was drawn and its size, never the data values or labels.
+  var scheduleDomCheck = function() {
+    if (domCheckTimer) {
+      clearTimeout(domCheckTimer);
+    }
+    domCheckTimer = setTimeout(function() {
+      domCheckTimer = null;
+      if (!vis || !vis.element || visReportsItself) {
+        return;
+      }
+      var element = vis.element;
+      var rect = element.getBoundingClientRect();
+      var svgCount = element.querySelectorAll("svg").length;
+      var canvasCount = element.querySelectorAll("canvas").length;
+      var elementCount = element.querySelectorAll("*").length;
+      var drawn = (svgCount + canvasCount) > 0 && rect.width > 0 && rect.height > 0;
+      postReport({
+        status : drawn ? "ok" : "nothing-drawn",
+        source : "dom",
+        svgCount : svgCount,
+        canvasCount : canvasCount,
+        elementCount : elementCount,
+        width : Math.round(rect.width),
+        height : Math.round(rect.height)
+      });
+    }, 1500);
   };
 
   var injectNextScript = function(scripts, callback) {
@@ -235,7 +357,7 @@ function VisualisationManager() {
         },
         onFailure : function(ex) {
           callback.onFailure("Failed to inject script '" + script.name + "' - "
-              + ex.message);
+              + errorMessage(ex));
         }
       };
 
@@ -273,11 +395,16 @@ function VisualisationManager() {
   };
 
   this.setVisType = function(type, className, callback) {
+    visReportsItself = false;
+    lastReportJson = null;
+    // A new visualisation has no controls until it sends them.
+    postControls(null);
     try {
       vis = eval("new " + type + "()");
       callback.onSuccess(null);
     } catch (ex) {
-      callback.onFailure(ex.message);
+      callback.onFailure(errorMessage(ex));
+      postReport({status : "error", error : "Unable to create '" + type + "' - " + errorMessage(ex)});
     }
 
     if (vis && vis.element) {
@@ -309,6 +436,17 @@ function VisualisationManager() {
   this.resize = function(callback) {
     if (vis) {
       vis.resize();
+    }
+  };
+
+  // A button in Stroom's toolbar under the visualisation was used (see stroom.controls).
+  this.command = function(name, value, callback) {
+    if (vis && typeof vis.command === "function") {
+      try {
+        vis.command(String(name), value === undefined || value === null ? null : String(value));
+      } catch (ex) {
+        console.error(ex);
+      }
     }
   };
 }

@@ -34,6 +34,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     private static final boolean DEFAULT_HIGHLIGHT = true;
     private static final int DEFAULT_FIELD_STATS_SAMPLE_SIZE = 5_000;
     private static final int DEFAULT_FIELD_STATS_MAX_SAMPLE_SIZE = 50_000;
+    private static final int DEFAULT_ESQL_ROW_LIMIT = 1_000;
+    private static final StroomDuration DEFAULT_ESQL_TIMEOUT = StroomDuration.ofMinutes(2);
 
     private final boolean highlight;
     private final StroomDuration scrollDuration;
@@ -41,6 +43,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     private final ElasticSuggestConfig suggestConfig;
     private final int fieldStatsSampleSize;
     private final int fieldStatsMaxSampleSize;
+    private final int esqlRowLimit;
+    private final StroomDuration esqlTimeout;
 
     public ElasticSearchConfig() {
         highlight = DEFAULT_HIGHLIGHT;
@@ -49,6 +53,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         suggestConfig = new ElasticSuggestConfig();
         fieldStatsSampleSize = DEFAULT_FIELD_STATS_SAMPLE_SIZE;
         fieldStatsMaxSampleSize = DEFAULT_FIELD_STATS_MAX_SAMPLE_SIZE;
+        esqlRowLimit = DEFAULT_ESQL_ROW_LIMIT;
+        esqlTimeout = DEFAULT_ESQL_TIMEOUT;
     }
 
     @SuppressWarnings("unused")
@@ -58,7 +64,9 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("storeSize") final String storeSize,
                                @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig,
                                @JsonProperty("fieldStatsSampleSize") final Integer fieldStatsSampleSize,
-                               @JsonProperty("fieldStatsMaxSampleSize") final Integer fieldStatsMaxSampleSize) {
+                               @JsonProperty("fieldStatsMaxSampleSize") final Integer fieldStatsMaxSampleSize,
+                               @JsonProperty("esqlRowLimit") final Integer esqlRowLimit,
+                               @JsonProperty("esqlTimeout") final StroomDuration esqlTimeout) {
         this.highlight = Objects.requireNonNullElse(highlight, DEFAULT_HIGHLIGHT);
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
@@ -66,6 +74,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         this.fieldStatsSampleSize = Objects.requireNonNullElse(fieldStatsSampleSize, DEFAULT_FIELD_STATS_SAMPLE_SIZE);
         this.fieldStatsMaxSampleSize = Objects.requireNonNullElse(
                 fieldStatsMaxSampleSize, DEFAULT_FIELD_STATS_MAX_SAMPLE_SIZE);
+        this.esqlRowLimit = Objects.requireNonNullElse(esqlRowLimit, DEFAULT_ESQL_ROW_LIMIT);
+        this.esqlTimeout = Objects.requireNonNullElse(esqlTimeout, DEFAULT_ESQL_TIMEOUT);
     }
 
     @JsonPropertyDescription("Highlight matched terms in the source document.")
@@ -100,6 +110,20 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         return fieldStatsMaxSampleSize;
     }
 
+    /// @return The most rows an ES|QL query run for Stroom AI returns unless it asks for another number.
+    @JsonPropertyDescription("The most rows an ES|QL query run by Stroom AI (esql_query) returns unless it asks " +
+                             "for fewer or more. It may ask for at most 10000, Elasticsearch's own cap.")
+    public int getEsqlRowLimit() {
+        return esqlRowLimit;
+    }
+
+    /// @return The longest an ES|QL query run for Stroom AI may take.
+    @JsonPropertyDescription("The longest an ES|QL query run by Stroom AI (esql_query) may take before it is " +
+                             "cancelled.")
+    public StroomDuration getEsqlTimeout() {
+        return esqlTimeout;
+    }
+
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
@@ -109,6 +133,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
                 ", suggestConfig=" + suggestConfig +
                 ", fieldStatsSampleSize=" + fieldStatsSampleSize +
                 ", fieldStatsMaxSampleSize=" + fieldStatsMaxSampleSize +
+                ", esqlRowLimit=" + esqlRowLimit +
+                ", esqlTimeout=" + esqlTimeout +
                 '}';
     }
 }

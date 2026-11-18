@@ -1,0 +1,44 @@
+name: Events already in the Elastic Common Schema (JSON lines, nested as ECS nests them)
+template: Event Data (JSON)
+capabilities: [nesting, field_normalization]
+# A shipper that writes ECS, 400 events: nested objects (event.action, user.name, source.ip, file.path), event.category
+# and event.type as arrays, and an outcome of success or failure. The traps: the source is ECS, the index is not
+# (Events first, as for any source); the kind of event is event.action; and the fields present differ by kind
+# (source.ip for logins, file.* for deletes).
+request: >
+  Onboard these ECS events from our log shipper (the file is on my disk). Index them.
+expected:
+  records: 400
+  event_types: [Authenticate, Delete]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob]
+files:
+  - {name: ecs-events.ndjson, generate: {kind: ecs_json, records: 400, seed: 12}}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: '@timestamp', time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: Endpoint Agent}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: ecs-shipper}
+      - {path: EventSource/Device/HostName, field: host.name}
+      - {path: EventSource/User/Id, field: user.name}
+      - {path: EventSource/Client/IPAddress, field: source.ip}
+      - {path: EventDetail/TypeId, field: event.action}
+    events:
+      - name: logon
+        when: [{field: event.action, equals: user-login}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user.name}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: event.outcome, map: {success: 'true', failure: 'false'}}
+      - name: file-delete
+        when: [{field: event.action, equals: file-delete}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: File}
+          - {path: EventDetail/Delete/Object/Id, field: file.path}
+          - {path: EventDetail/Delete/Object/Name, field: file.name}
