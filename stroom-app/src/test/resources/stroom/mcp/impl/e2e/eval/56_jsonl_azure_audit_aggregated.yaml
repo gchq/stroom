@@ -20,6 +20,7 @@ user_knows: >
   This build's group is called Messaging and holds exactly two source types: ExchangeOnline and MicrosoftTeams.
   SharePoint, OneDrive and AzureActiveDirectory are for later builds (parked). The other workloads' records being
   passed over by the Messaging pipeline is expected; they are not errors. The system is Microsoft 365.
+  Users' Ids stay whole, with their domain (sam.taylor@contoso.example): don't split the domain off.
 expected:
   records: 161
   event_types: [View, Send, Create|Update, Delete|Move]
