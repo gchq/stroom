@@ -829,6 +829,19 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect(swatch).toHaveStyle("backgroundColor", "rgb(255, 0, 0)"));
                     // The light example's own text colour
                     play.expect(swatch).toHaveStyle("color", "rgb(21, 21, 21)");
+                    // Each example says the contrast of its text on its background, the dark one's
+                    // the theme's own colours
+                    final Query lightContrast = style.querySelector(".cf-light-example + .cf-contrast");
+                    play.expect(lightContrast).toHaveTextContent("Contrast 4.5:1");
+                    play.expect(style.querySelector(".cf-dark-example + .cf-contrast"))
+                            .toHaveTextContent(TextMatch.regex("^Contrast \\d+\\.\\d:1$"));
+                    // Below WCAG's minimum for text it warns, and OK still keeps the colours
+                    play.clear(style.getByLabelText("Light Text Colour"));
+                    play.type(style.getByLabelText("Light Text Colour"), "#ffcccc");
+                    play.tab();
+                    play.waitFor(() -> play.expect(lightContrast).toHaveTextContent(
+                            "Contrast 2.8:1: below 4.5:1, so the text may be hard to read"));
+                    play.expect(lightContrast).toHaveClass("cf-contrast--low");
                     play.click(style.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit Custom Row Style",
                             StroomDom.DIALOG_TITLE)).toBeNull());

@@ -480,6 +480,17 @@
     color: #dce4e5;
 }
 
+/* The contrast of an example's text on its background, under it (Edit Custom Row Style) */
+.cf-contrast {
+    margin-top: .25rem;
+    font-size: 80%;
+    color: var(--text-color--muted);
+}
+/* Below WCAG's minimum for text */
+.cf-contrast--low {
+    color: var(--feedback);
+}
+
 
 
 
