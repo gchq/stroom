@@ -116,7 +116,9 @@ public class SearchRequestMapper {
                         searchRequest.getSearch().getDataSourceRef(),
                         expression,
                         params,
-                        searchRequest.getSearch().getTimeRange());
+                        searchRequest.getSearch().getTimeRange(),
+                        // Dashboards do not supply a native query yet.
+                        null);
 
             } catch (final RuntimeException ex) {
                 throw new RuntimeException("Invalid JSON for expression.  Got: " + expressionJson, ex);
@@ -126,7 +128,9 @@ public class SearchRequestMapper {
             return new Query(searchRequest.getSearch().getDataSourceRef(),
                     searchRequest.getSearch().getExpression(),
                     params,
-                    searchRequest.getSearch().getTimeRange());
+                    searchRequest.getSearch().getTimeRange(),
+                    // Dashboards do not supply a native query yet.
+                    null);
         }
     }
 

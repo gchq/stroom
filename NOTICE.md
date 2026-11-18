@@ -202,6 +202,7 @@ The table below includes licences for all Maven dependencies.
 | org.ow2.asm                      | asm-util                                     | 5.0.3            | Custom BSD    |           |               |
 | org.owasp.antisamy               | antisamy                                     | 1.4.3            | BSD           |           |               |
 | org.owasp.esapi                  | esapi                                        | 2.1.0            | BSD           |           |               |
+| org.postgresql                   | postgresql                                   | 42.7.14          | BSD 2-Clause  |           |               |
 | org.slf4j                        | slf4j-api                                    | 1.6.1            | MIT           |           |               |
 | org.slf4j                        | slf4j-api                                    | 1.6.2            | MIT           |           |               |
 | org.slf4j                        | slf4j-api                                    | 1.6.4            | MIT           |           |               |

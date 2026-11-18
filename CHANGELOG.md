@@ -13,6 +13,52 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.17] - 2026-11-18
+
+* Bug **#6025** : Fix a null pointer error when choosing Excel for a Data Connection that has never had a workbook.
+
+* Bug **#6036** : Fix a NUL character (U+0000) in data turning off XML escaping in the XMLWriter, so that the rest of the text was written unescaped. NUL is now always removed from the output, and the `preventEscapeSwitching` property now only affects `xsl:character-map` output.
+
+* Bug : Fix Detect Columns on a Data Connection giving columns whose names differ only in case, which queries then refused.
+
+* Bug : Fix a Data Connection being marked as changed after an edit was undone, and saving empty JDBC and Athena settings for other types.
+
+* Bug **#6039** : Fix incorrect handling of SQS messages when there is no matching S3 Client Config for the S3 location. It no longer attempts to consume the message.
+
+* Bug **#6027** : Fix NPE when refreshing OAuth tokens.
+
+* Bug **#6023** : Fix S3 stream processing when optional metadata or context streams are absent.
+
+* Bug **#6022** : Fix the User Access screen and session list showing no sessions when an authenticating edge proxy (e.g. an AWS ALB) is in use.
+
+
+## [v7.14-beta.16] - 2026-11-12
+
+* Bug **#5995** : Fix filtering of selection lists, e.g. time zone IDs in User Preferences, so that it ignores case. Filter text with upper case letters used to find nothing.
+
+* Bug **#6011** : Fix node startup and content searches waiting for a content index re-build to finish.
+
+
+## [v7.14-beta.15] - 2026-11-11
+
+* Bug **#6017** : Fix Ask Stroom AI ignoring the timeouts in the OpenAI Model document's HTTP client configuration. Requests to chat and embedding models always used a 60 second read timeout and a 15 second connect timeout.
+
+
+## [v7.14-beta.14] - 2026-11-11
+
+* Bug **#5953** : Change BCrypt Data Feed Key hashing to always truncate input on hashing and verification.
+
+
+## [v7.14-beta.13] - 2026-11-11
+
+* Bug **#5986** : Fix stepping a large stream failing with the stepping store byte limit before the first record is shown. The background capture of the stream now leaves 10% of `stroom.pipeline.stepping.maxBytesPerStream` free for the records being stepped to.
+
+
+## [v7.14-beta.12] - 2026-11-11
+
+* Bug **#6008** : Fix duplicate key error when replaying a report or rule execution.
+
+
 ## [v7.14-beta.11] - 2026-11-10
 
 * Feature : Add field-level query options to dashboard query expression terms on Elasticsearch fields, set with a cog button beside the term's value: case-insensitive and fuzzy matching for `keyword` and `wildcard` fields, and matching all words, phrase matching with slop and fuzzy matching for text fields.
@@ -2866,7 +2912,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.17...HEAD
+[v7.14-beta.17]: https://github.com/gchq/stroom/compare/v7.14-beta.16...v7.14-beta.17
+[v7.14-beta.16]: https://github.com/gchq/stroom/compare/v7.14-beta.15...v7.14-beta.16
+[v7.14-beta.15]: https://github.com/gchq/stroom/compare/v7.14-beta.14...v7.14-beta.15
+[v7.14-beta.14]: https://github.com/gchq/stroom/compare/v7.14-beta.13...v7.14-beta.14
+[v7.14-beta.13]: https://github.com/gchq/stroom/compare/v7.14-beta.12...v7.14-beta.13
+[v7.14-beta.12]: https://github.com/gchq/stroom/compare/v7.14-beta.11...v7.14-beta.12
 [v7.14-beta.11]: https://github.com/gchq/stroom/compare/v7.14-beta.10...v7.14-beta.11
 [v7.14-beta.10]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.10
 [v7.14-beta.9]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.9

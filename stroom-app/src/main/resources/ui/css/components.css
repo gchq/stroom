@@ -1771,6 +1771,14 @@ button.main-menu svg {
     overflow: auto;
 }
 
+/* Rows of a .form shown or hidden together, spaced like the form's own rows. Unlike .form it does
+   not scroll, so it does not clip the focus glow of the controls at its edges. */
+.form-section {
+    display: flex;
+    gap: var(--control__gap--vertical);
+    flex-direction: column;
+}
+
 .form-padding {
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }

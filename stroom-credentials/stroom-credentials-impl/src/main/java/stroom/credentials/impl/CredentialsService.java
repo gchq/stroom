@@ -21,6 +21,7 @@ import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.AwsKeySecret;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialWithPerms;
@@ -331,6 +332,7 @@ public class CredentialsService implements StoredSecrets {
     private static void checkSecretMatchesType(final Secret secret, final CredentialType credentialType) {
         final CredentialType secretType = switch (secret) {
             case final AccessTokenSecret ignored -> CredentialType.ACCESS_TOKEN;
+            case final AwsKeySecret ignored -> CredentialType.AWS_KEY;
             case final KeyStoreSecret ignored -> CredentialType.KEY_STORE;
             case final KeyStoreFileSecret ignored -> CredentialType.KEY_STORE_FILE;
             case final SshKeySecret ignored -> CredentialType.SSH_KEY;

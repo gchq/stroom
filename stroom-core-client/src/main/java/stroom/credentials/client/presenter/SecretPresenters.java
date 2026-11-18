@@ -33,6 +33,7 @@ import javax.inject.Inject;
 public class SecretPresenters {
 
     private final Provider<AccessTokenSecretPresenter> accessTokenSecretPresenterProvider;
+    private final Provider<AwsKeySecretPresenter> awsKeySecretPresenterProvider;
     private final Provider<SshKeySecretPresenter> sshKeySecretPresenterProvider;
     private final Provider<KeyStoreSecretPresenter> keyStoreSecretPresenterProvider;
     private final Provider<KeyStoreFileSecretPresenter> keyStoreFileSecretPresenterProvider;
@@ -43,11 +44,13 @@ public class SecretPresenters {
     @Inject
     public SecretPresenters(
             final Provider<AccessTokenSecretPresenter> accessTokenSecretPresenterProvider,
+            final Provider<AwsKeySecretPresenter> awsKeySecretPresenterProvider,
             final Provider<SshKeySecretPresenter> sshKeySecretPresenterProvider,
             final Provider<KeyStoreSecretPresenter> keyStoreSecretPresenterProvider,
             final Provider<KeyStoreFileSecretPresenter> keyStoreFileSecretPresenterProvider,
             final Provider<UsernamePasswordSecretPresenter> usernamePasswordSecretPresenterProvider) {
         this.accessTokenSecretPresenterProvider = accessTokenSecretPresenterProvider;
+        this.awsKeySecretPresenterProvider = awsKeySecretPresenterProvider;
         this.sshKeySecretPresenterProvider = sshKeySecretPresenterProvider;
         this.keyStoreSecretPresenterProvider = keyStoreSecretPresenterProvider;
         this.keyStoreFileSecretPresenterProvider = keyStoreFileSecretPresenterProvider;
@@ -70,6 +73,7 @@ public class SecretPresenters {
     private SecretPresenter<?> create(final CredentialType credentialType) {
         return switch (credentialType) {
             case ACCESS_TOKEN -> accessTokenSecretPresenterProvider.get();
+            case AWS_KEY -> awsKeySecretPresenterProvider.get();
             case KEY_STORE -> {
                 final KeyStoreSecretPresenter keyStoreSecretPresenter = keyStoreSecretPresenterProvider.get();
                 keyStoreSecretPresenter.setType(KeyStoreType.PKCS12);

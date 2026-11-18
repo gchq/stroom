@@ -35,6 +35,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.UUID;
+
 public class ScheduledProcessingPresenter
         extends MyPresenterWidget<ScheduledProcessingView> {
 
@@ -107,6 +109,8 @@ public class ScheduledProcessingPresenter
             final ExecutionSchedule newSchedule = executionHistory
                     .getExecutionSchedule()
                     .copy()
+                    // The replay is a new schedule so must not reuse the UUID of the one it was copied from.
+                    .uuid(UUID.randomUUID().toString())
                     .name(executionHistory.getExecutionSchedule().getName() + " (replay)")
                     .enabled(false)
                     .scheduleBounds(ScheduleBounds

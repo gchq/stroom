@@ -20,6 +20,8 @@ import stroom.core.client.gin.PluginModule;
 import stroom.credentials.client.CredentialsPlugin;
 import stroom.credentials.client.presenter.AccessTokenSecretPresenter;
 import stroom.credentials.client.presenter.AccessTokenSecretPresenter.AccessTokenSecretView;
+import stroom.credentials.client.presenter.AwsKeySecretPresenter;
+import stroom.credentials.client.presenter.AwsKeySecretPresenter.AwsKeySecretView;
 import stroom.credentials.client.presenter.CredentialSettingsPresenter;
 import stroom.credentials.client.presenter.CredentialSettingsPresenter.CredentialSettingsView;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
@@ -36,6 +38,7 @@ import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretVie
 import stroom.credentials.client.presenter.UsernamePasswordSecretPresenter;
 import stroom.credentials.client.presenter.UsernamePasswordSecretPresenter.UsernamePasswordSecretView;
 import stroom.credentials.client.view.AccessTokenSecretViewImpl;
+import stroom.credentials.client.view.AwsKeySecretViewImpl;
 import stroom.credentials.client.view.CredentialSettingsViewImpl;
 import stroom.credentials.client.view.CredentialsManagerViewImpl;
 import stroom.credentials.client.view.CredentialsViewImpl;
@@ -75,6 +78,9 @@ public class CredentialsModule extends PluginModule {
         bindPresenterWidget(AccessTokenSecretPresenter.class,
                 AccessTokenSecretView.class,
                 AccessTokenSecretViewImpl.class);
+        bindPresenterWidget(AwsKeySecretPresenter.class,
+                AwsKeySecretView.class,
+                AwsKeySecretViewImpl.class);
         bindPresenterWidget(SshKeySecretPresenter.class,
                 SshKeySecretView.class,
                 SshKeySecretViewImpl.class);

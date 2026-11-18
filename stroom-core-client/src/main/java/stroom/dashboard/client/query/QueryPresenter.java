@@ -50,6 +50,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultStoreInfo;
+import stroom.query.client.DataSourceClient;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
@@ -117,6 +118,7 @@ public class QueryPresenter
     private final LocationManager locationManager;
     private final IndexLoader indexLoader;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
+    private final DataSourceClient dataSourceClient;
     private final SearchModel searchModel;
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -150,7 +152,8 @@ public class QueryPresenter
                           final LocationManager locationManager,
                           final DateTimeSettingsFactory dateTimeSettingsFactory,
                           final ResultStoreModel resultStoreModel,
-                          final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
+                          final DynamicFieldSelectionListModel fieldSelectionBoxModel,
+                          final DataSourceClient dataSourceClient) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -162,6 +165,7 @@ public class QueryPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
+        this.dataSourceClient = dataSourceClient;
 
         view.setExpressionView(expressionPresenter.getView());
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
@@ -430,6 +434,15 @@ public class QueryPresenter
         fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
         expressionPresenter.setValueScopeSupplier(this::getValueScope);
+
+        // Some data sources, such as Amazon Athena, cost money on every run, so may set a minimum.
+        setDataSourceMinRefreshInterval(null);
+        dataSourceClient.fetchMinRefreshInterval(dataSourceRef, minimum -> {
+            // Ignore the answer if the data source has changed since.
+            if (Objects.equals(indexLoader.getLoadedDataSourceRef(), dataSourceRef)) {
+                setDataSourceMinRefreshInterval(minimum);
+            }
+        }, this);
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()

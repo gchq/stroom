@@ -19,6 +19,7 @@ package stroom.credentials.impl;
 import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.AwsKeySecret;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.KeyStoreFileSecret;
@@ -121,6 +122,30 @@ class TestCredentialsService {
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testAwsKeySecretMustBeStoredAsAnAwsKeyCredential() {
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("a credential", CredentialType.USERNAME_PASSWORD, null),
+                new AwsKeySecret("AKIAEXAMPLE", "secret"))))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testAwsKeyCredentialIsStored() {
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+        when(securityContext.getUserIdentityForAudit()).thenReturn("creator");
+
+        credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("aws", CredentialType.AWS_KEY, null),
+                new AwsKeySecret("AKIAEXAMPLE", "secret")));
+
+        verify(credentialsDao).putStoredSecret(any(), anyBoolean());
     }
 
     /// gh-5815: changing the name or expiry of existing credentials must not need the secret

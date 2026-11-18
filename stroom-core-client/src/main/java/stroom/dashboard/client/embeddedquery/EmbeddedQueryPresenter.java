@@ -52,6 +52,7 @@ import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.TableResult;
+import stroom.query.client.DataSourceClient;
 import stroom.query.client.QueryClient;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryDocPresenter;
@@ -97,6 +98,7 @@ public class EmbeddedQueryPresenter
             ComponentUse.PANEL);
 
     private final QueryClient queryClient;
+    private final DataSourceClient dataSourceClient;
     private final QueryModel queryModel;
     private final Provider<QueryDocPresenter> queryDocPresenterProvider;
     private final ContentManager contentManager;
@@ -129,13 +131,15 @@ public class EmbeddedQueryPresenter
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final ResultStoreModel resultStoreModel,
-                                  final ContentManager contentManager) {
+                                  final ContentManager contentManager,
+                                  final DataSourceClient dataSourceClient) {
         super(eventBus, view, settingsPresenterProvider);
         this.queryClient = queryClient;
         this.tablePresenterProvider = tablePresenterProvider;
         this.visPresenterProvider = visPresenterProvider;
         this.queryDocPresenterProvider = queryDocPresenterProvider;
         this.contentManager = contentManager;
+        this.dataSourceClient = dataSourceClient;
 
         final stroom.query.client.presenter.ResultComponent tableResultConsumer = new ResultComponent() {
             boolean start;
@@ -667,12 +671,28 @@ public class EmbeddedQueryPresenter
             // Read expression.
             queryModel.init(queryDoc.asDocRef());
             query = queryDoc.getQuery();
+            fetchMinRefreshInterval(query);
             initialised = true;
             final Automate automate = settings.getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
             }
         }
+    }
+
+    // Some data sources, such as Amazon Athena, cost money on every run, so may set a minimum.
+    private void fetchMinRefreshInterval(final String query) {
+        setDataSourceMinRefreshInterval(null);
+        queryClient.fetchDataSourceFromQueryString(query, dataSourceRef -> {
+            // Ignore the answer if the query has changed since.
+            if (Objects.equals(this.query, query)) {
+                dataSourceClient.fetchMinRefreshInterval(dataSourceRef, minimum -> {
+                    if (Objects.equals(this.query, query)) {
+                        setDataSourceMinRefreshInterval(minimum);
+                    }
+                }, this);
+            }
+        }, this);
     }
 
     @Override

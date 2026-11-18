@@ -798,6 +798,7 @@ class stroom.query.api.Query - public final void java.lang.Object.wait() throws 
 class stroom.query.api.Query - public final void java.lang.Object.wait(long) throws java.lang.InterruptedException
 class stroom.query.api.Query - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
 class stroom.query.api.Query - public int stroom.query.api.Query.hashCode()
+class stroom.query.api.Query - public java.lang.String stroom.query.api.Query.getNativeQuery()
 class stroom.query.api.Query - public java.lang.String stroom.query.api.Query.toString()
 class stroom.query.api.Query - public java.util.List<stroom.query.api.Param> stroom.query.api.Query.getParams()
 class stroom.query.api.Query - public static stroom.query.api.Query$Builder stroom.query.api.Query.builder()
@@ -819,6 +820,7 @@ class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder str
 class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder stroom.query.api.Query$Builder.addParams(stroom.query.api.Param...)
 class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder stroom.query.api.Query$Builder.dataSource(stroom.docref.DocRef)
 class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder stroom.query.api.Query$Builder.expression(stroom.query.api.ExpressionOperator)
+class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder stroom.query.api.Query$Builder.nativeQuery(java.lang.String)
 class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder stroom.query.api.Query$Builder.params(java.util.List<stroom.query.api.Param>)
 class stroom.query.api.Query$Builder - public stroom.query.api.Query$Builder stroom.query.api.Query$Builder.timeRange(stroom.query.api.TimeRange)
 class stroom.query.api.QueryKey - public boolean stroom.query.api.QueryKey.equals(java.lang.Object)

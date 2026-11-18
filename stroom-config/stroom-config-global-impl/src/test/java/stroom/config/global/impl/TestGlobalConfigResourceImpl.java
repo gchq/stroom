@@ -35,6 +35,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.EdgeAuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
@@ -71,6 +72,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestGlobalConfigResourceImpl.class);
 
     private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
+    // Replaced by a test before initNodes() to change the config the resource sees.
+    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
 
     public static final ConfigProperty CONFIG_PROPERTY_1;
     public static final ConfigProperty CONFIG_PROPERTY_2;
@@ -417,6 +420,23 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
     }
 
+    @Test
+    void fetchExtendedUiConfig_edgeAuthentication() {
+        // The UI hides the actions that end sessions behind an edge proxy, so it must be told the proxy is there.
+        authenticationConfig = Mockito.spy(new AuthenticationConfig());
+        Mockito.doReturn(new EdgeAuthenticationConfig(true, null))
+                .when(authenticationConfig).getEdgeAuthenticationConfig();
+        initNodes();
+
+        final ExtendedUiConfig response = doGetTest(
+                GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH,
+                ExtendedUiConfig.class,
+                null);
+
+        Assertions.assertThat(response.isEdgeAuthentication())
+                .isTrue();
+    }
+
     @Override
     public String getResourceBasePath() {
         return GlobalConfigResource.BASE_PATH;
@@ -524,7 +544,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
-                AuthenticationConfig::new,
+                () -> authenticationConfig,
                 StroomReceiptPolicyConfig::new,
                 ReceiveDataConfig::new,
                 AnnotationState::new,

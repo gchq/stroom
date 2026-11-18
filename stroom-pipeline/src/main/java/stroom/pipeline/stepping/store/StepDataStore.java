@@ -70,6 +70,10 @@ public class StepDataStore {
 
     // Reserved name for the per-part shared-scope state file (see getOrCreateStateFile).
     private static final String STATE_FILE_NAME = "__state__.dat";
+    // The percentage of maxBytesPerStream a backbone may fill. The rest is kept for the records a step
+    // materialises, so a backbone reading ahead through a large stream cannot leave no room for the record
+    // the user is actually stepping to (gh-5986).
+    private static final long BACKBONE_SHARE_PERCENT = 90;
 
     private final Path streamDir;
     private final SteppingConfig config;
@@ -98,6 +102,25 @@ public class StepDataStore {
     public StepDataStore(final Path streamDir, final SteppingConfig config) {
         this.streamDir = streamDir;
         this.config = config;
+    }
+
+    /// Check that a backbone (skeleton) capture may add another record to this store.
+    ///
+    /// A backbone reads ahead through the whole stream, so on a stream bigger than `maxBytesPerStream` it
+    /// always reaches the cap. It is held to a share of the cap, leaving the rest for the records a step
+    /// materialises, which are what the user is actually looking at. The check is made before a record is
+    /// written, so a backbone may go over its share by up to one record.
+    ///
+    /// @throws StepDataStoreException if the store already holds the backbone's share of the cap. The message
+    /// is the same as for the cap itself, because to the user it is the same limit.
+    public synchronized void checkBackboneHeadroom() {
+        checkNotDeleted();
+        final long backboneLimit = config.getMaxBytesPerStream() / 100 * BACKBONE_SHARE_PERCENT;
+        if (totalBytes >= backboneLimit) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Stepping store for this stream would exceed the {} byte limit; narrow your selection",
+                    config.getMaxBytesPerStream()));
+        }
     }
 
     /**
