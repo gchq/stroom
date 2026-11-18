@@ -323,6 +323,17 @@
   overflow-x: auto;
 }
 
+/* A rendered document's tables, which are most of the work in a large one (e.g. hundreds of them): one out of view
+   is neither laid out nor painted, taking the room of a typical table (or of its own, once it has been shown) until
+   it comes near the view. Its content is still found by find-in-page, selected, copied and printed. Only the table's
+   own box, never a section: no heading is in it, so pinned headings, collapsing and the headings' places measured
+   for them (see IFrameViewImpl.pinHeadings) are as they were. Its box already clips and holds its table's margins,
+   so the containment changes nothing else. */
+.info-page .markdown-table-scroll {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px auto 300px;
+}
+
 /* A run of text without a space kept on one line (see MarkdownConverter.nativeKeepCellWordsWhole). */
 .markdown-nowrap {
   white-space: nowrap;
