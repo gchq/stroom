@@ -20,7 +20,6 @@ import java.util.List;
 
 /// What running a query read.
 ///
-/// @param columns         The columns the query returned.
 /// @param unmatchedFields The query's fields that no column supplied.
 /// @param rowsRead        The rows read.
 /// @param rowsPassed      The rows that passed the `where` expression.
@@ -30,8 +29,7 @@ import java.util.List;
 ///                        scanned, or `null`.
 /// @param warnings        Problems found while reading, such as values that are not of their column's
 ///                        type.
-public record QueryRunSummary(List<SqlColumn> columns,
-                              List<String> unmatchedFields,
+public record QueryRunSummary(List<String> unmatchedFields,
                               long rowsRead,
                               long rowsPassed,
                               boolean limitReached,
@@ -42,24 +40,5 @@ public record QueryRunSummary(List<SqlColumn> columns,
     /// Creates a summary.
     public QueryRunSummary {
         warnings = List.copyOf(warnings);
-    }
-
-    /// Creates a summary with no warnings.
-    ///
-    /// @param columns         The columns the query returned.
-    /// @param unmatchedFields The query's fields that no column supplied.
-    /// @param rowsRead        The rows read.
-    /// @param rowsPassed      The rows that passed the `where` expression.
-    /// @param limitReached    True if there were more rows than the limit, so some were not read.
-    /// @param maxRows         The row limit.
-    /// @param info            Something to tell the user about the run, or `null`.
-    public QueryRunSummary(final List<SqlColumn> columns,
-                           final List<String> unmatchedFields,
-                           final long rowsRead,
-                           final long rowsPassed,
-                           final boolean limitReached,
-                           final int maxRows,
-                           final String info) {
-        this(columns, unmatchedFields, rowsRead, rowsPassed, limitReached, maxRows, info, List.of());
     }
 }

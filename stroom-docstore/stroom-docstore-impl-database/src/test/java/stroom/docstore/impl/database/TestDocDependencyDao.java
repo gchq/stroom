@@ -1,0 +1,1040 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.docstore.impl.database;
+
+import stroom.collection.api.CollectionService;
+import stroom.db.util.JooqUtil;
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
+import stroom.docstore.impl.db.DocStoreDBPersistenceDbModule;
+import stroom.docstore.impl.db.DocStoreDbConnProvider;
+import stroom.docstore.mock.MockDocFinderModule;
+import stroom.importexport.shared.Dependency;
+import stroom.importexport.shared.DependencyCriteria;
+import stroom.test.common.util.db.DbTestModule;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
+import stroom.util.shared.filter.FilterFieldDefinition;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
+import static stroom.docstore.impl.db.jooq.tables.DocDependency.DOC_DEPENDENCY;
+
+class TestDocDependencyDao {
+
+    @Inject
+    private DocDependencyDao dao;
+    @Inject
+    private DocStoreDbConnProvider connProvider;
+
+    @BeforeEach
+    void setUp() throws SQLException {
+        Guice.createInjector(
+                new DocStoreDBPersistenceDbModule(),
+                new DbTestModule(),
+                // The DAO now builds an ExpressionMapper, whose TermHandlerFactory needs these
+                // three. They are only consulted by conditions this DAO does not use
+                // (IN_DICTIONARY / IN_FOLDER / DocRef fields), so stubs are enough - but they must
+                // be bound or Guice cannot construct the graph.
+                new MockDocFinderModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(WordListProvider.class).toInstance(Mockito.mock(WordListProvider.class));
+                        bind(CollectionService.class).toInstance(Mockito.mock(CollectionService.class));
+                    }
+                }
+        ).injectMembers(this);
+
+        // Clear the doc_dependency table
+        try (final Connection connection = connProvider.getConnection()) {
+            stroom.test.common.util.db.DbTestUtil.clearTables(
+                    connection, List.of(DOC_DEPENDENCY.getName()));
+        }
+    }
+
+    // --- Helper ---
+
+    private DocRef docRef(final String type, final String name) {
+        return new DocRef(type, UUID.randomUUID().toString(), name);
+    }
+
+    private void createDocRow(final DocRef docRef) {
+        // Insert a minimal row into the doc table so LEFT JOINs can resolve names
+        JooqUtil.context(connProvider, ctx -> ctx
+                .insertInto(DOC)
+                .set(DOC.TYPE, docRef.getType())
+                .set(DOC.UUID, docRef.getUuid())
+                .set(DOC.NAME, docRef.getName())
+                .set(DOC.VERSION,
+                        UUID.randomUUID().toString())
+                .execute());
+    }
+
+    // --- setDependencies ---
+
+    @Test
+    void testSetDependencies_insertsEdges() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to1 = docRef("Index", "My Index");
+        final DocRef to2 = docRef("Pipeline", "My Pipeline");
+
+        dao.setDependencies(from, Set.of(to1, to2));
+
+        final int count = JooqUtil.contextResult(connProvider, ctx -> ctx
+                .selectCount().from(DOC_DEPENDENCY)
+                .where(DOC_DEPENDENCY.FROM_UUID.eq(from.getUuid()))
+                .fetchOptional()
+                .map(r -> r.value1())
+                .orElse(0));
+        Assertions.assertThat(count).isEqualTo(2);
+    }
+
+    @Test
+    void testSetDependencies_replacesExisting() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to1 = docRef("Index", "Index A");
+        final DocRef to2 = docRef("Index", "Index B");
+
+        // Set initial deps
+        dao.setDependencies(from, Set.of(to1));
+
+        // Replace with different dep
+        dao.setDependencies(from, Set.of(to2));
+
+        final Set<DocRef> deps = dao.getDependenciesOf(from.getUuid());
+        Assertions.assertThat(deps).hasSize(1);
+        Assertions.assertThat(deps.iterator().next().getUuid()).isEqualTo(to2.getUuid());
+    }
+
+    @Test
+    void testGetSourceUuids() {
+        final DocRef filter1 = docRef("ProcessorFilter", "");
+        final DocRef filter2 = docRef("ProcessorFilter", "");
+        final DocRef dashboard = docRef("Dashboard", "My Dashboard");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef index = docRef("Index", "My Index");
+
+        // A source with several edges is only returned once
+        dao.setDependencies(filter1, Set.of(pipeline, index));
+        dao.setDependencies(filter2, Set.of(pipeline));
+        dao.setDependencies(dashboard, Set.of(index));
+
+        assertThat(dao.getSourceUuids("ProcessorFilter"))
+                .containsExactlyInAnyOrder(filter1.getUuid(), filter2.getUuid());
+        assertThat(dao.getSourceUuids("Dashboard"))
+                .containsExactly(dashboard.getUuid());
+        assertThat(dao.getSourceUuids("Unknown"))
+                .isEmpty();
+    }
+
+    @Test
+    void testSetDependencies_emptySetDeletesAll() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to1 = docRef("Index", "My Index");
+
+        dao.setDependencies(from, Set.of(to1));
+        dao.setDependencies(from, Set.of());
+
+        assertThat(dao.getDependenciesOf(from.getUuid())).isEmpty();
+    }
+
+    @Test
+    void testSetDependencies_nullSetDeletesAll() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to1 = docRef("Index", "My Index");
+
+        dao.setDependencies(from, Set.of(to1));
+        dao.setDependencies(from, null);
+
+        assertThat(dao.getDependenciesOf(from.getUuid())).isEmpty();
+    }
+
+    // --- getDependenciesOf ---
+
+    @Test
+    void testGetDependenciesOf() {
+        final DocRef from = docRef("View", "My View");
+        final DocRef to1 = docRef("Index", "Index 1");
+        final DocRef to2 = docRef("Pipeline", "Pipeline 1");
+
+        dao.setDependencies(from, Set.of(to1, to2));
+
+        final Set<DocRef> deps = dao.getDependenciesOf(from.getUuid());
+        Assertions.assertThat(deps).hasSize(2);
+        Assertions.assertThat(deps.stream().map(DocRef::getUuid)).containsExactlyInAnyOrder(
+                to1.getUuid(), to2.getUuid());
+    }
+
+    @Test
+    void testGetDependenciesOf_noEdgesReturnsEmpty() {
+        assertThat(dao.getDependenciesOf(UUID.randomUUID().toString())).isEmpty();
+    }
+
+    // --- getDependantsOf ---
+
+    @Test
+    void testGetDependantsOf() {
+        final DocRef target = docRef("Index", "Shared Index");
+        final DocRef dependant1 = docRef("Dashboard", "Dashboard A");
+        final DocRef dependant2 = docRef("View", "View B");
+
+        dao.setDependencies(dependant1, Set.of(target));
+        dao.setDependencies(dependant2, Set.of(target));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(target.getUuid());
+        Assertions.assertThat(dependants).hasSize(2);
+        Assertions.assertThat(dependants.stream().map(DocRef::getUuid)).containsExactlyInAnyOrder(
+                dependant1.getUuid(), dependant2.getUuid());
+    }
+
+    @Test
+    void testGetDependantsOf_noReverseEdgesReturnsEmpty() {
+        assertThat(dao.getDependantsOf(UUID.randomUUID().toString())).isEmpty();
+    }
+
+    @Test
+    void testGetDependantsOf_resolvesLiveNameFromDocTable() {
+        final DocRef target = docRef("Index", "Shared Index");
+        // The edge stores the snapshot name, but the doc table holds a newer (live) name.
+        final DocRef dependant = docRef("Dashboard", "Stored Dashboard Name");
+        final DocRef liveDependant = new DocRef("Dashboard", dependant.getUuid(), "Live Dashboard Name");
+
+        createDocRow(liveDependant);
+        dao.setDependencies(dependant, Set.of(target));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(target.getUuid());
+        Assertions.assertThat(dependants).hasSize(1);
+        // Name is resolved live from the doc table, not the stored snapshot.
+        Assertions.assertThat(dependants.iterator().next().getName()).isEqualTo("Live Dashboard Name");
+    }
+
+    @Test
+    void testGetDependantsOf_rollsUpNonExplorerDependantToOwner() {
+        // A ProcessorFilter depends on a shared Dictionary. The filter is not an explorer tree node;
+        // its owning Pipeline is, so the dependant surfaces as the pipeline.
+        final DocRef sharedDict = docRef("Dictionary", "Shared Dictionary");
+        final DocRef filter = docRef("ProcessorFilter", "");   // no doc row -> non-explorer source
+        final DocRef pipeline = docRef("Pipeline", "Owning Pipeline");
+
+        createDocRow(sharedDict);
+        createDocRow(pipeline);        // owner exists in the doc table
+        // filter is NOT created
+
+        // The filter depends on its pipeline (owner edge) and the shared dictionary.
+        dao.setDependencies(filter, Set.of(pipeline, sharedDict));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(sharedDict.getUuid());
+
+        // The dependant is attributed to the pipeline (a real tree node), not the filter, with the
+        // owner's live name.
+        Assertions.assertThat(dependants).hasSize(1);
+        final DocRef dependant = dependants.iterator().next();
+        Assertions.assertThat(dependant.getUuid()).isEqualTo(pipeline.getUuid());
+        Assertions.assertThat(dependant.getName()).isEqualTo("Owning Pipeline");
+    }
+
+    @Test
+    void testGetDependantsOf_nonExplorerDependantWithoutOwnerIsNotRolledUp() {
+        final DocRef sharedDict = docRef("Dictionary", "Shared Dictionary");
+        final DocRef filter = docRef("ProcessorFilter", "Orphan Filter");
+
+        createDocRow(sharedDict);
+        // filter has no doc row and no owner-typed (Pipeline) edge.
+        dao.setDependencies(filter, Set.of(sharedDict));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(sharedDict.getUuid());
+
+        // No owner to roll up to, so it stays as the filter itself.
+        Assertions.assertThat(dependants).hasSize(1);
+        Assertions.assertThat(dependants.iterator().next().getUuid()).isEqualTo(filter.getUuid());
+    }
+
+    // --- deleteAllForDoc ---
+
+    @Test
+    void testDeleteAllForDoc() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to1 = docRef("Index", "Index 1");
+
+        dao.setDependencies(from, Set.of(to1));
+        assertThat(dao.getDependenciesOf(from.getUuid())).hasSize(1);
+
+        dao.deleteAllForDoc(from.getUuid());
+        assertThat(dao.getDependenciesOf(from.getUuid())).isEmpty();
+    }
+
+    @Test
+    void testDeleteAllForDoc_doesNotAffectOtherDocs() {
+        final DocRef from1 = docRef("Dashboard", "Dashboard 1");
+        final DocRef from2 = docRef("Dashboard", "Dashboard 2");
+        final DocRef to = docRef("Index", "Shared Index");
+
+        dao.setDependencies(from1, Set.of(to));
+        dao.setDependencies(from2, Set.of(to));
+
+        dao.deleteAllForDoc(from1.getUuid());
+
+        assertThat(dao.getDependenciesOf(from1.getUuid())).isEmpty();
+        assertThat(dao.getDependenciesOf(from2.getUuid())).hasSize(1);
+    }
+
+    // --- updateName ---
+
+    @Test
+    void testUpdateName_updatesFromName() {
+        final DocRef from = docRef("Dashboard", "Old Name");
+        final DocRef to = docRef("Index", "Index");
+
+        dao.setDependencies(from, Set.of(to));
+        dao.updateName(from.getUuid(), "New Name");
+
+        // Read the stored from_name directly
+        final String storedName = JooqUtil.contextResult(connProvider, ctx -> ctx
+                .select(DOC_DEPENDENCY.FROM_NAME)
+                .from(DOC_DEPENDENCY)
+                .where(DOC_DEPENDENCY.FROM_UUID.eq(from.getUuid()))
+                .fetchOne(DOC_DEPENDENCY.FROM_NAME));
+        Assertions.assertThat(storedName).isEqualTo("New Name");
+    }
+
+    @Test
+    void testUpdateName_updatesToName() {
+        final DocRef from = docRef("Dashboard", "Dashboard");
+        final DocRef to = docRef("Index", "Old Index Name");
+
+        dao.setDependencies(from, Set.of(to));
+        dao.updateName(to.getUuid(), "New Index Name");
+
+        // Read the stored to_name directly
+        final String storedName = JooqUtil.contextResult(connProvider, ctx -> ctx
+                .select(DOC_DEPENDENCY.TO_NAME)
+                .from(DOC_DEPENDENCY)
+                .where(DOC_DEPENDENCY.TO_UUID.eq(to.getUuid()))
+                .fetchOne(DOC_DEPENDENCY.TO_NAME));
+        Assertions.assertThat(storedName).isEqualTo("New Index Name");
+    }
+
+    // --- getBrokenDependencies ---
+
+    @Test
+    void testGetBrokenDependencies_detectsMissingTarget() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef missingTarget = docRef("Index", "Ghost Index");
+
+        // Create the 'from' doc in the doc table so it's live
+        createDocRow(from);
+        // Don't create missingTarget — it's "deleted" or never existed
+
+        dao.setDependencies(from, Set.of(missingTarget));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+        Assertions.assertThat(broken).isNotEmpty();
+
+        // Should contain an entry mapping 'from' -> set containing the missing target
+        Assertions.assertThat(broken.values().stream().flatMap(Set::stream).map(DocRef::getUuid))
+                .contains(missingTarget.getUuid());
+    }
+
+    @Test
+    void testGetBrokenDependencies_excludesPseudoRefs() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final String pseudoUuid = UUID.randomUUID().toString();
+        final DocRef pseudoTarget = new DocRef("Annotations", pseudoUuid, "Annotations");
+
+        createDocRow(from);
+        dao.setDependencies(from, Set.of(pseudoTarget));
+
+        // Pseudo-ref should be excluded
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of(pseudoUuid));
+        Assertions.assertThat(broken).isEmpty();
+    }
+
+    @Test
+    void testGetBrokenDependencies_noBrokenWhenTargetExists() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to = docRef("Index", "Live Index");
+
+        createDocRow(from);
+        createDocRow(to);  // Target exists
+
+        dao.setDependencies(from, Set.of(to));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+        Assertions.assertThat(broken).isEmpty();
+    }
+
+    @Test
+    void testGetBrokenDependencies_rollsUpNonExplorerSourceToOwner() {
+        // A ProcessorFilter is not an explorer tree node; its owning Pipeline is.
+        final DocRef filter = docRef("ProcessorFilter", "");    // no doc row -> non-explorer source
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef missingDict = docRef("Dictionary", "Ghost Dictionary");
+
+        createDocRow(pipeline);        // owner exists in the doc table
+        // filter and missingDict are NOT created
+
+        // The filter depends on its pipeline (healthy) and a now-missing dictionary (broken).
+        dao.setDependencies(filter, Set.of(pipeline, missingDict));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+
+        // The broken dep is attributed to the pipeline (a real tree node), not the filter.
+        Assertions.assertThat(broken).containsOnlyKeys(pipeline);
+        Assertions.assertThat(broken.get(pipeline).stream().map(DocRef::getUuid))
+                .containsExactly(missingDict.getUuid());
+        // The rolled-up key carries the owner's live name resolved from the doc table.
+        Assertions.assertThat(broken.keySet().iterator().next().getName()).isEqualTo("My Pipeline");
+    }
+
+    @Test
+    void testGetBrokenDependencies_nonExplorerSourceWithoutOwnerIsNotRolledUp() {
+        // Non-explorer source whose only broken edge has no owner-typed (Pipeline) dependency.
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef missingDict = docRef("Dictionary", "Ghost Dictionary");
+
+        dao.setDependencies(filter, Set.of(missingDict));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+
+        // No owner to roll up to, so it stays keyed on the filter.
+        Assertions.assertThat(broken).containsOnlyKeys(filter);
+        Assertions.assertThat(broken.get(filter).stream().map(DocRef::getUuid))
+                .containsExactly(missingDict.getUuid());
+    }
+
+    @Test
+    void testGetBrokenDependencies_rollsUpToAnalyticRuleOwner() {
+        // The filter of a streaming analytic is owned by its analytic rule rather than a pipeline
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef analyticRule = docRef("AnalyticRule", "My Rule");
+        final DocRef missingDict = docRef("Dictionary", "Ghost Dictionary");
+        createDocRow(analyticRule);
+
+        dao.setDependencies(filter, Set.of(analyticRule, missingDict));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+
+        Assertions.assertThat(broken).containsOnlyKeys(analyticRule);
+        Assertions.assertThat(broken.get(analyticRule).stream().map(DocRef::getUuid))
+                .containsExactly(missingDict.getUuid());
+    }
+
+    @Test
+    void testFetchDependencies_nonExplorerSourceTakesOwnerName() {
+        // A processor filter has no name of its own, so it is shown with its pipeline's name
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef index = docRef("Index", "My Index");
+        createDocRow(pipeline);
+        createDocRow(index);
+        dao.setDependencies(filter, Set.of(pipeline, index));
+
+        Assertions.assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .hasSize(2)
+                .extracting(dependency -> dependency.getFrom().getName())
+                .containsOnly("My Pipeline");
+
+        // The name is the pipeline's live name, so a rename needs no propagating
+        renameDocRow(pipeline, "Renamed Pipeline");
+        Assertions.assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .extracting(dependency -> dependency.getFrom().getName())
+                .containsOnly("Renamed Pipeline");
+
+        // The quick filter on the source name uses the same name
+        Assertions.assertThat(filter("fromname:Renamed").getValues())
+                .hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_nonExplorerSourceWithDeletedOwnerKeepsStoredName() {
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        createDocRow(pipeline);
+        dao.setDependencies(filter, Set.of(pipeline));
+        deleteDocRow(pipeline);
+
+        Assertions.assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .singleElement()
+                .satisfies(dependency -> {
+                    Assertions.assertThat(dependency.getFrom().getName())
+                            .isEmpty();
+                    Assertions.assertThat(dependency.isOk())
+                            .isFalse();
+                });
+    }
+
+    @Test
+    void testFetchDependencies_documentSourceKeepsItsOwnName() {
+        // A document is never given the name of a pipeline it depends on, e.g. a child pipeline
+        final DocRef child = docRef("Pipeline", "Child Pipeline");
+        final DocRef parent = docRef("Pipeline", "Parent Pipeline");
+        createDocRow(child);
+        createDocRow(parent);
+        dao.setDependencies(child, Set.of(parent));
+
+        Assertions.assertThat(filter("fromuuid:" + child.getUuid()).getValues())
+                .singleElement()
+                .extracting(dependency -> dependency.getFrom().getName())
+                .isEqualTo("Child Pipeline");
+    }
+
+    // --- fetchDependencies (paginated) ---
+
+    @Test
+    void testFetchDependencies_returnsPaginatedResults() {
+        final DocRef from = docRef("Dashboard", "My Dashboard");
+        final DocRef to1 = docRef("Index", "Index 1");
+        final DocRef to2 = docRef("Pipeline", "Pipeline 1");
+        final DocRef to3 = docRef("Dictionary", "Dict 1");
+
+        createDocRow(from);
+        createDocRow(to1);
+        createDocRow(to2);
+        createDocRow(to3);
+
+        dao.setDependencies(from, Set.of(to1, to2, to3));
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
+
+        Assertions.assertThat(page.getValues()).hasSize(3);
+        Assertions.assertThat(page.getPageResponse().getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void testFetchDependencies_resolvesLiveNamesFromDocTable() {
+        final DocRef from = docRef("Dashboard", "Dashboard Name");
+        final DocRef to = docRef("Index", "Index Name");
+
+        createDocRow(from);
+        createDocRow(to);
+
+        dao.setDependencies(from, Set.of(to));
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
+
+        Assertions.assertThat(page.getValues()).hasSize(1);
+        final Dependency dep = page.getValues().getFirst();
+        // Names should be resolved from the doc table (COALESCE prefers live name)
+        Assertions.assertThat(dep.getFrom().getName()).isEqualTo("Dashboard Name");
+        Assertions.assertThat(dep.getTo().getName()).isEqualTo("Index Name");
+        Assertions.assertThat(dep.isOk()).isTrue();
+    }
+
+    @Test
+    void testFetchDependencies_fallsBackToStoredNameForDeletedDoc() {
+        final DocRef from = docRef("Dashboard", "Dashboard Name");
+        final DocRef to = docRef("Index", "Stored Index Name");
+
+        createDocRow(from);
+        // Don't create 'to' in doc table — simulates deleted doc
+
+        dao.setDependencies(from, Set.of(to));
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
+
+        Assertions.assertThat(page.getValues()).hasSize(1);
+        final Dependency dep = page.getValues().getFirst();
+        // to name should fall back to the stored name
+        Assertions.assertThat(dep.getTo().getName()).isEqualTo("Stored Index Name");
+        Assertions.assertThat(dep.isOk()).isFalse();  // Target missing = broken
+    }
+
+    // --- Edge cases ---
+
+    @Test
+    void testIsolationBetweenDocs() {
+        final DocRef fromA = docRef("Dashboard", "A");
+        final DocRef fromB = docRef("View", "B");
+        final DocRef target = docRef("Index", "Shared");
+
+        dao.setDependencies(fromA, Set.of(target));
+        dao.setDependencies(fromB, Set.of(target));
+
+        // Each doc has exactly 1 dependency
+        assertThat(dao.getDependenciesOf(fromA.getUuid())).hasSize(1);
+        assertThat(dao.getDependenciesOf(fromB.getUuid())).hasSize(1);
+
+        // Target has 2 dependants
+        assertThat(dao.getDependantsOf(target.getUuid())).hasSize(2);
+    }
+
+    // --- fetchDependencies (quick filter) ---
+    //
+    // The quick filter text arrives as DependencyCriteria.partialName and is parsed server side
+    // into jOOQ conditions. Before gh-5720 it was matched as a literal LIKE against the from/to
+    // names, so every qualified term (which is what the explorer context menu sends) matched
+    // nothing.
+
+    /**
+     * Regression test for gh-5720. Right clicking an explorer item and choosing "Dependants"
+     * opens this screen pre-filtered with "touuid:&lt;uuid&gt;".
+     */
+    @Test
+    void testFetchDependencies_filterByToUuid() {
+        final Fixture f = new Fixture();
+
+        Assertions.assertThat(filter("touuid:" + f.index.getUuid()).getValues()
+                        .stream()
+                        .map(dep -> dep.getFrom().getName()))
+                .containsExactly("Dashboard One");
+    }
+
+    @Test
+    void testFetchDependencies_filterByFromUuid() {
+        final Fixture f = new Fixture();
+
+        Assertions.assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_filterByType() {
+        new Fixture();
+
+        Assertions.assertThat(filter("fromtype:View").getValues()).hasSize(1);
+        Assertions.assertThat(filter("totype:Index").getValues()).hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_unqualifiedTermMatchesEitherName() {
+        new Fixture();
+
+        // Matches on the from name only.
+        Assertions.assertThat(filter("Dashboard One").getValues()).hasSize(2);
+        // Matches on the to name only.
+        Assertions.assertThat(filter("Dict").getValues()).hasSize(1);
+        // Matches nothing.
+        Assertions.assertThat(filter("nosuchthing").getValues()).isEmpty();
+    }
+
+    @Test
+    void testFetchDependencies_filterByStatus() {
+        final Fixture f = new Fixture();
+
+        // Only the edge to the deleted dictionary is broken.
+        final ResultPage<Dependency> missing = filter("status:Missing");
+        Assertions.assertThat(missing.getValues()).hasSize(1);
+        Assertions.assertThat(missing.getValues().getFirst().getTo().getUuid()).isEqualTo(f.missingDict.getUuid());
+
+        Assertions.assertThat(filter("status:OK").getValues()).hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_operators() {
+        new Fixture();
+
+        // Equals, rather than the default contains.
+        Assertions.assertThat(filter("totype:=Index").getValues()).hasSize(2);
+        Assertions.assertThat(filter("totype:=Ind").getValues()).isEmpty();
+        // Starts with / ends with - both discriminating, the View row has neither.
+        Assertions.assertThat(filter("fromname:^Dashboard").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromname:$One").getValues()).hasSize(2);
+        // Negation.
+        Assertions.assertThat(filter("totype:!Index").getValues()).hasSize(1);
+    }
+
+    @Test
+    void testFetchDependencies_andOr() {
+        new Fixture();
+
+        Assertions.assertThat(filter("fromtype:Dashboard and totype:Index").getValues()).hasSize(1);
+        Assertions.assertThat(filter("fromtype:Dashboard or fromtype:View").getValues()).hasSize(3);
+    }
+
+    /**
+     * Pseudo-refs (Searchable / Annotation data sources) live outside the doc table by design, so
+     * a dependency on one is OK rather than missing.
+     */
+    @Test
+    void testFetchDependencies_pseudoRefIsNotMissing() {
+        final DocRef from = docRef("Dashboard", "Uses Annotations");
+        final DocRef pseudoRef = docRef("Searchable", "Annotations");
+        createDocRow(from);
+        // Deliberately no doc row for the pseudo-ref.
+        dao.setDependencies(from, Set.of(pseudoRef));
+
+        // Without the pseudo-ref set it looks broken...
+        final ResultPage<Dependency> unaware =
+                dao.fetchDependencies(new DependencyCriteria(), Set.of(), dep -> true);
+        Assertions.assertThat(unaware.getValues().getFirst().isOk()).isFalse();
+
+        // ...and with it, it is fine, and is excluded from a "missing" filter.
+        final Set<String> pseudoRefUuids = Set.of(pseudoRef.getUuid());
+        final ResultPage<Dependency> aware =
+                dao.fetchDependencies(new DependencyCriteria(), pseudoRefUuids, dep -> true);
+        Assertions.assertThat(aware.getValues().getFirst().isOk()).isTrue();
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setQuickFilter("status:Missing");
+        assertThat(dao.fetchDependencies(criteria, pseudoRefUuids, dep -> true).getValues()).isEmpty();
+    }
+
+    /**
+     * The quick filter queries on a debounce as the user types, so partially typed input and
+     * conditions outside the field's ConditionSet must match nothing rather than fail the request.
+     */
+    @Test
+    void testFetchDependencies_unparseableFilterReturnsEmpty() {
+        new Fixture();
+
+        // Unbalanced quote.
+        Assertions.assertThat(filter("\"Dashboard").getValues()).isEmpty();
+        // WORD_BOUNDARY is not in ConditionSet.SQL_TEXT and TermHandler would throw on it.
+        Assertions.assertThat(filter("fromname:?Dashboard").getValues()).isEmpty();
+    }
+
+    /**
+     * Empty is the right result for a rejected filter, but on its own it is indistinguishable
+     * from a filter that matched nothing - which is what made arming the capability check a
+     * change from one silent wrong answer to another. The reason has to come back with the page.
+     */
+    @Test
+    void testFetchDependencies_rejectedFilterExplainsItself() {
+        new Fixture();
+
+        final ResultPage<Dependency> page = filter("fromname:?Dashboard");
+
+        Assertions.assertThat(page.getValues()).isEmpty();
+        Assertions.assertThat(page.getFilterError()).isNotNull();
+        Assertions.assertThat(page.getFilterError().getText())
+                .contains("does not support")
+                .contains("word boundary");
+        // Positional, so the offending token can be underlined rather than described.
+        Assertions.assertThat(page.getFilterError().getFrom()).isNotNull();
+        Assertions.assertThat(page.getFilterError().getTo()).isNotNull();
+        Assertions.assertThat(page.getFilterError().getSeverity()).isEqualTo(Severity.ERROR);
+    }
+
+    /**
+     * A filter that legitimately matches nothing must NOT carry a diagnostic, or the widget would
+     * cry wolf on every ordinary empty result.
+     */
+    @Test
+    void testFetchDependencies_emptyResultCarriesNoDiagnostic() {
+        new Fixture();
+
+        final ResultPage<Dependency> page = filter("fromname:NoSuchThingExists");
+
+        Assertions.assertThat(page.getValues()).isEmpty();
+        Assertions.assertThat(page.getFilterError()).isNull();
+    }
+
+    @Test
+    void testFetchDependencies_filterSortAndPageTogether() {
+        new Fixture();
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setQuickFilter("fromtype:Dashboard");
+        criteria.setSortList(List.of(new CriteriaFieldSort(DependencyCriteria.FIELD_TO_NAME, false, true)));
+        criteria.setPageRequest(new PageRequest(0, 1));
+
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
+
+        // One row on the page, but the total reflects everything the filter matched.
+        Assertions.assertThat(page.getValues()).hasSize(1);
+        Assertions.assertThat(page.getPageResponse().getTotal()).isEqualTo(2);
+        Assertions.assertThat(page.getValues().getFirst().getTo().getName()).isEqualTo("Dict One");
+    }
+
+    /**
+     * Sorting by status must use the same pseudo-ref aware expression the SELECT does, or a
+     * pseudo-ref row is ordered as missing while being displayed as OK. The secondary sort makes
+     * the ordering deterministic so the two cases are distinguishable.
+     */
+    @Test
+    void testFetchDependencies_sortByStatusHonoursPseudoRefs() {
+        final DocRef from = docRef("Dashboard", "Sorter");
+        final DocRef existing = docRef("Index", "Zeta Index");
+        final DocRef pseudoRef = docRef("Searchable", "Alpha Pseudo");
+        final DocRef missing = docRef("Dictionary", "Beta Missing");
+        createDocRow(from);
+        createDocRow(existing);
+        // No doc rows for pseudoRef or missing.
+        dao.setDependencies(from, Set.of(existing, pseudoRef, missing));
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setSortList(List.of(
+                new CriteriaFieldSort(DependencyCriteria.FIELD_STATUS, false, true),
+                new CriteriaFieldSort(DependencyCriteria.FIELD_TO_NAME, false, true)));
+
+        final ResultPage<Dependency> page =
+                dao.fetchDependencies(criteria, Set.of(pseudoRef.getUuid()), dep -> true);
+
+        // "Missing" sorts before "OK", and only the dictionary is genuinely missing. If the sort
+        // used a pseudo-ref blind expression, "Alpha Pseudo" would sort into the missing group and
+        // come first.
+        Assertions.assertThat(page.getValues().stream().map(dep -> dep.getTo().getName()))
+                .containsExactly("Beta Missing", "Alpha Pseudo", "Zeta Index");
+        Assertions.assertThat(page.getValues().stream().map(Dependency::isOk))
+                .containsExactly(false, true, true);
+    }
+
+    /**
+     * Every qualifier the help tooltip advertises must resolve. The tooltip is built from
+     * DependencyCriteria.FIELD_DEFINITIONS, so a qualifier that the server does not recognise
+     * would be documented but silently match nothing - which is exactly how gh-5720 presented.
+     */
+    @Test
+    void testFetchDependencies_everyAdvertisedQualifierResolves() {
+        final Fixture f = new Fixture();
+
+        Assertions.assertThat(filter("fromtype:Dashboard").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromname:Dashboard One").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
+        Assertions.assertThat(filter("totype:Index").getValues()).hasSize(2);
+        Assertions.assertThat(filter("toname:Index One").getValues()).hasSize(1);
+        Assertions.assertThat(filter("touuid:" + f.index.getUuid()).getValues()).hasSize(1);
+        Assertions.assertThat(filter("status:OK").getValues()).hasSize(2);
+
+        // And the qualifiers are exactly those derived from the tooltip's field definitions.
+        Assertions.assertThat(DependencyCriteria.FIELD_DEFINITIONS
+                        .stream()
+                        .map(FilterFieldDefinition::getFilterQualifier))
+                .containsExactlyInAnyOrder(
+                        "fromtype", "fromname", "fromuuid",
+                        "totype", "toname", "touuid",
+                        "status");
+    }
+
+    // --- dependency_version stamping and rebuild support ---
+
+    @Test
+    void setDependencies_stampsDependencyVersion() {
+        final DocRef from = docRef("View", "View");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+        createDocRow(from);
+
+        Assertions.assertThat(getDependencyVersion(from))
+                .isNull();
+
+        dao.setDependencies(from, Set.of(to));
+
+        Assertions.assertThat(getDependencyVersion(from))
+                .isEqualTo(DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
+    }
+
+    @Test
+    void setDependencies_sourceWithNoDocRow() {
+        // e.g. a processor filter, which has edges but no doc row to stamp
+        final DocRef from = docRef("ProcessorFilter", "Filter");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+
+        dao.setDependencies(from, Set.of(to));
+
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .extracting(DocRef::getUuid)
+                .containsExactly(to.getUuid());
+    }
+
+    @Test
+    void findDocsWithStaleDependencies() {
+        final DocRef neverBuilt = docRef("Pipeline", "Never built");
+        final DocRef oldVersion = docRef("Pipeline", "Old version");
+        final DocRef current = docRef("Pipeline", "Current");
+        final DocRef deleted = docRef("Pipeline", "Deleted");
+        final String neverBuiltVersion = createDocRow(neverBuilt, null);
+        final String oldVersionVersion = createDocRow(oldVersion, DocDependencyDao.CURRENT_DEPENDENCY_VERSION - 1);
+        createDocRow(current, DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
+        createDocRow(deleted, null);
+        deleteDocRow(deleted);
+
+        // Other tests leave doc rows behind, so only look at the ones created here
+        final Set<String> uuids = Set.of(
+                neverBuilt.getUuid(), oldVersion.getUuid(), current.getUuid(), deleted.getUuid());
+        assertThat(dao.findDocsWithStaleDependencies())
+                .filteredOn(docVersion -> uuids.contains(docVersion.docRef().getUuid()))
+                .containsExactlyInAnyOrder(
+                        new DocDependencyDao.DocVersion(neverBuilt, neverBuiltVersion),
+                        new DocDependencyDao.DocVersion(oldVersion, oldVersionVersion));
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_versionMatches() {
+        final DocRef from = docRef("View", "View");
+        final DocRef oldTo = docRef("Pipeline", "Old pipeline");
+        final DocRef newTo = docRef("Pipeline", "New pipeline");
+        final String version = createDocRow(from, null);
+        dao.setDependencies(from, Set.of(oldTo));
+        setDependencyVersion(from, null);
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, version, Set.of(newTo));
+
+        Assertions.assertThat(written)
+                .isTrue();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .extracting(DocRef::getUuid)
+                .containsExactly(newTo.getUuid());
+        Assertions.assertThat(getDependencyVersion(from))
+                .isEqualTo(DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_docChangedSinceRead() {
+        final DocRef from = docRef("View", "View");
+        final DocRef savedTo = docRef("Pipeline", "Saved pipeline");
+        final DocRef staleTo = docRef("Pipeline", "Stale pipeline");
+        final String readVersion = createDocRow(from, null);
+        // A save happens after the rebuild read the doc: new version, and it writes its own edges
+        setDocVersion(from, UUID.randomUUID().toString());
+        dao.setDependencies(from, Set.of(savedTo));
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, readVersion, Set.of(staleTo));
+
+        Assertions.assertThat(written)
+                .isFalse();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .extracting(DocRef::getUuid)
+                .containsExactly(savedTo.getUuid());
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_docDeleted() {
+        final DocRef from = docRef("View", "View");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+        final String version = createDocRow(from, null);
+        deleteDocRow(from);
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, version, Set.of(to));
+
+        Assertions.assertThat(written)
+                .isFalse();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .isEmpty();
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_noDocRow() {
+        final DocRef from = docRef("View", "View");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, UUID.randomUUID().toString(), Set.of(to));
+
+        Assertions.assertThat(written)
+                .isFalse();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .isEmpty();
+    }
+
+    private String createDocRow(final DocRef docRef, final Integer dependencyVersion) {
+        final String version = UUID.randomUUID().toString();
+        JooqUtil.context(connProvider, ctx -> ctx
+                .insertInto(DOC)
+                .set(DOC.TYPE, docRef.getType())
+                .set(DOC.UUID, docRef.getUuid())
+                .set(DOC.NAME, docRef.getName())
+                .set(DOC.VERSION, version)
+                .set(DOC.DEPENDENCY_VERSION, dependencyVersion)
+                .execute());
+        return version;
+    }
+
+    private void deleteDocRow(final DocRef docRef) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.DELETED, System.currentTimeMillis())
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void renameDocRow(final DocRef docRef, final String name) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.NAME, name)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void setDocVersion(final DocRef docRef, final String version) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.VERSION, version)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void setDependencyVersion(final DocRef docRef, final Integer dependencyVersion) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.DEPENDENCY_VERSION, dependencyVersion)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private Integer getDependencyVersion(final DocRef docRef) {
+        return JooqUtil.contextResult(connProvider, ctx -> ctx
+                .select(DOC.DEPENDENCY_VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.DEPENDENCY_VERSION));
+    }
+
+    // --- Quick filter helpers ---
+
+    private ResultPage<Dependency> filter(final String quickFilterText) {
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setQuickFilter(quickFilterText);
+        return dao.fetchDependencies(criteria, Set.of(), dep -> true);
+    }
+
+
+    /**
+     * A small graph shared by the quick filter tests:
+     * <pre>
+     *   Dashboard "Dashboard One" -> Index "Index One"        (ok)
+     *   Dashboard "Dashboard One" -> Dictionary "Dict One"    (missing, no doc row)
+     *   View      "View Alpha"    -> Index "Index Two"        (ok)
+     * </pre>
+     */
+    private class Fixture {
+
+        private final DocRef dashboard1 = docRef("Dashboard", "Dashboard One");
+        private final DocRef view1 = docRef("View", "View Alpha");
+        private final DocRef index = docRef("Index", "Index One");
+        private final DocRef index2 = docRef("Index", "Index Two");
+        private final DocRef missingDict = docRef("Dictionary", "Dict One");
+
+        private Fixture() {
+            createDocRow(dashboard1);
+            createDocRow(view1);
+            createDocRow(index);
+            createDocRow(index2);
+            // No doc row for missingDict - it is the broken edge.
+            dao.setDependencies(dashboard1, Set.of(index, missingDict));
+            dao.setDependencies(view1, Set.of(index2));
+        }
+    }
+}

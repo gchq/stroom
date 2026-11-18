@@ -52,6 +52,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -71,6 +72,8 @@ class FsStreamStore implements StreamStore {
     private final PathCreator pathCreator;
     private final FsFileDeleter fsFileDeleter;
     private final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider;
+    private final ScheduledExecutorService cleanUpExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicBoolean hasShutdown = new AtomicBoolean(false);
 
     @Inject
     FsStreamStore(final FsPathHelper fileSystemStreamPathHelper,
@@ -367,36 +370,36 @@ class FsStreamStore implements StreamStore {
                     e.getClass().getSimpleName(),
                     e.getMessage()));
         } finally {
-            // Wait a few secs before we delete the file in case some file systems prevent deletion
-            // immediately after creation
             if (tempFile != null) {
-                deleteLater(tempFile, 10, TimeUnit.SECONDS);
+                try {
+                    // Try a sync delete first
+                    Files.deleteIfExists(tempFile);
+                } catch (final IOException e) {
+                    LOGGER.debug("Error deleting tempFile {}", tempFile, e);
+                    // Wait a few secs before we delete the file in case some file systems prevent deletion
+                    // immediately after creation
+                    final Path finalTempFile = tempFile;
+                    cleanUpExecutorService.schedule(() -> {
+                        LOGGER.debug("About to delete file {}", finalTempFile);
+                        try {
+                            Files.deleteIfExists(finalTempFile);
+                        } catch (final IOException e2) {
+                            LOGGER.error("Unable to delete temporary file {}", finalTempFile, e2);
+                        }
+                    }, 10, TimeUnit.SECONDS);
+                }
             }
         }
 
         return ValidationResult.ok();
     }
 
-    /// Deletes a file after a delay, on a thread of its own that ends once the file is deleted.
-    ///
-    /// @param file  The file to delete.
-    /// @param delay How long to wait before deleting it.
-    /// @param unit  The unit of the delay.
-    /// @return The executor the delete runs on, already shut down so it ends after the delete.
-    static ScheduledExecutorService deleteLater(final Path file, final long delay, final TimeUnit unit) {
-        final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.schedule(() -> {
-            LOGGER.debug("About to delete file {}", file);
-            try {
-                Files.deleteIfExists(file);
-            } catch (final IOException e) {
-                LOGGER.error("Unable to delete temporary file {}", file, e);
-            }
-        }, delay, unit);
-        // Not close(): it waits for the executor to end, so called from the delete it waited for itself
-        // for ever, and its thread (not a daemon) kept the JVM from exiting
-        executorService.shutdown();
-        return executorService;
+    /// Shutdown and clean up executor service
+    void shutdown() {
+        if (!hasShutdown.getAndSet(true)) {
+            cleanUpExecutorService.shutdown();
+            cleanUpExecutorService.close();
+        }
     }
 
     private Path getAbsVolumePath(final FsVolume volume) {

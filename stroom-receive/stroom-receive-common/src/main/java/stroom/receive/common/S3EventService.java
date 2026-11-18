@@ -30,7 +30,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.CommonSecurityContext;
-import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
@@ -65,7 +64,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -126,7 +124,7 @@ public class S3EventService {
             final S3ClientPool s3ClientPool,
             final S3ClientConfigService s3ClientConfigService,
             final S3MetaKeysMapper s3MetaKeysMapper,
-            final SecurityContext commonSecurityContext) {
+            final CommonSecurityContext commonSecurityContext) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;
@@ -167,6 +165,14 @@ public class S3EventService {
         s3EventConsumer.accept(new S3CreateEvent(s3Location, attributeMap));
     }
 
+    /// Adds the S3 object's metadata to the attribute map.
+    ///
+    /// @param s3Location   The location of the object on S3.
+    /// @param eTag         The entity tag of the object, or `null` to fetch whichever version is current.
+    /// @param attributeMap The attributes to add the metadata to.
+    /// @throws RuntimeException If there is no S3 client config for the object's region and bucket, as
+    ///                          without its metadata the object can't be received, e.g. it has no
+    ///                          `Feed` or `Schema` header.
     public void addS3MetaAttributes(final S3Location s3Location,
                                     final String eTag,
                                     final AttributeMap attributeMap) {
@@ -175,26 +181,23 @@ public class S3EventService {
         Objects.requireNonNull(s3Location);
         Objects.requireNonNull(attributeMap);
 
-        final Optional<S3ClientConfig> optS3ClientConfig = s3ClientConfigService.getS3ClientConfig(
-                s3Location.getRegionName(),
-                s3Location.getBucketName());
-
-        optS3ClientConfig.ifPresentOrElse(
-                s3ClientConfig -> {
-                    final Map<CIKey, String> s3Metadata = getS3Metadata(s3Location, eTag, s3ClientConfig);
-                    if (s3Metadata != null) {
-                        s3Metadata.forEach((k, v) -> {
-                            final CIKey originalKey = s3MetaKeysMapper.getOriginalKey(k)
-                                    .orElse(k);
-                            attributeMap.put(originalKey.get(), v);
-                        });
-                    }
-                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, s3Metadata: {}, modified attributeMap: {}",
-                            s3Location, s3Metadata, attributeMap);
-                },
-                () -> LOGGER.warn("No S3 client config found matching region '{}' and bucket '{}'. " +
-                                  "Unable to fetch S3 metadata for key '{}'",
-                        s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey()));
+        final S3ClientConfig s3ClientConfig = s3ClientConfigService.getS3ClientConfig(
+                        s3Location.getRegionName(),
+                        s3Location.getBucketName())
+                .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                        "No S3 client config found matching region '{}' and bucket '{}'. " +
+                        "Unable to fetch S3 metadata for key '{}'",
+                        s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey())));
+        final Map<CIKey, String> s3Metadata = getS3Metadata(s3Location, eTag, s3ClientConfig);
+        if (s3Metadata != null) {
+            s3Metadata.forEach((k, v) -> {
+                final CIKey originalKey = s3MetaKeysMapper.getOriginalKey(k)
+                        .orElse(k);
+                attributeMap.put(originalKey.get(), v);
+            });
+        }
+        LOGGER.debug("addS3MetaAttributes() - s3Location: {}, s3Metadata: {}, modified attributeMap: {}",
+                s3Location, s3Metadata, attributeMap);
     }
 
     private Map<CIKey, String> getS3Metadata(final S3Location s3Location,
@@ -361,9 +364,13 @@ public class S3EventService {
                                              final String deadLetterQueueUrl,
                                              final RuntimeException cause) {
         if (NullSafe.isNonBlankString(deadLetterQueueUrl)) {
-            LOGGER.error(LogUtil.message("Error processing message - queueUrl: {}, " +
-                                         "moving it to deadLetterQueueUrl: {} - {}",
-                    queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)), cause);
+            // Don't put the stack in the error msg as we could get a lot of these and spam the logs
+            LOGGER.error(LogUtil.message("Error processing message - messageId: {}, queueUrl: {}, " +
+                                         "moving it to deadLetterQueueUrl: {} - {} (DEBUG for stack trace)",
+                    message.messageId(), queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)));
+            LOGGER.debug(() -> LogUtil.message("Error processing message - messageId: {}, queueUrl: {}, " +
+                                               "moving it to deadLetterQueueUrl: {} - {}",
+                    message.messageId(), queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)), cause);
             try {
                 // Manually 'move' the message to the dead letter queue
                 reSendSqsMessage(message, deadLetterQueueUrl, sqsClient, cause);
@@ -376,8 +383,14 @@ public class S3EventService {
                         deadLetterQueueUrl, LogUtil.exceptionMessage(e)), e);
             }
         } else {
-            LOGGER.error(LogUtil.message("Error processing message - queueUrl: {} - {}",
-                    queueUrl, LogUtil.exceptionMessage(cause)), cause);
+            // No dead letter queue configured, so just leave the message on the original queue
+            LOGGER.error(LogUtil.message("Error processing message - deadLetterQueueUrl not configured, " +
+                                         "so leaving it on the queue - messageId: {}, queueUrl: {} - {} " +
+                                         "(DEBUG for stack trace)",
+                    message.messageId(), queueUrl, LogUtil.exceptionMessage(cause)));
+            LOGGER.debug(() -> LogUtil.message("Error processing message - deadLetterQueueUrl not configured, " +
+                                               "so leaving it on the queue - messageId: {}, queueUrl: {} - {}",
+                    message.messageId(), queueUrl, LogUtil.exceptionMessage(cause)), cause);
         }
     }
 
@@ -534,35 +547,8 @@ public class S3EventService {
                     validateEventVersion(JsonUtil.getNodeAsString(recordsItemNode, "eventVersion"));
 
                     final String eventName = getNodeAsString(recordsItemNode, "eventName");
-                    if (eventName != null && eventName.startsWith(SUPPORTED_EVENT_NAME_PREFIX)) {
-                        final AttributeMap attributeMapCopy = new AttributeMap(attributeMap);
-                        final String awsRegion = getNodeAsString(recordsItemNode, "awsRegion");
-                        final String eventTime = getNodeAsString(recordsItemNode, "eventTime");
-
-                        addEventTime(attributeMapCopy, eventTime);
-
-                        final JsonNode s3Node = getNode(recordsItemNode, "s3");
-
-                        final JsonNode s3BucketNode = getNode(s3Node, "bucket");
-                        final String bucketName = getNodeAsString(s3BucketNode, "name");
-                        final String bucketArn = getNodeAsString(s3BucketNode, "arn");
-
-                        final JsonNode objectNode = getNode(s3Node, "object");
-                        final String objectKey = getNodeAsString(objectNode, "key");
-                        final long objectSize = getNodeAsLong(objectNode, "size");
-                        final String eTag = getNodeAsString(objectNode, "eTag");
-
-                        attributeMapCopy.put(StandardHeaderArguments.CONTENT_LENGTH, String.valueOf(objectSize));
-
-                        // Print extracted values
-                        LOGGER.debug("processMessage() - awsRegion: {}, eventTime: {}, eventName: {}, " +
-                                     "bucketName: {}, bucketArn: {}, objectKey: {}, objectSize: {}, attributeMap: {}",
-                                awsRegion, eventTime, eventName, bucketName,
-                                bucketArn, objectKey, objectSize, attributeMapCopy);
-
-                        final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
-                        addS3MetaAttributes(s3Location, eTag, attributeMapCopy);
-                        s3CreateEvents.add(new S3CreateEvent(s3Location, attributeMapCopy));
+                    if (eventName.startsWith(SUPPORTED_EVENT_NAME_PREFIX)) {
+                        addS3CreateEvent(attributeMap, recordsItemNode, eventName, s3CreateEvents);
                     } else {
                         LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
                     }
@@ -570,12 +556,44 @@ public class S3EventService {
             } else {
                 throw new IllegalStateException("Unknown messageBody format, messageBody:\n" + messageBody);
             }
-        } catch (final Exception e) {
-            LOGGER.debug(() -> LogUtil.message("Error parsing SQS message body - {}, messageBody:\n{}",
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Error converting SQS message body - {}, messageBody:\n{}",
                     LogUtil.exceptionMessage(e), messageBody), e);
             throw e;
         }
         return s3CreateEvents;
+    }
+
+    private void addS3CreateEvent(final AttributeMap attributeMap,
+                                  final JsonNode recordsItemNode,
+                                  final String eventName,
+                                  final List<S3CreateEvent> s3CreateEvents) {
+        final String awsRegion = getNodeAsString(recordsItemNode, "awsRegion");
+        final String eventTime = getNodeAsString(recordsItemNode, "eventTime");
+
+        final JsonNode s3Node = getNode(recordsItemNode, "s3");
+
+        final JsonNode s3BucketNode = getNode(s3Node, "bucket");
+        final String bucketName = getNodeAsString(s3BucketNode, "name");
+        final String bucketArn = getNodeAsString(s3BucketNode, "arn");
+
+        final JsonNode objectNode = getNode(s3Node, "object");
+        final String objectKey = getNodeAsString(objectNode, "key");
+        final long objectSize = getNodeAsLong(objectNode, "size");
+        final String eTag = getNodeAsString(objectNode, "eTag");
+
+        final AttributeMap attributeMapCopy = new AttributeMap(attributeMap);
+        addEventTime(attributeMapCopy, eventTime);
+        attributeMapCopy.put(StandardHeaderArguments.CONTENT_LENGTH, String.valueOf(objectSize));
+        // Print extracted values
+        LOGGER.debug("processMessage() - awsRegion: {}, eventTime: {}, eventName: {}, " +
+                     "bucketName: {}, bucketArn: {}, objectKey: {}, objectSize: {}, attributeMap: {}",
+                awsRegion, eventTime, eventName, bucketName,
+                bucketArn, objectKey, objectSize, attributeMapCopy);
+
+        final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
+        addS3MetaAttributes(s3Location, eTag, attributeMapCopy);
+        s3CreateEvents.add(new S3CreateEvent(s3Location, attributeMapCopy));
     }
 
     private static String getNodeAsString(final JsonNode baseNode, final String fieldName) {

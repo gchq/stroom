@@ -16,7 +16,6 @@
 
 package stroom.dataconnection.impl;
 
-import stroom.query.api.datasource.FieldType;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValDate;
@@ -25,6 +24,8 @@ import stroom.query.language.functions.ValFloat;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+
+import software.amazon.awssdk.services.athena.model.ColumnInfo;
 
 import java.math.BigDecimal;
 import java.sql.Types;
@@ -35,7 +36,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /// Maps Amazon Athena column types to Stroom field types, and reads Athena's text values as Stroom
 /// values.
@@ -133,5 +137,24 @@ public final class AthenaTypeMapper {
         return bracket < 0
                 ? type
                 : type.substring(0, bracket).trim();
+    }
+
+    /// Turns Athena's column descriptions into columns.
+    ///
+    /// @param columnInfos The column descriptions from the first page of results.
+    /// @return The columns, in order.
+    static List<SqlColumn> toColumns(final List<ColumnInfo> columnInfos) {
+        final List<SqlColumn> columns = new ArrayList<>(columnInfos.size());
+        for (final ColumnInfo columnInfo : columnInfos) {
+            final int sqlType = toSqlType(columnInfo.type());
+            columns.add(new SqlColumn(
+                    columnInfo.name(),
+                    SqlTypeMapper.toFieldType(
+                            sqlType,
+                            Objects.requireNonNullElse(columnInfo.precision(), 0),
+                            Objects.requireNonNullElse(columnInfo.scale(), 0)),
+                    sqlType));
+        }
+        return List.copyOf(columns);
     }
 }

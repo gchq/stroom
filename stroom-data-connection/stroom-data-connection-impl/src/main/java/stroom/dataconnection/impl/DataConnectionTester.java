@@ -25,7 +25,6 @@ import stroom.dataconnection.shared.ExcelSettings;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.io.ByteSize;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -48,7 +47,6 @@ public class DataConnectionTester {
     private final Provider<SecurityContext> securityContextProvider;
     private final Connectors connectors;
     private final Provider<DataConnectionConfig> configProvider;
-    private final ExcelUploads excelUploads;
     private final Provider<DataConnectionStore> storeProvider;
     private final LdapConnector ldapConnector;
 
@@ -57,13 +55,11 @@ public class DataConnectionTester {
     DataConnectionTester(final Provider<SecurityContext> securityContextProvider,
                                        final Connectors connectors,
                                        final Provider<DataConnectionConfig> configProvider,
-                                       final ExcelUploads excelUploads,
                                        final Provider<DataConnectionStore> storeProvider,
                                        final LdapConnector ldapConnector) {
         this.securityContextProvider = securityContextProvider;
         this.connectors = connectors;
         this.configProvider = configProvider;
-        this.excelUploads = excelUploads;
         this.storeProvider = storeProvider;
         this.ldapConnector = ldapConnector;
     }
@@ -89,6 +85,11 @@ public class DataConnectionTester {
             if (excel == null || excel.getData() == null) {
                 throw new EntityServiceException("There is no workbook to detect the columns of. Upload one.");
             }
+            // An imported workbook is not checked on save.
+            StoredDataLimit.findProblem("workbook", excel.getData().length, configProvider.get())
+                    .ifPresent(problem -> {
+                        throw new EntityServiceException(problem);
+                    });
             return ColumnDetector.detect(
                     ExcelReader.read(excel.getData(), excel, ColumnDetector.SAMPLE_ROWS),
                     excel.getColumns());
@@ -97,11 +98,10 @@ public class DataConnectionTester {
         if (csv == null || NullSafe.isBlankString(csv.getData())) {
             throw new EntityServiceException("There is no CSV to detect the columns of.");
         }
-        final ByteSize limit = configProvider.get().getMaxStoredDataSize();
-        if (CsvReader.utf8Length(csv.getData()) > limit.getBytes()) {
-            throw new EntityServiceException("The CSV is more than the limit of " + limit
-                                             + " set by the property stroom.dataConnection.maxStoredDataSize.");
-        }
+        StoredDataLimit.findProblem("CSV", CsvReader.utf8Length(csv.getData()), configProvider.get())
+                .ifPresent(problem -> {
+                    throw new EntityServiceException(problem);
+                });
         return ColumnDetector.detect(CsvReader.parse(csv, ColumnDetector.SAMPLE_ROWS), csv.getColumns());
     }
 
@@ -123,35 +123,19 @@ public class DataConnectionTester {
         return connectors.get(toTest).test(toTest);
     }
 
-    // The workbook from the upload the editor names, or else the one stored with the document. The user
-    // may edit the document, so may read it.
+    // The workbook the document will have once saved: a new upload, the one it is copied from, or else
+    // the one stored. The editor never sends a workbook, so any sent is ignored: a test of one the user
+    // sent would say nothing of the one queried.
     private DataConnectionDoc withWorkbook(final DataConnectionDoc doc) {
         final ExcelSettings excel = doc.getExcel();
-        if (excel == null) {
-            return doc;
-        }
-        final byte[] data;
-        if (excel.getUploadKey() != null) {
-            data = excelUploads.read(excel.getUploadKey());
-        } else if (NullSafe.isBlankString(excel.getFileName())) {
-            // Removed in the editor, or never uploaded.
-            data = null;
-        } else {
-            final DataConnectionDoc stored = storeProvider.get().readDocument(doc.asDocRef());
-            data = NullSafe.get(stored, DataConnectionDoc::getExcel, ExcelSettings::getData);
-            // An imported workbook is not checked on save.
-            final ByteSize limit = configProvider.get().getMaxStoredDataSize();
-            if (data != null && data.length > limit.getBytes()) {
-                throw new EntityServiceException("The workbook is more than the limit of " + limit
-                                                 + " set by the property "
-                                                 + "stroom.dataConnection.maxStoredDataSize.");
-            }
-        }
-        return doc.copy()
-                .excel(excel.copy()
-                        .data(data)
-                        .build())
-                .build();
+        final DataConnectionDoc withoutSentData = excel == null || excel.getData() == null
+                ? doc
+                : doc.copy()
+                        .excel(excel.copy()
+                                .data(null)
+                                .build())
+                        .build();
+        return storeProvider.get().withWorkbook(withoutSentData);
     }
 
     private void checkEditPermission(final DataConnectionDoc doc) {

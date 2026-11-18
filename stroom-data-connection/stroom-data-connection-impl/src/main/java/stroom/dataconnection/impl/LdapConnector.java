@@ -17,18 +17,13 @@
 package stroom.dataconnection.impl;
 
 import stroom.dataconnection.shared.DataColumn;
-import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.dataconnection.shared.DataConnectionTestResponse;
 import stroom.dataconnection.shared.DataConnectionType;
 import stroom.dataconnection.shared.LdapSettings;
 import stroom.query.api.DateTimeSettings;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.api.datasource.QueryField;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.unboundid.ldap.sdk.Attribute;
@@ -71,8 +66,6 @@ import java.util.Set;
 /// warning. This is how JDBC sources work too.
 @Singleton
 class LdapConnector implements Connector {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LdapConnector.class);
 
     static final String TIME_RANGE_IGNORED = "The time range was ignored, as the LDAP filter has no :from or "
                                              + ":to placeholder and the Data Connection has no time "
@@ -129,10 +122,7 @@ class LdapConnector implements Connector {
     /// LDAP sources have no minimum unless the document sets one.
     @Override
     public int getMinRefreshMinutes(final DataConnectionDoc doc) {
-        final Integer minutes = NullSafe.get(doc.getLdap(), LdapSettings::getMinRefreshMinutes);
-        return minutes == null
-                ? 0
-                : Math.max(0, minutes);
+        return ConnectionRules.nonNegative(NullSafe.get(doc.getLdap(), LdapSettings::getMinRefreshMinutes), 0);
     }
 
     @Override
@@ -141,55 +131,41 @@ class LdapConnector implements Connector {
                                  final DateTimeSettings dateTimeSettings) {
         final LdapSettings settings = requireSettings(doc);
         final List<DataColumn> attributes = attributes(settings);
-        requireNamedAttributes(doc, attributes);
+        DataColumns.requireUniqueNames(doc, attributes, "attribute");
         final LdapFilterTemplate template = LdapFilterTemplate.parse(query.getNativeQuery());
         final Filter filter = template.resolve(query.getTimeRange(), query.getParams(), dateTimeSettings);
         // Resolved now, in the user's security context, so a credential they may not use is reported
         // before the search starts.
         final ResolvedLdapConnection connection = connectionResolver.resolve(settings);
 
-        final boolean timeRangeSet = TimeRanges.isSet(query.getTimeRange());
-        final String timeField = doc.getTimeField();
-        final ExpressionOperator expression;
-        if (template.usesTimeRange()) {
-            expression = query.getExpression();
-        } else {
-            if (timeRangeSet && !NullSafe.isBlankString(timeField)) {
-                requireDateAttribute(doc, attributes, timeField);
-            }
-            expression = TimeRanges.addTimeRange(query.getExpression(), query.getTimeRange(), timeField);
+        final TimeRanges.Applied timeRange = TimeRanges.apply(
+                query, template.usesTimeRange(), doc.getTimeField(), TIME_RANGE_IGNORED);
+        if (timeRange.filtersOnTimeColumn()) {
+            TimeRanges.requireDateColumn(doc, attributes, doc.getTimeField(), "attribute",
+                    " Add it to the attributes, or use :from and :to in the filter.");
         }
-        final List<String> warnings = timeRangeSet && !template.usesTimeRange() && NullSafe.isBlankString(timeField)
-                ? List.of(TIME_RANGE_IGNORED)
-                : List.of();
         final SqlQueryLimits limits = SqlQueryLimits.of(doc, configProvider.get());
-        final List<SqlColumn> columns = LdapQueryRunner.columns(attributes);
-        return new PreparedQuery(expression, warnings, (rowConsumerFactory, cancellation, progress) ->
-                queryRunner.run(connection, filter, attributes, columns, limits, rowConsumerFactory, cancellation,
-                        progress));
+        return new PreparedQuery(timeRange.expression(), timeRange.warnings(),
+                (rowConsumerFactory, cancellation, progress) ->
+                queryRunner.run(connection, filter, attributes, limits, rowConsumerFactory, cancellation, progress));
     }
 
     /// Connects and binds, then reads the base DN's entry and the directory's root DSE, reporting the
     /// directory's vendor and whether it supports paged results.
     @Override
-    public DataConnectionTestResponse test(final DataConnectionDoc doc) {
-        try {
-            final ResolvedLdapConnection connection = connectionResolver.resolve(requireSettings(doc));
-            try (final LDAPConnection ldapConnection = connectionFactory.connect(connection, timeoutSeconds(doc))) {
-                final RootDSE rootDse = ldapConnection.getRootDSE();
-                final SearchResultEntry baseEntry = ldapConnection.getEntry(connection.baseDn());
-                if (baseEntry == null) {
-                    return new DataConnectionTestResponse(false, "Connected to " + connection.url()
-                                                                     + " as " + connection.bindDn()
-                                                                     + ", but the base DN '" + connection.baseDn()
-                                                                     + "' was not found, or the bind account "
-                                                                     + "may not read it.");
-                }
-                return new DataConnectionTestResponse(true, describe(connection, rootDse));
+    public DataConnectionTestResponse testConnection(final DataConnectionDoc doc) throws Exception {
+        final ResolvedLdapConnection connection = connectionResolver.resolve(requireSettings(doc));
+        try (final LDAPConnection ldapConnection = connectionFactory.connect(connection, timeoutSeconds(doc))) {
+            final RootDSE rootDse = ldapConnection.getRootDSE();
+            final SearchResultEntry baseEntry = ldapConnection.getEntry(connection.baseDn());
+            if (baseEntry == null) {
+                return new DataConnectionTestResponse(false, "Connected to " + connection.url()
+                                                                 + " as " + connection.bindDn()
+                                                                 + ", but the base DN '" + connection.baseDn()
+                                                                 + "' was not found, or the bind account "
+                                                                 + "may not read it.");
             }
-        } catch (final LDAPException | GeneralSecurityException | RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("Connection test failed for {}", doc.getUuid()), e);
-            return new DataConnectionTestResponse(false, message(e));
+            return new DataConnectionTestResponse(true, describe(connection, rootDse));
         }
     }
 
@@ -288,7 +264,12 @@ class LdapConnector implements Connector {
                + "\n\n" + ADVICE;
     }
 
-    // LDAP result codes are clearer to users with their name, e.g. 'invalid credentials'.
+    /// LDAP result codes are clearer to users with their name, e.g. 'invalid credentials'.
+    @Override
+    public String describeFailure(final Exception e) {
+        return message(e);
+    }
+
     private static String message(final Exception e) {
         if (e instanceof final LDAPException ldapException) {
             final String diagnostic = ldapException.getDiagnosticMessage();
@@ -318,32 +299,4 @@ class LdapConnector implements Connector {
                 .toList();
     }
 
-    // Each attribute becomes a field, so each needs a name of its own. LDAP names ignore case.
-    private static void requireNamedAttributes(final DataConnectionDoc doc, final List<DataColumn> attributes) {
-        final Set<String> names = new HashSet<>();
-        for (final DataColumn attribute : attributes) {
-            if (!names.add(attribute.getName().toLowerCase(Locale.ROOT))) {
-                throw new IllegalArgumentException("Data Connection '" + doc.getName() + "' lists the "
-                                                   + "attribute '" + attribute.getName() + "' more than once.");
-            }
-        }
-    }
-
-    private static void requireDateAttribute(final DataConnectionDoc doc,
-                                             final List<DataColumn> attributes,
-                                             final String timeField) {
-        final DataColumn attribute = attributes.stream()
-                .filter(column -> timeField.equalsIgnoreCase(column.getName()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("The time range cannot be applied, as the time "
-                                                                + "column '" + timeField + "' is not an attribute "
-                                                                + "of Data Connection '" + doc.getName()
-                                                                + "'. Add it to the attributes, or use :from "
-                                                                + "and :to in the filter."));
-        if (attribute.getType() != DataColumnType.DATE) {
-            throw new IllegalArgumentException("The time range cannot be applied, as the time column '"
-                                               + timeField + "' of Data Connection '" + doc.getName()
-                                               + "' is not a Date attribute.");
-        }
-    }
 }

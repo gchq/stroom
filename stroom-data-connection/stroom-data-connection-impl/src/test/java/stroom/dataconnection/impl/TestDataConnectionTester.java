@@ -36,6 +36,7 @@ import stroom.util.shared.ResourceKey;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.GetDatabaseResponse;
@@ -67,13 +68,12 @@ class TestDataConnectionTester {
     }
 
     private final AthenaClient athenaClient = Mockito.mock(AthenaClient.class);
-    private final ExcelUploads excelUploads = Mockito.mock(ExcelUploads.class);
     private final DataConnectionStore store = Mockito.mock(DataConnectionStore.class);
 
     private DataConnectionTester tester(final SecurityContext securityContext) {
         final DataConnectionConfig config = new DataConnectionConfig(
                 List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, null, null, null,
-                List.of("^eu-west-2/primary$"), null, true, null, null);
+                List.of("^eu-west-2/primary$"), null, true, null, null, null, null);
         final StoredSecrets storedSecrets = Mockito.mock(StoredSecrets.class);
         final JdbcConnectionResolver resolver = new JdbcConnectionResolver(() -> config, () -> storedSecrets);
         final JdbcDriverLoader driverLoader = new JdbcDriverLoader(() -> config, Mockito.mock(PathCreator.class));
@@ -95,7 +95,6 @@ class TestDataConnectionTester {
                         new ExcelConnector(null, () -> config),
                         ldapConnector),
                 () -> config,
-                excelUploads,
                 () -> store,
                 ldapConnector);
     }
@@ -330,41 +329,71 @@ class TestDataConnectionTester {
     }
 
     @Test
-    void columnsOfAnUploadedWorkbookAreDetected() {
-        Mockito.when(excelUploads.read(UPLOAD)).thenReturn(TEAMS);
+    void columnsOfTheWorkbookTheStoreFindsAreDetected() {
+        // The store finds the workbook the settings name, whether uploaded or stored.
+        Mockito.when(store.withWorkbook(Mockito.any())).thenAnswer(invocation -> withData(invocation.getArgument(0)));
 
         assertThat(tester(new MockSecurityContext()).detectColumns(excelDoc(UPLOAD))).containsExactly(
                 new DataColumn("team", DataColumnType.TEXT),
                 new DataColumn("members", DataColumnType.LONG));
-        Mockito.verifyNoInteractions(store);
     }
 
     @Test
-    void storedWorkbookIsCheckedWhenNothingIsUploaded() {
-        // The editor never has the workbook, so the stored one is read.
-        final DataConnectionDoc stored = excelDoc(null).copy()
-                .excel(ExcelSettings.builder()
-                        .data(TEAMS)
-                        .build())
-                .build();
-        Mockito.when(store.readDocument(Mockito.any())).thenReturn(stored);
+    void workbookTheStoreFindsIsChecked() {
+        Mockito.when(store.withWorkbook(Mockito.any())).thenAnswer(invocation -> withData(invocation.getArgument(0)));
 
         final DataConnectionTestResponse response = tester(new MockSecurityContext()).test(excelDoc(null));
 
         assertThat(response.isOk()).isTrue();
         assertThat(response.getMessage()).startsWith("Read 2 rows of 2 columns.");
-        Mockito.verifyNoInteractions(excelUploads);
     }
 
     @Test
     void excelDocumentWithoutAWorkbookHasNoColumnsToDetect() {
-        // No file name means no workbook, e.g. after Remove, so the store is not read.
+        // No file name means no workbook, e.g. after Remove, so the store finds none.
         final DataConnectionDoc removed = excelDoc(null).copy()
                 .excel(ExcelSettings.builder().build())
                 .build();
+        Mockito.when(store.withWorkbook(removed)).thenReturn(removed);
 
         assertThatThrownBy(() -> tester(new MockSecurityContext()).detectColumns(removed))
                 .hasMessageContaining("There is no workbook");
-        Mockito.verifyNoInteractions(store);
+    }
+
+    @Test
+    void workbookSentInTheRequestIsIgnored() {
+        // A test of a workbook the client sent would say nothing of the one the document is queried
+        // with, so the store is asked for the stored one.
+        final byte[] sent = TestExcelReader.xlsx(new Object[][]{{"other"}, {"x"}});
+        final DataConnectionDoc withSentData = excelDoc(null).copy()
+                .excel(excelDoc(null).getExcel().copy()
+                        .data(sent)
+                        .build())
+                .build();
+        final ArgumentCaptor<DataConnectionDoc> askedFor = ArgumentCaptor.forClass(DataConnectionDoc.class);
+        Mockito.when(store.withWorkbook(askedFor.capture()))
+                .thenAnswer(invocation -> withData(invocation.getArgument(0)));
+
+        final DataConnectionTester tester = tester(new MockSecurityContext());
+        final DataConnectionTestResponse response = tester.test(withSentData);
+        final List<DataColumn> columns = tester.detectColumns(withSentData);
+
+        assertThat(askedFor.getAllValues())
+                .hasSize(2)
+                .allSatisfy(doc -> {
+                    assertThat(doc.getExcel().getData()).isNull();
+                    assertThat(doc.getExcel().getFileName()).isEqualTo("teams.xlsx");
+                });
+        assertThat(response.getMessage()).startsWith("Read 2 rows of 2 columns.");
+        assertThat(columns).extracting(DataColumn::getName).containsExactly("team", "members");
+    }
+
+    private static DataConnectionDoc withData(final DataConnectionDoc doc) {
+        return doc.copy()
+                .excel(doc.getExcel().copy()
+                        .uploadKey(null)
+                        .data(TEAMS)
+                        .build())
+                .build();
     }
 }

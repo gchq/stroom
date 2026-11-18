@@ -33,8 +33,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -153,27 +151,18 @@ public class JdbcQueryRunner {
                                        final SqlQueryLimits limits,
                                        final Function<List<SqlColumn>, SqlRowConsumer> rowConsumerFactory,
                                        final QueryCancellation cancellation) throws SQLException {
-        final List<SqlColumn> columns = Collections.unmodifiableList(
-                new ArrayList<>(SqlTypeMapper.toColumns(resultSet.getMetaData())));
+        final List<SqlColumn> columns = List.copyOf(SqlTypeMapper.toColumns(resultSet.getMetaData()));
         final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns);
-        final SqlRowConsumer.ColumnReader reader = columnIndex ->
+        final SqlRowConsumer.ColumnReader<SQLException> reader = columnIndex ->
                 SqlTypeMapper.readValue(resultSet, columnIndex + 1, columns.get(columnIndex));
 
-        long rowsRead = 0;
-        long rowsPassed = 0;
-        boolean limitReached = false;
+        final RowCounter counter = new RowCounter(limits.maxRows());
         while (!cancellation.isCancelled() && resultSet.next()) {
-            if (rowsRead >= limits.maxRows()) {
-                limitReached = true;
+            if (!counter.take(() -> rowConsumer.accept(reader))) {
                 break;
             }
-            rowsRead++;
-            if (rowConsumer.accept(reader)) {
-                rowsPassed++;
-            }
         }
-        return new QueryRunSummary(columns, rowConsumer.getUnmatchedFields(), rowsRead, rowsPassed, limitReached,
-                limits.maxRows(), null);
+        return counter.summary(rowConsumer.getUnmatchedFields(), null, List.of());
     }
 
     /// @param limits The query's limits.

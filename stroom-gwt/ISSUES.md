@@ -170,9 +170,10 @@ successfully") but its JVM stayed up for hours. A thread dump showed one thread 
 daemon, `pool-4-thread-1`, in `ExecutorService.close()` from `FsStreamStore.validateVolumePath`'s
 delayed delete of its test file: the delete ran on the executor and closed it, and `close()` waits
 for the executor to end, so it waited for itself for ever. That leaked a thread per volume validated
-in a running Stroom too. The delete is now `FsStreamStore.deleteLater`, which only shuts the
-executor down (the delayed delete still runs). Test: `TestFsStreamStore` (failed on the old code: the
-executor never ended).
+in a running Stroom too. Fixed on master by `9a8fc3bf77` ("Fix FsStreamStore clean up", merged in
+18 November 2026): the test file is deleted at once, a failed delete is retried on one executor
+shared by the store, and a shutdown task (and `SetupSampleData`, through `FsStreamStoreCleanUp`)
+shuts it down. This branch's own fix (`deleteLater`, `TestFsStreamStore`) was dropped in the merge.
 
 ### A table value loses what follows a link with a query string
 

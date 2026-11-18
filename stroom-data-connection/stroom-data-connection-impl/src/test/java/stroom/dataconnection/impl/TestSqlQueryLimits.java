@@ -27,7 +27,7 @@ class TestSqlQueryLimits {
 
     private static DataConnectionConfig config(final StroomDuration maxQueryTimeout, final int maxRowsLimit) {
         return new DataConnectionConfig(null, null, null, maxQueryTimeout, maxRowsLimit, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     @Test

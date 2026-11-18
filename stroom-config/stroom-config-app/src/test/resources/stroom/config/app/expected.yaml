@@ -509,6 +509,19 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
   docstore:
+    common:
+      docRefInfoCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
+      docRefNameCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
     db:
       connection:
         jdbcDriverClassName: null
@@ -525,18 +538,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-    docRefInfoCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    docRefNameCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
     physicalDeleteAge: "P30D"
   documentAsset:
     aceEditorModes:
@@ -1191,6 +1192,8 @@ appConfig:
     maxBooleanClauseCount: 1024
     maxStoredDataQueueSize: 1000
     resultStore:
+      joinMaxRows: 1000000
+      joinMaxSize: "256M"
       lmdb:
         localDir: "search_results"
         maxReaders: 10

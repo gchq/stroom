@@ -23,9 +23,6 @@ import stroom.dataconnection.shared.DataConnectionType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Query;
 import stroom.query.api.datasource.QueryField;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
@@ -39,7 +36,6 @@ import software.amazon.awssdk.services.athena.model.WorkGroupConfiguration;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 /// Queries Amazon Athena through the AWS SDK, with the SQL given in each query.
 ///
@@ -55,8 +51,6 @@ import java.util.function.Function;
 /// query are only known once it has run; until then there are none.
 @Singleton
 class AthenaConnector implements Connector {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AthenaConnector.class);
 
     static final String TIME_RANGE_REFUSED = "The query has a time range, but its SQL has no :from or :to "
                                              + "placeholder. Amazon Athena bills by the data a query scans, "
@@ -110,10 +104,9 @@ class AthenaConnector implements Connector {
     /// is billed.
     @Override
     public int getMinRefreshMinutes(final DataConnectionDoc doc) {
-        final Integer minutes = Objects.requireNonNullElse(
+        return ConnectionRules.nonNegative(
                 NullSafe.get(doc.getAthena(), AthenaConnectionSettings::getMinRefreshMinutes),
                 AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES);
-        return Math.max(0, minutes);
     }
 
     @Override
@@ -134,32 +127,24 @@ class AthenaConnector implements Connector {
         }
 
         return new PreparedQuery(query.getExpression(), List.of(), (rowConsumerFactory, cancellation, progress) -> {
-            final Function<List<SqlColumn>, SqlRowConsumer> cachingFactory = columns -> {
-                fieldCache.put(doc, sql, columns);
-                return rowConsumerFactory.apply(columns);
-            };
-            return queryRunner.run(doc, parsedSql, values, cachingFactory, cancellation, progress);
+            return queryRunner.run(doc, parsedSql, values, fieldCache.recording(doc, sql, rowConsumerFactory),
+                    cancellation, progress);
         });
     }
 
     /// Runs no query, as every query is billed. Instead the workgroup and database are looked up,
     /// which checks the credentials, region, workgroup and database.
     @Override
-    public DataConnectionTestResponse test(final DataConnectionDoc doc) {
-        try {
-            final ResolvedAthenaConnection connection = connectionResolver.resolve(doc.getAthena());
-            try (final AthenaClient client = clientFactory.create(connection)) {
-                final WorkGroup workGroup = client.getWorkGroup(builder -> builder
-                        .workGroup(connection.workGroup())).workGroup();
-                final Database database = client.getDatabase(builder -> builder
-                        .catalogName(connection.catalog())
-                        .databaseName(connection.database())).database();
-                return new DataConnectionTestResponse(true, describe(connection, workGroup, database,
-                        AthenaQueryRunner.maxDataScannedMb(doc.getAthena())));
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("Connection test failed for {}", doc.getUuid()), e);
-            return new DataConnectionTestResponse(false, e.getMessage());
+    public DataConnectionTestResponse testConnection(final DataConnectionDoc doc) throws Exception {
+        final ResolvedAthenaConnection connection = connectionResolver.resolve(doc.getAthena());
+        try (final AthenaClient client = clientFactory.create(connection)) {
+            final WorkGroup workGroup = client.getWorkGroup(builder -> builder
+                    .workGroup(connection.workGroup())).workGroup();
+            final Database database = client.getDatabase(builder -> builder
+                    .catalogName(connection.catalog())
+                    .databaseName(connection.database())).database();
+            return new DataConnectionTestResponse(true, describe(connection, workGroup, database,
+                    AthenaQueryRunner.maxDataScannedMb(doc.getAthena())));
         }
     }
 

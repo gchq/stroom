@@ -17,14 +17,19 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
+import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
+import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableSettings;
+import stroom.query.common.v2.JoinTables.Registration;
+import stroom.query.language.JoinWhereSplitter;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -39,30 +44,39 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CoprocessorsFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CoprocessorsFactory.class);
+    // A column expression that is one field, as in '${Host}'.
+    private static final Pattern SINGLE_FIELD = Pattern.compile("^\\$\\{(.+)}$");
 
     private final DataStoreFactory dataStoreFactory;
     private final ExpressionContextFactory expressionContextFactory;
     private final SizesProvider sizesProvider;
     private final Provider<Executor> executorProvider;
+    private final Provider<JoinTables> joinTablesProvider;
 
     @Inject
     public CoprocessorsFactory(final DataStoreFactory dataStoreFactory,
                                final ExpressionContextFactory expressionContextFactory,
                                final SizesProvider sizesProvider,
-                               final Provider<Executor> executorProvider) {
+                               final Provider<Executor> executorProvider,
+                               final Provider<JoinTables> joinTablesProvider) {
         this.dataStoreFactory = dataStoreFactory;
         this.expressionContextFactory = expressionContextFactory;
         this.sizesProvider = sizesProvider;
         this.executorProvider = executorProvider;
+        this.joinTablesProvider = joinTablesProvider;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -114,6 +128,68 @@ public class CoprocessorsFactory {
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
                 dataStoreSettings);
+    }
+
+    // Makes the rows of a search with joins go through its joins, once its join tables are built.
+    // Until then, as for the placeholder store a search with joins has while its joined sources are
+    // searched, the coprocessors have no joins. Every provider creates its coprocessors here, by
+    // whichever method, so every first source's rows are joined.
+    private void addJoins(final QueryKey queryKey, final CoprocessorsImpl coprocessors) {
+        if (queryKey == null || joinTablesProvider == null) {
+            return;
+        }
+        final JoinTables joinTables = joinTablesProvider.get();
+        final Optional<Registration> optionalRegistration = joinTables.acquire(queryKey);
+        if (optionalRegistration.isPresent()) {
+            final Registration registration = optionalRegistration.get();
+            try {
+                final Query query = registration.query();
+                final List<JoinPlan> plans = JoinPlan.createAll(
+                        query,
+                        coprocessors.getFieldIndex(),
+                        coprocessors.getExpressionContext(),
+                        ParamUtil.createParamMap(query.getParams()));
+                final JoiningCoprocessors joins = JoiningCoprocessors.create(
+                        coprocessors.getUnjoined(),
+                        query,
+                        plans,
+                        registration.tables(),
+                        getFirstSourceWhereFields(query, coprocessors.getTableSettings()));
+                // The tables are kept until every coprocessors using them are cleared.
+                coprocessors.setJoins(
+                        joins, () -> joinTables.release(queryKey, registration), !registration.copy());
+            } catch (final RuntimeException e) {
+                joinTables.release(queryKey, registration);
+                throw e;
+            }
+        }
+    }
+
+    // The first source's fields that a query's where tests on the joined rows: those of the hidden
+    // columns its tables' value filters name (see SearchRequestFactory), whose expressions are each
+    // one field, that no join line's alias names.
+    static List<String> getFirstSourceWhereFields(final Query query, final List<TableSettings> tables) {
+        final List<String> aliases = JoinPlan.getAliases(query);
+        final Set<String> fields = new LinkedHashSet<>();
+        for (final TableSettings table : tables) {
+            if (table.getValueFilter() == null) {
+                continue;
+            }
+            final Set<String> filtered = new HashSet<>(ExpressionUtil.fields(table.getValueFilter()));
+            for (final Column column : NullSafe.list(table.getColumns())) {
+                final Matcher matcher = SINGLE_FIELD.matcher(NullSafe.string(column.getExpression()));
+                if (filtered.contains(column.getId())
+                    && column.getId().startsWith(JoinWhereSplitter.POST_JOIN_COLUMN_PREFIX)
+                    && matcher.matches()) {
+                    final String field = matcher.group(1);
+                    final String alias = JoinWhereSplitter.findAlias(field, aliases);
+                    if (alias == null || alias.equals(query.getAlias())) {
+                        fields.add(field);
+                    }
+                }
+            }
+        }
+        return List.copyOf(fields);
     }
 
     public CoprocessorsImpl create(final SearchRequestSource searchRequestSource,
@@ -175,13 +251,15 @@ public class CoprocessorsFactory {
                     new HashSet<>()).add(coprocessor);
         });
 
-        return new CoprocessorsImpl(
+        final CoprocessorsImpl coprocessors = new CoprocessorsImpl(
                 Collections.unmodifiableMap(coprocessorMap),
                 Collections.unmodifiableMap(componentIdCoprocessorMap),
                 Collections.unmodifiableMap(extractionPipelineCoprocessorMap),
                 fieldIndex,
                 errorConsumer,
                 expressionContext);
+        addJoins(queryKey, coprocessors);
+        return coprocessors;
     }
 
     private Coprocessor create(final ExpressionContext expressionContext,

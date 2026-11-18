@@ -178,22 +178,18 @@ public class DataConnectionSettings extends Component {
     }
 
     private void showSettingsFor(final DataConnectionType type) {
-        final DataConnectionType shown = type == null
-                ? DataConnectionType.JDBC
-                : type;
+        final DataConnectionType shown = DataConnectionType.orDefault(type);
         jdbc.setVisible(shown == DataConnectionType.JDBC);
         athena.setVisible(shown == DataConnectionType.ATHENA);
         ldap.setVisible(shown == DataConnectionType.LDAP);
         csv.setVisible(shown == DataConnectionType.CSV);
         excel.setVisible(shown == DataConnectionType.EXCEL);
-        // Athena takes the time range in its SQL. CSV and Excel are read in Stroom, so they have no
-        // query timeout.
-        timeFieldGroup.setVisible(shown != DataConnectionType.ATHENA);
-        queryTimeoutGroup.setVisible(shown != DataConnectionType.CSV && shown != DataConnectionType.EXCEL);
+        timeFieldGroup.setVisible(shown.usesTimeField());
+        queryTimeoutGroup.setVisible(!shown.holdsData());
         testConnection.setText(switch (shown) {
             case CSV -> "Check CSV";
             case EXCEL -> "Check Workbook";
-            default -> "Test Connection";
+            case JDBC, ATHENA, LDAP -> "Test Connection";
         });
     }
 

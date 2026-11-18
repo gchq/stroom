@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 /// Checks the JDBC settings of a Data Connection against the administrator's controls in
@@ -107,7 +106,8 @@ public final class JdbcConnectionValidator {
         if (isEmbeddedDatabase(trimmedUrl)) {
             problems.add("Embedded databases (" + String.join(", ", EMBEDDED_DATABASE_URL_PREFIXES)
                          + ") cannot be used as Data Connections.");
-        } else if (!isAllowedUrl(trimmedUrl, config.getAllowedUrlPatterns(), problems)) {
+        } else if (!ConnectionRules.matchesAny(
+                trimmedUrl, config.getAllowedUrlPatterns(), "URL pattern", problems)) {
             problems.add("The JDBC URL '" + trimmedUrl + "' does not match any pattern in the "
                          + "dataConnection.allowedUrlPatterns property. Ask an administrator to allow it.");
         }
@@ -142,34 +142,13 @@ public final class JdbcConnectionValidator {
     /// @throws IllegalArgumentException If there is any problem; its message lists them all.
     public static void validate(final JdbcConnectionSettings settings,
                                 final DataConnectionConfig config) {
-        final List<String> problems = findProblems(settings, config);
-        if (!problems.isEmpty()) {
-            throw new IllegalArgumentException(String.join("\n", problems));
-        }
+        ConnectionRules.throwIfAny(findProblems(settings, config));
     }
 
     private static boolean isEmbeddedDatabase(final String url) {
         final String lowerCaseUrl = url.toLowerCase(Locale.ROOT);
         return EMBEDDED_DATABASE_URL_PREFIXES.stream()
                 .anyMatch(lowerCaseUrl::startsWith);
-    }
-
-    private static boolean isAllowedUrl(final String url,
-                                        final List<String> allowedUrlPatterns,
-                                        final List<String> problems) {
-        for (final String allowedUrlPattern : NullSafe.list(allowedUrlPatterns)) {
-            if (NullSafe.isNonBlankString(allowedUrlPattern)) {
-                try {
-                    if (Pattern.compile(allowedUrlPattern).matcher(url).matches()) {
-                        return true;
-                    }
-                } catch (final PatternSyntaxException e) {
-                    problems.add("The allowed URL pattern '" + allowedUrlPattern
-                                 + "' is not a valid regular expression: " + e.getDescription());
-                }
-            }
-        }
-        return false;
     }
 
     // Every property name the settings set, in the URL or the property list, as the driver sees them.
