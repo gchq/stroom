@@ -3730,6 +3730,7 @@ What the end-to-end classes prove:
 | Generation, style, shared XSLTs | `TestE2eGenerator`, `TestE2eXsltStyle`, `TestE2eRestyle`, `TestE2eSharedXslt` |
 | Hand edits, in a build and in production | `TestE2eHandEditedTranslation`, `TestE2eProductionHandEdits` |
 | Stream types, reference data and lookups | `TestE2eStreamTypes` |
+| Aggregated feeds: a source type read inside a held value, and a kind field the user chooses inside one within a source type group, through processing | `TestE2eHeldSourceTypes`, `TestE2eHeldKindFields` |
 | Source documentation; standing instructions | `TestE2eSourceDocs`, `TestE2eInstructions` |
 | Errors; evaluating and fixing existing pipelines | `TestE2eErrors`, `TestE2eEvaluateAndFix`, `TestE2eEvaluatePipeline` |
 | Indexing: Lucene, Elasticsearch hand-over, field types, users aggregate, discovery, a new version of a promoted Elasticsearch pipeline | `TestE2eLuceneIndexing`, `TestE2eElasticHandover`, `TestE2eFieldTypes`, `TestE2eUsersAggregate`, `TestE2eDiscovery`, `TestE2eElasticNewVersion` |

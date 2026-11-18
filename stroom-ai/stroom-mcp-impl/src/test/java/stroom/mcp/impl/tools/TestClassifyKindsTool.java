@@ -1350,6 +1350,38 @@ class TestClassifyKindsTool {
                 .containsEntry("field", "event.component"));
     }
 
+    @Test
+    void theScopesSourceTypeFieldIsNeverOfferedAsItsKindField() {
+        // Seen in the held kind field e2e (2026-11-18): within a scope of one source type, read inside the JSON
+        // string `event`, the form put `event.logger_name (com.x.App)` to the user as a kind field, one value in
+        // every record of the scope.
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 24; i++) {
+            final String app = "{\"logger_name\": \"com.x.App\", \"component\": \"" + List.of("auth", "billing",
+                    "search").get(i % 3) + "\", \"user\": \"u" + i + "\"}";
+            final String web = "{\"logger_name\": \"com.x.Web\", \"component\": \"cdn\", \"path\": \"/p" + i + "\"}";
+            for (final String event : List.of(app, web)) {
+                lines.append("{\"time\": ").append(1_763_452_800_000L + i % 4).append(", \"event\": ")
+                        .append(JsonUtil.writeValueAsString(event, false)).append("}\n");
+            }
+        }
+        samples(32L, lines.toString());
+        final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
+        Mockito.when(builds.scope("acme")).thenReturn(Optional.of(new SourceTypeScope("acme", "event>logger_name",
+                List.of(new SourceTypeRows.Row("com.x.App", SourceTypeRows.VALUE, "com.x.App"),
+                        new SourceTypeRows.Row("com.x.Web", SourceTypeRows.VALUE, "com.x.Web")),
+                List.of("com.x.App"))));
+        final ClassifyKindsTool scoped = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan, builds,
+                now::get);
+
+        final Map<String, Object> asking = BuildToolCalls.json(scoped.execute(BuildToolCalls.call(
+                ClassifyKindsTool.NAME, "{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [32]}"),
+                BuildToolCalls.context()).text());
+        assertThat(asking).as("%s", asking).containsEntry("status", "needs_kind_field");
+        assertThat(list(asking.get("candidates"))).extracting(candidate -> candidate.get("field"))
+                .contains("event.component").doesNotContain("event.logger_name", "time");
+    }
+
     private void samples(final long stream, final String text) {
         Mockito.when(sampleStreamTexts.read(List.of(stream))).thenReturn(new SampleStreamTexts.Texts(
                 Map.of("stream " + stream, text), List.of()));
