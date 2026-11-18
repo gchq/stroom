@@ -26,6 +26,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
@@ -305,24 +306,6 @@ class TestPromoteBuildTool {
         assertThat(String.valueOf(review(destinations).get("layout")))
                 .contains("Old/  (new)\n")
                 .doesNotContain("ACME-V1.0-Splitter-OLD (TextConverter)");
-    }
-
-    @Test
-    void aChangedOriginalIsAnsweredInTheChatWhereTheFormCantBeShown() {
-        // Decided by the user (2026-11-18): a form that can't be shown is never a dead end; the user's answer in the
-        // chat is honoured on the next call.
-        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
-
-        final String refused = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(
-                destinations, null)));
-        final Map<String, Object> answered = args(destinations, null);
-        answered.put("changed_originals", Map.of("x-copy", "keep"));
-        final Map<String, Object> shown = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(answered));
-
-        assertThat(refused).doesNotContain("client that can show forms")
-                .contains("couldn't be shown", "changed_originals", "x-copy", "'overwrite'", "'keep'");
-        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy")
-                .contains("ACME notes (Documentation)");
     }
 
     @Test
@@ -856,54 +839,90 @@ class TestPromoteBuildTool {
     }
 
     @Test
-    void aWorkingCopyOverAnOriginalChangedSinceItWasTakenIsWrittenBackOnlyIfTheUserSays() {
-        // Found reviewing the tools: an XSLT edited by hand in production after its working copy was taken lost
-        // the edit when the copy was promoted (kept only in the backup). The user is asked, told the difference.
+    void theApprovalNamesAnOriginalChangedSinceItWasCopiedWhoChangedItWhenAndItsBackup() {
+        // Decided by the user (2026-11-18): a production original changed since its working copy was taken is
+        // overwritten after its backup, said in the approval the user confirms anyway, never asked on its own.
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
-                ChangedOriginals.OVERWRITE_ORIGINAL, "value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
 
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
                 null)));
-        docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+        assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("The user did not agree to: Promote build");
 
-        // Asked once, before the layout was shown, not again at the approval.
-        assertThat(user.shown()).filteredOn(form -> form.contains("was changed in production")).hasSize(1);
-        assertThat(user.shown().getFirst())
-                .startsWith("Documentation 'ACME notes' was changed in production since its working copy was taken by "
-                            + "john.smith")
-                .contains("Overwriting it loses from production: Doors, v1 by hand.",
-                        "The working copy brings: Doors, v2.",
-                        ChangedOriginals.OVERWRITE_ORIGINAL, "kept only in its backup");
+        final String said = "Documentation 'ACME notes' was changed in production by john.smith on 2026-10-21 "
+                            + "09:30 UTC since it was copied: it is overwritten, its earlier version kept as a "
+                            + "backup in System/" + BuildWorld.WORKSPACE + "/backups ('ACME notes backup <date and "
+                            + "time>')";
+        assertThat(shown.get("changed_in_production")).isEqualTo(List.of(said));
+        assertThat(String.valueOf(shown.get("hint"))).contains("Say the changed_in_production too");
+        // The approval is the only form, and shows it in full.
+        assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form)
+                .startsWith("Promote build '" + BUILD + "' as shown in the chat")
+                .contains("- changed in production since copied:\n  - " + said));
+        // Declined: nothing promoted, production as it was.
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_BY_HAND);
+        assertThat(world.nodes).containsKey("x-copy");
+    }
+
+    @Test
+    void anOriginalChangedSinceItWasCopiedIsOverwrittenAfterItsBackupNothingElseAsked() {
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        assertThat(String.valueOf(shown.get("layout"))).contains("ACME notes  (Documentation: updated from its "
+                                                                 + "working copy, backed up first)");
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form).startsWith("Promote build"));
+        assertThat(promoted.get("promoted")).asList()
+                .contains("wrote Documentation 'ACME notes' back over 'ACME notes' (backup kept)");
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
+        assertThat(world.nodes).doesNotContainKey("x-copy");
+        // The production edit survives in its backup.
+        assertThat(world.nodes.values()).anySatisfy(node -> {
+            assertThat(node.name).startsWith("ACME notes backup ");
+            assertThat(world.documentAccess.path(node.docRef())).isEqualTo("/" + BuildWorld.WORKSPACE + "/backups");
+            assertThat(((DocumentationDoc) world.docs.get(node.uuid)).getData()).isEqualTo(NOTES_BY_HAND);
+        });
+    }
+
+    @Test
+    void changedOriginalsIsNoLongerAnArgumentAndKeepIsNotHonoured() {
+        // The old answer in the chat: not an argument any more (the call guard drops it as unknown), so it can't
+        // keep production from the overwrite the approval says.
+        assertThat(tool.definition().toString()).doesNotContain("changed_originals");
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        final Map<String, Object> withAnswer = args(destinations, null);
+        withAnswer.put("changed_originals", Map.of("x-copy", "keep"));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(withAnswer));
+        withAnswer.put("reviewed", shown.get("review_id"));
+        docs.call(tool, user.context(), DocumentationWorld.args(withAnswer));
+
         assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
     }
 
     @Test
-    void aWorkingCopyOverAChangedOriginalTheUserKeepsStaysInTheBuild() {
+    void aBackupThatIsNotMadeStopsTheWriteBack() {
+        // Production is only ever overwritten with its earlier version kept.
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
-                ChangedOriginals.KEEP_ORIGINAL, "value", true));
-
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
                 null)));
-        // The layout shown says the copy stays, as the user chose before it was shown.
-        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy");
-        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
-                destinations, shown.get("review_id"))));
+        Mockito.when(world.explorerService.copy(any(), any(), Mockito.anyBoolean(), any(),
+                any(PermissionInheritance.class))).thenReturn(null);
 
-        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData())
-                .isEqualTo(NOTES_BY_HAND);
+        assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id")))))
+                .contains("wasn't backed up to System/" + BuildWorld.WORKSPACE + "/backups, so it wasn't "
+                          + "overwritten");
+        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_BY_HAND);
         assertThat(world.nodes).containsKey("x-copy");
-        assertThat(promoted.get("promoted")).asList().contains("left Documentation 'ACME notes' in the workspace");
-
-        // Promoted again, it is asked again: the choice held for that promotion only.
-        final BuildToolCalls.FormUser later = BuildToolCalls.user(Map.of("choice",
-                ChangedOriginals.OVERWRITE_ORIGINAL, "value", true));
-        final Map<String, Object> again = docs.call(tool, later.context(), DocumentationWorld.args(args(
-                destinations, null)));
-        docs.call(tool, later.context(), DocumentationWorld.args(args(destinations, again.get("review_id"))));
-        assertThat(later.shown()).anyMatch(form -> form.contains("was changed in production"));
-        assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
     }
 
     @Test
@@ -917,18 +936,21 @@ class TestPromoteBuildTool {
                 null)));
         docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
+        assertThat(shown).doesNotContainKey("changed_in_production");
         assertThat(user.shown()).noneMatch(form -> form.contains("was changed in production"));
         assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
     }
 
     // A build whose working copy of production Documentation 'ACME notes' (copied at version v0) is v2, while
-    // production was edited by hand since (v1, by john.smith): the destinations to promote it with.
+    // production was edited by hand since (v1, by john.smith on 2026-10-21 09:30): the destinations to promote it
+    // with.
     private Map<String, Object> workingCopyOfAChangedOriginal() {
         exists("System/Feeds/Acme");
         final String prodFolder = world.folder("System/Feeds/Acme").uuid;
         world.add(DocumentationDoc.TYPE, "ACME notes", prodFolder, "x-prod");
         world.docs.put("x-prod", DocumentationDoc.builder().uuid("x-prod").name("ACME notes").version("v1")
-                .updateUser("john.smith").data(NOTES_BY_HAND).build());
+                .updateUser("john.smith").updateTimeMs(Instant.parse("2026-10-21T09:30:00Z").toEpochMilli())
+                .data(NOTES_BY_HAND).build());
         world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
         final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
         world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()

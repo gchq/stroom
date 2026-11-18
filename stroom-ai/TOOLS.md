@@ -2808,8 +2808,10 @@ Where each document goes (`plan`):
   version the group imports); an unchanged one is only discarded. A working copy of Documentation is
   **written back**: the original is copied into
   `<workspace>/backups` as `<name> backup <yyyyMMddHHmmss>` (UTC, tagged `mcp-generated`), then the copy's `data`,
-  `converterType`, `documentation` and `description` are written over it, and the copy deleted. An unchanged copy is
-  just deleted. A copy whose original was changed since it was taken is put to the user first (below).
+  `converterType`, `documentation` and `description` are written over it, and the copy deleted. No backup made (the
+  explorer copy gives back no document), nothing is written over the original: the promotion stops there, saying
+  what was done before it. An unchanged copy is just deleted. A copy whose original was changed since it was taken is
+  written back all the same, the approval saying so (below).
 * `keep` for a document UUID leaves it in the workspace (seen: a test feed made while fixing had nowhere to go but
   production, and the agent never promoted the fix). A build on existing feeds keeps its feeds there unless given a
   folder. The build's test feed (named `-MCP-TEST`, or recorded `output_for` the feeds it works from), its test
@@ -2892,30 +2894,17 @@ Where each document goes (`plan`):
   `<role root>/<feed>/<group>/<version>` for a role whose root is elsewhere.
 
 **Production changed since the copy.** `copy_pipeline` records in each working copy's build record entry the version
-its original had when copied (`BuildRecords.COPY_OF_VERSION`, `copy_of_version`). Before the layout is built (on the
-first call, so the reviewed tree shows the choice), each document to be written back whose original's version is now
-different (`ChangedOriginals.changedSinceCopied`; e.g. edited by hand in production) is put to the user in a form of its own
-(`ChangedOriginals.ask`, through `Consent.choose`): who changed production and when (the original's
-`updateUser` and `updateTimeMs`), then, for a document with code, what overwriting would lose from production and
-what the working copy brings (`CodeDiff`, at most six lines of each, at most 1,000 characters, so the form can
-always be shown). The choices:
-
-* "Overwrite production with the working copy": written back as below; the production change is then only in the
-  backup.
-* "Keep production as it is": the step becomes a keep, so production isn't touched; the working copy, and the
-  working-copy pipelines that would have been discarded, stay in the build, for the change to be made again on a
-  fresh working copy.
-
-The choice is kept in the copy's build record entry (`original_choice`) against the original's version, so the
-approval call doesn't ask again; it is cleared once the promotion is carried out, so promoting the build again asks
-afresh, and a further change in production asks again. Where the form can't be shown (decided by the user
-2026-11-18: never a dead end), promotion is refused before anything is changed with each question and its working
-copy's UUID, for the agent to ask in the chat; the user's answer is honoured on the next call through
-`changed_originals` (`{"<working copy uuid>": "overwrite" | "keep"}`, the options' full text accepted too), recorded
-as a form's answer would be. An answer given there is taken over one recorded. A copy taken before the version was
-recorded has none, and is written back without asking. Asked for by the user: before, the copy was written over a
-production edit made after it was taken, and the edit survived only in the backup; they chose a question that
-explains the difference over a refusal.
+its original had when copied (`BuildRecords.COPY_OF_VERSION`, `copy_of_version`). Each document to be written back
+whose original's version is now different (`ChangedOriginals.said`; e.g. edited by hand in production) is overwritten
+all the same, after its backup (decided by the user, 2026-11-18): never a question of its own. The review lists each
+as `changed_in_production` (its hint says to tell the user), and the approval form the user confirms anyway shows
+them in full under `changed in production since copied` (a `Consent.Listed` detail), e.g. `Documentation 'ACME
+notes' was changed in production by john.smith on 2026-10-21 09:30 UTC since it was copied: it is overwritten, its
+earlier version kept as a backup in System/MCP Workspace/backups ('ACME notes backup <date and time>')` (who and when
+from the original's `updateUser` and `updateTimeMs`, each left out when unknown). Declined, nothing is promoted. A
+copy taken before the version was recorded has none, and is written back without saying so. Before, the user was
+asked to overwrite or keep production in a form of its own, answered in the chat through a `changed_originals`
+argument where it couldn't be shown; both are gone (an old `changed_originals` is dropped as an unknown argument).
 
 Every destination is resolved before approval (`WriteGuard.resolveFolder`), and the folders to create are listed in
 the tree, so a missing folder can't stop a promotion half way. On approval, in order: pending changes are consolidated
@@ -2962,10 +2951,10 @@ feed the build works from, the survey doc and the build record.
 
 * **Arguments**: `build` (required), `destinations` (object, or JSON text: type, role or document UUID → explorer
   path, in any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`), `tidy_up` (boolean,
-  default true; false keeps the test data), `changed_originals` (object, or JSON text: working copy UUID →
-  `overwrite` or `keep`, the user's chat answer where the changed-original form couldn't be shown).
+  default true; false keeps the test data).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
-  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, not_promoted?, tidy_up?, hint}`. After approval: `build`,
+  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, changed_in_production?, not_promoted?,
+  tidy_up?, hint}`. After approval: `build`,
   `tidied_up` (per item: `document`, `streams_marked_deleted` or `shards_deleted`, `deleted`, and `failed` or
   `skipped` where it was left; or `tidy_up: not done ...` when the user unticked it), `layout`,
   `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,

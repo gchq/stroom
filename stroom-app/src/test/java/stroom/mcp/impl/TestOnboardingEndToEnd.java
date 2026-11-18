@@ -68,7 +68,10 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
     private static final String FEED = "ACME-LOGONS";
     private static final String CONVERTER = "ACME-LOGONS-Converter";
     private static final String EVENTS = "ACME-LOGONS-Events";
-    private static final String PROMOTED_FOLDER = "System/Acme/Events";
+    // The feed's own folder, where promotion puts the feed; its Events documents go in its role's version folder
+    // (role first, then version: decided by the user, 2026-11-17).
+    private static final String PROMOTED_FOLDER = "System/Acme/ACME-LOGONS";
+    private static final String PROMOTED_EVENTS_FOLDER = PROMOTED_FOLDER + "/Events/V1.0";
     private static final String CSV_SAMPLE = """
             time,user,host,ip,result
             2026-09-28T10:00:00,alice,ws01,10.0.0.1,ok
@@ -136,16 +139,17 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         final Map<String, Object> review = client.json("promote_build", Map.of(
                 "build", BUILD, "destinations", destinations));
         assertThat(review).containsEntry("status", "needs_review");
-        assertThat((String) review.get("layout")).startsWith(PROMOTED_FOLDER + "/  (new)")
+        assertThat((String) review.get("layout")).contains(PROMOTED_FOLDER + "/  (new)")
                 .contains(FEED + "  (Feed)", CONVERTER + "  (TextConverter)", EVENTS + "  (Pipeline)",
                         EVENTS + "  (XSLT)", EVENTS + "  (Documentation)");
         final Map<String, Object> promoted = client.json("promote_build", Map.of(
                 "build", BUILD, "destinations", destinations, "reviewed", review.get("review_id")));
         dump("promote_build", promoted);
         assertThat(promoted).doesNotContainKey("promoted_with_warnings");
-        for (final String uuid : List.of(built.feedUuid(), built.converterUuid(), built.xsltUuid(),
-                built.pipelineUuid(), (String) documented.get("uuid"))) {
-            assertThat(folderOf(uuid)).as(uuid).isEqualTo(PROMOTED_FOLDER);
+        assertThat(folderOf(built.feedUuid())).isEqualTo(PROMOTED_FOLDER);
+        for (final String uuid : List.of(built.converterUuid(), built.xsltUuid(), built.pipelineUuid(),
+                (String) documented.get("uuid"))) {
+            assertThat(folderOf(uuid)).as(uuid).isEqualTo(PROMOTED_EVENTS_FOLDER);
         }
         // The build folder stays, holding the sample's survey doc (a survey doc always stays in the build) with the
         // build's record, and the pipeline's filter for its feed is handed over disabled.
