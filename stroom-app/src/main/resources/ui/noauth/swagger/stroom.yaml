@@ -17558,6 +17558,7 @@ components:
         partitionBy:
           type: string
           enum:
+          - NONE
           - DAY
           - WEEK
           - MONTH
