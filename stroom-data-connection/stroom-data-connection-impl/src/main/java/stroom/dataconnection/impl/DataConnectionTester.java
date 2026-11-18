@@ -81,7 +81,7 @@ public class DataConnectionTester {
             return ldapConnector.detectAttributes(doc);
         }
         if (DataConnectionType.EXCEL.equals(doc.getSourceType())) {
-            final ExcelSettings excel = storeProvider.get().withWorkbook(doc).getExcel();
+            final ExcelSettings excel = withWorkbook(doc).getExcel();
             if (excel == null || excel.getData() == null) {
                 throw new EntityServiceException("There is no workbook to detect the columns of. Upload one.");
             }
@@ -117,11 +117,25 @@ public class DataConnectionTester {
     /// @throws PermissionException    If the current user may not edit the document.
     public DataConnectionTestResponse test(final DataConnectionDoc doc) {
         checkEditPermission(doc);
-        // The workbook is never sent by the editor, so the one the document names is found here.
         final DataConnectionDoc toTest = DataConnectionType.EXCEL.equals(doc.getSourceType())
-                ? storeProvider.get().withWorkbook(doc)
+                ? withWorkbook(doc)
                 : doc;
         return connectors.get(toTest).test(toTest);
+    }
+
+    // The workbook the document will have once saved: a new upload, the one it is copied from, or else
+    // the one stored. The editor never sends a workbook, so any sent is ignored: a test of one the user
+    // sent would say nothing of the one queried.
+    private DataConnectionDoc withWorkbook(final DataConnectionDoc doc) {
+        final ExcelSettings excel = doc.getExcel();
+        final DataConnectionDoc withoutSentData = excel == null || excel.getData() == null
+                ? doc
+                : doc.copy()
+                        .excel(excel.copy()
+                                .data(null)
+                                .build())
+                        .build();
+        return storeProvider.get().withWorkbook(withoutSentData);
     }
 
     private void checkEditPermission(final DataConnectionDoc doc) {
