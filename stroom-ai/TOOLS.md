@@ -6738,7 +6738,12 @@ pipeline would, in `stroom-ai-impl`:
   value not of that kind), `dataNotHeld`, `requiredLeftEmpty`, `traits`, `valueOf`. A condition's `matches` and an
   extraction's regex run with Java's regex engine, as Stroom's XSLT runs them. A JSON value that isn't text (a
   number) is read as its text. Every record of the sample is read, not the first 200 (seen in production: a VPN
-  rule's keys first appeared at the 557th of 3,933 records, and the check said they matched nothing). It also
+  rule's keys first appeared at the 557th of 3,933 records, and the check said they matched nothing). An
+  extraction reading an xpath (XML input) is first checked against the first 200 record documents
+  (`XPathChecks.MAX_SOURCE_DOCUMENTS`); one whose regex matches none of them is checked against all of them
+  before it is called a problem; if the check's time runs out before the rest, it is a warning (seen in the agent
+  eval, case 36: a SecretServer export's folder and permission keys, first held after the 200th of 1,000
+  records, refused, and the agent then saved with an empty sample to get past them). It also
   reports:
   * a TypeId the same for events of different kinds (`sharedTypeIds`), as a problem, not a warning (seen as a
     warning: two runs left TypeId the category alone, 'User' for logons, logoffs and lockouts, the warning one among

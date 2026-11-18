@@ -69,7 +69,8 @@ public final class XPathChecks {
     public static final String ESCAPED_TWICE = " `\\\\` in a regex matches a backslash character. A literal [ or ( "
                                                + "is `\\[` or `\\(`: one backslash in the regex itself, which your "
                                                + "call's JSON writes as two; nothing else escapes it again.";
-    /// The most record documents an extraction's xpath source is read from.
+    /// The record documents every extraction's xpath source is read from first; one whose regex matches none of
+    /// them is read against the rest of the sample's too, before it is called a problem.
     public static final int MAX_SOURCE_DOCUMENTS = 200;
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XPathChecks.class);
@@ -342,7 +343,7 @@ public final class XPathChecks {
         final List<String> warnings = new ArrayList<>();
         final List<String> unchecked = new ArrayList<>();
         final Set<String> produced = new LinkedHashSet<>();
-        List<XdmNode> parsed = null;
+        final SourceDocuments sourceDocuments = new SourceDocuments(documents);
         for (int n = 0; n < extractions.size(); n++) {
             final Extraction ex = extractions.get(n);
             final String source = ex.field() != null && !ex.field().isEmpty()
@@ -357,7 +358,8 @@ public final class XPathChecks {
             }
             produced.addAll(names);
             final List<String> texts = new ArrayList<>();
-            if (ex.field() != null && !ex.field().isEmpty() && fieldTexts) {
+            final boolean fromDocuments = ex.field() == null || ex.field().isEmpty() || !fieldTexts;
+            if (!fromDocuments) {
                 for (final Map<String, ?> record : records) {
                     final String value = valueOf(record, ex.field());
                     if (value != null && !value.isEmpty()) {
@@ -370,13 +372,9 @@ public final class XPathChecks {
                     problems.add(where + ": " + refused + ".");
                     continue;
                 }
-                if (parsed == null) {
-                    final List<String> all = documents.get();
-                    parsed = parseAll(all.subList(0, Math.min(MAX_SOURCE_DOCUMENTS, all.size())));
-                }
-                texts.addAll(sourceTexts(source, parsed, namespace));
+                texts.addAll(sourceTexts(source, sourceDocuments.first(), namespace));
             }
-            if (texts.isEmpty()) {
+            if (texts.isEmpty() && !(fromDocuments && sourceDocuments.hasMore())) {
                 // Nothing to read: the xpath and field checks say so.
                 continue;
             }
@@ -384,7 +382,28 @@ public final class XPathChecks {
                 unchecked.add(where);
                 continue;
             }
-            checkExtraction(where, ex, texts, problems, warnings);
+            final List<String> found = new ArrayList<>();
+            final List<String> said = new ArrayList<>();
+            final boolean matchedNone = texts.isEmpty() || checkExtraction(where, ex, texts, found, said);
+            if (matchedNone && fromDocuments && sourceDocuments.hasMore()) {
+                // Seen in the agent eval (case 36): a SecretServer export's folder and permission keys, drafted from
+                // all 1,000 records, first held after the 200th, each refused as matching none of the first 200.
+                if (deadline != null && clock.instant().isAfter(deadline)) {
+                    warnings.add(where + ": the regex matches none of the first " + sourceDocuments.firstCount()
+                                 + " of the sample's " + sourceDocuments.count() + " records, and the check's time "
+                                 + "ran out before the rest: step_sample shows what it gives.");
+                    continue;
+                }
+                found.clear();
+                said.clear();
+                final List<String> allTexts = sourceTexts(source, sourceDocuments.all(), namespace);
+                if (allTexts.isEmpty()) {
+                    continue;
+                }
+                checkExtraction(where, ex, allTexts, found, said);
+            }
+            problems.addAll(found);
+            warnings.addAll(said);
         }
         if (!unchecked.isEmpty()) {
             warnings.add(String.join(", ", unchecked) + " not checked against the sample: the check's time ran "
@@ -467,11 +486,12 @@ public final class XPathChecks {
     }
 
     // Checks one extraction's regex on its texts.
-    private static void checkExtraction(final String where,
-                                        final Extraction ex,
-                                        final List<String> rawTexts,
-                                        final List<String> problems,
-                                        final List<String> warnings) {
+    // True when the regex is sound and matches none of the texts (a problem, said), false otherwise.
+    private static boolean checkExtraction(final String where,
+                                           final Extraction ex,
+                                           final List<String> rawTexts,
+                                           final List<String> problems,
+                                           final List<String> warnings) {
         // As XPath reads them.
         final List<String> texts = rawTexts.stream()
                 .map(text -> NOT_XML.matcher(text).replaceAll("�"))
@@ -482,7 +502,7 @@ public final class XPathChecks {
         if (ex.regex().length() > SafePattern.MAX_REGEX_LENGTH) {
             problems.add(where + ": the regex is " + ex.regex().length() + " characters long, and may be at most "
                          + SafePattern.MAX_REGEX_LENGTH + ".");
-            return;
+            return false;
         }
         final RegularExpression regex;
         try {
@@ -492,15 +512,14 @@ public final class XPathChecks {
                          + firstLine(e.getMessage(), 200) + "." + (ex.regex().contains("\\\\")
                     ? ESCAPED_TWICE
                     : ""));
-            return;
+            return false;
         }
         try {
-            SafePattern.limited(ex.regex(), () -> {
-                checkMatches(where, ex, flags, regex, texts, problems, warnings);
-                return null;
-            });
+            return SafePattern.limited(ex.regex(), () -> checkMatches(where, ex, flags, regex, texts, problems,
+                    warnings) == 0);
         } catch (final PatternTimeoutException e) {
             problems.add(where + ": " + e.getMessage());
+            return false;
         }
     }
 
@@ -509,13 +528,13 @@ public final class XPathChecks {
     // first by the same regex in Java (close to XPath's), reading the text through a DeadlineCharSequence: a regex
     // that backtracks badly is stopped there before Saxon runs it. Saxon's own backtracking limit (lowered in
     // LockedSaxon) stops one the Java one can't read.
-    private static void checkMatches(final String where,
-                                     final Extraction ex,
-                                     final String flags,
-                                     final RegularExpression regex,
-                                     final List<String> texts,
-                                     final List<String> problems,
-                                     final List<String> warnings) {
+    private static int checkMatches(final String where,
+                                    final Extraction ex,
+                                    final String flags,
+                                    final RegularExpression regex,
+                                    final List<String> texts,
+                                    final List<String> problems,
+                                    final List<String> warnings) {
         final Pattern java = javaPattern(ex.regex(), javaFlags(flags));
         int matched = 0;
         String missed = null;
@@ -547,6 +566,7 @@ public final class XPathChecks {
                          + "the rest leave " + names + " empty. E.g. " + shown(missed, 160) + ": "
                          + whereItStops(ex.regex(), flags, List.of(missed)));
         }
+        return matched;
     }
 
     // The regex as Java reads it, or null if Java can't (XPath has syntax Java doesn't, e.g. [a-z-[aeiou]]).
@@ -773,5 +793,54 @@ public final class XPathChecks {
     /// @param warnings Regexes that match only some, and entries not checked in time.
     public record Findings(List<String> problems, List<String> warnings) {
 
+    }
+
+    // The sample's record documents an extraction's xpath source is read from, parsed when first needed: the first
+    // MAX_SOURCE_DOCUMENTS for every extraction, the rest only for one that matches none of those.
+    private static final class SourceDocuments {
+
+        private final Supplier<List<String>> documents;
+        private List<String> given;
+        private List<XdmNode> first;
+        private List<XdmNode> all;
+
+        private SourceDocuments(final Supplier<List<String>> documents) {
+            this.documents = documents;
+        }
+
+        private List<XdmNode> first() {
+            if (first == null) {
+                first = parseAll(given().subList(0, firstCount()));
+            }
+            return first;
+        }
+
+        private List<XdmNode> all() {
+            if (all == null) {
+                final List<XdmNode> parsed = new ArrayList<>(first());
+                parsed.addAll(parseAll(given().subList(firstCount(), count())));
+                all = parsed;
+            }
+            return all;
+        }
+
+        private boolean hasMore() {
+            return count() > firstCount();
+        }
+
+        private int firstCount() {
+            return Math.min(MAX_SOURCE_DOCUMENTS, count());
+        }
+
+        private int count() {
+            return given().size();
+        }
+
+        private List<String> given() {
+            if (given == null) {
+                given = documents.get();
+            }
+            return given;
+        }
     }
 }
