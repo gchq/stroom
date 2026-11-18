@@ -154,6 +154,8 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
     private static native void syncScroll(Element editorElement, Element previewElement) /*-{
         // The cursor's line, once it has moved.
         var cursorRow = -1;
+        // The lines of the editor's headings, as found by headingLines, until its text changes; null till found.
+        var headingCache = null;
         // A click of any button but the left (e.g. to open a menu) moves the cursor too: the preview stays put for
         // that (asked for by the user).
         var ignoreCursorUntilMs = 0;
@@ -237,8 +239,12 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
             if (!scroller || !editor || cursorRow < 0) {
                 return;
             }
-            var lines = editor.getValue().split('\n');
-            var sources = headingLines(lines);
+            // The editor's own lines, rather than its text joined and split again, on each move of the cursor.
+            var lines = editor.getSession().getDocument().getAllLines();
+            if (!headingCache) {
+                headingCache = headingLines(lines);
+            }
+            var sources = headingCache;
             var shown = Array.prototype.slice.call(doc.querySelectorAll(
                 '.markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)'));
             var count = Math.min(sources.length, shown.length);
@@ -278,7 +284,14 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
             var editor = aceEditor();
             if (editor && editor !== listening) {
                 listening = editor;
+                headingCache = null;
                 editor.selection.on('changeCursor', onCursor);
+                // Found again once the text has changed (a large document has thousands of lines to look through).
+                var forget = function () {
+                    headingCache = null;
+                };
+                editor.on('change', forget);
+                editor.on('changeSession', forget);
             }
         };
         editorElement.addEventListener('focusin', listen, true);
