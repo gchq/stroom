@@ -53,6 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -289,6 +290,73 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 : SourceTypeRegistry.read(documentation(found.getFirst().getUuid()));
     }
 
+    /// The folder a source type group's pipeline is in, as the registry's rows name it: where promotion put it.
+    ///
+    /// @param registry The registry, as [SourceTypeRegistry#read] reads it, or null.
+    /// @param group    The group's name (any case), or null.
+    /// @return The explorer path of the pipeline's folder, or null if no row of the group names a pipeline.
+    String groupPipelineFolder(final Map<String, Object> registry, final String group) {
+        if (registry == null || group == null) {
+            return null;
+        }
+        return ((List<Map<String, Object>>) registry.getOrDefault("rows", List.of())).stream()
+                .filter(row -> group.equalsIgnoreCase(String.valueOf(row.get("group"))))
+                .map(row -> row.get("pipeline") instanceof final Map<?, ?> pipeline
+                        ? (String) pipeline.get("uuid")
+                        : null)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(this::folderOf)
+                .orElse(null);
+    }
+
+    /// The name of a case's source type group: the one it expects (`expected.source_types.group.name`), else its
+    /// reference's.
+    ///
+    /// @param evalCase A case.
+    /// @return The group's name, or null for a case with none.
+    static String groupOf(final Map<String, Object> evalCase) {
+        final Map<String, Object> expected = evalCase.get("expected") instanceof final Map<?, ?> given
+                ? (Map<String, Object>) given
+                : Map.of();
+        if (expected.get("source_types") instanceof final Map<?, ?> sourceTypes
+            && sourceTypes.get("group") instanceof final Map<?, ?> group
+            && group.get("name") instanceof final String name) {
+            return name;
+        }
+        return evalCase.get("reference") instanceof final Map<?, ?> reference
+               && reference.get("source_types") instanceof final Map<?, ?> sourceTypes
+               && sourceTypes.get("group") instanceof final String name
+                ? name
+                : null;
+    }
+
+    /// The options a form's fields offer, as the user sees them: each field's choices (`enum`, or titled `oneOf` or
+    /// `anyOf` choices, or its items' for a multi-choice field) and `examples`.
+    ///
+    /// @param schema The form's requested schema.
+    /// @return The options, in the fields' order.
+    static List<String> formOptions(final Map<String, Object> schema) {
+        final List<String> options = new ArrayList<>();
+        if (schema != null && schema.get("properties") instanceof final Map<?, ?> fields) {
+            for (final Object field : fields.values()) {
+                if (field instanceof final Map<?, ?> definition) {
+                    options.addAll(McpTestClient.options(definition));
+                    for (final String key : List.of("enum", "oneOf", "anyOf", "examples")) {
+                        if (definition.get(key) instanceof final List<?> list) {
+                            for (final Object option : list) {
+                                options.add(String.valueOf(option instanceof final Map<?, ?> titled
+                                        ? titled.get("const")
+                                        : option));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return options;
+    }
+
     /// @param evalCase A case.
     /// @return Whether its build is promoted at the end (`promote: true`).
     static boolean promotes(final Map<String, Object> evalCase) {
@@ -523,7 +591,12 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 ? index(build, feed, group, pipeline, events, score, setup)
                 : null;
         if (promotes(evalCase)) {
-            promote(build, DESTINATIONS);
+            // A feed made in the build goes with it, beside a setup's.
+            final Map<String, Object> destinations = new LinkedHashMap<>(DESTINATIONS);
+            if (setup == null && stored == null) {
+                destinations.put("Feed", FEEDS);
+            }
+            promote(build, destinations);
         }
         final Built built = new Built(List.copyOf(raws), group, pipeline, pipelineName, saved.get("xslt") != null
                 ? uuidOf(map(saved, "xslt"))
@@ -535,6 +608,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                             ? SourceTypeRegistry.read(documentation(uuidOf(map(saved, "registry"))))
                             : null;
             scoreSourceTypes(evalCase, score, registry, gate, group, raws);
+            if (promotes(evalCase)) {
+                score.scoreLayout(evalCase, groupPipelineFolder(registry, group));
+            }
             if (setup != null) {
                 final String indexUsed = indexed != null
                         ? indexed.index()
@@ -581,14 +657,15 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 : null;
         final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed,
                 "system_name", sourceTypes.get("system_name"), "environment", environment, "rows",
-                sourceTypes.get("rows")));
+                sourceTypes.get("rows"), "patterns", sourceTypes.get("patterns")));
         if (!"needs_review".equals(shown.get("status"))) {
             throw new AssertionError("record_source_types showed no table: " + firstLines(String.valueOf(shown)));
         }
         answering(grouping(strings(sourceTypes, "source_types"), (String) sourceTypes.get("group")));
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
                 "system_name", sourceTypes.get("system_name"), "environment", environment, "reviewed",
-                shown.get("review_id"), "rows", shown.get("rows"), "group", sourceTypes.get("group")));
+                shown.get("review_id"), "rows", shown.get("rows"), "patterns", sourceTypes.get("patterns"), "group",
+                sourceTypes.get("group")));
         if (written.get("registry") == null) {
             throw new AssertionError("record_source_types wrote no registry: " + firstLines(String.valueOf(written)));
         }
@@ -614,6 +691,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             final Map<String, Object> answered = new LinkedHashMap<>();
             answered.put("message", form.message());
             answered.put("content", answer.content());
+            answered.put("options", formOptions(form.requestedSchema()));
             synchronized (formsAnswered) {
                 formsAnswered.add(answered);
             }

@@ -49,6 +49,9 @@ expected:
       - {match: value, value: AzureActiveDirectory, status: parked}
     passed_over: 208
     index: {fields_added: when_needed}
+    # Role first, then version: the group's new version promoted beside the setup's V1.0, in a version folder of
+    # its own.
+    layout: "/Messaging/Events/V(?!1\\.0$)\\d+(\\.\\d+)*$"
   forms:
     asked:
       - {message: "go in this build's source type group"}
