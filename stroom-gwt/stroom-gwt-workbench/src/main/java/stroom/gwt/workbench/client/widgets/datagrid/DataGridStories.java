@@ -698,6 +698,30 @@ public final class DataGridStories {
                     play.run("stop polling", InteractiveCellGrids::stopPolling);
                     play.waitFor(() -> play.expect(play.getAllByText("Stopped")).toHaveLength(4));
                 })
+                // An arrow pressed with the mouse in a grid that polls: the press focuses the field,
+                // so the polls drawing the row again while it is held keep the stepped value, which
+                // is committed when let go, the field keeping the focus
+                .story("ValueSpinnerArrowWhilePolling", InteractiveCellGrids::valueSpinnerGrid)
+                .withPlay(play -> {
+                    final Query input = play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
+                            .querySelector("input");
+                    final Query up = play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
+                            .getByTitle("Increase value");
+                    play.waitFor(() -> play.expect(input).toHaveValue("34"));
+                    // Held for several polls (every 10ms); held long, it may step more than once, so
+                    // the play checks only that the value before the press doesn't come back
+                    play.fireEvent().mouseDown(up);
+                    play.sleep(100);
+                    play.expect(input).not().toHaveValue("34");
+                    play.expect(input).toHaveFocus();
+                    play.fireEvent().mouseUp(up);
+                    play.waitFor(() -> play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1));
+                    play.sleep(100);
+                    play.expect(input).not().toHaveValue("34");
+                    play.expect(input).toHaveFocus();
+                    play.run("stop polling", InteractiveCellGrids::stopPolling);
+                    play.waitFor(() -> play.expect(play.getAllByText("Stopped")).toHaveLength(4));
+                })
                 // ExpanderCell: the expander opens and closes the tree without selecting the row
                 // A right-click on a cell's text field shows the field's edit items (Cut, Copy, Paste
                 // and so on) above the grid's own items (gchq/stroom#5897)
