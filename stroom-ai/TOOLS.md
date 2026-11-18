@@ -2950,13 +2950,13 @@ feed the build works from, the survey doc and the build record.
   path, in any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`), `tidy_up` (boolean,
   default true; false keeps the test data).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
-  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, changed_in_production?, not_promoted?,
+  role_locations?, follow_on_filters?, follow_on_filters_passed_over?, pipeline_changes?, index_changes?, changed_in_production?, not_promoted?,
   tidy_up?, hint}`. After approval: `build`,
   `tidied_up` (per item: `document`, `streams_marked_deleted` or `shards_deleted`, `deleted`, and `failed` or
   `skipped` where it was left; or `tidy_up: not done ...` when the user unticked it), `layout`,
   `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,
   `processing_filters` (each with `pipeline_link`, and `before_enabling` for an index that must start fresh) with a
-  `next` telling the user to review and enable them, `follow_on_filters`, `next_steps` and `user_actions` (buttons:
+  `next` telling the user to review and enable them, `follow_on_filters`, `follow_on_filters_passed_over`, `next_steps` and `user_actions` (buttons:
   enabling the new filters; none disables a filter).
 * **Follow-on filters** (`PromotionProcessing.followOns`, `createFollowOnFilters`; decided by the user 2026-11-17): for
   each new events (or records) version promoted, every filter outside the build and every other build with a
@@ -2964,7 +2964,14 @@ feed the build works from, the survey doc and the build record.
   gets a sibling on its pipeline: the same selection, priority, task limit and minimum creation time, the Pipeline
   term naming the new version, created **disabled** (`copied_from`, `reads`, `in_place_of`; its enable button after
   the new version's own filter). One already made (promoted again) isn't made twice. The filter it follows is never
-  changed, disabled or removed. The review lists them (`follow_on_filters`) and so does the approval form. The
+  changed, disabled or removed. A follow-on pipeline with a new version of its own in the build (`version_of`) is
+  passed over, and so is one writing to the index (a test index taken as the production index it stands in for; an
+  Elasticsearch index by name) that a pipeline the build promotes indexes the new version's Events into already, or
+  an earlier follow-on does (`withoutDoubleIndexing`): never two filters handed over indexing the same Events into
+  the same index (seen in an eval, case 61: the build's indexing pipeline, made afresh, and a follow-on on the
+  production one both indexed the V1.1 Events into the group's index). Those are said in
+  `follow_on_filters_passed_over`, in the review, the approval form and the result. The review lists the follow-ons
+  made (`follow_on_filters`) and so does the approval form. The
   result's `next_steps`: `1. Enable the new version's filters when ready: filter <id> ('<pipeline>'); ...` then `2.
   Once the new version's output is right, the admin disables or removes the earlier version's filters (the tools
   never do): '<old>': filter <ids>; '<follow-on>': filter <id> (reading the Events of '<old>').` The buttons that
@@ -6092,7 +6099,11 @@ tool saves no XSLT: `xslt_uuid` is one saved before (`save_xslt index_plan=...`)
 For Lucene, the fields the XSLT writes that the index lacks are added from the plan kept with the XSLT, and are not
 asked about. Stroom drops a value for a field the index lacks with only a warning ("Attempt to index unknown
 field"), so the pipeline would run and index nothing searchable; an XSLT written by hand (no kept plan) that writes
-such fields (its `<data name="...">`) is refused instead.
+such fields (its `<data name="...">`) is refused instead. Fields are added only to the build's own index: one
+outside the build (a production index) lacking the plan's fields is refused before the pipeline is made
+(`WriteGuard.checkInBuild`: make a new version of its pipeline with `copy_pipeline`). Seen in an eval (case 61): the
+pipeline was made, then the fields refused, and the agent's `copy_pipeline` of the production indexing pipeline under
+that name was refused as already in the build, so the build promoted a pipeline that was no new version of it.
 
 An indexing pipeline reads Events: an indexing template needs the build's own events pipeline, or
 `events_stream_ids` that are Events. A pipeline whose XSLT keeps a discovery plan reads raw data, so this isn't

@@ -107,6 +107,59 @@ class TestPromotionProcessing {
     }
 
     @Test
+    void aFollowOnIndexingTheNewEventsIntoAnIndexAPromotedPipelineIndexesThemIntoIsPassedOver() {
+        // Seen in an eval (case 61): the build's indexing pipeline, made afresh rather than as a new version of the
+        // production one, was promoted reading the new version's Events, and the production indexing pipeline
+        // gained a follow-on filter reading them too: both indexed into the same index, each event twice.
+        final DocRef version = new DocRef(PipelineDoc.TYPE, "ev2", "Acme-V1.1-Events");
+        final DocRef production = new DocRef(PipelineDoc.TYPE, "pi", "Acme - Indexing");
+        final DocRef otherIndexing = new DocRef(PipelineDoc.TYPE, "oi", "Acme-Other - Indexing");
+        final DocRef cef = new DocRef(PipelineDoc.TYPE, "cef", "Acme-CEF");
+        final DocRef built = new DocRef(PipelineDoc.TYPE, "ip2", "Acme - Indexing V1.1");
+        final DocRef index = new DocRef("Index", "idx", "ACME-INDEX");
+        final DocRef testIndex = new DocRef("Index", "tidx", "ACME-INDEX-MCP-TEST");
+        w.pipeline(production, false, null);
+        w.pipeline(otherIndexing, false, null);
+        w.pipeline(cef, false, null);
+        w.pipeline(built, true, null);
+        w.lucene("pi", index);
+        w.lucene("oi", new DocRef("Index", "idx-other", "ACME-OTHER"));
+        w.layers("cef", w.layer("cef", "xsltFilter", "XSLTFilter"));
+        // The build's pipeline writes to its test index while in the build: the production index it stands in for.
+        w.lucene("ip2", testIndex);
+        final ExpressionOperator reading = ProcessorFilterWrites.allOf(List.of(
+                ProcessorFilterWrites.term("Type", "Events"), PIPELINE_TERM));
+        final List<PromotionProcessing.FollowOn> followOns = List.of(
+                new PromotionProcessing.FollowOn(production, w.filter("pi", 5, true, reading, null),
+                        ProcessingWorld.EV, version),
+                new PromotionProcessing.FollowOn(otherIndexing, w.filter("oi", 6, true, reading, null),
+                        ProcessingWorld.EV, version),
+                new PromotionProcessing.FollowOn(cef, w.filter("cef", 7, true, reading, null), ProcessingWorld.EV,
+                        version));
+        final List<PromotionProcessing.Entry> processing = List.of(new PromotionProcessing.Entry(built, null,
+                "Events", List.of(ProcessorFilterWrites.pipelineTerm(version))));
+
+        final PromotionProcessing.Followed followed = w.promotion.withoutDoubleIndexing(followOns, processing,
+                Map.of("tidx", "idx"));
+
+        assertThat(followed.followOns()).extracting(followOn -> followOn.pipeline().getUuid())
+                .containsExactly("oi", "cef");
+        assertThat(followed.passedOver()).singleElement().satisfies(said -> assertThat(said).contains(
+                "'Acme - Indexing': no new filter", "'Acme - Indexing V1.1' already indexes the Events of "
+                                                   + "'Acme-V1.1-Events' into the same index",
+                "filter 5 is left as it is"));
+
+        // Without the build's pipeline reading the new Events, every follow-on is made.
+        assertThat(w.promotion.withoutDoubleIndexing(followOns, List.of(), Map.of("tidx", "idx")).followOns())
+                .hasSize(3);
+        // Two follow-ons into the same index from the same new Events: only the first is made.
+        w.lucene("oi", index);
+        assertThat(w.promotion.withoutDoubleIndexing(followOns, List.of(), Map.of()).followOns())
+                .extracting(followOn -> followOn.pipeline().getUuid())
+                .containsExactly("pi", "cef");
+    }
+
+    @Test
     void promotionPlansNewDataFiltersFromSampleFiltersAndSurveys() {
         for (final DocRef pipeline : List.of(TP, IP, SP)) {
             w.pipeline(pipeline, true, null);

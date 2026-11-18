@@ -374,13 +374,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // filters, for the admin to disable or remove once the new version's output is right (decided by the user,
         // 2026-11-17: never done by the tools).
         final Map<String, String> predecessors = predecessors(build, moving);
-        // The promoted pipelines outside the build reading a predecessor's Events (CEF flatteners, indexing): each
-        // gains a filter, disabled, reading the new version's Events instead (decided by the user, 2026-11-17). One
-        // with a new version of its own in this build is passed over: its new version reads the new Events.
-        final List<PromotionProcessing.FollowOn> followOns = promotionProcessing.followOns(eventsVersions(plan,
-                predecessors), pipeline -> guard.buildOf(pipeline).isEmpty() && !BuildDocumentation.inBuild(docs,
-                pipeline.getUuid()) && !predecessors.containsValue(pipeline.getUuid()));
-        final List<String> followOnSaid = followOns.stream().map(PromotionProcessing.FollowOn::said).toList();
         // A working copy of a promoted pipeline is deleted at promotion, its original going on: an index reading the
         // copy's Events in the build reads the original's once promoted.
         final Map<String, String> originals = new LinkedHashMap<>();
@@ -389,6 +382,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 .forEach(d -> originals.put(String.valueOf(d.get("uuid")), String.valueOf(d.get("working_copy_of"))));
         final List<PromotionProcessing.Entry> processing = promotionProcessing.promotionProcessing(moving, sources,
                 keptFeeds, originals);
+        // The promoted pipelines outside the build reading a predecessor's Events (CEF flatteners, indexing): each
+        // gains a filter, disabled, reading the new version's Events instead (decided by the user, 2026-11-17). One
+        // with a new version of its own in this build is passed over: its new version reads the new Events. So is
+        // one writing to an index a pipeline the build promotes indexes the new Events into already: never two
+        // filters indexing the same Events into the same index.
+        final PromotionProcessing.Followed followed = promotionProcessing.withoutDoubleIndexing(
+                promotionProcessing.followOns(eventsVersions(plan, predecessors), pipeline ->
+                        guard.buildOf(pipeline).isEmpty() && !BuildDocumentation.inBuild(docs, pipeline.getUuid())
+                        && !predecessors.containsValue(pipeline.getUuid())), processing, testIndexes(build));
+        final List<PromotionProcessing.FollowOn> followOns = followed.followOns();
+        final List<String> followOnSaid = followOns.stream().map(PromotionProcessing.FollowOn::said).toList();
         final List<String> warnings = facts.buildChecks(docs);
         final List<String> blocking = warnings.stream().filter(w -> w.endsWith(BuildChecks.BLOCKS)).toList();
         if (!blocking.isEmpty()) {
@@ -440,6 +444,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 review.put("hint", review.get("hint") + " Say the follow_on_filters too: each promoted pipeline "
                                    + "reading the earlier version's Events gains a new filter, disabled, reading the "
                                    + "new version's; its own filters are left as they are.");
+            }
+            if (!followed.passedOver().isEmpty()) {
+                review.put("follow_on_filters_passed_over", followed.passedOver());
+                review.put("hint", review.get("hint") + " Say the follow_on_filters_passed_over too: no filter is "
+                                   + "made where it would index the new Events into an index a promoted pipeline "
+                                   + "indexes them into already.");
             }
             if (!pipelineChanges.isEmpty()) {
                 review.put("pipeline_changes", pipelineChanges);
@@ -504,6 +514,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         if (!followOnSaid.isEmpty()) {
             shortForm.put("follow-on filters", followOnSaid);
+        }
+        if (!followed.passedOver().isEmpty()) {
+            shortForm.put("follow-on filters not made", followed.passedOver());
         }
         final List<String> notPromoted = notUsed(plan);
         if (!notPromoted.isEmpty()) {
@@ -592,6 +605,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final Map<String, Object> result = promoted(context, build, plan, folders, tree, done, warnings, filters,
                 followOnFilters, predecessors);
         tidy.report(result, tidying, tidied);
+        if (!followed.passedOver().isEmpty()) {
+            result.put("follow_on_filters_passed_over", followed.passedOver());
+        }
         return result;
     }
 

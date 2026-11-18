@@ -269,6 +269,17 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
                                       + "template indexes into Lucene: " + ELASTIC_TEMPLATE_INSTEAD);
             });
             missing = missingIndexFields(indexUuid, xsltUuid);
+            if (!missing.missing().isEmpty()) {
+                // The fields go only into the build's own index: refused before the pipeline is made. Seen in an
+                // eval (case 61): the pipeline was made, then the production index's fields were refused, and the
+                // agent's copy_pipeline of the production indexing pipeline under that name was refused in turn
+                // (already in the build). The build promoted a pipeline that was no new version of the production
+                // one, which gained a follow-on filter too: both indexed the new Events into the same index.
+                guard.checkInBuild(context.session(), documentAccess.read(new DocRef(LuceneIndexDoc.TYPE,
+                                indexUuid), LuceneIndexDoc.class)
+                        .map(doc -> new DocRef(LuceneIndexDoc.TYPE, indexUuid, doc.getName()))
+                        .orElse(new DocRef(LuceneIndexDoc.TYPE, indexUuid)));
+            }
             final String element = openElement(openProperties, "index")
                     .orElseThrow(() -> new ToolRefusal("This template sets its own Lucene index: it leaves no index "
                                                        + "for the pipeline to set"));
