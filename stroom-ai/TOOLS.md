@@ -2868,7 +2868,12 @@ Where each document goes (`plan`):
   the walk can't be sure, nothing is left out: a build of no pipeline (seen in e2e: a converter and XSLT promoted on
   their own), a build pipeline (or XSLT, dictionary) unreadable, or an element picking its document by a name
   pattern (`xsltNamePattern`, `namePattern`). The registry, source notes, reference documents and survey doc are
-  placed as before.
+  placed as before. A Lucene index doc whose name marks it as one to test with (a word `TEST`, numbered or not:
+  `-TEST`, `-TEST2`, `-MCP-TEST`) is walked too: nothing promoted writing to it, and no index plan of the build (by
+  its `index_name`) nor the feed's registry (by UUID) naming it, it is the agent's own test index, kept and tidied up
+  with the build's test indexes, and so are the `-VERIFY` dashboards searching only such indexes (seen in an eval,
+  case 61: an agent's `-TEST` and `-TEST2` indexes and their dashboards were promoted beside the new version's
+  pipeline). Any other index is promoted, whatever writes to it.
 * **A folder of the source's own** (`SourceFolders`): the source is the feed the build works from, else its
   registry's feed, else its one new feed. Where that feed's folder is a parent of sources (a subfolder of it, not a
   role or version subfolder, holds a feed: the siblings' convention), the build's documents go in
@@ -2934,8 +2939,11 @@ feeds. A failure is kept to its item: its later steps are skipped and it stays (
 searches does); the others carry on, and the promotion, already done, never fails. Only what the build provably
 made is tidied: in the build's own workspace folder, tagged `mcp-managed`, left there by the plan, not a feed the build
 works from, used by nothing outside the build (Stroom's dependencies: a pipeline or dashboard naming it; for a feed,
-any pipeline whose processor filter reads it, `ProcessorFilters.pipelinesReading`; without Manage Processors that
-check fails closed), nor by a document of the build the plan moves to production other than a pipeline (a dashboard
+any pipeline whose processor filter reads it, `ProcessorFilters.pipelinesReading`, but a filter selecting stream ids
+with no Feed term whose streams are all deleted or gone, which reads nothing: seen in an eval, case 61, an earlier
+build's sample filter left on its promoted pipeline picked a stream of that build's test feed, deleted by its tidy-up,
+and a later build's test feed of the same name was never tidied up; without Manage Processors that check fails
+closed), nor by a document of the build the plan moves to production other than a pipeline (a dashboard
 not named `-VERIFY` searching the test index, say: `used outside the build, by Dashboard '<name>' (the promotion moves
 it to production)`). What uses each item is checked again once the build is promoted, before its first step: a
 promoted document naming it now (a pipeline property naming the test feed that `restoreOutputFeed` doesn't rewrite,
@@ -3667,6 +3675,11 @@ with its own index (`copy_pipeline`). Seen in a user's test: the build's own Ela
 made the index count as the build's, and the user was asked to drop the production index, and did. `freshIndex` and
 the existing-index lookup refuse it again, so `drop_first` and `delete_first` never name one. A new version's first
 run (`version_of`, no filter yet) looks its own index up again: anything it matches, or a failed lookup, refuses it.
+`copy_pipeline` of such a pipeline points its copy at the test index at once and says so (`test_index`,
+`test_index_note`: make no test index of your own), so the agent never makes one of its own (seen in an eval, case
+61: the copy said nothing of a test index, made only once it processed, and the agent made `-TEST` indexes that
+promotion took to production). Processing then gives that test index any field the plan gained since
+(`test_index`, `made: false`).
 At promotion the test index isn't promoted (the tidy-up deletes its shards, then it, unless the user unticks it),
 the pipeline is written back pointed at production, and the production index gains the plan's missing fields (said in the
 review's `index_changes`), for any build.
@@ -4592,7 +4605,10 @@ nothing it matches is offered for deletion.
   (refused when true: a copy is always a new version).
 * **Returns**: `type`, `uuid`, `name`, `copy_of`, `copied_documents`, `source_types` (a new version of a group's
   pipeline: the registry rows moved to it), `index_name` and `index_docs` (a new version's own index and its Elastic
-  Index docs), `note`, and `next`; or `needs_names` (see above).
+  Index docs), `test_index` and `test_index_note` (a copy whose indexing filter names a production Lucene index:
+  pointed at the build's test index `<INDEX>-MCP-TEST` at once, made now, `BuildTestIndexes.redirect`; seen in an
+  eval, case 61, the copy said nothing of one and the agent made test indexes of its own), `note`, and `next`; or
+  `needs_names` (see above).
 * **Refuses**: a missing required argument; a template (`PipelineTemplates.templateReason`: `... is a template
   (...): templates are inherited, not copied ...`, pointing at `create_pipeline`); an owned document the user can't
   read; a new version under the original's names (`A new version of X needs names of its own, and ... are the

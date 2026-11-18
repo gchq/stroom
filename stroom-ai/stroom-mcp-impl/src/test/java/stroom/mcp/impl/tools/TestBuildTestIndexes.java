@@ -191,6 +191,39 @@ class TestBuildTestIndexes {
     }
 
     @Test
+    void aPipelineNamingItsTestIndexAlreadyGivesItThePlansNewFieldsBeforeProcessing() {
+        // copy_pipeline points a copy at the build's test index at once (seen in an eval, case 61: without it the
+        // agent made test indexes of its own); a field its plan gains later reaches the test index when it processes.
+        Mockito.when(guard.buildOf(new DocRef(PipelineDoc.TYPE, "p"))).thenReturn(Optional.of(BUILD));
+        Mockito.when(guard.buildOf(new DocRef(LuceneIndexDoc.TYPE, TEST))).thenReturn(Optional.of(BUILD));
+        Mockito.when(merged.elements()).thenReturn(Map.of("indexingFilter", "IndexingFilter"));
+        Mockito.when(merged.properties()).thenReturn(Map.of(new ElementProperty("indexingFilter", "index"),
+                doc(TEST)));
+        state.put(BuildRecords.DOCS, Map.of(TEST, Map.of(BuildTestIndexes.TEST_INDEX_FOR, PRODUCTION)));
+        Mockito.when(guard.folderContents(BUILD)).thenReturn(List.of(new WriteGuard.BuildDoc(LuceneIndexDoc.TYPE,
+                TEST, "ACME-MCP-TEST", List.of(), null, null)));
+        Mockito.when(documentAccess.read(new DocRef(LuceneIndexDoc.TYPE, PRODUCTION), LuceneIndexDoc.class))
+                .thenReturn(Optional.of(LuceneIndexDoc.builder().uuid(PRODUCTION).name("ACME").build()));
+        Mockito.when(keptMappings.keptMapping("p")).thenReturn(Optional.of(new KeptMapping.Kept("index", Map.of(
+                "backend", "lucene", "index_name", "ACME", "time_field", "EventTime", "fields", List.of(
+                        Map.of("name", "NewField", "type", "keyword", "source", "EventSource/Generator"))))));
+        Mockito.when(indexFields.addPromotedLuceneFields(any(), any())).thenReturn(Map.of("added",
+                List.of("NewField")));
+
+        final List<BuildTestIndexes.TestIndex> tests = testIndexes.redirect(new DocRef(PipelineDoc.TYPE, "p",
+                "ACME - Indexing V1.1"));
+
+        assertThat(tests).singleElement().satisfies(test -> {
+            assertThat(test.uuid()).isEqualTo(TEST);
+            assertThat(test.made()).isFalse();
+            assertThat(test.productionUuid()).isEqualTo(PRODUCTION);
+            assertThat(test.fieldsAdded()).containsExactly("NewField");
+        });
+        // The pipeline names it already: left as it is.
+        Mockito.verify(pipelineDocs, Mockito.never()).write(any());
+    }
+
+    @Test
     void aPipelineWritingToTheBuildsOwnIndexAddsNothingAtPromotion() {
         Mockito.when(merged.elements()).thenReturn(Map.of("indexingFilter", "IndexingFilter"));
         Mockito.when(merged.properties()).thenReturn(Map.of(new ElementProperty("indexingFilter", "index"),

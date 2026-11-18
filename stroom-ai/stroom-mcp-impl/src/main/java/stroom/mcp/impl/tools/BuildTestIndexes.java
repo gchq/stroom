@@ -110,7 +110,9 @@ class BuildTestIndexes {
     }
 
     /// Points a build's indexing pipeline at the build's test index of each production Lucene index it names, made
-    /// (or given the plan's new fields) now, before it processes anything.
+    /// (or given the plan's new fields) now, before it processes anything. A test index the pipeline names already
+    /// (copy_pipeline points a copy at it at once) is given the plan's new fields too: a field the plan gained since
+    /// reaches it before the pipeline processes.
     ///
     /// @param pipeline A pipeline.
     /// @return The test indexes it now writes to; none for a pipeline outside any build, or one that writes only to
@@ -122,11 +124,15 @@ class BuildTestIndexes {
         }
         final MergedPipeline merged = pipelineShapes.merged(pipeline.getUuid());
         final Map<String, String> production = productionIndexes(build, merged);
-        if (production.isEmpty()) {
+        final List<String> standingIn = testIndexesNamed(build, merged);
+        if (production.isEmpty() && standingIn.isEmpty()) {
             return List.of();
         }
         final Optional<FieldPlan> plan = plan(pipeline.getUuid());
         final List<TestIndex> out = new ArrayList<>();
+        for (final String productionUuid : standingIn) {
+            out.add(testIndex(build, productionUuid, plan.orElse(null)));
+        }
         PipelineDoc doc = pipelineDocs.read(pipeline.getUuid());
         boolean changed = false;
         for (final Map.Entry<String, String> entry : production.entrySet()) {
@@ -304,6 +310,22 @@ class BuildTestIndexes {
         return missing.isEmpty()
                 ? Optional.empty()
                 : Optional.of(new FieldAddition(indexUuid, doc.get().getName(), missing, List.of(plan)));
+    }
+
+    // The production indexes whose test indexes of the build the pipeline's IndexingFilters name already.
+    private List<String> testIndexesNamed(final String build, final MergedPipeline merged) {
+        final Map<String, String> tests = testIndexes(build);
+        final List<String> out = new ArrayList<>();
+        for (final Map.Entry<String, String> element : merged.elements().entrySet()) {
+            if (!LUCENE_FILTER.equals(element.getValue())) {
+                continue;
+            }
+            final String uuid = docUuid(merged.properties().get(new ElementProperty(element.getKey(), INDEX)));
+            if (uuid != null && tests.containsKey(uuid) && !out.contains(tests.get(uuid))) {
+                out.add(tests.get(uuid));
+            }
+        }
+        return out;
     }
 
     /// The production Lucene indexes a pipeline's IndexingFilters name, by element.

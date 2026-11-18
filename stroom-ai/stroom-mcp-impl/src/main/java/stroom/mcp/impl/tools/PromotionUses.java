@@ -18,9 +18,14 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -44,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /// Which of a build's documents nothing promoted uses (decided by the user, 2026-11-18: seen in a user test, an
 /// older Data Splitter the build had replaced was promoted with the rest). Promotion moves only what the build's
@@ -53,7 +59,11 @@ import java.util.Set;
 /// reference lookups' pipelines and feeds, an XSLT's imports, includes and dictionary lookups, a dictionary's imports.
 /// What that never reaches of the build's XSLTs, text converters and dictionaries, and the documentation named after
 /// only those, stays in the build. An indexing XSLT holding its index plan is always promoted (the feed's index
-/// decisions and the plan's index read it, with or without a pipeline yet), as are indexes (a registry names them).
+/// decisions and the plan's index read it, with or without a pipeline yet), as are indexes (a registry names them),
+/// but an index doc whose name marks it as one to test with (`-TEST`, `-TEST2`) that nothing promoted writes to and
+/// no plan or registry of the build names, and the verification dashboards searching only such indexes: test
+/// documents, which stay in the build (seen in an eval, case 61: an agent's own test indexes and their dashboards
+/// were promoted beside the new version's pipeline).
 ///
 /// The walk never leaves out what it can't be sure of: in a build of no pipeline, where a pipeline of the build can't
 /// be read, or one picks its XSLT or text converter by a name pattern, nothing is left out.
@@ -68,6 +78,8 @@ final class PromotionUses {
     // An element's property choosing its document by a name pattern (an XSLT filter's xsltNamePattern, a parser's
     // namePattern): what it picks can't be told from the pipeline.
     private static final String NAME_PATTERN = "namepattern";
+    // A word TEST in an index doc's name, numbered or not.
+    private static final Pattern TEST_MARK = Pattern.compile("(?i)(^|[^a-z0-9])test\\d*([^a-z0-9]|$)");
 
     private final DocumentAccess documentAccess;
 
@@ -91,9 +103,10 @@ final class PromotionUses {
         docs.forEach(doc -> byUuid.put(String.valueOf(doc.get("uuid")), doc));
         final Set<String> reached = new HashSet<>();
         final Deque<DocRef> pending = new ArrayDeque<>();
+        final Set<String> named = namedIndexes(docs);
         for (final Map<String, Object> doc : docs) {
             final String uuid = String.valueOf(doc.get("uuid"));
-            if (!mayBeUnused(doc) || always.contains(uuid) || holdsIndexPlan(doc)) {
+            if (!mayBeUnused(doc) || always.contains(uuid) || holdsIndexPlan(doc) || named.contains(uuid)) {
                 pending.add(ref(doc));
             }
         }
@@ -122,7 +135,81 @@ final class PromotionUses {
                 out.add(uuid);
             }
         });
+        out.addAll(verifyDashboardsOf(docs, out));
         out.addAll(documentationOf(docs, out));
+        return out;
+    }
+
+    /// Whether an index doc's name marks it as an index to test with: a word `TEST`, numbered or not, in it (as in
+    /// `ACME-INDEX-TEST`, `ACME-INDEX-TEST2`, or the tools' own `ACME-INDEX-MCP-TEST`).
+    ///
+    /// @param name An index doc's name.
+    /// @return True if it is marked so.
+    static boolean testMarked(final String name) {
+        return TEST_MARK.matcher(NullSafe.string(name)).find();
+    }
+
+    // The build's index docs an index plan of the build names (by its index name) or the feed's registry names (by
+    // UUID): promoted whatever writes to them, as the registry and the plan read them.
+    private Set<String> namedIndexes(final List<Map<String, Object>> docs) {
+        final Set<String> planned = new HashSet<>();
+        final List<String> registries = new ArrayList<>();
+        for (final Map<String, Object> doc : docs) {
+            if (XsltDoc.TYPE.equals(doc.get("type"))) {
+                indexPlan(doc).map(plan -> plan.get("index_name"))
+                        .filter(name -> name != null)
+                        .ifPresent(name -> planned.add(String.valueOf(name).toLowerCase(Locale.ROOT)));
+            } else if (DocumentationDoc.TYPE.equals(doc.get("type"))
+                       && String.valueOf(doc.get("name")).endsWith(SourceTypeRegistry.SUFFIX)) {
+                try {
+                    documentAccess.read(ref(doc), DocumentationDoc.class)
+                            .map(DocumentationDoc::getData)
+                            .ifPresent(registries::add);
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> LogUtil.message("Registry {} not read: {}", doc.get("uuid"), e.getMessage()));
+                }
+            }
+        }
+        final Set<String> out = new HashSet<>();
+        for (final Map<String, Object> doc : docs) {
+            final String uuid = String.valueOf(doc.get("uuid"));
+            if (LuceneIndexDoc.TYPE.equals(doc.get("type"))
+                && (planned.contains(String.valueOf(doc.get("name")).toLowerCase(Locale.ROOT))
+                    || registries.stream().anyMatch(text -> NullSafe.string(text).contains(uuid)))) {
+                out.add(uuid);
+            }
+        }
+        return out;
+    }
+
+    // The build's verification dashboards searching only indexes left in the build: test documents of those indexes,
+    // left with them. A dashboard that can't be read, or searches nothing, is promoted as before.
+    private Set<String> verifyDashboardsOf(final List<Map<String, Object>> docs, final Set<String> unused) {
+        final Set<String> out = new LinkedHashSet<>();
+        for (final Map<String, Object> doc : docs) {
+            if (!DashboardDoc.TYPE.equals(doc.get("type"))
+                || !String.valueOf(doc.get("name")).endsWith(PromotionTidyUp.VERIFY)) {
+                continue;
+            }
+            final Set<String> searched = new HashSet<>();
+            try {
+                documentAccess.read(ref(doc), DashboardDoc.class)
+                        .map(DashboardDoc::getDashboardConfig)
+                        .ifPresent(config -> {
+                            for (final ComponentConfig component : NullSafe.list(config.getComponents())) {
+                                if (component.getSettings() instanceof final QueryComponentSettings query
+                                    && query.getDataSource() != null) {
+                                    searched.add(query.getDataSource().getUuid());
+                                }
+                            }
+                        });
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Dashboard {} not read: {}", doc.get("uuid"), e.getMessage()));
+            }
+            if (!searched.isEmpty() && unused.containsAll(searched)) {
+                out.add(String.valueOf(doc.get("uuid")));
+            }
+        }
         return out;
     }
 
@@ -223,25 +310,34 @@ final class PromotionUses {
 
     // Whether a build XSLT holds an index plan (save_xslt's index_plan, kept in its description).
     private boolean holdsIndexPlan(final Map<String, Object> doc) {
+        return indexPlan(doc).isPresent();
+    }
+
+    // The index plan a build XSLT holds (save_xslt's index_plan, kept in its description), if it holds one.
+    private Optional<Map<String, Object>> indexPlan(final Map<String, Object> doc) {
         if (!XsltDoc.TYPE.equals(doc.get("type"))) {
-            return false;
+            return Optional.empty();
         }
         try {
             return documentAccess.read(ref(doc), XsltDoc.class)
                     .flatMap(xslt -> KeptMapping.readMapping(xslt.getDescription()))
                     .filter(kept -> INDEX_PLAN.equals(kept.kind()))
-                    .isPresent();
+                    .map(KeptMapping.Kept::payload);
         } catch (final RuntimeException e) {
             // Unread: walked as any other, so left out only where nothing uses it.
             LOGGER.debug(() -> LogUtil.message("No index plan read from {}: {}", doc.get("uuid"), e.getMessage()));
-            return false;
+            return Optional.empty();
         }
     }
 
     // Whether a document of the build is of a kind left in it when nothing uses it: never a working copy (written
-    // back over its original, or discarded).
+    // back over its original, or discarded). An index doc is, only when its name marks it as one to test with: an
+    // index nothing writes to yet is promoted, as a registry or a later build may name it.
     private static boolean mayBeUnused(final Map<String, Object> doc) {
-        return MAY_BE_UNUSED.contains(String.valueOf(doc.get("type"))) && doc.get("working_copy_of") == null;
+        final String type = String.valueOf(doc.get("type"));
+        return (MAY_BE_UNUSED.contains(type)
+                || LuceneIndexDoc.TYPE.equals(type) && testMarked(String.valueOf(doc.get("name"))))
+               && doc.get("working_copy_of") == null;
     }
 
     private static DocRef ref(final Map<String, Object> doc) {

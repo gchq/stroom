@@ -39,6 +39,7 @@ import stroom.util.shared.Selection;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -516,9 +517,12 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         final Map<String, Object> filter = agreed("create_processor_filter", args("pipeline_uuid", copy,
                 "stream_ids", securityEvents, "source_pipeline_uuid", security));
         dump("create_processor_filter new version", filter);
+        // The test index is made with the copy, and reported again as the build's when processing starts.
+        final Map<String, Object> made = list(copied, "test_index").getFirst();
+        assertThat(made).containsEntry("name", securityIndex + "-MCP-TEST").containsEntry("made", true);
         final Map<String, Object> test = list(filter, "test_index").getFirst();
-        assertThat(test).containsEntry("name", securityIndex + "-MCP-TEST")
-                .containsEntry("made", true);
+        assertThat(test).containsEntry("name", securityIndex + "-MCP-TEST").containsEntry("made", false)
+                .containsEntry("uuid", made.get("uuid"));
         final String testIndex = (String) test.get("uuid");
         assertThat(String.valueOf(filter.get("test_index_note"))).contains("never written to by the build");
         processAll();
@@ -647,7 +651,84 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 .containsExactlyInAnyOrder(version, afresh);
     }
 
+    @Test
+    void aJoinedGroupsBuildTestsInItsOwnTestIndexAndItsTestDocumentsAreNeverPromoted() {
+        // Seen in an eval (case 61, run 2): copy_pipeline of the group's production indexing pipeline gave no test
+        // index, so the agent made its own (-TEST, -TEST2) with create_index_doc, pointing the copy at each in turn
+        // and back at the production index, and promotion moved them and their verification dashboards to
+        // production. The tidy-up passed over the build's test feed as read by the production indexing pipeline:
+        // the first build's sample filter, left on it at promotion, picked a stream of the first build's test feed
+        // (deleted by its tidy-up), named as the later build's is.
+        final Promoted group = promotedGroup("JT");
+        final String later = "pega-idx-jt-2";
+        json("start_build", args("build", later, "feeds", List.of(group.feed())));
+        final String version = uuidOf(agreed("copy_pipeline", args("build", later, "source_uuid", group.events(),
+                "new_name", group.eventsName())));
+        final List<Long> versionEvents = events(version, group.stream());
+
+        // The copy of the production indexing pipeline writes to the build's test index from the start.
+        final Map<String, Object> copied = agreed("copy_pipeline", args("build", later, "source_uuid",
+                group.indexing(), "new_name", group.index() + " - Indexing"));
+        dump("copy_pipeline indexing " + later, copied);
+        final String copy = uuidOf(copied);
+        // Each defect said apart: checked softly until the review.
+        final SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(jsonOf(copied.get("test_index"))).as("the copy's test index: %s", copied)
+                .contains("\"name\":\"" + group.index() + "-MCP-TEST\"", group.indexDoc());
+        softly.assertThat(String.valueOf(copied.get("test_index_note"))).contains("Make no test index of your own");
+
+        // The agent makes a test index of its own all the same, verifies the copy's indexing into it, and points the
+        // copy back at the production index.
+        final String ownTest = uuidOf(agreed("create_index_doc", args("build", later, "backend", "lucene", "name",
+                group.index() + "-TEST", "time_field", group.plan().get("time_field"), "plan", group.plan())));
+        setIndex(copy, ownTest);
+        assertThat(stepSample(copy, versionEvents)).containsEntry("verdict", "clean");
+        agreed("create_processor_filter", args("pipeline_uuid", copy, "stream_ids", versionEvents,
+                "source_pipeline_uuid", version));
+        processAll();
+        flushIndexShards();
+        final Map<String, Object> verified = agreed("verify_index", args("build", later, "index_uuid", ownTest,
+                "backend", "lucene", "stream_ids", versionEvents, "expected_documents", eventCount(versionEvents),
+                "fields", List.of("StreamId", "EventId", group.plan().get("time_field")), "pipeline_uuid", copy));
+        dump("verify_index own test index", verified);
+        final String ownDashboard = String.valueOf(map(verified, "dashboard").get("uuid"));
+        assertThat(map(verified, "dashboard")).containsEntry("saved", true);
+        setIndex(copy, group.indexDoc());
+
+        final Map<String, Object> destinations = Map.of("Pipeline", group.folder(), "XSLT", group.folder(),
+                "Index", group.folder());
+        final Map<String, Object> review = json("promote_build", args("build", later, "destinations",
+                destinations));
+        dump("promote_build review " + later, review);
+        assertThat(review).containsEntry("status", "needs_review");
+        final String layout = String.valueOf(review.get("layout"));
+        // The test feed is the build's alone: tidied up.
+        softly.assertThat(layout).doesNotContain("used outside the build");
+        softly.assertThat(String.valueOf(review.get("tidy_up"))).contains("test feed '" + group.feed()
+                                                                          + "-MCP-TEST'");
+        // The agent's test index and its dashboard are test documents: never promoted, tidied up.
+        softly.assertThat(String.valueOf(review.get("tidy_up"))).contains("test index '" + group.index()
+                                                                          + "-TEST'");
+        softly.assertThat(layout.substring(Math.max(0, layout.indexOf("Left in the workspace:"))))
+                .contains(group.index() + "-TEST ", group.index() + "-TEST-VERIFY");
+        softly.assertAll();
+        final Map<String, Object> promoted = json("promote_build", args("build", later, "destinations",
+                destinations, "reviewed", review.get("review_id")));
+        dump("promote_build " + later, promoted);
+        assertThat(promoted).containsKey("promoted");
+        assertThat(exists(ownTest)).as("the agent's test index is tidied up").isFalse();
+        assertThat(exists(ownDashboard)).as("its dashboard is tidied up").isFalse();
+        assertThat(exists(group.indexDoc())).isTrue();
+        assertThat(jsonOf(promoted.get("tidied_up"))).contains(group.feed() + "-MCP-TEST");
+    }
+
     // --- the steps ---
+
+    // update_pipeline: the indexing pipeline's index set to the one given.
+    private void setIndex(final String pipeline, final String index) {
+        json("update_pipeline", args("pipeline_uuid", pipeline, "set_properties", List.of(Map.of("element",
+                "indexingFilter", "name", "index", "doc_type", "Index", "doc_uuid", index))));
+    }
 
     // A source type group promoted as case 61's setup has it (case 56): the feed promoted with its data, the
     // security group's pipeline processing the sample, its Events indexed into its own Lucene index by its indexing

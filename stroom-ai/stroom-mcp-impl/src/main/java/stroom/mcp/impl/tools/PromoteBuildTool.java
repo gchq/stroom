@@ -324,9 +324,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
         // feed).
         final List<String> sources = facts.sourceFeeds(build, docs);
-        // The build's test feeds (and test indexes, and their dashboards) stay in the workspace, whatever the
-        // destinations say.
-        final Set<String> testFeeds = tidyUp.testDocs(build, docs, testIndexes(build));
+        // What nothing the build promotes uses (an older splitter it replaced, say) stays in the build (decided by the
+        // user, 2026-11-18).
+        final Set<String> unused = unused(docs, markers);
+        // The build's test feeds (and test indexes, among them those the agent made itself that nothing promoted
+        // writes to, and their dashboards) stay in the workspace, whatever the destinations say.
+        final Set<String> testFeeds = tidyUp.testDocs(build, docs, testIndexes(build), unused);
         // The folder of the source's own its documents go in: the feed's, or one named for it where the feed's
         // folder is a parent of sources (the siblings' convention).
         final SourceFolders sourceFolders = new SourceFolders(guard, documentAccess);
@@ -336,9 +339,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // An aggregated feed's modules and a group's output feed of its own: beside the feed (the group's own in its
         // group's folder there).
         modulesBeside(build, docs, destinations, sourceFolders, markers).forEach(besideFeeds::putIfAbsent);
-        // What nothing the build promotes uses (an older splitter it replaced, say) stays in the build (decided by the
-        // user, 2026-11-18).
-        final Set<String> unused = unused(docs, markers);
         final Placed placed = new Placed(testFeeds, source, sourceFolders, group, sources, unused);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, sources, besideFeeds, placed, markers);
         // Role first, then version (decided by the user, 2026-11-17): each role's root chosen, then every document

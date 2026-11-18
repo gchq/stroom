@@ -89,6 +89,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private final ProductionIndexes productionIndexes;
     // An aggregated feed's source type groups; none in tests that make the tool themselves.
     private Provider<SourceTypeGroups> groupsProvider;
+    // The build's test indexes; none in tests that make the tool themselves.
+    private Provider<BuildTestIndexes> testIndexesProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -122,6 +124,15 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     @Inject
     void setGroups(final Provider<SourceTypeGroups> groups) {
         this.groupsProvider = groups;
+    }
+
+    /// Where the build's test indexes are made (set by injection; none in tests that make the tool themselves): a
+    /// copy writing to a production Lucene index writes to the build's test index from the start.
+    ///
+    /// @param testIndexes The build's test indexes.
+    @Inject
+    void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
+        this.testIndexesProvider = testIndexes;
     }
 
     @Override
@@ -342,6 +353,20 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             result.put("index_docs", indexDocs.stream().map(MergedPipeline::docRef).toList());
             notes.add("the new version writes to its own index '" + settled.indexName() + "', checked free on "
                       + "the cluster: agree its index template (propose_index_template) for that name");
+        }
+        // A copy writing to a production Lucene index writes to the build's test index from the start, made now.
+        // Seen in an eval (case 61): the copy of the group's production indexing pipeline said nothing of a test
+        // index (one was made only once it processed), so the agent made test indexes of its own, which promotion
+        // then took to production.
+        final List<BuildTestIndexes.TestIndex> testIndexes = testIndexesProvider == null
+                ? List.of()
+                : testIndexesProvider.get().redirect(new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()));
+        if (!testIndexes.isEmpty()) {
+            result.put("test_index", testIndexes.stream().map(BuildTestIndexes.TestIndex::toMap).toList());
+            result.put("test_index_note", String.join(" ", testIndexes.stream()
+                    .map(BuildTestIndexes.TestIndex::said)
+                    .toList()) + " Make no test index of your own: this one is the build's, and is tidied up at "
+                               + "promotion.");
         }
         if (!notes.isEmpty()) {
             result.put("note", String.join("; ", notes));

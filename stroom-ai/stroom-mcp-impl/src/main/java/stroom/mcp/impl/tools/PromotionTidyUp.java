@@ -32,6 +32,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -142,6 +143,22 @@ class PromotionTidyUp {
     Set<String> testDocs(final String build,
                          final List<Map<String, Object>> docs,
                          final Map<String, String> testIndexes) {
+        return testDocs(build, docs, testIndexes, Set.of());
+    }
+
+    /// As [#testDocs(String, List, Map)], with the build's documents nothing promoted uses ([PromotionUses]): a Lucene
+    /// index doc among them is one the agent made to test with (its name marks it so), a test index too. Seen in an
+    /// eval (case 61): an agent's own test indexes, and the verification dashboards on them, were promoted.
+    ///
+    /// @param build       The build.
+    /// @param docs        Its documents, as the plan lists them.
+    /// @param testIndexes Its test indexes, each with the production index doc's UUID it stands in for.
+    /// @param unused      The UUIDs of its documents nothing promoted uses.
+    /// @return Their UUIDs.
+    Set<String> testDocs(final String build,
+                         final List<Map<String, Object>> docs,
+                         final Map<String, String> testIndexes,
+                         final Set<String> unused) {
         final Set<String> out = new LinkedHashSet<>();
         for (final Map<String, Object> doc : docs) {
             final String uuid = String.valueOf(doc.get("uuid"));
@@ -159,8 +176,10 @@ class PromotionTidyUp {
         }
         final Set<String> indexes = new LinkedHashSet<>();
         docs.stream()
+                .filter(doc -> testIndexes.containsKey(String.valueOf(doc.get("uuid")))
+                               || LuceneIndexDoc.TYPE.equals(doc.get("type"))
+                                  && unused.contains(String.valueOf(doc.get("uuid"))))
                 .map(doc -> String.valueOf(doc.get("uuid")))
-                .filter(testIndexes::containsKey)
                 .forEach(indexes::add);
         out.addAll(indexes);
         if (!indexes.isEmpty()) {
@@ -504,7 +523,8 @@ class PromotionTidyUp {
             if (!filters.canManageProcessors()) {
                 throw new IllegalStateException("the processor filters reading it need Manage Processors");
             }
-            for (final Map<String, Object> pipeline : filters.pipelinesReading(ref.getName())) {
+            for (final Map<String, Object> pipeline : filters.pipelinesReading(ref.getName(),
+                    this::readsLiveStreams)) {
                 final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, String.valueOf(pipeline.get("uuid")),
                         Objects.toString(pipeline.get("name"), null));
                 if (!build.equals(guard.buildOf(pipelineRef).orElse(null))
@@ -514,6 +534,37 @@ class PromotionTidyUp {
             }
         }
         return out;
+    }
+
+    /// Whether a processor filter still reads what it names: a filter selecting streams by id with no Feed term of its
+    /// own (a build's sample filter) reads only those streams, so it reads none once every one of them is deleted.
+    /// Seen in an eval (case 61): an earlier build's sample filter, left on its indexing pipeline when that build was
+    /// promoted, selected a stream of the earlier build's test feed, deleted by its tidy-up; a later build's test
+    /// feed, named the same, was then said to be read by the production pipeline and never tidied up.
+    ///
+    /// @param filter A processor filter.
+    /// @return False only for a filter by stream id whose streams are all deleted (or gone).
+    boolean readsLiveStreams(final ProcessorFilter filter) {
+        final Set<Long> ids = ProcessorFilterWrites.selectedIds(ProcessorFilterWrites.expressionOf(filter));
+        final boolean namesFeed = ProcessorFilters.terms(filter).stream()
+                .anyMatch(term -> MetaFields.FEED.getFldName().equals(term.getField()));
+        if (ids.isEmpty() || namesFeed) {
+            return true;
+        }
+        final MetaService metaService = metaServiceProvider.get();
+        for (final Long id : ids) {
+            try {
+                final Meta meta = metaService.getMeta(id, true);
+                if (meta != null && meta.getStatus() != Status.DELETED) {
+                    return true;
+                }
+            } catch (final RuntimeException e) {
+                // Unread: taken to read it.
+                LOGGER.debug(() -> LogUtil.message("Stream {} not read: {}", id, e.getMessage()));
+                return true;
+            }
+        }
+        return false;
     }
 
     // A test feed with its unlocked streams' count and size, as its Data tab finds them.

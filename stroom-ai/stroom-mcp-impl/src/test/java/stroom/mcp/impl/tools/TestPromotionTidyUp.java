@@ -29,8 +29,15 @@ import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.ResultPage;
 
@@ -45,6 +52,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 /// The tidy-up at promotion: which of a build's documents are its test documents, which of them are proven its own
 /// to tidy up, and the order it is carried out in (streams, shards, then documents), each failure kept to its item.
@@ -92,6 +100,45 @@ class TestPromotionTidyUp {
     }
 
     @Test
+    void anIndexTheAgentMadeToTestWithThatNothingPromotedUsesIsATestIndexWithItsDashboard() {
+        // Seen in an eval (case 61): the agent's own ACME-INDEX-TEST, and the verification dashboard on it, were
+        // promoted beside the new version's pipeline.
+        inBuild(LuceneIndexDoc.TYPE, "ACME-INDEX-TEST", "own-test");
+        inBuild(LuceneIndexDoc.TYPE, "ACME-INDEX", "own-index");
+        dashboard("on-own-test", "ACME-INDEX-TEST-VERIFY", "own-test");
+        dashboard("on-own", "ACME-INDEX-VERIFY", "own-index");
+
+        assertThat(tidyUp.testDocs(BUILD, docs, Map.of(), Set.of("own-test", "on-own-test")))
+                .containsExactlyInAnyOrder("own-test", "on-own-test");
+        // Unused alone doesn't make an index a test index: PromotionUses leaves out only one its name marks so.
+        assertThat(tidyUp.testDocs(BUILD, docs, Map.of(), Set.of())).isEmpty();
+    }
+
+    @Test
+    void aSampleFilterWhoseStreamsAreAllDeletedReadsNothing() {
+        // Seen in an eval (case 61): an earlier build's sample filter, left on its promoted indexing pipeline, picked
+        // a stream of that build's test feed, deleted by its tidy-up; the later build's test feed, of the same name,
+        // was then said to be read by the production pipeline, and never tidied up.
+        Mockito.when(metaService.getMeta(6L, true)).thenReturn(Meta.builder().id(6L).status(Status.DELETED).build());
+        Mockito.when(metaService.getMeta(7L, true)).thenReturn(Meta.builder().id(7L).status(Status.UNLOCKED).build());
+        final ExpressionTerm pipeline = ProcessorFilterWrites.pipelineTerm(new DocRef(PipelineDoc.TYPE, "ev"));
+
+        assertThat(tidyUp.readsLiveStreams(filter(ProcessorFilterWrites.term("Id", 6), pipeline))).isFalse();
+        // A stream gone altogether: read by nothing.
+        assertThat(tidyUp.readsLiveStreams(filter(ProcessorFilterWrites.term("Id", 8)))).isFalse();
+        // One of its streams still there: it reads that.
+        assertThat(tidyUp.readsLiveStreams(filter(ExpressionOperator.builder().op(Op.OR)
+                .addTerm(ProcessorFilterWrites.term("Id", 6))
+                .addTerm(ProcessorFilterWrites.term("Id", 7))
+                .build()))).isTrue();
+        // A feed named, or no stream picked: what arrives in the feed is read.
+        assertThat(tidyUp.readsLiveStreams(filter(ProcessorFilterWrites.term("Id", 6),
+                ProcessorFilterWrites.term("Feed", "ACME-MCP-TEST")))).isTrue();
+        assertThat(tidyUp.readsLiveStreams(filter(ProcessorFilterWrites.term("Type", "Events"), pipeline)))
+                .isTrue();
+    }
+
+    @Test
     void onlyWhatTheBuildProvablyMadeAndNothingOutsideItUsesIsTidied() {
         final DocRef tidied = inBuild(FeedDoc.TYPE, "A-MCP-TEST", "a");
         // Not tagged as the tools': made by hand in the workspace.
@@ -116,8 +163,8 @@ class TestPromotionTidyUp {
         // Its streams read by the build's own pipeline: still the build's.
         world.add(PipelineDoc.TYPE, "OWN", world.folder("System/" + BuildWorld.WORKSPACE + "/" + BUILD).uuid, "own",
                 WriteGuard.MANAGED);
-        Mockito.when(processorFilters.pipelinesReading("A-MCP-TEST")).thenReturn(List.of(Map.of("uuid", "own",
-                "name", "OWN")));
+        Mockito.when(processorFilters.pipelinesReading(eq("A-MCP-TEST"), any())).thenReturn(List.of(Map.of("uuid",
+                "own", "name", "OWN")));
 
         final PromotionTidyUp.Plan plan = tidyUp.plan(BUILD, docs, kept(), Set.of("a", "b", "c", "d", "e"),
                 List.of("D-MCP-TEST"));
@@ -189,8 +236,8 @@ class TestPromotionTidyUp {
         inBuild(FeedDoc.TYPE, "A-MCP-TEST", "a");
         world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Indexing", "pi");
         docs.add(FakeBuildFacts.doc(PipelineDoc.TYPE, "pi", "ACME-Indexing"));
-        Mockito.when(processorFilters.pipelinesReading("A-MCP-TEST")).thenReturn(List.of(Map.of("uuid", "pi",
-                "name", "ACME-Indexing")));
+        Mockito.when(processorFilters.pipelinesReading(eq("A-MCP-TEST"), any())).thenReturn(List.of(Map.of("uuid",
+                "pi", "name", "ACME-Indexing")));
         Mockito.when(metaService.updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
                 Mockito.eq(Status.DELETED))).thenReturn(2);
         final List<PromotionLayout.Step> steps = docs.stream()
@@ -305,6 +352,12 @@ class TestPromotionTidyUp {
     }
 
     // A dashboard in the build, its queries searching the indexes given.
+    private static ProcessorFilter filter(final ExpressionItem... items) {
+        return ProcessorFilter.builder().id(1).pipelineUuid("pi")
+                .queryData(QueryData.builder().expression(ProcessorFilterWrites.allOf(List.of(items))).build())
+                .build();
+    }
+
     private void dashboard(final String uuid, final String name, final String... indexes) {
         inBuild(DashboardDoc.TYPE, name, uuid);
         final List<ComponentConfig> components = new ArrayList<>();

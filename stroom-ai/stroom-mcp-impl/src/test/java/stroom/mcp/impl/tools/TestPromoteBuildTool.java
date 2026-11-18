@@ -62,6 +62,7 @@ import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 /// promote_build: the layout, the documents moved, the versions consolidated, and what `TestE2ePlanWalk` and
 /// `TestE2eSourceDocs` (stroom-app) expect of it.
@@ -1151,8 +1152,8 @@ class TestPromoteBuildTool {
     void aTestFeedAProductionPipelineReadsOrOneOutsideTheBuildIsNeverTidied() {
         // A feed a pipeline outside the build reads, or one not in the build's workspace, is never a test feed.
         final Map<String, Object> destinations = buildWithTestData();
-        Mockito.when(processorFilters.pipelinesReading("ACME-MCP-TEST")).thenReturn(List.of(Map.of("uuid",
-                "prod-p", "name", "ACME-Prod", "reads_events", true)));
+        Mockito.when(processorFilters.pipelinesReading(eq("ACME-MCP-TEST"), any())).thenReturn(List.of(Map.of(
+                "uuid", "prod-p", "name", "ACME-Prod", "reads_events", true)));
         world.add(FeedDoc.TYPE, "OTHER-MCP-TEST", world.folder("System/Feeds/Acme").uuid, "o");
         listed(doc(FeedDoc.TYPE, "o", "OTHER-MCP-TEST", null));
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));

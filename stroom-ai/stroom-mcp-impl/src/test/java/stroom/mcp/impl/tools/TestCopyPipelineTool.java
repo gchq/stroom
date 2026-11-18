@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.LinkedHashMap;
@@ -122,6 +123,32 @@ class TestCopyPipelineTool {
         assertThat(made.get("copied_documents")).isEqualTo(List.of(
                 Map.of("type", "XSLT", "uuid", xslt.getUuid(), "name", "ACME-V2-XSLT"),
                 Map.of("type", "TextConverter", "uuid", converter.getUuid(), "name", "ACME-V2")));
+    }
+
+    @Test
+    void aCopyWritingToAProductionLuceneIndexWritesToTheBuildsTestIndexMadeNow() {
+        // Seen in an eval (case 61): the copy of the group's production indexing pipeline said nothing of a test
+        // index (one was made only once it processed), so the agent made test indexes of its own, and promotion
+        // took them to production.
+        source();
+        final BuildTestIndexes testIndexes = Mockito.mock(BuildTestIndexes.class);
+        Mockito.when(testIndexes.redirect(Mockito.any())).thenReturn(List.of(new BuildTestIndexes.TestIndex(
+                "ACME-INDEX-MCP-TEST", "ti", true, "ACME-INDEX", "ix", List.of())));
+        tool.setTestIndexes(() -> testIndexes);
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                 + "\"p1\", \"new_name\": \"ACME-V2 - Indexing\", "
+                                                                 + "\"rename\": {\"V1\": \"V2\"}}",
+                BuildToolCalls.answering(Map.of("value", true))));
+
+        final PipelineDoc copy = pipelines.pipelineNamed("ACME-V2 - Indexing");
+        final ArgumentCaptor<DocRef> redirected = ArgumentCaptor.forClass(DocRef.class);
+        Mockito.verify(testIndexes).redirect(redirected.capture());
+        assertThat(redirected.getValue().getUuid()).isEqualTo(copy.getUuid());
+        assertThat(made.get("test_index")).isEqualTo(List.of(Map.of("name", "ACME-INDEX-MCP-TEST", "uuid", "ti",
+                "made", true, "stands_in_for", Map.of("name", "ACME-INDEX", "uuid", "ix"))));
+        assertThat(String.valueOf(made.get("test_index_note"))).contains("build's test index ACME-INDEX-MCP-TEST",
+                "Make no test index of your own");
     }
 
     @Test
