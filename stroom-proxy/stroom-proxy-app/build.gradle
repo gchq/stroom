@@ -92,9 +92,6 @@ shadowJar {
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
 
-    // Without INCLUDE, it drops any duplicates
-    //duplicatesStrategy = DuplicatesStrategy.INCLUDE
-
     // Warn about dup classes.
     // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
     // other duplicate entries.
@@ -110,33 +107,6 @@ shadowJar {
 
     // Exclude all other dups, which will mostly be text files
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-//    filesMatching('**/pom.*') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/MANIFEST.MF') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/.gitkeep') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/*NOTICE*') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/*LICENSE*') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/*DEPENDENCIES*') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/*.md') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-//    filesMatching('**/*.txt') {
-//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    }
-
-
 
     archiveFileName = fatJarName
 }
