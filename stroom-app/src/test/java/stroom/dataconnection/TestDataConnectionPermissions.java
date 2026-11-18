@@ -25,7 +25,11 @@ import stroom.credentials.shared.Credential;
 import stroom.dataconnection.impl.DataConnectionConfig;
 import stroom.dataconnection.impl.DataConnectionSearchProvider;
 import stroom.dataconnection.impl.DataConnectionStore;
+import stroom.dataconnection.shared.CsvSettings;
+import stroom.dataconnection.shared.DataColumn;
+import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionDoc;
+import stroom.dataconnection.shared.DataConnectionType;
 import stroom.dataconnection.shared.JdbcConnectionSettings;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
@@ -114,6 +118,8 @@ class TestDataConnectionPermissions extends StroomIntegrationTest {
 
     private DocRef credentialDocRef;
     private DataConnectionDoc doc;
+    // A CSV of logons to join to the JDBC document's staff.
+    private DocRef logonsDocRef;
 
     @BeforeEach
     void setUp() throws SQLException {
@@ -143,6 +149,60 @@ class TestDataConnectionPermissions extends StroomIntegrationTest {
                             .build())
                     .build());
         });
+        logonsDocRef = securityContext.asUserResult(owner.asRef(), () -> {
+            final DocRef docRef = store.createDocument("Logons " + UUID.randomUUID());
+            store.writeDocument(store.readDocument(docRef).copy()
+                    .sourceType(DataConnectionType.CSV)
+                    .csv(CsvSettings.builder()
+                            .columns(List.of(
+                                    new DataColumn("User", DataColumnType.TEXT),
+                                    new DataColumn("Host", DataColumnType.TEXT)))
+                            .data("User,Host\nSmith,h1\nJones,h2\nNobody,h3\n")
+                            .build())
+                    .build());
+            return docRef;
+        });
+    }
+
+    // Lets a user use the logons CSV, the first source of the join searches.
+    private User canUseLogons(final User user) {
+        securityContext.asProcessingUser(() ->
+                documentPermissionService.setPermission(logonsDocRef, user.asRef(), DocumentPermission.USE));
+        return user;
+    }
+
+    // Joins the logons CSV to the JDBC document's staff, as the user.
+    private SearchResponse joinSearch(final User user) {
+        return securityContext.asUserResult(user.asRef(), () -> {
+            final SearchRequest sampleRequest = new SearchRequest(
+                    null, null, Query.builder().build(), null, DateTimeSettings.builder().build(), false);
+            final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+            final SearchRequest searchRequest = searchRequestFactory.create(
+                    "from \"" + logonsDocRef.getName() + "\"\n"
+                    + "left join \"" + doc.getName() + "\" as hr sql \"\"\""
+                    + DataConnectionTestDatabase.ALL_STAFF_SQL + "\"\"\" on User = hr.name\n"
+                    + "sort by Host\n"
+                    + "select User, hr.id",
+                    sampleRequest,
+                    expressionContext);
+            final SearchResponse response = resultStoreManager.search(searchRequest);
+            resultStoreManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
+            return response;
+        });
+    }
+
+    private static List<List<String>> rows(final SearchResponse response) {
+        return response.getResults()
+                .stream()
+                .flatMap(result -> ((TableResult) result).getRows().stream())
+                .map(row -> row.getValues()
+                        .subList(0, 2)
+                        .stream()
+                        .map(value -> value == null
+                                ? ""
+                                : value)
+                        .toList())
+                .toList();
     }
 
     // A user with no application permissions, given Use on the document and the credential as asked.
@@ -186,6 +246,37 @@ class TestDataConnectionPermissions extends StroomIntegrationTest {
         return response.getErrorMessages() == null
                 ? List.of()
                 : response.getErrorMessages().stream().map(ErrorMessage::getMessage).toList();
+    }
+
+    @Test
+    void joinToADocumentTheUserCanUseAddsItsFields() {
+        final SearchResponse response = joinSearch(canUseLogons(user(true, true)));
+
+        assertThat(errors(response)).isEmpty();
+        assertThat(rows(response)).containsExactly(
+                List.of("Smith", "1"),
+                List.of("Jones", "2"),
+                List.of("Nobody", ""));
+    }
+
+    @Test
+    void joinToADocumentTheUserCannotUseIsRefused() {
+        final User user = canUseLogons(user(false, true));
+
+        // The joined source can't even be found by a user who can't use it.
+        assertThatThrownBy(() -> joinSearch(user))
+                .hasMessageContaining("HR ")
+                .hasMessageContaining("not found. You may not have permission to use it");
+    }
+
+    @Test
+    void joinWithoutUseOnTheJoinedSourcesCredentialFails() {
+        final SearchResponse response = joinSearch(canUseLogons(user(true, false)));
+
+        assertThat(rowCount(response)).isZero();
+        assertThat(errors(response))
+                .anySatisfy(message -> assertThat(message).contains("Unable to use credential"))
+                .anySatisfy(message -> assertThat(message).contains("to join failed"));
     }
 
     @Test

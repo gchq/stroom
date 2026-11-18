@@ -522,6 +522,10 @@ class DashboardServiceImpl implements DashboardService {
                         search.getParams(),
                         search.getTimeRange(),
                         // Dashboards do not supply a native query yet.
+                        null,
+                        // Nor joins, which only StroomQL has.
+                        null,
+                        null,
                         null);
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = StoredQuery
