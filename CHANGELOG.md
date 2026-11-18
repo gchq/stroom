@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.18] - 2026-11-18
+
+* Feature : Add joins to StroomQL: `join`, `left join`, `semi join` and `anti join` lines after `from` (also written `inner join`, `left outer join`, `left semi join` and `left anti join`) join another data source or a bracketed query to the query's rows, as the rows arrive.
+
+* Bug : Fix StroomQL `in (a, b)` matching only the last value when filtering text fields of Data Connections and other sources filtered in Stroom.
+
+* Feature : Add event-to-event joins to StroomQL, e.g. `join "File events" as export on logon.UserId = export.UserId within 10m after logon.EventTime`, joining events whose times fall in a window of the first source's events.
+
+* Feature : Add `where exists`, `where not exists`, `where X in (from ...)` and `where X not in (from ...)` to StroomQL, as the SQL forms of semi and anti joins.
+
+* Feature : Add `right join` and `full join` (also written `right outer join` and `full outer join`) to StroomQL, giving the joined rows with no match once the first source has been searched.
+
+* Bug **#6039** : Fix REST S3 event notifications being accepted without S3 metadata when there is no matching S3 Client Config; they are now rejected, as SQS messages are.
+
+* Bug : Fix Test Connection and Detect Columns on an Excel Data Connection using a workbook sent in the request instead of the document's own.
+
+
 ## [v7.14-beta.17] - 2026-11-18
 
 * Bug **#6025** : Fix a null pointer error when choosing Excel for a Data Connection that has never had a workbook.
@@ -2912,7 +2929,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.18...HEAD
+[v7.14-beta.18]: https://github.com/gchq/stroom/compare/v7.14-beta.17...v7.14-beta.18
 [v7.14-beta.17]: https://github.com/gchq/stroom/compare/v7.14-beta.16...v7.14-beta.17
 [v7.14-beta.16]: https://github.com/gchq/stroom/compare/v7.14-beta.15...v7.14-beta.16
 [v7.14-beta.15]: https://github.com/gchq/stroom/compare/v7.14-beta.14...v7.14-beta.15
