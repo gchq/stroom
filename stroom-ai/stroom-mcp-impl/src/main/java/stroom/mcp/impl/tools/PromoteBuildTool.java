@@ -96,6 +96,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
     private static final String TEST_DASHBOARD_KEPT = "left in the workspace: it searches the build's test index";
+    // The workspace's folder of the originals' backups, made before each is written over.
+    private static final String BACKUPS = "backups";
     private static final DateTimeFormatter BACKUP_STAMP = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
             .withZone(ZoneOffset.UTC);
     private static final List<String> INDEX_TYPES = List.of(ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE);
@@ -154,7 +156,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.history = history;
         this.pendingDocs = pendingDocs;
         this.tidyUp = tidyUp;
-        this.changedOriginals = new ChangedOriginals(buildRecords, consent, writes);
+        this.changedOriginals = new ChangedOriginals(buildRecords, writes);
     }
 
     /// An aggregated feed's modules, put beside the feed (pointed at the originals of an older build's unchanged
@@ -246,7 +248,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "gains a new filter, disabled, reading the new version's (its own filters are left "
                              + "for the admin). Destination folders that don't exist yet are created "
                              + "first. A working copy is written back over its original after the original is "
-                             + "backed up to <workspace>/backups, then the copy is deleted. The build's workspace "
+                             + "backed up to <workspace>/backups, then the copy is deleted (also one whose "
+                             + "original was changed in production since it was copied: the review's "
+                             + "changed_in_production and the approval say so). The build's workspace "
                              + "folder is removed afterwards if nothing is left in it. An aggregated feed's helpers "
                              + "and common module go in <feed's folder>/Helpers/<version> and Common/<version>, its "
                              + "registry and source notes beside the feed; a source type group's documents in "
@@ -272,12 +276,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                 + "this: they are written back over their originals. 'keep' for a document UUID "
                                 + "leaves it in the build's workspace folder, not promoted (a test feed made while "
                                 + "fixing, say). Documents with no destination are named all at once."))
-                        .addProperty(ChangedOriginals.ARG, TranslationArgs.object(
-                                "Only where the reply asks for it (the form asking couldn't be shown): the user's "
-                                + "answer for each working copy whose original was changed in production, by the "
-                                + "working copy's uuid, 'overwrite' (production gets the working copy, after a "
-                                + "backup) or 'keep' (production stays as it is, the copy stays in the build), e.g. "
-                                + "{'<uuid>': 'keep'}."))
                         .addStringProperty(REVIEWED_ARG, "The review_id of the needs_review reply, once the user has "
                                                          + "been shown its layout in the chat and confirmed it: they "
                                                          + "then approve it in a short form. Not true: a layout "
@@ -343,9 +341,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final Set<String> unused = unused(docs, markers);
         final Placed placed = new Placed(testFeeds, source, sourceFolders, group, sources, unused);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, sources, besideFeeds, placed, markers);
-        // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
-        // the review, a copy kept still showed as written back).
-        askAboutChangedOriginals(call, context, build, plan);
         // Role first, then version (decided by the user, 2026-11-17): each role's root chosen, then every document
         // of a role in its version's folder there, and what documents or searches another beside it.
         final List<RoleRoot> roots = roleRoots(call, context, build, plan, destinations, placed, reviewed == null);
@@ -353,17 +348,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         besideWhatItDocuments(plan, destinations);
         withWhatItSearches(plan, destinations);
         refuseUnplaced(plan, placed);
-        // A working copy the user kept stays in the build: the modules promoted import its original, which must
-        // have what they need of it.
-        final Set<String> keptCopies = keptCopies(plan);
-        if (groupsProvider != null && !keptCopies.isEmpty()) {
-            final List<String> lacking = groupsProvider.get().keptProblems(build, docs, keptCopies);
-            if (!lacking.isEmpty()) {
-                throw new ToolRefusal("Not promoted: " + String.join("; ", lacking) + ". Overwrite production with "
-                                      + "the working copy, or change the modules importing it, then promote_build "
-                                      + "again. Nothing was changed.");
-            }
-        }
         // Every destination is resolved before approval, so a missing folder can't stop a promotion halfway.
         final Map<String, WriteGuard.Folder> folders = new LinkedHashMap<>();
         final List<String> creating = new ArrayList<>();
@@ -440,6 +424,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final PromotionTidyUp.Plan tidy = PromotionTidyUp.wanted(argsMap(call).get(PromotionTidyUp.TIDY_UP))
                 ? tidyUp.plan(build, docs, plan, testFeeds, sources)
                 : PromotionTidyUp.Plan.OFF;
+        // A production original changed since its working copy was taken is overwritten all the same, after its
+        // backup (decided by the user, 2026-11-18): the review and the approval say so, never a question of its own.
+        final List<String> changedSaid = changedOriginals.said(build, plan, ExplorerConstants.SYSTEM + "/"
+                                                                            + guard.workspaceFolder() + "/" + BACKUPS);
         final String laidOut = layout.promotionTree(plan, creating) + rootsNote(roots)
                                + PromotionLayout.warningsNote(layoutWarnings);
         // Shown with the tidy-up's counts, bound to its items alone (found in review, 2026-11-18).
@@ -465,6 +453,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                    + "own, unless the user chose to share one) and the fields this build adds to it "
                                    + "(forward only).");
             }
+            if (!changedSaid.isEmpty()) {
+                review.put("changed_in_production", changedSaid);
+                review.put("hint", review.get("hint") + " Say the changed_in_production too: each is overwritten "
+                                   + "by its working copy, its production version kept as a backup.");
+            }
             final List<String> notPromoted = notUsed(plan);
             if (!notPromoted.isEmpty()) {
                 review.put("not_promoted", notPromoted);
@@ -488,6 +481,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         shortForm.put("build", build);
         shortForm.put("layout", promoting + " document(s), as shown in the chat");
         shortForm.put("folders", new ArrayList<>(new TreeSet<>(moveTargets(plan))));
+        if (!changedSaid.isEmpty()) {
+            // In full: what the user agrees to lose from production but for its backup.
+            shortForm.put("changed in production since copied", new Consent.Listed(changedSaid));
+        }
         if (!roots.isEmpty()) {
             final List<String> where = new ArrayList<>();
             roots.forEach(root -> where.add(root.role() + ": " + root.root()));
@@ -520,7 +517,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (groupsProvider != null) {
             // An aggregated feed's modules import the originals their working copies are written back over.
             try {
-                done.addAll(groupsProvider.get().toOriginals(context, build, docs, keptCopies));
+                done.addAll(groupsProvider.get().toOriginals(context, build, docs, Set.of()));
             } catch (final RuntimeException e) {
                 throw new ToolRefusal("Not promoted: the build's modules couldn't be pointed at the originals of "
                                       + "their working copies: " + e.getMessage() + ". Done before it: "
@@ -556,15 +553,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!referenceChanges.isEmpty()) {
             done.addAll(referencesProvider.get().apply(referenceChanges));
         }
-        // A choice about a changed original holds for this promotion only: promoted again, it is asked again. What
-        // was kept is marked so, with its version, so it doesn't hold the build open on its feed until it changes.
+        // What was kept is marked so, with its version, so it doesn't hold the build open on its feed until it
+        // changes.
         plan.stream()
                 .filter(p -> PromotionLayout.KEEP.equals(p.action()))
                 .forEach(p -> {
                     final DocRef kept = ref(p.doc());
                     final Optional<String> version = BuildRecords.version(documentAccess, kept);
                     buildRecords.update(build, kept, entry -> {
-                        entry.remove(ChangedOriginals.ORIGINAL_CHOICE);
                         entry.put(BuildRecords.KEPT_AT_PROMOTION, true);
                         version.ifPresentOrElse(v -> entry.put(BuildRecords.KEPT_VERSION, v),
                                 () -> entry.remove(BuildRecords.KEPT_VERSION));
@@ -659,16 +655,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                   + "imports."
                 : "") + " Nothing was changed.");
         }
-    }
-
-    // The working copies the plan keeps in the build, by UUID: their originals stay as they are in production.
-    private static Set<String> keptCopies(final List<PromotionLayout.Step> plan) {
-        final Set<String> out = new LinkedHashSet<>();
-        plan.stream()
-                .filter(step -> PromotionLayout.KEEP.equals(step.action())
-                                && step.doc().get("working_copy_of") != null)
-                .forEach(step -> out.add(String.valueOf(step.doc().get("uuid"))));
-        return out;
     }
 
     // The role a document is laid out under: its build role subfolder's, or for a pipeline at the build's top, its
@@ -1642,23 +1628,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         };
     }
 
-    // Each working copy whose original was changed since it was taken: the user chooses whether it overwrites the
-    // original (ChangedOriginals); the working-copy pipelines stay with the copies kept, rather than being discarded
-    // from under them.
-    private void askAboutChangedOriginals(final ToolCall call,
-                                          final ToolCallContext context,
-                                          final String build,
-                                          final List<PromotionLayout.Step> plan) {
-        final boolean anyKept = changedOriginals.ask(call, context, NAME, build, plan, objectArg(call,
-                ChangedOriginals.ARG, "{working copy uuid: 'overwrite' or 'keep'}"));
-        if (anyKept) {
-            plan.replaceAll(step -> PromotionLayout.DISCARD.equals(step.action())
-                                    && !UNCHANGED_COPY.equals(step.target())
-                    ? new PromotionLayout.Step(step.doc(), PromotionLayout.KEEP, step.target(), step.role())
-                    : step);
-        }
-    }
-
     // True when a working copy's written-back content is the same as its original's now: nothing to write back.
     private boolean unchangedCopy(final Map<String, Object> doc, final String originalUuid) {
         try {
@@ -1673,7 +1642,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
     }
 
-    // A working copy written back over its original, after the original is backed up.
+    // A working copy written back over its original, after the original is backed up: never without the backup,
+    // since a production change made since the copy was taken survives only there.
     private String writeBack(final DocRef copy, final String originalUuid) {
         final DocRef original = places.find(originalUuid)
                 .map(found -> new DocRef(copy.getType(), found.getUuid(), found.getName()))
@@ -1683,12 +1653,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             guard.delete(copy);
             return "discarded unchanged working copy " + copy.getType() + " '" + copy.getName() + "'";
         }
-        final WriteGuard.Folder backups = guard.buildFolder("backups");
+        final WriteGuard.Folder backups = guard.buildFolder(BACKUPS);
         final List<DocRef> backupRefs = guard.copyTo(original, backups, original.getName() + " backup "
                                                                         + BACKUP_STAMP.format(history.now()));
-        if (!backupRefs.isEmpty()) {
-            guard.tag(backupRefs, Set.of(WriteGuard.GENERATED));
+        if (backupRefs.isEmpty()) {
+            throw new ToolRefusal(copy.getType() + " '" + original.getName() + "' wasn't backed up to "
+                                  + backups.path() + ", so it wasn't overwritten");
         }
+        guard.tag(backupRefs, Set.of(WriteGuard.GENERATED));
         writes.copyFields(copy, original, WRITTEN_BACK);
         if (guard.tags(copy).contains(WriteGuard.KEPT_MAPPING)) {
             // Its description now holds the mapping: the safeguard that notices it deleted goes with it.
