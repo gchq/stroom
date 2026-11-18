@@ -370,24 +370,33 @@ class FsStreamStore implements StreamStore {
             // Wait a few secs before we delete the file in case some file systems prevent deletion
             // immediately after creation
             if (tempFile != null) {
-                //noinspection resource // Closed inside job
-                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-                final Path finalTempFile = tempFile;
-                executorService.schedule(() -> {
-                    LOGGER.debug("About to delete file {}", finalTempFile);
-                    try {
-                        Files.deleteIfExists(finalTempFile);
-                    } catch (final IOException e) {
-                        LOGGER.error("Unable to delete temporary file {}", finalTempFile, e);
-                    } finally {
-                        executorService.shutdown();
-                        executorService.close();
-                    }
-                }, 10, TimeUnit.SECONDS);
+                deleteLater(tempFile, 10, TimeUnit.SECONDS);
             }
         }
 
         return ValidationResult.ok();
+    }
+
+    /// Deletes a file after a delay, on a thread of its own that ends once the file is deleted.
+    ///
+    /// @param file  The file to delete.
+    /// @param delay How long to wait before deleting it.
+    /// @param unit  The unit of the delay.
+    /// @return The executor the delete runs on, already shut down so it ends after the delete.
+    static ScheduledExecutorService deleteLater(final Path file, final long delay, final TimeUnit unit) {
+        final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.schedule(() -> {
+            LOGGER.debug("About to delete file {}", file);
+            try {
+                Files.deleteIfExists(file);
+            } catch (final IOException e) {
+                LOGGER.error("Unable to delete temporary file {}", file, e);
+            }
+        }, delay, unit);
+        // Not close(): it waits for the executor to end, so called from the delete it waited for itself
+        // for ever, and its thread (not a daemon) kept the JVM from exiting
+        executorService.shutdown();
+        return executorService;
     }
 
     private Path getAbsVolumePath(final FsVolume volume) {

@@ -163,6 +163,17 @@ that into Month, so the choice can never be kept (`IndexSettings`).
   **Fixed (22 October 2026):** the editor is now the component model pilot's copy, whose
   `EffectiveWordsList` breaks ties as intended, and `WordListPresenter` is deleted.
 
+### setupSampleData never exits
+
+**Fixed** (18 November 2026). `setupSampleData` finished ("Stroom Task Manager stopped
+successfully") but its JVM stayed up for hours. A thread dump showed one thread that wasn't a
+daemon, `pool-4-thread-1`, in `ExecutorService.close()` from `FsStreamStore.validateVolumePath`'s
+delayed delete of its test file: the delete ran on the executor and closed it, and `close()` waits
+for the executor to end, so it waited for itself for ever. That leaked a thread per volume validated
+in a running Stroom too. The delete is now `FsStreamStore.deleteLater`, which only shuts the
+executor down (the delayed delete still runs). Test: `TestFsStreamStore` (failed on the old code: the
+executor never ended).
+
 ### A table value loses what follows a link with a query string
 
 **Fixed** (18 November 2026, found while adding a play for a cell holding two links): in a query or
@@ -1134,6 +1145,12 @@ chooser in `afterStartUp`, so every opening shows it and the leak check runs. Ot
 the same: the runner's `-v` says which aren't checked and why.
 
 ### Sample data installs the old visualisations, with no assets
+
+**Confirmed fixed** (18 November 2026, run against a database made with `./local.yml.sh`,
+`setupDevEnv` (`stroom_a11y2`) and `./gradlew setupSampleData`): the log has "Importing visualisations
+stroom-visualisations-v8.0-beta.6"; the database has the zip's 27 visualisations (same names as the
+old pack) plus the sample source's two test ones, none twice, and `visualisation_assets` has 81 rows
+across all 27. The splitter beside a visualisation in the running app is still to be checked.
 
 **Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.5` (12 November 2026)), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
 
