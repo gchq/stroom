@@ -724,11 +724,23 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     // The raw records of source types outside the group, by the registry's source type field and rows (the first
     // match winning; a part's meta for a meta: field), as review_coverage tells them.
     private long passedOver(final Map<String, Object> registry, final String group, final List<Long> raws) {
-        final String field = String.valueOf(registry.get("field"));
         final List<String> types = new ArrayList<>();
         list(registry, "rows").stream()
                 .filter(row -> group.equalsIgnoreCase(String.valueOf(row.get("group"))))
                 .forEach(row -> types.add(String.valueOf(row.get("name"))));
+        return passedOverOutside(registry, types, raws);
+    }
+
+    /// The raw records of source types outside a set of them, by the registry's source type field and rows (the
+    /// first match winning; a part's meta for a meta: field), as review_coverage tells them: what a group's pipeline
+    /// passes over, its XSLT logging nothing of them.
+    ///
+    /// @param registry The registry, as [SourceTypeRegistry#read] reads it.
+    /// @param types    The source types kept, by row name.
+    /// @param raws     The raw streams.
+    /// @return The records of the other source types.
+    long passedOverOutside(final Map<String, Object> registry, final List<String> types, final List<Long> raws) {
+        final String field = String.valueOf(registry.get("field"));
         final SourceTypeScope scope = new SourceTypeScope(null, field, SourceTypeRegistry.rows(registry), types);
         long passed = 0;
         for (final long raw : raws) {
