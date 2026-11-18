@@ -18,6 +18,7 @@ package stroom.test;
 
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
+import stroom.data.store.impl.fs.FsStreamStoreCleanUp;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
@@ -31,8 +32,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.yaml.YamlFileUtil;
 
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -82,6 +83,8 @@ public final class SetupSampleData {
     private ImportExportService importExportService;
     @Inject
     private SetupSampleDataProcess setupSampleDataBean;
+    @Inject
+    private FsStreamStoreCleanUp fsStreamStoreCleanUp;
 
     public static void main(final String[] args) {
         if (args.length != 1) {
@@ -106,20 +109,26 @@ public final class SetupSampleData {
         // Start task manager
         taskManager.startup();
 
-        // Clear the DB and remove all content and data.
-        commonTestControl.clear();
-        // Setup the DB ready to load content and data.
-        commonTestControl.setup(null);
+        try {
+            // Clear the DB and remove all content and data.
+            commonTestControl.clear();
+            // Setup the DB ready to load content and data.
+            commonTestControl.setup(null);
 
-        // Pull in content packs from the content store, and the released visualisations
-        devSetup.installSampleDataPacks(Set.of(VISUALISATIONS_PACK));
-        installVisualisations();
+            // Pull in content packs from the content store, and the released visualisations
+            devSetup.installSampleDataPacks(Set.of(VISUALISATIONS_PACK));
+            installVisualisations();
 
-        // Load the sample data and content from the 'samples' dirs
-        setupSampleDataBean.run(true);
-
-        // Stop task manager
-        taskManager.shutdown();
+            // Load the sample data and content from the 'samples' dirs
+            setupSampleDataBean.run(true);
+        } finally {
+            try {
+                // Stop task manager
+                taskManager.shutdown();
+            } finally {
+                fsStreamStoreCleanUp.run();
+            }
+        }
     }
 
     // Imports the visualisations' released pack, as content-packs.json names it (downloaded into the
