@@ -16,13 +16,15 @@ Stroom uses:
 
 ## A short bullet list of the most critical rules the agent must follow before doing anything
 
-* DO NOT execute any `git commit` commands under any circumstances.
+* Changes may be staged and committed.
+  Commit messages are a single short line in the imperative mood, in the form `#NNNN Message` where `NNNN` is the GitHub issue number, e.g. `#6039 Reject S3 events without a matching S3 Client Config`.
+  When there is no issue, use the message alone.
+
+* DO NOT add a `Co-Authored-By` trailer, or any other AI attribution, to commit messages.
 
 * DO NOT execute any `git merge` commands under any circumstances.
 
-* DO NOT modify, stage, or alter git version control states automatically.
-
-* All code changes must remain un-staged in the working directory for human review.
+* DO NOT push, rebase, reset or otherwise rewrite git history.
 
 * DO NOT attempt to create/modify any issues or pull requests on GitHub.
   Issues and pull requests must be created/modified by a human.
