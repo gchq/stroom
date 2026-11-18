@@ -15,9 +15,6 @@ ext.moduleName = 'lucene553.shaded'
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 apply plugin: 'com.gradleup.shadow'
 
 configurations {
@@ -46,6 +43,10 @@ tasks.shadowJar {
     zip64 = true
     // Shaded the packages
     relocate 'org.apache.lucene', 'org.apache.lucene553'
+
+    // lucene-analyzers-common pulls in org.tartarus.snowball packages, so we need
+    // to shade them, else we have a conflict with our latest lucene.
+    relocate 'org.tartarus.snowball', 'org.apache.tartarus.snowball553'
 
     // Lucene jars included service loaders which need merging together.
     // Without INCLUDE, it drops some which makes tests fail
