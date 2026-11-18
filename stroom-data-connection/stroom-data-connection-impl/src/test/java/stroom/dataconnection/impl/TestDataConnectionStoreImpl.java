@@ -57,7 +57,7 @@ class TestDataConnectionStoreImpl {
         final MockSecurityContext securityContext = new MockSecurityContext();
         final DataConnectionConfig config = new DataConnectionConfig(
                 List.of("^jdbc:mysql://reporting-db:3306/.*$"), null, null, null, null, null, null, null,
-                List.of("^eu-west-2/stroom-.*$"), null, true, maxStoredDataSize, null);
+                List.of("^eu-west-2/stroom-.*$"), null, true, maxStoredDataSize, null, null, null);
         return new DataConnectionStoreImpl(
                 new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
                 securityContext,

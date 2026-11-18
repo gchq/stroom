@@ -80,7 +80,7 @@ class TestAthenaQueryRunner {
     void setUp() {
         final DataConnectionConfig config = new DataConnectionConfig(
                 null, null, null, null, null, null, null, null,
-                List.of("^eu-west-2/primary$"), null, true, null, null);
+                List.of("^eu-west-2/primary$"), null, true, null, null, null, null);
         final AthenaConnectionResolver resolver = new AthenaConnectionResolver(
                 () -> config,
                 () -> Mockito.mock(StoredSecrets.class));

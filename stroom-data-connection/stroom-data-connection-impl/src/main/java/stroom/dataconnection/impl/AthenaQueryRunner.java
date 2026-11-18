@@ -29,7 +29,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.AthenaError;
-import software.amazon.awssdk.services.athena.model.ColumnInfo;
 import software.amazon.awssdk.services.athena.model.Datum;
 import software.amazon.awssdk.services.athena.model.GetQueryResultsResponse;
 import software.amazon.awssdk.services.athena.model.QueryExecution;
@@ -42,14 +41,11 @@ import software.amazon.awssdk.services.athena.model.StatementType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -173,7 +169,7 @@ public class AthenaQueryRunner {
                 final QueryExecution execution = awaitCompletion(
                         client, id, limits, deadline, maxDataScannedMb, cancellation, progress);
                 if (execution == null) {
-                    return new QueryRunSummary(List.of(), List.of(), 0, 0, false, limits.maxRows(), null);
+                    return RowCounter.nothingRead(limits.maxRows());
                 }
                 return readResults(client, execution, limits, deadline, rowConsumerFactory, cancellation);
             } catch (final RuntimeException e) {
@@ -246,10 +242,7 @@ public class AthenaQueryRunner {
     /// @param settings Amazon Athena settings, or `null`.
     /// @return The limit in MB, 0 for none.
     static int maxDataScannedMb(final AthenaConnectionSettings settings) {
-        final Integer limit = NullSafe.get(settings, AthenaConnectionSettings::getMaxDataScannedMb);
-        return limit == null
-                ? 0
-                : Math.max(0, limit);
+        return ConnectionRules.nonNegative(NullSafe.get(settings, AthenaConnectionSettings::getMaxDataScannedMb), 0);
     }
 
     // Polls until the query finishes. Returns null if the search was cancelled. Any exception
@@ -315,87 +308,58 @@ public class AthenaQueryRunner {
                                                final Function<List<SqlColumn>, SqlRowConsumer> rowConsumerFactory,
                                                final QueryCancellation cancellation) {
         final String id = execution.queryExecutionId();
+        GetQueryResultsResponse page = getPage(client, id, null);
+        final List<SqlColumn> columns = AthenaTypeMapper.toColumns(
+                page.resultSet().resultSetMetadata().columnInfo());
+        final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns);
+        final RowCounter counter = new RowCounter(limits.maxRows());
         // The first row of a SELECT's first page holds the column names.
-        boolean skipHeader = StatementType.DML.equals(execution.statementType());
-        List<SqlColumn> columns = null;
-        SqlRowConsumer rowConsumer = null;
-        long rowsRead = 0;
-        long rowsPassed = 0;
-        boolean limitReached = false;
-        String nextToken = null;
-
-        do {
-            final String token = nextToken;
-            final GetQueryResultsResponse page = client.getQueryResults(builder -> builder
-                    .queryExecutionId(id)
-                    .maxResults(PAGE_SIZE)
-                    .nextToken(token));
-            if (columns == null) {
-                columns = toColumns(page.resultSet().resultSetMetadata().columnInfo());
-                rowConsumer = rowConsumerFactory.apply(columns);
-            }
+        int firstRow = StatementType.DML.equals(execution.statementType())
+                ? 1
+                : 0;
+        while (true) {
             final List<Row> rows = page.resultSet().rows();
-            for (int i = skipHeader ? 1 : 0; i < rows.size() && !limitReached; i++) {
-                if (rowsRead >= limits.maxRows()) {
-                    limitReached = true;
-                } else {
-                    rowsRead++;
-                    if (accept(rowConsumer, rows.get(i).data(), columns)) {
-                        rowsPassed++;
-                    }
+            for (int i = firstRow; i < rows.size(); i++) {
+                final List<Datum> data = rows.get(i).data();
+                if (!counter.take(() -> accept(rowConsumer, data, columns))) {
+                    break;
                 }
             }
-            skipHeader = false;
-            nextToken = page.nextToken();
-            if (nextToken != null && !limitReached && System.nanoTime() > deadline) {
+            final String nextToken = page.nextToken();
+            if (nextToken == null || counter.limitReached()) {
+                break;
+            }
+            if (System.nanoTime() > deadline) {
                 throw new IllegalStateException("Amazon Athena query " + id + " did not finish within "
                                                 + limits.timeoutSeconds() + " seconds, as reading its results "
                                                 + "took too long.");
             }
-        } while (nextToken != null && !limitReached && !cancellation.isCancelled());
+            if (cancellation.isCancelled()) {
+                break;
+            }
+            page = getPage(client, id, nextToken);
+            firstRow = 0;
+        }
+        return counter.summary(rowConsumer.getUnmatchedFields(), summaryInfo(execution), List.of());
+    }
 
-        return new QueryRunSummary(
-                columns,
-                rowConsumer.getUnmatchedFields(),
-                rowsRead,
-                rowsPassed,
-                limitReached,
-                limits.maxRows(),
-                summaryInfo(execution));
+    private static GetQueryResultsResponse getPage(final AthenaClient client,
+                                                   final String queryExecutionId,
+                                                   final String nextToken) {
+        return client.getQueryResults(builder -> builder
+                .queryExecutionId(queryExecutionId)
+                .maxResults(PAGE_SIZE)
+                .nextToken(nextToken));
     }
 
     private static boolean accept(final SqlRowConsumer rowConsumer,
                                   final List<Datum> data,
                                   final List<SqlColumn> columns) {
-        try {
-            return rowConsumer.accept(columnIndex -> AthenaTypeMapper.readValue(
-                    columnIndex < data.size()
-                            ? data.get(columnIndex).varCharValue()
-                            : null,
-                    columns.get(columnIndex)));
-        } catch (final SQLException e) {
-            // Athena values are read from text and never throw this.
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
-
-    /// Turns Athena's column descriptions into columns.
-    ///
-    /// @param columnInfos The column descriptions from the first page of results.
-    /// @return The columns, in order.
-    static List<SqlColumn> toColumns(final List<ColumnInfo> columnInfos) {
-        final List<SqlColumn> columns = new ArrayList<>(columnInfos.size());
-        for (final ColumnInfo columnInfo : columnInfos) {
-            final int sqlType = AthenaTypeMapper.toSqlType(columnInfo.type());
-            columns.add(new SqlColumn(
-                    columnInfo.name(),
-                    SqlTypeMapper.toFieldType(
-                            sqlType,
-                            Objects.requireNonNullElse(columnInfo.precision(), 0),
-                            Objects.requireNonNullElse(columnInfo.scale(), 0)),
-                    sqlType));
-        }
-        return List.copyOf(columns);
+        return rowConsumer.accept(columnIndex -> AthenaTypeMapper.readValue(
+                columnIndex < data.size()
+                        ? data.get(columnIndex).varCharValue()
+                        : null,
+                columns.get(columnIndex)));
     }
 
     private static String summaryInfo(final QueryExecution execution) {

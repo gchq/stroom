@@ -218,7 +218,7 @@ public class DataConnectionSettingsController extends Controller {
     /// @param doc    The Data Connection.
     public void read(final DocRef docRef, final DataConnectionDoc doc) {
         readDoc = doc;
-        view.setType(Objects.requireNonNullElse(doc.getSourceType(), DataConnectionType.JDBC));
+        view.setType(DataConnectionType.orDefault(doc.getSourceType()));
         readJdbc(doc);
         readAthena(doc);
         readLdap(doc);
@@ -544,18 +544,10 @@ public class DataConnectionSettingsController extends Controller {
         }
         final boolean header = section.isHeader();
         final boolean savingACopy = readDoc != null && !Objects.equals(doc.getUuid(), readDoc.getUuid());
-        final String fileName;
-        if (excelUploadKey != null) {
-            fileName = excelUploadName;
-        } else if (excelRemoved) {
-            fileName = null;
-        } else {
-            // The server keeps the stored workbook while a file name is sent, and removes it when
-            // none is
-            fileName = NullSafe.get(read, ExcelSettings::getFileName);
-        }
         return ExcelSettings.builder()
-                .fileName(fileName)
+                // The server keeps the stored workbook while a file name is sent, and removes it when
+                // none is
+                .fileName(workbookName())
                 .sheet(sheet)
                 .header(previous.getHeader() == null && header
                         ? null
@@ -643,11 +635,20 @@ public class DataConnectionSettingsController extends Controller {
 
     private boolean hasData() {
         if (view.getType() == DataConnectionType.EXCEL) {
-            return excelUploadKey != null
-                   || (!excelRemoved
-                       && NullSafe.get(readDoc, DataConnectionDoc::getExcel, ExcelSettings::getFileName) != null);
+            return workbookName() != null;
         }
         return !NullSafe.isBlankString(csvEditor.getText());
+    }
+
+    // The file name of the workbook the document has as edited: a new upload's, none once removed, or
+    // else the one read
+    private String workbookName() {
+        if (excelUploadKey != null) {
+            return excelUploadName;
+        }
+        return excelRemoved
+                ? null
+                : NullSafe.get(readDoc, DataConnectionDoc::getExcel, ExcelSettings::getFileName);
     }
 
     private void onAddAttribute() {

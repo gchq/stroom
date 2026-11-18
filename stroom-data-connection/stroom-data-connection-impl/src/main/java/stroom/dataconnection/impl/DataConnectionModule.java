@@ -42,7 +42,8 @@ public class DataConnectionModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(JdbcConnectionPoolCache.class)
-                .addBinding(SqlFieldCache.class);
+                .addBinding(SqlFieldCache.class)
+                .addBinding(DataTableCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(DataConnectionSearchProvider.class);

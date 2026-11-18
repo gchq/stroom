@@ -21,9 +21,7 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /// Checks the Amazon Athena settings of a Data Connection against the administrator's controls in
 /// [DataConnectionConfig].
@@ -66,7 +64,8 @@ public final class AthenaConnectionValidator {
 
         final String workGroup = workGroup(settings);
         final String regionAndWorkGroup = region.trim() + "/" + workGroup;
-        if (!isAllowed(regionAndWorkGroup, config.getAllowedAthenaWorkGroups(), problems)) {
+        if (!ConnectionRules.matchesAny(
+                regionAndWorkGroup, config.getAllowedAthenaWorkGroups(), "Athena pattern", problems)) {
             problems.add("The Athena workgroup '" + regionAndWorkGroup + "' does not match any pattern in the "
                          + "dataConnection.allowedAthenaWorkGroups property. Ask an administrator to allow it.");
         }
@@ -76,7 +75,8 @@ public final class AthenaConnectionValidator {
             final String trimmedLocation = outputLocation.trim();
             if (!trimmedLocation.startsWith("s3://")) {
                 problems.add("The output location must be an S3 URI, such as s3://bucket/path/.");
-            } else if (!isAllowed(trimmedLocation, config.getAllowedAthenaOutputLocations(), problems)) {
+            } else if (!ConnectionRules.matchesAny(
+                    trimmedLocation, config.getAllowedAthenaOutputLocations(), "Athena pattern", problems)) {
                 problems.add("The output location '" + trimmedLocation + "' does not match any pattern in the "
                              + "dataConnection.allowedAthenaOutputLocations property. Leave it empty to use the "
                              + "workgroup's, or ask an administrator to allow it.");
@@ -97,37 +97,13 @@ public final class AthenaConnectionValidator {
     /// @throws IllegalArgumentException If there is any problem; its message lists them all.
     public static void validate(final AthenaConnectionSettings settings,
                                 final DataConnectionConfig config) {
-        final List<String> problems = findProblems(settings, config);
-        if (!problems.isEmpty()) {
-            throw new IllegalArgumentException(String.join("\n", problems));
-        }
+        ConnectionRules.throwIfAny(findProblems(settings, config));
     }
 
     /// @param settings The Athena settings.
     /// @return The workgroup, or the default if none is set.
     static String workGroup(final AthenaConnectionSettings settings) {
-        final String workGroup = settings.getWorkGroup();
-        return NullSafe.isBlankString(workGroup)
-                ? AthenaConnectionSettings.DEFAULT_WORK_GROUP
-                : workGroup.trim();
-    }
-
-    private static boolean isAllowed(final String value,
-                                     final List<String> allowedPatterns,
-                                     final List<String> problems) {
-        for (final String allowedPattern : NullSafe.list(allowedPatterns)) {
-            if (NullSafe.isNonBlankString(allowedPattern)) {
-                try {
-                    if (Pattern.compile(allowedPattern).matcher(value).matches()) {
-                        return true;
-                    }
-                } catch (final PatternSyntaxException e) {
-                    problems.add("The allowed Athena pattern '" + allowedPattern
-                                 + "' is not a valid regular expression: " + e.getDescription());
-                }
-            }
-        }
-        return false;
+        return orDefault(settings.getWorkGroup(), AthenaConnectionSettings.DEFAULT_WORK_GROUP);
     }
 
     /// @param value        A setting, or `null`.
@@ -136,6 +112,6 @@ public final class AthenaConnectionValidator {
     static String orDefault(final String value, final String defaultValue) {
         return NullSafe.isBlankString(value)
                 ? defaultValue
-                : Objects.requireNonNull(value).trim();
+                : value.trim();
     }
 }

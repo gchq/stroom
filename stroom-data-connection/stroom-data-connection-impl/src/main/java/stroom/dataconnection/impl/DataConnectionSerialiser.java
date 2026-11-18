@@ -31,6 +31,7 @@ import stroom.util.string.EncodingUtil;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /// Reads and writes [DataConnectionDoc] documents for storage and import/export.
 ///
@@ -66,17 +67,15 @@ public class DataConnectionSerialiser implements DocumentSerialiser2<DataConnect
         }
         final DataConnectionDoc.Builder builder = doc.copy();
         if (csvBytes != null) {
-            final CsvSettings csv = doc.getCsv() == null
-                    ? CsvSettings.builder().build()
-                    : doc.getCsv();
+            final CsvSettings csv = Objects.requireNonNullElseGet(doc.getCsv(), () -> CsvSettings.builder().build());
             builder.csv(csv.copy()
                     .data(EncodingUtil.asString(csvBytes))
                     .build());
         }
         if (xlsxBytes != null) {
-            final ExcelSettings excel = doc.getExcel() == null
-                    ? ExcelSettings.builder().build()
-                    : doc.getExcel();
+            final ExcelSettings excel = Objects.requireNonNullElseGet(
+                    doc.getExcel(),
+                    () -> ExcelSettings.builder().build());
             // A stored workbook always has a file name, which the editor shows and sends back to keep
             // it. A pack's JSON could hold an upload key or a document to copy from; neither applies.
             builder.excel(excel.copy()
@@ -99,13 +98,9 @@ public class DataConnectionSerialiser implements DocumentSerialiser2<DataConnect
     /// @throws IOException If the document cannot be written.
     @Override
     public ImportExportDocument write(final DataConnectionDoc document) throws IOException {
-        final String csvData = document.getCsv() == null
-                ? null
-                : document.getCsv().getData();
+        final String csvData = NullSafe.get(document.getCsv(), CsvSettings::getData);
         // The workbook is never in the JSON, so it needs no removing.
-        final byte[] xlsxData = document.getExcel() == null
-                ? null
-                : document.getExcel().getData();
+        final byte[] xlsxData = NullSafe.get(document.getExcel(), ExcelSettings::getData);
         final ImportExportDocument importExportDocument = delegate.write(csvData == null
                 ? document
                 : document.copy()

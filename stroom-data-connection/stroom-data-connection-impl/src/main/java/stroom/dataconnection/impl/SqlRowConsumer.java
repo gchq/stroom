@@ -127,9 +127,10 @@ public class SqlRowConsumer {
     /// Reads one row and passes it on if it passes the expression.
     ///
     /// @param reader Reads a column of the current row.
+    /// @param <E>    The exception reading a column may throw.
     /// @return True if the row was passed on.
-    /// @throws SQLException If a column cannot be read.
-    public boolean accept(final ColumnReader reader) throws SQLException {
+    /// @throws E If a column cannot be read.
+    public <E extends Exception> boolean accept(final ColumnReader<E> reader) throws E {
         final Val[] row = new Val[rowSize];
         for (int pos = 0; pos < rowSize; pos++) {
             final int column = columnByField[pos];
@@ -197,12 +198,15 @@ public class SqlRowConsumer {
 
 
     /// Reads a column of the current row.
+    ///
+    /// @param <E> The exception reading a column may throw, such as [java.sql.SQLException] for a
+    ///            JDBC result set. Values read from text throw none.
     @FunctionalInterface
-    public interface ColumnReader {
+    public interface ColumnReader<E extends Exception> {
 
         /// @param columnIndex The column, counted from 0.
         /// @return The value.
-        /// @throws SQLException If the column cannot be read.
-        Val read(int columnIndex) throws SQLException;
+        /// @throws E If the column cannot be read.
+        Val read(int columnIndex) throws E;
     }
 }

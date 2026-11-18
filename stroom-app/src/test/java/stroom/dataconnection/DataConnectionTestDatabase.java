@@ -119,6 +119,6 @@ final class DataConnectionTestDatabase {
                 config.getFieldCache(),
                 config.getAllowedAthenaWorkGroups(),
                 config.getAllowedAthenaOutputLocations(),
-                config.isAllowDefaultAwsCredentials(), null, null);
+                config.isAllowDefaultAwsCredentials(), null, null, null, null);
     }
 }

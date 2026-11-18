@@ -422,7 +422,7 @@ class TestLdapConnector {
                 .hasMessageContaining("is not a Date attribute");
         assertThatThrownBy(() -> connector().prepare(notListed, timeRangeQuery("(cn=*)", "now() - 1h"), null))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("is not an attribute");
+                .hasMessageContaining("is not one of the attributes");
     }
 
     @Test
@@ -503,7 +503,7 @@ class TestLdapConnector {
 
         assertThatThrownBy(() -> connector().prepare(doc, query("(cn=*)"), null))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("more than once");
+                .hasMessageContaining("more than one attribute named");
     }
 
     @Test

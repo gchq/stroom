@@ -27,4 +27,14 @@ public interface DataConnectionStore extends DocumentStore<DataConnectionDoc> {
 
     /// @return References to every Data Connection document.
     List<DocRef> list();
+
+    /// Gives a document the workbook its Excel settings name: a new upload, the workbook of the
+    /// document being copied, or else the one already stored. The upload key and the document to copy
+    /// from are cleared. Settings with no file name and no new workbook have none.
+    ///
+    /// @param document A document as the editor sends it, without its workbook.
+    /// @return The document with its workbook, if it has one.
+    /// @throws stroom.util.shared.EntityServiceException If the upload or the document to copy from
+    ///                                                   cannot be found.
+    DataConnectionDoc withWorkbook(DataConnectionDoc document);
 }

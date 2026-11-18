@@ -31,7 +31,7 @@ class TestCredentialChoice {
         final CredentialChoice choice = new CredentialChoice();
         choice.reset("reporting-db");
 
-        assertThat(choice.isPicked()).isFalse();
+        assertThat(choice.awaits("reporting-db")).isTrue();
         assertThat(choice.getName()).isEqualTo("reporting-db");
     }
 
@@ -41,7 +41,7 @@ class TestCredentialChoice {
         choice.reset("reporting-db");
         choice.pick(credential("other-db"));
 
-        assertThat(choice.isPicked()).isTrue();
+        assertThat(choice.awaits("reporting-db")).isFalse();
         assertThat(choice.getName()).isEqualTo("other-db");
     }
 
@@ -51,7 +51,7 @@ class TestCredentialChoice {
         choice.reset("reporting-db");
         choice.pick(null);
 
-        assertThat(choice.isPicked()).isTrue();
+        assertThat(choice.awaits("reporting-db")).isFalse();
         assertThat(choice.getName()).isNull();
     }
 
@@ -70,7 +70,7 @@ class TestCredentialChoice {
         choice.pick(credential("other-db"));
         choice.reset("next-db");
 
-        assertThat(choice.isPicked()).isFalse();
+        assertThat(choice.awaits("next-db")).isTrue();
         assertThat(choice.getName()).isEqualTo("next-db");
     }
 
