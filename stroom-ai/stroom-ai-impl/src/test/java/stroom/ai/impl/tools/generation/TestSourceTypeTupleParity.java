@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.AwkwardValues;
 import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -72,6 +73,46 @@ class TestSourceTypeTupleParity extends XsltRuns {
         rows.add(SourceTypeModule.Row.of(SourceTypeRows.noValue()));
 
         assertSameAsTheTools(spec, rows, tools);
+    }
+
+    // Awkward values (2026-11-18, after chat 181's form feed) in both parts of the key: the outer field and the held
+    // JSON's, given to the group's XSLT as Stroom's jsonParser gives them (XML 1.1, references for the characters
+    // only it holds). Each record lands where the tools' rows put it, with the tools' key.
+    @ParameterizedTest
+    @ValueSource(strings = {"system + event>logger_name", "system + event>logger_name | event>xml:@logger", "system"})
+    void aGroupReadsAwkwardKeysAsTheToolsDo(final String spec) {
+        final List<String> lines = new ArrayList<>();
+        for (final AwkwardValues.Value value : AwkwardValues.ALL) {
+            lines.add(awkwardLine(value.text(), ToolJson.dumps(Map.of("logger_name", value.text()))));
+            lines.add(awkwardLine("Teams", "{\"logger_name\": " + ToolJson.dumps(value.text()) + "}"));
+        }
+        final SourceTypeReading reading = SourceTypeReading.of(spec);
+        final List<String> tools = lines.stream().map(TestSourceTypeReadingParity::parsed).map(reading::valueOf)
+                .toList();
+        final List<SourceTypeModule.Row> rows = new ArrayList<>();
+        // A row a key whose parts all have a value; for one field, a row a value.
+        new LinkedHashSet<>(tools).stream()
+                .filter(key -> key != null && !SourceTypeReading.keyParts(key).contains(""))
+                .forEach(key -> rows.add(reading.isTuple()
+                        ? new SourceTypeModule.Row("type " + rows.size(), SourceTypeRows.TUPLE,
+                                String.join(" + ", SourceTypeReading.keyParts(key).stream().map(part -> "= " + part)
+                                        .toList()))
+                        : new SourceTypeModule.Row("type " + rows.size(), SourceTypeRows.VALUE, key)));
+        rows.add(SourceTypeModule.Row.of(SourceTypeRows.noValue()));
+        final List<SourceTypeRows.Row> toolRows = rows.stream().map(SourceTypeModule.Row::toolRow).toList();
+
+        final List<String[]> xslt = TestSourceTypeReadingParity.classify(spec, rows,
+                TestSourceTypeReadingParity.stroomRecords(lines), true);
+
+        assertThat(xslt).hasSize(lines.size());
+        for (int i = 0; i < lines.size(); i++) {
+            final String expectedKey = tools.get(i) == null
+                    ? ""
+                    : tools.get(i);
+            final String expectedType = SourceTypeRows.first(toolRows, tools.get(i)).map(SourceTypeRows.Row::name)
+                    .orElse("");
+            assertThat(xslt.get(i)).as("record %s by %s", i, spec).containsExactly(expectedKey, expectedType);
+        }
     }
 
     @Test
@@ -204,5 +245,11 @@ class TestSourceTypeTupleParity extends XsltRuns {
     private static String line(final String system, final String event) {
         return "{\"id\": \"" + system.strip() + "\", \"timestamp\": \"2026-11-18T10:00:00.000Z\", \"hostname\": "
                + "\"uc01\", \"system\": " + ToolJson.dumps(system) + ", \"event\": " + ToolJson.dumps(event) + "}";
+    }
+
+    // A wrapper record of a system whose `event` holds the text given, the system's text escaped as JSON.
+    private static String awkwardLine(final String system, final String event) {
+        return "{\"id\": \"awkward\", \"timestamp\": \"2026-11-18T10:00:00.000Z\", \"hostname\": \"uc01\", "
+               + "\"system\": " + ToolJson.dumps(system) + ", \"event\": " + ToolJson.dumps(event) + "}";
     }
 }

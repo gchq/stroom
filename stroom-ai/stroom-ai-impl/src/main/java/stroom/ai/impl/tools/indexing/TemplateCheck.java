@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.indexing.TemplateMappings.Mapping;
+import stroom.ai.impl.tools.sample.XmlTree;
 import stroom.ai.impl.tools.validation.CloseMatches;
 
 import java.util.ArrayList;
@@ -55,7 +56,6 @@ public final class TemplateCheck {
             "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?)?(Z|[+-]\\d{2}(:?\\d{2})?)?)?$", FLAGS);
     private static final Pattern WHOLE = Pattern.compile("^-?\\d+$", FLAGS);
     private static final Pattern NUMBER = Pattern.compile("^-?(\\d+\\.?\\d*|\\.\\d+)([eE][-+]?\\d+)?$", FLAGS);
-    private static final Pattern DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>", FLAGS);
 
     private TemplateCheck() {
         // Static only.
@@ -67,7 +67,8 @@ public final class TemplateCheck {
     public static List<Map<String, Object>> jsonXmlDocuments(final String xml) {
         final XmlElement root;
         try {
-            root = XmlParser.parse(DECLARATION.matcher(xml).replaceFirst(""));
+            // As Stroom writes it: XML 1.1 kept so, a control character's reference (&#xc;) allowed.
+            root = XmlParser.parse(XmlTree.withoutDeclaration(xml));
         } catch (final RuntimeException e) {
             return List.of();
         }

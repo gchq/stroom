@@ -669,4 +669,30 @@ class TestLocalCheck extends DraftFixtures {
                 .extracting(Placeholders.Found::value)
                 .containsExactlyInAnyOrder("-", "n.a", "orgname", "x");
     }
+
+    @Test
+    void anXml11SampleIsReadAsXml11() {
+        // Found testing awkward values (2026-11-18): an XML 1.1 sample holding a form feed, as Stroom stores what it
+        // writes (&#xc;), was read with its declaration taken off, so as XML 1.0, in which &#xc; is not allowed: the
+        // sample check said "the sample is not XML a parser could read" and checked nothing.
+        final TranslationMapping xml = TranslationMapping.fromJson(JsonValues.map(ToolJson.loads("""
+                {"input": "xml", "root": "records", "record": "record",
+                 "common": [{"path": "EventSource/User/Id", "field": "user"}], "events": [{"name": "a"}]}""")));
+        final String sample = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<records>"
+                              + "<record><user>a</user><msg>page one&#xc;page two</msg></record>"
+                              + "<record><user>b</user><msg>x&#x85;y</msg></record></records>\n";
+        final LocalCheck.SampleRecords read = LocalCheck.sampleRecords(xml, sample, null);
+        assertThat(read.note()).isNull();
+        assertThat(read.records()).hasSize(2);
+        assertThat(LocalCheck.xmlValue((XmlTree.Element) read.records().getFirst(), "msg"))
+                .isEqualTo("page one\fpage two");
+        // Fragments of XML 1.1, as Stroom writes them, likewise.
+        final TranslationMapping fragments = TranslationMapping.fromJson(JsonValues.map(ToolJson.loads("""
+                {"input": "xml_fragments", "record": "record",
+                 "common": [{"path": "EventSource/User/Id", "field": "user"}], "events": [{"name": "a"}]}""")));
+        final LocalCheck.SampleRecords pieces = LocalCheck.sampleRecords(fragments, "<?xml version=\"1.1\"?>"
+                + "<record><user>a</user><msg>a&#x1b;[31m</msg></record><record><user>b</user></record>", null);
+        assertThat(pieces.note()).isNull();
+        assertThat(pieces.records()).hasSize(2);
+    }
 }

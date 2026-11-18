@@ -1540,7 +1540,7 @@
      "transform"
     ],
     "type": "literal_error",
-    "msg": "Input should be 'lower', 'upper', 'trim', 'strip_domain', 'domain', 'digits', 'unescape_quotes' or 'strip_control'",
+    "msg": "Input should be 'lower', 'upper', 'trim', 'strip_domain', 'domain', 'digits', 'unescape_quotes', 'unescape_backslashes' or 'strip_control'",
     "input": "nope"
    },
    {

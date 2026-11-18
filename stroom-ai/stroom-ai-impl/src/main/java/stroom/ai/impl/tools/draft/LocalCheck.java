@@ -425,7 +425,7 @@ public final class LocalCheck {
         List<XmlTree.Element> cut = null;
         if ("xml".equals(mapping.input())) {
             try {
-                root = XmlTree.parse(ToolText.subFirst(xmlDeclaration(), "", text));
+                root = XmlTree.parse(XmlTree.withoutDeclaration(text));
             } catch (final XmlTree.XmlException e) {
                 // A big document read only to here: its complete records.
                 final XmlTree.Pull pull = SampleProfiler.cutDocument(text);
@@ -459,10 +459,6 @@ public final class LocalCheck {
         return new SampleRecords(new ArrayList<>(all.stream()
                 .filter(element -> element.localName().equals(record))
                 .toList()), null);
-    }
-
-    private static Pattern xmlDeclaration() {
-        return ToolText.re("^\\s*<\\?xml[^>]*\\?>");
     }
 
     /// @param record A record (a map, or an XML element).

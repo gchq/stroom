@@ -132,8 +132,20 @@ class TestHeldText {
     }
 
     @Test
+    void valuesAreStrippedOfControlCharactersAsTheGroupsXsltStripsThem() {
+        // Found testing awkward values (2026-11-18): a form feed in a source type's value written into its group's
+        // XSLT made it not well-formed, and XPath's parse-json() reads it as U+FFFD; tab, new line and CR stay.
+        assertThat(HeldText.normalised("page one\fpage two")).isEqualTo("page onepage two");
+        assertThat(HeldText.normalised("\u001b[31mred\u001b[0m")).isEqualTo("[31mred[0m");
+        assertThat(HeldText.normalised("x\u0080y\u007f\ufffd")).isEqualTo("xy");
+        assertThat(HeldText.normalised("\f padded \u0007")).isEqualTo("padded");
+        assertThat(HeldText.normalised("a\tb\r\nc")).isEqualTo("a\tb\r\nc");
+        assertThat(HeldText.normalised("\u0000")).isNull();
+    }
+
+    @Test
     void theRegularExpressionsAreOnesXPathReadsToo() {
-        for (final String regex : List.of(HeldText.AROUND, HeldText.SPACE_AROUND, HeldText.PAIR,
+        for (final String regex : List.of(HeldText.AROUND, HeldText.SPACE_AROUND, HeldText.CONTROL, HeldText.PAIR,
                 HeldText.SYSLOG_5424, HeldText.SYSLOG_3164, HeldText.keyRegex("logger_name"))) {
             assertThat(XPathRegex.problem(regex)).as(regex).isEmpty();
         }

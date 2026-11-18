@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.AwkwardValues;
 import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
@@ -155,6 +156,68 @@ class TestSourceTypeReadingParity extends XsltRuns {
         assertThat(SourceTypeFields.valueOf(byIdRecord(parsed, "syslog"), "event>app")).isEqualTo("sshd");
     }
 
+    // Awkward values (2026-11-18, after chat 181's form feed): held JSON, XML and key=value whose source type and
+    // other values hold control characters, line ends, astral and right-to-left text, XML's specials and quotes; and
+    // a held field longer than the 10,000 characters Stroom's jsonParser keeps of a string. The records are given to
+    // the group's XSLT as Stroom's jsonParser gives them: XML 1.1, the characters only it holds as references.
+    @ParameterizedTest
+    @ValueSource(strings = {"event>logger_name", "event>logger_name | event>xml:@logger", "event>kv:logger_name",
+            "event>#format", "event>xml:#root", "event>msg>logger_name"})
+    void aGroupReadsAwkwardHeldValuesAsTheToolsDo(final String spec) {
+        final List<String> lines = awkwardLines();
+        final SourceTypeReading reading = SourceTypeReading.of(spec);
+        // The tools read each record as Stroom's jsonParser leaves it: a string longer than it keeps, cut. A Stroom
+        // limit, not the tools': they read the sample whole, so a held field past the cut reads differently in the
+        // group's pipeline (asserted below), whose processing warns of the cut ('String value truncated', which
+        // step_sample and wait_for_processing give for review, with stringTruncateLength to raise).
+        final List<String> tools = lines.stream().map(TestSourceTypeReadingParity::cutAsStroomParses)
+                .map(reading::valueOf).toList();
+        final int longAt = lines.size() - 1;
+        if (List.of("event>logger_name", "event>logger_name | event>xml:@logger", "event>#format").contains(spec)) {
+            assertThat(reading.valueOf(parsed(lines.get(longAt)))).as("the long record, read whole")
+                    .isNotEqualTo(tools.get(longAt));
+        }
+        final List<SourceTypeModule.Row> rows = new ArrayList<>();
+        new LinkedHashSet<>(tools).stream().filter(value -> value != null)
+                .forEach(value -> rows.add(new SourceTypeModule.Row("type " + rows.size(), SourceTypeRows.VALUE,
+                        value)));
+        rows.add(SourceTypeModule.Row.of(SourceTypeRows.noValue()));
+        final List<SourceTypeRows.Row> toolRows = rows.stream().map(SourceTypeModule.Row::toolRow).toList();
+
+        final List<String[]> xslt = classify(spec, rows, stroomRecords(lines), true);
+
+        assertThat(xslt).hasSize(lines.size());
+        for (int i = 0; i < lines.size(); i++) {
+            final String expectedValue = tools.get(i) == null
+                    ? ""
+                    : tools.get(i);
+            final String expectedType = SourceTypeRows.first(toolRows, tools.get(i)).map(SourceTypeRows.Row::name)
+                    .orElse("");
+            assertThat(xslt.get(i)).as("record %s by %s", parsed(lines.get(i)).get("id"), spec)
+                    .containsExactly(expectedValue, expectedType);
+        }
+    }
+
+    @Test
+    void theToolsReadAwkwardHeldValuesWhole() {
+        final SourceTypeReading reading = SourceTypeReading.of("event>logger_name | event>xml:@logger");
+        final Map<String, String> byId = new LinkedHashMap<>();
+        awkwardLines().stream().map(TestSourceTypeReadingParity::parsed)
+                .forEach(record -> byId.put(String.valueOf(record.get("id")), reading.valueOf(record)));
+        for (final AwkwardValues.Value value : AwkwardValues.ALL) {
+            // Read whole, but for the control characters (which no source type group's XSLT can hold) and the white
+            // space around it.
+            final String read = value.text().replaceAll("[\\p{Cc}&&[^\\t\\n\\r]]", "").strip();
+            assertThat(byId).as(value.why()).containsEntry("json-" + value.name(), read);
+            // Held XML holding a C0 control isn't XML (XML 1.0 can't write one): no value, as in processing.
+            final boolean c0 = value.text().chars().anyMatch(c -> c < 0x20 && c != '\t' && c != '\n' && c != '\r');
+            assertThat(byId).as(value.why()).containsEntry("xml-" + value.name(), c0
+                    ? null
+                    : read);
+        }
+        assertThat(byId).containsEntry("long", "com.x.Long");
+    }
+
     @Test
     void aGroupWhoseReadingIsNoneIsRefusedSayingWhy() {
         final TranslationMapping common = commonMapping();
@@ -172,6 +235,15 @@ class TestSourceTypeReadingParity extends XsltRuns {
     static List<String[]> classify(final String spec,
                                    final List<SourceTypeModule.Row> rows,
                                    final List<String> lines) {
+        return classify(spec, rows, records(lines), false);
+    }
+
+    // As classify, over records given as XML; by code points, each value written as its characters' numbers (so
+    // a control character, which the XML Saxon writes can't hold, comes back as it was).
+    static List<String[]> classify(final String spec,
+                                   final List<SourceTypeModule.Row> rows,
+                                   final String records,
+                                   final boolean byCodePoints) {
         final TranslationMapping common = commonMapping();
         final XsltGenerator.Generated commonXslt = XsltGenerator.generate(common, SCHEMA, "4.1.0");
         assertThat(commonXslt.problems()).isEmpty();
@@ -181,15 +253,104 @@ class TestSourceTypeReadingParity extends XsltRuns {
         assertThat(group.problems()).as("problems: %s", group.problems()).isEmpty();
         final String type = found(FUNCTION, group.xslt());
         final String value = found(VALUE_FUNCTION, group.xslt());
+        final String valueOf = byCodePoints
+                ? "string-join(for $c in string-to-codepoints(" + value + "(.)) return string($c), ' ')"
+                : value + "(.)";
         final String code = group.xslt().replace("</xsl:stylesheet>",
                 "<xsl:template match=\"/\" priority=\"100\"><types><xsl:for-each select=\"*/*\"><t value=\"{"
-                + value + "(.)}\" type=\"{" + type + "(.)}\"/></xsl:for-each></types></xsl:template>"
+                + valueOf + "}\" type=\"{" + type + "(.)}\"/></xsl:for-each></types></xsl:template>"
                 + "</xsl:stylesheet>");
         final Map<String, String> imports = new LinkedHashMap<>();
         imports.put(COMMON_HREF, commonXslt.xslt());
         imports.put(HELPERS_HREF, HelpersXslt.generate());
-        final XmlElement out = transform(code, records(lines), imports, new ArrayList<>());
-        return children(out, "t").stream().map(t -> new String[]{t.get("value"), t.get("type")}).toList();
+        final XmlElement out = transform(code, records, imports, new ArrayList<>());
+        return children(out, "t").stream().map(t -> new String[]{byCodePoints
+                ? fromCodePoints(t.get("value"))
+                : t.get("value"), t.get("type")}).toList();
+    }
+
+    private static String fromCodePoints(final String numbers) {
+        final StringBuilder out = new StringBuilder();
+        for (final String number : numbers.split(" ")) {
+            if (!number.isEmpty()) {
+                out.appendCodePoint(Integer.parseInt(number));
+            }
+        }
+        return out.toString();
+    }
+
+    // Wrapper records whose `event` holds each awkward value: as held JSON (its source type and a message), as an
+    // attribute of held XML, and as a quoted key=value pair where the value holds no quote; then a held JSON
+    // message longer than Stroom's jsonParser keeps of a string.
+    static List<String> awkwardLines() {
+        final List<String> lines = new ArrayList<>();
+        for (final AwkwardValues.Value value : AwkwardValues.ALL) {
+            lines.add(line("json-" + value.name(), ToolJson.dumps(Map.of("logger_name", value.text(),
+                    "msg", ToolJson.dumps(Map.of("logger_name", value.text()))))));
+            lines.add(line("xml-" + value.name(), "<Log logger=\"" + heldXml(value.text())
+                                                   + "\"><When>now</When></Log>"));
+            if (value.text().indexOf('"') < 0 && value.text().indexOf('\\') < 0) {
+                lines.add(line("kv-" + value.name(), "logger_name=\"" + value.text() + "\" level=1"));
+            }
+        }
+        lines.add(line("long", "{\"logger_name\": \"com.x.Long\", \"msg\": \""
+                               + "L".repeat(AwkwardValues.JSON_PARSER_CUT + 50) + "\"}"));
+        return lines;
+    }
+
+    // A record as Stroom's jsonParser leaves it, flattened: each string longer than it keeps, cut.
+    private static Map<String, Object> cutAsStroomParses(final String line) {
+        return SampleProfiler.flatten(cut(ToolJson.loads(line)));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object cut(final Object value) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            ((Map<String, Object>) map).forEach((key, inner) -> out.put(key, cut(inner)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            return list.stream().map(TestSourceTypeReadingParity::cut).toList();
+        }
+        return value instanceof final String text && text.length() > AwkwardValues.JSON_PARSER_CUT
+                ? text.substring(0, AwkwardValues.JSON_PARSER_CUT)
+                : value;
+    }
+
+    // An attribute's value as a source writes held XML (no declaration, so XML 1.0): the specials and the white
+    // space an attribute would normalise as references; a C0 control raw, which makes it not XML (no XML 1.0
+    // reference can write one).
+    private static String heldXml(final String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+                .replace("\t", "&#x9;").replace("\n", "&#xa;").replace("\r", "&#xd;");
+    }
+
+    // The sample as Stroom's jsonParser gives it: XML 1.1, the characters only it holds as character references,
+    // and each string cut to the jsonParser's default length.
+    static String stroomRecords(final List<String> lines) {
+        final StringBuilder out = new StringBuilder("<?xml version=\"1.1\"?><map xmlns=\"http://www.w3.org/2013/XSL/json\">");
+        lines.forEach(line -> out.append(asStroomParses(null, ToolJson.loads(line))));
+        return out.append("</map>").toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String asStroomParses(final String key, final Object value) {
+        final String keyed = key == null
+                ? ""
+                : " key=\"" + AwkwardValues.xml11Text(key) + "\"";
+        if (value instanceof final Map<?, ?> map) {
+            final StringBuilder out = new StringBuilder("<map" + keyed + ">");
+            ((Map<String, Object>) map).forEach((name, inner) -> out.append(asStroomParses(name, inner)));
+            return out.append("</map>").toString();
+        }
+        if (value instanceof final String text) {
+            final String cut = text.length() > AwkwardValues.JSON_PARSER_CUT
+                    ? text.substring(0, AwkwardValues.JSON_PARSER_CUT)
+                    : text;
+            return "<string" + keyed + ">" + AwkwardValues.xml11Text(cut) + "</string>";
+        }
+        return asParsed(key, value);
     }
 
     private static String found(final Pattern pattern, final String xslt) {

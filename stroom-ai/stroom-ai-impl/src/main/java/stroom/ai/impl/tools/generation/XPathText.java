@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolText;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// How the translation generator writes each kind of XPath expression, one method each. The XSLT reader ([XsltReader])
@@ -37,14 +38,19 @@ public final class XPathText {
     /// Transforms worth a function of their own when repeated; lower, upper and trim are one XPath call already.
     public static final List<String> FUNCTION_TRANSFORMS = List.of("strip_domain", "domain", "digits");
 
+    // The control characters no XML 1.0 text holds.
+    private static final Pattern XML_10_FORBIDDEN = Pattern.compile("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]");
+
     private XPathText() {
         // Static only.
     }
 
     /// @param text Text.
-    /// @return It as an XPath string literal, a quote in it doubled: `'o''neil'`.
+    /// @return It as an XPath string literal, a quote in it doubled: `'o''neil'`; without the control characters
+    /// XML 1.0 can't hold (all but tab, new line and CR), which the XSLT can't hold either (found testing awkward
+    /// values, 2026-11-18: a source type's value holding a form feed made its group's XSLT not well-formed).
     public static String literal(final String text) {
-        return "'" + text.replace("'", "''") + "'";
+        return "'" + XML_10_FORBIDDEN.matcher(text).replaceAll("").replace("'", "''") + "'";
     }
 
     /// @param kind      The mapping's input: `data_splitter`, `json`, `xml` or `xml_fragments`.
@@ -281,6 +287,9 @@ public final class XPathText {
             // 51).
             case "strip_control" -> "replace(" + one + ", '\\p{Cc}\\[[0-9;]*[A-Za-z]|[\\p{Cc}-[\\t\\n\\r]]', '')";
             case "unescape_quotes" -> "replace(" + one + ", '\"\"', '\"')";
+            // A quote or a backslash escaped with a backslash, as one: key=value values quoted so keep the escape in
+            // Stroom (a backslash before anything else is the source's own, kept).
+            case "unescape_backslashes" -> "replace(" + one + ", '\\\\([\"\\\\])', '$1')";
             default -> one;
         };
     }

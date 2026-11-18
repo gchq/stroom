@@ -79,6 +79,17 @@ class TestErrorTriage {
     }
 
     @Test
+    void aJsonStringCutByTheParserIsForReviewWithTheProperty() {
+        // Found testing awkward values (2026-11-18; seen as a warning in chat 181): the JSON parser cut a value past
+        // its 10,000 characters, and the inherited element's warning was benign, so step_sample said "clean" and the
+        // events held the cut value.
+        final ErrorTriage.Classified cut = RULES.classify("WARNING", "jsonParser", false,
+                "String value truncated to length 10000, original length: 10050");
+        assertThat(cut.classification()).isEqualTo(ErrorTriage.REVIEW);
+        assertThat(cut.reason()).contains("stringTruncateLength").contains("10,000").contains("set_properties");
+    }
+
+    @Test
     void unmatchedRecordsWithEveryTestedValueEmptyMayBePiecesOfARecord() {
         // Seen in testing: CSV values holding line breaks split each record into pieces, logged with every tested
         // value empty, and the agent nearly added a rule for them.

@@ -25,6 +25,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -38,8 +40,43 @@ import javax.xml.stream.XMLStreamReader;
 /// DTDs and external entities are not read.
 public final class XmlTree {
 
+    /// The XML 1.1 declaration [#withoutDeclaration(String)] keeps.
+    public static final String XML_11_DECLARATION = "<?xml version=\"1.1\"?>";
+
+    // A text's XML declaration, after any byte order mark and white space.
+    private static final Pattern DECLARATION = Pattern.compile("^\uFEFF?\\s*<\\?xml[^>]*\\?>");
+    // A declaration's version 1.1.
+    private static final Pattern VERSION_11 = Pattern.compile("version\\s*=\\s*[\"']1\\.1[\"']");
+
     private XmlTree() {
         // Static methods only.
+    }
+
+    /// @param text A text, or null.
+    /// @return Its XML declaration's version as a declaration of its own when it declares XML 1.1
+    /// ([#XML_11_DECLARATION]), else "".
+    public static String xml11Declaration(final String text) {
+        if (text == null) {
+            return "";
+        }
+        final Matcher declaration = DECLARATION.matcher(text);
+        return declaration.find() && VERSION_11.matcher(declaration.group()).find()
+                ? XML_11_DECLARATION
+                : "";
+    }
+
+    /// The text without its XML declaration (and what is before it), to be read, or wrapped, as it is; but an XML
+    /// 1.1 declaration's version kept ([#XML_11_DECLARATION]), as Stroom writes its XML streams, so the text still
+    /// reads as XML 1.1. Found testing awkward values (2026-11-18): taking the declaration off read Stroom's XML 1.1
+    /// as XML 1.0, in which a control character's reference (a form feed as `&#xc;`) isn't allowed.
+    ///
+    /// @param text A text, or null.
+    /// @return It without its declaration but for an XML 1.1 one's version; "" for null.
+    public static String withoutDeclaration(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return xml11Declaration(text) + DECLARATION.matcher(text).replaceFirst("");
     }
 
     /// Reads a whole document, as `etree.fromstring` does.

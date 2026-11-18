@@ -91,9 +91,9 @@
     </xsl:if>
   </xsl:function>
   <xsl:function name="mcp:source_type_value" as="xs:string">
-    <!-- A record's sourcetype as the tools read it: stripped, and '' for none or a nil value -->
+    <!-- A record's sourcetype as the tools read it: stripped (controls, white space), and '' for none or a nil value -->
     <xsl:param name="record" as="element()"/>
-    <xsl:variable name="stripped" select="replace(string(($record/*[@key='sourcetype'])[1]), '^[ \t\n\r]+|[ \t\n\r]+$', '')"/>
+    <xsl:variable name="stripped" select="replace(replace(string(($record/*[@key='sourcetype'])[1]), '[\p{Cc}�-[\t\n\r]]', ''), '^[ \t\n\r]+|[ \t\n\r]+$', '')"/>
     <xsl:sequence select="if (lower-case($stripped) = ('-', 'null', 'none', 'n/a')) then '' else $stripped"/>
   </xsl:function>
   <xsl:function name="mcp:seen_source_type" as="xs:boolean">

@@ -60,6 +60,11 @@ rules:
   # replaces it and reads on; the cause is the source's bytes, not the pipeline (inherited parser element).
   - {message: 'un-decodable byte', class: review,
      reason: "The source sends bytes that aren't in the feed's character set (its encoding; UTF-8 unless set): Stroom replaces each with the replacement character and reads on, so those characters are lost, but not by anything in the pipeline. fetch_events (streamId) on the raw stream says which bytes they are and how they read. If the whole stream is in one other character set (Windows-1252, say: é, curly quotes), set the feed's encoding to it; if it mixes character sets, no one setting reads it all, and the source is to be fixed. Ask the user which"}
+  # A JSON string longer than the JSON parser keeps (its stringTruncateLength, 10,000 characters by default): cut,
+  # with a warning from the inherited parser element, which was benign (found testing awkward values, 2026-11-18;
+  # seen in chat 181), so step_sample said clean and the events held the cut value.
+  - {message: 'String value truncated to length', class: review,
+     reason: "Stroom's JSON parser cut a string value longer than its stringTruncateLength (10,000 characters by default), so the events hold only its first part, and a value held inside it (JSON, XML) may no longer parse. If the whole value is wanted, set the JSON parser's stringTruncateLength above the longest value (update_pipeline set_properties [{element: <the template's JSON parser>, name: stringTruncateLength, value: <a size>}]), then step and process the streams again; otherwise tell the user the value is cut, and why it stays"}
   # A required element left out, reported at the element after it (not in the Python server; seen: "starting with
   # element '{Data}'. One of '{Command}' is expected" read as Data put in the wrong place, two rounds of stepping
   # before Command was given a default).

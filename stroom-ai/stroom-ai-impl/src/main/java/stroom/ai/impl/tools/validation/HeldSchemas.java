@@ -94,7 +94,10 @@ public class HeldSchemas {
     static final int MAX_EVENT_SCHEMAS = 8;
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HeldSchemas.class);
-    private static final Pattern SCHEMA_LOCATION = Pattern.compile("schemaLocation=\"\\s*(\\S+)\\s+(\\S+)\\s*\"");
+    // Each part ends at the attribute's quote (found testing awkward values, 2026-11-18: Events with no white space,
+    // a Description holding compact JSON, were read as declaring a system id up to a quote in the JSON).
+    private static final Pattern SCHEMA_LOCATION = Pattern.compile(
+            "schemaLocation=\"\\s*([^\"\\s]+)\\s+([^\"\\s]+)\\s*\"");
     private static final Pattern EVENT_LOGGING_VERSION = Pattern.compile("event-logging-v(\\d+(?:\\.\\d+)*)\\.xsd");
     private static final Pattern NUMBER = Pattern.compile("\\d+");
     private static final Pattern FILE_PREFIX = Pattern.compile("^file:/*");

@@ -131,7 +131,9 @@ Change `delimiter` for tab (`\t`), pipe or semicolon data. Quoted fields need
 (`"Said ""bye"" and left"`) stays doubled: Data Splitter has no way to make it one (its `escape` attribute is for
 an escape character before the quote, `\"`, and breaks quoting by doubling), so the mapping reads such a field with
 `transform: unescape_quotes`; the draft sets it where the sample has them. An escape character (`a\,b`) is the
-spec's `escape`: the converter's split then takes it out of each cell (`$2`).
+spec's `escape`: the converter's split then takes it out of each cell (`$2`). A quoted key=value value with a quote
+escaped by a backslash (`msg="say \"hi\""`) is read whole, but keeps the backslash: the mapping reads it with
+`transform: unescape_backslashes` (`\"` and `\\` as `"` and `\`), which the draft sets where the sample has one.
 
 ## Records over several lines
 

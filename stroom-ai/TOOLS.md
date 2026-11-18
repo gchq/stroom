@@ -3924,7 +3924,9 @@ Shared behaviour:
   XSLT step and no parser, so there is no output of it to look at`).
 * **Triage.** Errors and warnings from every element are triaged by `ErrorTriage` (the environment's error rules
   and Stroom's own) into blocking, review and benign groups, with up to three examples each, the errors the user
-  accepted for the pipeline (`AcceptedErrors`) counted as benign. Output with no XML elements is a marker of its own
+  accepted for the pipeline (`AcceptedErrors`) counted as benign. The JSON parser's cut of a string longer than its
+  `stringTruncateLength` is for review, with the property to raise (it was a benign Warning from an inherited
+  element, so stepping was clean and the value lost; found testing awkward values, 2026-11-18). Output with no XML elements is a marker of its own
   (`SteppingVerdicts.emptyOutput`): when no template matches (usually a wrong `xpath-default-namespace`), XSLT's
   built-in rules copy text through, nothing errors, and processing silently writes nothing. CEF lines and Kafka
   records are not empty output (`SteppingVerdicts.sendsOn`), nor is text that isn't only the input's own text (CSV
@@ -4314,7 +4316,10 @@ Events are read as the XML version they declare: Stroom writes Events streams as
 in a source's value (a form feed, bell or escape) is written as a character reference (`&#xc;`) XML 1.0 forbids.
 The merged events of `stream_ids` keep the 1.1 declaration when any record has it, and an `events_xml` with a 1.1
 declaration is read as 1.1. Seen in chat 181: a Teams message's form feed, passed by Stroom's schema filter, was
-refused as "not well-formed (line 1)" of the merged one-line document, and the agent spent about 30 calls looking.
+refused as "not well-formed (line 1)" of the merged one-line document, and the agent spent about 30 calls looking. The
+declared schema is read from `xsi:schemaLocation` up to its closing quote (found testing awkward values, 2026-11-18:
+Events with no white space whose first Description held compact JSON were read as declaring a system id running into
+the JSON, and refused: "Stroom has no XML schema").
 
 * **Arguments**: `events_xml` (an `<Events>` document, e.g. step output) or `stream_ids` (Events streams processing
   wrote, as `wait_for_processing` lists them); exactly one of the two. `schema_version` (default the version the
@@ -4654,7 +4659,10 @@ input kind and layout from the profile, the obvious event-logging homes for fiel
 host, client and server addresses and ports, user, event type, message: `FieldHomes`), one rule per kind of event
 the naming field shows, a text field's key/value pairs read as one extract entry a key, every other field carried
 as Data, and notes on what is left to decide (the action element per kind, System Name and Environment, a time
-zone). `ActionRules` reads each kind's own records for its action: connections allowed or denied become
+zone). A quoted value's escapes that Stroom's Data Splitter keeps are undone by the field's transform: a CSV's
+doubled quote by `unescape_quotes`, a key=value quote or backslash escaped with a backslash by
+`unescape_backslashes` (`EscapedQuotes`; found testing awkward values, 2026-11-18, the events holding
+`say \"hi\"`). `ActionRules` reads each kind's own records for its action: connections allowed or denied become
 Network/Permit or Deny, logons and logoffs Authenticate, configuration changes Update, a service started or
 stopped Process, health and state records Alert. With `build`, the build's source notes (record_source_notes) are
 followed: catalogued events become rules with their action element, checked against the schema
@@ -4907,10 +4915,16 @@ of an object or of a JSON string holding one, `parse-xml` of a text holding no `
 `tokenize()` counting pairs; held JSON is JSON itself, `ToolJson.loadsStrict` in the tools: no `NaN` or `Infinity`,
 each number read as written, `2.10` and `1e10`, as `json-to-xml` keeps it), then
 stepped into as the tools step (JSON keys; XML elements and attributes by local name, the first in document order;
-a key's first `key=` value; a syslog field), each reading's value normalised, the first with a value taken; the
+a key's first `key=` value; a syslog field), each reading's value normalised (control characters but tab, new line
+and CR taken out, and U+FFFD, which `parse-json()` reads them as, then white space around it: a row's value can't
+hold one, as no XML 1.0 XSLT can; found testing awkward values, 2026-11-18), the first with a value taken; the
 `(no value)` row matches an empty value (`$value = ''`). A reading that isn't one is refused (`groupProblems`). Parity
 with the tools is tested over held JSON (once and twice encoded), XML, key=value, syslog, two and three held values
-deep, plain text and missing or malformed held fields (`TestSourceTypeReadingParity`). Every other record (another
+deep, plain text and missing or malformed held fields, and awkward values (controls, line ends, astral and
+right-to-left text, XML's specials) given to the XSLT as Stroom's jsonParser gives them, XML 1.1
+(`TestSourceTypeReadingParity`, `TestSourceTypeTupleParity`). A held field longer than the jsonParser keeps
+(`stringTruncateLength`, 10,000 by default) reads whole to the tools and cut in processing, so differently: the cut
+is a Warning triaged for review, with the property to raise. Every other record (another
 group's, parked, dropped, or a value no row matches) is passed over, its record's number read so the group's log
 lines name the right records, never logged nor warned of: an INFO line a document of the records passed over
 (`XsltGenerator.PASSED_OVER`, written by group XSLTs generated before 2026-11-15) made Stroom write an Error stream
@@ -4979,7 +4993,8 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   `references`.
 * **Returns**: the generator's result (`ok`, `xslt` unless saved, `problems`, `warnings` grouped, `events`),
   `schema_version` (and `schema_version_settled`), `required_imports`, `sample_check` (`records`, `problems`,
-  `warnings`, `fields_seen`, `not_checked`, `kept_unknown`, `note`), `changes_applied`, `changes_applied_to`,
+  `warnings`, `fields_seen`, `not_checked`, `kept_unknown`, `note`; an XML 1.1 sample, as Stroom writes XML, is read as
+  XML 1.1: read as 1.0, one holding `&#xc;` was "not XML a parser could read"), `changes_applied`, `changes_applied_to`,
   `source_notes_check`, `set_properties` and `set_properties_note` (JSON input: the JSON parser's `addRootObject`,
   true for JSON lines, for create_pipeline), `field_mapping` / `field_mapping_sample`, `saved` (`type`, `uuid`,
   `name`, `version`) with `next`, `follow_on` (on a replace: review_coverage reviews the pipelines reading its
@@ -6253,7 +6268,9 @@ check's lowest-EventId hit is traced back to its record by stepping the pipeline
 (record index EventId - 1), every hit of a stream in one stepping session (each in its own captured the stream
 again: verifying a long stream took over five minutes); the trace passes when the document there holds the value
 searched and is the hit's, matching on the hit's other columns when stepping numbers the record otherwise (stepped
-alone, every record was numbered 1). With `pipeline_uuid`, a field the pipeline's plan writes for these Events that
+alone, every record was numbered 1). The stepped document is read as the XML version it declares (found testing awkward values,
+2026-11-18: an Elasticsearch indexing XSLT's XML 1.1 output holding `&#xc;` was read as XML 1.0, giving "no
+document", so the check failed). With `pipeline_uuid`, a field the pipeline's plan writes for these Events that
 the index lacks fails the run.
 
 Passing records the build's pipelines writing to the index as verified (`BuildRecords.VERIFIED`), with the streams

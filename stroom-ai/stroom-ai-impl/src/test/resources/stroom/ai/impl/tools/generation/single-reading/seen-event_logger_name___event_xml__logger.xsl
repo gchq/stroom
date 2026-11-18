@@ -98,9 +98,9 @@
     <xsl:sequence select="string((mcp:reading_value(mcp:reading_held(string(($record/*[@key='event'])[1][not(*)]), '', '', 'logger_name', '^(|.*?[ \t\n\r,;])logger_name=(&quot;([^&quot;]*)&quot;|([^ \t\n\r,;]*)).*$', ('logger_name'), ('logger_name'), '')), mcp:reading_value(mcp:reading_held(string(($record/*[@key='event'])[1][not(*)]), 'xml', '', '@logger', '', (), (), 'logger')))[. ne ''][1])"/>
   </xsl:function>
   <xsl:function name="mcp:reading_value" as="xs:string">
-    <!-- A value read, stripped of XML's white space; '' for a nil value -->
+    <!-- A value read, stripped of control characters, then of XML's white space; '' for a nil value -->
     <xsl:param name="value" as="xs:string?"/>
-    <xsl:variable name="stripped" select="replace(string($value), '^[ \t\n\r]+|[ \t\n\r]+$', '')"/>
+    <xsl:variable name="stripped" select="replace(replace(string($value), '[\p{Cc}�-[\t\n\r]]', ''), '^[ \t\n\r]+|[ \t\n\r]+$', '')"/>
     <xsl:sequence select="if (lower-case($stripped) = ('-', 'null', 'none', 'n/a')) then '' else $stripped"/>
   </xsl:function>
   <xsl:function name="mcp:reading_held" as="xs:string">
