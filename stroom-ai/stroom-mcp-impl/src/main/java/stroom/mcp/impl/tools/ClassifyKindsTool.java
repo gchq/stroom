@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.KindFields;
+import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.shared.AiToolCategory;
@@ -543,7 +544,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // Most records in no kind listed: not classified, so the plan doesn't go on to the draft with them in a
             // rule no one was asked about (seen in testing: one kind of 433 records settled, 5,567 of 6,000 in none,
             // "every kind is settled: go on to the draft", and no form put to the user).
-            final KindFields.Choice choice = KindFields.candidates(records);
+            final KindFields.Choice choice = KindFields.candidates(withoutSourceType(build, records));
             result.put(TO_CLASSIFY, List.of());
             result.put(STATUS, "mostly_unclassified");
             if (!choice.candidates().isEmpty()) {
@@ -722,7 +723,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                    final List<Map<String, Object>> records,
                                    final boolean mayAsk,
                                    final List<String> userChose) {
-        final KindFields.Choice choice = KindFields.choose(records);
+        final KindFields.Choice choice = KindFields.choose(withoutSourceType(build, records));
         if (userChose != null) {
             // Chosen by the user in the form this call put to them.
             return new KindsChosen(userChose, null, true);
@@ -776,6 +777,65 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return new KindsChosen(said, null, true);
     }
 
+    // The records as their kind field is chosen among them within the build's scope: without the scope's source
+    // type field, as the records spell it (`event.logger_name` for `event>logger_name`), whose value is one source
+    // type's in every record of it, so it tells no kinds apart (seen in the held kind field e2e, 2026-11-18:
+    // `event.logger_name (com.x.App)` put to the user as a kind field). The records as given without a scope.
+    private List<Map<String, Object>> withoutSourceType(final String build, final List<Map<String, Object>> records) {
+        final Set<String> aside = builds.scope(build)
+                .map(scope -> sourceTypeSpellings(scope.field()))
+                .orElse(Set.of());
+        if (aside.isEmpty()) {
+            return records;
+        }
+        return records.stream()
+                .map(record -> {
+                    final Map<String, Object> copy = new LinkedHashMap<>(record);
+                    copy.keySet().removeAll(aside);
+                    return copy;
+                })
+                .toList();
+    }
+
+    // A source type field's names as the draft's records spell them: the field itself, and for a reading into a held
+    // value its names dotted (JSON's keys) and with slashes (XML's elements, an attribute after `@`).
+    private static Set<String> sourceTypeSpellings(final String field) {
+        final Set<String> out = new LinkedHashSet<>();
+        if (field == null) {
+            return out;
+        }
+        final SourceTypeReading reading = SourceTypeReading.isReading(field)
+                ? SourceTypeReading.cached(field)
+                : null;
+        if (reading == null) {
+            out.add(field);
+            return out;
+        }
+        for (final SourceTypeReading.Path path : reading.paths()) {
+            if (path.held().isEmpty()) {
+                out.add(path.field());
+                continue;
+            }
+            // A held value's format or root element read (`#format`, `#root`): no field of the records holds it.
+            if (path.held().stream().anyMatch(step -> step.special() != null)) {
+                continue;
+            }
+            final List<String> names = new ArrayList<>();
+            String attribute = null;
+            for (final SourceTypeReading.Step step : path.held()) {
+                names.addAll(step.names());
+                attribute = step.attribute();
+            }
+            out.add(path.field() + "." + String.join(".", names));
+            out.add(path.field() + "/" + String.join("/", names) + (attribute == null
+                    ? ""
+                    : (names.isEmpty()
+                            ? ""
+                            : "/") + "@" + attribute));
+        }
+        return out;
+    }
+
     // Where the draft's kinds leave most records in none, and the user hasn't chosen the kind fields: the fields that
     // could tell them apart put to the user; their choice listed at once. Empty when there is nothing to ask.
     private Optional<Map<String, Object>> kindFieldAsked(final ToolCall call,
@@ -793,7 +853,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // Not where the user has told the kinds apart by patterns over every record either.
             return Optional.empty();
         }
-        final KindFields.Choice choice = KindFields.candidates(records);
+        final KindFields.Choice choice = KindFields.candidates(withoutSourceType(build, records));
         if (choice.candidates().isEmpty()) {
             return Optional.empty();
         }
