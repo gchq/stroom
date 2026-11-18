@@ -22,6 +22,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.documentation.shared.DocumentationDoc;
@@ -39,6 +40,9 @@ import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.ResultPage;
@@ -210,6 +214,115 @@ class TestPromoteBuildTool {
         assertThat(String.valueOf(shown.get("layout"))).contains("└── Elastic Indices/\n    └── Acme/  (new)\n"
                                                                  + "        └── V1.0/  (new)\n"
                                                                  + "            └── ACME-V1.0-Indexing  (Pipeline)");
+    }
+
+    @Test
+    void aFeedInAFolderNamedAfterItKeepsItsRoleFoldersWhenItsOwnFolderIsGivenAsARolesLocation() {
+        // Seen in a user test (2026-11-18): the feed in System/Feeds and Translations/ABC/ABC-FEED, its documents
+        // went to ABC-FEED/ABC-FEED/V1.0, Events and Indexing together with no role folders. The question asked for
+        // "the folder holding the feed's Events folders": the feed's own folder, given back as the role's location.
+        final String own = abcFeed();
+        final String expected = own + "/\n"
+                                + "├── Events/  (new)\n"
+                                + "│   └── V1.0/  (new)\n"
+                                + "│       └── ABC-FEED-V1.0-EVENTS  (Pipeline)\n"
+                                + "└── Indexing/  (new)\n"
+                                + "    └── V1.0/  (new)\n"
+                                + "        └── ABC-FEED-V1.0-INDEXING  (Pipeline)";
+
+        // Proposed: the feed's own location.
+        assertThat(String.valueOf(review(Map.of()).get("layout"))).startsWith(expected)
+                .contains("- Events: System/Feeds and Translations/ABC (proposed: the feed's own location)");
+        // Given in the chat, destinations keyed by the role.
+        assertThat(String.valueOf(review(Map.of("Events", own, "indexing",
+                "/Feeds and Translations/ABC/abc-feed")).get("layout")))
+                .startsWith(expected)
+                .doesNotContain("ABC-FEED/ABC-FEED")
+                .contains("- Events: System/Feeds and Translations/ABC (as given)");
+        // Answered in the form: the same.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("a1", own, "a2", own));
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(Map.of(),
+                null)));
+        assertThat(String.valueOf(shown.get("layout"))).startsWith(expected)
+                .contains("- Indexing: System/Feeds and Translations/ABC (as the user chose)");
+        assertThat(String.valueOf(user.forms().getFirst())).doesNotContain("the feed's Events folders");
+    }
+
+    @Test
+    void aFeedInAFolderNamedAfterItWithSiblingsKeepsItsRoleFolders() {
+        final String own = abcFeed();
+        world.add(FeedDoc.TYPE, "XYZ-FEED", world.folder("System/Feeds and Translations/ABC/XYZ-FEED").uuid, "xyz");
+        world.folder("System/Feeds and Translations/ABC/XYZ-FEED/Events/V1.0");
+        Mockito.when(docs.pipelineIndex.read()).thenReturn(Map.of("xyz-ev", new PipelineIndex.Entry("xyz-ev",
+                "XYZ-FEED-V1.0-EVENTS", "System/Feeds and Translations/ABC/XYZ-FEED/Events/V1.0", "template", null)));
+        docs.facts.stages.put("xyz-ev", "translation");
+
+        final Map<String, Object> proposed = review(Map.of());
+        final Map<String, Object> given = review(Map.of("Events", own, "Indexing", own));
+
+        assertThat(String.valueOf(proposed.get("layout")))
+                .contains("- Events: System/Feeds and Translations/ABC (proposed: where the sibling feeds' Events "
+                          + "pipelines are)")
+                .contains("ABC-FEED/\n├── Events/  (new)\n│   └── V1.0/  (new)\n");
+        assertThat(String.valueOf(given.get("layout"))).doesNotContain("ABC-FEED/ABC-FEED")
+                .contains("ABC-FEED/\n├── Events/  (new)\n│   └── V1.0/  (new)\n")
+                .contains("└── Indexing/  (new)\n    └── V1.0/  (new)\n");
+    }
+
+    @Test
+    void onlyWhatTheBuildsPipelinesUseIsPromotedAndTheRestIsListed() {
+        // Seen in a user test (2026-11-18): an older Data Splitter the build had replaced was promoted with the rest.
+        // Decided by the user (2026-11-18): what nothing uses stays in the build, listed in the approval.
+        final Map<String, Object> destinations = buildWithAReplacedSplitter();
+
+        final Map<String, Object> shown = review(destinations);
+
+        assertThat(String.valueOf(shown.get("layout")))
+                .contains("ACME-V1.0-Splitter  (TextConverter)", "ACME Helpers  (XSLT)", "ACME Lists  (Dictionary)")
+                .doesNotContain("ACME-V1.0-Splitter-OLD  (TextConverter)", "ACME-V1.0-Splitter-OLD  (Documentation)",
+                        "ACME Unused  (XSLT)")
+                .contains("Not promoted, left in the build (nothing uses them): ACME-V1.0-Splitter-OLD "
+                          + "(TextConverter), ACME-V1.0-Splitter-OLD (Documentation), ACME Unused (XSLT)");
+        assertThat(String.valueOf(((Map<?, ?>) approvalForm(destinations, shown.get("review_id")).get("details"))
+                .get("not promoted (nothing uses them)")))
+                .contains("ACME-V1.0-Splitter-OLD (TextConverter)", "ACME Unused (XSLT)");
+
+        // Promoted: they stay in the build, untouched by the tidy-up; the rest moved.
+        promote(BuildToolCalls.user(Map.of("value", true)), destinations);
+        final String buildFolder = world.folder("System/" + BuildWorld.WORKSPACE + "/" + BUILD).uuid;
+        assertThat(world.nodes.get("old").parent).isEqualTo(buildFolder);
+        assertThat(world.nodes.get("old-doc").parent).isEqualTo(buildFolder);
+        assertThat(world.nodes.get("unused").parent).isEqualTo(buildFolder);
+        assertThat(world.nodes.get("ds").parent).isNotEqualTo(buildFolder);
+        assertThat(world.nodes.get("h").parent).isNotEqualTo(buildFolder);
+    }
+
+    @Test
+    void aDocumentNothingUsesIsPromotedWhenGivenAFolderOfItsOwn() {
+        final Map<String, Object> destinations = new LinkedHashMap<>(buildWithAReplacedSplitter());
+        destinations.put("old", "/Feeds/Acme/Old");
+
+        assertThat(String.valueOf(review(destinations).get("layout")))
+                .contains("Old/  (new)\n")
+                .doesNotContain("ACME-V1.0-Splitter-OLD (TextConverter)");
+    }
+
+    @Test
+    void aChangedOriginalIsAnsweredInTheChatWhereTheFormCantBeShown() {
+        // Decided by the user (2026-11-18): a form that can't be shown is never a dead end; the user's answer in the
+        // chat is honoured on the next call.
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+
+        final String refused = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(
+                destinations, null)));
+        final Map<String, Object> answered = args(destinations, null);
+        answered.put("changed_originals", Map.of("x-copy", "keep"));
+        final Map<String, Object> shown = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(answered));
+
+        assertThat(refused).doesNotContain("client that can show forms")
+                .contains("couldn't be shown", "changed_originals", "x-copy", "'overwrite'", "'keep'");
+        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy")
+                .contains("ACME notes (Documentation)");
     }
 
     @Test
@@ -748,7 +861,7 @@ class TestPromoteBuildTool {
         // the edit when the copy was promoted (kept only in the backup). The user is asked, told the difference.
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
-                PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
+                ChangedOriginals.OVERWRITE_ORIGINAL, "value", true));
 
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
                 null)));
@@ -761,7 +874,7 @@ class TestPromoteBuildTool {
                             + "john.smith")
                 .contains("Overwriting it loses from production: Doors, v1 by hand.",
                         "The working copy brings: Doors, v2.",
-                        PromoteBuildTool.OVERWRITE_ORIGINAL, "kept only in its backup");
+                        ChangedOriginals.OVERWRITE_ORIGINAL, "kept only in its backup");
         assertThat(((DocumentationDoc) world.docs.get("x-prod")).getData()).isEqualTo(NOTES_V2);
     }
 
@@ -769,7 +882,7 @@ class TestPromoteBuildTool {
     void aWorkingCopyOverAChangedOriginalTheUserKeepsStaysInTheBuild() {
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
-                PromoteBuildTool.KEEP_ORIGINAL, "value", true));
+                ChangedOriginals.KEEP_ORIGINAL, "value", true));
 
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
                 null)));
@@ -785,7 +898,7 @@ class TestPromoteBuildTool {
 
         // Promoted again, it is asked again: the choice held for that promotion only.
         final BuildToolCalls.FormUser later = BuildToolCalls.user(Map.of("choice",
-                PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
+                ChangedOriginals.OVERWRITE_ORIGINAL, "value", true));
         final Map<String, Object> again = docs.call(tool, later.context(), DocumentationWorld.args(args(
                 destinations, null)));
         docs.call(tool, later.context(), DocumentationWorld.args(args(destinations, again.get("review_id"))));
@@ -1360,6 +1473,57 @@ class TestPromoteBuildTool {
                         "template", null)));
         docs.facts.stages.put("beta-ev", "translation");
         docs.facts.stages.put("beta-ix", "indexing");
+    }
+
+    // Production feed ABC-FEED in a folder named after it, the build's pipelines working from it: the feed's folder.
+    private String abcFeed() {
+        final String own = "System/Feeds and Translations/ABC/ABC-FEED";
+        world.add(FeedDoc.TYPE, "ABC-FEED", world.folder(own).uuid, "abc");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "ABC-FEED", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "abc", "ABC-FEED")));
+        docs.facts.sources = List.of("ABC-FEED");
+        listed(doc(PipelineDoc.TYPE, "ev", "ABC-FEED-V1.0-EVENTS", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "ABC-FEED-V1.0-INDEXING", "Indexing"));
+        return own;
+    }
+
+    // A build whose pipeline uses its new splitter and XSLT (which imports its helpers and reads a dictionary
+    // importing another), beside the splitter it replaced (with its documentation) and an XSLT nothing imports.
+    private Map<String, Object> buildWithAReplacedSplitter() {
+        exists("System/Feeds/Acme");
+        world.inBuild(BUILD, FeedDoc.TYPE, "ACME", "f");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.0-Events", "ev");
+        world.inBuild(BUILD, TextConverterDoc.TYPE, "ACME-V1.0-Splitter", "ds");
+        world.inBuild(BUILD, TextConverterDoc.TYPE, "ACME-V1.0-Splitter-OLD", "old");
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-V1.0-Splitter-OLD", "old-doc");
+        world.inBuild(BUILD, XsltDoc.TYPE, "ACME-V1.0-Events", "x");
+        world.inBuild(BUILD, XsltDoc.TYPE, "ACME Helpers", "h");
+        world.inBuild(BUILD, XsltDoc.TYPE, "ACME Unused", "unused");
+        world.inBuild(BUILD, DictionaryDoc.TYPE, "ACME Words", "dict");
+        world.inBuild(BUILD, DictionaryDoc.TYPE, "ACME Lists", "lists");
+        world.docs.put("x", XsltDoc.builder().uuid("x").name("ACME-V1.0-Events").version("v0")
+                .data("<xsl:stylesheet><xsl:import href=\"ACME Helpers\"/>"
+                      + "<xsl:variable name=\"w\" select=\"stroom:dictionary('ACME Words')\"/></xsl:stylesheet>")
+                .build());
+        world.docs.put("dict", DictionaryDoc.builder().uuid("dict").name("ACME Words").version("v0")
+                .imports(List.of(new DocRef(DictionaryDoc.TYPE, "lists", "ACME Lists"))).build());
+        world.docs.put("ev", PipelineDoc.builder().uuid("ev").name("ACME-V1.0-Events").version("v0")
+                .pipelineData(new PipelineDataBuilder()
+                        .addProperty(new PipelineProperty("dsParser", "textConverter", new PipelinePropertyValue(
+                                new DocRef(TextConverterDoc.TYPE, "ds", "ACME-V1.0-Splitter"))))
+                        .addProperty(new PipelineProperty("translationFilter", "xslt", new PipelinePropertyValue(
+                                new DocRef(XsltDoc.TYPE, "x", "ACME-V1.0-Events"))))
+                        .build())
+                .build());
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(TextConverterDoc.TYPE, "ds", "ACME-V1.0-Splitter", "Events"),
+                doc(TextConverterDoc.TYPE, "old", "ACME-V1.0-Splitter-OLD", "Events"),
+                doc(DocumentationDoc.TYPE, "old-doc", "ACME-V1.0-Splitter-OLD", "Events"),
+                doc(XsltDoc.TYPE, "x", "ACME-V1.0-Events", "Events"), doc(XsltDoc.TYPE, "h", "ACME Helpers", "Events"),
+                doc(XsltDoc.TYPE, "unused", "ACME Unused", "Events"),
+                doc(DictionaryDoc.TYPE, "dict", "ACME Words", "Events"),
+                doc(DictionaryDoc.TYPE, "lists", "ACME Lists", "Events"));
+        return Map.of("Feed", "/Feeds/Acme");
     }
 
     // The folders, made.

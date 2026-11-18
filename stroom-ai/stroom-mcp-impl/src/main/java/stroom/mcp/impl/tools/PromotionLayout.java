@@ -53,6 +53,9 @@ class PromotionLayout {
     static final String DISCARD = "discard";
     /// A step: a document left in the workspace.
     static final String KEEP = "keep";
+    /// A kept step's target: a build document nothing promoted uses (decided by the user, 2026-11-18), left in the
+    /// build.
+    static final String NOT_USED = "not promoted: nothing uses it";
 
     /// An aggregated feed's shared modules' folders, each a role of its own beside [WriteGuard#ROLES], always under
     /// the feed's folder: `<feed>/Common/V1.0`, `<feed>/Helpers/V1.0`.
@@ -115,7 +118,8 @@ class PromotionLayout {
     /// version. Under the feed's own root, `<feed>/<Role>/<version>` (an aggregated feed's group's:
     /// `<feed>/<group>/<Role>/<version>`); under a root of the role's own, elsewhere, no role folder:
     /// `<root>/<feed>/<version>` (`<root>/<feed>/<group>/<version>`), e.g. `System/Elastic Indices/App-Logs/V1.0`.
-    /// An aggregated feed's shared modules always go under the feed: `<feed>/Common/<version>`.
+    /// An aggregated feed's shared modules always go under the feed: `<feed>/Common/<version>`. A root that is the
+    /// feed's folder itself is the feed's own ([#ownRoot]).
     ///
     /// @param feedFolder The feed's folder, e.g. `System/Parent/App-Logs`.
     /// @param root       The role's root, or null for the feed's own.
@@ -132,10 +136,25 @@ class PromotionLayout {
         final String groupPart = NullSafe.isBlankString(group)
                 ? ""
                 : "/" + group;
-        if (root == null || sameFolder(root, parentOf(feed)) || MODULE_ROLES.contains(role)) {
+        final String own = ownRoot(root, feed);
+        if (own == null || sameFolder(own, parentOf(feed)) || MODULE_ROLES.contains(role)) {
             return feed + groupPart + "/" + role + "/" + version;
         }
-        return normalised(root) + "/" + lastPart(feed) + groupPart + "/" + version;
+        return normalised(own) + "/" + lastPart(feed) + groupPart + "/" + version;
+    }
+
+    /// A role's root as the layout reads it: the feed's folder itself given as the root is the feed's own location,
+    /// the folder holding it. Seen in a user test (2026-11-18): the feed in a folder named after it, its own folder
+    /// given as the root (the question asked for "the folder holding the feed's Events folders") gave
+    /// `<feed>/<feed>/V1.0`, every role together with no role folders.
+    ///
+    /// @param root       A role's root, or null.
+    /// @param feedFolder The feed's folder, or null when it isn't known.
+    /// @return The root, the folder holding the feed's where the root is the feed's folder; null for null.
+    static String ownRoot(final String root, final String feedFolder) {
+        return root != null && sameFolder(root, feedFolder)
+                ? parentOf(normalised(feedFolder))
+                : root;
     }
 
     /// A new version's folder beside its predecessor's (decided by the user, 2026-11-17): a sibling version folder in
@@ -276,12 +295,12 @@ class PromotionLayout {
                 continue;
             }
             final Optional<String> before = predecessorFolder(step.doc());
-            String target = rolePath(base, rootByRole.get(role), group, role, version);
+            final String root = ownRoot(rootByRole.get(role), base);
+            String target = rolePath(base, root, group, role, version);
             if (before.isPresent()) {
                 final Predecessor predecessor = predecessor(before.get());
-                final String root = rootByRole.get(role);
-                if (root == null || sameFolder(root, rootOf(predecessor, feedFolder,
-                        buildGroup))) {
+                if (root == null || sameFolder(root, ownRoot(rootOf(predecessor, feedFolder, buildGroup),
+                        feedFolder))) {
                     target = nextVersionPath(predecessor, feedFolder, role, version);
                 }
             }
@@ -394,6 +413,7 @@ class PromotionLayout {
         final Map<String, List<String>> placed = new LinkedHashMap<>();
         final List<String> written = new ArrayList<>();
         final List<String> kept = new ArrayList<>();
+        final List<String> unused = new ArrayList<>();
         for (final Step step : plan) {
             final Map<String, Object> doc = step.doc();
             final String type = String.valueOf(doc.get("type"));
@@ -412,7 +432,9 @@ class PromotionLayout {
                         written.add(name + " (" + type + ")");
                     }
                 }
-                case KEEP -> kept.add(name + " (" + type + ")");
+                case KEEP -> (NOT_USED.equals(step.target())
+                        ? unused
+                        : kept).add(name + " (" + type + ")");
                 default -> {
                     // A discarded working copy isn't shown.
                 }
@@ -457,6 +479,9 @@ class PromotionLayout {
         }
         if (!kept.isEmpty()) {
             out += "\n\nLeft in the workspace: " + String.join(", ", kept);
+        }
+        if (!unused.isEmpty()) {
+            out += "\n\nNot promoted, left in the build (nothing uses them): " + String.join(", ", unused);
         }
         return out;
     }

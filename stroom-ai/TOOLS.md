@@ -2744,7 +2744,7 @@ destinations; unlocked by Manage Processors (the promoted pipelines' filters are
 approve) · confirms itself · chat group build · Classes: `PromoteBuildTool`, `PromotionLayout`, `PromotionProcessing`,
 `DocumentPlaces`, `DocumentWrites`, `WriteGuard`, `BuildRecords`, `BuildChecks`, `Consent`, `IndexingRuns`,
 `OutputFeeds`, `XsltHistory`, `DocumentationVersions`, `SurveyDocuments`, `SourceTypeGroups`, `GroupReferences`,
-`FeedIndexDecisions`, `SourceFolders`, `PromotionTidyUp`
+`FeedIndexDecisions`, `SourceFolders`, `PromotionTidyUp`, `PromotionUses`, `ChangedOriginals`
 
 An aggregated feed's indexes (`FeedIndexDecisions.changes`, `apply`): each indexing plan kept in the build is
 matched to its source type group and output feed (as `draft_index_mapping` recorded them in the build record's
@@ -2845,11 +2845,31 @@ Where each document goes (`plan`):
   (`SourceFolders.siblings`: feeds in the feed's root and the folders there holding a feed; `PromotionLayout.siblingRoots`
   reads, from `PipelineIndex.read()`, pipelines in a folder named for a sibling, not templates others inherit from nor
   in the workspace, at most 200, by stage role, and takes the root most are under), else the feed's own root. Options:
-  the proposal, then the feed's own location where it differs; the user may type another. With forms, all roles in one
-  form on the review's call (`Consent.answerEach`: suggested answers as buttons, a blank one taking the proposal),
-  recorded so the approval call lays out what was reviewed; without, the reply's `role_locations` (`role`,
+  the proposal, then the feed's own location where it differs; the user may type another. The feed's own folder given
+  (or chosen) as a role's root is the feed's own location (`PromotionLayout.ownRoot`, in `rolePath`, `layOut`'s
+  predecessor check and `roleRoots`): seen in a user test (2026-11-18), the feed in a folder named after it
+  (`.../ABC/ABC-FEED`), its own folder given back for "the folder holding the feed's Events folders", as the question
+  then put it, was read as a root elsewhere, and every role went in `ABC-FEED/ABC-FEED/V1.0` with no role folders. The
+  question now asks for the folder holding the feed's folder, naming the feed's own location. With forms, all roles
+  in one form on the review's call (`Consent.answerEach`: suggested answers as buttons, a blank one taking the
+  proposal), recorded so the approval call lays out what was reviewed; without, the reply's `role_locations` (`role`,
   `location`, `why`, `options`) for the agent to ask in the chat. The tree ends with `Where each role goes ...: -
   <Role>: <root> (<why>)`, so the review id and the approval cover them.
+* **Only what is used** (`PromotionUses`; decided by the user 2026-11-18, seen in a user test: an older Data Splitter
+  the build had replaced was promoted with the rest): promotion moves only what the build's pipelines need. Walked
+  from everything always promoted (pipelines, the parent pipelines they inherit from, feeds, indexes, working copies,
+  an aggregated feed's modules, an indexing XSLT holding its index plan, documentation of its own) through each
+  pipeline's own properties' documents and its reference lookups' pipelines and feeds, each XSLT's imports, includes
+  and dictionary lookups (a build XSLT's or dictionary's name quoted, or its UUID, in the code), and each dictionary's
+  imports. A build XSLT, text converter or dictionary nothing reaches (one used only by another unused one included),
+  and the Documentation named after only those, stay in the build untouched (a `keep` step, target `not promoted:
+  nothing uses it`: no version consolidation, marked `kept_at_promotion` like any document left, never tidied up).
+  The tree ends `Not promoted, left in the build (nothing uses them): ...`, the review lists `not_promoted`, the
+  approval `not promoted (nothing uses them)`. A folder given by the document's UUID promotes it all the same. Where
+  the walk can't be sure, nothing is left out: a build of no pipeline (seen in e2e: a converter and XSLT promoted on
+  their own), a build pipeline (or XSLT, dictionary) unreadable, or an element picking its document by a name
+  pattern (`xsltNamePattern`, `namePattern`). The registry, source notes, reference documents and survey doc are
+  placed as before.
 * **A folder of the source's own** (`SourceFolders`): the source is the feed the build works from, else its
   registry's feed, else its one new feed. Where that feed's folder is a parent of sources (a subfolder of it, not a
   role or version subfolder, holds a feed: the siblings' convention), the build's documents go in
@@ -2874,8 +2894,8 @@ Where each document goes (`plan`):
 **Production changed since the copy.** `copy_pipeline` records in each working copy's build record entry the version
 its original had when copied (`BuildRecords.COPY_OF_VERSION`, `copy_of_version`). Before the layout is built (on the
 first call, so the reviewed tree shows the choice), each document to be written back whose original's version is now
-different (`changedSinceCopied`; e.g. edited by hand in production) is put to the user in a form of its own
-(`askAboutChangedOriginals`, through `Consent.choose`): who changed production and when (the original's
+different (`ChangedOriginals.changedSinceCopied`; e.g. edited by hand in production) is put to the user in a form of its own
+(`ChangedOriginals.ask`, through `Consent.choose`): who changed production and when (the original's
 `updateUser` and `updateTimeMs`), then, for a document with code, what overwriting would lose from production and
 what the working copy brings (`CodeDiff`, at most six lines of each, at most 1,000 characters, so the form can
 always be shown). The choices:
@@ -2888,11 +2908,14 @@ always be shown). The choices:
 
 The choice is kept in the copy's build record entry (`original_choice`) against the original's version, so the
 approval call doesn't ask again; it is cleared once the promotion is carried out, so promoting the build again asks
-afresh, and a further change in production asks again. Promotion already needs a client that can show forms (its
-approval), so a client without them is refused. A copy taken before the version was recorded has none, and is
-written back without asking. Asked for by the user: before, the copy was written over a production edit made after
-it was taken, and the edit survived only in the backup; they chose a question that explains the difference over a
-refusal.
+afresh, and a further change in production asks again. Where the form can't be shown (decided by the user
+2026-11-18: never a dead end), promotion is refused before anything is changed with each question and its working
+copy's UUID, for the agent to ask in the chat; the user's answer is honoured on the next call through
+`changed_originals` (`{"<working copy uuid>": "overwrite" | "keep"}`, the options' full text accepted too), recorded
+as a form's answer would be. An answer given there is taken over one recorded. A copy taken before the version was
+recorded has none, and is written back without asking. Asked for by the user: before, the copy was written over a
+production edit made after it was taken, and the edit survived only in the backup; they chose a question that
+explains the difference over a refusal.
 
 Every destination is resolved before approval (`WriteGuard.resolveFolder`), and the folders to create are listed in
 the tree, so a missing folder can't stop a promotion half way. On approval, in order: pending changes are consolidated
@@ -2939,9 +2962,10 @@ feed the build works from, the survey doc and the build record.
 
 * **Arguments**: `build` (required), `destinations` (object, or JSON text: type, role or document UUID → explorer
   path, in any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`), `tidy_up` (boolean,
-  default true; false keeps the test data).
+  default true; false keeps the test data), `changed_originals` (object, or JSON text: working copy UUID →
+  `overwrite` or `keep`, the user's chat answer where the changed-original form couldn't be shown).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
-  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, tidy_up?, hint}`. After approval: `build`,
+  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, not_promoted?, tidy_up?, hint}`. After approval: `build`,
   `tidied_up` (per item: `document`, `streams_marked_deleted` or `shards_deleted`, `deleted`, and `failed` or
   `skipped` where it was left; or `tidy_up: not done ...` when the user unticked it), `layout`,
   `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,
