@@ -13,8 +13,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.14-beta.18] - 2026-11-18
-
 * Feature : Add joins to StroomQL: `join`, `left join`, `semi join` and `anti join` lines after `from` (also written `inner join`, `left outer join`, `left semi join` and `left anti join`) join another data source or a bracketed query to the query's rows, as the rows arrive.
 
 * Bug : Fix StroomQL `in (a, b)` matching only the last value when filtering text fields of Data Connections and other sources filtered in Stroom.
@@ -2949,7 +2947,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.17-parallel-pathways...HEAD
-[v7.14-beta.18]: https://github.com/gchq/stroom/compare/v7.14-beta.17...v7.14-beta.18
 [v7.14-beta.17-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...v7.14-beta.17-parallel-pathways
 [v7.14-beta.17]: https://github.com/gchq/stroom/compare/v7.14-beta.16...v7.14-beta.17
 [v7.14-beta.16-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...v7.14-beta.16-parallel-pathways
