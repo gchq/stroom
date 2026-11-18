@@ -626,6 +626,30 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aSyslogBodysKeyValueQuoteEscapedWithABackslashIsUnescapedToo() {
+        // Seen in the agent eval (case 25): the splitter a syslog header with a key_value body, msg="say \"hi\"",
+        // and the draft read msg with no transform, so the events said 'say \"hi\"'.
+        final String text = String.join("\n",
+                "<134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - user=alice action=allow msg=\"ok\"",
+                "<134>1 2026-10-02T11:01:00.000Z wf01 webfilter 2211 - - user=bob action=block "
+                + "msg=\"say \\\"hi\\\" to phishing\"",
+                "<134>1 2026-10-02T11:02:00.000Z wf01 webfilter 2211 - - user=carol action=block "
+                + "msg=\"saved to C:\\\\temp\"") + "\n";
+        final SplitterSpec splitter = specOf("""
+                {"kind": "syslog", "rfc": "rfc5424", "body": {"kind": "key_value", "quote": "\\""}}""");
+        final Map<String, Object> drafted = DraftMapping.draft(List.of(text), "Web filter", "Web filter", "Prod",
+                null, null, splitter);
+        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mappingOf(drafted).get("common")));
+        JsonValues.maps(mappingOf(drafted).get("events")).forEach(rule -> entries.addAll(JsonValues.maps(
+                rule.get("fields"))));
+        assertThat(entries).filteredOn(entry -> "msg".equals(entry.get("field"))).isNotEmpty()
+                .allSatisfy(entry -> assertThat(entry.get("transform")).isEqualTo("unescape_backslashes"));
+        assertThat(entries).filteredOn(entry -> "user".equals(entry.get("field"))).isNotEmpty()
+                .allSatisfy(entry -> assertThat(entry).doesNotContainKey("transform"));
+        assertThat(String.valueOf(drafted.get("notes"))).contains("['msg'] hold quotes escaped with a backslash");
+    }
+
+    @Test
     void syslogNilValuesAreLeftOutAndNeverNameTheKind() {
         final Map<String, Object> drafted = draft(List.of(format("syslog5424_kv")), "");
         assertThat(mappingOf(drafted).get("nil_values")).isEqualTo(List.of("-"));

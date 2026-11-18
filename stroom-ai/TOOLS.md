@@ -4693,7 +4693,9 @@ as Data, and notes on what is left to decide (the action element per kind, Syste
 zone). A quoted value's escapes that Stroom's Data Splitter keeps are undone by the field's transform: a CSV's
 doubled quote by `unescape_quotes`, a key=value quote or backslash escaped with a backslash by
 `unescape_backslashes` (`EscapedQuotes`; found testing awkward values, 2026-11-18, the events holding
-`say \"hi\"`). `ActionRules` reads each kind's own records for its action: connections allowed or denied become
+`say \"hi\"`), wherever the splitter spec holds the quoted key_value spec: its own, a syslog (or other) header's
+`body`, an alternatives part or a part's body (seen in the agent eval, case 25: a syslog body's escapes kept), never
+the header's fields or the body's text it was read from. `ActionRules` reads each kind's own records for its action: connections allowed or denied become
 Network/Permit or Deny, logons and logoffs Authenticate, configuration changes Update, a service started or
 stopped Process, health and state records Alert. With `build`, the build's source notes (record_source_notes) are
 followed: catalogued events become rules with their action element, checked against the schema

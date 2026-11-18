@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.sample.SplitterSpec;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +30,10 @@ import java.util.Set;
 /// Quoted key=value values holding a quote escaped with a backslash (`msg="say \"hi\""`): Stroom's Data Splitter reads
 /// the value whole (the converter's regex reads past the escape) but keeps the backslash, so the draft reads such a
 /// field with `transform: unescape_backslashes`. Found testing awkward values (2026-11-18): the events said
-/// `say \"hi\"`. Format-level knowledge only: whether the sample's values hold the escape.
+/// `say \"hi\"`. Format-level knowledge only: whether the sample's values hold the escape. The key_value spec may be
+/// the splitter's own or nested in it: a syslog (or other) header's body, an alternatives part, or a part's body. Seen
+/// in the agent eval (case 25): a syslog header with a key_value body read with no transform, its events saying
+/// `say \"hi\"`.
 final class EscapedQuotes {
 
     private EscapedQuotes() {
@@ -48,13 +52,19 @@ final class EscapedQuotes {
                          final List<Map<String, Object>> records,
                          final Map<String, Object> mapping,
                          final List<String> notes) {
-        if (spec == null || !"key_value".equals(spec.kind()) || !LocalCheck.hasText(spec.quote())) {
+        if (spec == null) {
             return;
         }
-        final String escapedQuote = "\\" + spec.quote();
+        final Set<String> quotes = new LinkedHashSet<>();
+        final Set<String> notPairs = new HashSet<>();
+        collect(spec, quotes, notPairs);
+        if (quotes.isEmpty()) {
+            return;
+        }
         final Set<String> escaped = new HashSet<>();
         records.forEach(record -> record.forEach((key, value) -> {
-            if (ToolText.str(value).contains(escapedQuote)) {
+            final String text = ToolText.str(value);
+            if (!notPairs.contains(key) && quotes.stream().anyMatch(quote -> text.contains("\\" + quote))) {
                 escaped.add(key);
             }
         }));
@@ -73,5 +83,22 @@ final class EscapedQuotes {
         notes.add(ToolText.repr(escaped.stream().sorted(ToolText::compare).toList()) + " hold quotes escaped with a "
                   + "backslash inside quoted values, which Data Splitter keeps escaped: the draft reads them with "
                   + "transform unescape_backslashes (a quote or backslash after a backslash as itself).");
+    }
+
+    // The quotes of the quoted key_value specs in the spec, wherever nested (its body, its alternatives' parts and
+    // theirs), and the fields that aren't a pair's value: the header's fields of a spec with a body, and the text its
+    // body is read from (kept whole, escapes and all, as the source wrote it).
+    private static void collect(final SplitterSpec spec, final Set<String> quotes, final Set<String> notPairs) {
+        if ("key_value".equals(spec.kind()) && LocalCheck.hasText(spec.quote())) {
+            quotes.add(spec.quote());
+        }
+        if (spec.body() != null) {
+            notPairs.add(spec.bodyField());
+            if ("syslog".equals(spec.kind())) {
+                notPairs.addAll(spec.syslogNames());
+            }
+            collect(spec.body(), quotes, notPairs);
+        }
+        spec.parts().forEach(part -> collect(part, quotes, notPairs));
     }
 }
