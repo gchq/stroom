@@ -269,6 +269,38 @@ class TestPromotionProcessing {
     }
 
     @Test
+    void aProductionLuceneIndexIsNeverPutUpForEmptyingOnlyAnIndexTheBuildMadeIs() {
+        // Seen in an eval (case 61, a source type joining its promoted group as V1.1): the handover asked the user
+        // to delete the shards of the group's production index, its V1.0 history with them, before enabling the new
+        // version's indexing filter.
+        final DocRef version = new DocRef(PipelineDoc.TYPE, "ev2", "Acme-V1.1-Events");
+        w.pipeline(IP, true, null);
+        w.lucene("ip", new DocRef("Index", "idx", "ACME-INDEX"));
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(IP, null, "Events",
+                List.of(ProcessorFilterWrites.pipelineTerm(version)));
+
+        final List<Map<String, Object>> production = w.promotion.createPromotionFilters(StroomLinks.CHAT,
+                List.of(entry), Set.of("ip"));
+
+        assertThat(String.valueOf(production.getFirst().get("before_enabling")))
+                .contains("'ACME-INDEX' is not emptied: it is a production index",
+                        "indexes the Events of 'Acme-V1.1-Events' into it beside what it holds",
+                        "none of those Events are in it yet", "the user decides")
+                .doesNotContain("delete the shards");
+        assertThat(TestCreateProcessorFilterTool.actions(production.getFirst())).singleElement()
+                .satisfies(action -> assertThat(action.get("action")).isEqualTo("enable_processor_filter"));
+
+        // The build's own index, promoted with it, holding the build's sample: emptied first, as before.
+        final List<Map<String, Object>> own = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
+                Set.of("ip", "idx"));
+
+        assertThat(String.valueOf(own.getFirst().get("before_enabling"))).contains("delete the shards of index "
+                                                                                   + "'ACME-INDEX' first");
+        assertThat(TestCreateProcessorFilterTool.actions(own.getFirst())).extracting(action -> action.get("action"))
+                .containsExactly("open_document", "enable_processor_filter");
+    }
+
+    @Test
     void aNewVersionsOwnIndexIsDroppedOnlyWhileNothingElseClaimsIt() {
         // Its own index (the free name the build made, holding only the sample), named by the promoted pipeline and
         // the Elastic Index doc the build made for it: dropped first, as before.

@@ -720,6 +720,17 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         assertThat(exists(ownDashboard)).as("its dashboard is tidied up").isFalse();
         assertThat(exists(group.indexDoc())).isTrue();
         assertThat(jsonOf(promoted.get("tidied_up"))).contains(group.feed() + "-MCP-TEST");
+        // The group's production index is never put up for emptying (seen in the same eval: the handover asked the
+        // user to delete its shards, its V1.0 history with them): its new filter reads only the V1.1 Events.
+        final Map<String, Object> handedOver = list(promoted, "processing_filters").stream()
+                .filter(filter -> String.valueOf(filter.get("pipeline")).equals(copied.get("name")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No filter for the copy: " + promoted));
+        assertThat(String.valueOf(handedOver.get("before_enabling")))
+                .contains("'" + group.index() + "' is not emptied: it is a production index")
+                .doesNotContain("delete the shards");
+        assertThat(jsonOf(promoted.get("user_actions"))).doesNotContain("delete its shards")
+                .doesNotContain("\"open_document\"");
     }
 
     // --- the steps ---

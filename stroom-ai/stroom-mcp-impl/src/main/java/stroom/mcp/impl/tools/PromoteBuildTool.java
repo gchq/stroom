@@ -1816,8 +1816,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                + "disabling or removing the earlier version's filters is the admin's, never the "
                                + "tools'."
                                + (filters.stream().anyMatch(f -> f.get("before_enabling") != null)
-                    ? " A filter with before_enabling indexes into an index that must start fresh: ask the user to "
-                      + "have it done first, as it says (an index left as it is holds the build's events twice)."
+                    ? " Give the user each filter's before_enabling as it is: an index the build made is emptied or "
+                      + "dropped first, as it says (left as it is, it holds the build's events twice); a production "
+                      + "index never is, and it says what the user decides instead."
                     : ""));
         }
         return result;
