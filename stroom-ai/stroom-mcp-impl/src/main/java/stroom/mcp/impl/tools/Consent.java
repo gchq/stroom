@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.ElicitationSchema;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
@@ -36,10 +37,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -60,6 +65,12 @@ import java.util.WeakHashMap;
 ///
 /// What the user settled on in the call's forms ([#edited], [#changes]) is kept for the call, for the tool and for
 /// [BuildPlan#withNext] to read.
+///
+/// Tools build forms that fit what a form may hold ([ElicitationSchema]); one that still can't be shown (too large,
+/// or the client couldn't show it) is asked in the chat, and the user's answer said there is taken on the next call,
+/// never asked again in a form that can't be shown (decided by the user, 2026-11-18): [#takesChatAnswer] says when a
+/// tool takes it. A form not shown is kept for the session, by the tool and its question, so the next call, whatever
+/// its other arguments, knows it.
 @Singleton
 public class Consent {
 
@@ -74,10 +85,30 @@ public class Consent {
     // Characters of one detail's value in a form.
     private static final int DETAIL_LIMIT = 160;
     private static final int HEADING_LIMIT = 150;
+    /// The most lines of a list a form's message shows ([#firstLines]); the rest are in the chat.
+    public static final int LINES_SHOWN = 5;
+    // The most characters of a yes/no field's description: the form's message carries the summary.
+    private static final int DESCRIPTION_LIMIT = 300;
+    // How long a form not shown is kept for the next call to take the user's chat answer.
+    private static final Duration UNSHOWN_KEPT = Duration.ofHours(2);
+    // The most sessions whose forms not shown are kept.
+    private static final int SESSIONS_KEPT = 1_000;
+    // What a form not shown is kept under for a confirmation (one at a time per tool and session).
+    private static final String CONFIRMATION_TOPIC = "\nconfirmation";
+    // What a question the agent was told to ask in the chat is kept under, after its topic.
+    private static final String ASKED_IN_CHAT = "\nasked in the chat";
+    private static final SecureRandom RANDOM = new SecureRandom();
+    // Why a form that fits wasn't shown: the client answered it with an error.
+    private static final String CLIENT_COULD_NOT_SHOW = "the client couldn't show it";
+    // The key of [#pick]'s list.
+    private static final String PICKED = "picked";
 
     private final Provider<AiAuditLog> auditLogProvider;
     // What each call's forms settled, kept while the call's context is.
     private final Map<ToolCallContext, CallState> calls = Collections.synchronizedMap(new WeakHashMap<>());
+    // The forms that couldn't be shown, by session, then by tool and question.
+    // The oldest session's are dropped past SESSIONS_KEPT.
+    private final Map<String, Map<String, Unshown>> unshown = Collections.synchronizedMap(new LinkedHashMap<>());
 
     /// @param auditLogProvider Records each request, grant and refusal.
     @Inject
@@ -105,8 +136,82 @@ public class Consent {
             audit(context.session(), request.kind().word(), request, "refused: no form can be shown", false);
             throw new ToolRefusal(FormsRequired.cannotAsk(context.session(), call.name(), request.summary()));
         }
-        ask(call, context, request, digest(request.action(), request.details(), request.binding(),
-                request.options()), state);
+        final String message = formMessage(request.summary(), request.details(), request.documents());
+        final Map<String, Object> schema = schema(request);
+        final String problem = ElicitationSchema.check(message, schema);
+        if (problem == null) {
+            ask(call, context, request, message, schema, state);
+        } else if (!request.editable().isEmpty()) {
+            confirmShown(call, context, request, state);
+        } else {
+            confirmInChat(call, context, request, problem, state);
+        }
+    }
+
+    /// Whether a tool takes the user's answer to one of its questions as said in the chat (an argument the agent
+    /// passes) rather than asking it in a form: where no form can be shown now, or where the question's form
+    /// couldn't be shown in this session (too large, or the client couldn't show it), so the agent asked in the
+    /// chat. Never a loop: a form that can't be shown isn't asked again instead of taking the answer the user gave.
+    ///
+    /// @param context  The call's context.
+    /// @param action   The tool, e.g. `record_source_types`.
+    /// @param question The question, as the tool asked it: [#choose]'s title (else its question), [#pick]'s and
+    ///                 [#answer]'s question, [#review]'s text, [#chooseEach]'s and [#answerEach]'s intro.
+    /// @return True if the tool takes the answer given in the chat.
+    public boolean takesChatAnswer(final ToolCallContext context, final String action, final String question) {
+        return !context.userQuestions().canAsk() || unshownFor(context.session(), topic(action, question)) != null;
+    }
+
+    /// @param context  The call's context.
+    /// @param action   The tool.
+    /// @param question The question, as for [#takesChatAnswer(ToolCallContext, String, String)].
+    /// @return Why the user is asked in the chat, for a tool's hint to begin with: the form was too large to show
+    /// (and why), the client couldn't show it, or no form can be shown now.
+    public String whyInChat(final ToolCallContext context, final String action, final String question) {
+        final Unshown form = context.userQuestions().canAsk()
+                ? unshownFor(context.session(), topic(action, question))
+                : null;
+        return form == null
+                ? "No form can be shown in this session now"
+                : notShown(form.problem());
+    }
+
+    /// Notes that the agent was told to ask the user a question in the chat (its form couldn't be shown, or no form
+    /// can be now), so that an answer the call gives later that would otherwise be ambiguous (accept_as_is='true':
+    /// the agent's wish to go ahead, or the user's yes) is known to be the user's.
+    ///
+    /// @param context  The call's context.
+    /// @param action   The tool.
+    /// @param question The question, as for [#takesChatAnswer(ToolCallContext, String, String)].
+    public void askInChat(final ToolCallContext context, final String action, final String question) {
+        remember(context.session(), topic(action, question) + ASKED_IN_CHAT, new Unshown("asked in the chat",
+                Instant.now(), null, null));
+    }
+
+    /// @param context  The call's context.
+    /// @param action   The tool.
+    /// @param question The question.
+    /// @return True if the agent was told, in this session, to ask the user it in the chat ([#askInChat]), and no
+    /// form has asked it since.
+    public boolean wasAskedInChat(final ToolCallContext context, final String action, final String question) {
+        return unshownFor(context.session(), topic(action, question) + ASKED_IN_CHAT) != null;
+    }
+
+    /// A list for a form's message, short: its first lines, and how many more there are and where they are. Forms
+    /// are short plain text; the whole list (a table, say) is shown in the chat, and the form refers to it.
+    ///
+    /// @param lines The list's lines, in order.
+    /// @param where Where the whole list is, e.g. `the table shown in the chat`.
+    /// @return The first [#LINES_SHOWN] lines, each cut short, one a line, and for the rest a last line
+    /// `And N more (where).`.
+    public static String firstLines(final List<String> lines, final String where) {
+        final List<String> all = NullSafe.list(lines);
+        final List<String> out = new ArrayList<>();
+        all.stream().limit(LINES_SHOWN).forEach(line -> out.add(heading(line, DESCRIPTION_LIMIT)));
+        if (all.size() > LINES_SHOWN) {
+            out.add("And " + (all.size() - LINES_SHOWN) + " more (" + where + ").");
+        }
+        return String.join("\n", out);
     }
 
     /// @param context  The call's context.
@@ -152,11 +257,12 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.of("choice"));
         schema.put("properties", Map.of("choice", field));
-        if (unshowable(context, action, question, schema)) {
+        final Optional<ElicitResult> asked = askShown(call, context, action,
+                NullSafe.nonBlankStringElse(title, question), key, question, schema);
+        if (asked.isEmpty()) {
             return Optional.empty();
         }
-        final ElicitResult answer = context.userQuestions().ask(call.name(),
-                UserQuestions.formCallId(call.id(), key), question, schema);
+        final ElicitResult answer = asked.get();
         final Object given = answer.action() == ElicitResult.Action.ACCEPT
                 ? NullSafe.map(answer.content()).get("choice")
                 : null;
@@ -208,12 +314,13 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.copyOf(fieldKeys.keySet()));
         schema.put("properties", properties);
-        if (unshowable(context, action, intro, schema)) {
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
+        final Optional<ElicitResult> asked = askShown(call, context, action, intro, "choices-" + digest, intro,
+                schema);
+        if (asked.isEmpty()) {
             return Optional.empty();
         }
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
-        final ElicitResult answer = context.userQuestions().ask(call.name(),
-                UserQuestions.formCallId(call.id(), "choices-" + digest), intro, schema);
+        final ElicitResult answer = asked.get();
         final Map<String, Object> content = answer.action() == ElicitResult.Action.ACCEPT
                 ? NullSafe.map(answer.content())
                 : Map.of();
@@ -269,12 +376,13 @@ public class Consent {
         final Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         schema.put("properties", properties);
-        if (unshowable(context, action, intro, schema)) {
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
+        final Optional<ElicitResult> asked = askShown(call, context, action, intro, "answers-" + digest, intro,
+                schema);
+        if (asked.isEmpty()) {
             return Optional.empty();
         }
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
-        final ElicitResult answer = context.userQuestions().ask(call.name(),
-                UserQuestions.formCallId(call.id(), "answers-" + digest), intro, schema);
+        final ElicitResult answer = asked.get();
         if (answer.action() == ElicitResult.Action.CANCEL) {
             throw new ToolRefusal(notAgreed(heading(intro), action, true));
         }
@@ -366,12 +474,13 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.copyOf(fieldKeys.keySet()));
         schema.put("properties", properties);
-        if (unshowable(context, action, intro, schema)) {
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + items.keySet()).substring(0, 16);
+        final Optional<ElicitResult> asked = askShown(call, context, action, text, "review-" + digest, intro,
+                schema);
+        if (asked.isEmpty()) {
             return Optional.empty();
         }
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + items.keySet()).substring(0, 16);
-        final ElicitResult answer = context.userQuestions().ask(call.name(),
-                UserQuestions.formCallId(call.id(), "review-" + digest), intro, schema);
+        final ElicitResult answer = asked.get();
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             auditLogProvider.get().processed(context.session(), null, "review", action + ": " + heading(intro),
                     "declined", false);
@@ -385,6 +494,108 @@ public class Consent {
         auditLogProvider.get().processed(context.session(), null, "review", action + ": " + heading(intro),
                 "answered: " + answers, true);
         return Optional.of(answers);
+    }
+
+    /// Options put to the user in one form as one list to tick any number of (none ticked to start: the user
+    /// chooses), each with what it is shown under it, and one free-text field filled with a suggested answer: e.g.
+    /// which source types go in a build's group, and the group's name. One field however many options, so the form
+    /// fits where a yes/no an option wouldn't (seen: a scope form of a field for each of 65 source types couldn't be
+    /// shown, and the run never completed).
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `record_source_types`.
+    /// @param intro     What the form is about, its message.
+    /// @param question  The list's title.
+    /// @param options   The options by value, each with what it is (blank for nothing), in the order shown.
+    /// @param text      The free-text field's title.
+    /// @param suggested The free-text field's suggested answer, or null for none.
+    /// @return The options ticked, in the order offered, and the free text (blank when none); empty when the
+    /// session can't show a form now, or the form can't be shown (the agent then asks the user, and
+    /// [#takesChatAnswer] is true for the question on the next call).
+    /// @throws ToolRefusal if the user declined the form.
+    public Optional<Picked> pick(final ToolCall call,
+                                 final ToolCallContext context,
+                                 final String action,
+                                 final String intro,
+                                 final String question,
+                                 final Map<String, String> options,
+                                 final String text,
+                                 final String suggested) {
+        if (NullSafe.isEmptyMap(options) || !context.userQuestions().canAsk()) {
+            return Optional.empty();
+        }
+        Map<String, Object> schema = pickSchema(question, options, text, suggested, true);
+        if (ElicitationSchema.check(intro, schema) != null) {
+            // Too large with what each option is: the options alone (the table in the chat says what each is).
+            schema = pickSchema(question, options, text, suggested, false);
+        }
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + options.keySet()).substring(0, 16);
+        final Optional<ElicitResult> asked = askShown(call, context, action, question, "pick-" + digest, intro,
+                schema);
+        if (asked.isEmpty()) {
+            return Optional.empty();
+        }
+        final ElicitResult answer = asked.get();
+        if (answer.action() != ElicitResult.Action.ACCEPT) {
+            auditLogProvider.get().processed(context.session(), null, "review", action + ": " + heading(intro),
+                    "declined", false);
+            throw new ToolRefusal("The user declined: " + heading(intro));
+        }
+        final Map<String, Object> content = NullSafe.map(answer.content());
+        final List<String> ticked = new ArrayList<>();
+        if (content.get(PICKED) instanceof final Collection<?> values) {
+            values.forEach(value -> ticked.add(String.valueOf(value)));
+        } else if (content.get(PICKED) instanceof final String value && !value.isBlank()) {
+            ticked.add(value);
+        }
+        final List<String> chosen = options.keySet().stream().filter(ticked::contains).toList();
+        final Picked picked = new Picked(chosen, NullSafe.string(NullSafe.trim(NullSafe.get(content.get("text"),
+                String::valueOf))));
+        auditLogProvider.get().processed(context.session(), null, "review", action + ": " + heading(intro),
+                "answered: " + picked, true);
+        return Optional.of(picked);
+    }
+
+    // The form of [#pick]: the list, each option's value its title, what it is under it (Stroom's form shows these),
+    // and the free-text field.
+    private static Map<String, Object> pickSchema(final String question,
+                                                  final Map<String, String> options,
+                                                  final String text,
+                                                  final String suggested,
+                                                  final boolean described) {
+        final List<Map<String, Object>> choices = new ArrayList<>();
+        options.keySet().forEach(value -> {
+            final Map<String, Object> choice = new LinkedHashMap<>();
+            choice.put("const", value);
+            choice.put("title", value);
+            choices.add(choice);
+        });
+        final Map<String, Object> items = new LinkedHashMap<>();
+        items.put("type", "string");
+        items.put("anyOf", choices);
+        if (described) {
+            // As ask_user gives them: what each choice means, shown under it.
+            items.put("optionDescriptions", options.values().stream().map(NullSafe::string).toList());
+        }
+        final Map<String, Object> list = new LinkedHashMap<>();
+        list.put("type", "array");
+        list.put("title", heading(question));
+        list.put("items", items);
+        list.put("default", List.of());
+        final Map<String, Object> textField = new LinkedHashMap<>();
+        textField.put("type", "string");
+        textField.put("title", heading(text));
+        if (NullSafe.isNonBlankString(suggested)) {
+            textField.put("default", suggested.strip());
+        }
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put(PICKED, list);
+        properties.put("text", textField);
+        final Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("properties", properties);
+        return schema;
     }
 
     /// One question the user answers with the answer suggested (a button) or in their own words, one or the other:
@@ -439,12 +650,13 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.of("answer"));
         schema.put("properties", Map.of("answer", field));
-        if (unshowable(context, action, intro, schema)) {
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + question).substring(0, 16);
+        final Optional<ElicitResult> asked = askShown(call, context, action, question, "answer-" + digest, intro,
+                schema);
+        if (asked.isEmpty()) {
             return Optional.empty();
         }
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + question).substring(0, 16);
-        final ElicitResult answer = context.userQuestions().ask(call.name(),
-                UserQuestions.formCallId(call.id(), "answer-" + digest), intro, schema);
+        final ElicitResult answer = asked.get();
         final String given = answer.action() == ElicitResult.Action.ACCEPT
                 ? NullSafe.trim(NullSafe.get(NullSafe.map(answer.content()).get("answer"), String::valueOf))
                 : null;
@@ -463,22 +675,47 @@ public class Consent {
         return Optional.of(given);
     }
 
-    // A form too large to show is asked in the chat instead, as when the session can't show forms: shown, it would
-    // be refused, stopping the call where the user can never answer it (seen: a stand-ins form of a question for
-    // each of ~150 values, and a hand-edit question naming every field of a wide mapping).
-    private boolean unshowable(final ToolCallContext context,
-                               final String action,
-                               final String message,
-                               final Map<String, Object> schema) {
+    // The form asked, or empty where it can't be shown: too large (seen: a stand-ins form of a question for each of
+    // ~150 values, a hand-edit question naming every field of a wide mapping, a scope form of a field for each of 65
+    // source types), or the client couldn't show it. Shown, a form too large would be refused, stopping the call
+    // where the user can never answer it; so it is asked in the chat instead, as when the session can't show forms,
+    // and kept as not shown, so the next call takes the user's answer said there ([#takesChatAnswer]). A form shown
+    // for the question since forgets it.
+    private Optional<ElicitResult> askShown(final ToolCall call,
+                                            final ToolCallContext context,
+                                            final String action,
+                                            final String question,
+                                            final String key,
+                                            final String message,
+                                            final Map<String, Object> schema) {
+        final String topic = topic(action, question);
         final String problem = ElicitationSchema.check(message, schema);
-        if (problem == null) {
-            return false;
+        if (problem != null) {
+            notShownNow(context, action, topic, message, problem);
+            return Optional.empty();
         }
+        forget(context.session(), topic);
+        forget(context.session(), topic + ASKED_IN_CHAT);
+        try {
+            return Optional.of(context.userQuestions().ask(call.name(), UserQuestions.formCallId(call.id(), key),
+                    message, schema));
+        } catch (final ToolRefusal e) {
+            // Only a form that can never be shown is refused so (the client answered it with an error).
+            notShownNow(context, action, topic, message, CLIENT_COULD_NOT_SHOW);
+            return Optional.empty();
+        }
+    }
+
+    private void notShownNow(final ToolCallContext context,
+                             final String action,
+                             final String topic,
+                             final String message,
+                             final String problem) {
         LOGGER.warn(() -> LogUtil.message("Form for '{}' from {} not shown, as {}: asked in the chat instead",
                 heading(message, 80), action, problem));
         auditLogProvider.get().processed(context.session(), null, "choice", action + ": " + heading(message),
                 "not asked in a form, as " + problem, false);
-        return true;
+        remember(context.session(), topic, new Unshown(problem, Instant.now(), null, null));
     }
 
     /// @param context  The call's context.
@@ -639,12 +876,21 @@ public class Consent {
     private void ask(final ToolCall call,
                      final ToolCallContext context,
                      final Request request,
-                     final String digest,
+                     final String message,
+                     final Map<String, Object> schema,
                      final CallState state) {
         final String kind = request.kind().word();
+        final String digest = digest(request.action(), request.details(), request.binding(), request.options());
         final String key = kind + "-" + digest.substring(0, 16);
-        final ElicitResult answer = context.userQuestions().ask(call.name(), UserQuestions.formCallId(call.id(), key),
-                formMessage(request.summary(), request.details(), request.documents()), schema(request));
+        final ElicitResult answer;
+        try {
+            answer = context.userQuestions().ask(call.name(), UserQuestions.formCallId(call.id(), key), message,
+                    schema);
+        } catch (final ToolRefusal e) {
+            // Only a form that can never be shown is refused so (the client answered it with an error).
+            confirmInChat(call, context, request, CLIENT_COULD_NOT_SHOW, state);
+            return;
+        }
         final Map<String, Object> content = NullSafe.map(answer.content());
         final boolean accepted = answer.action() == ElicitResult.Action.ACCEPT;
         // With a value to edit, accepting the form is the confirmation; otherwise its yes or no is.
@@ -675,6 +921,177 @@ public class Consent {
                 new Change(request.editable().get(name).proposed(), theirs)));
     }
 
+    // The values to edit are too many for one form (a field each): the agent shows them in the chat first, and the
+    // call after, passing back what was shown (shown_id), asks the user to confirm them in a short form, bound to
+    // what was shown. To change one, the user says so in the chat and the call is made with it changed (which shows
+    // them again). Asked for by the user, 2026-11-18: forms fit, and what they can't hold is shown in the chat.
+    private void confirmShown(final ToolCall call,
+                              final ToolCallContext context,
+                              final Request request,
+                              final CallState state) {
+        final List<String> values = new ArrayList<>();
+        request.editable().values().forEach(value -> values.add(value.title() + ": " + value.proposed()));
+        final String shown = String.join("\n", values);
+        final String shownId = reviewId(shown);
+        if (!shownId.equals(argText(call, UserQuestions.SHOWN_ARG))) {
+            audit(context.session(), request.kind().word(), request, "not asked yet: its " + values.size()
+                                                                     + " values to be shown in the chat first",
+                    false);
+            throw new ToolRefusal("Nothing was done yet: " + request.summary() + " proposes " + values.size()
+                                  + " values, too many to edit in one form. Show the user them in the chat, as a "
+                                  + "list, as they are:\n- " + String.join("\n- ", values) + "\nThen call "
+                                  + request.action() + " again with the same arguments and "
+                                  + UserQuestions.SHOWN_ARG + "='" + shownId + "': the user confirms them in a short "
+                                  + "form. If they want one changed, call with it changed instead (its argument), "
+                                  + "which shows them again.");
+        }
+        final Map<String, Object> details = new LinkedHashMap<>(request.details());
+        details.put("values", "the " + values.size() + " shown in the chat, as they are");
+        final Request confirming = new Request(request.kind(), request.action(), request.summary(), details,
+                Map.of(), request.documents(), NullSafe.string(request.binding()) + "\nshown " + shownId,
+                request.options());
+        final String message = formMessage(confirming.summary(), confirming.details(), confirming.documents());
+        final Map<String, Object> schema = schema(confirming);
+        final String problem = ElicitationSchema.check(message, schema);
+        if (problem != null) {
+            confirmInChat(call, context, request, problem, state);
+            return;
+        }
+        ask(call, context, confirming, message, schema, state);
+    }
+
+    // A confirmation whose form can't be shown (too large however it is cut, or the client couldn't show it) is not
+    // a dead end: the agent is given what it asks, in full, to show the user in the chat, and a one-time id bound to
+    // exactly that (its details and the values proposed), kept for this session and tool only; once the user says
+    // yes in their own words, the call made again with the same arguments and confirmed_in_chat=<the id> is
+    // granted. The id is unguessable, used once, and stands for nothing else: changed details ask again. Audited as
+    // granted in the chat. The agent could pass it without asking, as it could any answer said in the chat where no
+    // form can be shown; the id at least means it was told to show the user exactly this first.
+    private void confirmInChat(final ToolCall call,
+                               final ToolCallContext context,
+                               final Request request,
+                               final String problem,
+                               final CallState state) {
+        final String kind = request.kind().word();
+        final String bound = confirmationDigest(request);
+        final String given = argText(call, UserQuestions.CONFIRMED_IN_CHAT_ARG);
+        final String key = request.action() + CONFIRMATION_TOPIC;
+        final Unshown pending = unshownFor(context.session(), key);
+        if (pending != null && !given.isEmpty() && given.equalsIgnoreCase(pending.token())
+            && bound.equals(pending.bound())) {
+            forget(context.session(), key);
+            audit(context.session(), kind, request, "granted in the chat, as the form couldn't be shown ("
+                                                    + problem + ")", true);
+            request.options().forEach((name, option) -> state.options.put(name, option.ticked()));
+            return;
+        }
+        final byte[] bytes = new byte[6];
+        RANDOM.nextBytes(bytes);
+        final String token = HexFormat.of().formatHex(bytes);
+        remember(context.session(), key, new Unshown(problem, Instant.now(), token, bound));
+        audit(context.session(), kind, request, "not asked: the form couldn't be shown, as " + problem
+                                                + "; to be confirmed in the chat", false);
+        throw new ToolRefusal(confirmInChatText(request, problem, token, !given.isEmpty()));
+    }
+
+    private static String confirmInChatText(final Request request,
+                                            final String problem,
+                                            final String token,
+                                            final boolean wrongId) {
+        final List<String> lines = new ArrayList<>();
+        lines.add(request.summary());
+        request.details().forEach((name, value) -> lines.add("- " + name + ": " + (value instanceof final Listed listed
+                ? String.join("; ", listed)
+                : shownInFull(value))));
+        request.editable().values().forEach(value -> lines.add("- " + value.title() + ": " + value.proposed()));
+        request.options().values().forEach(option -> lines.add("- " + option.title() + ": " + (option.ticked()
+                ? "yes"
+                : "no")));
+        return notShown(problem) + ", so the user wasn't asked to agree and nothing was done." + (wrongId
+                ? " The " + UserQuestions.CONFIRMED_IN_CHAT_ARG + " given is for something else, or has run out: "
+                  + "what is asked now is below."
+                : "") + " Show the user exactly this in the chat, and ask them whether they agree:\n"
+               + String.join("\n", lines) + "\nOnly once they say yes, in their own words, call " + request.action()
+               + " again with the same arguments and " + UserQuestions.CONFIRMED_IN_CHAT_ARG + "='" + token + "'. "
+               + "It stands for their yes to exactly this: never pass it without it. If they want something changed, "
+               + "call with it changed instead (it is asked again).";
+    }
+
+    // What a value is, written whole (a list's items joined).
+    private static String shownInFull(final Object value) {
+        if (value instanceof final Collection<?> collection) {
+            return String.join(", ", collection.stream().map(ToolText::str).toList());
+        }
+        return ToolText.str(value);
+    }
+
+    // What a confirmation in the chat is bound to: its details and the values it proposes.
+    private static String confirmationDigest(final Request request) {
+        final Map<String, String> proposed = new LinkedHashMap<>();
+        request.editable().forEach((name, value) -> proposed.put(name, value.proposed()));
+        return XsltCode.sha256(digest(request.action(), request.details(), request.binding(), request.options())
+                               + "\n" + ToolJson.dumpsSortedKeys(proposed));
+    }
+
+    // Why a form wasn't shown, as a tool's reply begins.
+    private static String notShown(final String problem) {
+        return CLIENT_COULD_NOT_SHOW.equals(problem)
+                ? "The client couldn't show the form"
+                : "The form was too large to show (" + problem + ")";
+    }
+
+    private static String argText(final ToolCall call, final String name) {
+        final Object value = ToolArgs.raw(call, name);
+        return value == null
+                ? ""
+                : String.valueOf(value).strip();
+    }
+
+    private static String topic(final String action, final String question) {
+        return action + "\n" + heading(question);
+    }
+
+    private static String sessionKey(final ToolSession session) {
+        return session.kind() + ":" + session.id();
+    }
+
+    private void remember(final ToolSession session, final String key, final Unshown form) {
+        synchronized (unshown) {
+            unshown.computeIfAbsent(sessionKey(session), ignored -> new LinkedHashMap<>()).put(key, form);
+            if (unshown.size() > SESSIONS_KEPT) {
+                unshown.remove(unshown.keySet().iterator().next());
+            }
+        }
+    }
+
+    private void forget(final ToolSession session, final String key) {
+        synchronized (unshown) {
+            final Map<String, Unshown> forms = unshown.get(sessionKey(session));
+            if (forms != null) {
+                forms.remove(key);
+            }
+        }
+    }
+
+    // The form not shown for the key in the session, if it is kept still.
+    private Unshown unshownFor(final ToolSession session, final String key) {
+        synchronized (unshown) {
+            final Map<String, Unshown> forms = unshown.get(sessionKey(session));
+            final Unshown form = forms == null
+                    ? null
+                    : forms.get(key);
+            if (form != null && expired(form)) {
+                forms.remove(key);
+                return null;
+            }
+            return form;
+        }
+    }
+
+    private static boolean expired(final Unshown form) {
+        return form.at().plus(UNSHOWN_KEPT).isBefore(Instant.now());
+    }
+
     // With a value to edit, the form is just that field, prefilled: accepting it confirms (clients step through
     // fields one at a time, so a yes or no beside it would be a second prompt).
     private static Map<String, Object> schema(final Request request) {
@@ -688,7 +1105,8 @@ public class Consent {
                     request.kind() == Kind.APPROVAL
                             ? "Approve"
                             : "Confirm"));
-            field.put("description", request.summary());
+            // Short: the form's message carries the summary.
+            field.put("description", heading(request.summary(), DESCRIPTION_LIMIT));
             properties.put("value", field);
             request.options().forEach((name, option) -> {
                 final Map<String, Object> choice = new LinkedHashMap<>();
@@ -983,6 +1401,26 @@ public class Consent {
             more.put(key, new Option(title, ticked));
             return new Request(kind, action, summary, details, editable, documents, binding, more);
         }
+    }
+
+    /// What the user answered in a [Consent#pick] form.
+    ///
+    /// @param chosen The options ticked, in the order offered.
+    /// @param text   The free text, trimmed (blank when none).
+    public record Picked(List<String> chosen, String text) {
+
+        /// @param chosen The options ticked.
+        /// @param text   The free text.
+        public Picked {
+            chosen = List.copyOf(NullSafe.list(chosen));
+            text = NullSafe.string(text);
+        }
+    }
+
+    // A form that couldn't be shown: why, when, and for a confirmation, the id the user's yes in the chat is given by
+    // and what it is bound to.
+    private record Unshown(String problem, Instant at, String token, String bound) {
+
     }
 
     // What a call's forms settled: the value of each editable field, those the user changed, and each choice made.

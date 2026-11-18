@@ -112,6 +112,7 @@ public class McpElicitations {
             throw McpError.builder(ErrorCodes.INVALID_PARAMS)
                     .message("The form can't be shown to the user, as " + problem + " (at most "
                              + ElicitationSchema.MAX_MESSAGE_CHARS + " characters of message, "
+                             + ElicitationSchema.MAX_SCHEMA_CHARS + " characters of fields as JSON, "
                              + ElicitationSchema.MAX_FIELDS + " fields). The user has not answered it.")
                     .build();
         }
@@ -129,16 +130,23 @@ public class McpElicitations {
     /// @param callId  The id of the tool call asking, or null if it isn't asked in one.
     /// @param message What the questions are for.
     /// @param schema  The questions, as a form.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown (asked outside a tool call), the
-    /// user sent a message instead, or the run was stopped.
+    /// @return The user's answer, or a decline or cancel if too many forms are waiting (asked outside a tool call),
+    /// the user sent a message instead, or the run was stopped.
     /// @throws AiChatRunManager.WaitingForUserException if the run is to stop until the user answers.
-    /// @throws ToolRefusal if the form, asked in a tool call, can never be shown (e.g. it is too large).
+    /// @throws ToolRefusal if the form can never be shown (e.g. it is too large), with or without a call id.
     public ElicitResult askUser(final int chatId,
                                 final String tool,
                                 final String callId,
                                 final String message,
                                 final Map<String, Object> schema) {
         if (callId == null) {
+            // A call with no id (some models give none): a form that can never be shown is the tool's fault, as in a
+            // call with one, not the user declining it.
+            final String problem = ElicitationSchema.check(message, schema);
+            if (problem != null) {
+                warn(chatId, "A form from " + STROOM_AI + " couldn't be shown, as " + problem + ".");
+                throw new ToolRefusal(ElicitationSchema.cannotShow(problem));
+            }
             return handle(chatId, STROOM_AI, tool, new ElicitFormRequest(message, schema, null));
         }
         // Asked before the run stopped: the answer, if there is one now.

@@ -79,6 +79,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClassifyKindsTool.class);
 
     static final String NAME = "classify_kinds";
+    // The question of the kind field's form.
+    private static final String KIND_FIELD_QUESTION = "Which field tells the kinds of event apart?";
     private static final String BUILD_ARG = "build";
     private static final String SOURCE_ARG = "source";
     private static final String STREAM_IDS_ARG = "stream_ids";
@@ -852,7 +854,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 }
             }
         }
-        if (spelt.equals(kept) || !context.userQuestions().canAsk()) {
+        if (spelt.equals(kept) || consent.takesChatAnswer(context, NAME, KIND_FIELD_QUESTION)) {
             // Chosen by the user in a form before, or no form can be shown: what the user said.
             return new KindsChosen(spelt, null, true);
         }
@@ -868,9 +870,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 ? KindFields.ONE_KIND_ANSWER
                 : String.join(", ", spelt);
         final Optional<String> answer = consent.answer(call, context, NAME, "The kinds of event are to be told apart "
-                                                                            + "by " + proposed + ".", "Which field "
-                                                                            + "tells the kinds of event apart?",
-                put.options());
+                                                                            + "by " + proposed + ".",
+                KIND_FIELD_QUESTION, put.options());
         if (answer.isEmpty()) {
             return new KindsChosen(spelt, null, true);
         }

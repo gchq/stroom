@@ -3039,8 +3039,9 @@ the feed's last), is put to the user: "Stop and accept them as read" or "Step re
 (`read_deeper` without forms); a stop is kept as `stopped_streams` and settles it, and no hint says to raise
 `max_chars_per_stream` for it. `accept_as_is` (asked for by the user: a survey that couldn't be covered and a user
 who wanted to go ahead with a limited sample) reads nothing: the user confirms going ahead with the survey as it is
-(in a form, or as they said in the chat), and the state is covered as far as they chose (`accepted`) until the
-survey reads on. The gate on create_processor_filter (`BuildPlan.uncovered(build, streamIds)`) lets a filter over
+(in a form, or as they said in the chat: where no form can be shown, or its form couldn't be, `accept_as_is` is
+their answer, and `true` their yes once the agent was told to ask them; seen: `true` sent back for the user's yes
+asked for it again, for ever), and the state is covered as far as they chose (`accepted`) until the survey reads on. The gate on create_processor_filter (`BuildPlan.uncovered(build, streamIds)`) lets a filter over
 stream_ids the survey read whole (or stopped at) go ahead uncovered, and a build on an existing feed with no survey
 record has its `covered` step still to do (seen: the agent deleted the record to get past the gate). Streams are picked in bisection order (newest, oldest, middle,
 quarters ...) by `FeedSampling.pickSpread`, skipping those already read; with `stream_ids` exactly those streams are
@@ -3287,9 +3288,14 @@ and `group` (the name the agent suggests), the user chooses in a form which sour
 group and what it is called (decided 2026-11-13: one source type group a build, any number of source types). The form
 (plain text): "Which of feed 'x''s source types go in this build's source type group? A build makes one group,
 translated by one pipeline. ... Those you leave out are parked for a later build." (and, where the registry has
-groups, "Naming an existing group (...) adds them to it."), a yes per source type offered ("Put x in the group",
-with its share and formats), and one text field, "What is the group called?", filled with the suggested name, which
-the user keeps or changes (left empty, the suggestion stands). A call with forms and no `group` is refused before
+groups, "Naming an existing group (...) adds them to it."), one list to tick, "Source types to put in the group"
+(`Consent.pick`: a multi-select of every source type offered, each with its share and formats under it, none ticked
+to start; one field however many source types, so 65 of them fit, where a yes/no field each could never be shown),
+and one text field, "What is the group called?", filled with the suggested name, which the user keeps or changes
+(left empty, the suggestion stands). A scope form that still can't be shown (too large, or the client couldn't show
+it) says so in the `needs_user` hint, and the next call takes `scope=` and `group=` as the user said them in the chat
+(`Consent.takesChatAnswer`), never asking the form again (decided by the user, 2026-11-18). The patterns' and list
+items' forms name the first five rows and how many more ("And 60 more (all are in the table shown in the chat)."). A call with forms and no `group` is refused before
 anything is asked. The name matching an existing group's (any case) is that group's: the source types join it (its
 pipeline and output feed, when `build_translation_xslt` builds it; a promoted one through a working copy of its XSLT),
 said in `joins`; with none chosen, the build changes that group alone (without forms, `scope=[]`, an explicit empty
@@ -3311,9 +3317,10 @@ pipeline, output feed, `references` and profile. A registry recorded again (a la
 over. The review is bound to the table (`Consent.wasReviewed`): other rows, or changed profiles, show it again.
 
 * **Arguments**: `feed` (required), `build`, `reviewed`, `rows` (the `rows` a `needs_review` reply gave back, or as
-  the user says), `remove` (rows to remove, by name, on the user's word), `patterns` (no forms: `use` or `exact`),
-  `group` (the group's name: the suggestion the form shows, or, without forms, the user's), `scope` and `reason` (no
-  forms; `scope=[]` with an existing group's name changes that group alone), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
+  the user says), `remove` (rows to remove, by name, on the user's word), `patterns` (no forms, or its form couldn't
+  be shown: `use` or `exact`), `group` (the group's name: the suggestion the form shows, or, without forms, the
+  user's), `scope` and `reason` (no forms, or the scope form couldn't be shown; `scope=[]` with an existing group's
+  name changes that group alone), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
 * **Returns**: `status: needs_review` (`feed`, `field`, `table`, `review_id`, `rows`, `to_confirm`, `hint`); `status: needs_user`
   with `proposed_rows` (each `name`, `match`, `values`, `records`: the patterns, without forms) or `offered` and
   `groups` (the source types for the scope and the registry's groups, without forms); or `feed`, `field`, `registry`
@@ -4941,8 +4948,9 @@ word). A group XSLT's `uuid` alone regenerates it as the group it is (its kept m
 in a form before anything is saved: the group gets a pipeline of its own (`<feed> <group>`, recorded on its rows
 then, so the group counts as placed), and "Where do the Events of group 'x' go?" ("Into the same feed (<feed>)", the
 default; or "To an output feed of its own (made next)"; the group's index is its own either way, decided
-2026-11-14). Without forms the call is refused,
-nothing saved, until `own_output_feed=true|false` says the user's answer; given for a group already placed, it is
+2026-11-14). Without forms, or where its form couldn't be shown (the refusal says which), the call is refused,
+nothing saved, until `own_output_feed=true|false` says the user's answer, which is then read before any form is
+asked (seen over `/mcp`: a client that couldn't show the form refused every call, the answer read only after it); given for a group already placed, it is
 ignored, said in `group.notes`. Source types added to a group already placed join its pipeline and output feed, said
 in `group.notes`, with no form. A source type another group translates is refused (a source type belongs to one
 group), as is a group whose mode is the common module's. The rows record it (`pipeline`: `name`, and `uuid` once
@@ -5978,11 +5986,16 @@ value over the example's mapping of the name (`FromExample`).
   otherwise (a field's meaning: its description where both have one, else what it reads), is a clash: all of them
   put to the user in one form of short plain text, each with its two answers (another type: rename this build's
   field to `<name>_<group>`, or a new index version `<index>-v2` with the index's fields; another meaning: one
-  field read from both paths, or renamed). The reply's `feed_index` says the `output_feed`, the `group`, the index's
+  field read from both paths, or renamed); past what a form holds (20 fields), the first 19 one by one and one more
+  question for the others, all the same way (rename each; same meaning where only the meaning differs, the others
+  renamed; or a new index version), the message naming the first five clashes and how many more (all in
+  `index_clashes`). The reply's `feed_index` says the `output_feed`, the `group`, the index's
   `groups`, `shared_with` and `moves_from` (shared at the user's word), the `index`, `inherited_fields`,
   `clashes_resolved`, `new_version_of` (with `new_version_hint` when the user chose a new version in the form) and
-  where it is `kept`; without forms the clashes come back in it as `index_clashes`,
-  with `clash_hint` on how to apply them by `changes=`. Amending (`changes=`) is checked the same way. The
+  where it is `kept`; without forms (or where the form couldn't be shown) the clashes come back in it as
+  `index_clashes`, with `clash_hint` on how to apply them by `changes=` (a rename: remove the field and add it under
+  the new name; one field read from both: the field with both sources), and a new version by drafting again with the
+  next version's `index_name` and `change_shared=true`, which the user confirms in a form. Amending (`changes=`) is checked the same way. The
   `backend` is the feed's shared one (refused otherwise, as `get_field_conventions` refuses it).
 
 ### `create_index_doc`
@@ -6370,7 +6383,25 @@ was declined by the client as too long. A detail given as `Consent.Listed` is sh
 1,500 characters, for what the user must see in full to agree to (a verification dashboard's columns: seen in chat
 177, cut with "…"). A choice form too large to show at all is not shown: `choose` returns empty
 and the agent asks in the chat (seen: a stand-ins form with a question for each of about 150
-values, and a hand-edit question naming every field of a wide mapping). `Consent.reviewId(shown)` and `wasReviewed`
+values, and a hand-edit question naming every field of a wide mapping); so does a form the client answers with an
+error. Either is kept for the session, by tool and question (two hours), so the next call, whatever its other
+arguments, takes the user's answer as the chat gave it: `takesChatAnswer(context, action, question)` is true where
+no form can be shown now or that question's form couldn't be, and `whyInChat` begins the tool's hint ("The form was
+too large to show (...)", "The client couldn't show the form") with the argument that takes the answer (decided by
+the user, 2026-11-18: tools build forms that fit; one that still can't be shown has its chat answer honoured on the
+next call, never a loop or a dead end). Forms are built to fit: `pick` asks many options as one multi-select (the
+scope's source types), `firstLines` gives a list in a message as its first five lines and "And N more (where)" with
+the whole list in the chat, and questions past `MAX_FIELDS` are asked the first 19 one by one and one for the
+others (stand-ins, index clashes). `require` checks its form first: a yes/no field's description is cut to 300
+characters (the message carries the summary); values to edit too many for one form are shown in the chat first (a
+refusal listing them, with a `shown_id`), and the call made again with `shown_id` asks one short confirmation bound
+to what was shown (a value to change is changed by the call's arguments); a confirmation that still can't be shown
+(or that the client couldn't show) gives the agent what it asks, in full, to show the user, and a one-time id bound
+to exactly that (its details and values proposed, for this session and tool, two hours): once the user says yes in
+their own words, the same call with `confirmed_in_chat=<the id>` is granted, audited as "granted in the chat". The id
+is random, used once, and another request's details ask again; the agent could pass it unasked, as it could any
+answer said in the chat where no form can be shown. `shown_id` and `confirmed_in_chat` are taken by every tool
+though none declares them (`UserQuestions.RESERVED_ARGS`, kept by the call guard). `Consent.reviewId(shown)` and `wasReviewed`
 bind a `needs_review` reply to what it showed (promotion layouts, index templates, records kept as Unknown). Every
 ask and answer is audited.
 

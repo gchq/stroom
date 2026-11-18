@@ -51,11 +51,23 @@ final class DomainSplits {
     /// @return The one question put to the user for them all.
     static String question(final List<QualifiedIds> found) {
         final String example = found.getFirst().examples().getFirst();
+        // Short, as a form's message is: the first few fields, each with its first few paths, and how many more.
         final String fields = found.stream()
-                .map(each -> "'" + each.field() + "' (" + String.join(", ", each.paths()) + ")")
-                .collect(Collectors.joining(", "));
+                .limit(Consent.LINES_SHOWN)
+                .map(each -> "'" + each.field() + "' (" + firstFew(each.paths()) + ")")
+                .collect(Collectors.joining(", ")) + (found.size() > Consent.LINES_SHOWN
+                ? " and " + (found.size() - Consent.LINES_SHOWN) + " more field(s)"
+                : "");
         return "Split the domain off the users' Ids from " + fields + "? E.g. " + example + ": the Id "
                + account(example) + ", the Domain " + domain(example) + ".";
+    }
+
+    // A field's paths for a question: the first few, and how many more.
+    private static String firstFew(final List<String> paths) {
+        return paths.size() <= Consent.LINES_SHOWN
+                ? String.join(", ", paths)
+                : String.join(", ", paths.subList(0, Consent.LINES_SHOWN)) + " and "
+                  + (paths.size() - Consent.LINES_SHOWN) + " more";
     }
 
     /// The user's answer as a call gives it (`domain_split`, what they said in the chat): the latest word, over any

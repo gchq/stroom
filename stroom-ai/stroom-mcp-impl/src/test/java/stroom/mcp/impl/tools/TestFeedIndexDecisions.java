@@ -16,16 +16,21 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -191,6 +196,35 @@ class TestFeedIndexDecisions {
                            + "fields, from now on");
     }
 
+    @Test
+    void clashesPastWhatAFormHoldsAreAskedTheFirstOneByOneAndTheRestTogether() {
+        // One question a clash, uncapped: past what a form holds, the form was never shown.
+        final List<PlannedField> theirs = new ArrayList<>(List.of(PlannedField.of("StreamId", "id", "@StreamId")));
+        final List<PlannedField> ours = new ArrayList<>(theirs);
+        for (int i = 1; i <= 30; i++) {
+            theirs.add(PlannedField.of("Field" + i, "keyword", "EventDetail/F" + i));
+            ours.add(PlannedField.of("Field" + i, "long", "EventDetail/F" + i));
+        }
+        FeedIndexes.record(state, SECURITY, FEED, plan(SECURITY_INDEX, theirs.toArray(PlannedField[]::new)), null,
+                new FeedIndexes.Decided("user", "2026-11-14T10:00:00Z", "pega-1"));
+        decisions = new FeedIndexDecisions(groups, mock(SourceTypeRegistries.class), streamReader,
+                mock(BuildRecords.class), mock(WriteGuard.class), mock(DocumentAccess.class),
+                new Consent(() -> mock(AiAuditLog.class)), mock(IndexFields.class), () -> mock(BuildPlan.class));
+        final Renaming user = new Renaming();
+
+        final FeedIndexDecisions.ForPlan forPlan = decisions.forPlan(call("{\"share_index_with\": \"" + SECURITY
+                                                                           + "\"}"), user.context(), BUILD,
+                List.of(MAIL_EVENTS), plan(SECURITY_INDEX, ours.toArray(PlannedField[]::new)),
+                "draft_index_mapping");
+
+        assertThat(user.forms).singleElement().satisfies(form -> assertThat((Map<?, ?>) form.get("properties"))
+                .hasSize(ElicitationSchema.MAX_FIELDS));
+        assertThat(user.intros.getFirst()).contains("30 clash(es)", "And 25 more");
+        assertThat((List<?>) forPlan.said().get("clashes_resolved")).hasSize(30);
+        assertThat(forPlan.plan().fields()).extracting(PlannedField::name)
+                .contains("Field1_pega_mail", "Field30_pega_mail");
+    }
+
     private static ToolCall call(final String arguments) {
         return new ToolCall("1", "draft_index_mapping", arguments);
     }
@@ -209,5 +243,39 @@ class TestFeedIndexDecisions {
         row.put("group", group);
         row.put("pipeline", Map.of("name", FEED + " " + group, "uuid", pipeline));
         return row;
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    // A user of a client that shows forms, who gives this build's fields other names: the first choice of each
+    // question. Stroom shows no form too large to show: a tool asking one fails the test.
+    private static final class Renaming implements UserQuestions {
+
+        private final List<String> intros = new ArrayList<>();
+        private final List<Map<String, Object>> forms = new ArrayList<>();
+
+        private ToolCallContext context() {
+            return ToolCallContext.builder(BuildToolCalls.context().session()).userQuestions(this).build();
+        }
+
+        @Override
+        public boolean canAsk() {
+            return true;
+        }
+
+        @Override
+        public ElicitResult ask(final String toolName,
+                                final String callId,
+                                final String intro,
+                                final Map<String, Object> form) {
+            assertThat(ElicitationSchema.check(intro, form)).as("a form too large to show: %s", intro).isNull();
+            intros.add(intro);
+            forms.add(form);
+            final Map<String, Object> content = new LinkedHashMap<>();
+            ((Map<?, ?>) form.get("properties")).forEach((key, field) -> content.put(String.valueOf(key),
+                    ((List<?>) ((Map<?, ?>) field).get("enum")).getFirst()));
+            return new ElicitResult(ElicitResult.Action.ACCEPT, content);
+        }
     }
 }

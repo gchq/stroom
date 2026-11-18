@@ -556,6 +556,28 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void whereANewGroupsEventsGoIsTakenAsTheUserSaidOnceItsFormCouldntBeShown() {
+        // Seen over /mcp: the client answered the placement form with an error, and as own_output_feed was read
+        // only after asking, every call was refused the same way.
+        world.forms = true;
+        world.unshowable.add("Source type group 'PEGA security'");
+        final Map<String, Object> asked = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        asked.remove("own_output_feed");
+
+        final Map<String, Object> refused = world.call(tool, asked);
+
+        assertThat(String.valueOf(refused.get("error"))).contains("The client couldn't show the form",
+                "Ask the user where its Events go", "own_output_feed=false (the same feed)", "Nothing was saved");
+        assertThat(placementForms()).hasSize(1);
+        asked.put("own_output_feed", true);
+        final Map<String, Object> saved = world.call(tool, asked);
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(placementForms()).as("not asked again").hasSize(1);
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("output_feed", "");
+    }
+
+    @Test
     void anOwnOutputFeedGivenForAGroupPlacedAlreadyIsSaidToBeIgnored() {
         world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
         final Map<String, Object> given = new LinkedHashMap<>(args(security(), "PEGA security",

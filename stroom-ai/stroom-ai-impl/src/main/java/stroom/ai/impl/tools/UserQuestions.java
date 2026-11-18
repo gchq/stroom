@@ -22,6 +22,7 @@ import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /// How a tool asks the user questions in its session and waits for the answers: a form in the chat for Stroom
 /// AI's chat (see `McpElicitations`), and an MCP elicitation later.
@@ -45,6 +46,15 @@ public interface UserQuestions {
 
     /// What separates a tool call's id from a form's key in the id of one of several forms the call asks.
     String FORM_SEPARATOR = "#form:";
+    /// The argument a call passes back once the agent has shown the user in the chat the values a confirmation
+    /// proposes, which were too many for its form: the confirmation is then asked in a short form.
+    String SHOWN_ARG = "shown_id";
+    /// The argument a call passes back once the user has confirmed in the chat, in their own words, what a
+    /// confirmation form too large to show (or one the client couldn't show) asked them.
+    String CONFIRMED_IN_CHAT_ARG = "confirmed_in_chat";
+    /// The arguments any tool that asks the user takes, though none declares them (the tool's reply says when to
+    /// give one): kept where unknown arguments are dropped.
+    Set<String> RESERVED_ARGS = Set.of(SHOWN_ARG, CONFIRMED_IN_CHAT_ARG);
 
     /// @return False if the user can't be asked now, e.g. as they aren't watching the chat (an unattended run).
     boolean canAsk();

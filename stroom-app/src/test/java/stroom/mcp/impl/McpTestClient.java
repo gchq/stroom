@@ -176,12 +176,37 @@ public final class McpTestClient {
         return new ElicitResult(ElicitResult.Action.DECLINE, null, null);
     }
 
+    /// @param list A form's field that is a list to tick.
+    /// @return Its choices' values, in order.
+    public static List<String> options(final Map<?, ?> list) {
+        final Object items = list.get("items");
+        if (!(items instanceof final Map<?, ?> choices)) {
+            return List.of();
+        }
+        if (choices.get("enum") instanceof final List<?> values) {
+            return values.stream().map(String::valueOf).toList();
+        }
+        final Object listed = choices.get("anyOf") != null
+                ? choices.get("anyOf")
+                : choices.get("oneOf");
+        return listed instanceof final List<?> each
+                ? each.stream()
+                        .filter(Map.class::isInstance)
+                        .map(choice -> String.valueOf(((Map<?, ?>) choice).get("const")))
+                        .toList()
+                : List.of();
+    }
+
     private static Object answer(final Object field) {
         if (!(field instanceof final Map<?, ?> schema)) {
             return null;
         }
         if ("boolean".equals(schema.get("type"))) {
             return true;
+        }
+        // A list to tick: every choice, as a user agreeing ticks every box.
+        if ("array".equals(schema.get("type"))) {
+            return options(schema);
         }
         if (schema.get("default") != null) {
             return schema.get("default");

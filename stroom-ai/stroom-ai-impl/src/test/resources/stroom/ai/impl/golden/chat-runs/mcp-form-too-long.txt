@@ -22,8 +22,8 @@ Run 1: answered: The server's confirmation form couldn't be shown, so no filter 
       "callId" : "call-1",
       "tool" : "create_filter",
       "error" : true,
-      "text" : "Error: The user could not be asked to confirm: The form can't be shown to the user, as its message is too long (at most 2000 characters of message, 20 fields). The user has not answered it.",
-      "chars" : 189,
+      "text" : "Error: The user could not be asked to confirm: The form can't be shown to the user, as its message is too long (at most 2000 characters of message, 16000 characters of fields as JSON, 20 fields). The user has not answered it.",
+      "chars" : 225,
       "durationMs" : "<time>"
     }
 
@@ -64,4 +64,4 @@ Tools offered: ask_user, memory, propose_query, read_turn, create_filter
 [2] AI
     Calls create_filter as call-1 with {"feed":"ACME"}
 [3] TOOL RESULT for call-1 (create_filter)
-    Error: The user could not be asked to confirm: The form can't be shown to the user, as its message is too long (at most 2000 characters of message, 20 fields). The user has not answered it.
+    Error: The user could not be asked to confirm: The form can't be shown to the user, as its message is too long (at most 2000 characters of message, 16000 characters of fields as JSON, 20 fields). The user has not answered it.

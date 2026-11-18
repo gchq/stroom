@@ -403,7 +403,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                          + "translates already; given, it "
                                                                          + "holds every one the scope puts in "
                                                                          + "the group."))
-                        .addBooleanProperty(OWN_OUTPUT_FEED_ARG, "With group, only where no form can be shown, for "
+                        .addBooleanProperty(OWN_OUTPUT_FEED_ARG, "With group, only where no form can be shown (or "
+                                                                 + "the reply says its form couldn't be), for "
                                                                  + "a new group: true when the user wants its "
                                                                  + "Events in an output feed of its own, false for "
                                                                  + "the same feed. Otherwise asked in a form.")
@@ -1215,21 +1216,35 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final String pipeline = SourceTypeGroups.pipelineName(b.group.feed(), b.group.group());
         final List<String> feeds = List.of("Into the same feed (" + b.group.feed() + ")",
                 "To an output feed of its own (made next)");
+        final String question = "Where do the Events of group '" + b.group.group() + "' go?";
+        // The user's answer said in the chat first, where it is theirs (no form can be shown, or this one couldn't
+        // be): asked again, a form the client can't show would refuse the call every time.
+        if (request.ownOutputFeed() != null && consent.takesChatAnswer(context, NAME, question)) {
+            return new SourceTypeGroups.Placement(request.ownOutputFeed());
+        }
+        final List<String> types = b.group.sourceTypes();
+        final String named = types.size() <= Consent.LINES_SHOWN
+                ? String.join(", ", types)
+                : String.join(", ", types.subList(0, Consent.LINES_SHOWN)) + " and " + (types.size()
+                                                                                       - Consent.LINES_SHOWN)
+                  + " more";
         final Optional<String> chosen = consent.choose(call, context, NAME, "Source type group '" + b.group.group()
-                                                                            + "' (" + String.join(", ",
-                b.group.sourceTypes()) + ") is new. It gets a pipeline of its own, '" + pipeline + "', which reads "
-                                                                            + "every stream of the feed and passes "
-                                                                            + "over the other source types' "
-                                                                            + "records. Choose where its Events go.",
-                feeds, "Where do the Events of group '" + b.group.group() + "' go?");
+                                                                            + "' (" + named + ") is new. It gets a "
+                                                                            + "pipeline of its own, '" + pipeline
+                                                                            + "', which reads every stream of the "
+                                                                            + "feed and passes over the other source "
+                                                                            + "types' records. Choose where its "
+                                                                            + "Events go.",
+                feeds, question);
         if (chosen.isPresent()) {
             return new SourceTypeGroups.Placement(feeds.get(1).equals(chosen.get()));
         }
-        if (request.ownOutputFeed() == null) {
-            throw new ToolRefusal("Group '" + b.group.group() + "' is new: it gets a pipeline of its own ('"
-                                  + pipeline + "'). Ask the user where its Events go: " + String.join("; ", feeds)
-                                  + ". Then call again with " + OWN_OUTPUT_FEED_ARG + "=false (the same feed) or "
-                                  + "true (an output feed of its own). Nothing was saved.");
+        if (request.ownOutputFeed() == null || !consent.takesChatAnswer(context, NAME, question)) {
+            throw new ToolRefusal(consent.whyInChat(context, NAME, question) + ". Group '" + b.group.group()
+                                  + "' is new: it gets a pipeline of its own ('" + pipeline + "'). Ask the user "
+                                  + "where its Events go: " + String.join("; ", feeds) + ". Then call again with "
+                                  + OWN_OUTPUT_FEED_ARG + "=false (the same feed) or true (an output feed of its "
+                                  + "own), as they said. Nothing was saved.");
         }
         return new SourceTypeGroups.Placement(request.ownOutputFeed());
     }

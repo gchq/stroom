@@ -262,7 +262,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         // chose (asked for by the user: seen in chat 172, the agent called with backend=lucene unasked, the user was
         // never asked, and the reply said they had chosen it).
         final boolean backendTheUsers = backend == null || recorded.get(BACKEND_ARG) != null
-                                        || !context.userQuestions().canAsk();
+                                        || consent.takesChatAnswer(context, NAME, BACKEND_QUESTION);
         if (name == null && (backend == null || !backendTheUsers)) {
             // Seen: an agent asked without the backend, got the profiles, then looked the backend up and asked
             // again. When every indexing template has the same backend, that's the index's backend.
@@ -291,7 +291,8 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                     result.put("status", "needs_guidance");
                     result.put("question", BACKEND_QUESTION);
                     result.put("options", List.copyOf(labels.keySet()));
-                    result.put("hint", "Ask the user only which backend, Elasticsearch or Lucene, and call again with "
+                    result.put("hint", consent.whyInChat(context, NAME, BACKEND_QUESTION) + ". Ask the user only "
+                                       + "which backend, Elasticsearch or Lucene, and call again with "
                                        + "backend= their answer. Don't ask how fields are named yet: the choices for "
                                        + "that follow from the backend (for Elasticsearch, the user's own index "
                                        + "template first), and the server asks them.");

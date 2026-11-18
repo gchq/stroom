@@ -38,6 +38,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -352,6 +354,169 @@ class TestConsent {
         assertThat(questions.callIds.get(2)).isNotEqualTo(questions.callIds.get(0));
     }
 
+    @Test
+    void valuesToEditTooManyForAFormAreShownInTheChatThenConfirmedInOneShortForm() {
+        // A new version's names, a field each: past what a form holds, the form was never shown and the call could
+        // never go on.
+        Consent.Request request = Consent.Request.confirmation("copy_pipeline", "Copy pipeline 'P' as 'P V2.0'",
+                Map.of("build", "b"));
+        for (int i = 1; i <= ElicitationSchema.MAX_FIELDS + 5; i++) {
+            request = request.withEditable("doc" + i, "Copy of XSLT " + i, "XSLT " + i + " V2.0");
+        }
+        final Consent.Request many = request;
+        final Questions user = Questions.strict(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("value", true)));
+
+        final String shown = refusal(() -> consent.require(CALL, user.context(), many));
+
+        assertThat(user.forms).as("nothing asked before the values are shown").isEmpty();
+        assertThat(shown).contains("Nothing was done yet", "too many to edit in one form",
+                "Copy of XSLT 1: XSLT 1 V2.0", "Copy of XSLT 25: XSLT 25 V2.0", UserQuestions.SHOWN_ARG + "='");
+        final String shownId = idAfter(shown, UserQuestions.SHOWN_ARG);
+        // Another id (or none) is not what was shown: shown again.
+        assertThat(refusal(() -> consent.require(withArg(UserQuestions.SHOWN_ARG, "abc"), user.context(), many)))
+                .contains("too many to edit in one form");
+
+        consent.require(withArg(UserQuestions.SHOWN_ARG, shownId), user.context(), many);
+
+        assertThat(user.forms).singleElement().satisfies(form -> assertThat(asMap(form.get("properties")))
+                .containsOnlyKeys("value"));
+        assertThat(user.intros.getFirst()).contains("Copy pipeline 'P' as 'P V2.0'", "the 25 shown in the chat");
+        // The values stand as proposed.
+        assertThat(consent.changes(user.context())).isEmpty();
+    }
+
+    @Test
+    void aConfirmationTheClientCantShowIsConfirmedInTheChatOnceBoundToWhatWasShown() {
+        // Not a dead end: the agent shows the user what is asked, and their yes in the chat is passed back by an id
+        // that stands for exactly that, once.
+        final Questions client = Questions.refusing();
+        final Consent.Request request = Consent.Request.confirmation("create_feed", "Create feed A", Map.of(
+                "feed name", "A")).withEditable("name", "Feed name", "A");
+
+        final String asked = refusal(() -> consent.require(CALL, client.context(), request));
+
+        assertThat(asked).startsWith("The client couldn't show the form, so the user wasn't asked to agree and "
+                                     + "nothing was done.")
+                .contains("Create feed A", "- feed name: A", "- Feed name: A", "Only once they say yes",
+                        "never pass it without it");
+        final String token = idAfter(asked, UserQuestions.CONFIRMED_IN_CHAT_ARG);
+        // Another's details: asked again, with another id.
+        final Consent.Request other = Consent.Request.confirmation("create_feed", "Create feed B", Map.of(
+                "feed name", "B"));
+        assertThat(refusal(() -> consent.require(withArg(UserQuestions.CONFIRMED_IN_CHAT_ARG, token),
+                client.context(), other))).contains("is for something else", "Create feed B")
+                .doesNotContain(token);
+        final String again = idAfter(refusal(() -> consent.require(CALL, client.context(), request)),
+                UserQuestions.CONFIRMED_IN_CHAT_ARG);
+
+        consent.require(withArg(UserQuestions.CONFIRMED_IN_CHAT_ARG, again), client.context(), request);
+
+        Mockito.verify(auditLog).processed(Mockito.eq(SESSION), Mockito.isNull(), Mockito.eq("confirmation"),
+                Mockito.anyString(), Mockito.startsWith("granted in the chat"), Mockito.eq(true));
+        // Used once.
+        assertThat(refusal(() -> consent.require(withArg(UserQuestions.CONFIRMED_IN_CHAT_ARG, again),
+                client.context(), request))).contains("is for something else");
+    }
+
+    @Test
+    void aFormThatCantBeShownLetsTheNextCallTakeTheUsersChatAnswer() {
+        // Seen: a scope form too large to show, the agent told to ask in the chat and pass the answer, and the
+        // answer refused (forms can be shown in the session), so the form asked again, for ever.
+        final Questions user = Questions.strict(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("choice", "A")));
+        final List<String> manyOptions = IntStream.range(0, 400)
+                .mapToObj(i -> "System/Indexes/Department " + i + "/Some long folder name/Index " + i)
+                .toList();
+        assertThat(consent.takesChatAnswer(user.context(), "get_field_conventions", "Which index?")).isFalse();
+
+        assertThat(consent.choose(CALL, user.context(), "get_field_conventions", "Which index?", manyOptions,
+                null)).isEmpty();
+
+        assertThat(consent.takesChatAnswer(user.context(), "get_field_conventions", "Which index?")).isTrue();
+        assertThat(consent.whyInChat(user.context(), "get_field_conventions", "Which index?"))
+                .isEqualTo("The form was too large to show (its form is too large)");
+        // Another question, tool or session isn't.
+        assertThat(consent.takesChatAnswer(user.context(), "get_field_conventions", "Which backend?")).isFalse();
+        assertThat(consent.takesChatAnswer(user.context(), "create_feed", "Which index?")).isFalse();
+        assertThat(consent.takesChatAnswer(ToolCallContext.builder(ToolSession.chat(3)).userQuestions(user)
+                .build(), "get_field_conventions", "Which index?")).isFalse();
+        // Where no form can be shown at all, the chat's answer is the user's, as before.
+        assertThat(consent.takesChatAnswer(textOnly(), "create_feed", "Which index?")).isTrue();
+        assertThat(consent.whyInChat(textOnly(), "create_feed", "Which index?"))
+                .isEqualTo("No form can be shown in this session now");
+        // A form shown for the question since: asked in forms again.
+        assertThat(consent.choose(CALL, user.context(), "get_field_conventions", "Which index?", List.of("A", "B"),
+                null)).contains("A");
+        assertThat(consent.takesChatAnswer(user.context(), "get_field_conventions", "Which index?")).isFalse();
+    }
+
+    @Test
+    void aFormTheClientCantShowIsLeftToTheChatRatherThanRefusingTheCall() {
+        // Seen over /mcp: the client answered a form with an error, the call was refused, and every call after
+        // asked it again.
+        final Questions client = Questions.refusing();
+
+        assertThat(consent.choose(CALL, client.context(), "build_translation_xslt", "Where?", List.of("A", "B"),
+                "Where do the Events go?")).isEmpty();
+
+        assertThat(consent.takesChatAnswer(client.context(), "build_translation_xslt", "Where do the Events go?"))
+                .isTrue();
+        assertThat(consent.whyInChat(client.context(), "build_translation_xslt", "Where do the Events go?"))
+                .isEqualTo("The client couldn't show the form");
+    }
+
+    @Test
+    void manyOptionsArePickedInOneListNoneTickedToStart() {
+        final Map<String, String> options = new LinkedHashMap<>();
+        IntStream.rangeClosed(1, 65).forEach(i -> options.put("Source type " + i, "about 1% of the records "
+                                                                                 + "read; json"));
+        final Questions user = Questions.strict(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of(
+                "picked", List.of("Source type 9", "Source type 2", "Not offered"), "text", " Group ")));
+
+        final Optional<Consent.Picked> picked = consent.pick(CALL, user.context(), "record_source_types",
+                "Which go in the group?", "Source types to put in the group", options, "What is it called?",
+                "Suggested");
+
+        assertThat(picked).contains(new Consent.Picked(List.of("Source type 2", "Source type 9"), "Group"));
+        final Map<String, Object> properties = asMap(user.forms.getFirst().get("properties"));
+        assertThat(properties).containsOnlyKeys("picked", "text");
+        final Map<String, Object> list = asMap(properties.get("picked"));
+        assertThat(list).containsEntry("type", "array").containsEntry("default", List.of());
+        assertThat(asMap(list.get("items")).get("optionDescriptions")).asList().hasSize(65)
+                .first().isEqualTo("about 1% of the records read; json");
+        assertThat(asMap(properties.get("text"))).containsEntry("default", "Suggested");
+    }
+
+    @Test
+    void aListInAFormsMessageIsItsFirstLinesAndHowManyMore() {
+        final List<String> lines = IntStream.rangeClosed(1, 65).mapToObj(i -> "Row " + i).toList();
+
+        assertThat(Consent.firstLines(lines, "all are in the table shown in the chat"))
+                .isEqualTo("Row 1\nRow 2\nRow 3\nRow 4\nRow 5\nAnd 60 more (all are in the table shown in the "
+                           + "chat).");
+        assertThat(Consent.firstLines(lines.subList(0, 2), "x")).isEqualTo("Row 1\nRow 2");
+    }
+
+    // The refusal's message.
+    private static String refusal(final Runnable call) {
+        try {
+            call.run();
+        } catch (final ToolRefusal e) {
+            return e.getMessage();
+        }
+        throw new AssertionError("Not refused");
+    }
+
+    // The id a reply says to pass back as the argument.
+    private static String idAfter(final String text, final String argument) {
+        final Matcher matcher = Pattern.compile(argument + "='([0-9a-f]+)'").matcher(text);
+        assertThat(matcher.find()).as("%s in %s", argument, text).isTrue();
+        return matcher.group(1);
+    }
+
+    private static ToolCall withArg(final String name, final String value) {
+        return new ToolCall(CALL.id(), CALL.name(), "{\"" + name + "\": \"" + value + "\"}");
+    }
+
     private static Consent.Request confirmation() {
         return Consent.Request.confirmation("create_feed", "Create feed A", Map.of("feed name", "A"));
     }
@@ -373,12 +538,32 @@ class TestConsent {
     private static final class Questions implements UserQuestions {
 
         private final ElicitResult answer;
+        // Fails a test given a form Stroom couldn't show.
+        private final boolean strict;
+        // Answers as a client that can't show the form does.
+        private final boolean refuses;
         private final List<String> intros = new ArrayList<>();
         private final List<String> callIds = new ArrayList<>();
         private final List<Map<String, Object>> forms = new ArrayList<>();
 
         private Questions(final ElicitResult answer) {
+            this(answer, false, false);
+        }
+
+        private Questions(final ElicitResult answer, final boolean strict, final boolean refuses) {
             this.answer = answer;
+            this.strict = strict;
+            this.refuses = refuses;
+        }
+
+        // Answers every form so, and fails the test given one too large to show.
+        private static Questions strict(final ElicitResult answer) {
+            return new Questions(answer, true, false);
+        }
+
+        // A client that answers every form with an error.
+        private static Questions refusing() {
+            return new Questions(null, false, true);
         }
 
         private ToolCallContext context() {
@@ -395,6 +580,12 @@ class TestConsent {
                                 final String callId,
                                 final String intro,
                                 final Map<String, Object> form) {
+            if (strict) {
+                assertThat(ElicitationSchema.check(intro, form)).as("a form too large to show: %s", intro).isNull();
+            }
+            if (refuses) {
+                throw new ToolRefusal(ElicitationSchema.cannotShow("the client said: no"));
+            }
             intros.add(intro);
             callIds.add(callId);
             forms.add(form);

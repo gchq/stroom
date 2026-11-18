@@ -101,6 +101,13 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     private static final String NEEDS_USER = "needs_user";
     // The scope form's free-text field: the group's name.
     private static final String GROUP_QUESTION = "What is the group called?";
+    // The scope form's list: the source types to tick.
+    static final String SCOPE_QUESTION = "Source types to put in the group";
+    // The questions of the patterns' and list items' forms.
+    static final String PATTERNS_QUESTION = "Use these patterns, or one source type per value?";
+    static final String ITEMS_QUESTION = "Use these list items, or one source type per value?";
+    // Where a form's message says the rest of its rows are.
+    private static final String ROWS_IN_THE_CHAT = "all are in the table shown in the chat";
 
     private final SurveyDocuments surveyDocuments;
     private final SourceTypeRegistries registries;
@@ -210,10 +217,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                    + "row's removal is confirmed by the user in a "
                                                                    + "form (refused for a translated row where no "
                                                                    + "form can be shown)."))
-                        .addStringProperty(PATTERNS_ARG, "Only when the client shows no forms: the user's answer "
-                                                         + "to the proposed patterns or list items ('use' them, or "
+                        .addStringProperty(PATTERNS_ARG, "Only when no form can be shown, or the reply says its "
+                                                         + "form couldn't be: the user's answer in the chat to the "
+                                                         + "proposed patterns or list items ('use' them, or "
                                                          + "'exact': a source type per value).")
-                        .addProperty(SCOPE_ARG, stringArraySchema("Only when the client shows no forms: the "
+                        .addProperty(SCOPE_ARG, stringArraySchema("Only when no form can be shown, or the reply "
+                                                                  + "says the scope form couldn't be: the "
                                                                   + "source types the user chose for this build's "
                                                                   + "group, by name (with group). [] with an "
                                                                   + "existing group's name changes that group "
@@ -361,7 +370,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             result.put("feed", feed);
             result.put("offered", offered(registry).stream().map(row -> JsonValues.text(row.get("name"))).toList());
             result.put("groups", registryGroups(registry));
-            result.put("hint", "Ask the user in the chat which of the offered source types go in this build's source "
+            result.put("hint", consent.whyInChat(context, NAME, SCOPE_QUESTION) + ". Ask the user in the chat which "
+                               + "of the offered source types go in this build's source "
                                + "type group (a build makes one group, one pipeline; the table shown) and what the "
                                + "group is called (suggest a name; an existing group's name adds them to it); the "
                                + "rest are parked for later builds. Then call " + NAME + " again with "
@@ -658,11 +668,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 ? Optional.of(given2)
                 : proposal.lists()
                         ? consent.answer(call, context, NAME, itemsIntro(feed, field, proposal),
-                                "Use these list items, or one source type per value?", List.of(USE_ITEMS,
-                                        ONE_PER_VALUE))
+                                ITEMS_QUESTION, List.of(USE_ITEMS, ONE_PER_VALUE))
                         : consent.answer(call, context, NAME, patternsIntro(feed, field, proposal),
-                                "Use these patterns, or one source type per value?", List.of(USE_PATTERNS,
-                                        ONE_PER_VALUE));
+                                PATTERNS_QUESTION, List.of(USE_PATTERNS, ONE_PER_VALUE));
         if (answer.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("status", NEEDS_USER);
@@ -671,14 +679,17 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     .map(row -> Entries.of("name", row.row().name(), "match", row.row().said(), "values",
                             row.values(), "records", row.records()))
                     .toList());
-            result.put("hint", (proposal.lists()
+            result.put("hint", consent.whyInChat(context, NAME, proposal.lists()
+                    ? ITEMS_QUESTION
+                    : PATTERNS_QUESTION) + ". " + (proposal.lists()
                     ? "The values of '" + field + "' are lists: a source type an item is proposed, rarest first "
                       + "(a record whose list holds several is the first row's), each covering the values shown. "
                     : "The values of '" + field + "' are many paths or names: these patterns are proposed, "
                       + "each covering the values shown, tried in order (narrower first). ")
-                               + "Ask the user in the chat whether to use them, or have a source type per value, then "
-                               + "call " + NAME + " again with " + PATTERNS_ARG + "='use' or 'exact' (or " + ROWS_ARG
-                               + " as they say).");
+                               + "Show the user proposed_rows as a table, and ask them in the chat whether to use "
+                               + "them, or have a source type per value; then call " + NAME + " again with "
+                               + PATTERNS_ARG + "='use' or 'exact' (their answer), or " + ROWS_ARG + " as they "
+                               + "say.");
             return new Rows(List.of(), result);
         }
         final String said = answer.get().strip().toLowerCase(Locale.ROOT);
@@ -892,10 +903,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             lines.add(n++ + ". " + row.row().name() + " " + row.row().said() + ": " + row.records() + " records ("
                       + row.values().size() + " value(s))");
         }
-        return "The values of '" + field + "' in feed '" + feed + "' are lists (split on '" + separator + "'): a "
-               + "source type is proposed for each item, tried in this order, rarest first; a record whose list "
-               + "holds several items is of the first row's. A value none matches later is a new source type.\n"
-               + String.join("\n", lines);
+        return "The values of '" + field + "' in feed '" + feed + "' are lists (split on '" + separator + "'): "
+               + proposal.rows().size() + " source types are proposed, one an item, tried in this order, rarest "
+               + "first; a record whose list holds several items is of the first row's. A value none matches later "
+               + "is a new source type.\n" + Consent.firstLines(lines, ROWS_IN_THE_CHAT);
     }
 
     // The form's message: each pattern with the values and records it covers, in plain text.
@@ -911,9 +922,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     ? ", +" + (row.values().size() - 4) + " more"
                     : "") + ")");
         }
-        return "The values of '" + field + "' in feed '" + feed + "' are paths or names: these source types are "
-               + "proposed, tried in this order, the first match winning (a pattern matches values starting so). A "
-               + "value none matches later is a new source type.\n" + String.join("\n", lines);
+        return "The values of '" + field + "' in feed '" + feed + "' are paths or names: " + proposal.rows().size()
+               + " source types are proposed, tried in this order, the first match winning (a pattern matches values "
+               + "starting so). A value none matches later is a new source type.\n"
+               + Consent.firstLines(lines, ROWS_IN_THE_CHAT);
     }
 
     // A row as the user gave it: `name = value`, `name ~ ^pattern`, or `name ∈ item` (`name in item`); for a
@@ -1068,7 +1080,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         final List<String> given = stringListArg(call, SCOPE_ARG);
         final String suggested = NullSafe.string(stringArg(call, GROUP_ARG)).strip();
         final List<String> groups = registryGroups(registry);
-        if (given.isEmpty() && emptyScopeGiven(call) && !context.userQuestions().canAsk()) {
+        // The user's answer said in the chat: where no form can be shown, or the scope form couldn't be.
+        final boolean chatAnswer = consent.takesChatAnswer(context, NAME, SCOPE_QUESTION);
+        if (given.isEmpty() && emptyScopeGiven(call) && chatAnswer) {
             // Without forms, scope=[] with an existing group's name is the user's "change that group alone", as no
             // source type ticked in the form is.
             if (suggested.isEmpty()) {
@@ -1084,10 +1098,11 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             }
             return Optional.of(new Scope(List.of(), NullSafe.string(stringArg(call, REASON_ARG)).strip(), group));
         }
-        // scope is the user's answer said in the chat, only where no form can be shown: where one can, the form
-        // asks the user, whatever scope the agent gives (seen in an eval: the agent passed scope=["OneDrive"] with
-        // forms available and the user was never asked which source types go in the group).
-        if (!given.isEmpty() && !context.userQuestions().canAsk()) {
+        // scope is the user's answer said in the chat, only where no form can be shown, or the scope form couldn't
+        // be (seen: 65 source types, the form too large, and the scope given as the user said refused for ever):
+        // where one can, the form asks the user, whatever scope the agent gives (seen in an eval: the agent passed
+        // scope=["OneDrive"] with forms available and the user was never asked which source types go in the group).
+        if (!given.isEmpty() && chatAnswer) {
             if (suggested.isEmpty()) {
                 throw new ToolRefusal("Give " + GROUP_ARG + ": the name the user gave this build's source type group "
                                       + "(a build makes one group, its source types the scope's)"
@@ -1107,24 +1122,22 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                   + "(e.g. for the kind of system its source types are), which the user keeps or "
                                   + "changes in the form" + groupsSaid(groups) + ". Nothing was asked.");
         }
-        final Map<String, Consent.Editable> items = new LinkedHashMap<>();
+        // One list to tick, however many source types (seen: a yes/no field each, 65 of them, too many for a form);
+        // none ticked to start: the user chooses.
+        final Map<String, String> options = new LinkedHashMap<>();
         for (final String name : names) {
             final Map<String, Object> profile = profiles.getOrDefault(name, Map.of());
-            items.put(name, new Consent.Editable("Put " + name + " in the group", "about "
-                                                                                + JsonValues.text(profile.getOrDefault(
-                    "share_percent", 0)) + "% of the records read; " + String.join(", ",
-                    JsonValues.mapOrEmpty(profile.get("formats")).keySet())));
+            options.put(name, "about " + JsonValues.text(profile.getOrDefault("share_percent", 0)) + "% of the "
+                              + "records read; " + String.join(", ", JsonValues.mapOrEmpty(profile.get("formats"))
+                    .keySet()));
         }
-        final Optional<Map<String, Object>> answers = consent.review(call, context, NAME, scopeIntro(feed, groups),
-                items, GROUP_QUESTION, suggested, false);
+        final Optional<Consent.Picked> answers = consent.pick(call, context, NAME, scopeIntro(feed, groups),
+                SCOPE_QUESTION, options, GROUP_QUESTION, suggested);
         if (answers.isEmpty()) {
             return Optional.empty();
         }
-        final List<String> chosen = names.stream().filter(name -> Boolean.TRUE.equals(answers.get().get(name)))
-                .toList();
-        final String named = NullSafe.nonBlankStringElse(NullSafe.get(answers.get().get(Consent.REVIEW_TEXT),
-                String::valueOf), suggested).strip();
-        return Optional.of(new Scope(chosen, "", groupNamed(groups, named)));
+        final String named = NullSafe.nonBlankStringElse(answers.get().text(), suggested).strip();
+        return Optional.of(new Scope(answers.get().chosen(), "", groupNamed(groups, named)));
     }
 
     // True when the call gives scope as an empty list: an answer (no source type added), not a scope left out.

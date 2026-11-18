@@ -138,6 +138,10 @@ public final class ElicitationSchema {
             if (definition.containsKey("oneOf") && options(definition).isEmpty()) {
                 return "has no choices";
             }
+            // Its answer may be no longer than this (see content): a longer default could never be accepted.
+            if (definition.get("default") instanceof final String text && text.length() > MAX_TEXT_CHARS) {
+                return "has a default longer than " + MAX_TEXT_CHARS + " characters";
+            }
             return null;
         } else if ("number".equals(type) || "integer".equals(type) || "boolean".equals(type)) {
             return null;

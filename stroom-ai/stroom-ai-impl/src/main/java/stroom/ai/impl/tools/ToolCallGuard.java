@@ -293,7 +293,10 @@ public class ToolCallGuard {
         });
         final List<String> ignored = properties.isEmpty()
                 ? List.of()
-                : arguments.keySet().stream().filter(key -> !properties.containsKey(key)).sorted().toList();
+                : arguments.keySet().stream()
+                        .filter(key -> !properties.containsKey(key) && !UserQuestions.RESERVED_ARGS.contains(key))
+                        .sorted()
+                        .toList();
         ignored.forEach(arguments::remove);
         int mended = 0;
         for (final Entry<String, Object> entry : arguments.entrySet()) {
