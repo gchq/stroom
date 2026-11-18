@@ -1,0 +1,177 @@
+name: Application logs of 43 loggers in one feed (JSON lines, the source type held in a JSON string's logger_name)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, held_values, nesting, epoch_times]
+promote: true
+# An aggregated feed of many source types, modelled on a user's test (2026-11-18): a log shipper's JSON lines
+# (aggregated/held-loggers, made by its held-loggers-generator.py), every service's loggers in one feed, 43 of them.
+# Each record's `event` is a JSON string holding the application's record, whose `logger_name` says which logger
+# wrote it: the source type is held, `event>logger_name`. The shipper's own fields: `time` in epoch milliseconds and
+# `fields.orig_rt` in epoch nanoseconds. The user wants one group, Security audit, of the ten audit loggers; the
+# other 33 are for later, three of them in the audit loggers' own packages (com.acme.auth.TokenCache,
+# com.acme.iam.DirectorySync, com.acme.data.ExportWorker), so the package patterns record_source_types proposes
+# don't fit the group: its rows must be the loggers themselves. The data is in the feed already (`streams`),
+# nothing to upload. The traps: the scope form (one multi-choice list of over 20 source types) not shown, or the
+# scope asked again and again (the user's run looped in record_source_types); a feed-wide kind field asked, or the
+# times (`time`, `fields.orig_rt`) offered as kind fields; the kinds within the group told apart by `action`, a field
+# inside the held value (`event.action`), not by the logger alone; the other loggers' 464 records passed over
+# (counted, INFO), not errors; and promotion to the role-first layout (`<feed folder>/<group>/Events/<version>`).
+request: >
+  Onboard our platform's application logs: they are in Stroom already, in our feed, nothing to upload. The log
+  shipper sends one JSON object a line, every service's loggers in the one feed, over forty of them; the
+  application's own record is a JSON string in the event field, and its logger_name says which logger wrote it. For
+  now we only want the security audit loggers, as one group called "Security audit": com.acme.auth.LoginAudit,
+  com.acme.auth.MfaAudit, com.acme.auth.PasswordAudit, com.acme.session.SessionAudit, com.acme.iam.RoleAudit,
+  com.acme.iam.UserAdminAudit, com.acme.iam.ApiKeyAudit, com.acme.data.ExportAudit, com.acme.data.RecordAccessAudit
+  and com.acme.config.SettingsAudit. Leave the other loggers for later. Index the group's events, and promote the
+  build when it's done.
+user_knows: >
+  logger_name, inside the JSON string in the event field, says which logger (source) a record came from. This build's
+  group is called Security audit and holds exactly the ten audit loggers named in the request, each logger by its
+  own name (not by package: com.acme.auth.TokenCache, com.acme.iam.DirectorySync and com.acme.data.ExportWorker are
+  in the same packages but are not audit loggers). Every other logger is for later builds. In the audit records,
+  action (inside the event JSON) says what was done: it tells the kinds of event apart. user is who did it;
+  target_user, where there is one, who it was done to. time is when the shipper read the line (epoch milliseconds);
+  fields.orig_rt is when the application wrote it (epoch nanoseconds): that is the event time. The other loggers'
+  records being passed over by the group's pipeline is expected; they are not errors. The system is the ACME
+  platform. Promote the build, keeping its documents where the feed's other documents are.
+expected:
+  records: 136
+  event_types: [Authenticate, View|Export]
+  paths: [EventTime/TimeCreated, EventSource/User/Id]
+  values:
+    EventSource/User/Id: [sec.ops, it.admin, priya.nair]
+  # The other loggers' records are passed over, never translated.
+  forbidden_values:
+    EventSource/Generator: [com.acme.auth.TokenCache, com.acme.iam.DirectorySync, com.acme.web.RequestLogger,
+                            org.hibernate.SQL]
+  source_types:
+    # Scored on the registry beside the feed, after promotion.
+    promoted: true
+    field: event>logger_name
+    group:
+      name: Security audit
+      values: [com.acme.auth.LoginAudit, com.acme.auth.MfaAudit, com.acme.auth.PasswordAudit,
+               com.acme.session.SessionAudit, com.acme.iam.RoleAudit, com.acme.iam.UserAdminAudit,
+               com.acme.iam.ApiKeyAudit, com.acme.data.ExportAudit, com.acme.data.RecordAccessAudit,
+               com.acme.config.SettingsAudit]
+      others: [com.acme.auth.TokenCache, com.acme.iam.DirectorySync, com.acme.data.ExportWorker,
+               com.acme.web.RequestLogger, com.acme.billing.PaymentGateway, org.hibernate.SQL, com.acme.jobs.Scheduler,
+               com.zaxxer.hikari.pool.HikariPool]
+    passed_over: 464
+    # Role first, then version: the group's Events pipeline in <feed folder>/<group>/Events/V1.0.
+    layout: "/Security audit/Events/V\\d+(\\.\\d+)*$"
+  forms:
+    asked:
+      - {message: "go in this build's source type group", at_most: 1}
+    # No kind field asked over the whole feed, and the times never offered as kind fields.
+    not_asked:
+      - {message: "kinds of event apart", offering: "^(time|fields[./]orig_rt|orig_rt)( |$)"}
+streams: {resource: aggregated/held-loggers/held-loggers.json}
+reference:
+  source_types:
+    field: event>logger_name
+    # A row a logger: the package patterns proposed would take the other loggers of the audit packages too.
+    patterns: exact
+    system_name: ACME platform
+    group: Security audit
+    source_types: [com.acme.auth.LoginAudit, com.acme.auth.MfaAudit, com.acme.auth.PasswordAudit,
+                   com.acme.session.SessionAudit, com.acme.iam.RoleAudit, com.acme.iam.UserAdminAudit,
+                   com.acme.iam.ApiKeyAudit, com.acme.data.ExportAudit, com.acme.data.RecordAccessAudit,
+                   com.acme.config.SettingsAudit]
+  mapping:
+    input: json
+    json_layout: lines
+    json_fields: [event]
+    ignored_fields: [service, fields.collector, fields.env, time, event.thread, event.level]
+    common:
+      - {path: EventTime/TimeCreated, field: fields.orig_rt, time_format: epoch_ns}
+      - {path: EventSource/System/Name, value: ACME platform}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: event.logger_name}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: event.user}
+      - {path: EventSource/Client/IPAddress, field: event.src_ip}
+      - {path: EventDetail/TypeId, field: event.action}
+      - {path: EventDetail/Description, field: event.message}
+    events:
+      - name: logon
+        when: [{field: event.action, one_of: [LOGIN_SUCCESS, MFA_SUCCESS]}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: event.user}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: 'true'}
+      - name: logon_failed
+        when: [{field: event.action, one_of: [LOGIN_FAILURE, MFA_FAILURE]}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: event.user}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
+          - {path: EventDetail/Authenticate/Outcome/Description, field: event.reason}
+      - name: logoff
+        when: [{field: event.action, one_of: [LOGOUT, SESSION_EXPIRED]}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: event.user}
+      - name: session_revoked
+        when: [{field: event.action, equals: SESSION_REVOKED}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: event.target_user}
+      - name: password_change
+        when: [{field: event.action, equals: PASSWORD_CHANGE}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: ChangePassword}
+          - {path: EventDetail/Authenticate/User/Id, field: event.user}
+      - name: password_reset
+        when: [{field: event.action, equals: PASSWORD_RESET}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: ResetPassword}
+          - {path: EventDetail/Authenticate/User/Id, field: event.target_user}
+      - name: role_changed
+        when: [{field: event.action, one_of: [ROLE_GRANTED, ROLE_REVOKED]}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Role membership}
+          - {path: EventDetail/Update/After/Object/Id, field: event.target_user}
+          - {path: EventDetail/Update/After/Object/Name, field: event.role}
+      - name: user_created
+        when: [{field: event.action, equals: USER_CREATED}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: User}
+          - {path: EventDetail/Create/Object/Id, field: event.target_user}
+      - name: user_disabled
+        when: [{field: event.action, equals: USER_DISABLED}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: User}
+          - {path: EventDetail/Update/After/Object/Id, field: event.target_user}
+      - name: user_deleted
+        when: [{field: event.action, equals: USER_DELETED}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: User}
+          - {path: EventDetail/Delete/Object/Id, field: event.target_user}
+      - name: key_created
+        when: [{field: event.action, equals: KEY_CREATED}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: API key}
+          - {path: EventDetail/Create/Object/Id, field: event.key_id}
+      - name: key_revoked
+        when: [{field: event.action, equals: KEY_REVOKED}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: API key}
+          - {path: EventDetail/Delete/Object/Id, field: event.key_id}
+      - name: export_downloaded
+        when: [{field: event.action, equals: EXPORT_DOWNLOADED}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Export}
+          - {path: EventDetail/View/Object/Id, field: event.export_id}
+          - {path: EventDetail/View/Data, data_name: rows, field: event.rows}
+      - name: record_viewed
+        when: [{field: event.action, equals: RECORD_VIEWED}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Customer record}
+          - {path: EventDetail/View/Object/Id, field: event.record_id}
+      - name: setting_changed
+        when: [{field: event.action, equals: SETTING_CHANGED}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Setting}
+          - {path: EventDetail/Update/After/Object/Id, field: event.setting}
+          - {path: EventDetail/Update/After/Object/Data, data_name: value, field: event.new_value}
