@@ -22,7 +22,6 @@ import stroom.dataconnection.shared.DataConnectionType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Query;
 import stroom.query.api.datasource.QueryField;
-import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
@@ -34,9 +33,6 @@ import java.util.List;
 /// it asks the document's connector for everything that depends on the type. [Connectors] finds the
 /// connector for a document.
 interface Connector {
-
-    /// Logs failed connection tests.
-    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Connector.class);
 
     /// @return The type of Data Connection this connector serves.
     DataConnectionType getType();
@@ -89,7 +85,9 @@ interface Connector {
                 // The test was stopped, so whatever runs next on this thread must know too.
                 Thread.currentThread().interrupt();
             }
-            LOGGER.debug(() -> LogUtil.message("{} test failed for {}", getType(), doc.getUuid()), e);
+            // Logged as the connector's own class, so DEBUG on e.g. LdapConnector shows its failures
+            LambdaLoggerFactory.getLogger(getClass())
+                    .debug(() -> LogUtil.message("{} test failed for {}", getType(), doc.getUuid()), e);
             return new DataConnectionTestResponse(false, describeFailure(e));
         }
     }

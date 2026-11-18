@@ -57,7 +57,6 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.RequestThrottledException;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 
 import java.time.Duration;
@@ -66,7 +65,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -168,6 +166,14 @@ public class S3EventService {
         s3EventConsumer.accept(new S3CreateEvent(s3Location, attributeMap));
     }
 
+    /// Adds the S3 object's metadata to the attribute map.
+    ///
+    /// @param s3Location   The location of the object on S3.
+    /// @param eTag         The entity tag of the object, or `null` to fetch whichever version is current.
+    /// @param attributeMap The attributes to add the metadata to.
+    /// @throws RuntimeException If there is no S3 client config for the object's region and bucket, as
+    ///                          without its metadata the object can't be received, e.g. it has no
+    ///                          `Feed` or `Schema` header.
     public void addS3MetaAttributes(final S3Location s3Location,
                                     final String eTag,
                                     final AttributeMap attributeMap) {
@@ -176,21 +182,13 @@ public class S3EventService {
         Objects.requireNonNull(s3Location);
         Objects.requireNonNull(attributeMap);
 
-        final Optional<S3ClientConfig> optS3ClientConfig = s3ClientConfigService.getS3ClientConfig(
-                s3Location.getRegionName(),
-                s3Location.getBucketName());
-
-        optS3ClientConfig.ifPresentOrElse(
-                s3ClientConfig -> addS3MetaAttributes(s3Location, eTag, attributeMap, s3ClientConfig),
-                () -> LOGGER.warn("No S3 client config found matching region '{}' and bucket '{}'. " +
-                                  "Unable to fetch S3 metadata for key '{}', continuing without metadata",
-                        s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey()));
-    }
-
-    private void addS3MetaAttributes(final S3Location s3Location,
-                                     final String eTag,
-                                     final AttributeMap attributeMap,
-                                     final S3ClientConfig s3ClientConfig) {
+        final S3ClientConfig s3ClientConfig = s3ClientConfigService.getS3ClientConfig(
+                        s3Location.getRegionName(),
+                        s3Location.getBucketName())
+                .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                        "No S3 client config found matching region '{}' and bucket '{}'. " +
+                        "Unable to fetch S3 metadata for key '{}'",
+                        s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey())));
         final Map<CIKey, String> s3Metadata = getS3Metadata(s3Location, eTag, s3ClientConfig);
         if (s3Metadata != null) {
             s3Metadata.forEach((k, v) -> {
@@ -368,12 +366,12 @@ public class S3EventService {
                                              final RuntimeException cause) {
         if (NullSafe.isNonBlankString(deadLetterQueueUrl)) {
             // Don't put the stack in the error msg as we could get a lot of these and spam the logs
-            LOGGER.error(LogUtil.message("Error processing message - queueUrl: {}, " +
+            LOGGER.error(LogUtil.message("Error processing message - messageId: {}, queueUrl: {}, " +
                                          "moving it to deadLetterQueueUrl: {} - {} (DEBUG for stack trace)",
-                    queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)));
-            LOGGER.debug(() -> LogUtil.message("Error processing message - queueUrl: {}, " +
+                    message.messageId(), queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)));
+            LOGGER.debug(() -> LogUtil.message("Error processing message - messageId: {}, queueUrl: {}, " +
                                                "moving it to deadLetterQueueUrl: {} - {}",
-                    queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)), cause);
+                    message.messageId(), queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)), cause);
             try {
                 // Manually 'move' the message to the dead letter queue
                 reSendSqsMessage(message, deadLetterQueueUrl, sqsClient, cause);
@@ -387,12 +385,13 @@ public class S3EventService {
             }
         } else {
             // No dead letter queue configured, so just leave the message on the original queue
-            LOGGER.error(LogUtil.message("deadLetterQueueUrl not configured, unable to move message to the DQL - " +
-                                         "message: {}, cause: {} (DEBUG for stack trace)",
-                    queueUrl, LogUtil.exceptionMessage(cause)));
-            LOGGER.debug(() -> LogUtil.message(
-                    "deadLetterQueueUrl not configured, unable to move message to the DQL - message: {}, cause: {} ",
-                    queueUrl, LogUtil.exceptionMessage(cause), cause));
+            LOGGER.error(LogUtil.message("Error processing message - deadLetterQueueUrl not configured, " +
+                                         "so leaving it on the queue - messageId: {}, queueUrl: {} - {} " +
+                                         "(DEBUG for stack trace)",
+                    message.messageId(), queueUrl, LogUtil.exceptionMessage(cause)));
+            LOGGER.debug(() -> LogUtil.message("Error processing message - deadLetterQueueUrl not configured, " +
+                                               "so leaving it on the queue - messageId: {}, queueUrl: {} - {}",
+                    message.messageId(), queueUrl, LogUtil.exceptionMessage(cause)), cause);
         }
     }
 
@@ -549,7 +548,7 @@ public class S3EventService {
                     validateEventVersion(JsonUtil.getNodeAsString(recordsItemNode, "eventVersion"));
 
                     final String eventName = getNodeAsString(recordsItemNode, "eventName");
-                    if (NullSafe.startsWith(eventName, SUPPORTED_EVENT_NAME_PREFIX)) {
+                    if (eventName.startsWith(SUPPORTED_EVENT_NAME_PREFIX)) {
                         addS3CreateEvent(attributeMap, recordsItemNode, eventName, s3CreateEvents);
                     } else {
                         LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
@@ -558,8 +557,8 @@ public class S3EventService {
             } else {
                 throw new IllegalStateException("Unknown messageBody format, messageBody:\n" + messageBody);
             }
-        } catch (final JacksonException e) {
-            LOGGER.debug(() -> LogUtil.message("Error parsing SQS message body - {}, messageBody:\n{}",
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Error converting SQS message body - {}, messageBody:\n{}",
                     LogUtil.exceptionMessage(e), messageBody), e);
             throw e;
         }
@@ -594,14 +593,7 @@ public class S3EventService {
                 bucketArn, objectKey, objectSize, attributeMapCopy);
 
         final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
-        final S3ClientConfig s3ClientConfig = s3ClientConfigService.getS3ClientConfig(
-                        s3Location.getRegionName(),
-                        s3Location.getBucketName())
-                .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                        "No S3 client config found matching region '{}' and bucket '{}'. " +
-                        "Unable to fetch S3 metadata for key '{}'",
-                        s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey())));
-        addS3MetaAttributes(s3Location, eTag, attributeMapCopy, s3ClientConfig);
+        addS3MetaAttributes(s3Location, eTag, attributeMapCopy);
         s3CreateEvents.add(new S3CreateEvent(s3Location, attributeMapCopy));
     }
 
