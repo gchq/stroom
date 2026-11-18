@@ -219,7 +219,9 @@ public class TableRow {
                             sb.setLength(0);
                         }
                         parts.add(hyperlink);
-                        i += hyperlink.toString().length() - 1;
+                        // Past the link as it is written in the value (its toString() is encoded, so
+                        // may be longer, which skipped what follows it)
+                        i += LinkValue.lengthAt(value, i) - 1;
                     } else {
                         sb.append(c);
                     }

@@ -115,4 +115,24 @@ class TestLinkValue {
                 .addCase("[aaaaa](bbbbb)<zzzzz>", new LinkValue("aaaaa", "bbbbb", null, null, "zzzzz"))
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testLengthAt() {
+        // The link's length as written, from its '[' at 2, whatever follows it
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(Integer.class)
+                .withSingleArgTestFunction(value -> LinkValue.lengthAt(value, 2))
+                .withSimpleEqualityAssertion()
+                .addCase("a [b](c) d", "[b](c)".length())
+                .addCase("a [b](c){d} e", "[b](c){d}".length())
+                .addCase("a [b](c){d}<e> f", "[b](c){d}<e>".length())
+                .addCase("a [b](c)<e> f", "[b](c)<e>".length())
+                // Characters that are encoded count once, as written
+                .addCase("a [b c](d?e=f&g=h){data} [x](y)", "[b c](d?e=f&g=h){data}".length())
+                // Not a link there
+                .addCase("a [b] c", 0)
+                .addCase("a b", 0)
+                .build();
+    }
 }

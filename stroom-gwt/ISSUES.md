@@ -163,6 +163,18 @@ that into Month, so the choice can never be kept (`IndexSettings`).
   **Fixed (22 October 2026):** the editor is now the component model pilot's copy, whose
   `EffectiveWordsList` breaks ties as intended, and `WordListPresenter` is deleted.
 
+### A table value loses what follows a link with a query string
+
+**Fixed** (18 November 2026, found while adding a play for a cell holding two links): in a query or
+dashboard table, a value such as `[Open](data?id=1001&partNo=1){data} [Source](...)` showed the
+first link, then the rest of the value from some way along it (e.g. `03&partNo=...`): the second
+link, or any text after the first, was lost or mangled. `TableRow.getParts` skipped past a link by
+the length of `LinkValue.toString()`, which URL encodes the text and address, so is longer wherever
+they have `?`, `=`, `&`, a space and so on (as every data link has). It now skips by the link's
+length as written (`LinkValue.lengthAt`). JUnit can't show it (`LinkValue` encodes only in the
+browser, `GWT.isClient()`), so `TestLinkValue` tests `lengthAt` and `TestTableRow` the parts; the
+play `App/Editors/QueryEditor` `TwoLinksInACell` failed on it before the fix.
+
 ### The Pathways editor can't create a pathway or add a constraint
 
 **Re-checked** (6 November 2026, against the code): New Pathway and the read-only settings are fixed (`PathwayTree.java:129` guards a null root; a New Pathway story exists). Still open: a node with no constraints can never get one (`ConstraintListController.java:43`, 82-84, 138-142; `PathNode.constraints` may be null); the path New, Edit and Delete buttons have no actions; read only shows only once a node is chosen (`read()` and `onReadOnlyChange` never call `enableButtons()`).
