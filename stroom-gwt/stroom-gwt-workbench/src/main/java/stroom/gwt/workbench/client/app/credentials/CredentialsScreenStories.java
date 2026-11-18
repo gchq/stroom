@@ -182,6 +182,19 @@ public final class CredentialsScreenStories {
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 })
+                // Tab from the Settings tab goes straight to Name: the tab's panel holds fields, so it
+                // isn't a tab stop (it was, as it was checked before the dialog showed, finding none)
+                .story("SettingsTabGoesToName", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    final Query settings = dialog.getByRole("tab", "Settings");
+                    play.waitFor(() -> play.expect(dialog.getByRole("tabpanel", "Settings"))
+                            .not().toHaveAttribute("tabindex"));
+                    play.run("focus the Settings tab", () -> settings.element().get().focus());
+                    play.tab();
+                    play.expect(dialog.getByLabelText("Name")).toHaveFocus();
+                })
                 // Choosing SSH Key swaps in the private key fields
                 .story("SshKeyType", CredentialsScreenStories::render)
                 .withPlay(play -> {
