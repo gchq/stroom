@@ -30,9 +30,6 @@ FROM redhat/ubi10-minimal:10.2-1794227009@sha256:f0c7b9ae9914fcf183e7c36fc468649
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
-# su-exec required for running stroom as not-root user
-# All the packages in the add --upgrade section had CVEs at some point.
-# Make sure binutils is not present as that has unfixed CVEs
 
 RUN \
     set -eu; \
@@ -43,10 +40,7 @@ RUN \
         ca-certificates \
         curl \
         glibc-langpack-en \
-        jq \
-        openssl \
-        shadow-utils \
-        tzdata && \
+        jq; \
     microdnf clean all; \
     locale -a
 
@@ -66,15 +60,25 @@ ENV LANGUAGE=en_GB:en
 # Build the custom JRE by scanning the app jar to find out what modules are needed
 FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396a4926f183b1d379934248b0d335567282417517 AS stroom_proxy_jlink_stage
 # Comma delimited list of extra modules to add in
-# We need jdk.jcmd so we can take heap dumps if needs be
+# We need jdk.jcmd so we can take heap dumps using jmap, jcmd, etc.
 ARG EXTRA_MODULES="jdk.jcmd"
 ARG JAVA_MAJOR_VERSION="25"
 ARG APP_JAR_FILENAME
 COPY "./build/${APP_JAR_FILENAME}" /app/
 RUN set -eux; \
-    MODULES="$(jdeps -quiet --recursive --print-module-deps --ignore-missing-deps --multi-release ${JAVA_MAJOR_VERSION} "/app/${APP_JAR_FILENAME}" )"; \
+    # Examine the jar to work out what modules we need
+    MODULES="$( \
+        jdeps \
+        -quiet \
+        --recursive \
+        --print-module-deps \
+        --ignore-missing-deps \
+        --multi-release \
+        ${JAVA_MAJOR_VERSION} \
+        "/app/${APP_JAR_FILENAME}" )"; \
     MODULES="${MODULES}${EXTRA_MODULES:+,${EXTRA_MODULES}}"; \
     echo "jlink modules: ${MODULES}"; \
+    # Build the custom JRE \
     jlink \
         --add-modules "${MODULES}" \
         --no-header-files \
@@ -123,6 +127,9 @@ CMD ["./start.sh"]
 
 RUN \
     set -eu; \
+    # Needed for groupadd/useradd \
+    microdnf install -y \
+        shadow-utils; \
     if ! getent group "${GROUP_NAME}" >/dev/null 2>&1; then \
         groupadd \
             --gid "${GROUP_ID}" \

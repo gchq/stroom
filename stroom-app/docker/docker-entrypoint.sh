@@ -79,4 +79,3 @@ else
   # Already non-root so just crack on and run the cmd as is
   exec "$@"
 fi
-
