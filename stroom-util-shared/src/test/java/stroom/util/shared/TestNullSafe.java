@@ -1154,46 +1154,6 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testStartsWith() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputTypes(String.class, String.class)
-                .withOutputType(boolean.class)
-                .withTestFunction(testCase ->
-                        NullSafe.startsWith(testCase.getInput()._1, testCase.getInput()._2))
-                .withSimpleEqualityAssertion()
-                .addCase(Tuple.of(null, "foo"), false)
-                .addCase(Tuple.of("", "foo"), false)
-                .addCase(Tuple.of("bar", "foo"), false)
-                .addCase(Tuple.of("barfoo", "foo"), false)
-                .addCase(Tuple.of("_foo", "foo"), false)
-                .addCase(Tuple.of("_foo_", "foo"), false)
-                .addCase(Tuple.of("foobar", ""), true)
-                .addCase(Tuple.of("foobar", "foo"), true)
-                .addThrowsCase(Tuple.of("foobar", null), NullPointerException.class)
-                .build();
-    }
-
-    @TestFactory
-    Stream<DynamicTest> testEndsWith() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputTypes(String.class, String.class)
-                .withOutputType(boolean.class)
-                .withTestFunction(testCase ->
-                        NullSafe.endsWith(testCase.getInput()._1, testCase.getInput()._2))
-                .withSimpleEqualityAssertion()
-                .addCase(Tuple.of(null, "bar"), false)
-                .addCase(Tuple.of("", "bar"), false)
-                .addCase(Tuple.of("foo", "bar"), false)
-                .addCase(Tuple.of("barfoo", "bar"), false)
-                .addCase(Tuple.of("bar_", "bar"), false)
-                .addCase(Tuple.of("_bar_", "bar"), false)
-                .addCase(Tuple.of("barfoo", ""), true)
-                .addCase(Tuple.of("foobar", "bar"), true)
-                .addThrowsCase(Tuple.of("foobar", null), NullPointerException.class)
-                .build();
-    }
-
-    @TestFactory
     Stream<DynamicTest> testSubString() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, Integer.class, Integer.class)

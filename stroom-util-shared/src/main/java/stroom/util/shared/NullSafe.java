@@ -472,20 +472,6 @@ public class NullSafe {
                 : "";
     }
 
-    /// @param str    The string to check
-    /// @param prefix The prefix to check for in str. Must not be null.
-    /// @return True if str is non-null and starts with prefix
-    public static boolean startsWith(final String str, final String prefix) {
-        return str != null && str.startsWith(prefix);
-    }
-
-    /// @param str    The string to check
-    /// @param suffix The suffix to check for in str. Must not be null.
-    /// @return True if str is non-null and ends with suffix
-    public static boolean endsWith(final String str, final String suffix) {
-        return str != null && str.endsWith(suffix);
-    }
-
     public static String subString(final String str, final int beginIndex, final int endIndex) {
         return str != null
                 ? str.substring(beginIndex, endIndex)
