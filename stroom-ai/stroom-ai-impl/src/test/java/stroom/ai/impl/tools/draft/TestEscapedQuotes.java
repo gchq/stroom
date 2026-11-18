@@ -28,7 +28,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Key=value values holding a quote escaped with a backslash, read with `transform: unescape_backslashes` wherever
-/// the splitter spec holds the key_value spec.
+/// the splitter spec holds the key_value spec; delimited values holding a doubled quote, read with
+/// `transform: unescape_quotes` wherever it holds the delimited spec.
 class TestEscapedQuotes {
 
     // A syslog record whose key=value body holds an escaped quote; its header's structured data and its body's text
@@ -37,6 +38,12 @@ class TestEscapedQuotes {
             Map.of("structured", "[x@1 a=\"b\\\"c\"]", "message", "msg=\"say \\\"hi\\\"\" user=alice",
                     "msg", "say \\\"hi\\\"", "user", "alice"),
             Map.of("structured", "-", "message", "msg=\"ok\" user=bob", "msg", "ok", "user", "bob"));
+    // A syslog record whose delimited body holds a doubled quote; its header's structured data and its body's text
+    // hold one too.
+    private static final List<Map<String, Object>> DOUBLED = List.of(
+            Map.of("structured", "[x@1 a=\"b\"\"c\"]", "message", "alice,\"say \"\"hi\"\"\"",
+                    "msg", "say \"\"hi\"\"", "user", "alice"),
+            Map.of("structured", "-", "message", "bob,ok", "msg", "ok", "user", "bob"));
 
     @Test
     void aTopLevelKeyValueSpecsEscapedValuesAreUnescaped() {
@@ -87,6 +94,61 @@ class TestEscapedQuotes {
         EscapedQuotes.unescape(SplitterSpec.fromMap(Map.of("kind", "key_value", "quote", "\"")),
                 List.of(Map.of("msg", "ok")), plain, notes);
         assertThat(transforms(plain)).containsEntry("msg", null);
+        assertThat(notes).isEmpty();
+    }
+
+    @Test
+    void aTopLevelDelimitedSpecsDoubledQuotesAreUndoubled() {
+        final Map<String, Object> mapping = mapping("msg", "user");
+        final List<String> notes = new ArrayList<>();
+        EscapedQuotes.undouble(SplitterSpec.fromMap(Map.of("kind", "delimited", "quote", "\"", "header", true)),
+                DOUBLED, mapping,
+                notes);
+
+        // At the top level every field is the spec's own: those of the records holding a doubled quote too.
+        assertThat(transforms(mapping)).containsEntry("msg", "unescape_quotes").containsEntry("user", null);
+        assertThat(notes).singleElement().asString().startsWith("['message', 'msg', 'structured'] hold doubled "
+                                                                + "quotes");
+    }
+
+    @Test
+    void aSyslogBodysDoubledQuotesAreUndoubledButNotTheHeadersOrTheBodysText() {
+        final Map<String, Object> mapping = mapping("msg", "user", "structured", "message");
+        EscapedQuotes.undouble(SplitterSpec.fromMap(Map.of("kind", "syslog", "rfc", "rfc5424", "body",
+                Map.of("kind", "delimited", "quote", "\"", "header", List.of("user", "msg")))), DOUBLED, mapping,
+                new ArrayList<>());
+
+        assertThat(transforms(mapping)).containsEntry("msg", "unescape_quotes")
+                .containsEntry("user", null)
+                .containsEntry("structured", null)
+                .containsEntry("message", null);
+    }
+
+    @Test
+    void anAlternativesPartsBodysDoubledQuotesAreUndoubled() {
+        final Map<String, Object> mapping = mapping("msg");
+        final Map<String, Object> syslogPart = Map.of("kind", "syslog", "rfc", "rfc5424", "variant", "syslog",
+                "body", Map.of("kind", "delimited", "quote", "\"", "header", List.of("user", "msg")));
+        final Map<String, Object> pairsPart = Map.of("kind", "key_value", "quote", "\"", "variant", "pairs");
+        EscapedQuotes.undouble(SplitterSpec.fromMap(Map.of("kind", "alternatives", "variant_field", "format",
+                "parts", List.of(pairsPart, syslogPart))), DOUBLED, mapping, new ArrayList<>());
+
+        assertThat(transforms(mapping)).containsEntry("msg", "unescape_quotes");
+    }
+
+    @Test
+    void anUnquotedDelimitedSpecOrAKeyValueOneLeavesDoubledQuotesAlone() {
+        final List<String> notes = new ArrayList<>();
+        final Map<String, Object> unquoted = mapping("msg");
+        EscapedQuotes.undouble(SplitterSpec.fromMap(Map.of("kind", "syslog", "rfc", "rfc5424", "body",
+                Map.of("kind", "delimited", "header", List.of("user", "msg")))), DOUBLED, unquoted, notes);
+        assertThat(transforms(unquoted)).containsEntry("msg", null);
+
+        final Map<String, Object> pairs = mapping("msg");
+        EscapedQuotes.undouble(SplitterSpec.fromMap(Map.of("kind", "key_value", "quote", "\"")), DOUBLED, pairs,
+                notes);
+        assertThat(transforms(pairs)).containsEntry("msg", null);
+        EscapedQuotes.undouble(null, DOUBLED, pairs, notes);
         assertThat(notes).isEmpty();
     }
 

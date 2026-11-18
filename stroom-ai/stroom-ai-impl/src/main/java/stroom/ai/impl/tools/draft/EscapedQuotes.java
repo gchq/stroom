@@ -33,7 +33,8 @@ import java.util.Set;
 /// `say \"hi\"`. Format-level knowledge only: whether the sample's values hold the escape. The key_value spec may be
 /// the splitter's own or nested in it: a syslog (or other) header's body, an alternatives part, or a part's body. Seen
 /// in the agent eval (case 25): a syslog header with a key_value body read with no transform, its events saying
-/// `say \"hi\"`.
+/// `say \"hi\"`. A quoted delimited spec's doubled quote (a CSV's `""`), which Data Splitter keeps doubled, is read
+/// with `transform: unescape_quotes` the same way, wherever the delimited spec is nested ([#undouble]).
 final class EscapedQuotes {
 
     private EscapedQuotes() {
@@ -47,7 +48,6 @@ final class EscapedQuotes {
     /// @param records The sample's records.
     /// @param mapping The draft's mapping: its common entries and its rules' fields are given the transform.
     /// @param notes   The draft's notes, added to.
-    @SuppressWarnings("unchecked")
     static void unescape(final SplitterSpec spec,
                          final List<Map<String, Object>> records,
                          final Map<String, Object> mapping,
@@ -55,41 +55,90 @@ final class EscapedQuotes {
         if (spec == null) {
             return;
         }
-        final Set<String> quotes = new LinkedHashSet<>();
-        final Set<String> notPairs = new HashSet<>();
-        collect(spec, quotes, notPairs);
-        if (quotes.isEmpty()) {
-            return;
-        }
-        final Set<String> escaped = new HashSet<>();
-        records.forEach(record -> record.forEach((key, value) -> {
-            final String text = ToolText.str(value);
-            if (!notPairs.contains(key) && quotes.stream().anyMatch(quote -> text.contains("\\" + quote))) {
-                escaped.add(key);
-            }
-        }));
+        final Set<String> escaped = holding(spec, "key_value", "\\", records);
         if (escaped.isEmpty()) {
             return;
         }
-        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
-        JsonValues.maps(mapping.get("events")).forEach(rule -> entries.addAll(
-                (List<Map<String, Object>>) rule.get("fields")));
-        for (final Map<String, Object> entry : entries) {
-            if (escaped.contains(entry.get("field")) && !JsonValues.truthy(entry.get("transform"))
-                && !JsonValues.truthy(entry.get("time_format"))) {
-                entry.put("transform", "unescape_backslashes");
-            }
-        }
+        transform(mapping, escaped, "unescape_backslashes");
         notes.add(ToolText.repr(escaped.stream().sorted(ToolText::compare).toList()) + " hold quotes escaped with a "
                   + "backslash inside quoted values, which Data Splitter keeps escaped: the draft reads them with "
                   + "transform unescape_backslashes (a quote or backslash after a backslash as itself).");
     }
 
-    // The quotes of the quoted key_value specs in the spec, wherever nested (its body, its alternatives' parts and
-    // theirs), and the fields that aren't a pair's value: the header's fields of a spec with a body, and the text its
-    // body is read from (kept whole, escapes and all, as the source wrote it).
-    private static void collect(final SplitterSpec spec, final Set<String> quotes, final Set<String> notPairs) {
-        if ("key_value".equals(spec.kind()) && LocalCheck.hasText(spec.quote())) {
+    /// Gives each entry reading a field whose values hold a doubled quote of a quoted delimited spec (a CSV's `""`)
+    /// the transform `unescape_quotes`, unless it has one (or a time format), and says so in a note. The delimited
+    /// spec may be the splitter's own or nested in it, as for [#unescape]; a header's fields and the text a body is
+    /// read from are left as written.
+    ///
+    /// @param spec    The Data Splitter spec the sample is read with, or null.
+    /// @param records The sample's records.
+    /// @param mapping The draft's mapping: its common entries and its rules' fields are given the transform.
+    /// @param notes   The draft's notes, added to.
+    static void undouble(final SplitterSpec spec,
+                         final List<Map<String, Object>> records,
+                         final Map<String, Object> mapping,
+                         final List<String> notes) {
+        if (spec == null) {
+            return;
+        }
+        final Set<String> doubled = holding(spec, "delimited", "", records);
+        if (doubled.isEmpty()) {
+            return;
+        }
+        transform(mapping, doubled, "unescape_quotes");
+        notes.add(ToolText.repr(doubled.stream().sorted(ToolText::compare).toList()) + " hold doubled quotes inside "
+                  + "quoted values, which Data Splitter keeps doubled: the draft reads them with transform "
+                  + "unescape_quotes.");
+    }
+
+    // The fields whose values hold a quote of a quoted spec of the kind nested in the spec, written after the prefix
+    // (a backslash) or doubled (no prefix): never a header's field nor the text a body is read from.
+    private static Set<String> holding(final SplitterSpec spec,
+                                       final String kind,
+                                       final String prefix,
+                                       final List<Map<String, Object>> records) {
+        final Set<String> quotes = new LinkedHashSet<>();
+        final Set<String> notPairs = new HashSet<>();
+        collect(spec, kind, quotes, notPairs);
+        final Set<String> found = new HashSet<>();
+        if (quotes.isEmpty()) {
+            return found;
+        }
+        records.forEach(record -> record.forEach((key, value) -> {
+            final String text = ToolText.str(value);
+            if (!notPairs.contains(key) && quotes.stream().anyMatch(quote -> text.contains(prefix.isEmpty()
+                    ? quote + quote
+                    : prefix + quote))) {
+                found.add(key);
+            }
+        }));
+        return found;
+    }
+
+    // Each entry reading one of the fields given the transform, unless it has one or a time format.
+    @SuppressWarnings("unchecked")
+    private static void transform(final Map<String, Object> mapping,
+                                  final Set<String> fields,
+                                  final String transform) {
+        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
+        JsonValues.maps(mapping.get("events")).forEach(rule -> entries.addAll(
+                (List<Map<String, Object>>) rule.get("fields")));
+        for (final Map<String, Object> entry : entries) {
+            if (fields.contains(entry.get("field")) && !JsonValues.truthy(entry.get("transform"))
+                && !JsonValues.truthy(entry.get("time_format"))) {
+                entry.put("transform", transform);
+            }
+        }
+    }
+
+    // The quotes of the quoted specs of the kind in the spec, wherever nested (its body, its alternatives' parts and
+    // theirs), and the fields that aren't the nested spec's values: the header's fields of a spec with a body, and
+    // the text its body is read from (kept whole, escapes and all, as the source wrote it).
+    private static void collect(final SplitterSpec spec,
+                                final String kind,
+                                final Set<String> quotes,
+                                final Set<String> notPairs) {
+        if (kind.equals(spec.kind()) && LocalCheck.hasText(spec.quote())) {
             quotes.add(spec.quote());
         }
         if (spec.body() != null) {
@@ -97,8 +146,8 @@ final class EscapedQuotes {
             if ("syslog".equals(spec.kind())) {
                 notPairs.addAll(spec.syslogNames());
             }
-            collect(spec.body(), quotes, notPairs);
+            collect(spec.body(), kind, quotes, notPairs);
         }
-        spec.parts().forEach(part -> collect(part, quotes, notPairs));
+        spec.parts().forEach(part -> collect(part, kind, quotes, notPairs));
     }
 }
