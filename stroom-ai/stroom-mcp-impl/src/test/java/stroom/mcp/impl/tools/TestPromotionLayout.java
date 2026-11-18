@@ -23,6 +23,7 @@ import stroom.pipeline.shared.XsltDoc;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,32 @@ class TestPromotionLayout {
         // An aggregated feed's group: its own folder in the feed's.
         assertThat(PromotionLayout.rolePath("System/Parent/App-Logs", null, "Messaging", "Events", "V1.0"))
                 .isEqualTo("System/Parent/App-Logs/Messaging/Events/V1.0");
+    }
+
+    @Test
+    void aRootThatIsTheFeedsOwnFolderIsTheFeedsOwnRoot() {
+        // Seen in a user test (2026-11-18): the feed in a folder named after it, its own folder given as the role's
+        // root, gave <feed>/<feed>/V1.0, Events and Indexing together with no role folders.
+        final String feed = "System/Feeds and Translations/ABC/ABC-FEED";
+        assertThat(PromotionLayout.rolePath(feed, feed, null, "Events", "V1.0")).isEqualTo(feed + "/Events/V1.0");
+        assertThat(PromotionLayout.rolePath(feed, "/Feeds and Translations/ABC/abc-feed", null, "Indexing", "V1.0"))
+                .isEqualTo(feed + "/Indexing/V1.0");
+        assertThat(PromotionLayout.rolePath(feed, "System/Feeds and Translations/ABC", null, "Indexing", "V1.0"))
+                .isEqualTo(feed + "/Indexing/V1.0");
+    }
+
+    @Test
+    void aNewVersionWhoseRootIsTheFeedsOwnFolderGoesBesideItsPredecessor() {
+        // The predecessor's root compared with the feed's own folder given as the role's root: the feed's own.
+        final String feed = "System/Feeds/ABC/ABC-FEED";
+        world.add(PipelineDoc.TYPE, "ABC-FEED-V1.0-EVENTS", world.folder(feed + "/Events/V1.0").uuid, "before");
+        final List<PromotionLayout.Step> plan = new ArrayList<>(List.of(new PromotionLayout.Step(
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "new", "ABC-FEED-V1.1-EVENTS", "version_of", "before"),
+                PromotionLayout.MOVE, feed, "Events")));
+
+        layout.layOut(plan, Map.of("Events", feed), feed, null, step -> null, List.of("ABC-FEED"));
+
+        assertThat(plan.getFirst().target()).isEqualTo(feed + "/Events/V1.1");
     }
 
     @Test
