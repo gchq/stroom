@@ -393,6 +393,20 @@ class TestSourceNotes {
         assertThat(SourceNotes.dropConditions("nonsense")).isEmpty();
     }
 
+    @Test
+    void anActionIsReadAgainstTheEnumerationOfItsActionElement() {
+        // Seen in the agent eval (cases 60 and 65): "Add member to role" and "MFA" accepted as Actions.
+        assertThat(SourceNotes.allowedActions(SCHEMA, "Authorise")).containsExactly("Request", "Modify");
+        assertThat(SourceNotes.allowedAction(SCHEMA, "Authorise", "Add member to role")).isEmpty();
+        assertThat(SourceNotes.allowedAction(SCHEMA, "Authenticate", "MFA")).isEmpty();
+        assertThat(SourceNotes.allowedAction(SCHEMA, "/Authenticate/", "logon")).contains("Logon");
+        assertThat(SourceNotes.allowedAction(SCHEMA, "Authenticate", "Logoff")).contains("Logoff");
+        // No Action, or no action given: nothing to check.
+        assertThat(SourceNotes.allowedActions(SCHEMA, "Alert")).isNull();
+        assertThat(SourceNotes.allowedAction(SCHEMA, "Alert", "Blocked")).contains("Blocked");
+        assertThat(SourceNotes.allowedAction(SCHEMA, "Authorise", null)).contains("");
+    }
+
     private static Map<String, Object> mapping(final List<Map<String, Object>> common,
                                                final List<Map<String, Object>> events) {
         final Map<String, Object> mapping = new LinkedHashMap<>();

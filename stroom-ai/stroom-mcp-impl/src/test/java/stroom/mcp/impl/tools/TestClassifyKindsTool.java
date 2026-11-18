@@ -1053,6 +1053,29 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void anActionTheSchemaDoesNotAllowIsRefusedAndOneMisspeltByCaseCorrected() {
+        // Seen in the agent eval (cases 60 and 65): "Add member to role" and "MFA" accepted as Authorise and
+        // Authenticate Actions, which the schema doesn't allow. The draft then wrote Modify, and the build refused it
+        // as not what the user confirmed. Refused when proposed, naming the Actions allowed.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
+                        + "\"description\": \"d\", \"event_detail\": \"Authorise\", \"action\": \"Add member to "
+                        + "role\", \"confidence\": \"high\"}, {\"field\": \"action\", \"value\": \"logout\", "
+                        + "\"description\": \"d\", \"event_detail\": \"Authenticate\", \"action\": \"MFA\", "
+                        + "\"confidence\": \"high\"}]}"))
+                .startsWith("Nothing recorded:")
+                .contains("EventDetail/Authorise/Action takes only Request, Modify, not 'Add member to role'",
+                        "EventDetail/Authenticate/Action takes only Logon, Logoff, ChangePassword")
+                .contains("not 'MFA'");
+        // An allowed Action in another case is the schema's spelling.
+        assertThat(String.valueOf(call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", "
+                                       + "\"value\": \"login\", \"description\": \"d\", \"event_detail\": "
+                                       + "\"Authorise\", \"action\": \"modify\", \"confidence\": \"high\"}]}",
+                BuildToolCalls.context()).get("table")))
+                .contains("Authorise: Modify");
+    }
+
+    @Test
     void aCatchAllIsNotProposedAsUnknown() {
         // Seen in chat 160: two catch-all formats proposed as Unknown, the gateway's logons and the hosts' sudo
         // commands in them left for the mapping, never put to the user.
