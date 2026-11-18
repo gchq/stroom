@@ -47,7 +47,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -302,7 +301,7 @@ class TestSourceTypeGroups {
                 doc(docs.get("PEGA helpers"), "PEGA helpers", "o-helpers"),
                 doc(docs.get("PEGA common"), "PEGA common", "o-common"));
 
-        final List<String> done = world.groups.toOriginals(world.context(), BUILD, listed, Set.of());
+        final List<String> done = world.groups.toOriginals(world.context(), BUILD, listed);
 
         assertThat(done).anySatisfy(line -> assertThat(line).contains("pointed 'PEGA security' at the originals"));
         // The group (new) imports the common module's original, which imports the helpers' original; the kept
@@ -778,37 +777,6 @@ class TestSourceTypeGroups {
         assertThat(world.groups.groupOf(BUILD, xsltsInBuild().get("PEGA security"))).hasValueSatisfying(found ->
                 assertThat(found.group()).isEqualTo("PEGA security"));
         assertThat(world.groups.groupOf(BUILD, xsltsInBuild().get("PEGA common"))).isEmpty();
-    }
-
-    @Test
-    void promotionLeavesAWorkingCopyTheUserKeptAsItIs() {
-        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
-        final Map<String, String> docs = xsltsInBuild();
-        // The common module's original, in production, as the kept copy's: it has the parts the group calls.
-        final String groupCode = world.xslt(docs.get("PEGA security")).getData();
-        final String commonCode = world.xslt(docs.get("PEGA common")).getData();
-        world.world.add(XsltDoc.TYPE, "PEGA common", world.world.folder("System/Feeds/PEGA").uuid, "o-common");
-        world.world.docs.put("o-common", XsltDoc.builder().uuid("o-common").name("PEGA common")
-                .data(commonCode).build());
-        final List<Map<String, Object>> listed = List.of(
-                doc(docs.get("PEGA security"), "PEGA security", null),
-                doc(docs.get("PEGA helpers"), "PEGA helpers", "o-helpers"),
-                doc(docs.get("PEGA common"), "PEGA common", "o-common"));
-
-        assertThat(world.groups.keptProblems(BUILD, listed, Set.of(docs.get("PEGA common")))).isEmpty();
-        world.groups.toOriginals(world.context(), BUILD, listed, Set.of(docs.get("PEGA common")));
-
-        // The kept copy is as it was; the group promoted imports the original.
-        assertThat(world.xslt(docs.get("PEGA common")).getData()).isEqualTo(commonCode);
-        assertThat(world.xslt(docs.get("PEGA security")).getData()).isNotEqualTo(groupCode)
-                .contains("uuid='o-common'");
-
-        // An original lacking a part the group calls: promotion would break it, so it is refused.
-        world.world.docs.put("o-common", XsltDoc.builder().uuid("o-common").name("PEGA common")
-                .data(commonCode.replace("pega_common_device", "pega_common_old")).build());
-        assertThat(world.groups.keptProblems(BUILD, listed, Set.of(docs.get("PEGA common"))))
-                .singleElement().satisfies(problem -> assertThat(problem).contains("PEGA security",
-                        "PEGA common", "pega_common_device"));
     }
 
     @Test

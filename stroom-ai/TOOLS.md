@@ -2784,10 +2784,7 @@ moves (forward only: none is removed): the build's pipelines (a new one, a new v
 original), and the production pipelines running a group's XSLT the build changes through a working copy (found
 through the content index, `PipelineIndex.containing`). After approval and before anything is written back or moved
 (`SourceTypeGroups.toOriginals`), every module of the build imports the originals its working copies are written back
-over (imports rewritten by text, in the code and the kept mapping) and the registry names the originals. A working
-copy the user kept (production changed since, below) is left as it is, and the modules promoted import its original;
-promotion is refused, before the review, when that original lacks a template, function, variable or mode they use of
-the copy (`keptProblems`).
+over (imports rewritten by text, in the code and the kept mapping) and the registry names the originals.
 
 Promotes a build out of the workspace in two calls. The first works out the whole layout and returns it without
 changing anything (`status: needs_review`, a `layout` tree from `PromotionLayout.promotionTree`, and a `review_id`,

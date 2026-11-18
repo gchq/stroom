@@ -517,7 +517,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (groupsProvider != null) {
             // An aggregated feed's modules import the originals their working copies are written back over.
             try {
-                done.addAll(groupsProvider.get().toOriginals(context, build, docs, Set.of()));
+                done.addAll(groupsProvider.get().toOriginals(context, build, docs));
             } catch (final RuntimeException e) {
                 throw new ToolRefusal("Not promoted: the build's modules couldn't be pointed at the originals of "
                                       + "their working copies: " + e.getMessage() + ". Done before it: "
