@@ -113,6 +113,8 @@ public class ResultStore {
         }
 
         this.terminate = true;
+        // A stopped search's matches aren't all known.
+        coprocessors.withholdUnmatchedJoinedRows();
         if (searchProcess != null) {
             searchProcess.onTerminate();
         }
@@ -184,11 +186,14 @@ public class ResultStore {
                                        final Throwable throwable) {
         final ErrorConsumer errorConsumer = getErrorConsumer(nodeName);
         errorConsumer.add(throwable);
+        // A node that failed may have had matches that are now unknown.
+        coprocessors.withholdUnmatchedJoinedRows();
     }
 
     public void addError(final Throwable error) {
         final ErrorConsumer errorConsumer = getErrorConsumer(nodeName);
         errorConsumer.add(error);
+        coprocessors.withholdUnmatchedJoinedRows();
     }
 
     public List<ErrorMessage> getErrors() {

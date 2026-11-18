@@ -727,6 +727,8 @@ abstract class AbstractDataStoreTest {
                         .localDir("search_results")
                         .maxStoreSize(ByteSize.ofGibibytes(1))
                         .build(),
+                null,
+                null,
                 null);
     }
 

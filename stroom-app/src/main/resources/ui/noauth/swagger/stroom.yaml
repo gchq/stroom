@@ -7689,6 +7689,23 @@ paths:
       summary: Destroy search results
       tags:
       - Remote Search
+  /remoteSearch/v1/joinTables:
+    get:
+      operationId: getRemoteSearchJoinTables
+      parameters:
+      - in: query
+        name: queryKey
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/octet-stream: {}
+          description: default response
+      summary: "Get the join tables of a search, for a node that searches its first\
+        \ source"
+      tags:
+      - Remote Search
   /remoteSearch/v1/poll:
     get:
       operationId: pollRemoteSearch
@@ -17377,6 +17394,33 @@ components:
         scheduleReferenceTime:
           type: integer
           format: int64
+    JoinKey:
+      type: object
+      description: A pair of expressions whose values must be equal for two rows to
+        join
+      properties:
+        left:
+          type: string
+          description: The expression worked out from the rows the join is applied
+            to
+        right:
+          type: string
+          description: The expression worked out from the joined source's rows
+    JoinWindow:
+      type: object
+      description: The time window a joined row's time must fall in
+      properties:
+        after:
+          type: boolean
+          description: "True if the window starts at the time field and runs forward,\
+            \ false or missing if it ends there and runs back"
+        duration:
+          type: string
+          description: "The length of the window as a StroomQL duration, e.g. 10m"
+        timeField:
+          type: string
+          description: The field of the rows being joined that holds the time the
+            window starts or ends at
     KafkaConfigDoc:
       type: object
       properties:
@@ -18128,6 +18172,8 @@ components:
           items:
             type: integer
             format: int64
+        sourceNode:
+          type: string
         sourceTaskId:
           $ref: "#/components/schemas/TaskId"
         taskName:
@@ -19465,16 +19511,24 @@ components:
       type: object
       description: The query terms for the search
       properties:
+        alias:
+          type: string
         dataSource:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        joins:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryJoin"
         nativeQuery:
           type: string
         params:
           type: array
           items:
             $ref: "#/components/schemas/Param"
+        sourceTableSettings:
+          $ref: "#/components/schemas/TableSettings"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
       required:
@@ -19828,6 +19882,36 @@ components:
           - STRUCTURE
           - VISUALISATION
           - DICTIONARY
+    QueryJoin:
+      type: object
+      description: A source joined to the rows of a query
+      properties:
+        alias:
+          type: string
+          description: "The name the joined source's fields are prefixed with, as\
+            \ in <alias>.<field>"
+        keys:
+          type: array
+          description: The pairs of expressions whose values must be equal for rows
+            to join
+          items:
+            $ref: "#/components/schemas/JoinKey"
+        query:
+          $ref: "#/components/schemas/Query"
+        tableSettings:
+          $ref: "#/components/schemas/TableSettings"
+        type:
+          type: string
+          description: The kind of join
+          enum:
+          - INNER
+          - LEFT
+          - SEMI
+          - ANTI
+          - RIGHT
+          - FULL
+        window:
+          $ref: "#/components/schemas/JoinWindow"
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
