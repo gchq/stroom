@@ -386,36 +386,24 @@ class TestConsent {
     }
 
     @Test
-    void aConfirmationTheClientCantShowIsConfirmedInTheChatOnceBoundToWhatWasShown() {
-        // Not a dead end: the agent shows the user what is asked, and their yes in the chat is passed back by an id
-        // that stands for exactly that, once.
+    void aConfirmationTheClientCantShowIsRefusedNotConfirmedInTheChat() {
+        // A confirmation is given only in a form (decided by the user, 2026-11-18): the agent can't approve for the
+        // user. The refusal says why the form wasn't shown, not that no form can be shown here.
         final Questions client = Questions.refusing();
         final Consent.Request request = Consent.Request.confirmation("create_feed", "Create feed A", Map.of(
                 "feed name", "A")).withEditable("name", "Feed name", "A");
 
-        final String asked = refusal(() -> consent.require(CALL, client.context(), request));
+        final String refused = refusal(() -> consent.require(CALL, client.context(), request));
 
-        assertThat(asked).startsWith("The client couldn't show the form, so the user wasn't asked to agree and "
-                                     + "nothing was done.")
-                .contains("Create feed A", "- feed name: A", "- Feed name: A", "Only once they say yes",
-                        "never pass it without it");
-        final String token = idAfter(asked, UserQuestions.CONFIRMED_IN_CHAT_ARG);
-        // Another's details: asked again, with another id.
-        final Consent.Request other = Consent.Request.confirmation("create_feed", "Create feed B", Map.of(
-                "feed name", "B"));
-        assertThat(refusal(() -> consent.require(withArg(UserQuestions.CONFIRMED_IN_CHAT_ARG, token),
-                client.context(), other))).contains("is for something else", "Create feed B")
-                .doesNotContain(token);
-        final String again = idAfter(refusal(() -> consent.require(CALL, client.context(), request)),
-                UserQuestions.CONFIRMED_IN_CHAT_ARG);
-
-        consent.require(withArg(UserQuestions.CONFIRMED_IN_CHAT_ARG, again), client.context(), request);
-
-        Mockito.verify(auditLog).processed(Mockito.eq(SESSION), Mockito.isNull(), Mockito.eq("confirmation"),
-                Mockito.anyString(), Mockito.startsWith("granted in the chat"), Mockito.eq(true));
-        // Used once.
-        assertThat(refusal(() -> consent.require(withArg(UserQuestions.CONFIRMED_IN_CHAT_ARG, again),
-                client.context(), request))).contains("is for something else");
+        assertThat(refused).startsWith("The client couldn't show the form, so the user wasn't asked to agree and "
+                                       + "nothing was done")
+                .contains("Create feed A", "given only in a form, not in the chat")
+                .doesNotContain("confirmed_in_chat");
+        // The same call again is refused again: nothing passed back grants it.
+        assertThat(refusal(() -> consent.require(withArg("confirmed_in_chat", "anything"), client.context(),
+                request))).contains("given only in a form");
+        Mockito.verify(auditLog, Mockito.never()).processed(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.anyString(), Mockito.anyString(), Mockito.eq(true));
     }
 
     @Test

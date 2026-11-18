@@ -67,13 +67,13 @@ class TestToolCallGuard {
 
     @Test
     void theArgumentsAToolsReplyAsksForBackAreKeptThoughNoToolDeclaresThem() {
-        // A confirmation too large to show is confirmed in the chat: the reply asks for confirmed_in_chat back, and
-        // dropping it as unknown would ask again for ever.
+        // Values too many for a confirmation's form are shown in the chat first: the reply asks for shown_id back,
+        // and dropping it as unknown would ask again for ever.
         final StroomTool tool = tool("copy_pipeline", ObjectSchema.builder()
                 .addStringProperty("name", "The name.")
                 .build(), call -> ToolResult.text("{\"copied\":true}"));
 
-        final String arguments = "{\"name\":\"a\",\"confirmed_in_chat\":\"abc\",\"shown_id\":\"def\"}";
+        final String arguments = "{\"name\":\"a\",\"shown_id\":\"def\"}";
 
         final ToolResult result = call(tool, arguments);
 

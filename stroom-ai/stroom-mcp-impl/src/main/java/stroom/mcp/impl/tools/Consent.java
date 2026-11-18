@@ -37,14 +37,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -93,11 +91,8 @@ public class Consent {
     private static final Duration UNSHOWN_KEPT = Duration.ofHours(2);
     // The most sessions whose forms not shown are kept.
     private static final int SESSIONS_KEPT = 1_000;
-    // What a form not shown is kept under for a confirmation (one at a time per tool and session).
-    private static final String CONFIRMATION_TOPIC = "\nconfirmation";
     // What a question the agent was told to ask in the chat is kept under, after its topic.
     private static final String ASKED_IN_CHAT = "\nasked in the chat";
-    private static final SecureRandom RANDOM = new SecureRandom();
     // Why a form that fits wasn't shown: the client answered it with an error.
     private static final String CLIENT_COULD_NOT_SHOW = "the client couldn't show it";
     // The key of [#pick]'s list.
@@ -144,7 +139,7 @@ public class Consent {
         } else if (!request.editable().isEmpty()) {
             confirmShown(call, context, request, state);
         } else {
-            confirmInChat(call, context, request, problem, state);
+            refuseUnshown(context, request, problem);
         }
     }
 
@@ -185,7 +180,7 @@ public class Consent {
     /// @param question The question, as for [#takesChatAnswer(ToolCallContext, String, String)].
     public void askInChat(final ToolCallContext context, final String action, final String question) {
         remember(context.session(), topic(action, question) + ASKED_IN_CHAT, new Unshown("asked in the chat",
-                Instant.now(), null, null));
+                Instant.now()));
     }
 
     /// @param context  The call's context.
@@ -715,7 +710,7 @@ public class Consent {
                 heading(message, 80), action, problem));
         auditLogProvider.get().processed(context.session(), null, "choice", action + ": " + heading(message),
                 "not asked in a form, as " + problem, false);
-        remember(context.session(), topic, new Unshown(problem, Instant.now(), null, null));
+        remember(context.session(), topic, new Unshown(problem, Instant.now()));
     }
 
     /// @param context  The call's context.
@@ -888,7 +883,7 @@ public class Consent {
                     schema);
         } catch (final ToolRefusal e) {
             // Only a form that can never be shown is refused so (the client answered it with an error).
-            confirmInChat(call, context, request, CLIENT_COULD_NOT_SHOW, state);
+            refuseUnshown(context, request, CLIENT_COULD_NOT_SHOW);
             return;
         }
         final Map<String, Object> content = NullSafe.map(answer.content());
@@ -954,83 +949,23 @@ public class Consent {
         final Map<String, Object> schema = schema(confirming);
         final String problem = ElicitationSchema.check(message, schema);
         if (problem != null) {
-            confirmInChat(call, context, request, problem, state);
+            refuseUnshown(context, request, problem);
             return;
         }
         ask(call, context, confirming, message, schema, state);
     }
 
-    // A confirmation whose form can't be shown (too large however it is cut, or the client couldn't show it) is not
-    // a dead end: the agent is given what it asks, in full, to show the user in the chat, and a one-time id bound to
-    // exactly that (its details and the values proposed), kept for this session and tool only; once the user says
-    // yes in their own words, the call made again with the same arguments and confirmed_in_chat=<the id> is
-    // granted. The id is unguessable, used once, and stands for nothing else: changed details ask again. Audited as
-    // granted in the chat. The agent could pass it without asking, as it could any answer said in the chat where no
-    // form can be shown; the id at least means it was told to show the user exactly this first.
-    private void confirmInChat(final ToolCall call,
-                               final ToolCallContext context,
-                               final Request request,
-                               final String problem,
-                               final CallState state) {
-        final String kind = request.kind().word();
-        final String bound = confirmationDigest(request);
-        final String given = argText(call, UserQuestions.CONFIRMED_IN_CHAT_ARG);
-        final String key = request.action() + CONFIRMATION_TOPIC;
-        final Unshown pending = unshownFor(context.session(), key);
-        if (pending != null && !given.isEmpty() && given.equalsIgnoreCase(pending.token())
-            && bound.equals(pending.bound())) {
-            forget(context.session(), key);
-            audit(context.session(), kind, request, "granted in the chat, as the form couldn't be shown ("
-                                                    + problem + ")", true);
-            request.options().forEach((name, option) -> state.options.put(name, option.ticked()));
-            return;
-        }
-        final byte[] bytes = new byte[6];
-        RANDOM.nextBytes(bytes);
-        final String token = HexFormat.of().formatHex(bytes);
-        remember(context.session(), key, new Unshown(problem, Instant.now(), token, bound));
-        audit(context.session(), kind, request, "not asked: the form couldn't be shown, as " + problem
-                                                + "; to be confirmed in the chat", false);
-        throw new ToolRefusal(confirmInChatText(request, problem, token, !given.isEmpty()));
-    }
-
-    private static String confirmInChatText(final Request request,
-                                            final String problem,
-                                            final String token,
-                                            final boolean wrongId) {
-        final List<String> lines = new ArrayList<>();
-        lines.add(request.summary());
-        request.details().forEach((name, value) -> lines.add("- " + name + ": " + (value instanceof final Listed listed
-                ? String.join("; ", listed)
-                : shownInFull(value))));
-        request.editable().values().forEach(value -> lines.add("- " + value.title() + ": " + value.proposed()));
-        request.options().values().forEach(option -> lines.add("- " + option.title() + ": " + (option.ticked()
-                ? "yes"
-                : "no")));
-        return notShown(problem) + ", so the user wasn't asked to agree and nothing was done." + (wrongId
-                ? " The " + UserQuestions.CONFIRMED_IN_CHAT_ARG + " given is for something else, or has run out: "
-                  + "what is asked now is below."
-                : "") + " Show the user exactly this in the chat, and ask them whether they agree:\n"
-               + String.join("\n", lines) + "\nOnly once they say yes, in their own words, call " + request.action()
-               + " again with the same arguments and " + UserQuestions.CONFIRMED_IN_CHAT_ARG + "='" + token + "'. "
-               + "It stands for their yes to exactly this: never pass it without it. If they want something changed, "
-               + "call with it changed instead (it is asked again).";
-    }
-
-    // What a value is, written whole (a list's items joined).
-    private static String shownInFull(final Object value) {
-        if (value instanceof final Collection<?> collection) {
-            return String.join(", ", collection.stream().map(ToolText::str).toList());
-        }
-        return ToolText.str(value);
-    }
-
-    // What a confirmation in the chat is bound to: its details and the values it proposes.
-    private static String confirmationDigest(final Request request) {
-        final Map<String, String> proposed = new LinkedHashMap<>();
-        request.editable().forEach((name, value) -> proposed.put(name, value.proposed()));
-        return XsltCode.sha256(digest(request.action(), request.details(), request.binding(), request.options())
-                               + "\n" + ToolJson.dumpsSortedKeys(proposed));
+    // A confirmation whose form can't be shown (too large however it is cut, or the client couldn't show it) is
+    // refused: a confirmation is only ever given in a form, never said in the chat, so the agent can't approve for
+    // the user (decided by the user, 2026-11-18). The refusal says why the form wasn't shown, not that no form can
+    // be shown here.
+    private void refuseUnshown(final ToolCallContext context, final Request request, final String problem) {
+        audit(context.session(), request.kind().word(), request, "refused: the form couldn't be shown, as "
+                                                                 + problem, false);
+        throw new ToolRefusal(notShown(problem) + ", so the user wasn't asked to agree and nothing was done: "
+                              + request.summary() + " A confirmation is given only in a form, not in the chat, so "
+                              + "don't repeat the call as it was. Tell the user what you were doing and why its form "
+                              + "couldn't be shown, and ask them how to go on (e.g. doing it in smaller parts).");
     }
 
     // Why a form wasn't shown, as a tool's reply begins.
@@ -1417,9 +1352,8 @@ public class Consent {
         }
     }
 
-    // A form that couldn't be shown: why, when, and for a confirmation, the id the user's yes in the chat is given by
-    // and what it is bound to.
-    private record Unshown(String problem, Instant at, String token, String bound) {
+    // A form that couldn't be shown: why, and when.
+    private record Unshown(String problem, Instant at) {
 
     }
 
