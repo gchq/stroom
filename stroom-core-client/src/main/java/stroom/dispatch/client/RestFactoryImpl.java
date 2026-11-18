@@ -41,6 +41,7 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
 import org.fusesource.restygwt.client.RestServiceProxy;
+import org.fusesource.restygwt.client.callback.CallbackAware;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -260,7 +261,6 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                     errorHandler,
                     taskMonitor,
                     task);
-            final REST<R> rest = REST.withCallback(methodCallback);
             // Send the request with this factory's dispatcher rather than RestyGWT's static
             // default, so that factories with different dispatchers can be used side by side
             // (e.g. in tests). The service instances are shared, but the request is created and
@@ -269,7 +269,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                 ((RestServiceProxy) service).setDispatcher(dispatcher);
             }
             taskMonitor.onStart(task);
-            function.apply(rest.call(service));
+            call(service, methodCallback, function);
         }
 
         private boolean isOwnerDisposed() {
@@ -281,6 +281,26 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
+    }
+
+    /// Calls a service's method with a callback, which the request is made with. RestyGWT leaves
+    /// the callback on the service, and a service is shared (usually a static `GWT.create`), so it
+    /// is taken off once the request is made: it kept the caller, and all the caller reached, until
+    /// the service's next call (e.g. a closed query editor, kept by the query resource).
+    ///
+    /// @param service  The service.
+    /// @param callback The callback for the call's reply.
+    /// @param function Calls the service's method, which makes and sends the request.
+    /// @param <T>      The service's type.
+    /// @param <R>      The type of the call's reply.
+    static <T extends DirectRestService, R> void call(final T service,
+                                                      final MethodCallback<R> callback,
+                                                      final Function<T, R> function) {
+        try {
+            function.apply(REST.withCallback(callback).call(service));
+        } finally {
+            ((CallbackAware) service).setCallback(null);
+        }
     }
 
     private static class MethodCallbackImpl<R> implements MethodCallback<R> {

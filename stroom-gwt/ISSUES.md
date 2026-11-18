@@ -1088,7 +1088,31 @@ first attempt (33 to 284 nodes). Each passed on a rerun of the Report Editor sto
 check. Worth a look if one keeps failing: the leak check at 4 workers may be measuring before the
 closed editor's parts are collected. Again in the dialog padding full run (17 November 2026, 3
 workers): Report Editor's Notifications Editable and three Analytic Rule stories on both attempts;
-all passed on reruns (three Analytic Rule stories only on a second attempt, at 2 workers).
+all passed on reruns (three Analytic Rule stories only on a second attempt, at 2 workers). Again in
+the tab panel full run (18 November 2026, 3 workers): Analytic Rule's Edit Notification Twice and
+Delete Schedule Selects Next on both attempts (71 and 142 nodes). Rerun alone at 2 workers, a
+different Analytic Rule story failed on both attempts and four on a first, with the tab panel fix
+and without it alike (Settings Read Only, then New Schedule Seeds The Default Node).
+
+**Fixed** (18 November 2026): not the leak check's timing, a closed editor kept by a shared REST
+service. Under load, a close's DOM node count went up and down by one whole query editor (about
+2,990 nodes, 439 listeners) from one close to the next, never growing; the leak check's slope read
+a step as growth. A heap snapshot in the high state traced the kept editor's detached elements (its
+Ace editor's layers among them) to `QueryResource_DirectRestServiceImpl` (a static
+`GWT.create(QueryResource.class)`), whose callback field held the last call's `MethodCallbackImpl`,
+then `RestFactoryImpl`'s task executor, `QueryResultTableController`, `QueryEditorController`: the
+editor that made the resource's last call. RestyGWT's `REST.withCallback(callback).call(service)`
+sets the callback on the shared service and never takes it off, so every static resource kept its
+last caller (and all it reached) until its next call; under load, whether the reopened editor had
+made its call before the measure decided it. In the app it kept a closed editor, dashboard or
+dialog until the resource's next call. `RestFactoryImpl.call` takes it off once the request is made
+(`TestRestFactoryImpl`). Also, the probe's close now drops the focus check's hook
+(`window.__workbenchContentFocus`), which held the just-closed screen while it was measured.
+After: six Analytic Rule stories run at once, two runs each, measured the same at every close
+(about 3,295 nodes, where it had been 6,300 to 9,300), and the Analytic Rule and Report editors'
+38 stories passed at 3 workers, none on a retry. The whole suite then passed, 2,000 stories, with
+one retry (Spinner Inline's timing) and no leak failure; the only screenshot changes were the force
+vises' moving layouts.
 
 **Stories whose screen the leak check never saw** (17 November 2026, fixed): the Visualisation
 Assets stories added their frame before `afterStartUp`, so the leak probe counted nothing the opening
