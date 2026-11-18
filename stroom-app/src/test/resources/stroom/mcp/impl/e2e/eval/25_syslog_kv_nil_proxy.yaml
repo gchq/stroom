@@ -1,6 +1,6 @@
 name: Web filter (RFC 5424 syslog, key=value body, "-" for none)
 template: Event Data (Text)
-capabilities: [optional_fields, mixed_formats]
+capabilities: [optional_fields, mixed_formats, escaped_quotes]
 request: >
   Onboard the web filter's logs: RFC 5424 syslog with a key=value body. Each line is a web request it allowed or
   blocked. Where the filter has no value for a key it writes "-" (no user when the client wasn't signed in, no
@@ -15,12 +15,16 @@ expected:
   # "-" is the filter's none: it is no one's user id.
   forbidden_values:
     EventSource/User/Id: ['-']
+  # msg is quoted, a quote or backslash in it escaped with a backslash: the Events hold it unescaped, wherever the
+  # agent puts it (unescape_backslashes).
+  texts: ['blocked "x.bin": malware', 'say "hi" to phishing', 'saved to C:\temp']
+  forbidden_texts: ['blocked \"x.bin\": malware', 'say \"hi\" to phishing', 'saved to C:\\temp']
 sample: |
-  <134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - user=alice src=10.2.0.5 dst=93.184.216.34 url=https://example.com/ category=business action=allow referer=-
-  <134>1 2026-10-02T11:00:05.000Z wf01 webfilter 2211 - - user=- src=10.2.0.77 dst=198.51.100.40 url=http://198.51.100.40/x.bin category=malware action=block referer=-
-  <134>1 2026-10-02T11:01:10.000Z wf01 webfilter 2211 - - user=bob src=10.2.0.9 dst=93.184.216.34 url=https://example.com/news category=news action=allow referer=https://example.com/
-  <134>1 2026-10-02T11:02:00.000Z wf02 webfilter 1907 - - user=- src=10.2.1.4 dst=203.0.113.80 url=https://203.0.113.80/login category=phishing action=block referer=https://mail.example.org/
-  <134>1 2026-10-02T11:05:30.000Z wf02 webfilter 1907 - - user=alice src=10.2.0.5 dst=192.0.2.15 url=https://intranet.example.org/ category=- action=allow referer=-
+  <134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - user=alice src=10.2.0.5 dst=93.184.216.34 url=https://example.com/ category=business action=allow referer=- msg="ok"
+  <134>1 2026-10-02T11:00:05.000Z wf01 webfilter 2211 - - user=- src=10.2.0.77 dst=198.51.100.40 url=http://198.51.100.40/x.bin category=malware action=block referer=- msg="blocked \"x.bin\": malware"
+  <134>1 2026-10-02T11:01:10.000Z wf01 webfilter 2211 - - user=bob src=10.2.0.9 dst=93.184.216.34 url=https://example.com/news category=news action=allow referer=https://example.com/ msg="ok"
+  <134>1 2026-10-02T11:02:00.000Z wf02 webfilter 1907 - - user=- src=10.2.1.4 dst=203.0.113.80 url=https://203.0.113.80/login category=phishing action=block referer=https://mail.example.org/ msg="say \"hi\" to phishing"
+  <134>1 2026-10-02T11:05:30.000Z wf02 webfilter 1907 - - user=alice src=10.2.0.5 dst=192.0.2.15 url=https://intranet.example.org/ category=- action=allow referer=- msg="saved to C:\\temp"
 reference:
   splitter: infer
   mapping:
@@ -35,6 +39,7 @@ reference:
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/Id, field: user}
       - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Description, field: msg, transform: unescape_backslashes}
     events:
       - name: web request
         fields:
