@@ -38,6 +38,16 @@ Stroom uses:
   Reuse existing project utilities first.
 
 
+## Protected branches
+
+* DO NOT commit directly to `master`, or to a version branch, i.e. one whose whole name matches the regular expression `[0-9]+\.[0-9]+` (e.g. `7.14`).
+
+* Check the current branch with `git branch --show-current` before committing.
+  If it is protected, stop and ask the human to create a branch to commit to.
+
+* Branches named after a version but with more to the name, such as `7.14_fixes` or `gh-6039-missing-s3-config-handling__7.14`, are not protected.
+
+
 ## Structure
 
 * The server-side code follows a layered architecture: resource -> services -> DAOs.
