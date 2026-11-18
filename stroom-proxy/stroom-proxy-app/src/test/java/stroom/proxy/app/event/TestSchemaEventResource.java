@@ -41,7 +41,6 @@ import org.apache.hc.core5.http.HttpStatus;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
-import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -105,7 +104,7 @@ public class TestSchemaEventResource {
     private static boolean post(final HttpClient httpClient) {
         try {
             final EventTime eventTime = new EventTime();
-            eventTime.setTimeCreated(Date.from(Instant.now()));
+            eventTime.setTimeCreated(Instant.now());
 
             final User user = new User();
             user.setName("Fred");
