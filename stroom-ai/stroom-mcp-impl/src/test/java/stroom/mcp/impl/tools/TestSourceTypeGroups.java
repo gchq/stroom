@@ -70,12 +70,27 @@ class TestSourceTypeGroups {
              {"path": "EventSource/Generator", "value": "Pega"},
              {"path": "EventSource/Device/HostName", "field": "hostname"}]""";
 
+    // The build's sample records, a line each, by source type: a security login, an integration call, and a DB
+    // record written as a login (as the security group reads it).
+    private static final String SECURITY_LOGIN = record("PegaSecurityEvent",
+            "{\\\"eventType\\\": \\\"login\\\", \\\"operatorId\\\": \\\"alice\\\"}");
+    private static final String INTEGRATION_CALL = record("PegaIntegration",
+            "Request: <Envelope><Header><CorrelationId>c-1</CorrelationId></Header></Envelope>");
+    private static final String DB_LOGIN = record("PegaDB",
+            "{\\\"eventType\\\": \\\"login\\\", \\\"operatorId\\\": \\\"bob\\\"}");
+
     private final TranslationWorld world = new TranslationWorld();
     private final BuildTranslationXsltTool tool = world.buildTool();
     private final List<String> written = new ArrayList<>();
+    // The text of the build's sample stream, which each save is checked against.
+    private String sample = SECURITY_LOGIN + INTEGRATION_CALL + DB_LOGIN;
 
     @BeforeEach
     void setUp() {
+        // The build's own sample stream: a save given neither sample nor stream_ids is checked against it.
+        world.facts.ownRaw = List.of(1L);
+        Mockito.when(world.sampleStreamTexts.read(List.of(1L))).thenAnswer(inv -> new SampleStreamTexts.Texts(
+                Map.of("stream 1", sample), List.of()));
         // The build holds the feed's registry, as record_source_types made it.
         world.world.inBuild(BUILD, DocumentationDoc.TYPE, "PEGA source types", "r");
         // The registry as last written, as the build holds it.
@@ -997,9 +1012,17 @@ class TestSourceTypeGroups {
                  "ignored_fields": ["app"],
                  "events": [{"name": "call",
                              "fields": [{"path": "EventDetail/TypeId", "field": "direction"},
-                                        {"path": "EventDetail/Unknown/Data", "data_name": "correlation",
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/Device/HostName", "field": "hostname"},
+                                        {"path": "EventDetail/Authenticate/Data", "data_name": "correlation",
                                          "field": "soap/Envelope/Header/CorrelationId"}]}]}"""
                 .formatted(WRAPPER.replace("\"PEGA\"", "\"PEGA Integration\"")));
+    }
+
+    // A sample record of the source type, its message as given (escaped for a JSON string).
+    private static String record(final String sourceType, final String message) {
+        return "{\"timestamp\": \"2026-09-28T10:00:00.000Z\", \"hostname\": \"h1\", \"sourcetype\": \""
+               + sourceType + "\", \"app\": \"pega\", \"message\": \"" + message + "\"}\n";
     }
 
     @SuppressWarnings("unchecked")

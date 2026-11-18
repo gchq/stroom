@@ -61,6 +61,7 @@ import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
@@ -79,6 +80,7 @@ import jakarta.inject.Provider;
 
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -137,6 +139,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private static final int MOST_WORDS_QUOTED = 300;
     private static final int DEFAULT_RECORDS = 50;
     private static final int MAX_RECORDS = 1000;
+    // The most of the build's own sample streams a save given neither sample nor stream_ids is checked against.
+    private static final int MOST_BUILD_SAMPLE_STREAMS = 5;
 
     private final TranslationDocs translationDocs;
     private final TranslationBuilds builds;
@@ -150,6 +154,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private final CurrentTranslations currentTranslations;
     private final SourceTypeGroups groups;
     private final LookupKeyCounts lookupKeyCounts;
+    private final BuildPlan plan;
     private final Clock clock;
 
     @Inject
@@ -164,9 +169,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              final Provider<AiAuditLog> auditLogProvider,
                              final CurrentTranslations currentTranslations,
                              final SourceTypeGroups groups,
-                             final LookupKeyCounts lookupKeyCounts) {
+                             final LookupKeyCounts lookupKeyCounts,
+                             final BuildPlan plan) {
         this(translationDocs, builds, eventVersions, requiredImports, consent, sampleStreamTexts, stepping,
-                agentInstructions, auditLogProvider, currentTranslations, groups, lookupKeyCounts, Clock.systemUTC());
+                agentInstructions, auditLogProvider, currentTranslations, groups, lookupKeyCounts, plan,
+                Clock.systemUTC());
     }
 
     /// As the injected constructor, with the clock the sample check's time is read against, for tests.
@@ -182,6 +189,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              final CurrentTranslations currentTranslations,
                              final SourceTypeGroups groups,
                              final LookupKeyCounts lookupKeyCounts,
+                             final BuildPlan plan,
                              final Clock clock) {
         this.translationDocs = translationDocs;
         this.builds = builds;
@@ -195,6 +203,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         this.currentTranslations = currentTranslations;
         this.groups = groups;
         this.lookupKeyCounts = lookupKeyCounts;
+        this.plan = plan;
         this.clock = clock;
     }
 
@@ -864,6 +873,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final TranslationMapping mapping = checked(b);
         final List<String> warnings = TranslationBuilds.warnings(b.result);
         List<String> samples = request.samples();
+        // A save given neither is checked against the build's own sample streams: seen in eval case 36, a save with
+        // "sample": [] and no stream_ids checked no record, returned ok, and every form the check drives was skipped.
+        final List<Long> streamIds = samples == null && request.streamIds().isEmpty() && saves(request)
+                ? buildSampleStreams(request)
+                : request.streamIds();
+        if (request.streamIds().isEmpty() && !streamIds.isEmpty()) {
+            warnings.add("sample: checked against the build's sample streams " + streamIds + " (neither sample "
+                         + "nor stream_ids was given)");
+        }
         // An aggregated feed's build with a scope: the mapping is checked against the scope's records alone, those of
         // other source types left out as they are read, and only the scope's confirmed kinds are compared with it.
         // A source type group's: its own source types alone, of the build's scope.
@@ -871,8 +889,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? builds.scope(request.build())
                 : Optional.of(new SourceTypeScope(b.build, b.group.field(), SourceTypeRegistry.rows(
                         b.group.registry().found().state()), b.group.sourceTypes()));
-        if (samples == null && !request.streamIds().isEmpty()) {
-            final SampleStreamTexts.Texts read = sampleStreamTexts.read(request.streamIds());
+        if (samples == null && !streamIds.isEmpty()) {
+            final SampleStreamTexts.Texts read = sampleStreamTexts.read(streamIds);
             final SampleStreamTexts.Scoped scoped = scope.map(found -> sampleStreamTexts.scoped(read, found))
                     .orElse(null);
             final SampleStreamTexts.Texts texts = scoped == null
@@ -899,8 +917,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 SampleTexts.checkSample(text, SAMPLE_ARG);
             }
         }
-        if (!request.streamIds().isEmpty()) {
-            warnings.addAll(builds.metaNotSent(mapping, request.streamIds()));
+        if (!streamIds.isEmpty()) {
+            warnings.addAll(builds.metaNotSent(mapping, streamIds));
         }
         warnings.addAll(lookupKeyCounts.mismatches(mapping));
         warnings.addAll(TranslationBuilds.zoneNotKept(mapping));
@@ -942,13 +960,52 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         b.placeholders = (List<Placeholders.Found>) check.remove(MappingSampleCheck.PLACEHOLDERS);
         b.result.put("sample_check", check);
         JsonValues.strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
-        final List<String> found = JsonValues.strings(check.get("problems"));
+        final List<String> found = new ArrayList<>(JsonValues.strings(check.get("problems")));
+        if (saves(request) && !JsonValues.truthy(check.get("records"))) {
+            // A check over no record says nothing of the mapping: saved on it, the forms it drives (domain split,
+            // placeholders, confirmed kinds, rules kept as Unknown) were all skipped.
+            found.add("no sample record was checked" + (JsonValues.truthy(check.get("note"))
+                    ? " (" + check.get("note") + ")"
+                    : "") + ", so nothing is saved: give stream_ids (the sample streams, holding records of the "
+                      + "mapping's input) or sample (their text)");
+        }
         if (!found.isEmpty()) {
             // A time format no sample value fits fails every record at stepping: as good as a schema problem.
             found.forEach(problem -> TranslationBuilds.problems(b.result).add("sample: " + problem));
             b.result.put("ok", false);
             b.result.put("xslt", null);
         }
+    }
+
+    // With build and name, or uuid, the XSLT is saved.
+    private static boolean saves(final Request request) {
+        return request.build() != null || request.uuid() != null;
+    }
+
+    // The build's own sample streams (the newest), else the newest its survey read: what a save given neither sample
+    // nor stream_ids is checked against. None for an XSLT in no build, which is never saved (WriteGuard refuses it,
+    // saying why). Refused for a build with neither.
+    private List<Long> buildSampleStreams(final Request request) {
+        final String build = buildOf(request);
+        if (build == null) {
+            return List.of();
+        }
+        final List<Long> own = plan.rawSampleStreams(build, MOST_BUILD_SAMPLE_STREAMS);
+        if (!own.isEmpty()) {
+            return own;
+        }
+        final List<Long> surveyed = builds.surveyStatesInBuild(build).stream()
+                .flatMap(state -> SurveyDoc.streams(state).stream())
+                .distinct()
+                .sorted(Comparator.reverseOrder())
+                .limit(MOST_BUILD_SAMPLE_STREAMS)
+                .toList();
+        if (surveyed.isEmpty()) {
+            throw new ToolRefusal("A saved XSLT is checked against the sample first, and none was given: build '"
+                                  + build + "' has no sample streams of its own and no survey naming any. Give "
+                                  + "stream_ids (the sample streams) or sample (their text)");
+        }
+        return surveyed;
     }
 
     // EventSource/System/Name and Environment are the user's to give (or a standing instruction's): a draft's
@@ -1987,6 +2044,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 return null;
             }
             if (given instanceof final List<?> list) {
+                if (list.isEmpty()) {
+                    // "sample": [] is no sample (seen in eval case 36: taken as one, 0 records were checked and the
+                    // save returned ok).
+                    return null;
+                }
                 return list.stream().map(item -> item == null
                         ? ""
                         : String.valueOf(item)).toList();

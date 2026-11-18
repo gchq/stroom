@@ -4906,7 +4906,15 @@ through the model. A call runs in this order:
    line where its records follow one (`SurveyExamples`), and a warning says how many; only for records a line each,
    not XML or a JSON array, whose records can't stand apart from their text. Seen in testing: a sample read to its
    4,004th record of 25,000 refused the fields of the rare kinds near the end (a file upload's name and size), and
-   the agent read them through raw XPath to get past the check, which then checked none of them.
+   the agent read them through raw XPath to get past the check, which then checked none of them. `sample: []` is
+   no sample. A save (`build`, or `uuid`) given neither `sample` nor `stream_ids` is checked against the build's own
+   sample streams (`BuildPlan.rawSampleStreams`, the newest five), else the newest five streams its survey read
+   (`SurveyDoc.streams`), a warning naming them; a build with neither is refused, asking for `stream_ids` or
+   `sample`. A save whose check read no record is a problem (`no sample record was checked`, with the reader's
+   note), so nothing is saved: a check over no records says nothing of the mapping. Seen in the agent eval (case 36
+   on Haiku): saved with `"sample": []` and no `stream_ids`, 0 records were checked, the save returned ok, and every
+   form the check drives (domain split, placeholders, confirmed kinds, rules kept as Unknown) was skipped. An XSLT in
+   no build is never saved (WriteGuard refuses it), so it takes no fallback.
 5. **The user's choices** (only when saving): a user's Id whose values carry a domain (`DomainSplits`: split into
    Id and Domain, or keep whole; one question for all fields not answered before), and values that stand for none
    (`PlaceholderChoices`: leave each out, as `nil_values`, or keep as written; one form, at most 20 questions, 19
