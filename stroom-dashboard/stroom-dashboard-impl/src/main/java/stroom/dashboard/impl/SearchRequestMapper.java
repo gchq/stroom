@@ -118,6 +118,10 @@ public class SearchRequestMapper {
                         params,
                         searchRequest.getSearch().getTimeRange(),
                         // Dashboards do not supply a native query yet.
+                        null,
+                        // Nor joins, which only StroomQL has.
+                        null,
+                        null,
                         null);
 
             } catch (final RuntimeException ex) {
@@ -130,6 +134,10 @@ public class SearchRequestMapper {
                     params,
                     searchRequest.getSearch().getTimeRange(),
                     // Dashboards do not supply a native query yet.
+                    null,
+                    // Nor joins, which only StroomQL has.
+                    null,
+                    null,
                     null);
         }
     }

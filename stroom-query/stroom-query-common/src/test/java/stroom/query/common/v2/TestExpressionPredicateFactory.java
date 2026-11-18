@@ -642,6 +642,41 @@ class TestExpressionPredicateFactory {
                 doComparatorTest(userInput, expectedOrderedValues));
     }
 
+    @Test
+    void textInMatchesEveryValueHowEverTheyAreSeparated() {
+        // StroomQL holds 'in (a, b)' as 'a, b'; other forms come from elsewhere.
+        for (final String values : List.of("a, b", "a,b", "a b", " a ,, b ")) {
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addTerm(ExpressionTerm.builder()
+                            .field("test")
+                            .condition(ExpressionTerm.Condition.IN)
+                            .value(values)
+                            .build())
+                    .build();
+            final Predicate<String> predicate = new ExpressionPredicateFactory()
+                    .createOptional(expression, TEXT_VALUE_FUNCTION_FACTORIES, DateTimeSettings.builder().build())
+                    .orElseThrow();
+
+            assertThat(predicate).as(values).accepts("a", "b").rejects("c", "a,", "a, b", "");
+        }
+    }
+
+    @Test
+    void textInMatchesValuesWithSlashes() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field("test")
+                        .condition(ExpressionTerm.Condition.IN)
+                        .value("http://a.com, http://b.com")
+                        .build())
+                .build();
+        final Predicate<String> predicate = new ExpressionPredicateFactory()
+                .createOptional(expression, TEXT_VALUE_FUNCTION_FACTORIES, DateTimeSettings.builder().build())
+                .orElseThrow();
+
+        assertThat(predicate).accepts("http://a.com", "http://b.com").rejects("http://c.com");
+    }
+
 //    public static void main(String[] args) {
 //
 //        List<String> classNames;

@@ -36,6 +36,7 @@ import stroom.util.shared.ResourceKey;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.GetDatabaseResponse;
@@ -357,6 +358,34 @@ class TestDataConnectionTester {
 
         assertThatThrownBy(() -> tester(new MockSecurityContext()).detectColumns(removed))
                 .hasMessageContaining("There is no workbook");
+    }
+
+    @Test
+    void workbookSentInTheRequestIsIgnored() {
+        // A test of a workbook the client sent would say nothing of the one the document is queried
+        // with, so the store is asked for the stored one.
+        final byte[] sent = TestExcelReader.xlsx(new Object[][]{{"other"}, {"x"}});
+        final DataConnectionDoc withSentData = excelDoc(null).copy()
+                .excel(excelDoc(null).getExcel().copy()
+                        .data(sent)
+                        .build())
+                .build();
+        final ArgumentCaptor<DataConnectionDoc> askedFor = ArgumentCaptor.forClass(DataConnectionDoc.class);
+        Mockito.when(store.withWorkbook(askedFor.capture()))
+                .thenAnswer(invocation -> withData(invocation.getArgument(0)));
+
+        final DataConnectionTester tester = tester(new MockSecurityContext());
+        final DataConnectionTestResponse response = tester.test(withSentData);
+        final List<DataColumn> columns = tester.detectColumns(withSentData);
+
+        assertThat(askedFor.getAllValues())
+                .hasSize(2)
+                .allSatisfy(doc -> {
+                    assertThat(doc.getExcel().getData()).isNull();
+                    assertThat(doc.getExcel().getFileName()).isEqualTo("teams.xlsx");
+                });
+        assertThat(response.getMessage()).startsWith("Read 2 rows of 2 columns.");
+        assertThat(columns).extracting(DataColumn::getName).containsExactly("team", "members");
     }
 
     private static DataConnectionDoc withData(final DataConnectionDoc doc) {

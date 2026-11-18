@@ -56,6 +56,7 @@ public class ExpressionPredicateFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExpressionPredicateFactory.class);
     private static final String DELIMITER = ",";
+    private static final Pattern IN_DELIMITERS = Pattern.compile("[,\\s]+");
     private static final Comparator<Score> SCORE_COMPARATOR = Comparator
             .comparingInt(Score::length)
             .thenComparing(Score::index);
@@ -1938,7 +1939,11 @@ public class ExpressionPredicateFactory {
 
         private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
                                                                 final Function<T, String> extractionFunction) {
-            final String[] in = term.getValue().split(" ");
+            // Split on commas as well as spaces, as the index data sources do, so StroomQL's
+            // 'in (a, b)', held as 'a, b', matches both.
+            final String[] in = Arrays.stream(IN_DELIMITERS.split(term.getValue()))
+                    .filter(value -> !value.isEmpty())
+                    .toArray(String[]::new);
             // If there are no terms then always a false match.
             if (in.length == 0) {
                 return Optional.of(matchNone());
