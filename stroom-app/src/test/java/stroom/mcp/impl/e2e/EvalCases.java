@@ -59,7 +59,7 @@ final class EvalCases {
             "55_kv_two_event_times", "56_jsonl_azure_audit_aggregated", "57_jsonl_collector_paths",
             "58_jsonl_pega_wrapper", "59_jsonl_windows_meta_roles", "60_jsonl_azure_audit_new_group",
             "61_jsonl_azure_audit_join_group", "62_esql_top_uploaders_by_domain", "63_esql_daily_uploads_by_domain",
-            "64_esql_unsanctioned_uploads_mb");
+            "64_esql_unsanctioned_uploads_mb", "65_jsonl_held_loggers_many");
 
     // What a case whose data is in the feed already shows of it: the first stream's first parts, each part's first
     // lines.
