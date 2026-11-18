@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.17-parallel-pathways] - 2026-11-18
+
 * Bug **#6025** : Fix a null pointer error when choosing Excel for a Data Connection that has never had a workbook.
 
 * Bug **#6036** : Fix a NUL character (U+0000) in data turning off XML escaping in the XMLWriter, so that the rest of the text was written unescaped. NUL is now always removed from the output, and the `preventEscapeSwitching` property now only affects `xsl:character-map` output.
@@ -2929,7 +2931,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.17-parallel-pathways...HEAD
+[v7.14-beta.17-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...v7.14-beta.17-parallel-pathways
 [v7.14-beta.16-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...v7.14-beta.16-parallel-pathways
 [v7.14-beta.15-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.11-parallel-pathways...v7.14-beta.15-parallel-pathways
 [v7.14-beta.11-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...v7.14-beta.11-parallel-pathways
