@@ -174,6 +174,11 @@ class TestEventVersions {
     @Test
     void changesToASavedXsltKeepItsVersionAndAskNothing() {
         holding("4.1.0", "3.5.2");
+        // The build's sample stream, logons alone: each save is checked against it.
+        world.facts.ownRaw = List.of(1L);
+        Mockito.when(world.sampleStreamTexts.read(List.of(1L))).thenReturn(new SampleStreamTexts.Texts(Map.of(
+                "stream 1", "time,action,user,result,sid,host\n2026-09-28T10:00:00.000Z,login,alice,ok,s1,ws01\n"),
+                List.of()));
         final Map<String, Object> made = world.call(world.buildTool(), Map.of("mapping", TranslationWorld.mapping(),
                 "schema_version", "3.5.2", "build", "acme-v1", "name", "ACME-Events"));
         final String uuid = String.valueOf(((Map<?, ?>) made.get("saved")).get("uuid"));

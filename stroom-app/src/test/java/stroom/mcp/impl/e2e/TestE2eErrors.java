@@ -203,8 +203,12 @@ class TestE2eErrors extends AbstractE2eTest {
         createFeed(build, feed);
         final long raw = upload(feed, "<logons><logon><when>2026-09-28 12:00:00</when><who>frank</who>"
                                       + "<host>ws06</host><result>SUCCESS</logon></logons>");
+        // Saved checked against the records as the agent reads them (well formed): the stream itself, which no
+        // XML parser reads, would leave no record checked and nothing saved.
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", E2eFixtures.xmlMapping(),
-                "build", build, "name", feed + "-Events", "schema_version", VERSION));
+                "build", build, "name", feed + "-Events", "schema_version", VERSION, "sample",
+                "<logons><logon><when>2026-09-28 12:00:00</when><who>frank</who><host>ws06</host>"
+                + "<addr>192.0.2.6</addr><result>SUCCESS</result></logon></logons>"));
         final String template = templateUuid("translation", "Event Data (XML)");
         final Map<String, Object> xslt = docProperty("translationFilter", "xslt",
                 (String) map(saved, "saved").get("uuid"), "XSLT");
