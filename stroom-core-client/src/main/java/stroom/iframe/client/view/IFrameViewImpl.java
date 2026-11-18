@@ -117,8 +117,9 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
     /// each below those of the sections it is in, so the headings of every section the view is in show, and any
     /// of them can be collapsed from there (asked for by the user). The frame's document has no script of its
     /// own, so each heading's place is measured from here: again when the frame is resized, its fonts load, or a
-    /// section opens (a closed one's headings have no size). Does nothing for a document this page can't see
-    /// into, or one with no sections.
+    /// section opens (a closed one's headings have no size), at most once a frame, however many sections
+    /// open or close at once (e.g. Expand all on a document of hundreds of headings, each measuring them all).
+    /// Does nothing for a document this page can't see into, or one with no sections.
     private native void pinHeadings(Element frameElement) /*-{
         var doc = null;
         try {
@@ -165,6 +166,22 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
                 });
             }
         };
+        var placing = false;
+        var placeSoon = function () {
+            if (!placing) {
+                placing = true;
+                doc.defaultView.requestAnimationFrame(function () {
+                    placing = false;
+                    place();
+                });
+            }
+        };
+        // A style set only when it changes, so placing them again as they were leaves the layout as it was.
+        var setStyle = function (element, name, value) {
+            if (element.style[name] !== value) {
+                element.style[name] = value;
+            }
+        };
         var place = function () {
             // Pinned at the very top, over the page's own padding, rather than leaving a gap above the headings.
             var padding = parseFloat(doc.defaultView.getComputedStyle(scroller()).paddingTop) || 0;
@@ -181,24 +198,25 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
                 var depth = above.depth + 1;
                 placed.set(section, {bottom: top + heights[i], depth: depth});
                 var summary = section.firstElementChild;
-                summary.style.top = (top - padding) + 'px';
+                setStyle(summary, 'top', (top - padding) + 'px');
                 // An outer heading over an inner one that is scrolling away beneath it.
-                summary.style.zIndex = String(Math.max(2, 20 - depth));
+                setStyle(summary, 'zIndex', String(Math.max(2, 20 - depth)));
                 if (summary.firstElementChild) {
                     // A link to a heading puts it below the headings pinned above it.
-                    summary.firstElementChild.style.scrollMarginTop = (top - padding) + 'px';
+                    setStyle(summary.firstElementChild, 'scrollMarginTop', (top - padding) + 'px');
                 }
             });
             doc.documentElement.classList.add('markdown-pinned-headings');
             markSoon();
         };
         place();
-        doc.addEventListener('toggle', place, true);
+        // Each section opened or closed has its own toggle event (and an open one each as it loads).
+        doc.addEventListener('toggle', placeSoon, true);
         doc.addEventListener('scroll', markSoon, {capture: true, passive: true});
         // As the page's width changes (the frame resized, or its edge dragged), its headings wrap differently.
-        new doc.defaultView.ResizeObserver(place).observe(doc.querySelector('.markdown') || doc.body);
+        new doc.defaultView.ResizeObserver(placeSoon).observe(doc.querySelector('.markdown') || doc.body);
         if (doc.fonts && doc.fonts.ready) {
-            doc.fonts.ready.then(place);
+            doc.fonts.ready.then(placeSoon);
         }
         // A section collapsed from its pinned heading: scrolled to where it starts, its heading staying where it
         // was, rather than leaving the view further down the page, past it.

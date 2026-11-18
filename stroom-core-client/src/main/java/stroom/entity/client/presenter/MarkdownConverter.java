@@ -40,6 +40,8 @@ public class MarkdownConverter {
 
     private final UserPreferencesManager userPreferencesManager;
     private final JavaScriptObject showdownConverter;
+    // The markdown last shown in a frame, as html: a Documentation tab and its editor's preview each show it.
+    private final LastConversion lastFramedConversion = new LastConversion();
 
     @Inject
     public MarkdownConverter(final UserPreferencesManager userPreferencesManager) {
@@ -119,9 +121,10 @@ public class MarkdownConverter {
                                      final String rawMarkdown,
                                      final boolean copyButtons) {
         if (htmlBuilder != null && !NullSafe.isBlankString(rawMarkdown)) {
-            final String markdownHtml = nativeConvert(rawMarkdown, copyButtons
-                    ? SvgImage.COPY.getSvg()
-                    : null);
+            final String markdownHtml = copyButtons
+                    ? lastFramedConversion.convert(rawMarkdown, markdown -> nativeConvert(markdown,
+                    SvgImage.COPY.getSvg()))
+                    : nativeConvert(rawMarkdown, null);
             final SafeHtml markdownSafeHtml = SafeHtmlUtils.fromTrustedString(markdownHtml);
             final String cssClasses = getMarkdownContainerClasses();
 
