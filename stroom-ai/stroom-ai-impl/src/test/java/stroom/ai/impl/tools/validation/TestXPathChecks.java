@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Timeout;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -164,6 +165,63 @@ class TestXPathChecks {
                             + "['when', 'subject', 'server', 'kind', 'action', 'user', 'item'] would be empty")
                 .contains("It matches as far as `Sep 27 2026 23:48:10 ` and stops there")
                 .contains("EN DASH (U+2013)");
+    }
+
+    @Test
+    void testARegexMatchingOnlyRecordsPastTheFirstDocumentsReadIsNotAProblem() {
+        // Seen in the agent eval (case 36): a SecretServer export's folder keys, drafted from all 1,000 records, first
+        // held after the 200th, each refused as matching none of the first 200; the agent then saved with an empty
+        // sample to get past it, and nothing was checked.
+        final List<String> documents = new ArrayList<>();
+        for (int i = 0; i < XPathChecks.MAX_SOURCE_DOCUMENTS + 50; i++) {
+            final String data = i < XPathChecks.MAX_SOURCE_DOCUMENTS + 10
+                    ? "Event: [User] Action: [Login] By User: alice"
+                    : "Event: [Folder] Action: [Create] By User: alice; Folder Id: " + i;
+            documents.add("<Event xmlns=\"records:2\"><EventData><Data>" + data + "</Data></EventData></Event>");
+        }
+        final Extraction folder = new Extraction(null, "EventData/Data", "Folder Id: (\\d+)", null,
+                List.of("folder_id"));
+        final Findings findings = XPathChecks.checkExtractions(List.of(folder), false, List.of(), () -> documents,
+                "records:2", Map.of(), null, CLOCK);
+        assertThat(findings.problems()).isEmpty();
+        assertThat(findings.warnings()).singleElement().asString()
+                .startsWith("extract[0] (EventData/Data): the regex matches 40 of the 250 sample texts");
+
+        // One that matches none of them all is still a problem, counted over them all.
+        final Extraction wrong = new Extraction(null, "EventData/Data", "Folder Key: (\\d+)", null,
+                List.of("folder_id"));
+        assertThat(XPathChecks.checkExtractions(List.of(wrong), false, List.of(), () -> documents, "records:2",
+                Map.of(), null, CLOCK).problems()).singleElement().asString()
+                .startsWith("extract[0] (EventData/Data): the regex matches none of the 250 sample texts");
+
+        // The deadline passed once the first documents were checked, the rest unread: a warning, not a problem.
+        final Findings late = XPathChecks.checkExtractions(List.of(folder), false, List.of(), () -> documents,
+                "records:2", Map.of(), CLOCK.instant(), ticking());
+        assertThat(late.problems()).isEmpty();
+        assertThat(late.warnings()).singleElement().asString()
+                .contains("matches none of the first 200 of the sample's 250 records, and the check's time ran out");
+    }
+
+    // A clock a second later each time it is read.
+    private static Clock ticking() {
+        return new Clock() {
+            private int reads;
+
+            @Override
+            public ZoneOffset getZone() {
+                return ZoneOffset.UTC;
+            }
+
+            @Override
+            public Clock withZone(final ZoneId zone) {
+                return this;
+            }
+
+            @Override
+            public Instant instant() {
+                return CLOCK.instant().plusSeconds(reads++);
+            }
+        };
     }
 
     @Test
