@@ -190,6 +190,14 @@ public final class PlanBEditorStories {
                     play.expect(play.getByText("Data Retention", GROUP_LABEL)).toBeInTheDocument();
                     play.expect(play.queryByText("Key Schema", GROUP_LABEL)).toBeNull();
                     play.expect(play.queryByText("Value Schema", GROUP_LABEL)).toBeNull();
+                    // The granularities read as words, not the enum's names (were "HOUR", "DAY", "WEEK")
+                    final Query granularity = selection(play, "Publishing", "Bucket Granularity");
+                    play.expect(granularity).toHaveValue("Day");
+                    play.click(granularity);
+                    play.expect(play.screen().findByText("Hour", ".selection-popup *")).toBeInTheDocument();
+                    play.click(play.screen().findByText("Week", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(selection(play, "Publishing", "Bucket Granularity"))
+                            .toHaveValue("Week"));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Changing the type shows that type's groups, and keeps the settings every type has:

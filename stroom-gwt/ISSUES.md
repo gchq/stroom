@@ -1387,9 +1387,9 @@ to delete them by hand.~~
   October 2026 it differed in every full run (waves 40 to 47) and alone too, always with the
   Show Main Menu tooltip shown; its baseline was retaken with the tooltip when master's explorer
   Reload button was merged in (the toolbar changed anyway).
-* Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
+* ~~Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
   (found 25 October 2026 in wave 4's audit; older; harmless, as `ExecutionScheduleManager` acts
-  only on `true`). Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditorController`).
+  only on `true`).~~ Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditorController`).
 * ~~Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
@@ -1548,11 +1548,12 @@ to delete them by hand.~~
 * ~~Unused CSS met in wave 12 (27 October 2026): `.pipelineStructureViewImpl-buttons`
   (`components.css`; nothing has the class since the pipeline's Structure tab converted). Delete it
   once removals are allowed.~~ **Deleted** (checked 30 October 2026: it is named nowhere).
-* Classes wave 12 left un-BEM'd (found 27 October 2026, in its audit): the annotation editor's
+* ~~Classes wave 12 left un-BEM'd (found 27 October 2026, in its audit): the annotation editor's
   `annotationContainer`, `annotationHistory*`, `annotationButtons`, `annotationTextBox` and the rest
   (`stroom-annotation.css`; only the button width moved, to `annotation-editor.css`), and the traces
   list's `traces-toolbar` (`pathways.css`, set in `TracesListTabController`). Rename them with their
-  rules to `annotation-editor__…` and `traces-list-tab__toolbar` in one pass each. **The annotation
+  rules to `annotation-editor__…` and `traces-list-tab__toolbar` in one pass each.~~ **Done**
+  (closed 19 November 2026). **The annotation
   editor's done** (wave 28, 29 October 2026: `annotation-editor`, `annotation-setting`,
   `annotation-history` and `duration-label`, a sheet each); `traces-toolbar` is
   `traces-list-tab__toolbar` (`traces-list-tab.css`) since UI audit wave 8 (29 October 2026).
@@ -1635,8 +1636,10 @@ to delete them by hand.~~
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
   defaults to Dialog while the config default is Dock.
 * Solr's ZooKeeper Path is a single value shown in a multi-line text area.
-* Plan B's Bucket Granularity list shows the enum names in capitals (HOUR, DAY, WEEK), as
-  `BucketGranularity` has no display names.
+* ~~Plan B's Bucket Granularity list shows the enum names in capitals (HOUR, DAY, WEEK), as
+  `BucketGranularity` has no display names.~~ **Fixed** (19 November 2026): it has display names
+  (Hour, Day, Week); stored documents keep the enum names. Play: `App/Editors/PlanBEditor` `Trace`
+  (failed before).
 * The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
   (`$\{BaseField.score\}`), not UiBinder's `{{`, so it may show the backslashes
   (`ElasticIndexSettings.ui.xml`).
