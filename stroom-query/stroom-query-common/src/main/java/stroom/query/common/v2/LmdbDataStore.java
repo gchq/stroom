@@ -139,10 +139,8 @@ public class LmdbDataStore implements DataStore {
     private final int[] windowShifts;
     // Gives the window key of a stored row, for a table whose rows are copied to other windows.
     private final WindowRowGenerator windowKeyGenerator;
-    // Counts the commits to the store, so that the range of windows is only worked out again when
-    // the rows that can be read have changed.
-    private final AtomicLong windowRowVersion = new AtomicLong();
-    private long windowRangeVersion = -1;
+    // The first and last windows that the store has real rows for, noted as rows are stored.
+    private final StoredWindowExtent storedWindowExtent = new StoredWindowExtent();
     private final int windowTimeFieldIndex;
     private final String windowTimeField;
     private final AtomicBoolean reportedRowWithNoWindowTime = new AtomicBoolean();
@@ -322,20 +320,35 @@ public class LmdbDataStore implements DataStore {
                && column.getExpression().startsWith(WINDOW_KEY_FUNCTION);
     }
 
-    // Finds the first and last windows that hold a real row, and not only copies of rows from other
+    // Sets the first and last windows that hold a real row, and not only copies of rows from other
     // windows. The range is of the whole store, whatever span of time is being read from it, as a
     // window can read one that is outside that span.
     //
-    // The version is that of the rows before the read began. One taken after could be of rows that
-    // were stored since, which the read does not see, and the range would then be kept as if it
-    // covered them.
-    private void setWindowRange(final LmdbReadContext readContext, final long version) {
+    // The windows are noted as rows are stored. The store is only read through to find them when it
+    // has changed in a way that was not noted, such as rows being deleted.
+    //
+    // The extent is what was known before the read began. If it were taken after, it could be of
+    // rows that were stored since, which the read does not see.
+    private void setWindowRange(final LmdbReadContext readContext, final StoredWindowExtent.Snapshot extent) {
         if (windowKeyGenerator == null) {
             return;
         }
-        if (version == windowRangeVersion) {
+        if (storedWindowExtent.needsScan(extent) && !scanWindowExtent(readContext, extent)) {
+            // The rows were not all read, so the range is worked out again next time.
             return;
         }
+        final long first = storedWindowExtent.getFirst(extent);
+        final long last = storedWindowExtent.getLast(extent);
+        if (first > last) {
+            valueReferenceIndex.getWindowRange().clear();
+        } else {
+            valueReferenceIndex.getWindowRange().set(first, last);
+        }
+    }
+
+    // Reads through the top level rows of the store to find the first and last windows with a real
+    // row. Returns false if the read was interrupted.
+    private boolean scanWindowExtent(final LmdbReadContext readContext, final StoredWindowExtent.Snapshot extent) {
         final long[] range = new long[]{Long.MAX_VALUE, Long.MIN_VALUE};
         lmdbRowKeyFactory.createChildKeyRange(Key.ROOT_KEY, keyRange ->
                 readContext.read(keyRange, iterator -> {
@@ -352,15 +365,10 @@ public class LmdbDataStore implements DataStore {
                     }
                 }));
         if (Thread.currentThread().isInterrupted()) {
-            // The rows were not all read, so work the range out again next time.
-            return;
+            return false;
         }
-        if (range[0] > range[1]) {
-            valueReferenceIndex.getWindowRange().clear();
-        } else {
-            valueReferenceIndex.getWindowRange().set(range[0], range[1]);
-        }
-        windowRangeVersion = version;
+        storedWindowExtent.scanned(extent, range[0], range[1]);
+        return true;
     }
 
     // Reads the rows held in a value, leaving out any that exist only because a row was copied to a
@@ -527,7 +535,12 @@ public class LmdbDataStore implements DataStore {
             final ByteBuffer rowKey = lmdbRowKeyFactory.create(depth, parentRowKey, storedValues);
             final ByteBuffer rowValue = lmdbRowValueFactory.create(storedValues);
             parentRowKey = rowKey;
-            rows[depth] = new LmdbKV(currentDbState, rowKey, rowValue);
+            // Note the window of a top level row of an event in the window, so that the first and
+            // last windows with such rows are known without reading through the store.
+            final Long realWindowKey = timeWindows != null && depth == 0 && windowShift == 0
+                    ? Long.valueOf(windowKey)
+                    : null;
+            rows[depth] = new LmdbKV(currentDbState, rowKey, rowValue, realWindowKey);
         }
 
         // We build rows first before putting to ensure that the byte buffers used for the parent row key are
@@ -585,6 +598,7 @@ public class LmdbDataStore implements DataStore {
                                     case final LmdbKV lmdbKV -> {
                                         currentDbState = lmdbKV.getCurrentDbState();
                                         insert(writeTxn, db, lmdbKV);
+                                        storedWindowExtent.add(lmdbKV);
                                         uncommittedCount++;
                                     }
                                     case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem -> {
@@ -611,6 +625,8 @@ public class LmdbDataStore implements DataStore {
 
                                 // Create payload and clear the DB.
                                 payloadCreator.addPayload(writeTxn, db, false);
+                                // The payload takes the rows out of the store.
+                                storedWindowExtent.committed(true);
 
                             } else if (uncommittedCount > 0) {
                                 final long count = uncommittedCount;
@@ -683,16 +699,18 @@ public class LmdbDataStore implements DataStore {
                         final DeleteCommand deleteCommand) {
         lmdbRowKeyFactory.createChildKeyRange(
                 deleteCommand.getParentKey(), deleteCommand.getTimeFilter(), keyRange -> {
+                    final boolean[] rowsDeleted = new boolean[1];
                     try (final Stream<LmdbEntry> stream = db.stream(writeTxn, keyRange)) {
                         stream.forEach(entry -> {
                             final ByteBuffer keyBuffer = entry.getKey();
                             if (keyBuffer.limit() > 1) {
                                 db.delete(writeTxn, keyBuffer);
+                                rowsDeleted[0] = true;
                             }
                         });
                     }
                     writeTxn.commit();
-                    windowRowVersion.incrementAndGet();
+                    storedWindowExtent.committed(rowsDeleted[0]);
                 });
     }
 
@@ -700,7 +718,7 @@ public class LmdbDataStore implements DataStore {
                         final CurrentDbState currentDbState) {
         putCurrentDbState(writeTxn, currentDbState);
         writeTxn.commit();
-        windowRowVersion.incrementAndGet();
+        storedWindowExtent.committed(false);
     }
 
 
@@ -1112,7 +1130,7 @@ public class LmdbDataStore implements DataStore {
             // reads the DB state without holding this object's monitor, so share the lock.
             readTxnLock.lock();
             try {
-                final long windowRowVersionBeforeRead = windowRowVersion.get();
+                final StoredWindowExtent.Snapshot windowExtentBeforeRead = storedWindowExtent.snapshot();
                 env.read(readTxn ->
                         SimpleMetrics.measure("fetch", () -> {
                             try {
@@ -1126,7 +1144,7 @@ public class LmdbDataStore implements DataStore {
                                         db,
                                         readTxn,
                                         timeFilter);
-                                setWindowRange(readContext, windowRowVersionBeforeRead);
+                                setWindowRange(readContext, windowExtentBeforeRead);
 
                                 getChildren(
                                         readContext,
