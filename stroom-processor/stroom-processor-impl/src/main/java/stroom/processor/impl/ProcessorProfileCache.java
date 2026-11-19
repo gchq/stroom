@@ -145,38 +145,51 @@ public class ProcessorProfileCache implements Clearable, EntityEvent.Handler {
         // Get the configured time zone for the periods.
         final ZoneId zoneId = UserTimeZoneUtil.getZoneId(processorProfile.getTimeZone(), null);
         final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(now, zoneId);
-        final int dayValue = zonedDateTime.getDayOfWeek().getValue();
-        final Day day = Day.getDayByValue(dayValue);
 
         for (final ProfilePeriod period : periods) {
-            // Ignore periods that do not include the current day.
-            if (period.getDays().isIncluded(day)) {
-                // Calculate the start time.
-                final ZonedDateTime startTime = setTime(zonedDateTime, period.getStartTime());
-                // Check start time is before or equal.
-                if (!startTime.isAfter(zonedDateTime)) {
-                    // Calculate the end time and ensure it is after the start time.
-                    ZonedDateTime endTime = setTime(zonedDateTime, period.getEndTime());
-                    if (!endTime.isAfter(startTime)) {
-                        endTime = endTime.plusDays(1);
-                    }
-                    // Check end time is after or equal.
-                    if (!endTime.isBefore(zonedDateTime)) {
-                        int maxNodeThreads = Integer.MAX_VALUE;
-                        if (period.isLimitNodeThreads()) {
-                            maxNodeThreads = period.getMaxNodeThreads();
-                        }
-                        int maxClusterThreads = Integer.MAX_VALUE;
-                        if (period.isLimitClusterThreads()) {
-                            maxClusterThreads = period.getMaxClusterThreads();
-                        }
-                        return new ProfileResult(maxNodeThreads, maxClusterThreads);
-                    }
+            // A period belongs to the day it starts on, so a period that runs past midnight may have started
+            // yesterday and still be active now.
+            if (isActive(period, zonedDateTime, zonedDateTime) ||
+                isActive(period, zonedDateTime.minusDays(1), zonedDateTime)) {
+                int maxNodeThreads = Integer.MAX_VALUE;
+                if (period.isLimitNodeThreads()) {
+                    maxNodeThreads = period.getMaxNodeThreads();
                 }
+                int maxClusterThreads = Integer.MAX_VALUE;
+                if (period.isLimitClusterThreads()) {
+                    maxClusterThreads = period.getMaxClusterThreads();
+                }
+                return new ProfileResult(maxNodeThreads, maxClusterThreads);
             }
         }
 
         return ZERO;
+    }
+
+    // Tests whether the occurrence of the period that starts on the day of `startDay` includes `now`.
+    private boolean isActive(final ProfilePeriod period,
+                             final ZonedDateTime startDay,
+                             final ZonedDateTime now) {
+        // Ignore periods that do not include the day the period would start on.
+        final Day day = Day.getDayByValue(startDay.getDayOfWeek().getValue());
+        if (!period.getDays().isIncluded(day)) {
+            return false;
+        }
+
+        // Calculate the start time and check it is before or equal.
+        final ZonedDateTime startTime = setTime(startDay, period.getStartTime());
+        if (startTime.isAfter(now)) {
+            return false;
+        }
+
+        // Calculate the end time and ensure it is after the start time.
+        ZonedDateTime endTime = setTime(startDay, period.getEndTime());
+        if (!endTime.isAfter(startTime)) {
+            endTime = endTime.plusDays(1);
+        }
+
+        // Check end time is after or equal.
+        return !endTime.isBefore(now);
     }
 
     private ZonedDateTime setTime(final ZonedDateTime zonedDateTime, final Time time) {
