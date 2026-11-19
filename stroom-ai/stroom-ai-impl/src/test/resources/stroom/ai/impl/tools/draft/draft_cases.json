@@ -15595,7 +15595,8 @@
        {
         "path": "EventDetail/Authenticate/Data",
         "data_name": "event.type",
-        "field": "event.type"
+        "field": "event.type",
+        "repeat": true
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -15626,7 +15627,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "event.type",
-        "field": "event.type"
+        "field": "event.type",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -15661,7 +15663,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "event.type",
-        "field": "event.type"
+        "field": "event.type",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -15699,7 +15702,8 @@
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'event.category' ([\"authentication\"], [\"file\"]): replace each EventDetail/Unknown left by the action element that describes its records (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
-    "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue."
+    "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue.",
+    "'event.type' holds a list of values (a JSON array): a Data per value (repeat), not one Data of the values run together."
    ],
    "unmapped_fields": [
     "ecs.version",
@@ -15796,7 +15800,8 @@
        {
         "path": "EventDetail/Authenticate/Data",
         "data_name": "event.type",
-        "field": "event.type"
+        "field": "event.type",
+        "repeat": true
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -15827,7 +15832,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "event.type",
-        "field": "event.type"
+        "field": "event.type",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -15862,7 +15868,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "event.type",
-        "field": "event.type"
+        "field": "event.type",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -15900,7 +15907,8 @@
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'event.category' ([\"authentication\"], [\"file\"]): replace each EventDetail/Unknown left by the action element that describes its records (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
-    "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue."
+    "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue.",
+    "'event.type' holds a list of values (a JSON array): a Data per value (repeat), not one Data of the values run together."
    ],
    "unmapped_fields": [
     "ecs.version",
@@ -27675,7 +27683,8 @@
        {
         "path": "EventDetail/Authenticate/Data",
         "data_name": "tags",
-        "field": "tags"
+        "field": "tags",
+        "repeat": true
        }
       ]
      },
@@ -27699,7 +27708,8 @@
        {
         "path": "EventDetail/Authenticate/Data",
         "data_name": "tags",
-        "field": "tags"
+        "field": "tags",
+        "repeat": true
        }
       ]
      },
@@ -27709,7 +27719,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "tags",
-        "field": "tags"
+        "field": "tags",
+        "repeat": true
        }
       ],
       "catch_all": true
@@ -27728,7 +27739,8 @@
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
-    "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue."
+    "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue.",
+    "'tags' holds a list of values (a JSON array): a Data per value (repeat), not one Data of the values run together."
    ],
    "unmapped_fields": [
     "tags"

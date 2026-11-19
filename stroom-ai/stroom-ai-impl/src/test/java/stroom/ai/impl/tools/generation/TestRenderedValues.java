@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 
 import org.junit.jupiter.api.Test;
@@ -374,6 +375,34 @@ class TestRenderedValues extends XsltRuns {
         assertThat(LookupKeys.keyText(List.of("a"))).isEqualTo(XPathText.keyText("a"));
         assertThat(LookupKeys.key(List.of(" a "))).as("one field is a plain key, as it is").isEqualTo(" a ");
         assertThat(LookupKeys.key(List.of(" a  b ", "c"))).isEqualTo("a b" + LookupKeys.SEPARATOR + "c");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aDraftedArrayOfValuesIsWrittenADataPerValue() {
+        // Decided by the user (2026-11-20, from eval case 69): Stroom's JSON as XML runs an array's values together
+        // as its text; the draft writes a Data per value (repeat), so the Events hold each one.
+        final String sample = """
+                [{"time": "2026-10-01T08:00:00Z", "host": "mx01", "action": "login", "user": "jo", \
+                  "tags": ["vpn", "office"]},
+                 {"time": "2026-10-01T08:05:00Z", "host": "mx01", "action": "login", "user": "al", "tags": ["vpn"]}]
+                """;
+        final Map<String, Object> mapping = new LinkedHashMap<>((Map<String, Object>) DraftMapping.draft(
+                List.of(sample), "App", "App", "Test", null, null, null).get("mapping"));
+        final List<Object> rules = new ArrayList<>();
+        for (final Object rule : (List<Object>) mapping.get("events")) {
+            rules.add(keyed((Map<String, Object>) rule, "allow_unknown", "kept unknown for the test"));
+        }
+        mapping.put("events", rules);
+        final XsltGenerator.Generated events = XsltGenerator.generate(TranslationMapping.fromJson(mapping), SCHEMA,
+                "4.1.0");
+        assertThat(events.ok()).as(String.valueOf(events.problems())).isTrue();
+
+        final List<XmlElement> written = children(transform(events.xslt(), stroomXml(sample)), "Event");
+
+        assertThat(written).hasSize(2);
+        assertThat(data(written.get(0), "tags")).containsExactly("vpn", "office");
+        assertThat(data(written.get(1), "tags")).containsExactly("vpn");
     }
 
     // --------------------------------------------------------------------------------

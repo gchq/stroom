@@ -111,6 +111,20 @@ class TestE2eCatalogueRepeatedItems extends AbstractE2eTest {
                 Collectors.counting()))).isEqualTo(counts);
         assertThat(written).extracting(event -> textAt(event, "EventSource/Device/HostName"))
                 .containsOnly("mx-gw1", "mx-gw2");
+        // A list of values (an alert's tags) a Data per value, not one Data of them run together (decided by the
+        // user, 2026-11-20).
+        assertThat(jsonOf(drafted.get("events"))).contains("\"data_name\":\"tags\",\"field\":\"tags\","
+                                                          + "\"repeat\":true");
+        assertThat(tags(written.getFirst())).containsExactly("inbound", "malware", "high");
+        assertThat(tags(written.get(1))).containsExactly("inbound", "phishing");
+    }
+
+    // The values of an Event's Data named tags, in order.
+    private static List<String> tags(final Element event) {
+        return descendants(event, "Data").stream()
+                .filter(data -> "tags".equals(data.getAttribute("Name")))
+                .map(data -> data.getAttribute("Value"))
+                .toList();
     }
 
     // The draft with what the schema needs and the draft can't know, as the agent adds it: the device (the batch's

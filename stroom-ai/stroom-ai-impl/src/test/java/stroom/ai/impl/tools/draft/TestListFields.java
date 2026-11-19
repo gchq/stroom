@@ -212,14 +212,31 @@ class TestListFields extends DraftFixtures {
     }
 
     @Test
-    void anArrayOfValuesIsLeftAsItWas() {
+    void anArrayOfValuesIsADataPerValue() {
+        // Decided by the user (2026-11-20, from eval case 69): Stroom's JSON as XML runs an array's values together
+        // as its text, so a Data of the whole array reads "vpnoffice"; a Data per value, as the reference does.
         final String text = """
-                [{"time": "2026-10-01T08:00:00Z", "action": "login", "tags": ["vpn", "office"]},
-                 {"time": "2026-10-01T08:05:00Z", "action": "login", "tags": ["vpn"]}]
+                [{"time": "2026-10-01T08:00:00Z", "host": "mx01", "action": "login", "user": "jo", \
+                  "tags": ["vpn", "office"]},
+                 {"time": "2026-10-01T08:05:00Z", "host": "mx01", "action": "login", "user": "al", "tags": ["vpn"]},
+                 {"time": "2026-10-01T08:06:00Z", "host": "mx01", "action": "login", "user": "al", "tags": []}]
                 """;
         final Map<String, Object> draft = draft(Map.of("a.json", text), "App");
 
         assertThat(groups(draft)).isEmpty();
-        assertThat(String.valueOf(mappingOf(draft))).contains("data_name=tags, field=tags");
+        assertThat(String.valueOf(mappingOf(draft))).contains("data_name=tags, field=tags, repeat=true");
+        assertThat(notes(draft)).anySatisfy(note -> assertThat(note).startsWith("'tags' holds a list of values"));
+        final XsltGenerator.Generated result = generated(draft);
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+    }
+
+    @Test
+    void aFieldOfJsonValuesThatAreNotListsIsOneData() {
+        // Text that only looks like a list, and arrays in too few values, stay one Data.
+        assertThat(ListFields.valueArrays(List.of("[\"a\"]", "plain", "text", "more"))).isFalse();
+        assertThat(ListFields.valueArrays(List.of("[\"a\", \"b\"]", "[1, 2]", "[]"))).isTrue();
+        assertThat(ListFields.valueArrays(List.of("[{\"id\": 1}]"))).isFalse();
+        assertThat(ListFields.valueArrays(List.of("[\"a\", [\"b\"]]"))).isFalse();
+        assertThat(ListFields.valueArrays(List.of())).isFalse();
     }
 }

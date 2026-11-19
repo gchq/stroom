@@ -95,6 +95,7 @@ final class ListFields {
                                 final boolean json) {
         final Map<String, Split> splits = new LinkedHashMap<>();
         final Map<String, List<String>> arrays = new LinkedHashMap<>();
+        final Set<String> repeated = new LinkedHashSet<>();
         // Each field examined once, though many rules carry its Data.
         final Set<String> examined = new HashSet<>();
         for (final Map<String, Object> entry : entries(mapping)) {
@@ -109,6 +110,8 @@ final class ListFields {
                         : List.of();
                 if (!keys.isEmpty()) {
                     arrays.put(field, keys);
+                } else if (json && valueArrays(held)) {
+                    repeated.add(field);
                 } else {
                     final Split split = splitOf(held);
                     if (split != null) {
@@ -118,6 +121,9 @@ final class ListFields {
             }
             if (arrays.containsKey(field)) {
                 replace(entry, arrayGroup((String) entry.get(PATH), field, arrays.get(field)));
+            } else if (repeated.contains(field)) {
+                // Stroom's JSON as XML runs an array's values together as its text: a Data per value.
+                entry.put("repeat", true);
             } else if (splits.containsKey(field)) {
                 replace(entry, splitGroup((String) entry.get(PATH), field, splits.get(field).separator()));
             }
@@ -125,6 +131,12 @@ final class ListFields {
         final List<String> notes = new ArrayList<>();
         if (!splits.isEmpty()) {
             notes.add(splitNote(splits));
+        }
+        if (!repeated.isEmpty()) {
+            notes.add(String.join(", ", repeated.stream().map(ToolText::repr).toList()) + (repeated.size() == 1
+                    ? " holds a list"
+                    : " hold lists") + " of values (a JSON array): a Data per value (repeat), not one Data of the "
+                      + "values run together.");
         }
         if (!arrays.isEmpty()) {
             notes.add(arrayNote(arrays));
@@ -174,6 +186,45 @@ final class ListFields {
             }
         }
         return keys.stream().limit(MAX_KEYS).toList();
+    }
+
+    /// Whether a JSON field's values are arrays of plain values (strings, numbers, booleans), not objects nor lists:
+    /// every one examined an array, and at least one holding a value. Read whole, Stroom's JSON as XML runs such an
+    /// array's values together as its text.
+    ///
+    /// @param values The field's non-empty values, as JSON text.
+    /// @return True if they are.
+    static boolean valueArrays(final List<String> values) {
+        boolean anyItems = false;
+        int examined = 0;
+        for (final String value : values) {
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            if (examined++ >= MAX_VALUES) {
+                break;
+            }
+            final String stripped = value.strip();
+            if (!stripped.startsWith("[") || !stripped.endsWith("]")) {
+                return false;
+            }
+            final Object parsed;
+            try {
+                parsed = ToolJson.loads(stripped);
+            } catch (final ToolJson.JsonDecodeException e) {
+                return false;
+            }
+            if (!(parsed instanceof final List<?> items)) {
+                return false;
+            }
+            for (final Object item : items) {
+                if (item instanceof Map || item instanceof List) {
+                    return false;
+                }
+                anyItems = true;
+            }
+        }
+        return anyItems;
     }
 
     /// Whether a field's values are lists: most of them (nine in ten) a list or one value of one kind, a quarter or
