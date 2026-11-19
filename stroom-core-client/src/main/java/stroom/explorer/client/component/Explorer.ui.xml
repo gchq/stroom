@@ -36,15 +36,18 @@
             </b:Toolbar>
             <spinner:SmallBusySpinner ui:field="spinner" addStyleNames="explorer__spinner"/>
         </b:ToolbarRow>
-        <!-- The tree, shown once the explorer is first shown -->
-        <layout:ScrollPane addStyleNames="dock-max">
-            <e:ExplorerTree ui:field="explorerTree" multiSelect="true" visible="false"/>
-        </layout:ScrollPane>
-        <!-- The current activity, when activities are used: pressing it chooses another -->
-        <g:SimplePanel styleName="dock-min">
-            <g:SimplePanel ui:field="activityOuter" styleName="explorer__activity" visible="false">
+        <!-- The tree, shown once the explorer is first shown, and below it the current activity, when
+             activities are used (pressing it chooses another), with a splitter between them so the
+             tree can be given more room, or the activity more to show all of it -->
+        <layout:SplitPane ui:field="treeAndActivity" vertical="true" thin="true" sizes="*, 80px"
+                          minSizes="100px, 40px" names="Explorer tree, Current activity"
+                          addStyleNames="dock-max">
+            <layout:ScrollPane>
+                <e:ExplorerTree ui:field="explorerTree" multiSelect="true" visible="false"/>
+            </layout:ScrollPane>
+            <g:SimplePanel ui:field="activityOuter" styleName="explorer__activity">
                 <b:Button ui:field="activityButton" styleName="explorer__activity-button"/>
             </g:SimplePanel>
-        </g:SimplePanel>
+        </layout:SplitPane>
     </g:FlowPanel>
 </ui:UiBinder>

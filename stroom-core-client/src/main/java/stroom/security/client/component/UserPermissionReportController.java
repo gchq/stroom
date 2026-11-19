@@ -151,6 +151,8 @@ public class UserPermissionReportController extends Controller {
         }
 
         combinedExpression = builder.build();
+        documentPermissionsList.setExpressionFiltered(
+                filterExpression != null && NullSafe.hasItems(filterExpression.getChildren()));
         documentPermissionsList.getCriteriaBuilder().expression(combinedExpression);
         documentPermissionsList.refresh();
     }

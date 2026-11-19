@@ -148,6 +148,14 @@ public final class EditTagsDialogStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
+                // Remove Tags left open (the screenshot and the dialog measurement show it)
+                .story("RemoveTagsOpen", context -> renderRemove(context, MULTIPLE, "[\"keep\", \"drop\"]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Remove Tags from 2 Documents",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByRole("option", "drop")).toBeInTheDocument());
+                })
                 // The tag lists are list boxes of several choices, named by their labels. From the
                 // field, Down goes to the known tags; Space chooses, moving only moves, and Enter
                 // adds those chosen, going back to the field

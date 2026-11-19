@@ -187,6 +187,27 @@ public final class MetaBrowserStories {
                             .toBeNull());
                     expectNoProblems(play);
                 })
+                // Filter Streams left open (the screenshot and the dialog measurement show it)
+                .story("FilterStreamsOpen", MetaBrowserStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("Events Pipeline")).toBeInTheDocument());
+                    play.click(play.getByTitle("Filter Streams"));
+                    final Play filter = dialog(screen, "Filter Streams");
+                    play.waitFor(() -> play.expect(filter.getByRole("tree", "Expression")).toBeVisible());
+                })
+                // Selection Summary left open (the screenshot and the dialog measurement show it)
+                .story("SelectionSummaryOpen", MetaBrowserStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("Events Pipeline")).toBeInTheDocument());
+                    play.click(play.getAllByTitle("Not Ticked").nth(0));
+                    play.waitFor(() -> play.expect(play.getAllByTitle("Ticked").count()).toBeGreaterThan(0));
+                    play.click(play.getByTitle("Show Summary of Selected Streams"));
+                    final Play summary = dialog(screen, "Selection Summary");
+                    play.waitFor(() -> play.expect(summary.getByText(TextMatch.containing("That are associated with:")))
+                            .toBeInTheDocument());
+                })
                 // Reprocessing a match-all selection strips the filter's Status = Unlocked term
                 .story("ReprocessStripsStatusTerms", MetaBrowserStories::render)
                 .withPlay(play -> {

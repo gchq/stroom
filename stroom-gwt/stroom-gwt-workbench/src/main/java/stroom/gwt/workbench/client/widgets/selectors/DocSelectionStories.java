@@ -268,7 +268,7 @@ public final class DocSelectionStories {
     /// Equivalent of `<p style={{fontSize: 12, marginTop: 8}}>`.
     private static Label echo(final String text) {
         final Label echo = new Label(text);
-        echo.getElement().getStyle().setProperty("fontSize", "12px");
+        echo.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         echo.getElement().getStyle().setProperty("marginTop", "8px");
         return echo;
     }

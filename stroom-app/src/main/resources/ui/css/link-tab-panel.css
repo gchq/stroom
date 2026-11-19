@@ -73,7 +73,7 @@
     padding: 0 6px;
     border-radius: .25rem;
     font-size: var(--font-size-12);
-    line-height: 18px;
+    line-height: 1.35; /* 18px at Medium */
     color: var(--text-color);
     border: 1px solid var(--control__border-color);
     white-space: nowrap;

@@ -104,7 +104,7 @@ General button styles
   /*color: rgba(0, 0, 0, 0.87); */
   /*padding: .375rem 1rem; */
   /*font-size: 0.875rem; */
-  min-width: 120px;
+  min-width: calc(120px * var(--text-scale));
   /*box-sizing: border-box; */
   /*transition: background-color 250ms ease-in-out, box-shadow 250ms ease-in-out, border 250ms ease-in-out, color 250ms ease-in-out; */
   /*line-height: 1.75; */
@@ -127,9 +127,9 @@ General button styles
   position: relative;
   display: inline-block;
   padding: 5px 16px;
-  font-size: 14px;
+  font-size: var(--font-size-13);
   font-weight: 500;
-  line-height: 20px;
+  line-height: 1.385; /* 20px at Medium */
   white-space: nowrap;
   vertical-align: middle;
   cursor: pointer;
@@ -160,7 +160,7 @@ General button styles
 .form > .button,
 .form-group > .button {
     align-self: flex-start;
-    min-width: 200px;
+    min-width: calc(200px * var(--text-scale));
 }
 
 .button:focus {
@@ -535,4 +535,30 @@ styles: only that content shows, as the button's own text
   /*
   Ripple effect
    */
+}
+
+/* In forced colours (e.g. Windows high contrast) the ring's transparent side was drawn in the border
+   colour, so a busy button showed a whole, still-looking circle. There it keeps its gap, in the
+   button's text colour */
+@media (forced-colors: active) {
+    .button__spinner-ring {
+        forced-color-adjust: none;
+        border-color: ButtonText;
+        border-right-color: transparent;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) the variants' fills are replaced, so OK looked like
+   Cancel. There the default action (primary, e.g. OK and Close; green, e.g. New and Accept) has a
+   thicker border, as a system's default button does; the others keep the usual one */
+@media (forced-colors: active) {
+    .button--contained-primary,
+    .button--contained-green,
+    .button--default-primary {
+        border: 2px solid ButtonText;
+    }
+
+    :is(.button--contained-primary, .button--contained-green, .button--default-primary):is(:disabled, .button--disabled) {
+        border-color: GrayText;
+    }
 }

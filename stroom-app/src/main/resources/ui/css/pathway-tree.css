@@ -108,3 +108,18 @@
 .pathway-tree__list {
     overflow: auto;
 }
+
+/* In forced colours (e.g. Windows high contrast) the selected node was shown by its fill alone, which
+   is replaced; there it is the system's selection colours. The connectors are in the text colour, as
+   their white, which forced colours leave on an SVG, vanished on a light background */
+@media (forced-colors: active) {
+    .pathway-tree__curves svg path {
+        stroke: CanvasText;
+    }
+
+    .pathway-tree__node-name--selected {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        color: HighlightText;
+    }
+}

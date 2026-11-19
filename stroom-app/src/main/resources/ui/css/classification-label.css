@@ -36,3 +36,14 @@
     vertical-align: middle;
     white-space: nowrap;
 }
+
+/* In forced colours (e.g. Windows high contrast) a classification keeps the colour configured for it
+   (a protective marking is known by its colour, and its band showed only as a word without it),
+   with a CanvasText border so that it stands out from the page whatever its colour */
+@media (forced-colors: active) {
+    .classification-label {
+        forced-color-adjust: none;
+        border: 1px solid CanvasText;
+        box-sizing: border-box;
+    }
+}

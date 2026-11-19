@@ -182,6 +182,19 @@ public final class CredentialsScreenStories {
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 })
+                // Tab from the Settings tab goes straight to Name: the tab's panel holds fields, so it
+                // isn't a tab stop (it was, as it was checked before the dialog showed, finding none)
+                .story("SettingsTabGoesToName", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    final Query settings = dialog.getByRole("tab", "Settings");
+                    play.waitFor(() -> play.expect(dialog.getByRole("tabpanel", "Settings"))
+                            .not().toHaveAttribute("tabindex"));
+                    play.run("focus the Settings tab", () -> settings.element().get().focus());
+                    play.tab();
+                    play.expect(dialog.getByLabelText("Name")).toHaveFocus();
+                })
                 // Choosing SSH Key swaps in the private key fields
                 .story("SshKeyType", CredentialsScreenStories::render)
                 .withPlay(play -> {
@@ -453,6 +466,19 @@ public final class CredentialsScreenStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Replace Username / Password Secret"))
                             .toBeNull());
                     SecurityPlays.expectNoProblems(play);
+                })
+                // Replace Username / Password Secret left open (the screenshot and the dialog measurement
+                // show it)
+                .story("ReplaceSecretOpen", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.click(play.findByText("My Creds"));
+                    final Query replace = play.getByRole("button", TextMatch.containing(REPLACE_SECRET_TITLE));
+                    play.waitFor(() -> play.expect(replace).not().toHaveAttribute("aria-disabled", "true"));
+                    play.click(replace);
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Replace Username / Password Secret",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("User Name");
                 })
                 // Replacing a Key Store File's secret starts from its type and path, which aren't secret
                 .story("ReplaceKeyStoreFileSecret", CredentialsScreenStories::render)

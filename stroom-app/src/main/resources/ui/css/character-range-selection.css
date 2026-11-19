@@ -26,7 +26,7 @@
 }
 
 .character-range-selection__options > * {
-   min-width: 120px;
+   min-width: calc(120px * var(--text-scale));
 }
 
 .character-range-selection__info {

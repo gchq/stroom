@@ -57,3 +57,11 @@
     transition: color .3s;
 }
 
+
+/* In forced colours (e.g. Windows high contrast) the form's panel, drawn by its fill, lost its edge
+   against the page. There it is edged in the text colour */
+@media (forced-colors: active) {
+    .sign-in-page .sign-in-page__form-panel {
+        border: 1px solid CanvasText;
+    }
+}

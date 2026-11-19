@@ -17,13 +17,13 @@
 /* A Git repository's settings (GitRepoSettings): its fields, the credentials' box and its buttons
    are all 400px wide */
 .git-repo-settings button.git-repo-settings__button {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }
 
 .git-repo-settings input.git-repo-settings__field {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }
 
 .git-repo-settings div.git-repo-settings__credentials {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }

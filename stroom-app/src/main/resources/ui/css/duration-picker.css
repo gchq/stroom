@@ -11,16 +11,18 @@
     gap: 8px;
 }
 
-/* Room for 1000000 (the largest amount) beside the arrows (their 54px, and the field's padding and
+/* Room for 1000000 (the largest amount, four medium font sizes wide, 57.76px, as wide as the text
+   is drawn) beside the arrows (their 54px, and the field's padding and
    border). Under the block, to outrank value-spinner.css's width */
 .duration-picker .duration-picker__amount {
     flex: 0 0 auto;
-    width: calc(var(--font-size-13) * 4 + 64px);
+    width: calc(57.76px * var(--text-scale) + 64px);
 }
 
-/* Room for "Milliseconds" (the longest unit) beside the drop-down arrow. Under the block, to outrank
+/* Room for "Milliseconds" (the longest unit, six medium font sizes wide, 86.64px, as wide as the
+   text is drawn) beside the drop-down arrow. Under the block, to outrank
    selection-box.css's width; its field has no least width (icon-box--fluid) */
 .duration-picker .duration-picker__unit {
     flex: 0 0 auto;
-    width: calc(var(--font-size-13) * 6 + 40px);
+    width: calc(86.64px * var(--text-scale) + 40px);
 }

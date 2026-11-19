@@ -19,6 +19,7 @@
 // a ring is drawn in full is checked by the FocusRings story's play.
 
 import assert from 'node:assert/strict';
+import { activeFocusRing } from './focus-ring.mjs';
 
 // The top bar's controls, as named by their title or aria-label
 const MAIN_MENU = 'Main Menu';
@@ -37,9 +38,9 @@ function focused(page) {
   });
 }
 
-// The focused element's focus ring (its box shadow), or 'none'
+// The focused element's focus ring, or 'none' (see focus-ring.mjs)
 function ring(page) {
-  return page.evaluate(() => getComputedStyle(document.activeElement).boxShadow);
+  return activeFocusRing(page);
 }
 
 // Tabs through the page from the start until each control has had the focus, checking that each

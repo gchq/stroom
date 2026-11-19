@@ -115,7 +115,8 @@ public class FloorMapCanvasController extends Controller {
     /// overlapping the moment they are closer than that. It was previously
     /// three-quarters of the box on the reasoning that only badly-obscured pairs
     /// needed merging — which guaranteed the survivors overlapped, since the
-    /// merged glyph is a full box wide and its neighbour could sit at 45 px. The
+    /// merged glyph is a full box wide and its neighbour could sit at three-quarters
+    /// of one. The
     /// clearance above the box gives the count pill and the caption somewhere to
     /// go. Being a *screen* distance is what makes one constant serve every
     /// zoom level and every document.

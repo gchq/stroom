@@ -358,3 +358,15 @@
   width: 15px;
   height: 20px;
 }
+
+/* In forced colours (e.g. Windows high contrast) the selected node and box title were shown by
+   their fill alone, which is replaced; there they are the system's selection colours */
+@media (forced-colors: active) {
+    .xsd-browser__box-title--selected,
+    .xsd-browser__node-label--selected {
+        forced-color-adjust: none;
+        background: Highlight !important;
+        border-color: Highlight;
+        color: HighlightText !important;
+    }
+}

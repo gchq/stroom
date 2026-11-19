@@ -80,8 +80,11 @@ public final class SplitPaneContentStories {
                     final Value<Double> editorWidth = editorArea.width();
                     play.waitFor(() -> play.expect("the table's growth",
                             () -> gridWidth.get() - gridBefore.get()).toBeCloseTo(50, 0));
+                    // Within 2px: with a user's text spacing (WCAG 1.4.12) the editor's gutter, which
+                    // its text area sits beside, measures its line numbers again and moves a little
                     play.waitFor(() -> play.expect("the editor's growth",
-                            () -> editorWidth.get() - editorBefore.get()).toBeCloseTo(-50, 0));
+                            () -> editorWidth.get() - editorBefore.get())
+                            .toSatisfy("about 50 pixels narrower", w -> Math.abs((Double) w + 50) <= 2));
                     // A splitter is narrower than 24px, so nothing else clickable may be within 12px
                     // of its centre (WCAG 2.5.8): the pager's buttons and the editor's gutter aren't.
                     // The grid's rows are, which is accepted (full-width targets; see ISSUES.md)

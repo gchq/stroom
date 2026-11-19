@@ -21,16 +21,20 @@ import stroom.widget.popup.client.AbstractPopupPanel;
 import stroom.widget.popup.client.DialogAction;
 import stroom.widget.popup.client.Popup;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.PopupUtil;
 import stroom.widget.text.client.Html;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.InputModality;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -50,6 +54,8 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "help-popup";
     private static final String ARIA_EXPANDED = "aria-expanded";
+    // The room beside its button, which limits its width (help-popup.css)
+    private static final String ROOM = "--help-popup__room";
 
     @UiField
     Html content;
@@ -135,12 +141,31 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
     /// @param popupPosition Where to show it, e.g. below its button. Null centres it.
     public void show(final PopupPosition popupPosition) {
         final boolean takeFocus = InputModality.isKeyboard();
+        limitWidthToRoomBeside(popupPosition);
         setVisible(false);
         setModal(false);
         PopupUtil.showPopup(this, false, popupPosition, null, PopupType.POPUP, takeFocus
                 ? this::focus
                 : null);
         setOpenerExpanded(true);
+    }
+
+    // Beside its button, the popup is no wider than the room on the roomier side, as its help wraps:
+    // wider (long help at a large text size), it would be placed over the button and the field it
+    // helps with (help-popup.css)
+    private void limitWidthToRoomBeside(final PopupPosition popupPosition) {
+        final boolean beside = popupPosition != null
+                               && (PopupLocation.RIGHT.equals(popupPosition.getPopupLocation())
+                                   || PopupLocation.LEFT.equals(popupPosition.getPopupLocation()));
+        if (beside) {
+            final Rect anchor = popupPosition.getRelativeRect();
+            final double windowLeft = Window.getScrollLeft();
+            final double windowRight = windowLeft + Window.getClientWidth();
+            final double room = Math.max(windowRight - anchor.getRight(), anchor.getLeft() - windowLeft);
+            CssProperties.set(getElement(), ROOM, Math.floor(room) + "px");
+        } else {
+            CssProperties.remove(getElement(), ROOM);
+        }
     }
 
     // The popup itself takes the focus (not its first link), so that a screen reader reads it from

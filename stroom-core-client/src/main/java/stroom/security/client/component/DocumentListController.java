@@ -146,6 +146,12 @@ public class DocumentListController extends Controller {
         return view.getSelectionModel().getSelected();
     }
 
+    /// @param filtered Whether the Filter dialog's expression narrows the documents, so that with
+    ///                 none the list says "No matches".
+    public void setExpressionFiltered(final boolean filtered) {
+        view.setExpressionFiltered(filtered);
+    }
+
     /// @param enabled Whether Edit can be pressed.
     public void setEditEnabled(final boolean enabled) {
         view.setEditEnabled(enabled);

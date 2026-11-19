@@ -16,6 +16,8 @@
 
 package stroom.planb.shared;
 
+import stroom.docref.HasDisplayValue;
+
 /**
  * Controls how archive shard directories are labelled.
  *
@@ -24,8 +26,20 @@ package stroom.planb.shared;
  * ({@code label}, {@code bucketEnd}, {@code detect}) lives in the
  * server-side {@code BucketGranularityUtil} in {@code stroom-planb-impl}.
  */
-public enum BucketGranularity {
-    HOUR,
-    DAY,
-    WEEK
+public enum BucketGranularity implements HasDisplayValue {
+    HOUR("Hour"),
+    DAY("Day"),
+    WEEK("Week");
+
+    private final String displayValue;
+
+    BucketGranularity(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
+    /// @return The granularity as a word to show, e.g. `Day`.
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
 }

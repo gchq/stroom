@@ -34,9 +34,11 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.Heading;
 import stroom.widget.datagrid.client.HeadingListener;
 import stroom.widget.datagrid.client.SortIcon;
+import stroom.widget.datagrid.client.model.TextScale;
 import stroom.widget.menu.client.HideMenuEvent;
 import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.IconParentMenuItem;
@@ -329,11 +331,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         }
     }
 
-    // The width typed in the Column Width dialog, as dragging the header's edge sets it
+    // The width typed in the Column Width dialog, as dragging the header's edge sets it. Widths are
+    // kept at the medium text size, and drawn larger or smaller with the text size
     private void resize(final Column column, final Element th) {
-        columnWidthProvider.get().show(tableController, th.getOffsetWidth(), width ->
+        final int width = TextScale.toMedium(th.getOffsetWidth(), DataGrid.textScale());
+        columnWidthProvider.get().show(tableController, width, newWidth ->
                 tableController.setPreferredColumns(
-                        replaceColumns(getColumns(), column, column.copy().width(width).build())));
+                        replaceColumns(getColumns(), column, column.copy().width(newWidth).build())));
     }
 
     // The column with the id, or null if there is none

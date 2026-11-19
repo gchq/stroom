@@ -250,6 +250,16 @@ public final class SteppingScreenStories {
                     play.click(jump.getByRole("button", StroomDom.button("Cancel")));
                     expectNoProblems(play);
                 })
+                // Set Location left open (the screenshot and the dialog measurement show it)
+                .story("SetLocationOpen", context -> render(context, STEP_LAYERS, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button",
+                            "Set Location ([1:1:1], stream 1, part 1, record 1)"));
+                    final Play jump = screen.within(
+                            screen.findByText("Set Location", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(jump.getByText("Record Number", "label")).toBeVisible());
+                })
                 // Change Step Filters lists the whole pipeline, not just the elements with data
                 .story("SteppingFilterFullTree", context -> render(context, FULL_LAYERS, null))
                 .withPlay(play -> {

@@ -144,6 +144,8 @@ public final class FindInContentDialogStories {
                     play.expect(pattern).toHaveAccessibleDescription(TextMatch.startingWith(INVALID_REGEX_MESSAGE));
                     play.expect(screen.getByText(INVALID_REGEX_MESSAGE)).toHaveAttribute("aria-live", "polite");
                     play.expect(pattern).toHaveFocus();
+                    // The list, with a pattern set, says "No matches" rather than "No items"
+                    play.expect(screen.getByText("No matches")).toBeVisible();
                     // Said under the box, not in an alert
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });

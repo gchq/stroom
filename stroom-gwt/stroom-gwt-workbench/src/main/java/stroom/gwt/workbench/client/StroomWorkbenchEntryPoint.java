@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client;
 import stroom.gwt.workbench.framework.client.Workbench;
 import stroom.gwt.workbench.framework.client.story.StoryUrls;
 import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.util.client.TextScaleMeter;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.Window;
@@ -28,11 +29,15 @@ public class StroomWorkbenchEntryPoint implements EntryPoint {
 
     @Override
     public void onModuleLoad() {
+        // Widths given at the medium text size follow the text as drawn, as in Stroom
+        TextScaleMeter.install();
         // A story's page stops the browser's own context menu as Stroom does, so right-clicks behave
         // as in Stroom: the edit menu on text fields for stories that show menus, none elsewhere
         if (StoryUrls.isPreviewPage(Window.Location.getPath())) {
             ContextMenuManager.install(null);
         }
-        Workbench.start(AllStories.create(), new StroomThemeDecorator());
+        // Once the text's font has loaded and the scale is measured in it, so that a story's play
+        // sees the scale its widths are drawn at, not one measured in a fallback font first
+        TextScaleMeter.whenMeasured(() -> Workbench.start(AllStories.create(), new StroomThemeDecorator()));
     }
 }

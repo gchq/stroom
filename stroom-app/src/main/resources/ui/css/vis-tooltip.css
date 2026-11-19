@@ -34,9 +34,9 @@
     left: var(--vis-tooltip__left, 0);
     top: var(--vis-tooltip__top, 0);
     z-index: 3000;
-    max-width: 400px;
+    max-width: calc(400px * var(--text-scale));
     color: var(--text-color);
-    font-size: 12px;
+    font-size: var(--font-size-11);
     line-height: 1.4;
     overflow-wrap: anywhere;
     pointer-events: none;

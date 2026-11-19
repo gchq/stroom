@@ -55,3 +55,29 @@ input[type="radio"]:disabled:checked {
     background: radial-gradient(circle, var(--control__text-color--disabled) 0 3.5px, transparent 4px),
                 var(--control__background-color--disabled);
 }
+
+/* Forced colours (e.g. Windows high contrast) drop backgrounds, the chosen one's dot (a gradient)
+   with them, so every option looked unchosen. There the button keeps its own colours, in system
+   ones: a ring in the text colour; chosen, filled in Highlight with a dot in HighlightText, as the
+   system's own radio buttons are; disabled, the ring and dot in GrayText */
+@media (forced-colors: active) {
+    input[type="radio"] {
+        forced-color-adjust: none;
+        border-color: CanvasText;
+        background: Canvas;
+    }
+
+    input[type="radio"]:checked {
+        border-color: Highlight;
+        background: radial-gradient(circle, HighlightText 0 3.5px, Highlight 4px);
+    }
+
+    input[type="radio"]:disabled {
+        border-color: GrayText;
+        background: Canvas;
+    }
+
+    input[type="radio"]:disabled:checked {
+        background: radial-gradient(circle, GrayText 0 3.5px, Canvas 4px);
+    }
+}

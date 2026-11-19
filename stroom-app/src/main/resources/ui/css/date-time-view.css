@@ -40,7 +40,7 @@
     align-items: center;
     gap: 4px;
     padding-bottom: 4px;
-    width: 176px;
+    width: calc(176px * var(--text-scale));
 }
 
 /* The spinner fills the field beside its button */

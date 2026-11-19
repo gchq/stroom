@@ -18,5 +18,5 @@
 
 /* A text field, wide enough for a cipher suite's name */
 .http-tls-config-editor__text {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }

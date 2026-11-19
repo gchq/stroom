@@ -271,6 +271,62 @@ when the page loads, when an element is added and when its class changes, so a p
 closed again counts. It tells which stylesheet rules can still match something: a class no story
 sets, and that the code doesn't build, can only be styled for a screen no story shows.
 
+## Text sizes
+
+`--font-size <small|medium|large>` shows the stories at a Stroom text size preference: a script
+added to every frame (`lib/text-sizes.mjs`) gives the page the `stroom-font-size-<size>` class, as
+`ThemeCssUtil` does in Stroom, in place of the workbench page's `stroom-font-size-medium`. It only
+switches a frame's own class: a frame without one (a visualisation's) doesn't follow the preference
+in Stroom either, so it isn't given one.
+
+`--text-sizes <file>` writes every text each story that passes shows to the file as JSON: each
+element with text of its own (HTML or SVG, in any frame, visible), its path (the element and up to
+three ancestors, with up to three classes each), its computed font size and its line height,
+recorded when the story has finished. `text-size-diff.mjs` compares two runs at different text
+sizes and lists the text whose size didn't follow the preference, grouped by path, the paths seen
+in the most stories first (it exits 1 if there is any):
+
+```bash
+# From the repository root: every story at medium, then at large
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest \
+  "-PworkbenchTestArgs=--skip-a11y --font-size medium --text-sizes /some/dir/medium.json"
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest \
+  "-PworkbenchTestArgs=--skip-a11y --font-size large --text-sizes /some/dir/large.json"
+cd stroom-gwt/stroom-gwt-workbench/test-runner
+node text-size-diff.mjs --baseline /some/dir/medium.json --actual /some/dir/large.json
+```
+
+A text counts as changed if it grew (or shrank) by 3% or more (`--min-ratio`). Large is about 10%
+above Medium for each variable, and ordinary text about 22% (14.44px to 17.64px), as the
+page's own size follows the preference too (`base.css`), so the `rem` sizes do as well.
+
+`--text-fit <file>` writes the text each story that passes shows that doesn't fit, to the file as
+JSON (`lib/text-fit.mjs`): text whose line boxes reach past a box that hides its overflow
+(`cut-off`; a box that scrolls instead doesn't count, nor one of 2px or less, which hides text for
+screen readers on purpose), text shortened with `text-overflow: ellipsis` (`ellipsis`), and two texts
+drawn over each other, neither inside the other (`overlap`, of the parts shown), and a dialog whose
+content is wider than it (`scrolls-sideways`, by its title). Each is listed once per story, by its
+kind, path and text; a text cut off or shortened is one problem however it shows, so a text
+shortened at one size and cut off at the other is not new. Stories have plenty of these on purpose (an ellipsis in a
+narrow column), so a run on its own says little: `text-fit-diff.mjs` compares two runs at different
+text sizes and lists what only the second has, what no longer fits as the text grew (it exits 1 if
+there is any):
+
+```bash
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest \
+  "-PworkbenchTestArgs=--skip-a11y --font-size medium --text-fit /some/dir/medium-fit.json"
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest \
+  "-PworkbenchTestArgs=--skip-a11y --font-size large --text-fit /some/dir/large-fit.json"
+cd stroom-gwt/stroom-gwt-workbench/test-runner
+node text-fit-diff.mjs --baseline /some/dir/medium-fit.json --actual /some/dir/large-fit.json
+```
+
+`--text-spacing` shows the stories with the text spacing a user may set for themselves (WCAG
+1.4.12), overriding the page's own (`lib/text-spacing.mjs`): lines 1.5 times the font size apart,
+letters 0.12 times it, words 0.16 times it, and 2 times it after each paragraph. A `--text-fit` run
+with it, compared with one without at the same text size, lists the text the spacing cuts off or
+runs together.
+
 ## Leak check
 
 `-PworkbenchLeakCheck` (the runner's `--leak-check`) also checks each story that passes for memory
@@ -347,6 +403,10 @@ or `src/test/resources/dialog-coverage-evidence.json` names a story whose play o
   [Accessibility check](#accessibility-check)).
 * `screenshot-diff.mjs` - compares a run's screenshots with the baseline (see
   [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
+* `text-size-diff.mjs` - compares two runs' text sizes (see [Text sizes](#text-sizes));
+  `lib/text-sizes.mjs` sets the text size and records and compares the sizes.
+* `text-fit-diff.mjs` - compares two runs' text that doesn't fit (see [Text sizes](#text-sizes));
+  `lib/text-fit.mjs` finds it and compares the runs.
 * `grid-geometry.mjs` - records or compares the sizes of the stories' data grids (see
   [Data grid geometry](#data-grid-geometry)); `lib/grid-geometry.mjs` measures and compares them.
 * `lib/` - story selection, deciding a story's

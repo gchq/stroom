@@ -37,9 +37,9 @@
    toolbar-button.css */
 
 /* The current activity, below the explorer, as a button that changes it (was stroom.css's
-   activityOuter and activityButton) */
+   activityOuter and activityButton), in a pane its splitter resizes (Explorer.ui.xml); it scrolls
+   when its summary is taller */
 .explorer__activity {
-    max-height: 200px;
     overflow-y: auto;
 }
 

@@ -41,7 +41,7 @@
 /* A list as big as its rows (SelectionList.setFitContent, a selection box's list in its popup),
    within the popup's limits (was selection-popup.css's) */
 .pager-panel--fit-content .pager-panel__list {
-    min-width: 200px;
-    max-width: 400px;
+    min-width: calc(200px * var(--text-scale));
+    max-width: calc(400px * var(--text-scale));
     max-height: 400px;
 }

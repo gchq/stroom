@@ -41,7 +41,7 @@
 .suggestion-box__popup {
     z-index: 100;
     min-width: var(--suggestion-box__width, 200px);
-    max-width: 400px;
+    max-width: calc(400px * var(--text-scale));
 }
 
 .suggestion-box__list {
@@ -73,5 +73,11 @@
         background-color: Highlight;
         color: HighlightText;
         forced-color-adjust: none;
+    }
+
+    /* Mouse over: its hovered fill is replaced, so a Highlight line round it, as a grid row's */
+    .suggestion-box__option:not(.suggestion-box__option--active):hover {
+        outline: 1px solid Highlight;
+        outline-offset: -1px;
     }
 }

@@ -111,7 +111,7 @@
 
 .ask-stroom-ai--empty .ask-stroom-ai__bottom-inner {
     width: 100%;
-    max-width: 500px;
+    max-width: calc(500px * var(--text-scale));
 }
 
 .ask-stroom-ai__empty-prompt {

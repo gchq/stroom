@@ -112,7 +112,18 @@
     outline-offset: 1px;
 }
 
+/* Forced colours (e.g. Windows high contrast) drew every day's transparent border, so today's looked
+   like any other day's, and days outside the month weren't dimmed. There a day's border is the
+   page's colour, today's CanvasText, and days outside the month GrayText */
 @media (forced-colors: active) {
+    .calendar__day {
+        border-color: Canvas;
+    }
+
+    .calendar__day--outside {
+        color: GrayText;
+    }
+
     .calendar__day[aria-current="date"] {
         border-color: CanvasText;
     }
@@ -124,7 +135,9 @@
         forced-color-adjust: none;
     }
 
+    /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .calendar__day:focus-visible {
-        outline-color: CanvasText;
+        outline-color: CanvasText !important;
+        outline-offset: 1px !important;
     }
 }

@@ -22,6 +22,7 @@ import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeClient;
 import stroom.schedule.client.component.ScheduleBoxController;
 import stroom.security.client.component.UserRefSelectionController;
+import stroom.security.shared.FindUserContext;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
@@ -67,6 +68,8 @@ public class BatchExecutionScheduleEditorController extends Controller {
 
         runAsUser = make(runAsUserProvider);
         runAsUser.attach(view.getRunAsUserBox());
+        // Only users you may run as, as the single schedule editor offers
+        runAsUser.setContext(FindUserContext.RUN_AS);
         view.setOnRunAsUserEnabled(runAsUser::setEnabled);
 
         make(dateTimeBoxControllerProvider).attach(view.getStartTimeBox());

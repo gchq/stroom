@@ -9,7 +9,7 @@
              xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="name" label="Name"
                         helpText="Name of this schedule, shown in the list of schedules.">
             <form:TextBox ui:field="name" addStyleNames="w-100"/>

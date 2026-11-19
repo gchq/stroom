@@ -84,6 +84,14 @@ public final class TabSessionChooserDialogStories {
                     play.expect(play.spy(ON_PICK)).not().toHaveBeenCalledWith("Feed Feed A");
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Select Tab Session left open (the screenshot and the dialog measurement show it)
+                .story("SelectTabSessionOpen", TabSessionChooserDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Select Tab Session To Open:",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByRole("option", "Pipeline work")).toBeInTheDocument());
+                })
                 // The sessions are a list (listbox): the one with the focus is chosen, and Enter on
                 // it opens it, as a double click does
                 .story("ChooseByKeyboard", TabSessionChooserDialogStories::render)

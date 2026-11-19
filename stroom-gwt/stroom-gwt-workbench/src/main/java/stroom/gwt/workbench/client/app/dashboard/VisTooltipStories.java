@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -105,10 +106,12 @@ public final class VisTooltipStories {
                     play.expect(tooltip).toHaveTextContent(TextMatch.containing("20"));
                     // A popup as Stroom's others are, so see-through as they are with the user's
                     // Enable Transparency preference (on in this page's classes): the popup colour
-                    // at 80%, the page blurred behind it
+                    // at 80%, the page blurred behind it; in high contrast popups are solid
                     play.expect(tooltip).toHaveClass("popup");
-                    play.expect(tooltip.computedStyle("background-color")).toMatch(", 0.8)");
-                    play.expect(tooltip.computedStyle("backdrop-filter")).toMatch("blur(20px)");
+                    if (!ForcedColours.active()) {
+                        play.expect(tooltip.computedStyle("background-color")).toMatch(", 0.8)");
+                        play.expect(tooltip.computedStyle("backdrop-filter")).toMatch("blur(20px)");
+                    }
                     // East of the bar, so past the right of the frame
                     play.expect("the tooltip's left less the frame's right",
                                     () -> side(tooltip, "left") - side(frame, "right"))

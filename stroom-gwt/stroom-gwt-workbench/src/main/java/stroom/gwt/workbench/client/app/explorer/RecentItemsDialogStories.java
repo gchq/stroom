@@ -137,8 +137,9 @@ public final class RecentItemsDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Recent Items");
-                    // The dialog shows an empty result list with no message
+                    // The dialog shows an empty result list that says so
                     play.expect(screen.querySelectorAll(RESULT_ROWS)).toHaveLength(0);
+                    play.waitFor(() -> play.expect(screen.getByText("No items")).toBeVisible());
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });

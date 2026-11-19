@@ -19,6 +19,7 @@
 // forced colours, the splitter's menu from the keyboard, and mouse versus keyboard focus.
 
 import assert from 'node:assert/strict';
+import { isForced, withForcedColours } from './forced-colours.mjs';
 
 const SPLITTER = '.split-pane__splitter';
 
@@ -86,9 +87,12 @@ async function splitterContrast(page) {
       return layers.reduceRight((below, [r, g, b, alpha]) =>
         [r, g, b].map((v, i) => v * alpha + below[i] * (1 - alpha)), [255, 255, 255]);
     };
+    // In forced colours (e.g. Windows high contrast) the focused line is Highlight (split-pane.css)
+    const forced = matchMedia('(forced-colors: active)').matches;
     const variable = (name) => {
       const probe = document.createElement('div');
-      probe.style.backgroundColor = `var(${name})`;
+      probe.style.forcedColorAdjust = 'none';
+      probe.style.backgroundColor = forced ? 'Highlight' : `var(${name})`;
       document.body.append(probe);
       const colour = rgb(getComputedStyle(probe).backgroundColor);
       probe.remove();
@@ -124,19 +128,21 @@ export const CHECKS = {
     await page.mouse.down();
     // The line fades to its dragged colour (split-pane.css's transition)
     await page.waitForTimeout(700);
-    const held = await splitter.evaluate((element) => ({
+    // In forced colours (e.g. Windows high contrast) the held line is Highlight (split-pane.css)
+    const held = await splitter.evaluate((element, forced) => ({
       focused: element === document.activeElement,
       focusVisible: element.matches(':focus-visible'),
       colour: getComputedStyle(element, '::before').backgroundColor,
       highlight: (() => {
         const probe = document.createElement('div');
-        probe.style.backgroundColor = 'var(--splitter__line-color--active)';
+        probe.style.forcedColorAdjust = 'none';
+        probe.style.backgroundColor = forced ? 'Highlight' : 'var(--splitter__line-color--active)';
         document.body.append(probe);
         const colour = getComputedStyle(probe).backgroundColor;
         probe.remove();
         return colour;
       })(),
-    }));
+    }), await isForced(page));
     await page.mouse.up();
     assert.ok(held.focused, 'a press gives the splitter the focus');
     assert.ok(!held.focusVisible, 'a press doesn\'t show as keyboard focus');
@@ -188,14 +194,11 @@ export const CHECKS = {
     }));
     const normal = await colours();
     assert.notEqual(normal.splitter, normal.page, 'the thin splitter is drawn');
-    await page.emulateMedia({ forcedColors: 'active' });
-    try {
+    await withForcedColours(page, async () => {
       const forced = await colours();
       assert.notEqual(forced.splitter, forced.page,
         `the thin splitter is drawn in forced colours (it is ${forced.splitter}, the page ${forced.page})`);
-    } finally {
-      await page.emulateMedia({ forcedColors: 'none' });
-    }
+    });
   },
   // The first pane is on the right: dragging the splitter left grows it
   'widgets-layout-splitpane--right-to-left': async (page) => {

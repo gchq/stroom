@@ -213,6 +213,13 @@ class DataGridKeyboard<R> {
             return grid.isScroller(target) && onScrollerKeyDown(event);
         }
         final int rowIndex = DataGrid.parseInt(row.getAttribute(GridHtml.DATA_ROW));
+        if (column >= 0
+            && event.getKeyCode() == KeyCodes.KEY_TAB
+            && !event.getAltKey()
+            && !DataGridDom.isCtrl(event)
+            && onTabInCell(event, target)) {
+            return true;
+        }
         if (editing) {
             return onEditingKeyDown(event, rowIndex);
         }
@@ -518,6 +525,24 @@ class DataGridKeyboard<R> {
         return false;
     }
 
+    // Tab and Shift+Tab in a cell holding more than one control (e.g. a result's two links) go to
+    // its next or previous control. From its last (or first) they go on as from a cell's only
+    // control: to the next cell holding a control while editing, else out of the grid
+    private boolean onTabInCell(final NativeEvent event, final Element target) {
+        final Element cell = grid.findAncestorWithAttribute(target, GridHtml.DATA_COL);
+        if (cell == null) {
+            return false;
+        }
+        final Element control = controlBeside(cell, target, event.getShiftKey());
+        if (control == null) {
+            return false;
+        }
+        handled(event);
+        // The focus coming to it tells the keyboard whether it is a field being edited (onFocusIn)
+        focusVisible(control);
+        return true;
+    }
+
     // Tab edits the next cell holding a control, Shift+Tab the one before; with none, the focus
     // leaves the grid as Tab would leave it from the grid's tab stop
     private boolean onEditingTab(final NativeEvent event, final int rowIndex) {
@@ -781,6 +806,39 @@ class DataGridKeyboard<R> {
     private static native Element formControl(Element cell) /*-{
         return cell.querySelector('[role="combobox"], '
             + '[role="checkbox"]:not([aria-readonly="true"]):not([aria-hidden="true"])');
+    }-*/;
+
+    // The cell's control after (or before) the one holding the target, or null if the target isn't
+    // in one or there is none: the cell's fields and controls in reading order, leaving out those
+    // disabled, not shown, or inside another (a selection box's parts)
+    private static native Element controlBeside(Element cell, Element target, boolean back) /*-{
+        var found = cell.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea, '
+            + '[role="combobox"], [role="checkbox"]:not([aria-hidden="true"]), button, a[href], '
+            + '[data-row-action]');
+        var controls = [];
+        for (var i = 0; i < found.length; i++) {
+            var control = found[i];
+            if (control.disabled || control.getClientRects().length === 0) {
+                continue;
+            }
+            var inner = false;
+            for (var j = 0; j < controls.length; j++) {
+                if (controls[j].contains(control)) {
+                    inner = true;
+                }
+            }
+            if (!inner) {
+                controls.push(control);
+            }
+        }
+        var at = -1;
+        for (var k = 0; k < controls.length; k++) {
+            if (controls[k].contains(target)) {
+                at = k;
+            }
+        }
+        var to = back ? at - 1 : at + 1;
+        return at >= 0 && to >= 0 && to < controls.length ? controls[to] : null;
     }-*/;
 
     // Leaves every row, header, cell and control but the one to keep out of the tab order: rows and

@@ -66,6 +66,13 @@ public final class QueryInfoPromptStories {
                     play.waitFor(() -> play.expect(screen.queryByText(TITLE, StroomDom.DIALOG_TITLE)).toBeNull());
                     expectNoProblems(play);
                 })
+                // The query info dialog left open (the screenshot and the dialog measurement show it)
+                .story("QueryInfoOpen", context -> render(context, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(screen.findByText(TITLE, StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Query Info")).toHaveFocus());
+                })
                 // Cancel gives nothing, so the query isn't run
                 .story("Cancel", context -> render(context, null))
                 .withPlay(play -> {

@@ -43,7 +43,8 @@ async function unavailableReason() {
 const skip = (await unavailableReason()) ?? false;
 
 const STORIES = ['pass', 'fail', 'busy-loop-during', 'busy-loop-after', 'reload-fast', 'nav-away-fast',
-  'nav-away-later', 'console', 'flaky', '../../../evil', 'kill-browser', 'forced-colours'];
+  'nav-away-later', 'console', 'flaky', '../../../evil', 'kill-browser', 'forced-colours',
+  'dark-scheme'];
 
 // The preview page: the story's behaviour is chosen by its id
 const PREVIEW_SCRIPT = `
@@ -72,6 +73,9 @@ setTimeout(() => {
     case 'flaky': done(window.FLAKY_ATTEMPT > 1 ? 'COMPLETED' : 'ERRORED', { error: 'Not yet' }); break;
     case 'forced-colours':
       done(matchMedia('(forced-colors: active)').matches ? 'COMPLETED' : 'ERRORED', { error: 'Not forced' });
+      break;
+    case 'dark-scheme':
+      done(matchMedia('(prefers-color-scheme: dark)').matches ? 'COMPLETED' : 'ERRORED', { error: 'Not dark' });
       break;
     default: done('COMPLETED');
   }
@@ -232,6 +236,21 @@ test('runner: --forced-colours shows the stories with forced colours', { skip },
   const standard = await run('forced-colours-off', ['forced-colours']);
   assert.equal(standard.code, 1);
   assert.match(standard.output, /Not forced/);
+});
+
+test('runner: --colour-scheme sets the colour scheme the browser asks for', { skip }, async () => {
+  const dark = await run('dark-scheme', ['--colour-scheme', 'dark', '--forced-colours', 'dark-scheme']);
+  assert.equal(dark.code, 0);
+  // Without it, the scheme is light
+  const light = await run('dark-scheme-off', ['--forced-colours', 'dark-scheme']);
+  assert.equal(light.code, 1);
+  assert.match(light.output, /Not dark/);
+});
+
+test('runner: a colour scheme other than light or dark is refused', { skip }, async () => {
+  const { code, output } = await run('scheme-bad', ['--colour-scheme', 'blue', 'pass']);
+  assert.notEqual(code, 0);
+  assert.match(output, /--colour-scheme must be light or dark, not 'blue'/);
 });
 
 test('runner: a theme other than dark or light is refused', { skip }, async () => {

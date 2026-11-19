@@ -199,6 +199,25 @@ public final class ProcessorFilterListStories {
                     play.click(play.querySelector(STREAM_LINK_OPEN));
                     play.expect(play.spy(SHOW_DATA_SPY)).toHaveBeenCalledTimes(1);
                     expectNoProblems(play);
+                })
+                // Batch Change All Filtered Processors left open (the screenshot and the dialog
+                // measurement show it)
+                .story("BatchChangeAllFilteredProcessorsOpen", context -> render(context, PLAIN_ROWS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findAllByText("Events Pipeline");
+                    play.click(play.getByTitle("Batch Edit Filtered Processors"));
+                    final Play batch = dialog(screen, "Batch Change All Filtered Processors");
+                    play.waitFor(() -> play.expect(batch.getByText("Change", "label")).toBeVisible());
+                })
+                // Filter Processors left open (the screenshot and the dialog measurement show it)
+                .story("FilterProcessorsOpen", context -> render(context, PLAIN_ROWS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findAllByText("Events Pipeline");
+                    play.click(play.getByTitle("Filter Processors"));
+                    final Play filter = dialog(screen, "Filter Processors");
+                    play.waitFor(() -> play.expect(filter.getByRole("tree", "Expression")).toBeVisible());
                 });
     }
 
@@ -207,6 +226,10 @@ public final class ProcessorFilterListStories {
     private static Play openInfo(final Play play) {
         play.click(play.findAllByTitle("Info").nth(0));
         return play.screen();
+    }
+
+    private static Play dialog(final Play screen, final String caption) {
+        return screen.within(screen.findByText(caption, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
     private static void expectNoProblems(final Play play) {

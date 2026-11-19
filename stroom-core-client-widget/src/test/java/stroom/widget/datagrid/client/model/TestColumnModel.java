@@ -65,6 +65,43 @@ class TestColumnModel {
     }
 
     @Test
+    void testRescaleHoldsTheSameTextAndStillFits() {
+        // Drawn at 1.26, then the scale measured once fonts load is 1.29: the fixed column holds
+        // the same 200 at medium, the fill column gives back what it gains, the percent keeps its share
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("fixed", ColumnSizing.resizable(200).scaled(1.26));
+        model.add("percent", ColumnSizing.percent(10));
+        model.add("fill", ColumnSizing.fill(100).scaled(1.26));
+        model.resolve(1000);
+        assertThat(model.getWidths()).containsExactly(252, 100, 648);
+
+        model.rescale(1.26, 1.29, 1000);
+        assertThat(model.getWidths()).containsExactly(258, 100, 642);
+        assertThat(model.getTotalWidth()).isEqualTo(1000);
+        assertThat(model.getSizing(0).getWidth()).isEqualTo(258);
+        assertThat(model.getSizing(2).getWidth()).isEqualTo(129);
+        assertThat(model.getSizing(0).getMinWidth()).isEqualTo(39);
+
+        // Back to medium: the fill column takes up what the fixed one gives
+        model.rescale(1.29, 1, 1000);
+        assertThat(model.getWidths()).containsExactly(200, 100, 700);
+    }
+
+    @Test
+    void testRescaleKeepsAnOverflowThatWasThere() {
+        // Columns wider than the grid (or a grid not shown) only scale
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("a", ColumnSizing.resizable(300));
+        model.add("b", ColumnSizing.resizable(300));
+        model.resolve(500);
+
+        model.rescale(1, 1.26, 500);
+        assertThat(model.getWidths()).containsExactly(378, 378);
+        model.rescale(1.26, 1.29, 0);
+        assertThat(model.getWidths()).containsExactly(387, 387);
+    }
+
+    @Test
     void testSetWidthWithinFillKeepsAnOverflowThatWasThere() {
         // The user widened the fill column past the edge: only the expander's gain is taken back
         final ColumnModel<String> model = new ColumnModel<>();

@@ -63,7 +63,9 @@ html, body {
 /* With a high contrast theme (forced colours), the browser leaves an SVG point's outline in the
    theme's focus colour, so it is given the high contrast theme's */
 @media (forced-colors: active) {
+    /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .vis-point:focus-visible {
-        outline-color: Highlight;
+        outline-color: Highlight !important;
+        outline-offset: 1px !important;
     }
 }

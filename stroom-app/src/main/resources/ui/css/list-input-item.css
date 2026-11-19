@@ -21,7 +21,7 @@
     flex-direction: row;
     justify-content: space-between;
     gap: 2em;
-    width: 390px;
+    width: calc(390px * var(--text-scale));
 }
 
 .list-input-item .list-input-item__word {

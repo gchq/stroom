@@ -30,7 +30,6 @@ import stroom.query.client.component.QueryInfo;
 import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.text.client.Html;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/currentActivity`: whether a query needs the query info popup, given the
@@ -107,7 +106,7 @@ public final class CurrentActivityStories {
         final Html text = new Html("requiresQueryInfo &mdash; required unless the activity sets "
                 + "<code>requireQueryInfo=false</code>.");
         text.getElement().getStyle().setProperty("fontFamily", "monospace");
-        text.getElement().getStyle().setFontSize(13, Unit.PX);
+        text.getElement().getStyle().setProperty("fontSize", "var(--font-size-12)");
         harness.add(text);
 
         harness.afterStartUp(() -> {

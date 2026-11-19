@@ -25,7 +25,6 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -40,9 +39,10 @@ import java.util.Map;
 /// The group edit dialog's content, which its [FloorMapGroupEditController] shows.
 ///
 /// ```
-/// Name      [ Maintenance        ]
-/// Colour    [ ■ ]
-///
+/// Name
+/// [ Maintenance                  ]
+/// Colour
+/// [ ■ ]
 /// Members
 /// [ filter…                      ]
 /// ┌──────────────────────────────┐
@@ -63,11 +63,7 @@ public class FloorMapGroupEdit extends Component {
     private static final String NOT_ON_MAP = "(not on the map)";
 
     @UiField
-    TableCellElement nameLabel;
-    @UiField
     TextBox nameBox;
-    @UiField
-    TableCellElement colourLabel;
     @UiField
     ColourBox colourBox;
     @UiField
@@ -95,12 +91,6 @@ public class FloorMapGroupEdit extends Component {
     /// Makes the dialog's content.
     public FloorMapGroupEdit() {
         initWidget(BINDER.createAndBindUi(this));
-
-        // The Name and Colour labels are <td> text, which names nothing on its own
-        nameLabel.setId(AriaUtil.uniqueId("floormap-label"));
-        AriaUtil.labelledBy(nameBox, nameLabel.getId());
-        colourLabel.setId(AriaUtil.uniqueId("floormap-label"));
-        AriaUtil.labelledBy(colourBox, colourLabel.getId());
 
         //noinspection unused e
         filterBox.addKeyUpHandler(e -> onFilterChanged());

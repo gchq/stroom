@@ -29,6 +29,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /// A message shown over the middle of what it is put in, e.g. a list's or a visualisation's
 /// errors; hidden until there is one to show.
@@ -38,6 +40,9 @@ public class MessagePanel extends Component {
 
     @UiField
     Html message;
+
+    private Consumer<Boolean> onShownChange = shown -> {
+    };
 
     /// Makes a hidden message panel, e.g. one a template declares.
     public MessagePanel() {
@@ -74,13 +79,26 @@ public class MessagePanel extends Component {
     public void showMessage(final SafeHtml msg) {
         if (!isVisible()) {
             message.setHTML(msg);
-            setVisible(true);
+            setShown(true);
         }
     }
 
     /// Hides the message.
     public void hideMessage() {
-        setVisible(false);
+        setShown(false);
+    }
+
+    /// @param onShownChange Told whether a message shows, whenever that changes, e.g. so that
+    ///                      what it covers says nothing of its own under it.
+    public void setOnShownChange(final Consumer<Boolean> onShownChange) {
+        this.onShownChange = Objects.requireNonNull(onShownChange, "onShownChange");
+    }
+
+    private void setShown(final boolean shown) {
+        if (isVisible() != shown) {
+            setVisible(shown);
+            onShownChange.accept(shown);
+        }
     }
 
 

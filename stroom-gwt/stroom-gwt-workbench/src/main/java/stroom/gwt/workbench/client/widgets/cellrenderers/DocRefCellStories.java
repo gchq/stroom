@@ -219,7 +219,7 @@ public final class DocRefCellStories {
     private static Widget contextMenuItems(final DocRefCell<DocRef> cell) {
         final FlowPanel panel = new FlowPanel();
         final Style style = panel.getElement().getStyle();
-        style.setProperty("fontSize", "13px");
+        style.setProperty("fontSize", "var(--font-size-12)");
         style.setProperty("fontFamily", "monospace");
         panel.add(new Label("DocRefCell.getContextMenuItems(FEED_REF):"));
         final Html list = new Html();
