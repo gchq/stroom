@@ -541,10 +541,11 @@ class TestCatalogueEventTypesTool {
         return out;
     }
 
-    // An event type recognised by the number an extraction reads from the record's object.
+    // An event type recognised by the number an extraction reads from the record's object (by its start: an equals
+    // on a number each record has its own is refused).
     private static Map<String, Object> numbered() {
         return withKeys(type("Delete-Records", "Delete", "low", null), "recognised_by", List.of(Map.of("when",
-                List.of(Map.of("field", "record_number", "equals", "99")), "names", List.of())));
+                List.of(Map.of("field", "record_number", "starts_with", "99")), "names", List.of())));
     }
 
     // The extraction reading the record's number from its object (rec-99).
