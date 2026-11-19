@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.draft.SplitterXml;
@@ -520,6 +521,18 @@ class TestBuildTranslationXsltTool {
         assertThat(world.call(tool, Map.of("mapping", kept, "uuid", uuid, "build", "acme-v1", "sample", SAMPLE)))
                 .containsKey("saved");
         assertThat(world.asked).isEmpty();
+    }
+
+    @Test
+    void aGroupsTranslationGivenNoNameIsSentForTheXsltNamedAfterTheGroup() {
+        // Seen in TestE2eAggregatedFeedWalks: a group's call gave build and group but no name, so its target was ""
+        // and the user's answer to the confirmed-changed form was kept nowhere; the Unknown review that followed
+        // took the only reviewed=, and the two reviews were asked in turn for ever.
+        final BuildTranslationXsltTool.Request request = BuildTranslationXsltTool.Request.of(new ToolCall("1",
+                BuildTranslationXsltTool.NAME, ToolJson.dumps(Map.of("mapping", Map.of(), "build", "walk-1",
+                        "group", "Directory"))), tool);
+
+        assertThat(request.target()).isEqualTo("walk-1/Directory");
     }
 
     @Test

@@ -1865,8 +1865,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         return "this call's mapping (with any changes it applied), kept for " + (request.uuid() != null
                 ? "XSLT " + request.uuid() + ": the next changes= with the same uuid"
-                : "'" + request.name() + "' in build " + request.build() + ": the next changes= with the same build "
-                  + "and name") + " start from it, not from the draft or the saved XSLT.";
+                : "'" + (request.name() == null
+                        ? request.group()
+                        : request.name()) + "' in build "
+                  + request.build() + ": the next changes= with the same build and " + (request.name() == null
+                        ? "group"
+                        : "name")) + " start from it, not from the draft or the saved XSLT.";
     }
 
     private static void hint(final Build b) {
@@ -2031,13 +2035,19 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return out;
         }
 
-        /// @return The XSLT the mapping is sent for: its uuid, `build/name`, or "".
+        /// @return The XSLT the mapping is sent for: its uuid, `build/name`, a source type group's given no name
+        /// `build/group` (its XSLT is saved under the group's name), or "".
         String target() {
             if (uuid != null) {
                 return uuid;
             }
-            return build != null && name != null
-                    ? build + "/" + name
+            // Seen in TestE2eAggregatedFeedWalks: a group's call with no name had no target, so the user's answer to
+            // one form was kept nowhere, and two reviews were asked in turn for ever.
+            final String named = NullSafe.isNonBlankString(name)
+                    ? name
+                    : group;
+            return build != null && named != null
+                    ? build + "/" + named
                     : "";
         }
 
