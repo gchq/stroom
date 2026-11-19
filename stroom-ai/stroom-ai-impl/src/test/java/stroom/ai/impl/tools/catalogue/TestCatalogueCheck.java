@@ -344,6 +344,14 @@ class TestCatalogueCheck {
         assertThat(check.toJson().get("counts")).isEqualTo(Map.of("Authenticate-Logon", Map.of("records", 2,
                 "by_way", List.of(2))));
         assertThat(check.uncatalogued().records()).isEqualTo(1);
+
+        // The same batches as one JSON array.
+        final TranslationMapping array = TranslationMapping.parse(Map.of("input", "json", "json_layout", "array",
+                "for_each", "events", "events", List.of(Map.of("name", "r", "fields", List.of()))));
+        final CatalogueCheckResult inArray = CatalogueCheck.check(catalogue(logon), CatalogueSample.read(array,
+                "[" + batches.strip().replace("\n", ",") + "]", null, LocalCheck.JSON_PARSER_CUT, null), null);
+        assertThat(said(inArray)).isEmpty();
+        assertThat(inArray.uncatalogued().records()).isEqualTo(1);
     }
 
     @Test
