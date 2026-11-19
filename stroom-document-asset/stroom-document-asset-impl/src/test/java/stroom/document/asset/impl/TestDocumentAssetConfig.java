@@ -118,14 +118,16 @@ class TestDocumentAssetConfig {
     }
 
     @Test
-    void testTheAllowedImageOriginPatternAcceptsSingleSourceExpressions() {
+    void testTheAllowedImageOriginPatternAcceptsHttpAndHttpsHosts() {
         final Pattern pattern = Pattern.compile(DocumentAssetConfig.ALLOWED_IMAGE_ORIGIN_PATTERN);
 
         assertThat(Arrays.asList(
                 "https://*.tile.osm.org",
                 "https://maps.example.com:8443",
                 "https://tiles.example.com/osm/",
-                "https:"))
+                "http://tiles.internal:8080",
+                "http://localhost",
+                "https://10.0.0.5:*"))
                 .allMatch(origin -> pattern.matcher(origin).matches());
     }
 
@@ -142,6 +144,26 @@ class TestDocumentAssetConfig {
                 "https://a.example.com\t",
                 "'unsafe-inline'",
                 "\"https://a.example.com\""))
+                .noneMatch(origin -> pattern.matcher(origin).matches());
+    }
+
+    /// Each of these would let any visualisation script send data to any host as image requests.
+    @Test
+    void testTheAllowedImageOriginPatternRefusesSourcesThatAllowAnyHost() {
+        final Pattern pattern = Pattern.compile(DocumentAssetConfig.ALLOWED_IMAGE_ORIGIN_PATTERN);
+
+        assertThat(Arrays.asList(
+                "*",
+                "https:",
+                "http:",
+                "blob:",
+                "data:",
+                "https://*",
+                "https://*.",
+                "*.tile.osm.org",
+                "tile.osm.org",
+                "ftp://tiles.example.com",
+                "javascript:alert(1)"))
                 .noneMatch(origin -> pattern.matcher(origin).matches());
     }
 

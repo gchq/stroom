@@ -227,10 +227,8 @@ class TestDocumentAssetServlet {
         assertThat(policy).contains("img-src 'self' data:;");
     }
 
-    /**
-     * Regression test: the image sources were fixed at {@code 'self' data:}, so a GeoMap in an asset-based
-     * visualisation could not show tiles from its tile server, and there was no way to allow it.
-     */
+    /// Regression test: the image sources were fixed at `'self' data:`, so a GeoMap in an asset-based
+    /// visualisation could not show tiles from its tile server, and there was no way to allow it.
     @Test
     void allowedImageOriginsAreAddedToTheImageSources() {
         final String policy = visualisationPolicy("https://*.tile.osm.org", "https://maps.example.com:8443");
@@ -263,6 +261,8 @@ class TestDocumentAssetServlet {
                 "https://d.example.com,https://e.example.com",
                 "'unsafe-inline'",
                 "\"https://f.example.com\"",
+                "*",
+                "https:",
                 "",
                 null,
                 "https://allowed.example.org");
@@ -322,14 +322,12 @@ class TestDocumentAssetServlet {
         return setSecurityHeaders(mimetype, visualisation, List.of());
     }
 
-    /**
-     * Calls the servlet's header logic against a response that records what it was given.
-     *
-     * @param mimetype            The mimetype the asset is being served with.
-     * @param visualisation       Whether the owning document is a Visualisation.
-     * @param allowedImageOrigins The configured allowed image origins.
-     * @return The headers that were set, keyed on header name.
-     */
+    /// Calls the servlet's header logic against a response that records what it was given.
+    ///
+    /// @param mimetype            The mimetype the asset is being served with.
+    /// @param visualisation       Whether the owning document is a Visualisation.
+    /// @param allowedImageOrigins The configured allowed image origins.
+    /// @return The headers that were set, keyed on header name.
     private Map<String, String> setSecurityHeaders(final String mimetype,
                                                    final boolean visualisation,
                                                    final List<String> allowedImageOrigins) {
@@ -344,12 +342,10 @@ class TestDocumentAssetServlet {
         return headers;
     }
 
-    /**
-     * Calls the servlet's header logic for a Visualisation's HTML asset with the given allowed image origins.
-     *
-     * @param allowedImageOrigins The configured allowed image origins.
-     * @return The content security policy that was set.
-     */
+    /// Calls the servlet's header logic for a Visualisation's HTML asset with the given allowed image origins.
+    ///
+    /// @param allowedImageOrigins The configured allowed image origins.
+    /// @return The content security policy that was set.
     private String visualisationPolicy(final String... allowedImageOrigins) {
         // Arrays.asList rather than List.of, which refuses the null a test passes.
         return setSecurityHeaders("text/html", true, Arrays.asList(allowedImageOrigins))

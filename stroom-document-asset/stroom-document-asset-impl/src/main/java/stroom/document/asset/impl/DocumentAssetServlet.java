@@ -205,18 +205,14 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
      */
     static final String CONTENT_SECURITY_POLICY_INERT = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
 
-    /**
-     * The part of {@link #CONTENT_SECURITY_POLICY_ASSET} up to and including the default image sources.
-     */
+    /// The part of [#CONTENT_SECURITY_POLICY_ASSET] up to and including the default image sources.
     private static final String CONTENT_SECURITY_POLICY_ASSET_START =
             "default-src 'self'; " +
             "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
             "style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' data:";
 
-    /**
-     * The part of {@link #CONTENT_SECURITY_POLICY_ASSET} after the image sources.
-     */
+    /// The part of [#CONTENT_SECURITY_POLICY_ASSET] after the image sources.
     private static final String CONTENT_SECURITY_POLICY_ASSET_END =
             "; " +
             "object-src 'none'; " +
@@ -224,20 +220,16 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
             "form-action 'none'; " +
             "frame-ancestors 'self'";
 
-    /**
-     * Policy for every other asset of a Visualisation, when no extra image origins are configured.
-     * Visualisations legitimately serve executable HTML from this store, so scripting cannot be denied
-     * here. What is denied is the set of capabilities no asset needs: plugins, form submission, and - the
-     * valuable one - re-pointing the document base, which would otherwise let an asset resolve its own
-     * relative URLs against another origin. See {@link #assetContentSecurityPolicy} for how configured
-     * image origins, e.g. a GeoMap's tile server, are added.
-     */
+    /// Policy for every other asset of a Visualisation, when no extra image origins are configured.
+    /// Visualisations legitimately serve executable HTML from this store, so scripting cannot be denied
+    /// here. What is denied is the set of capabilities no asset needs: plugins, form submission, and - the
+    /// valuable one - re-pointing the document base, which would otherwise let an asset resolve its own
+    /// relative URLs against another origin. See [#assetContentSecurityPolicy] for how configured
+    /// image origins, e.g. a GeoMap's tile server, are added.
     static final String CONTENT_SECURITY_POLICY_ASSET =
             CONTENT_SECURITY_POLICY_ASSET_START + CONTENT_SECURITY_POLICY_ASSET_END;
 
-    /**
-     * Matches an allowed image origin that can safely be added to the policy.
-     */
+    /// Matches an allowed image origin that can safely be added to the policy.
     private static final Pattern ALLOWED_IMAGE_ORIGIN_PATTERN =
             Pattern.compile(DocumentAssetConfig.ALLOWED_IMAGE_ORIGIN_PATTERN);
 
@@ -261,9 +253,7 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
      */
     private final ExplorerNodeService explorerNodeService;
 
-    /**
-     * Config, read on each request for the properties that can change without a restart
-     */
+    /// Config, read on each request for the properties that can change without a restart
     private final Provider<DocumentAssetConfig> configProvider;
 
     /**
@@ -653,18 +643,16 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
         }
     }
 
-    /**
-     * Builds the policy for an asset that may execute, adding the given origins to its image sources so
-     * that, for example, a GeoMap can show tiles from an external tile server.
-     * <p>
-     * Each origin is added only if it is a single source expression. One holding whitespace, a quote,
-     * {@code ;} or {@code ,} could add other sources, keywords or whole directives, so it is left out.
-     * Config validation reports such entries to the administrator; this is the backstop.
-     * </p>
-     *
-     * @param allowedImageOrigins The origins to add to {@code img-src}. Must not be null.
-     * @return The policy. Equal to {@link #CONTENT_SECURITY_POLICY_ASSET} when no origin is added.
-     */
+    /// Builds the policy for an asset that may execute, adding the given origins to its image sources so
+    /// that, for example, a GeoMap can show tiles from an external tile server.
+    ///
+    /// Each origin is added only if it matches [DocumentAssetConfig#ALLOWED_IMAGE_ORIGIN_PATTERN]: an
+    /// `http` or `https` source with a host. Anything else could allow every host, or add other sources,
+    /// keywords or whole directives, so it is left out. Config validation reports such entries to the
+    /// administrator; this is the backstop.
+    ///
+    /// @param allowedImageOrigins The origins to add to `img-src`. Must not be null.
+    /// @return The policy. Equal to [#CONTENT_SECURITY_POLICY_ASSET] when no origin is added.
     static String assetContentSecurityPolicy(final List<String> allowedImageOrigins) {
         final StringBuilder policy = new StringBuilder(CONTENT_SECURITY_POLICY_ASSET_START);
         for (final String origin : allowedImageOrigins) {

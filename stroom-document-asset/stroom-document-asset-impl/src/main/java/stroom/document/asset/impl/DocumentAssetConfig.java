@@ -70,12 +70,16 @@ public class DocumentAssetConfig extends AbstractConfig {
     /** Mode to use for editor if nothing else matches */
     private static final String DEFAULT_ACE_EDITOR_MODE = "TEXT";
 
-    /**
-     * What an allowed image origin must look like: a single Content Security Policy source expression.
-     * Whitespace, ';' and ',' would let an entry add sources or whole directives to the policy, and quotes
-     * would let it add keywords such as 'unsafe-inline', so all of them are refused.
-     */
-    static final String ALLOWED_IMAGE_ORIGIN_PATTERN = "^[^\\s;,'\"]+$";
+    /// What an allowed image origin must look like: an `http` or `https` Content Security Policy source
+    /// with a host, e.g. `https://*.tile.osm.org`, `http://tiles.internal:8080` or
+    /// `https://maps.example.com/tiles/`. The host may start with a `*.` subdomain wildcard.
+    ///
+    /// A bare `*` or a scheme-only source such as `https:` or `blob:` is refused, because it would let
+    /// any visualisation script send data to any host as image requests. Whitespace, `;` and `,` would
+    /// let an entry add sources or whole directives to the policy, and quotes would let it add keywords
+    /// such as `'unsafe-inline'`, so none of them can appear.
+    static final String ALLOWED_IMAGE_ORIGIN_PATTERN =
+            "^https?://(\\*\\.)?[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(:([0-9]+|\\*))?(/[^\\s;,'\"]*)?$";
 
     /** Where assets will be cached */
     private final String assetCacheDir;
@@ -98,7 +102,7 @@ public class DocumentAssetConfig extends AbstractConfig {
     /** Default ACE editor mode */
     private final String defaultAceEditorMode;
 
-    /** Origins, besides Stroom's own, that a visualisation may load images from */
+    /// Origins, besides Stroom's own, that a visualisation may load images from
     private final List<String> allowedImageOrigins;
 
     /*
@@ -269,12 +273,15 @@ public class DocumentAssetConfig extends AbstractConfig {
     ///
     /// @return The origins as Content Security Policy source expressions. Never null; empty by default.
     @JsonPropertyDescription("Origins, besides Stroom's own, that an asset-based visualisation may load "
-                             + "images from. Each entry is a Content Security Policy source expression "
-                             + "that is added to the 'img-src' directive, e.g. 'https://*.tile.osm.org' "
-                             + "to show map tiles from GeoMap's default tile server, or "
-                             + "'https://maps.example.com'. Empty by default, so only Stroom's own images "
-                             + "and data: URLs load. An entry containing whitespace, quotes, ';' or ',' is "
-                             + "invalid and is left out of the policy.")
+                             + "images from, such as a GeoMap's tile server. Each entry is added to the "
+                             + "img-src directive of the visualisation's Content Security Policy. An entry "
+                             + "is an http or https URL with a host, optionally a port and path, and the "
+                             + "host may start with a *. subdomain wildcard, for example "
+                             + "https://*.tile.osm.org for GeoMap's default tile server, or "
+                             + "http://tiles.internal:8080. Enter entries without quotes. A bare * or a "
+                             + "scheme on its own, such as https:, is invalid, as it would allow any host; "
+                             + "an invalid entry is left out of the policy. Empty by default, so only "
+                             + "Stroom's own images and data: URLs load.")
     @AllMatchPattern(pattern = ALLOWED_IMAGE_ORIGIN_PATTERN)
     @JsonProperty("allowedImageOrigins")
     public List<String> getAllowedImageOrigins() {
