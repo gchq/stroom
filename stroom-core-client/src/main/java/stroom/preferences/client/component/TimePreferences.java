@@ -28,12 +28,14 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /// The Date and Time tab of the user's preferences: the format dates and times are shown in, a
 /// standard one or the user's own, and the time zone they are shown in. It reads and writes the
@@ -80,6 +82,8 @@ public class TimePreferences extends Component {
 
     private Runnable onChange = () -> {
     };
+    // The custom format last shown or reported, so leaving it unedited reports nothing
+    private String committedText;
 
     /// Makes an empty tab.
     public TimePreferences() {
@@ -110,6 +114,26 @@ public class TimePreferences extends Component {
             changeVisible();
             onChange.run();
         });
+        // The rest report their changes too, so the screens show them before OK, as they do the
+        // above: the time zone Id when it is chosen, and the offsets and the custom format when
+        // committed (an arrow, Enter or leaving the field), so a half-typed format is never applied
+        timeZoneId.addValueChangeHandler(event -> onChange.run());
+        timeZoneOffsetHours.setOnChange(value -> onChange.run());
+        timeZoneOffsetMinutes.setOnChange(value -> onChange.run());
+        text.addBlurHandler(event -> onCustomFormatCommitted());
+        text.addKeyDownHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                onCustomFormatCommitted();
+            }
+        });
+    }
+
+    // Reports the custom format if it differs from the one last shown or reported
+    private void onCustomFormatCommitted() {
+        if (!Objects.equals(text.getText(), committedText)) {
+            committedText = text.getText();
+            onChange.run();
+        }
     }
 
     /// Shows the user's date and time preferences.
@@ -168,6 +192,7 @@ public class TimePreferences extends Component {
         custom.setValue(isCustom);
         text.setEnabled(isCustom);
         text.setText(patternText);
+        committedText = patternText;
     }
 
     private void changeVisible() {

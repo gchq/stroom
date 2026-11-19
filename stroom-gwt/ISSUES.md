@@ -1648,8 +1648,16 @@ to delete them by hand.~~
     column.getFilter() != null`, which can't be true (`getColumnFilter` never gives null) and
     compares the wrong filter (the include/exclude one); it works only because the other branch
     covers it.
-  * The time preferences don't make the dialog changed when the time zone Id, the offset or the
-    Custom Format text is edited (`TimePreferences`, lines 101-112).
+  * ~~The time preferences don't make the dialog changed when the time zone Id, the offset or the
+    Custom Format text is edited (`TimePreferences`, lines 101-112).~~ **Re-scoped and fixed**
+    (19 November 2026). The dialog has no changed state of its own: OK always saved these fields (it
+    writes every field), and a change only applies the preferences to the screens before OK. These
+    three didn't, unlike the format and the kind of time zone, so their effect showed only after OK.
+    Now the time zone Id reports when chosen, and the offsets and the custom format when committed
+    (an arrow, Enter or leaving the field); the format isn't reported while typed, so a half-typed
+    or blank one is never applied. Play: `App/Main/TimePreferences` `EveryFieldReportsItsChange`
+    (failed before). Cancel's revert of what was applied is unchanged, and is covered with the
+    dialog's stories (`App/Main/AppShell`).
   * Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
     (`AnalyticProcessingController.setProcessType`).

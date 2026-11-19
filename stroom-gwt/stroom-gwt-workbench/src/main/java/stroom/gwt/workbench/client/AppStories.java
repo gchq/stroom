@@ -105,6 +105,7 @@ import stroom.gwt.workbench.client.app.main.AppShellStories;
 import stroom.gwt.workbench.client.app.main.ContentTabPaneStories;
 import stroom.gwt.workbench.client.app.main.LinkPageStories;
 import stroom.gwt.workbench.client.app.main.QuickFilterHistoryStories;
+import stroom.gwt.workbench.client.app.main.TimePreferencesStories;
 import stroom.gwt.workbench.client.app.main.TopBarStories;
 import stroom.gwt.workbench.client.app.main.WelcomeScreenStories;
 import stroom.gwt.workbench.client.app.monitoring.CachesScreenStories;
@@ -298,6 +299,8 @@ public final class AppStories {
         // App/Main/TabSessionChooserDialog
         TabSessionChooserDialogStories.addTo(registry);
         LinkPageStories.addTo(registry);
+        // App/Main/TimePreferences
+        TimePreferencesStories.addTo(registry);
         // App/Main/TopBar
         TopBarStories.addTo(registry);
         // App/Main/TracesScreen
