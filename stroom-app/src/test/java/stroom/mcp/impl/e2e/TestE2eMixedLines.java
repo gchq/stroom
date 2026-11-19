@@ -61,7 +61,7 @@ class TestE2eMixedLines extends AbstractE2eTest {
                 "source_name", "Mixed", "system_name", "Mixed", "environment", "Test", "splitter", splitter,
                 "continuation_lines", 20));
         dump("draft_translation_mapping", draft);
-        final Map<String, Object> mapping = decide(map(draft, "mapping"));
+        final Map<String, Object> mapping = decide(draftedMapping(draft));
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", mapping,
                 "schema_version", draft.get("schema_version"), "stream_ids", List.of(raw), "splitter", splitter,
                 "build", build, "name", feed + "-Events"));

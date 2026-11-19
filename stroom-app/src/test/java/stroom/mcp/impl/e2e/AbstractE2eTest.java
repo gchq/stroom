@@ -35,6 +35,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.mcp.impl.DraftedMappings;
 import stroom.mcp.impl.McpTestClient;
 import stroom.mcp.impl.McpTestClients;
 import stroom.meta.api.AttributeMap;
@@ -637,54 +638,13 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return changed;
     }
 
-    /// The mapping a draft_translation_mapping result drafted, as this test's client (one outside Stroom) gets it:
-    /// in the result, or, for a draft too large to give whole, read with jq from the workspace file it was saved to,
-    /// an entry a line as the agent reads it (a read cuts a line past 2,000 characters).
+    /// The mapping a draft_translation_mapping result drafted, as this test's client (one outside Stroom) gets it
+    /// ([DraftedMappings#of]).
     ///
     /// @param draft A draft_translation_mapping result.
     /// @return Its mapping.
-    @SuppressWarnings("unchecked")
     Map<String, Object> draftedMapping(final Map<String, Object> draft) {
-        if (draft.get("mapping") instanceof final Map<?, ?> mapping) {
-            return (Map<String, Object>) mapping;
-        }
-        assertThat(draft).as("a draft with no mapping says where it was saved, and outlines it")
-                .containsKeys("mapping_saved", "mapping_outline");
-        final Object path = draft.get("mapping_saved");
-        final Map<String, Object> mapping = new LinkedHashMap<>();
-        for (final Object key : JsonUtil.readValue(jq(path, "keys"), List.class)) {
-            final String at = ".[\"" + key + "\"]";
-            if ("events".equals(key)) {
-                final int rules = Integer.parseInt(jq(path, at + " | length").strip());
-                final List<Object> events = new ArrayList<>();
-                for (int i = 0; i < rules; i++) {
-                    final String rule = at + "[" + i + "]";
-                    final String withoutFields = jq(path, rule + " | del(.fields)");
-                    final Map<String, Object> event = new LinkedHashMap<>(JsonUtil.readValue(withoutFields,
-                            Map.class));
-                    event.put("fields", jqItems(path, rule + ".fields"));
-                    events.add(event);
-                }
-                mapping.put("events", events);
-            } else if ("\"array\"".equals(jq(path, at + " | type").strip())) {
-                mapping.put((String) key, jqItems(path, at));
-            } else {
-                mapping.put((String) key, JsonUtil.readValue(jq(path, at), Object.class));
-            }
-        }
-        return mapping;
-    }
-
-    // The items of a list in a workspace JSON file, one a line.
-    private List<Object> jqItems(final Object path, final String list) {
-        final String text = jq(path, list + "[]");
-        return "No results.".equals(text)
-                ? List.of()
-                : text.lines().map(line -> JsonUtil.readValue(line, Object.class)).toList();
-    }
-
-    private String jq(final Object path, final String query) {
-        return McpTestClient.text(client.call("jq", args("path", path, "query", query)));
+        return DraftedMappings.of(client, draft);
     }
 
     /// @param drafted A draft's mapping.

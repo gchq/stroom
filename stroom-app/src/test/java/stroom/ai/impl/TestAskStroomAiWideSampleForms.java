@@ -29,6 +29,7 @@ import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.docref.DocRef;
+import stroom.mcp.impl.DraftedMappings;
 import stroom.mcp.impl.McpTestClient;
 import stroom.mcp.impl.McpTestClients;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -192,7 +193,7 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
                 "save_as", CONVERTER));
         final Map<String, Object> draft = client.json("draft_translation_mapping",
                 Map.of("stream_ids", List.of(streamId)));
-        final Map<String, Object> mapping = completed((Map<String, Object>) draft.get("mapping"));
+        final Map<String, Object> mapping = completed(DraftedMappings.of(client, draft));
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("build", buildName);
         arguments.put("name", EVENTS);
