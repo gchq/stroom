@@ -23,7 +23,6 @@ import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -881,35 +880,68 @@ class TestDraftMapping extends DraftFixtures {
 
     @Test
     @SuppressWarnings("unchecked")
-    void theDraftFollowsTheDocumentationAndGenerates() {
+    void theDraftFollowsTheDocumentationAndTheCatalogueAndGenerates() {
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(
+                documented("Authenticate-Logon", "An account logged on", "Logon", "true", "4624"),
+                documented("Authenticate-LogonFailed", "An account failed to log on", "Logon", "false", "4625"),
+                documented("Authenticate-Logoff", "An account logged off", "Logoff", null, "4634"),
+                documented("Authenticate-Explicit", "A logon with explicit credentials", "Logon", null, "4648")),
+                true);
+        notes.put("fields", ((Map<String, Object>) json(NOTES)).get("fields"));
         final Map<String, Object> draft = DraftMapping.draft(NOTES_SAMPLE, "Acme directory", "Acme", "Eval",
-                json(NOTES), null, null);
+                notes, null, null);
         final Map<String, Map<String, Object>> common = common(draft);
         assertThat(common.get("EventSource/User/Id").get("field")).isEqualTo("usr");
         assertThat(common.get("EventSource/Client/IPAddress").get("field")).isEqualTo("src");
         final Map<String, Map<String, Object>> rules = rules(draft);
-        final Map<String, Map<String, Object>> failed = fields(rules.get("4625"));
-        assertThat(rules.get("4625").get("when")).isEqualTo(json("[{\"field\": \"evt\", \"equals\": \"4625\"}]"));
-        assertThat(failed.get("EventDetail/TypeId").get("value")).isEqualTo("Logon failed");
+        final Map<String, Map<String, Object>> failed = fields(rules.get("authenticate_logonfailed"));
+        assertThat(rules.get("authenticate_logonfailed").get("when"))
+                .isEqualTo(json("[{\"field\": \"evt\", \"equals\": \"4625\"}]"));
+        assertThat(failed.get("EventDetail/TypeId").get("value")).isEqualTo("Authenticate-LogonFailed");
         assertThat(failed.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
         assertThat(failed.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("false");
         assertThat(failed.get("EventDetail/Description").get("value")).isEqualTo("An account failed to log on");
-        assertThat(fields(rules.get("4634")).get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logoff");
+        assertThat(fields(rules.get("authenticate_logoff")).get("EventDetail/Authenticate/Action").get("value"))
+                .isEqualTo("Logoff");
         // Documented, though the sample has none.
-        assertThat(rules).containsKey("4648");
+        assertThat(rules).containsKey("authenticate_explicit");
         final Map<String, Object> applied = (Map<String, Object>) draft.get("source_notes");
-        assertThat(applied.get("not_in_sample")).isEqualTo(List.of("evt=4648"));
-        assertThat(applied.get("not_in_catalogue")).isEqualTo(List.of("evt=9999"));
+        assertThat(applied.get("not_in_sample")).isEqualTo(List.of("Authenticate-Explicit"));
+        assertThat(applied.get("uncatalogued")).isEqualTo(1);
         assertThat(notes(draft).getFirst()).startsWith("Drafted from the source documentation");
-        assertThat(notes(draft)).anyMatch(n -> n.contains("evt=9999"));
+        assertThat(notes(draft)).anyMatch(n -> n.startsWith("1 sampled record(s) no event type recognises"));
         final XsltGenerator.Generated checked = generate(mappingOf(draft), SCHEMA, "4.1.0");
         assertThat(checked.ok()).as("%s", checked.problems()).isTrue();
     }
 
+    // A documented event type, told by its evt code.
+    private static Map<String, Object> documented(final String typeId,
+                                                  final String description,
+                                                  final String action,
+                                                  final String success,
+                                                  final String code) {
+        final Map<String, Object> type = TestCatalogueTranslation.type(typeId, typeId, "Authenticate", action,
+                success, TestCatalogueTranslation.way(TestCatalogueTranslation.eq("evt", code)));
+        type.put("description", description);
+        return type;
+    }
+
+    // An event type the user confirmed, told by a field's value.
+    private static Map<String, Object> confirmed(final String typeId,
+                                                 final String detail,
+                                                 final String action,
+                                                 final String field,
+                                                 final String value) {
+        final Map<String, Object> type = TestCatalogueTranslation.type(typeId, typeId, detail, action, null,
+                TestCatalogueTranslation.way(TestCatalogueTranslation.eq(field, value)));
+        type.put("actor", null);
+        type.put("basis", "user_confirmed");
+        return type;
+    }
     @Test
     void whoActedAndWhatWasActedOnAreDraftedWhereTheCatalogueSays() {
-        // Asked for by the user: a kind's actor is its event's user, and what it was done to its action element's
-        // object, so an action element without an Action (Delete, Create) isn't left empty.
+        // Asked for by the user: an event type's actor is its event's user, and what it was done to its action
+        // element's object, so an action element without an Action (Delete, Create) isn't left empty.
         final List<String> lines = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
             lines.add("ts=2026-11-06T09:%02d:00Z evt=%s subject=admin%d target=user%d host=dc01".formatted(i,
@@ -917,26 +949,26 @@ class TestDraftMapping extends DraftFixtures {
                             ? "4720"
                             : "4726", i % 3, i));
         }
-        final Map<String, Object> notes = json("""
-                {"source": "Directory", "fields": [], "events": [
-                  {"event": "4720", "description": "An account was created", "event_detail": "Create",
-                   "field": "evt", "value": "4720", "actor": "subject", "affected": "target",
-                   "affected_as": "User/Id", "basis": "user_confirmed"},
-                  {"event": "4726", "description": "An account was deleted", "event_detail": "Delete",
-                   "field": "evt", "value": "4726", "actor": "subject", "affected": "target",
-                   "affected_as": "User/Id", "basis": "user_confirmed"}]}""");
+        final Map<String, Object> created = confirmed("Create-Account", "Create", null, "evt", "4720");
+        final Map<String, Object> deletedType = confirmed("Delete-Account", "Delete", null, "evt", "4726");
+        for (final Map<String, Object> type : List.of(created, deletedType)) {
+            type.put("actor", "subject");
+            type.put("affected", "target");
+            type.put("affected_as", "User/Id");
+        }
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(created, deletedType), true);
         final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "Directory",
                 "Directory", "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
-        final Map<String, Map<String, Object>> deleted = fields(rules(draft).get("4726"));
+        final Map<String, Map<String, Object>> deleted = fields(rules(draft).get("delete_account"));
         assertThat(deleted.get("EventSource/User/Id").get("field")).isEqualTo("subject");
         assertThat(deleted.get("EventDetail/Delete/User/Id").get("field")).isEqualTo("target");
-        assertThat(fields(rules(draft).get("4720")).get("EventDetail/Create/User/Id").get("field")).isEqualTo("target");
+        assertThat(fields(rules(draft).get("create_account")).get("EventDetail/Create/User/Id").get("field"))
+                .isEqualTo("target");
         final XsltGenerator.Generated checked = generate(mappingOf(draft), SCHEMA, "4.1.0");
         assertThat(checked.problems()).noneMatch(problem -> problem.contains("needs one of"));
     }
-
     @Test
-    void aClassifiedKindKeepsWhatTheSamplesRuleReadAndItsOwnMessage() {
+    void anEventTypeKeepsWhatTheSamplesRuleReadAndItsOwnMessage() {
         // Seen in the agent eval: a catalogue rule wrote one fixed description over each record's message, and its
         // actor, a label rather than a field, left the event's user empty.
         final List<String> lines = new ArrayList<>();
@@ -946,52 +978,27 @@ class TestDraftMapping extends DraftFixtures {
                             ? "login"
                             : "logout", i % 3, i, i));
         }
-        final Map<String, Object> notes = json("""
-                {"source": "App", "fields": [], "events": [
-                  {"event": "login", "description": "A user logged on", "event_detail": "Authenticate",
-                   "action": "Logon", "field": "action", "value": "login", "actor": "By User",
-                   "basis": "user_confirmed"},
-                  {"event": "logout", "description": "A user logged off", "event_detail": "Authenticate",
-                   "action": "Logoff", "field": "action", "value": "logout", "actor": "src",
-                   "basis": "user_confirmed"}]}""");
+        final Map<String, Object> login = confirmed("Authenticate-Logon", "Authenticate", "Logon", "action", "login");
+        login.put("description", "A user logged on");
+        login.put("actor", "By User");
+        final Map<String, Object> logout = confirmed("Authenticate-Logoff", "Authenticate", "Logoff", "action",
+                "logout");
+        logout.put("description", "A user logged off");
+        logout.put("actor", "src");
         final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "App", "App",
-                "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
-        final Map<String, Map<String, Object>> login = fields(rules(draft).get("login"));
-        assertThat(login).doesNotContainKey("EventDetail/Description");
+                "Test", TestCatalogueTranslation.notes(List.of(login, logout), true),
+                detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
+        final Map<String, Map<String, Object>> logon = fields(rules(draft).get("authenticate_logon"));
+        assertThat(logon).doesNotContainKey("EventDetail/Description");
         assertThat(common(draft).get("EventDetail/Description").get("field")).isEqualTo("msg");
-        assertThat(login.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
+        assertThat(logon.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
         // Neither a label nor an address is the event's user: the common mapping stands.
-        assertThat(login).doesNotContainKey("EventSource/User/Id");
-        assertThat(fields(rules(draft).get("logout"))).doesNotContainKey("EventSource/User/Id");
-        assertThat(notes(draft)).anyMatch(note -> note.contains("login: actor 'By User' isn't a field of the "
-                                                                + "records")
-                                                  && note.contains("logout: actor 'src' holds addresses"));
+        assertThat(logon).doesNotContainKey("EventSource/User/Id");
+        assertThat(fields(rules(draft).get("authenticate_logoff"))).doesNotContainKey("EventSource/User/Id");
+        assertThat(notes(draft)).anyMatch(note -> note.contains("Authenticate-Logon: actor 'By User' isn't a field "
+                                                                + "of the records")
+                                                  && note.contains("Authenticate-Logoff: actor 'src' holds addresses"));
     }
-
-    @Test
-    void aClassifiedKindIsDescribedByTheCommentAPersonWrote() {
-        // Seen in the agent eval (case 42): every ticket event described as 'A ticket is closed', its comment kept
-        // as Data.
-        final List<String> lines = new ArrayList<>(List.of("time,action,user,ticket,comment"));
-        for (int i = 0; i < 12; i++) {
-            lines.add("2026-11-06T09:%02d:00Z,%s,user%d,T-%d,said thing %d".formatted(i, i % 2 == 0
-                    ? "create"
-                    : "close", i % 3, i, i));
-        }
-        final Map<String, Object> notes = json("""
-                {"source": "Desk", "fields": [], "events": [
-                  {"event": "create", "description": "A ticket is raised", "event_detail": "Create",
-                   "field": "action", "value": "create", "basis": "user_confirmed"},
-                  {"event": "close", "description": "A ticket is closed", "event_detail": "Update",
-                   "field": "action", "value": "close", "basis": "user_confirmed"}]}""");
-        final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "Desk", "Desk",
-                "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
-        final Map<String, Map<String, Object>> closed = fields(rules(draft).get("close"));
-        assertThat(closed.get("EventDetail/Description").get("field")).isEqualTo("comment");
-        assertThat(JsonValues.maps(rules(draft).get("close").get("fields")))
-                .noneMatch(field -> "comment".equals(field.get("data_name")));
-    }
-
     @Test
     void anAffectedObjectIsCheckedAgainstTheActionElement() {
         assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Network/Permit", "Destination"))
@@ -1012,36 +1019,6 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Object> rule = rules(draft).get("4625");
         assertThat(rule == null || JsonValues.maps(rule.get("fields")).stream()
                 .noneMatch(f -> "EventDetail/Authenticate/Action".equals(f.get("path")))).isTrue();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void whereTheCatalogueCantBeFollowedTheSamplesOwnRulesAreKept() {
-        final Map<String, Object> entry = cases("draft_cases.json").stream()
-                .filter(e -> "test guessed catalogue".equals(e.get("name")))
-                .findFirst()
-                .orElseThrow();
-        final Map<String, Object> draft = DraftMapping.draft(entry.get("samples"), "Firewall", "FW", "Eval",
-                (Map<String, Object>) entry.get("source_notes"),
-                detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
-        final Map<String, Map<String, Object>> rules = rules(draft);
-        assertThat(networkElements(rules.get("traffic_permitted"))).containsExactly("Permit");
-        assertThat(networkElements(rules.get("traffic_denied"))).containsExactly("Deny");
-        assertThat(rules.values()).allMatch(r -> JsonValues.maps(r.get("fields")).stream().noneMatch(f ->
-                ((String) f.get("path")).startsWith("EventDetail/Allow")
-                || ((String) f.get("path")).startsWith("EventDetail/Deny")));
-        assertThat(notes(draft)).anyMatch(n -> n.startsWith("Kept from the sample's values")
-                                               && n.contains("event_type=TRAFFIC"));
-        // The catalogue's own events, completed from the sample's rule for the same records where the schema
-        // wants more.
-        final Map<String, Map<String, Object>> login = fields(rules.get("login_success"));
-        assertThat(login).containsKey("EventDetail/Authenticate/Action");
-        assertThat(login.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("true");
-        assertThat(fields(rules.get("config_change"))).containsKey("EventDetail/Update/After/Configuration/Type");
-        // Unknown is left for the user to agree when the XSLT is built, never agreed by the draft.
-        assertThat(rules.values()).noneMatch(r -> JsonValues.truthy(r.get("allow_unknown")));
-        final XsltGenerator.Generated checked = generate(mappingOf(draft), SCHEMA, "4.1.0");
-        assertThat(checked.problems()).allMatch(p -> p.contains("vpn_down"));
     }
 
     private static Set<String> networkElements(final Map<String, Object> rule) {
@@ -1368,67 +1345,7 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
-    void theKindFieldTheUserChoseMakesTheRules() {
-        // Seen in testing: a CSV mail log's kind in msg_act, a name the draft didn't know, so every record was one
-        // 'other' event. The draft doesn't guess a field by its values: classify_kinds and survey_feed put the
-        // candidates to the user, and the draft follows what they chose.
-        assertThat(rules(DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null, null, null, null)).keySet())
-                .containsExactly("other");
-        final Map<String, Object> byAct = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
-                Map.of(SourceNotes.KIND_FIELDS, List.of("msg_act")), null, null);
-        final Map<String, Object> byDirection = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
-                Map.of(SourceNotes.KIND_FIELDS, List.of("direction")), null, null);
-        final Map<String, Object> oneKind = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
-                Map.of(SourceNotes.KIND_FIELDS, List.of(KindFields.ONE_KIND)), null, null);
-
-        assertThat(rules(byAct).keySet()).contains("allow", "quarantine", "reject");
-        assertThat(rules(byDirection).keySet()).contains("inbound", "outbound").doesNotContain("allow");
-        assertThat(rules(oneKind).keySet()).containsExactly("other");
-    }
-
-    @Test
-    void recordsClassifiedAsOneKindAreAllTakenByItsRule() {
-        // Asked for by the user: one kind classified like any other. Told by a field every sample record shares
-        // (product=Gate), its rule is the rule for every record, so another product value isn't left to Unknown.
-        final StringBuilder csv = new StringBuilder("time,product,user,src\n");
-        for (int i = 0; i < 6; i++) {
-            csv.append("2026-11-06T09:00:0%dZ,Gate,u%d,10.0.0.%d\n".formatted(i, i, i));
-        }
-        final Map<String, Object> event = Map.of("event", "Door opened", "field", "product", "value", "Gate",
-                "event_detail", "Authenticate", "action", "Logon", "type_id", "Badge");
-        final Map<String, Object> notes = Map.of("fields", List.of(), "events", List.of(event),
-                SourceNotes.WHOLE_KIND, List.of("product=Gate"));
-
-        final Map<String, Object> drafted = DraftMapping.draft(List.of(csv.toString()), "Gate", null, null, notes,
-                null, null);
-
-        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(drafted).get("events"));
-        assertThat(rules).singleElement().satisfies(rule -> {
-            assertThat(rule).doesNotContainKey("when");
-            assertThat(String.valueOf(rule)).contains("Authenticate");
-        });
-        // A single event from the user's documentation isn't the records as one kind: its rule keeps its condition,
-        // and the rule for the rest stays (found in review: other values would have been taken as that event).
-        final Map<String, Object> documented = DraftMapping.draft(List.of(csv.toString()), "Gate", null, null,
-                Map.of("fields", List.of(), "events", List.of(event)), null, null);
-        assertThat(JsonValues.maps(mappingOf(documented).get("events"))).hasSize(2)
-                .anySatisfy(rule -> assertThat(rule).containsKey("when"));
-    }
-
-    @Test
-    void aKindFieldTheUserNamedIsMatchedAsTheRecordsSpellItAndOneTheyLackIsPassedOver() {
-        final Map<String, Object> cased = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
-                Map.of(SourceNotes.KIND_FIELDS, List.of("Msg_Act")), null, null);
-        final Map<String, Object> absent = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
-                Map.of(SourceNotes.KIND_FIELDS, List.of("verdict")), null, null);
-
-        assertThat(rules(cased).keySet()).contains("allow", "quarantine", "reject");
-        // Not every kind lost: chosen by name as without a choice.
-        assertThat(rules(absent).keySet()).containsExactly("other");
-    }
-
-    @Test
-    void aClassifiedRuleCarriesAsDataOnlyTheFieldsItsOwnRecordsHold() {
+    void anEventTypesRuleCarriesAsDataOnlyTheFieldsItsOwnRecordsHold() {
         // Seen in chat 172: every NetScaler rule given every key any NetScaler message held (a logon's Data its ICA
         // application, an SNMP trap's cpu), and the documentation listing them "not in the sample".
         final StringBuilder lines = new StringBuilder();
@@ -1436,35 +1353,22 @@ class TestDraftMapping extends DraftFixtures {
             lines.append("time=2026-11-06T09:00:0%dZ action=login user=u%d session=s%d\n".formatted(i, i, i));
             lines.append("time=2026-11-06T09:01:0%dZ action=print printer=p%d pages=%d\n".formatted(i, i, i + 1));
         }
-        final Map<String, Object> notes = Map.of("fields", List.of(), "events", List.of(
-                Map.of("event", "logon", "field", "action", "value", "login", "event_detail", "Authenticate",
-                        "action", "Logon"),
-                Map.of("event", "printed", "field", "action", "value", "print", "event_detail", "Print")));
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(
+                confirmed("Authenticate-Logon", "Authenticate", "Logon", "action", "login"),
+                confirmed("Print-Document", "Print", null, "action", "print")), true);
 
         final Map<String, Map<String, Object>> rules = rules(DraftMapping.draft(List.of(lines.toString()), "App",
                 null, null, notes, null, null));
 
-        assertThat(dataNames(rules.get("logon"))).doesNotContain("printer", "pages");
-        assertThat(dataNames(rules.get("printed"))).doesNotContain("session").contains("printer", "pages");
+        assertThat(dataNames(rules.get("authenticate_logon"))).doesNotContain("printer", "pages")
+                .contains("action");
+        assertThat(dataNames(rules.get("print_document"))).doesNotContain("session").contains("printer", "pages");
     }
-
     private static List<String> dataNames(final Map<String, Object> rule) {
         return JsonValues.maps(rule.get("fields")).stream()
                 .filter(field -> field.get("data_name") != null)
                 .map(field -> String.valueOf(field.get("data_name")))
                 .toList();
-    }
-
-    private static String msgActCsv() {
-        final List<String> lines = new ArrayList<>(List.of("timestamp,sender,recipient,subject,msg_act,direction"));
-        for (int i = 0; i < 60; i++) {
-            lines.add("2026-11-11T08:" + String.format("%02d", i) + ":04Z,u" + i + "@example.com,r" + i
-                      + "@example.com,Subject " + i + "," + List.of("allow", "quarantine", "reject").get(i % 3) + ","
-                      + (i % 2 == 0
-                    ? "inbound"
-                    : "outbound"));
-        }
-        return String.join("\n", lines) + "\n";
     }
 
     // The draft's common entries and its rules' fields.

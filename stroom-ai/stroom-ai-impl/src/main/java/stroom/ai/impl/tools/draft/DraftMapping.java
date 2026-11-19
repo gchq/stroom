@@ -215,6 +215,11 @@ public final class DraftMapping {
     private static final String EXTRACT = "extract";
     private static final String DATA_NAME = "data_name";
     private static final String EVENTS = "events";
+    // Said when the draft has no catalogue of event types to follow.
+    private static final String UNCATALOGUED_NOTE = "No catalogue of event types yet: these rules are the draft's own "
+                                                    + "guesses from the sample's values, a draft to be catalogued. "
+                                                    + "Catalogue the event types (catalogue_event_types) and draft "
+                                                    + "again before building: the translation follows the catalogue.";
 
     private DraftMapping() {
         // Static only.
@@ -257,54 +262,17 @@ public final class DraftMapping {
                 ? ""
                 : sourceName;
         if (read.spec() != null && SplitterSpec.ALTERNATIVES.equals(read.spec().kind())) {
-            final String field = read.spec().variantField();
-            return withDrops(VariantDrafts.draft(read, (variant, records) -> new Drafting(records, source)
-                    .draft(systemName, environment, SourceNotes.forVariant(sourceNotes, field, variant), detailCheck)),
-                    sourceNotes);
+            return VariantDrafts.draft(read, (variant, records) -> new Drafting(records, source)
+                    .draft(systemName, environment, sourceNotes, detailCheck));
         }
         final Optional<SplitterSpec.ConverterVariants> formats = read.spec() == null
                 ? Optional.empty()
                 : read.spec().converterVariants();
         if (formats.isPresent()) {
-            return withDrops(VariantDrafts.draft(read, formats.get(), (variant, records) -> new Drafting(records,
-                    source).draft(systemName, environment, SourceNotes.forVariant(sourceNotes, formats.get().field(),
-                    variant), detailCheck)), sourceNotes);
+            return VariantDrafts.draft(read, formats.get(), (variant, records) -> new Drafting(records, source)
+                    .draft(systemName, environment, sourceNotes, detailCheck));
         }
-        return withDrops(new Drafting(read, source).draft(systemName, environment, sourceNotes, detailCheck),
-                sourceNotes);
-    }
-
-    // The draft with a drop rule for each kind the user said to leave untranslated (classify_kinds), so their records
-    // are neither translated nor logged as Unknown (asked for by the user: a drop left to the agent could be
-    // forgotten, and the records then kept as Unknown, logged in every Error stream).
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> withDrops(final Map<String, Object> result,
-                                                 final Map<String, Object> sourceNotes) {
-        final List<String> dropped = sourceNotes == null
-                ? List.of()
-                : JsonValues.strings(sourceNotes.get(SourceNotes.DROPPED));
-        if (dropped.isEmpty() || !(result.get("mapping") instanceof final Map<?, ?> drafted)) {
-            return result;
-        }
-        final Map<String, Object> mapping = (Map<String, Object>) drafted;
-        final List<Object> drops = new ArrayList<>((List<Object>) mapping.getOrDefault("drop_when", List.of()));
-        final List<String> added = new ArrayList<>();
-        for (final String key : dropped) {
-            final List<Map<String, Object>> when = SourceNotes.dropConditions(key);
-            final Map<String, Object> drop = dict("reason", SourceNotes.DROPPED_REASON + ": " + key, "when", when);
-            if (!when.isEmpty() && !drops.contains(drop)) {
-                drops.add(drop);
-                added.add(key);
-            }
-        }
-        if (!added.isEmpty()) {
-            mapping.put("drop_when", drops);
-            final List<Object> notes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
-            notes.add("Kinds the user said to leave untranslated are dropped (drop_when), neither translated nor "
-                      + "logged: " + String.join("; ", added) + ".");
-            result.put("notes", notes);
-        }
-        return result;
+        return new Drafting(read, source).draft(systemName, environment, sourceNotes, detailCheck);
     }
 
     /// The sample's records as the draft reads them.
@@ -914,9 +882,7 @@ public final class DraftMapping {
             homes();
             users();
             correlated();
-            final Kinds kinds = kinds(sourceNotes == null
-                    ? List.of()
-                    : JsonValues.strings(sourceNotes.get(SourceNotes.KIND_FIELDS)));
+            final Kinds kinds = kinds(List.of());
             final String naming = kinds.namings().isEmpty()
                     ? null
                     : kinds.namings().getFirst();
@@ -928,11 +894,14 @@ public final class DraftMapping {
             List<String> rest = kinds.rest();
             Map<String, Object> applied = null;
             if (sourceNotes != null && !sourceNotes.isEmpty()
-                && (JsonValues.truthy(sourceNotes.get(FIELDS)) || JsonValues.truthy(sourceNotes.get(EVENTS)))) {
-                // The user's documentation says where fields belong and what each event is: it wins over guesses
-                // from names.
+                && (JsonValues.truthy(sourceNotes.get(FIELDS)) || SourceNotes.catalogue(sourceNotes) != null)) {
+                // The user's documentation says where fields belong, and the catalogue what each event type is and
+                // how its records are recognised: they win over guesses from names.
                 applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck, records);
                 rest = withNotes(applied, rest);
+            }
+            if (applied == null || !Boolean.TRUE.equals(applied.get(SourceNotes.CATALOGUED))) {
+                notes.add(UNCATALOGUED_NOTE);
             }
             final List<String> unusedTimes = unusedTimes(rest);
             if (!unusedTimes.isEmpty()) {
@@ -2423,34 +2392,40 @@ public final class DraftMapping {
         @SuppressWarnings("unchecked")
         private List<String> withNotes(final Map<String, Object> applied, final List<String> rest) {
             final List<String> appliedFields = (List<String>) applied.get(FIELDS);
-            final List<String> appliedEvents = (List<String>) applied.get(EVENTS);
-            final List<String> fromSample = (List<String>) applied.get("from_sample");
+            final List<String> appliedEvents = (List<String>) applied.getOrDefault(EVENTS, List.of());
             final List<String> unread = (List<String>) applied.getOrDefault("unread_fields", List.of());
             if (!unread.isEmpty()) {
-                notes.add("The source notes name what the draft couldn't use, so those rules keep the sample's: "
-                          + String.join("; ", unread) + ". The fields are " + reprs(names) + ": correct the notes "
-                          + "(classify_kinds from_user) if a kind's user or object is one of them.");
+                notes.add("The catalogue names what the draft couldn't use: " + String.join("; ", unread)
+                          + ". The fields are " + reprs(names) + ": correct the event type (catalogue_event_types "
+                          + "op change) if its user or object is one of them.");
             }
-            final List<String> notInCatalogue = (List<String>) applied.get("not_in_catalogue");
-            if (!appliedEvents.isEmpty()) {
-                notes.removeIf(n -> n.startsWith("One rule per value of") || n.startsWith("No field names the kind"));
+            final boolean catalogued = Boolean.TRUE.equals(applied.get(SourceNotes.CATALOGUED));
+            if (catalogued) {
+                notes.removeIf(n -> n.startsWith("One rule per value of") || n.startsWith("No field names the kind")
+                                    || n.startsWith("Drafted from the sample's values"));
             }
             List<String> left = rest;
-            if (!appliedFields.isEmpty() || !appliedEvents.isEmpty()) {
+            if (!appliedFields.isEmpty() || catalogued) {
                 final List<Map<String, Object>> drafted = JsonValues.maps(mapping.get("common"));
                 left = rest.stream().filter(n -> drafted.stream().noneMatch(e -> n.equals(e.get(FIELD)))).toList();
-                final List<String> said = new ArrayList<>(appliedFields);
-                said.addAll(appliedEvents);
-                notes.addFirst("Drafted from the source documentation: " + String.join("; ", said) + ".");
             }
-            if (!fromSample.isEmpty()) {
-                notes.add(Math.min(1, notes.size()), "Kept from the sample's values, where the catalogue can't be "
-                                                     + "followed: " + String.join("; ", fromSample) + ".");
+            if (!appliedFields.isEmpty()) {
+                notes.addFirst("Drafted from the source documentation: " + String.join("; ", appliedFields) + ".");
             }
-            if (!notInCatalogue.isEmpty()) {
-                notes.add("The catalogue does not list " + String.join(", ", notInCatalogue) + ": those records fall "
-                          + "to the rule for the rest; read the reference documents (find_in_content pattern=the "
-                          + "value) or ask the user.");
+            if (catalogued) {
+                notes.add(Math.min(1, notes.size()), "Drafted from the catalogue of event types: one rule per way "
+                                                     + "each event type is recognised, then the catch-all for "
+                                                     + "uncatalogued records: " + String.join("; ", appliedEvents)
+                                                     + ".");
+                final List<String> notInSample = (List<String>) applied.getOrDefault("not_in_sample", List.of());
+                if (!notInSample.isEmpty()) {
+                    notes.add("Event types no sampled record is recognised as (not in the sample): "
+                              + String.join(", ", notInSample) + ".");
+                }
+                if (applied.get("uncatalogued") instanceof final Integer count && count > 0) {
+                    notes.add(count + " sampled record(s) no event type recognises: the catch-all translates them "
+                              + "as Unknown (uncatalogued records).");
+                }
             }
             return left;
         }

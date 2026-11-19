@@ -122,36 +122,43 @@ class TestSourceNotes {
     }
 
     @Test
-    void theDraftFollowsTheDocumentation() {
+    void theDraftPlacesTheFieldsTheDocumentationPlaces() {
+        final List<Map<String, Object>> events = new ArrayList<>(List.of(other()));
         final Map<String, Object> mapping = mapping(new ArrayList<>(List.of(entry("path", "EventSource/User/Id",
-                "field", "user"))), new ArrayList<>(List.of(other())));
+                "field", "user"))), events);
 
         final Map<String, Object> applied = SourceNotes.applyToDraft(mapping, NAMES, VALUES, notes(), CHECK);
 
         final Map<Object, Map<String, Object>> common = byKey(list(mapping.get("common")), "path");
         assertThat(common.get("EventSource/User/Id").get("field")).isEqualTo("usr");
         assertThat(common.get("EventSource/Client/IPAddress").get("field")).isEqualTo("src");
-        final Map<Object, Map<String, Object>> rules = byKey(list(mapping.get("events")), "name");
-        assertThat(rules.get("4625").get("when")).isEqualTo(List.of(Map.of("field", "evt", "equals", "4625")));
-        final Map<Object, Map<String, Object>> failed = byKey(list(rules.get("4625").get("fields")), "path");
-        assertThat(failed.get("EventDetail/TypeId").get("value")).isEqualTo("Logon failed");
-        assertThat(failed.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
-        assertThat(failed.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("false");
-        assertThat(failed.get("EventDetail/Description").get("value")).isEqualTo("An account failed to log on");
-        // The schema wants the user authenticating: the one the event is about.
-        assertThat(failed.get("EventDetail/Authenticate/User/Id").get("field")).isEqualTo("usr");
-        assertThat(byKey(list(rules.get("4634").get("fields")), "path").get("EventDetail/Authenticate/Action")
-                .get("value")).isEqualTo("Logoff");
-        // Documented, though the sample has none.
-        assertThat(rules).containsKey("4648");
-        // The rule for everything else stays last.
-        assertThat(list(mapping.get("events")).getLast().get("name")).isEqualTo("other");
-        assertThat(applied.get("not_in_sample")).isEqualTo(List.of("evt=4648"));
-        assertThat(applied.get("not_in_catalogue")).isEqualTo(List.of("evt=9999"));
         assertThat(applied.get("fields")).isEqualTo(List.of("usr -> EventSource/User/Id",
                 "src -> EventSource/Client/IPAddress"));
-        assertThat(applied.get("events")).asInstanceOf(InstanceOfAssertFactories.LIST)
-                .contains("4648 (evt=4648) -> Authenticate, not in the sample");
+        // The old notes' events are no catalogue: the draft's own rules stay.
+        assertThat(applied.get(SourceNotes.CATALOGUED)).isEqualTo(false);
+        assertThat(mapping.get("events")).isSameAs(events);
+    }
+
+    @Test
+    void theCatalogueIsReadFromTheNotesJsonBlock() {
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(TestCatalogueTranslation.type(
+                "Authenticate-Logon", "Logon", "Authenticate", "Logon", "true",
+                TestCatalogueTranslation.way(TestCatalogueTranslation.eq("evt", "4624")))), true);
+        notes.put("scope", Map.of("source_type_field", "event>log_type", "source_types", List.of("Integration")));
+
+        assertThat(SourceNotes.catalogue(notes)).satisfies(catalogue -> {
+            assertThat(catalogue.eventTypes()).extracting(type -> type.typeId()).containsExactly("Authenticate-Logon");
+            assertThat(catalogue.catchAll().confirmed()).isTrue();
+            assertThat(catalogue.scope().sourceTypes()).containsExactly("Integration");
+        });
+        assertThat(SourceNotes.catchAllReason(notes, SourceNotes.catalogue(notes)))
+                .isEqualTo(CatalogueTranslation.CATCH_ALL_AGREED);
+        notes.put("catch_all", Map.of("status", "confirmed", "allow_unknown", "the user's reason"));
+        assertThat(SourceNotes.catchAllReason(notes, SourceNotes.catalogue(notes))).isEqualTo("the user's reason");
+        assertThat(SourceNotes.catalogue(notes())).as("no event_types").isNull();
+        assertThat(SourceNotes.catalogue(null)).isNull();
+        // Several docs: the first catalogue.
+        assertThat(SourceNotes.merged(List.of(notes(), notes)).get("event_types")).isEqualTo(notes.get("event_types"));
     }
 
     @Test
@@ -165,9 +172,14 @@ class TestSourceNotes {
 
     @Test
     void aMappingThatContradictsTheCatalogueIsReported() {
-        final Map<String, Object> mapping = mapping(new ArrayList<>(List.of(entry("path", "EventSource/User/Id",
-                "field", "user"))), new ArrayList<>(List.of(other())));
-        SourceNotes.applyToDraft(mapping, NAMES, VALUES, notes(), CHECK);
+        final List<Map<String, Object>> events = new ArrayList<>();
+        for (final Map<String, Object> event : list(notes().get("events"))) {
+            events.add(sampleRule(String.valueOf(event.get("value")), List.of(entry("field", "evt", "equals",
+                            event.get("value"))), entry("path", "EventDetail/TypeId", "value", event.get("type_id")),
+                    entry("path", "EventDetail/Authenticate/Action", "value", event.get("action"))));
+        }
+        events.add(other());
+        final Map<String, Object> mapping = mapping(new ArrayList<>(), events);
         assertThat(SourceNotes.checkMapping(mapping, notes())).isEmpty();
 
         for (final Map<String, Object> rule : list(mapping.get("events"))) {
@@ -188,19 +200,6 @@ class TestSourceNotes {
                 .toList());
         assertThat(SourceNotes.checkMapping(mapping, notes())).anySatisfy(p -> assertThat(p).contains(
                 "4634 (evt=4634): no rule takes it"));
-    }
-
-    @Test
-    void withoutCataloguedEventsOnlyTheFieldsAreApplied() {
-        final List<Map<String, Object>> events = new ArrayList<>(List.of(other()));
-        final Map<String, Object> mapping = mapping(new ArrayList<>(), events);
-        final Map<String, Object> notes = notes();
-        notes.remove("events");
-
-        final Map<String, Object> applied = SourceNotes.applyToDraft(mapping, NAMES, VALUES, notes, CHECK);
-
-        assertThat(applied.get("events")).isEqualTo(List.of());
-        assertThat(mapping.get("events")).isSameAs(events);
     }
 
     @Test
@@ -228,157 +227,6 @@ class TestSourceNotes {
                 .singleElement()
                 .as("another field's format isn't taken")
                 .satisfies(entry -> assertThat(entry).containsEntry("field", "usr").doesNotContainKey("time_format"));
-    }
-
-    @Test
-    void whereTheCatalogueCantBeFollowedTheSamplesOwnRulesAreKept() {
-        final Map<String, Object> permitted = sampleRule("traffic_permitted", List.of(
-                        entry("field", "event_type", "equals", "TRAFFIC"), entry("field", "action", "equals", "ALLOW")),
-                entry("path", "EventDetail/Network/Permit/Source/Device/IPAddress", "field", "src_ip"));
-        final Map<String, Object> denied = sampleRule("traffic_denied", List.of(
-                        entry("field", "event_type", "equals", "TRAFFIC"), entry("field", "action", "equals", "DENY")),
-                entry("path", "EventDetail/Network/Deny/Source/Device/IPAddress", "field", "src_ip"));
-        final Map<String, Object> login = sampleRule("login_success", List.of(entry("field", "action", "one_of",
-                        List.of("LOGIN_SUCCESS"))),
-                entry("path", "EventDetail/Authenticate/Action", "value", "Logon"),
-                entry("path", "EventDetail/Authenticate/Data", "data_name", "x", "field", "x"));
-        final Map<String, Object> config = sampleRule("config_change", List.of(entry("field", "action", "equals",
-                        "CONFIG_CHANGE")),
-                entry("path", "EventDetail/Update/After/Configuration/Type", "value", "Policy"));
-        final Map<String, Object> mapping = mapping(new ArrayList<>(), new ArrayList<>(List.of(permitted, denied,
-                login, config, other())));
-        final List<String> names = List.of("event_type", "action", "src_ip");
-        final Map<String, List<String>> values = Map.of("event_type", List.of("TRAFFIC", "ADMIN", "SYSTEM"),
-                "action", List.of("ALLOW", "DENY", "LOGIN_SUCCESS", "LOGIN_FAILED", "CONFIG_CHANGE",
-                        "VPN_TUNNEL_DOWN"), "src_ip", List.of("192.0.2.10"));
-        final Map<String, Object> notes = new LinkedHashMap<>();
-        notes.put("events", guessed());
-
-        final Map<String, Object> applied = SourceNotes.applyToDraft(mapping, names, values, notes, CHECK);
-
-        final Map<Object, Map<String, Object>> rules = byKey(list(mapping.get("events")), "name");
-        assertThat(rules.get("traffic_permitted")).isSameAs(permitted);
-        assertThat(rules.get("traffic_denied")).isSameAs(denied);
-        assertThat(rules.values()).noneMatch(rule -> list(rule.get("fields")).stream().anyMatch(field ->
-                String.valueOf(field.get("path")).startsWith("EventDetail/Allow")
-                || String.valueOf(field.get("path")).startsWith("EventDetail/Deny")));
-        assertThat(applied.get("from_sample")).isEqualTo(List.of("event_type=TRAFFIC: the catalogue has more than "
-                                                                 + "one event for it, so the sample's rules are "
-                                                                 + "kept (traffic_permitted: Network; "
-                                                                 + "traffic_denied: Network)"));
-        // The catalogue's own events, completed from the sample's rule for the same records where the schema wants
-        // more.
-        final Map<Object, Map<String, Object>> loginFields = byKey(list(rules.get("login_success").get("fields")),
-                "path");
-        assertThat(loginFields).containsKey("EventDetail/Authenticate/Action");
-        assertThat(loginFields.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("true");
-        assertThat(rules.get("config_change").get("fields")).asInstanceOf(InstanceOfAssertFactories.LIST)
-                .anyMatch(field -> "EventDetail/Update/After/Configuration/Type".equals(((Map<?, ?>) field)
-                        .get("path")));
-        // Unknown is left for the user to agree when the XSLT is built, never agreed by the draft.
-        assertThat(byKey(list(rules.get("vpn_down").get("fields")), "path")).containsKey("EventDetail/Unknown/Data");
-        assertThat(rules.values()).noneMatch(rule -> rule.containsKey("allow_unknown"));
-    }
-
-    @Test
-    void ruleNamesAreMadeUnique() {
-        final Map<String, Object> mapping = mapping(new ArrayList<>(), new ArrayList<>());
-        final Map<String, Object> notes = new LinkedHashMap<>();
-        notes.put("events", List.of(
-                entry("event", "Log on", "description", "a", "event_detail", "Authenticate", "field", "e", "value",
-                        "1"),
-                entry("event", "log-on", "description", "b", "event_detail", "Authenticate", "field", "e", "value",
-                        "2")));
-
-        SourceNotes.applyToDraft(mapping, List.of("e"), Map.of("e", List.of("1", "2")), notes, CHECK);
-
-        assertThat(list(mapping.get("events"))).extracting(rule -> rule.get("name"))
-                .containsExactly("log_on", "log_on_");
-    }
-
-    @Test
-    void anEventSaidInFreeTextIsARuleMatchingItsPatternItsGroupsReadAsFields() {
-        // Asked for by the user after chat 166: sshd's events told apart by patterns, not by splitter parts.
-        final List<String> names = List.of("time", "host", "app", "message");
-        final Map<String, List<String>> values = Map.of(
-                "time", List.of("2026-11-06T09:00:00Z"), "host", List.of("jump01"), "app", List.of("sshd"),
-                "message", List.of("Failed password for alice from 10.0.0.1 port 22 ssh2",
-                        "Accepted publickey for bob from 10.0.0.2 port 22 ssh2",
-                        "Server listening on 0.0.0.0 port 22."));
-        final Map<String, Object> notes = new LinkedHashMap<>();
-        notes.put("events", List.of(
-                entry("event", "sshd", "description", "Any other sshd line", "event_detail", "Unknown", "field",
-                        "app", "value", "sshd"),
-                entry("event", "Failed password", "description", "A password was refused", "event_detail",
-                        "Authenticate", "action", "Logon", "success", false, "field", "message", "matches",
-                        "^Failed password for (?:invalid user )?(\\S+) from (\\S+)", "names",
-                        List.of("ssh_user", "ssh_src"), "actor", "ssh_user", "within", "app=sshd"),
-                entry("event", "Accepted publickey", "description", "A key was accepted", "event_detail",
-                        "Authenticate", "action", "Logon", "success", true, "field", "message", "matches",
-                        "^Accepted publickey for (\\S+) from (\\S+)", "names", List.of("key_user", "key_src"),
-                        "actor", "key_user")));
-        final Map<String, Object> mapping = mapping(new ArrayList<>(), new ArrayList<>(List.of(other())));
-
-        final Map<String, Object> applied = SourceNotes.applyToDraft(mapping, names, values, notes, CHECK);
-
-        final List<Map<String, Object>> rules = list(mapping.get("events"));
-        // The patterns first: the rule for the rest of sshd's lines would otherwise take theirs.
-        // Within the kind it splits: only sshd's lines, as the user confirmed it.
-        assertThat(rules).extracting(rule -> String.valueOf(rule.get("when"))).startsWith(
-                "[{field=app, equals=sshd}, {field=message, matches=^Failed password for (?:invalid user )?(\\S+) "
-                + "from (\\S+)}]",
-                "[{field=message, matches=^Accepted publickey for (\\S+) from (\\S+)}]",
-                "[{field=app, equals=sshd}]");
-        final Map<String, Object> failed = rules.getFirst();
-        assertThat(list(failed.get("fields"))).contains(
-                entry("path", "EventDetail/TypeId", "value", "Failed password"),
-                entry("path", "EventSource/User/Id", "field", "ssh_user"),
-                entry("path", "EventDetail/Authenticate/Outcome/Success", "value", "false"));
-        // Each pattern's groups read by an extract entry of its own.
-        assertThat(list(mapping.get("extract"))).containsExactly(
-                entry("field", "message", "regex", "^Failed password for (?:invalid user )?(\\S+) from (\\S+)",
-                        "names", List.of("ssh_user", "ssh_src")),
-                entry("field", "message", "regex", "^Accepted publickey for (\\S+) from (\\S+)", "names",
-                        List.of("key_user", "key_src")));
-        assertThat(String.valueOf(applied.get("unread_fields"))).doesNotContain("ssh_user");
-        // A message is no value to list as missing from the catalogue.
-        assertThat((List<?>) applied.get("not_in_catalogue")).noneMatch(item -> String.valueOf(item)
-                .startsWith("message="));
-
-        // The mapping checked against the patterns: a rule for each, or said.
-        assertThat(SourceNotes.checkMapping(mapping, notes)).isEmpty();
-        final Map<String, Object> without = new LinkedHashMap<>(mapping);
-        without.put("events", rules.subList(1, rules.size()));
-        assertThat(SourceNotes.checkMapping(without, notes)).singleElement().asString()
-                .startsWith("Failed password (message matching ^Failed password for").endsWith("no rule takes it");
-    }
-
-    @Test
-    void aKindSplitByAnotherFieldsValueIsItsOwnRuleBeforeTheKinds() {
-        // Seen in chat 168: SSLVPN's events split by event_id within category=SSLVPN, proposed as '^LOGIN$' patterns
-        // for want of a way to give the value.
-        final List<String> names = List.of("category", "event_id", "body");
-        final Map<String, List<String>> values = Map.of("category", List.of("SSLVPN", "SSLVPN", "AAA"),
-                "event_id", List.of("LOGIN", "LOGOUT", "LOGIN"), "body", List.of("a b c", "d e f", "g h i"));
-        final Map<String, Object> notes = new LinkedHashMap<>();
-        notes.put("events", List.of(
-                entry("event", "SSLVPN", "description", "Other VPN events", "event_detail", "Alert", "field",
-                        "category", "value", "SSLVPN"),
-                entry("event", "VPN login", "description", "A VPN login", "event_detail", "Authenticate", "action",
-                        "Logon", "field", "event_id", "value", "LOGIN", "within", "category=SSLVPN"),
-                entry("event", "AAA login", "description", "An AAA login", "event_detail", "Authenticate", "action",
-                        "Logon", "field", "event_id", "value", "LOGIN", "within", "category=AAA")));
-        final Map<String, Object> mapping = mapping(new ArrayList<>(), new ArrayList<>(List.of(other())));
-
-        SourceNotes.applyToDraft(mapping, names, values, notes, CHECK);
-
-        // The same value in two kinds isn't a twin: each is within its own.
-        assertThat(SourceNotes.catalogueProblems(JsonValues.maps(notes.get("events")), null)).isEmpty();
-        assertThat(list(mapping.get("events"))).extracting(rule -> String.valueOf(rule.get("when"))).startsWith(
-                "[{field=category, equals=SSLVPN}, {field=event_id, equals=LOGIN}]",
-                "[{field=category, equals=AAA}, {field=event_id, equals=LOGIN}]",
-                "[{field=category, equals=SSLVPN}]");
-        assertThat(SourceNotes.checkMapping(mapping, notes)).isEmpty();
     }
 
     @Test

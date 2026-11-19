@@ -113,7 +113,7 @@ class TestDraftMixedLines {
     // What an agent decides beyond the draft for the formats that have none of their own: a time and a host.
     @SuppressWarnings("unchecked")
     @Test
-    void aConfirmedKindIsTheRuleOfTheFormatWhoseRecordsHoldItNotOfEveryFormat() {
+    void anEventTypeIsTheRuleOfTheFormatWhoseRecordsItRecognisesNotOfEveryFormat() {
         // Seen in chat 163: confirmed kinds applied to every format with an 'event' field gave a rule for each kind
         // in each format (linux_icastart, netscaler_history), failing the schema checks.
         final StringBuilder text = new StringBuilder();
@@ -130,11 +130,11 @@ class TestDraftMixedLines {
                         "names", List.of("time", "host", "event", "user")),
                 Map.of("kind", "regex", "variant", "linux", "pattern", "^(\\S+) (\\S+) LINUX (\\S+) (\\S+)$",
                         "names", List.of("time", "host", "event", "user")))));
-        final Map<String, Object> notes = Map.of("source", "Mixed", "fields", List.of(), "events", List.of(
-                Map.of("event", "LOGIN", "field", "event", "value", "LOGIN", "description", "A gateway logon",
-                        "event_detail", "Authenticate", "action", "Logon"),
-                Map.of("event", "SUDO", "field", "event", "value", "SUDO", "description", "A sudo command",
-                        "event_detail", "Process", "action", "Execute")));
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(
+                TestCatalogueTranslation.type("Authenticate-Logon", "Gateway logon", "Authenticate", "Logon", null,
+                        TestCatalogueTranslation.way(TestCatalogueTranslation.eq("event", "LOGIN"))),
+                TestCatalogueTranslation.type("Process-Sudo", "Sudo command", "Process", "Execute", null,
+                        TestCatalogueTranslation.way(TestCatalogueTranslation.eq("event", "SUDO")))), true);
 
         final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
                 notes, null, splitter);
@@ -147,6 +147,10 @@ class TestDraftMixedLines {
                 .toList();
         assertThat(rules).as("%s", rules).contains("[variant=gw, event=LOGIN]", "[variant=linux, event=SUDO]")
                 .doesNotContain("[variant=linux, event=LOGIN]", "[variant=gw, event=SUDO]");
+        // Each format's uncatalogued records its own: the rule marked catch_all has no conditions, so none is.
+        assertThat(JsonValues.maps(mapping(draft).get("events"))).noneMatch(rule -> rule.containsKey("catch_all"))
+                .anyMatch(rule -> "gw_uncatalogued".equals(rule.get("name")))
+                .anyMatch(rule -> "linux_uncatalogued".equals(rule.get("name")));
     }
 
     @Test
@@ -184,7 +188,7 @@ class TestDraftMixedLines {
     }
 
     @Test
-    void aPatternKindIsTheRuleOfTheFormatWhoseMessagesItMatches() {
+    void aPatternWayIsTheRuleOfTheFormatWhoseMessagesItMatches() {
         // Asked for by the user after chat 166: an event said in free text told apart by a pattern, in its own
         // format's rules only, before that format's rule for the rest.
         final StringBuilder text = new StringBuilder();
@@ -201,12 +205,13 @@ class TestDraftMixedLines {
                         "names", List.of("time", "host", "event", "user")),
                 Map.of("kind", "regex", "variant", "linux", "pattern", "^(\\S+) (\\S+) LINUX (.*)$",
                         "names", List.of("time", "host", "message")))));
-        final Map<String, Object> notes = Map.of("source", "Mixed", "fields", List.of(), "events", List.of(
-                Map.of("event", "Failed password", "description", "A password was refused", "event_detail",
-                        "Authenticate", "action", "Logon", "success", false, "field", "message", "matches",
-                        "^sshd: Failed password for (\\S+) from (\\S+)", "names", List.of("ssh_user", "ssh_src"),
-                        "actor", "ssh_user", "within", "variant=linux")));
-
+        final Map<String, Object> failed = TestCatalogueTranslation.type("Authenticate-FailedPassword",
+                "Failed password", "Authenticate", "Logon", "false", Map.of("when", List.of(Map.of("field",
+                        "message", "matches", "^sshd: Failed password for (\\S+) from (\\S+)")), "names",
+                        List.of("ssh_user", "ssh_src")));
+        failed.put("actor", "ssh_user");
+        failed.put("description", "A password was refused");
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(failed), true);
         final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
                 notes, null, splitter);
 
@@ -214,22 +219,25 @@ class TestDraftMixedLines {
                 .map(rule -> rule.get("name") + " " + rule.get("when"))
                 .toList();
         // The format's condition once: within names the format, which the format's rules test already.
-        assertThat(rules).as("%s", rules).anySatisfy(rule -> assertThat(rule).startsWith("linux_failed_password")
+        assertThat(rules).as("%s", rules).anySatisfy(rule -> assertThat(rule)
+                .startsWith("linux_authenticate_failedpassword")
                 .containsOnlyOnce("equals=linux").contains("matches=^sshd: Failed password for"));
         assertThat(rules).noneMatch(rule -> rule.startsWith("gw_") && rule.contains("matches"));
-        assertThat(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_failed_password"))
+        assertThat(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_authenticate_failedpassword"))
                 .findFirst().orElseThrow()))
-                .isLessThan(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_other"))
+                .isLessThan(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_uncatalogued"))
                         .findFirst().orElseThrow()));
         assertThat(JsonValues.maps(mapping(draft).get("extract"))).anySatisfy(extract -> assertThat(extract)
                 .containsEntry("names", List.of("ssh_user", "ssh_src")));
-        // Not drafted into the other format, nor noted there as missing from the sample (seen in chat 170).
-        assertThat(String.valueOf(draft.get("notes"))).doesNotContain("[gw] Drafted from the source documentation");
+        // The user its groups read is the event's.
+        assertThat(JsonValues.maps(mapping(draft).get("events")).stream()
+                .filter(rule -> String.valueOf(rule.get("name")).startsWith("linux_authenticate"))
+                .findFirst().orElseThrow().get("fields").toString()).contains("field=ssh_user");
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void aKindTheUserSaidToDropIsDroppedNotTranslatedNorLogged() {
+    void anEventTypeTheUserDroppedIsDroppedNotTranslatedNorLogged() {
         // Asked for by the user: a drop left to the agent could be forgotten, the records kept as Unknown and logged.
         final StringBuilder text = new StringBuilder();
         for (int i = 0; i < 4; i++) {
@@ -239,16 +247,20 @@ class TestDraftMixedLines {
         }
         final SplitterSpec splitter = SplitterSpec.fromMap(Map.of("kind", "regex", "pattern",
                 "^(\\S+) (\\S+) GW (\\S+) (\\S+)$", "names", List.of("time", "host", "event", "user")));
-        final Map<String, Object> notes = Map.of("source", "Mixed", "fields", List.of(), "events", List.of(),
-                "dropped", List.of("event=LOGOUT"));
+        final Map<String, Object> logoff = TestCatalogueTranslation.type("Authenticate-Logoff", "Logoff",
+                "Authenticate", "Logoff", null, TestCatalogueTranslation.way(TestCatalogueTranslation.eq("event",
+                        "LOGOUT")));
+        logoff.put("drop", true);
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(logoff), true);
 
         final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
                 notes, null, splitter);
 
         assertThat((List<Map<String, Object>>) mapping(draft).get("drop_when")).containsExactly(Map.of(
-                "reason", "the user said to leave these untranslated: event=LOGOUT",
+                "reason", "the user said to leave these untranslated: Authenticate-Logoff",
                 "when", List.of(Map.of("field", "event", "equals", "LOGOUT"))));
-        assertThat(String.valueOf(draft.get("notes"))).contains("dropped (drop_when), neither translated nor logged");
+        assertThat(JsonValues.maps(mapping(draft).get("events"))).extracting(rule -> rule.get("name"))
+                .containsExactly("uncatalogued");
     }
 
     // Each rule's conditions, as field=value.

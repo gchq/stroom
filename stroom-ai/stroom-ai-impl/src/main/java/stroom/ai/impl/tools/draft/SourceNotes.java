@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.IpAddresses;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
@@ -102,6 +103,14 @@ public final class SourceNotes {
     public static final String WHOLE_KIND = "whole_kind";
     /// The reason a dropped kind's drop rule gives.
     public static final String DROPPED_REASON = "the user said to leave these untranslated";
+    /// The catalogue's event types (the contract's `event_types`).
+    public static final String EVENT_TYPES = "event_types";
+    /// The catalogue's catch-all (`catch_all`): its status, and the agreement for its records (`allow_unknown`).
+    public static final String CATCH_ALL = "catch_all";
+    /// The keys of the source notes' JSON block that hold the catalogue.
+    public static final List<String> CATALOGUE_KEYS = List.of(EVENT_TYPES, CATCH_ALL, "scope");
+    /// In what [#applyToDraft] returns: true when the rules are the catalogue's.
+    public static final String CATALOGUED = "catalogued";
     // A split's key: the kind it is within, the field, and its value or pattern.
     private static final Pattern SPLIT_KEY = Pattern.compile("^([^:=\\s]+=[^:]*): (\\S+) (matches|=) (.*)$");
     // How a pattern event's key holds its regex, apart from a value.
@@ -351,10 +360,11 @@ public final class SourceNotes {
         return problems;
     }
 
-    /// The draft mapping rebuilt from the notes where they speak: fields the dictionary places, one rule per
-    /// catalogued event the sample's fields can show. Where the catalogue can't be followed (an action element the
-    /// schema doesn't have, Unknown, events with the same field and value), the rules the sample's own values gave
-    /// are kept. For the draft mapping (draft_translation_mapping), which drafts `mapping` from the sample first.
+    /// The draft mapping rebuilt from the notes where they speak: fields the dictionary places, and, when the notes
+    /// hold a catalogue of event types ([#catalogue]), the rules it gives ([CatalogueTranslation]): one per way of
+    /// recognising each event type, in the catalogue's order, then the catch-all's. With no catalogue the draft's
+    /// own rules stay (a draft before cataloguing). For the draft mapping (draft_translation_mapping), which drafts
+    /// `mapping` from the sample first.
     ///
     /// @param mapping     The draft: `common` (field entries, each `path` and `field` or `value`) and `events`
     ///                    (rules, each `name`, `when` and `fields`, the one without `when` last). Changed in place.
@@ -362,8 +372,8 @@ public final class SourceNotes {
     /// @param values      Each field's values in the sample.
     /// @param notes       The source notes ([#readNotes]).
     /// @param detailCheck Why an `event_detail` can't be an action element ([#detailProblem]), or null.
-    /// @return What was applied, and what the sample and notes disagree on: `fields`, `events`, `not_in_sample`,
-    /// `not_in_catalogue` and `from_sample`.
+    /// @return What was applied: `fields`, and with a catalogue [#CATALOGUED], `events`, `not_in_sample`,
+    /// `uncatalogued`, `dropped` and `unread_fields` ([CatalogueTranslation#apply]).
     public static Map<String, Object> applyToDraft(final Map<String, Object> mapping,
                                                    final List<String> names,
                                                    final Map<String, List<String>> values,
@@ -372,10 +382,9 @@ public final class SourceNotes {
         return applyToDraft(mapping, names, values, notes, detailCheck, null);
     }
 
-    /// [#applyToDraft(Map, List, Map, Map, Function)], each catalogue rule given as Data only the fields left over
-    /// that its own records hold (asked for by the user: seen in chat 172, every NetScaler rule given every key any
-    /// NetScaler message held, a logon's Data its ICA application and SNMP cpu, and the documentation listing them
-    /// "not in the sample"); all of them where the sample has none of its records.
+    /// [#applyToDraft(Map, List, Map, Map, Function)] with the sample's records, so each rule is given as Data only
+    /// the fields left over that its own records hold (asked for by the user: seen in chat 172, every NetScaler rule
+    /// given every key any NetScaler message held), and starts from the draft's rule that took its records.
     ///
     /// @param mapping     The draft's mapping, changed in place.
     /// @param names       The records' fields.
@@ -392,23 +401,10 @@ public final class SourceNotes {
                                                    final Function<String, String> detailCheck,
                                                    final List<Map<String, Object>> records) {
         final List<Map<String, Object>> common = (List<Map<String, Object>>) mapping.get("common");
-        final List<Map<String, Object>> drafted = (List<Map<String, Object>>) mapping.get("events");
-        final List<Map<String, Object>> sampled = drafted.stream()
-                .filter(rule -> JsonValues.truthy(rule.get("when")))
-                .toList();
         final Map<String, Object> applied = new LinkedHashMap<>();
         final List<String> appliedFields = new ArrayList<>();
-        final List<String> appliedEvents = new ArrayList<>();
-        final List<String> notInSample = new ArrayList<>();
-        final List<String> notInCatalogue = new ArrayList<>();
-        final List<String> fromSample = new ArrayList<>();
         applied.put("fields", appliedFields);
-        applied.put("events", appliedEvents);
-        applied.put("not_in_sample", notInSample);
-        applied.put("not_in_catalogue", notInCatalogue);
-        applied.put("from_sample", fromSample);
-        final List<String> unread = new ArrayList<>();
-        applied.put("unread_fields", unread);
+        applied.put(CATALOGUED, false);
 
         final Map<String, Map<String, Object>> byField = new LinkedHashMap<>();
         for (final Map<String, Object> field : JsonValues.maps(notes.get("fields"))) {
@@ -452,145 +448,45 @@ public final class SourceNotes {
             appliedFields.add(name + " -> " + path);
         });
 
-        // Splits first (patterns, and values within a kind): each tells apart some of a kind's records, so its rule
-        // comes before the kind's own (the rest of a catch-all, classified too), or that rule would take them all.
-        final List<Map<String, Object>> events = JsonValues.maps(notes.get("events")).stream()
-                .filter(event -> names.contains(text(event.get("field")))
-                                 && (hasValue(event.get("value")) || isPattern(event)))
-                .sorted(Comparator.comparingInt(event -> isPattern(event) || isSplit(event)
-                        ? 0
-                        : 1))
-                .toList();
-        if (events.isEmpty()) {
+        final Catalogue catalogue = catalogue(notes);
+        if (catalogue == null) {
+            // No catalogue yet: the draft keeps its own rules, to be catalogued before building.
             return applied;
         }
-        // The fields a pattern's capture groups read (the user in 'Failed password for (\S+)'): an extract entry
-        // each pattern, and their values, so the rules can name them.
-        final List<String> knownNames = new ArrayList<>(names);
-        final Map<String, List<String>> knownValues = new LinkedHashMap<>();
-        values.forEach((name, held) -> knownValues.put(name, new ArrayList<>(held)));
-        captured(mapping, events, values, knownNames, knownValues);
-        final Set<List<String>> seen = new LinkedHashSet<>();
-        events.forEach(event -> seen.add(key(event)));
-        final Set<String> taken = new LinkedHashSet<>();
-        common.forEach(entry -> taken.add(NullSafe.get(entry.get("field"), String::valueOf)));
-        detailFields.forEach(entry -> taken.add(text(entry.get("field"))));
-        events.forEach(event -> taken.add(text(event.get("field"))));
-        final List<String> rest = names.stream()
-                .filter(name -> !taken.contains(name) && !NullSafe.isEmptyCollection(values.get(name)))
-                .toList();
-        // Two events a record can't tell apart: the same field and value (or pattern) within the same kind.
-        final Set<List<String>> twins = new LinkedHashSet<>();
-        for (final List<String> key : seen) {
-            if (events.stream().filter(event -> key(event).equals(key)).map(SourceNotes::twinKey).distinct().count()
-                < events.stream().filter(event -> key(event).equals(key)).count()) {
-                twins.add(key);
-            }
-        }
-
-        final List<Map<String, Object>> rules = new ArrayList<>();
-        final Catalogued known = new Catalogued(knownNames, knownValues);
-        // The records classified as one kind (classify_kinds, where none was told apart: told by a field every record
-        // has the same value of): its rule is the rule for every record, in place of the draft's own, so records with
-        // another value of that field (another host, a newer version) aren't left out of it.
-        Map<String, Object> whole = null;
-        for (final Map<String, Object> event : events) {
-            String detail = ToolText.strip(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
-                    .strip(), "/");
-            if (detail.isEmpty()) {
-                detail = UNKNOWN;
-            }
-            final List<String> key = key(event);
-            final String why = why(twins.contains(key), detail, detailCheck);
-            if (why != null) {
-                // The sample's values say more than the catalogue here: keep the rules they gave, when they name an
-                // action.
-                final List<Map<String, Object>> kept = sampled.stream()
-                        .filter(rule -> covers(rule, key) && !namesOnlyUnknown(rule))
-                        .toList();
-                if (!kept.isEmpty()) {
-                    final List<Map<String, Object>> fresh = kept.stream().filter(rule -> !rules.contains(rule))
-                            .toList();
-                    rules.addAll(fresh);
-                    if (!fresh.isEmpty()) {
-                        fromSample.add(key.get(0) + "=" + key.get(1) + ": " + why + ", so the sample's rules are "
-                                       + "kept (" + String.join("; ", fresh.stream()
-                                .map(rule -> rule.get("name") + ": " + String.join(", ", new TreeSet<>(detailOf(rule))))
-                                .toList()) + ")");
-                    }
-                    continue;
-                }
-                if (!UNKNOWN.equals(detail) && detailCheck != null && detailCheck.apply(detail) != null) {
-                    detail = UNKNOWN;
-                }
-            }
-            final List<String> ownRest = heldBy(event, key, rest, records);
-            JsonValues.strings(event.get(NAMES)).stream().filter(name -> !ownRest.contains(name)).forEach(ownRest::add);
-            rules.add(rule(event, key, detail, common, detailFields, sampled, ownRest, known));
-            if (sampled.isEmpty() && events.size() == 1 && !isPattern(event) && !isSplit(event)
-                && JsonValues.strings(notes.get(WHOLE_KIND)).contains(key.get(0) + "=" + key.get(1))
-                && Set.of(key.get(1)).equals(new LinkedHashSet<>(NullSafe.list(values.get(key.get(0)))))) {
-                whole = rules.getLast();
-                whole.remove("when");
-            }
-            final String actor = text(event.get("actor"));
-            if (!actor.isBlank() && known.person(actor) == null) {
-                unread.add(key.get(1) + ": actor '" + actor + "'" + (known.field(actor) == null
-                        ? " isn't a field of the records"
-                        : " holds addresses, not a user"));
-            }
-            final String affected = text(event.get("affected"));
-            if (!affected.isBlank() && known.field(affected) == null) {
-                unread.add(key.get(1) + ": affected '" + affected + "' isn't a field of the records");
-            }
-            final boolean shown = isPattern(event)
-                    ? NullSafe.list(values.get(key.get(0))).stream().anyMatch(value -> matches(event, value))
-                    : NullSafe.list(values.get(key.get(0))).contains(key.get(1));
-            appliedEvents.add(firstTruthy(event.get("event"), key.get(1), "") + " (" + key.get(0) + "=" + key.get(1)
-                              + ") -> " + detail + (shown
-                    ? ""
-                    : ", not in the sample"));
-            if (!shown) {
-                notInSample.add(key.get(0) + "=" + key.get(1));
-            }
-        }
-        // Values the catalogue doesn't list, of fields whose kinds are values (a pattern's field is free text: its
-        // values are every message).
-        final Set<String> catalogued = new LinkedHashSet<>();
-        events.stream().filter(event -> !isPattern(event)).forEach(event -> catalogued.add(text(event.get("field"))));
-        events.stream().filter(SourceNotes::isPattern).forEach(event -> catalogued.remove(text(event.get("field"))));
-        for (final String field : catalogued) {
-            for (final String value : new LinkedHashSet<>(NullSafe.list(values.get(field)))) {
-                if (!seen.contains(List.of(field, value))) {
-                    notInCatalogue.add(field + "=" + value);
-                }
-            }
-        }
-        // Records of values the catalogue doesn't list keep the sample's rule when it names an action, not Unknown.
-        for (final Map<String, Object> rule : sampled) {
-            if (!rules.contains(rule) && !namesOnlyUnknown(rule) && seen.stream().noneMatch(key -> covers(rule, key))) {
-                rules.add(rule);
-            }
-        }
-        final Map<String, Object> other = drafted.stream()
-                .filter(rule -> !JsonValues.truthy(rule.get("when")))
-                .findFirst()
-                .orElse(null);
-        final Set<String> namesUsed = new LinkedHashSet<>();
-        for (final Map<String, Object> rule : rules) {
-            String name = text(rule.get("name"));
-            while (namesUsed.contains(name)) {
-                name = name + "_";
-            }
-            rule.put("name", name);
-            namesUsed.add(name);
-        }
-        final List<Map<String, Object>> all = new ArrayList<>(rules);
-        if (other != null && whole == null) {
-            all.add(other);
-        }
-        mapping.put("events", all);
+        applied.put(CATALOGUED, true);
+        applied.putAll(CatalogueTranslation.apply(mapping, names, values, catalogue, catchAllReason(notes, catalogue),
+                detailFields, detailCheck, records));
         return applied;
+    }
+
+    /// @param notes The source notes ([#readNotes], [#merged]), or null.
+    /// @return Their catalogue of event types (`event_types`, `catch_all`, `scope`), or null when they have none
+    /// (no `event_types`) or it doesn't read.
+    public static Catalogue catalogue(final Map<String, Object> notes) {
+        if (notes == null || !(notes.get(EVENT_TYPES) instanceof List)) {
+            return null;
+        }
+        final Map<String, Object> json = new LinkedHashMap<>();
+        for (final String key : CATALOGUE_KEYS) {
+            if (notes.get(key) != null) {
+                json.put(key, notes.get(key));
+            }
+        }
+        return Catalogue.parse(json).catalogue();
+    }
+
+    /// @param notes     The source notes.
+    /// @param catalogue Their catalogue.
+    /// @return The catch-all's agreement, the uncatalogued records' allow_unknown: the reason the notes' catch-all
+    /// gives (`allow_unknown`), else the catch-all's confirmation; null while the catch-all isn't confirmed.
+    public static String catchAllReason(final Map<String, Object> notes, final Catalogue catalogue) {
+        if (notes.get(CATCH_ALL) instanceof final Map<?, ?> catchAll
+            && catchAll.get("allow_unknown") instanceof final String reason && !reason.isBlank()) {
+            return reason;
+        }
+        return catalogue.catchAll().confirmed()
+                ? CatalogueTranslation.CATCH_ALL_AGREED
+                : null;
     }
 
     /// Several notes docs read as one: fields by name (the first of each), events in order.
@@ -605,7 +501,17 @@ public final class SourceNotes {
         final Set<String> dropped = new LinkedHashSet<>();
         List<String> kindFields = List.of();
         final Set<String> wholeKinds = new LinkedHashSet<>();
+        Map<String, Object> catalogue = null;
         for (final Map<String, Object> note : NullSafe.list(notes)) {
+            if (catalogue == null && note.get(EVENT_TYPES) instanceof List) {
+                // A build's catalogue is one: the first doc holding one.
+                catalogue = new LinkedHashMap<>();
+                for (final String key : CATALOGUE_KEYS) {
+                    if (note.get(key) != null) {
+                        catalogue.put(key, note.get(key));
+                    }
+                }
+            }
             if (kindFields.isEmpty()) {
                 kindFields = JsonValues.strings(note.get(KIND_FIELDS));
             }
@@ -631,6 +537,9 @@ public final class SourceNotes {
         }
         if (!wholeKinds.isEmpty()) {
             out.put(WHOLE_KIND, new ArrayList<>(wholeKinds));
+        }
+        if (catalogue != null) {
+            out.putAll(catalogue);
         }
         return out;
     }
@@ -743,221 +652,6 @@ public final class SourceNotes {
                 .orElse(null);
     }
 
-    // Why the catalogue can't be followed for an event, or null when it can.
-    private static String why(final boolean twin, final String detail, final Function<String, String> detailCheck) {
-        if (twin) {
-            return "the catalogue has more than one event for it";
-        }
-        final String problem = detailCheck != null && !UNKNOWN.equals(detail)
-                ? detailCheck.apply(detail)
-                : null;
-        if (NullSafe.isNonEmptyString(problem)) {
-            return problem;
-        }
-        return UNKNOWN.equals(detail)
-                ? "the catalogue gives no action element"
-                : null;
-    }
-
-    // One rule for a catalogued event: the sample's own rule for its records first, so what the draft read stays
-    // (asked for by the user; seen in the agent eval, a catalogue rule wrote one fixed description over each
-    // record's message, and lost the severity, names and addresses the sample's rule had), then what the catalogue
-    // says over it: the TypeId, the action element's Action and outcome, who acted and what was acted on.
-    private static Map<String, Object> rule(final Map<String, Object> event,
-                                            final List<String> key,
-                                            final String detail,
-                                            final List<Map<String, Object>> common,
-                                            final List<Map<String, Object>> detailFields,
-                                            final List<Map<String, Object>> sampled,
-                                            final List<String> rest,
-                                            final Catalogued fieldsKnown) {
-        final String prefix = EVENT_DETAIL + detail + "/";
-        final List<Map<String, Object>> fields = new ArrayList<>();
-        sampled.stream()
-                .filter(rule -> covers(rule, key))
-                .findFirst()
-                .ifPresent(like -> {
-                    for (final Map<String, Object> field : JsonValues.maps(like.get("fields"))) {
-                        final String path = text(field.get("path"));
-                        if ("EventDetail/TypeId".equals(path)) {
-                            continue;
-                        }
-                        if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2
-                            && !path.startsWith(prefix)) {
-                            // Under another action element (Unknown, or the sample's guess): its Data move to the
-                            // catalogue's; its other children are that element's, not this one's.
-                            if (path.endsWith("/Data") && JsonValues.truthy(field.get("data_name"))) {
-                                final Map<String, Object> moved = new LinkedHashMap<>(field);
-                                moved.put("path", prefix + "Data");
-                                fields.add(moved);
-                            }
-                            continue;
-                        }
-                        fields.add(new LinkedHashMap<>(field));
-                    }
-                });
-        fields.addFirst(JsonValues.truthy(event.get("type_id"))
-                ? entry("path", "EventDetail/TypeId", "value", text(event.get("type_id")))
-                : isPattern(event)
-                        // The field is the whole message: the kind's own name is its TypeId.
-                        ? entry("path", "EventDetail/TypeId", "value", firstTruthy(event.get("event"),
-                        event.get("title"), "Other"))
-                        : entry("path", "EventDetail/TypeId", "field", key.get(0)));
-        // The catalogue's description only where the records carry no message of their own.
-        final boolean ownMessage = Stream.concat(common.stream(), fields.stream())
-                .anyMatch(entry -> "EventDetail/Description".equals(entry.get("path"))
-                                   && (JsonValues.truthy(entry.get("field")) || JsonValues.truthy(entry.get("xpath"))
-                                       || JsonValues.truthy(entry.get("any_of"))));
-        // A field of free text a person wrote about each event (a ticket's comment) is the event's message before
-        // the catalogue's words for the kind (seen in the agent eval: every ticket event described as 'A ticket is
-        // closed', its comment kept as Data).
-        final String freeText = ownMessage
-                ? null
-                : fieldsKnown.freeText();
-        if (freeText != null) {
-            final Map<String, Object> message = fields.stream()
-                    .filter(field -> freeText.equals(field.get("field")))
-                    .findFirst()
-                    .map(LinkedHashMap::new)
-                    .orElseGet(() -> new LinkedHashMap<>(entry("field", freeText)));
-            fields.removeIf(field -> freeText.equals(field.get("field")));
-            message.put("path", "EventDetail/Description");
-            message.remove("data_name");
-            put(fields, message);
-        } else if (JsonValues.truthy(event.get("description")) && !ownMessage) {
-            put(fields, entry("path", "EventDetail/Description", "value", event.get("description")));
-        }
-        if (JsonValues.truthy(event.get("action"))) {
-            put(fields, entry("path", EVENT_DETAIL + detail + "/Action", "value", event.get("action")));
-        }
-        if (event.get("success") != null) {
-            put(fields, entry("path", EVENT_DETAIL + detail + "/Outcome/Success", "value",
-                    JsonValues.truthy(event.get("success"))
-                            ? "true"
-                            : "false"));
-        }
-        // Who acted, where the catalogue says (asked for by the user: kind by kind, not one field for the source):
-        // only a field of the records, and not one holding addresses (seen in the eval: a firewall's source address
-        // given as the actor of records naming no user).
-        final String actor = fieldsKnown.person(text(event.get("actor")));
-        if (actor != null) {
-            put(fields, entry("path", "EventSource/User/Id", "field", actor));
-        }
-        // What it was done to: the object the catalogue names (affected_as, checked against the schema when
-        // recorded), its value from the affected field.
-        final String affected = fieldsKnown.field(text(event.get("affected")));
-        if (affected != null && JsonValues.truthy(event.get("affected_as"))) {
-            put(fields, entry("path", EVENT_DETAIL + detail + "/" + text(event.get("affected_as")), "field",
-                    affected));
-        }
-        final String user = actor != null
-                ? actor
-                : common.stream()
-                        .filter(entry -> "EventSource/User/Id".equals(entry.get("path"))
-                                         && JsonValues.truthy(entry.get("field")))
-                        .map(entry -> text(entry.get("field")))
-                        .findFirst()
-                        .orElse(null);
-        if ("Authenticate".equals(detail) && user != null
-            && !hasPath(fields, entry("path", "EventDetail/Authenticate/User/Id"))) {
-            // The schema wants the user authenticating: the one the event is about.
-            fields.add(entry("path", "EventDetail/Authenticate/User/Id", "field", user));
-        }
-        fields.addAll(detailFields.stream()
-                .filter(field -> text(field.get("path")).startsWith(prefix) && !hasPath(fields, field))
-                .toList());
-        // The fields left over, as Data: not one the rule already reads (as Data or into an element).
-        final Set<String> read = new LinkedHashSet<>();
-        fields.stream()
-                .filter(field -> !"EventDetail/TypeId".equals(field.get("path")))
-                .forEach(field -> {
-                    read.add(text(field.get("data_name")));
-                    read.add(text(field.get("field")));
-                });
-        for (final String name : rest) {
-            if (!read.contains(name)) {
-                fields.add(entry("path", prefix + "Data", "data_name", name, "field", name));
-            }
-        }
-        final String name = ToolText.strip(NOT_NAME.matcher(firstTruthy(event.get("event"), isPattern(event)
-                        ? event.get("title")
-                        : key.get(1), ""))
-                .replaceAll("_"), "_").toLowerCase(Locale.ROOT);
-        final Map<String, Object> rule = new LinkedHashMap<>();
-        rule.put("name", name.isEmpty()
-                ? "event"
-                : name);
-        // The kind a pattern (or another field's value) splits first (app=sshd), so the rule takes only that kind's
-        // records, as the user confirmed it (another program's 'Failed password for' lines stay theirs). Not a
-        // format's field, which a format's own draft has left out: its condition is added with the format's rules.
-        final List<Map<String, Object>> when = new ArrayList<>();
-        within(event, fieldsKnown).ifPresent(when::add);
-        when.add(isPattern(event)
-                ? entry("field", key.get(0), MATCHES, text(event.get(MATCHES)))
-                : entry("field", key.get(0), "equals", key.get(1)));
-        rule.put("when", when);
-        rule.put("fields", fields);
-        // Unknown is not agreed here: build_translation_xslt puts it to the user with the records it catches.
-        return rule;
-    }
-
-    // An entry in place of any with its path (and Data name), where it was; else last.
-    private static void put(final List<Map<String, Object>> fields, final Map<String, Object> entry) {
-        for (int i = 0; i < fields.size(); i++) {
-            if (Objects.equals(fields.get(i).get("path"), entry.get("path"))
-                && Objects.equals(fields.get(i).get("data_name"), entry.get("data_name"))) {
-                fields.set(i, entry);
-                return;
-            }
-        }
-        fields.add(entry);
-    }
-
-    // The action elements a rule writes.
-    private static Set<String> detailOf(final Map<String, Object> rule) {
-        final Set<String> elements = new LinkedHashSet<>();
-        for (final Map<String, Object> field : JsonValues.maps(rule.get("fields"))) {
-            final String path = text(field.get("path"));
-            if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2) {
-                elements.add(path.split("/")[1]);
-            }
-        }
-        return elements;
-    }
-
-    private static boolean namesOnlyUnknown(final Map<String, Object> rule) {
-        final Set<String> elements = new LinkedHashSet<>(detailOf(rule));
-        elements.remove(UNKNOWN);
-        return elements.isEmpty();
-    }
-
-    private static boolean covers(final Map<String, Object> rule, final List<String> key) {
-        for (final Map<String, Object> condition : JsonValues.maps(rule.get("when"))) {
-            if (!key.get(0).equals(condition.get("field")) || Boolean.TRUE.equals(condition.get("not"))) {
-                continue;
-            }
-            if (key.get(1).startsWith(PATTERN)) {
-                if (key.get(1).substring(PATTERN.length()).equals(text(condition.get(MATCHES)))) {
-                    return true;
-                }
-                continue;
-            }
-            final boolean matches = condition.get("equals") != null
-                    ? ToolText.str(condition.get("equals")).equals(key.get(1))
-                    : NullSafe.list(condition.get("one_of") instanceof final List<?> list
-                            ? list
-                            : null).stream().map(ToolText::str).toList().contains(key.get(1));
-            if (matches) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasPath(final List<Map<String, Object>> fields, final Map<String, Object> field) {
-        return fields.stream().anyMatch(existing -> Objects.equals(existing.get("path"), field.get("path")));
-    }
-
     private static List<String> key(final Map<String, Object> event) {
         return List.of(text(event.get("field")), isPattern(event)
                 ? PATTERN + text(event.get(MATCHES))
@@ -999,30 +693,6 @@ public final class SourceNotes {
         return when;
     }
 
-    /// The notes as one format's draft follows them: without the events that split another format's records
-    /// (`within` naming the format field and another format). Seen in chat 170: sshd's patterns, within
-    /// variant=linux, drafted into the NetScaler format too and noted there as "not in the sample".
-    ///
-    /// @param notes   The source notes, or null.
-    /// @param field   The field naming each record's format.
-    /// @param variant The format drafted, or null for the records no format read.
-    /// @return The notes for it.
-    public static Map<String, Object> forVariant(final Map<String, Object> notes,
-                                                 final String field,
-                                                 final String variant) {
-        if (notes == null || field == null) {
-            return notes;
-        }
-        final String prefix = field + "=";
-        final List<Map<String, Object>> events = JsonValues.maps(notes.get("events")).stream()
-                .filter(event -> !text(event.get("within")).startsWith(prefix)
-                                 || text(event.get("within")).equals(prefix + variant))
-                .toList();
-        final Map<String, Object> out = new LinkedHashMap<>(notes);
-        out.put("events", events);
-        return out;
-    }
-
     /// @param event A catalogue event.
     /// @return True if it splits a listed kind (classify_kinds' `within`): told by a pattern, or by a value of another
     /// field than the kind's (event_id=LOGIN within category=SSLVPN).
@@ -1053,85 +723,8 @@ public final class SourceNotes {
         }
     }
 
-    // A pattern event's within (field=value) as a condition, when the records hold its field; empty for '*'.
-    // The fields left over that a catalogue event's own records hold: all of them when the records aren't known or
-    // none of them is the event's.
-    private static List<String> heldBy(final Map<String, Object> event,
-                                       final List<String> key,
-                                       final List<String> rest,
-                                       final List<Map<String, Object>> records) {
-        if (records == null) {
-            return new ArrayList<>(rest);
-        }
-        final String within = text(event.get("within"));
-        final int equals = within.indexOf('=');
-        final List<Map<String, Object>> own = records.stream()
-                .filter(record -> equals <= 0
-                                  || within.substring(equals + 1).equals(text(record.get(within.substring(0, equals)))))
-                .filter(record -> isPattern(event)
-                        ? matches(event, text(record.get(key.get(0))))
-                        : key.get(1).equals(text(record.get(key.get(0)))))
-                .toList();
-        if (own.isEmpty()) {
-            return new ArrayList<>(rest);
-        }
-        return rest.stream()
-                .filter(name -> own.stream().anyMatch(record -> !text(record.get(name)).isBlank()))
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    private static Optional<Map<String, Object>> within(final Map<String, Object> event, final Catalogued known) {
-        final String within = text(event.get("within"));
-        final int equals = within.indexOf('=');
-        if (equals <= 0) {
-            return Optional.empty();
-        }
-        final String field = within.substring(0, equals);
-        return known.field(field) == null
-                ? Optional.empty()
-                : Optional.of(entry("field", field, "equals", within.substring(equals + 1)));
-    }
-
     // The fields pattern events' capture groups read: an extract entry each (once), and the values they take.
     @SuppressWarnings("unchecked")
-    private static void captured(final Map<String, Object> mapping,
-                                 final List<Map<String, Object>> events,
-                                 final Map<String, List<String>> values,
-                                 final List<String> knownNames,
-                                 final Map<String, List<String>> knownValues) {
-        for (final Map<String, Object> event : events) {
-            final List<String> groups = JsonValues.strings(event.get(NAMES));
-            if (!isPattern(event) || groups.isEmpty()) {
-                continue;
-            }
-            final String field = text(event.get("field"));
-            final Map<String, Object> extract = entry("field", field, "regex", text(event.get(MATCHES)), "names",
-                    new ArrayList<>(groups));
-            final List<Map<String, Object>> extracts = (List<Map<String, Object>>) mapping.computeIfAbsent("extract",
-                    k -> new ArrayList<>());
-            if (!extracts.contains(extract)) {
-                extracts.add(extract);
-            }
-            final Pattern pattern;
-            try {
-                pattern = Pattern.compile(text(event.get(MATCHES)));
-            } catch (final PatternSyntaxException e) {
-                continue;
-            }
-            for (final String value : NullSafe.list(values.get(field))) {
-                final Matcher found = pattern.matcher(value);
-                if (found.find()) {
-                    for (int i = 0; i < groups.size() && i < found.groupCount(); i++) {
-                        if (found.group(i + 1) != null) {
-                            knownValues.computeIfAbsent(groups.get(i), k -> new ArrayList<>()).add(found.group(i + 1));
-                        }
-                    }
-                }
-            }
-            groups.stream().filter(name -> !knownNames.contains(name)).forEach(knownNames::add);
-        }
-    }
-
     private static Map<String, Object> entry(final Object... keysAndValues) {
         final Map<String, Object> entry = new LinkedHashMap<>();
         for (int i = 0; i + 1 < keysAndValues.length; i += 2) {
@@ -1164,43 +757,5 @@ public final class SourceNotes {
         return value == null
                 ? ""
                 : ToolText.str(value);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    // The sample's fields, for checking the fields a catalogue event names.
-    private record Catalogued(List<String> names, Map<String, List<String>> values) {
-
-        // The field, when the records have it; else null.
-        String field(final String name) {
-            return name != null && !name.isBlank() && names.contains(name)
-                    ? name
-                    : null;
-        }
-
-        // The first field of free text a person writes about an event (a comment, a remark, a note) the records
-        // hold; else null.
-        String freeText() {
-            return names.stream()
-                    .filter(name -> DraftMapping.FREE_TEXT.matcher(name).matches()
-                                    && !NullSafe.list(values.get(name)).isEmpty())
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        // The field, when the records have it and it names a person or account: not one whose values are
-        // addresses.
-        String person(final String name) {
-            final String known = field(name);
-            if (known == null) {
-                return null;
-            }
-            final List<String> held = NullSafe.list(values.get(known));
-            return !held.isEmpty() && held.stream().allMatch(IpAddresses::isAddress)
-                    ? null
-                    : known;
-        }
     }
 }
