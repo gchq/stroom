@@ -28,6 +28,7 @@ import stroom.query.api.TableSettings;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.token.TokenException;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.security.mock.MockSecurityContext;
@@ -180,6 +181,38 @@ class TestSearchRequestFactoryWindow {
         assertRefused("from events window EventTime by 1h advance 1m "
                       + "eval Change = count() - lag(count(), 1) select Change",
                 "Each event would be copied 120 times");
+    }
+
+    @Test
+    void mostCopiesOfEachEventIsConfigured() {
+        final SearchResultStoreConfig config = new SearchResultStoreConfig(
+                null, null, null, null, null, null, null, null, null, null, null, 10);
+        final SearchRequestFactory limited = new SearchRequestFactory(
+                (keywordGroup, parentTableSettings) -> null,
+                MockDataSourceResolver.getInstance(),
+                () -> criteria -> ResultPage.createUnboundedList(List.of(QueryField.createDate("EventTime"))),
+                MockSecurityContext.getInstance(),
+                () -> config);
+        final SearchRequest in = new SearchRequest(
+                null,
+                new QueryKey("test"),
+                Query.builder().build(),
+                new ArrayList<ResultRequest>(0),
+                utc(),
+                false);
+        final ExpressionContext expressionContext = ExpressionContext
+                .builder()
+                .dateTimeSettings(utc())
+                .maxStringLength(100)
+                .build();
+
+        assertThat(limited.create(
+                "from events window EventTime by 10m advance 1m select count() as Events", in, expressionContext))
+                .isNotNull();
+        assertThatThrownBy(() -> limited.create(
+                "from events window EventTime by 11m advance 1m select count() as Events", in, expressionContext))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Each event would be in 11 windows, and the most allowed is 10");
     }
 
     @Test

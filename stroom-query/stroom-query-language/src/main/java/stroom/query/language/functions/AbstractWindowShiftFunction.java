@@ -19,6 +19,7 @@ package stroom.query.language.functions;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
+import stroom.query.language.functions.ref.WindowRange;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -37,11 +38,15 @@ abstract class AbstractWindowShiftFunction extends AbstractWindowFunction {
     private static final int AGGREGATE_PARAM = 0;
     private static final int WINDOWS_PARAM = 1;
     private static final int DEFAULT_PARAM = 2;
+    // The furthest window that can be read. How many different distances a query may use is limited
+    // by how many copies of each row they make, and not by this.
+    private static final int MAX_WINDOWS = 10_000;
 
     private final boolean later;
     private Function aggregate;
     private int windowShift;
     private Val defaultValue;
+    private WindowRange windowRange;
 
     /// Creates the function.
     ///
@@ -77,9 +82,9 @@ abstract class AbstractWindowShiftFunction extends AbstractWindowFunction {
         final Long windows = ownParams[WINDOWS_PARAM] instanceof final Val val
                 ? toWholeNumber(val)
                 : null;
-        if (windows == null || windows < 1 || windows > TimeWindows.MAX_WINDOWS_PER_TIME) {
+        if (windows == null || windows < 1 || windows > MAX_WINDOWS) {
             throw new ParseException("The second parameter of '" + name + "' must be a whole number of windows "
-                                     + "from 1 to " + TimeWindows.MAX_WINDOWS_PER_TIME + ", as in '"
+                                     + "from 1 to " + MAX_WINDOWS + ", as in '"
                                      + name + "(count(), 1)'", 0);
         }
         // A row is copied to the window that will read it. For `lag` that is a later window, and for
@@ -109,12 +114,19 @@ abstract class AbstractWindowShiftFunction extends AbstractWindowFunction {
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         valueReferenceIndex.addWindowShift(windowShift);
+        windowRange = valueReferenceIndex.getWindowRange();
         super.addValueReferences(valueReferenceIndex);
     }
 
     @Override
     public Generator createGenerator() {
-        return new Gen(getWindowKeyReference(), aggregate.createGenerator(), windowShift, defaultValue);
+        return new Gen(
+                getWindowKeyReference(),
+                aggregate.createGenerator(),
+                windowShift,
+                defaultValue,
+                getTimeWindows(),
+                windowRange);
     }
 
 
@@ -127,15 +139,21 @@ abstract class AbstractWindowShiftFunction extends AbstractWindowFunction {
         private final Generator aggregateGenerator;
         private final int windowShift;
         private final Val defaultValue;
+        private final TimeWindows timeWindows;
+        private final WindowRange windowRange;
 
         private Gen(final ValReference windowKeyReference,
                     final Generator aggregateGenerator,
                     final int windowShift,
-                    final Val defaultValue) {
+                    final Val defaultValue,
+                    final TimeWindows timeWindows,
+                    final WindowRange windowRange) {
             this.windowKeyReference = windowKeyReference;
             this.aggregateGenerator = aggregateGenerator;
             this.windowShift = windowShift;
             this.defaultValue = defaultValue;
+            this.timeWindows = timeWindows;
+            this.windowRange = windowRange;
         }
 
         // A row adds nothing to the value in its own window.
@@ -154,9 +172,19 @@ abstract class AbstractWindowShiftFunction extends AbstractWindowFunction {
 
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-            final Val val = aggregateGenerator.eval(storedValues, childDataSupplier);
-            if (defaultValue != null && (val == null || val.type().isNull())) {
-                return defaultValue;
+            // A window before the first with data, or after the last, has no value. This is not the
+            // same as a window between them that is empty, where a count is zero.
+            final Long windowKey = windowKeyReference.get(storedValues).toLong();
+            final boolean inRange = windowKey == null
+                                    || windowRange == null
+                                    || windowRange.contains(timeWindows.shift(windowKey, -windowShift));
+            final Val val = inRange
+                    ? aggregateGenerator.eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            if (val == null || val.type().isNull()) {
+                return defaultValue == null
+                        ? ValNull.INSTANCE
+                        : defaultValue;
             }
             return val;
         }

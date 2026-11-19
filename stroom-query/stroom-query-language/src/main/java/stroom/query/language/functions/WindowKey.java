@@ -16,7 +16,10 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.CountReference;
+import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValReference;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 /// The key of the window that a row is in, which rows of a query with a `window` clause are grouped
 /// by. Two windows can start at the same time, on a day when the clocks go forward, so rows are
@@ -37,23 +40,62 @@ class WindowKey extends AbstractWindowFunction {
 
     static final String NAME = "windowKey";
 
+    private CountReference realRowCountReference;
+
     public WindowKey(final ExpressionContext expressionContext, final String name) {
         super(expressionContext, name, 0, 0);
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        realRowCountReference = valueReferenceIndex.addCount(name);
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
-        return new Gen(getWindowKeyReference());
+        return new Gen(getWindowKeyReference(), realRowCountReference);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private static final class Gen extends AbstractWindowGenerator {
+    private static final class Gen extends AbstractWindowGenerator implements WindowRowGenerator {
 
-        private Gen(final ValReference windowKeyReference) {
+        private final ValReference windowKeyReference;
+        private final CountReference realRowCountReference;
+
+        private Gen(final ValReference windowKeyReference, final CountReference realRowCountReference) {
             super(windowKeyReference);
+            this.windowKeyReference = windowKeyReference;
+            this.realRowCountReference = realRowCountReference;
+        }
+
+        // Counts the rows that are really in the window, and not the copies of rows from other
+        // windows.
+        @Override
+        public void set(final Val[] values, final StoredValues storedValues) {
+            super.set(values, storedValues);
+            if (storedValues.getWindowShift() == 0) {
+                realRowCountReference.increment(storedValues);
+            }
+        }
+
+        @Override
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            realRowCountReference.add(existingValues, realRowCountReference.get(newValues));
+            super.merge(existingValues, newValues);
+        }
+
+        @Override
+        public Long getWindowKey(final StoredValues storedValues) {
+            return windowKeyReference.get(storedValues).toLong();
+        }
+
+        @Override
+        public boolean hasRealRows(final StoredValues storedValues) {
+            return realRowCountReference.get(storedValues) > 0;
         }
 
         @Override

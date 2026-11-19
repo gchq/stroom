@@ -41,6 +41,7 @@ import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.TimeWindows;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.WindowRowGenerator;
 import stroom.query.language.functions.ref.DataReader;
 import stroom.query.language.functions.ref.DataWriter;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -136,9 +137,19 @@ public class LmdbDataStore implements DataStore {
     private final TimeWindows timeWindows;
     // How far each row is copied for the functions that read other windows, such as lag.
     private final int[] windowShifts;
+    // Gives the window key of a stored row, for a table whose rows are copied to other windows.
+    private final WindowRowGenerator windowKeyGenerator;
+    // Counts the commits to the store, so that the range of windows is only worked out again when
+    // the rows that can be read have changed.
+    private final AtomicLong windowRowVersion = new AtomicLong();
+    private long windowRangeVersion = -1;
     private final int windowTimeFieldIndex;
     private final String windowTimeField;
     private final AtomicBoolean reportedRowWithNoWindowTime = new AtomicBoolean();
+    private final AtomicLong rowsWithNoWindowTime = new AtomicLong();
+    // A store that is added to for as long as its rule runs is never complete, so can't wait until
+    // then to say how many rows it left out.
+    private final boolean neverComplete;
     private final StoredValueMapper storedValueMapper;
 
     private final int maxPutsBeforeCommit;
@@ -183,6 +194,7 @@ public class LmdbDataStore implements DataStore {
                         .map(SearchRequestSource::getSourceType)
                         .orElse(SourceType.DASHBOARD_UI);
 
+        neverComplete = SourceType.TABLE_BUILDER_ANALYTIC.equals(sourceType);
         if (tableSettings.getWindow() instanceof final HoppingWindow hoppingWindow) {
             timeWindows = createTimeWindows(hoppingWindow, tableSettings);
             windowTimeField = hoppingWindow.getTimeField();
@@ -203,7 +215,10 @@ public class LmdbDataStore implements DataStore {
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         windowShifts = valueReferenceIndex.getWindowShifts();
-        checkWindowUse();
+        checkWindowUse(resultStoreConfig);
+        windowKeyGenerator = timeWindows == null || windowShifts.length == 0
+                ? null
+                : findWindowKeyGenerator();
         compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         final int maxStringFieldLength = tableSettings.overrideMaxStringFieldLength() &&
@@ -288,17 +303,93 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    private void checkWindowUse() {
+    private WindowRowGenerator findWindowKeyGenerator() {
+        for (final CompiledColumn compiledColumn : compiledColumnArray) {
+            final Column column = compiledColumn.getColumn();
+            if (isWindowKeyColumn(column)
+                && compiledColumn.getGenerator() instanceof final WindowRowGenerator windowRowGenerator) {
+                return windowRowGenerator;
+            }
+        }
+        return null;
+    }
+
+    // The window key must be in the outermost group, so that every row of the store is in one window.
+    private static boolean isWindowKeyColumn(final Column column) {
+        return column.getGroup() != null
+               && column.getGroup() == 0
+               && column.getExpression() != null
+               && column.getExpression().startsWith(WINDOW_KEY_FUNCTION);
+    }
+
+    // Finds the first and last windows that hold a real row, and not only copies of rows from other
+    // windows. The range is of the whole store, whatever span of time is being read from it, as a
+    // window can read one that is outside that span.
+    private void setWindowRange(final LmdbReadContext readContext) {
+        if (windowKeyGenerator == null) {
+            return;
+        }
+        final long version = windowRowVersion.get();
+        if (version == windowRangeVersion) {
+            return;
+        }
+        final long[] range = new long[]{Long.MAX_VALUE, Long.MIN_VALUE};
+        lmdbRowKeyFactory.createChildKeyRange(Key.ROOT_KEY, keyRange ->
+                readContext.read(keyRange, iterator -> {
+                    while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+                        final ByteBuffer valueBuffer = iterator.next().getVal();
+                        do {
+                            final StoredValues storedValues = readValues(valueBuffer);
+                            final Long windowKey = windowKeyGenerator.getWindowKey(storedValues);
+                            if (windowKey != null && windowKeyGenerator.hasRealRows(storedValues)) {
+                                range[0] = Math.min(range[0], windowKey);
+                                range[1] = Math.max(range[1], windowKey);
+                            }
+                        } while (valueBuffer.hasRemaining());
+                    }
+                }));
+        if (Thread.currentThread().isInterrupted()) {
+            // The rows were not all read, so work the range out again next time.
+            return;
+        }
+        if (range[0] > range[1]) {
+            valueReferenceIndex.getWindowRange().clear();
+        } else {
+            valueReferenceIndex.getWindowRange().set(range[0], range[1]);
+        }
+        windowRangeVersion = version;
+    }
+
+    // Reads the rows held in a value, leaving out any that exist only because a row was copied to a
+    // window before the first with data or after the last.
+    private Stream<StoredValues> readRows(final ByteBuffer valueBuffer) {
+        final StoredValues storedValues = readValues(valueBuffer);
+        if (windowKeyGenerator != null) {
+            final Long windowKey = windowKeyGenerator.getWindowKey(storedValues);
+            if (windowKey != null && !valueReferenceIndex.getWindowRange().contains(windowKey)) {
+                return Stream.empty();
+            }
+        }
+        return storedValueMapper.create(storedValues);
+    }
+
+    private void checkWindowUse(final AbstractResultStoreConfig resultStoreConfig) {
         if (timeWindows == null) {
             if (valueReferenceIndex.usesWindows()) {
                 throw new IllegalArgumentException("Window functions such as windowStart() and lag() can "
                                                    + "only be used in a query that has a window clause");
             }
         } else {
+            // StroomQL applies the configured limit to every query. It is checked again here for
+            // the results of a search, whose table need not come from StroomQL. The table of a rule
+            // always does, and its store has no such setting, so there is nothing more to check.
+            final int maxCopies = resultStoreConfig instanceof final SearchResultStoreConfig searchConfig
+                    ? searchConfig.getMaxWindowCopiesPerEvent()
+                    : Integer.MAX_VALUE;
             final long copies = TimeWindows.getCopiesPerTime(timeWindows.getWindowsPerTime(), windowShifts.length);
-            if (copies > TimeWindows.MAX_WINDOWS_PER_TIME) {
+            if (copies > maxCopies) {
                 throw new IllegalArgumentException(TimeWindows.tooManyCopiesMessage(
-                        timeWindows.getWindowsPerTime(), windowShifts.length));
+                        timeWindows.getWindowsPerTime(), windowShifts.length, maxCopies));
             }
         }
     }
@@ -314,12 +405,10 @@ public class LmdbDataStore implements DataStore {
         // copies would be counted together.
         final boolean groupedByWindow = NullSafe.list(tableSettings.getColumns())
                 .stream()
-                .anyMatch(column -> column.getGroup() != null
-                                    && column.getExpression() != null
-                                    && column.getExpression().startsWith(WINDOW_KEY_FUNCTION));
+                .anyMatch(LmdbDataStore::isWindowKeyColumn);
         if (!groupedByWindow) {
             throw new IllegalArgumentException("A table with a window must have a column that is grouped by "
-                                               + WINDOW_KEY_FUNCTION + ")");
+                                               + WINDOW_KEY_FUNCTION + ") in its outermost group");
         }
         return timeWindows;
     }
@@ -333,8 +422,10 @@ public class LmdbDataStore implements DataStore {
                 ? null
                 : time.toLong();
         if (timeMs == null) {
-            // A row with no time can't be put in a window, so it is left out. Say so once.
-            if (reportedRowWithNoWindowTime.compareAndSet(false, true)) {
+            // A row with no time can't be put in a window, so it is left out. How many are left out
+            // is said once, when no more rows will be added.
+            rowsWithNoWindowTime.incrementAndGet();
+            if (neverComplete && reportedRowWithNoWindowTime.compareAndSet(false, true)) {
                 errorConsumer.add(Severity.WARNING, () -> "Rows with no time in the window field '"
                                                           + windowTimeField + "' are left out of the results");
             }
@@ -348,6 +439,21 @@ public class LmdbDataStore implements DataStore {
                 addInternal(values, timeWindows.shift(windowKey, windowShift), windowShift, currentDbState);
             }
         });
+    }
+
+    private void reportRowsWithNoWindowTime() {
+        final long count = rowsWithNoWindowTime.get();
+        if (count > 0 && reportedRowWithNoWindowTime.compareAndSet(false, true)) {
+            errorConsumer.add(Severity.WARNING, () ->
+                    count + (count == 1
+                            ? " row"
+                            : " rows")
+                    + " with no time in the window field '" + windowTimeField
+                    + (count == 1
+                            ? "' was"
+                            : "' were")
+                    + " left out of the results");
+        }
     }
 
     // The current DB state is a reference to the current event, so we can keep track of what we have
@@ -562,6 +668,7 @@ public class LmdbDataStore implements DataStore {
                         });
                     }
                     writeTxn.commit();
+                    windowRowVersion.incrementAndGet();
                 });
     }
 
@@ -569,6 +676,7 @@ public class LmdbDataStore implements DataStore {
                         final CurrentDbState currentDbState) {
         putCurrentDbState(writeTxn, currentDbState);
         writeTxn.commit();
+        windowRowVersion.incrementAndGet();
     }
 
 
@@ -993,6 +1101,7 @@ public class LmdbDataStore implements DataStore {
                                         db,
                                         readTxn,
                                         timeFilter);
+                                setWindowRange(readContext);
 
                                 getChildren(
                                         readContext,
@@ -1102,9 +1211,8 @@ public class LmdbDataStore implements DataStore {
                         // If we are just counting the total results from this point then we don't need to
                         // deserialise unless we are hiding rows.
                         if (fetchState.justCount) {
-                            if (mapper.hidesRows()) {
-                                final Stream<StoredValues> stream = storedValueMapper
-                                        .create(readValues(valueBuffer));
+                            if (mapper.hidesRows() || windowKeyGenerator != null) {
+                                final Stream<StoredValues> stream = readRows(valueBuffer);
                                 stream.forEach(storedValues -> {
                                     final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                                     final LmdbItem item = new LmdbItem(
@@ -1141,8 +1249,7 @@ public class LmdbDataStore implements DataStore {
                                 // Only bother to test open groups if we have some left.
                                 if (openGroups.isNotEmpty()) {
                                     // Add children if the group is open.
-                                    final Stream<StoredValues> stream = storedValueMapper
-                                            .create(readValues(valueBuffer));
+                                    final Stream<StoredValues> stream = readRows(valueBuffer);
                                     stream.forEach(storedValues -> {
                                         final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                                         final int childDepth = depth + 1;
@@ -1166,8 +1273,7 @@ public class LmdbDataStore implements DataStore {
 
                         } else {
                             do {
-                                final Stream<StoredValues> stream = storedValueMapper
-                                        .create(readValues(valueBuffer));
+                                final Stream<StoredValues> stream = readRows(valueBuffer);
                                 stream.forEach(storedValues -> {
                                     final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                                     final LmdbItem item = new LmdbItem(
@@ -1258,8 +1364,7 @@ public class LmdbDataStore implements DataStore {
                     while (valueBuffer.hasRemaining() || isFirstValue) {
                         isFirstValue = false;
 
-                        final Stream<StoredValues> stream = storedValueMapper
-                                .create(readValues(valueBuffer));
+                        final Stream<StoredValues> stream = readRows(valueBuffer);
                         stream.forEach(storedValues -> {
                             final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                             final LmdbItem item = new LmdbItem(
@@ -1691,6 +1796,7 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public void signalComplete() {
+            lmdbDataStore.reportRowsWithNoWindowTime();
             if (!isComplete()) {
                 // Add an empty item to the transfer queue.
                 lmdbDataStore.queue.complete();

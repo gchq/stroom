@@ -104,6 +104,26 @@ class TestLag {
     }
 
     @Test
+    void windowOutsideTheRangeOfTheDataHasNoValue() throws ParseException {
+        final Row row = new Row("lag(count(), 1, -1)");
+        final TimeWindows timeWindows = TimeWindows.create(new HoppingWindow("EventTime", "1d", null, null, "Z"));
+        final long first = 0;
+        final long second = timeWindows.shift(first, 1);
+
+        // The data starts in the first window, so the window before it is outside the range, while
+        // the first window is inside it though this group has no rows there.
+        row.valueReferenceIndex.getWindowRange().set(first, second);
+
+        row.addTo(first);
+        assertThat(row.eval().toLong()).isEqualTo(-1);
+
+        final Row later = new Row("lag(count(), 1, -1)");
+        later.valueReferenceIndex.getWindowRange().set(first, second);
+        later.addTo(second);
+        assertThat(later.eval().toLong()).isZero();
+    }
+
+    @Test
     void lagIsKeptForAGroupedRow() throws ParseException {
         assertThat(parse(WINDOW_CONTEXT, "lag(count(), 1)").hasAggregate()).isTrue();
     }
@@ -119,9 +139,9 @@ class TestLag {
         assertRefused(WINDOW_CONTEXT, "lag(windowStart(), 1)", "The first parameter of 'lag' must be");
         assertRefused(WINDOW_CONTEXT, "lag(first(${Bytes}), 1)", "The first parameter of 'lag' must be");
         assertRefused(WINDOW_CONTEXT, "lag(count() + 1, 1)", "The first parameter of 'lag' must be");
-        assertRefused(WINDOW_CONTEXT, "lead(count(), 0)", "must be a whole number of windows from 1 to 100");
-        assertRefused(WINDOW_CONTEXT, "lead(count(), 1.5)", "must be a whole number of windows from 1 to 100");
-        assertRefused(WINDOW_CONTEXT, "lag(count(), 101)", "must be a whole number of windows from 1 to 100");
+        assertRefused(WINDOW_CONTEXT, "lead(count(), 0)", "must be a whole number of windows from 1 to 10000");
+        assertRefused(WINDOW_CONTEXT, "lead(count(), 1.5)", "must be a whole number of windows from 1 to 10000");
+        assertRefused(WINDOW_CONTEXT, "lag(count(), 10001)", "must be a whole number of windows from 1 to 10000");
         assertRefused(WINDOW_CONTEXT, "lag(count(), ${Bytes})", "must be a whole number of windows");
         assertRefused(WINDOW_CONTEXT, "lag(count(), 1, count())", "The third parameter of 'lag' must be a fixed");
     }
@@ -181,9 +201,19 @@ class TestLag {
             generator = parsed.createGenerator();
         }
 
-        // Adds a row that is really a number of windows before this one, or in it if that is zero.
+        // Adds a row of a window to that window.
+        private void addTo(final long windowKey) {
+            add(0, windowKey);
+        }
+
         private void add(final int windowShift) {
+            add(windowShift, 0);
+        }
+
+        // Adds a row that is really a number of windows before this one, or in it if that is zero.
+        private void add(final int windowShift, final long windowKey) {
             final StoredValues added = valueReferenceIndex.createStoredValues();
+            added.setWindowKey(windowKey);
             added.setWindowShift(windowShift);
             final Val[] values = Val.of(ValNull.INSTANCE);
             if (windowShift == 0) {

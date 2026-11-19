@@ -57,6 +57,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -195,7 +196,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .hasSize(1)
                 .first()
                 .satisfies(message -> assertThat(message.getMessage())
-                        .contains("Rows with no time in the window field 'EventTime' are left out"));
+                        .isEqualTo("2 rows with no time in the window field 'EventTime' were left out of "
+                                   + "the results"));
     }
 
     @Test
@@ -212,15 +214,19 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         addEvent(dataStore, "2026-03-12T09:00:00Z", "user2");
 
         // The columns are the user, the start of the window, its count, the count of the window
-        // before and the count of the window after. The 12th has a row for user1 though they did
-        // nothing that day, as the days either side read it.
-        assertThat(windowRows(dataStore, tableSettings, 5)).contains(
-                List.of("user1", "2026-03-10T00:00:00.000Z", "2", "0", "1"),
-                List.of("user1", "2026-03-11T00:00:00.000Z", "1", "2", "0"),
-                List.of("user1", "2026-03-12T00:00:00.000Z", "0", "1", "1"),
-                List.of("user1", "2026-03-13T00:00:00.000Z", "1", "0", "0"),
-                List.of("user2", "2026-03-11T00:00:00.000Z", "1", "0", "1"),
-                List.of("user2", "2026-03-12T00:00:00.000Z", "1", "1", "0"));
+        // before and the count of the window after. A user has a row for a day they did nothing on
+        // if a day either side reads it, as user1 does for the 12th. The data runs from the 10th to
+        // the 13th, so there are no rows for the 9th or the 14th, and the days outside that range
+        // have no count, where an empty day inside it has a count of zero.
+        assertThat(windowRows(dataStore, tableSettings, 5)).containsExactlyInAnyOrder(
+                Arrays.asList("user1", "2026-03-10T00:00:00.000Z", "2", null, "1"),
+                Arrays.asList("user1", "2026-03-11T00:00:00.000Z", "1", "2", "0"),
+                Arrays.asList("user1", "2026-03-12T00:00:00.000Z", "0", "1", "1"),
+                Arrays.asList("user1", "2026-03-13T00:00:00.000Z", "1", "0", null),
+                Arrays.asList("user2", "2026-03-10T00:00:00.000Z", "0", null, "1"),
+                Arrays.asList("user2", "2026-03-11T00:00:00.000Z", "1", "0", "1"),
+                Arrays.asList("user2", "2026-03-12T00:00:00.000Z", "1", "1", "0"),
+                Arrays.asList("user2", "2026-03-13T00:00:00.000Z", "0", "1", null));
     }
 
     @Test
@@ -234,10 +240,11 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         // The hour from 11:00 holds one event, and the hour before it, from 10:00, holds two. The
         // window that starts half an hour before is not the one that is read.
-        assertThat(windowRows(dataStore, tableSettings, 5)).contains(
-                List.of("user1", "2026-03-10T10:30:00.000Z", "2", "1", "0"),
-                List.of("user1", "2026-03-10T11:00:00.000Z", "1", "2", "0"),
-                List.of("user1", "2026-03-10T11:30:00.000Z", "0", "2", "0"));
+        assertThat(windowRows(dataStore, tableSettings, 5)).containsExactlyInAnyOrder(
+                Arrays.asList("user1", "2026-03-10T09:30:00.000Z", "1", null, "2"),
+                Arrays.asList("user1", "2026-03-10T10:00:00.000Z", "2", null, "1"),
+                Arrays.asList("user1", "2026-03-10T10:30:00.000Z", "2", "1", null),
+                Arrays.asList("user1", "2026-03-10T11:00:00.000Z", "1", "2", null));
     }
 
     @Test

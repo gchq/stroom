@@ -107,6 +107,21 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 2);
     }
 
+    // The test events are all in one year, so the year before it is outside the range of the data
+    // and lag gives its default, where a year inside the range with no events would give zero.
+    @Test
+    void testWindowLag() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1y
+                eval before = lag(count(), 1, -1)
+                group by UserId
+                having before = -1
+                select windowStart() as Year, UserId, before""";
+        basicTest(query, 9, 2);
+    }
+
     /**
      * A table builder rule builds its detections in a different place to a scheduled query, so the level and
      * status a rule declares have to reach this path too.

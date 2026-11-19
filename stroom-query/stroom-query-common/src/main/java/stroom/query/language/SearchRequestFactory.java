@@ -55,6 +55,7 @@ import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.DateExpressionParser.DatePoint;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
@@ -109,16 +110,43 @@ public class SearchRequestFactory {
     private final DataSourceResolver dataSourceResolver;
     private final Provider<QueryFieldProvider> queryFieldProviderProvider;
     private final SecurityContext securityContext;
+    private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
 
-    @Inject
+    /// Creates the factory with the default limits on a query.
+    ///
+    /// @param visualisationTokenConsumer Parses the `show` clause.
+    /// @param dataSourceResolver         Finds the data source that a query names.
+    /// @param queryFieldProviderProvider Gives the fields of a data source.
+    /// @param securityContext            The security context.
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
                                 final DataSourceResolver dataSourceResolver,
                                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                                 final SecurityContext securityContext) {
+        this(visualisationTokenConsumer,
+                dataSourceResolver,
+                queryFieldProviderProvider,
+                securityContext,
+                SearchResultStoreConfig::new);
+    }
+
+    /// Creates the factory.
+    ///
+    /// @param visualisationTokenConsumer Parses the `show` clause.
+    /// @param dataSourceResolver         Finds the data source that a query names.
+    /// @param queryFieldProviderProvider Gives the fields of a data source.
+    /// @param securityContext            The security context.
+    /// @param resultStoreConfigProvider  Gives the configured limits on a query.
+    @Inject
+    public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
+                                final DataSourceResolver dataSourceResolver,
+                                final Provider<QueryFieldProvider> queryFieldProviderProvider,
+                                final SecurityContext securityContext,
+                                final Provider<SearchResultStoreConfig> resultStoreConfigProvider) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
         this.dataSourceResolver = dataSourceResolver;
         this.queryFieldProviderProvider = queryFieldProviderProvider;
         this.securityContext = securityContext;
+        this.resultStoreConfigProvider = resultStoreConfigProvider;
     }
 
     public void extractDataSourceOnly(final String string,
@@ -191,6 +219,7 @@ public class SearchRequestFactory {
                 dataSourceResolver,
                 queryFieldProviderProvider,
                 securityContext,
+                resultStoreConfigProvider.get().getMaxWindowCopiesPerEvent(),
                 false);
     }
 
@@ -204,6 +233,8 @@ public class SearchRequestFactory {
         private final DataSourceResolver dataSourceResolver;
         private final Provider<QueryFieldProvider> queryFieldProviderProvider;
         private final SecurityContext securityContext;
+        // The most times a query with a window clause may add one event to its results.
+        private final int maxWindowCopiesPerEvent;
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
@@ -232,7 +263,9 @@ public class SearchRequestFactory {
                 final DataSourceResolver dataSourceResolver,
                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                 final SecurityContext securityContext,
+                final int maxWindowCopiesPerEvent,
                 final boolean bracketed) {
+            this.maxWindowCopiesPerEvent = maxWindowCopiesPerEvent;
             this.visualisationTokenConsumer = visualisationTokenConsumer;
             this.dataSourceResolver = dataSourceResolver;
             this.queryFieldProviderProvider = queryFieldProviderProvider;
@@ -1198,8 +1231,9 @@ public class SearchRequestFactory {
                 throw new TokenException(token, e.getMessage());
             }
             final int windowsPerTime = TimeWindows.create(window).getWindowsPerTime();
-            if (TimeWindows.getCopiesPerTime(windowsPerTime, windowShifts) > TimeWindows.MAX_WINDOWS_PER_TIME) {
-                throw new TokenException(token, TimeWindows.tooManyCopiesMessage(windowsPerTime, windowShifts));
+            if (TimeWindows.getCopiesPerTime(windowsPerTime, windowShifts) > maxWindowCopiesPerEvent) {
+                throw new TokenException(token, TimeWindows.tooManyCopiesMessage(
+                        windowsPerTime, windowShifts, maxWindowCopiesPerEvent));
             }
         }
 
@@ -1270,9 +1304,9 @@ public class SearchRequestFactory {
             } catch (final IllegalArgumentException e) {
                 throw new TokenException(keywordGroup, e.getMessage());
             }
-            if (timeWindows.getWindowsPerTime() > TimeWindows.MAX_WINDOWS_PER_TIME) {
-                throw new TokenException(keywordGroup,
-                        TimeWindows.tooManyCopiesMessage(timeWindows.getWindowsPerTime(), 0));
+            if (timeWindows.getWindowsPerTime() > maxWindowCopiesPerEvent) {
+                throw new TokenException(keywordGroup, TimeWindows.tooManyCopiesMessage(
+                        timeWindows.getWindowsPerTime(), 0, maxWindowCopiesPerEvent));
             }
             return window;
         }
@@ -1715,6 +1749,7 @@ public class SearchRequestFactory {
                     dataSourceResolver,
                     queryFieldProviderProvider,
                     securityContext,
+                    maxWindowCopiesPerEvent,
                     true);
             builder.expressionContext = expressionContext;
             builder.paramMap = paramMap;

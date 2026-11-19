@@ -66,8 +66,9 @@ import java.util.function.LongConsumer;
 /// than the end that [#getWindowEnd(long)] gives for its window.
 public final class TimeWindows {
 
-    /// The most windows that one time may be in. Every row is copied once for each window it is in,
-    /// so this limits how much a hopping window multiplies the rows of a query.
+    /// The most copies of one row that a result store makes for a query with windows, unless it is
+    /// configured otherwise. Every row is copied once for each window it is in, so this limits how
+    /// much a hopping window multiplies the rows of a query.
     public static final int MAX_WINDOWS_PER_TIME = 100;
 
     private static final long MILLIS_PER_SECOND = 1_000L;
@@ -337,16 +338,19 @@ public final class TimeWindows {
     ///
     /// @param windowsPerTime How many windows each time is in.
     /// @param windowShifts   How many other windows the functions of the query read.
+    /// @param maxCopies      The most copies allowed.
     /// @return The message.
-    public static String tooManyCopiesMessage(final int windowsPerTime, final int windowShifts) {
+    public static String tooManyCopiesMessage(final int windowsPerTime,
+                                              final int windowShifts,
+                                              final int maxCopies) {
         final long copies = getCopiesPerTime(windowsPerTime, windowShifts);
         if (windowShifts == 0) {
             return "Each event would be in " + windowsPerTime + " windows, and the most allowed is "
-                   + MAX_WINDOWS_PER_TIME + ". Use a larger advance or a smaller window";
+                   + maxCopies + ". Use a larger advance or a smaller window";
         }
         return "Each event would be copied " + copies + " times, as it is in " + windowsPerTime
                + " windows and lag() and lead() read " + windowShifts + " other windows, and the most "
-               + "allowed is " + MAX_WINDOWS_PER_TIME + ". Use a larger advance, a smaller window or fewer "
+               + "allowed is " + maxCopies + ". Use a larger advance, a smaller window or fewer "
                + "different lag() and lead() distances";
     }
 

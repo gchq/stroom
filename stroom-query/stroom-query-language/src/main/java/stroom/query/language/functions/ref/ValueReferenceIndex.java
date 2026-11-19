@@ -32,6 +32,15 @@ public class ValueReferenceIndex {
     private final List<ValueReference<?>> list = new ArrayList<>();
     private final SortedSet<Integer> windowShifts = new TreeSet<>();
     private boolean usesWindows;
+    private final WindowRange windowRange = new WindowRange();
+
+    /// Gets the range of time windows that hold real rows, which the functions that read other
+    /// windows are given and a result store sets.
+    ///
+    /// @return The range, which is shared by everything compiled with this index.
+    public WindowRange getWindowRange() {
+        return windowRange;
+    }
 
     /// Records that a function reads the values of another time window, so that rows are copied
     /// to the window that reads them.
