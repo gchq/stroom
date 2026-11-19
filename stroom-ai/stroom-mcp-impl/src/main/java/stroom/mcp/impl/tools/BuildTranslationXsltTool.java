@@ -36,6 +36,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
@@ -1526,9 +1527,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Map<String, String> agreedBefore = kept.isEmpty()
                 ? Map.of()
                 : builds.unknownAgreed(request.uuid(), request.build(), request.name());
+        final String catchAllAgreed = kept.isEmpty()
+                ? null
+                : catchAllAgreed(request.build());
         kept.forEach(rule -> {
             final String key = TranslationBuilds.unknownKey(rule);
-            if (key.equals(agreedBefore.get(rule.name()))) {
+            if (key.equals(agreedBefore.get(rule.name()))
+                || (rule.catchAll() && catchAllAgreed != null && catchAllAgreed.equals(rule.allowUnknown()))) {
                 agreedNow.put(rule.name(), key);
             }
         });
@@ -1592,6 +1597,21 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 .boundTo(shown));
         kept.forEach(rule -> agreedNow.put(rule.name(), TranslationBuilds.unknownKey(rule)));
         return Optional.empty();
+    }
+
+    // The agreement the user gave the catalogue's catch-all in catalogue_event_types's form (its allow_unknown), or
+    // null when the build's catch-all isn't confirmed: the catch-all rule carrying it is not put to them again (seen
+    // in eval cases 19 and 58: the same records asked about in two forms).
+    private String catchAllAgreed(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return null;
+        }
+        final Map<String, Object> notes = builds.notesInBuild(build);
+        final Catalogue catalogue = SourceNotes.catalogue(notes);
+        // As the draft writes it on the catch-all rule.
+        return catalogue != null && catalogue.catchAll().confirmed()
+                ? SourceNotes.catchAllReason(notes, catalogue)
+                : null;
     }
 
     // A user's Id whose sample values carry a domain (domain.com\sam.lee) is put to the user, before saving: split it,

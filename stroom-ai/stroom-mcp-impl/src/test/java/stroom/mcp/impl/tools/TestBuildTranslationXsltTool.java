@@ -661,6 +661,48 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void theCatchAllTheUserAgreedToInTheCatalogueIsNotPutToThemAgain() {
+        // Seen in eval cases 19 and 58 on Haiku (2026-11-20): the catch-all confirmed in catalogue_event_types's form,
+        // then the same records put to the user again by the save's "Translate these records as Unknown events".
+        final Map<String, Object> notCaught = confirmedType("Authenticate-Logoff", "Logoff", "A user logged off",
+                "logout", "Logoff");
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of(notCaught));
+        block.put("catch_all", Map.of("status", "confirmed", "allow_unknown", "status lines carry no activity"));
+        final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n" + SourceNotes.block(block) + "\n")
+                .build());
+
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", caughtAll("status lines carry no "
+                                                                                       + "activity"),
+                "build", "acme-v1", "name", "N", "sample", SAMPLE));
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        assertThat(world.shown).isEmpty();
+
+        // A reason the user didn't agree to is put to them, as before.
+        final Map<String, Object> other = world.call(tool, Map.of("mapping", caughtAll("the agent's own reason"),
+                "build", "acme-v1", "name", "N2", "sample", SAMPLE));
+        assertThat(other.get("status")).isEqualTo("needs_review");
+    }
+
+    // Logons, and the catch-all for the rest (the status lines) as Unknown, with the reason given.
+    private static Map<String, Object> caughtAll(final String reason) {
+        final Map<String, Object> mapping = TranslationWorld.mapping();
+        final List<Object> events = list(mapping.get("events"));
+        final Map<String, Object> catchAll = new LinkedHashMap<>();
+        catchAll.put("name", "uncatalogued");
+        catchAll.put("catch_all", true);
+        catchAll.put("allow_unknown", reason);
+        catchAll.put("fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Unknown"),
+                Map.of("path", "EventDetail/Unknown/Data", "data_name", "action", "field", "action")));
+        mapping.put("events", List.of(events.get(0), catchAll));
+        return mapping;
+    }
+
+    @Test
     void keepingUnknownNeedsTheUsersConfirmationBeforeSaving() {
         final Map<String, Object> kept = keptAsUnknown();
         // Seen in VS Code: asked with "no sample records checked", the user couldn't see what went to Unknown. A
