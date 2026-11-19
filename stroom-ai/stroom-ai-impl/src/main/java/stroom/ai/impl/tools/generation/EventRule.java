@@ -40,7 +40,9 @@ import java.util.Set;
 /// @param data         Input fields carried as Data of this rule's action element, each named after its field;
 ///                     always empty once validated, as each becomes a Data entry of fields.
 /// @param catchAll     `catch_all`: the rule for uncatalogued records, the records no other rule takes: last, without
-///                     conditions, and what it takes logged (`Caught by`).
+///                     conditions, and what it takes logged (`Caught by`). A line format's (mixed lines,
+///                     alternatives, a saved converter) has its variant condition as its only conditions: all on one
+///                     field, the variant field ([#variantField()]), and it is the last of its line format's rules.
 public record EventRule(String name,
                         List<Condition> when,
                         List<FieldMapping> fields,
@@ -106,9 +108,10 @@ public record EventRule(String name,
         if (!fields.ok()) {
             return null;
         }
-        if (catchAll && (!when.isEmpty() || drop)) {
+        if (catchAll && (drop || (!when.isEmpty() && fieldOfAll(when) == null))) {
             fields.valueError("[" + name + "] catch_all is the rule for the records no other rule takes: it has no "
-                              + "conditions (when) and translates them (no drop)");
+                              + "conditions (when), or, a line format's, only conditions on the variant field (one "
+                              + "field, no xpath), and translates them (no drop)");
             return null;
         }
         if (data.isEmpty()) {
@@ -156,6 +159,28 @@ public record EventRule(String name,
     /// @return This rule with those fields.
     public EventRule withFields(final List<FieldMapping> fields) {
         return new EventRule(name, when, fields, drop, allowUnknown, keepUnknown, data, catchAll);
+    }
+
+    /// @return The field a line format's catch-all tests (its variant field): the one field all its conditions are
+    /// on; null for a rule that isn't a catch-all, or a catch-all with no conditions.
+    public String variantField() {
+        return catchAll
+                ? fieldOfAll(when)
+                : null;
+    }
+
+    // The one field every condition tests (none an xpath); null when they test none, or more than one.
+    private static String fieldOfAll(final List<Condition> conditions) {
+        final Set<String> tested = new HashSet<>();
+        for (final Condition condition : conditions) {
+            if (condition.field() == null || condition.xpath() != null) {
+                return null;
+            }
+            tested.add(condition.field());
+        }
+        return tested.size() == 1
+                ? tested.iterator().next()
+                : null;
     }
 
     /// @param mode How to write it.

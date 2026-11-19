@@ -399,10 +399,9 @@ final class VariantDrafts {
                                                   final List<Map<String, Object>> own) {
         final Map<String, Object> out = new LinkedHashMap<>(rule);
         out.put(NAME, prefix + "_" + rule.get(NAME));
-        // The catch-all's rule is the variant's uncatalogued records', for them only: the rule marked catch_all has
-        // no conditions, so each variant's is left unmarked, and the generator takes each as a catch-all, as it
-        // takes what its variant's rules before it leave.
-        out.remove("catch_all");
+        // The catch-all's rule is the variant's uncatalogued records', for them only: still marked catch_all, its
+        // variant's condition its only condition (settled with the translation lane, 2026-11-19), so the generator
+        // logs what it catches from the flag, not by inference.
         final List<Object> when = new ArrayList<>(List.of(condition));
         if (rule.get(WHEN) instanceof final List<?> conditions) {
             // A way testing the variant itself has it once.

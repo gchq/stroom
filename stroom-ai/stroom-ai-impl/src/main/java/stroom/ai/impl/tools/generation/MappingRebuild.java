@@ -39,6 +39,8 @@ import java.util.regex.Pattern;
 /// what every rule writes alike put in common. See [XsltReader#rebuild].
 final class MappingRebuild {
 
+    // A rule's spec key, while the rules are read: it logs what it catches and has conditions.
+    private static final String CAUGHT_WITH_CONDITIONS = "\u0000caught";
     private static final Pattern EVENT_TYPE = Pattern.compile("^event[_-]type[_-]");
     // What the rebuild reads of loops, said where one isn't read.
     private static final String NOT_A_LOOP_READ = "a group's loop and a repeated Data entry's are read back as the "
@@ -119,6 +121,7 @@ final class MappingRebuild {
             rulesOut.add(spec);
             perRule.add(entries);
         }
+        lineFormatCatchAlls(rulesOut);
         final Set<String> now = new HashSet<>();
         reading.rules().forEach(rule -> now.add(rule.key()));
         before.forEach((key, old) -> {
@@ -143,6 +146,36 @@ final class MappingRebuild {
             out.problems().add("the mapping read back doesn't validate: " + XsltReader.head(e.getMessage(), 400));
         }
         return out;
+    }
+
+    // The rules logging what they catch whose conditions are all on one field, the same for each: line formats'
+    // catch-alls (each format's variant condition its only condition), read back as marked. Conditions on more than
+    // one field, or rules on different fields, are not a line format's: left unmarked, as the generator inferred.
+    private static void lineFormatCatchAlls(final List<Map<String, Object>> rules) {
+        final Set<String> fields = new HashSet<>();
+        boolean lineFormats = true;
+        for (final Map<String, Object> rule : rules) {
+            if (rule.remove(CAUGHT_WITH_CONDITIONS) == null) {
+                continue;
+            }
+            rule.put(CAUGHT_WITH_CONDITIONS, true);
+            final Set<Object> tested = new HashSet<>();
+            for (final Object condition : rule.get("when") instanceof final List<?> when
+                    ? when
+                    : List.of()) {
+                tested.add(condition instanceof final Map<?, ?> map && map.get("xpath") == null
+                        ? map.get("field")
+                        : null);
+            }
+            lineFormats &= tested.size() == 1 && !tested.contains(null);
+            tested.forEach(field -> fields.add(String.valueOf(field)));
+        }
+        lineFormats &= fields.size() <= 1;
+        for (final Map<String, Object> rule : rules) {
+            if (rule.remove(CAUGHT_WITH_CONDITIONS) != null && lineFormats) {
+                rule.put("catch_all", true);
+            }
+        }
     }
 
     // One rule read: its spec (name, conditions, drop, unknown), and its entries, each with what it is known by.
@@ -181,6 +214,9 @@ final class MappingRebuild {
         if (rule.caught() && !XsltReader.truthy(rule.test())) {
             // The rule for the records no other rule takes, logging them (Caught by): read back as marked.
             spec.put("catch_all", true);
+        } else if (rule.caught()) {
+            // A line format's (its only conditions on the variant field), marked once every rule is read.
+            spec.put(CAUGHT_WITH_CONDITIONS, true);
         }
         if (old != null) {
             if (XsltReader.truthy(old.rule().allowUnknown())) {

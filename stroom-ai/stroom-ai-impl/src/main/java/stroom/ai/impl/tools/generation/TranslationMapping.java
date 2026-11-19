@@ -20,9 +20,11 @@ import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /// A translation mapping: which input field (or constant) goes to which event-logging path, per kind of event,
@@ -173,16 +175,41 @@ public record TranslationMapping(String input,
         return mapping.withPairsAsExtract().withDataNamesInStyle();
     }
 
-    // The catch-all rule (catch_all) is one at most, and last: it takes what every rule before it leaves.
+    // The catch-all rule (catch_all) is one at most, and last: it takes what every rule before it leaves. A line
+    // format's catch-all (its only conditions on the variant field) is one a format, the last of the rules testing
+    // its format's condition; every line format's on the same variant field.
     private static String catchAllProblem(final List<EventRule> events) {
-        final List<String> catchAll = events.stream().filter(EventRule::catchAll).map(EventRule::name).toList();
+        final List<String> catchAll = events.stream()
+                .filter(rule -> rule.catchAll() && rule.variantField() == null)
+                .map(EventRule::name)
+                .toList();
         if (catchAll.size() > 1) {
             return "Rules " + ToolText.list(catchAll) + " are each marked catch_all: one rule at most takes the "
                    + "records no other rule does";
         }
-        if (catchAll.size() == 1 && !events.getLast().catchAll()) {
+        if (catchAll.size() == 1 && !events.getLast().name().equals(catchAll.getFirst())) {
             return "Rule " + ToolText.repr(catchAll.getFirst()) + " is marked catch_all but isn't last: the rule for "
                    + "the records no other rule takes goes last";
+        }
+        final Set<String> variantFields = new LinkedHashSet<>();
+        for (int n = 0; n < events.size(); n++) {
+            final EventRule rule = events.get(n);
+            if (rule.variantField() == null) {
+                continue;
+            }
+            variantFields.add(rule.variantField());
+            for (final EventRule after : events.subList(n + 1, events.size())) {
+                if (!after.drop() && after.when().containsAll(rule.when())) {
+                    return "Rule " + ToolText.repr(rule.name()) + " is marked catch_all but isn't the last of its "
+                           + "line format's rules (" + ToolText.repr(after.name()) + " comes after it): a line "
+                           + "format's rule for the records no other rule of the format takes goes last of them";
+                }
+            }
+        }
+        if (variantFields.size() > 1) {
+            return "The line formats' catch_all rules test different fields (" + variantFields.stream()
+                    .map(ToolText::repr).collect(Collectors.joining(", ")) + "): each tests the one variant field, "
+                   + "its format's value";
         }
         return null;
     }

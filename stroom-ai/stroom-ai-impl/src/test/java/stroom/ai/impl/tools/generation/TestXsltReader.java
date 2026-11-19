@@ -475,6 +475,27 @@ class TestXsltReader extends XsltRuns {
         assertThat(flagged).isEqualTo(inferred);
     }
 
+    @Test
+    void eachLineFormatsCatchAllIsReadBackMarked() {
+        final Map<String, Object> gw = rule("gw_rest", List.of(equalsCondition("action", "gw")), LOGON);
+        gw.put("catch_all", true);
+        final Map<String, Object> other = rule("other_rest", List.of(equalsCondition("action", "other")),
+                otherRule().get("fields") instanceof final List<?> fields
+                        ? fields
+                        : List.of());
+        other.put("catch_all", true);
+        other.put("allow_unknown", "the rest");
+        final TranslationMapping m = mapping(with("events", List.of(rule("logon", List.of(equalsCondition("action",
+                "gw"), equalsCondition("host", "ws01")), LOGON), gw, other)));
+        final String code = codeOf(m);
+
+        final RebuiltMapping rebuilt = XsltReader.rebuild(code, null, null);
+
+        assertThat(rebuilt.problems()).isEmpty();
+        assertThat(rebuilt.mapping().events()).extracting(EventRule::catchAll).containsExactly(false, true, true);
+        assertThat(codeOf(rebuilt.mapping())).contains("Caught by rule ''gw_rest''", "Caught by rule ''other_rest''");
+    }
+
     // --- helpers ----------------------------------------------------------------------------------------------------
 
     private static String codeOf(final TranslationMapping m) {

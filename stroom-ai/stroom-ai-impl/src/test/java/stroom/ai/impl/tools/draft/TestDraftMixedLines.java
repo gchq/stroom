@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -152,10 +154,20 @@ class TestDraftMixedLines {
         assertThat(rules).as("%s", rules).contains("[variant=gw, event=LOGIN]", "[variant=linux, event=SUDO]",
                         "[variant=linux, event=CRON]")
                 .doesNotContain("[variant=linux, event=LOGIN]", "[variant=gw, event=SUDO]", "[variant=gw, event=CRON]");
-        // Each format's uncatalogued records its own: the rule marked catch_all has no conditions, so none is.
-        assertThat(JsonValues.maps(mapping(draft).get("events"))).noneMatch(rule -> rule.containsKey("catch_all"))
-                .anyMatch(rule -> "gw_uncatalogued".equals(rule.get("name")))
-                .anyMatch(rule -> "linux_uncatalogued".equals(rule.get("name")));
+        // Each format's uncatalogued records its own: a catch_all whose only condition is its format's.
+        final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+        JsonValues.maps(mapping(draft).get("events")).forEach(rule -> byName.put((String) rule.get("name"), rule));
+        assertThat(byName.values().stream().filter(rule -> Boolean.TRUE.equals(rule.get("catch_all")))
+                .map(rule -> (String) rule.get("name")).toList()).containsExactlyInAnyOrder("gw_uncatalogued",
+                "linux_uncatalogued");
+        assertThat(byName.get("gw_uncatalogued").get("when")).isEqualTo(List.of(Map.of("field", "variant",
+                "equals", "gw")));
+        assertThat(byName.get("linux_uncatalogued").get("when")).isEqualTo(List.of(Map.of("field", "variant",
+                "equals", "linux")));
+        // The mapping validates and generates, each format's catch-all logging what it catches.
+        final TranslationMapping parsed = TranslationMapping.parse(mapping(draft));
+        assertThat(parsed.events().stream().filter(EventRule::catchAll).map(EventRule::name).toList())
+                .containsExactlyInAnyOrder("gw_uncatalogued", "linux_uncatalogued");
     }
 
     @Test

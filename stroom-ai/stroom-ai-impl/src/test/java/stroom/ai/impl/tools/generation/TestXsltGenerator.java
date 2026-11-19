@@ -1149,6 +1149,44 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void eachLineFormatsCatchAllLogsItsOwnRecordsFromTheFlag() {
+        // Each format's uncatalogued records: a catch_all whose only condition is on the variant field, last of its
+        // format's rules; logged from the flag, the format's other rules not.
+        final TranslationMapping m = TranslationMapping.fromJson(json("""
+                {"input": "data_splitter", "common": [
+                  {"path": "EventTime/TimeCreated", "field": "time"},
+                  {"path": "EventSource/System/Name", "value": "Acme"},
+                  {"path": "EventSource/System/Environment", "value": "Prod"},
+                  {"path": "EventSource/Generator", "value": "Acme"},
+                  {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [
+                  {"name": "gw_logon", "when": [{"field": "variant", "equals": "gw"},
+                                                {"field": "event", "equals": "LOGIN"}],
+                   "fields": [{"path": "EventDetail/TypeId", "value": "Authenticate-Logon"},
+                              {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                              {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]},
+                  {"name": "gw_uncatalogued", "when": [{"field": "variant", "equals": "gw"}], "catch_all": true,
+                   "allow_unknown": "uncatalogued records",
+                   "fields": [{"path": "EventDetail/TypeId", "value": "Unknown"},
+                              {"path": "EventDetail/Unknown/Data", "data_name": "event", "field": "event"}]},
+                  {"name": "linux_sudo", "when": [{"field": "variant", "equals": "linux"},
+                                                  {"field": "event", "equals": "SUDO"}],
+                   "fields": [{"path": "EventDetail/TypeId", "value": "Authenticate-Sudo"},
+                              {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                              {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]},
+                  {"name": "linux_uncatalogued", "when": [{"field": "variant", "equals": "linux"}],
+                   "catch_all": true, "allow_unknown": "uncatalogued records",
+                   "fields": [{"path": "EventDetail/TypeId", "value": "Unknown"},
+                              {"path": "EventDetail/Unknown/Data", "data_name": "event", "field": "event"}]}]}"""));
+        final XsltGenerator.Generated result = XsltGenerator.generate(m, SCHEMA_352, "3.5.2");
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        assertThat(result.xslt()).contains("Caught by rule ''gw_uncatalogued'': record ",
+                        "Caught by rule ''linux_uncatalogued'': record ")
+                .doesNotContain("Caught by rule ''gw_logon''", "Caught by rule ''linux_sudo''");
+    }
+
+    @Test
     void theExampleMappingGenerates() {
         // The shape of a mapping, whole, shown in a reply that refuses one, generates.
         final TranslationMapping example = TranslationMapping.fromJson(json("""
