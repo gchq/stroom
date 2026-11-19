@@ -1437,8 +1437,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     // The form's message: which fields could tell the kinds apart, in plain text.
     private static String kindIntro(final String feed, final KindFields.Choice choice) {
-        return "No field of feed '" + feed + "' is named like a kind of event (type, action...), but these could "
-               + "tell its kinds apart:\n" + choice.said();
+        return (choice.candidates().stream().anyMatch(KindFields.Candidate::named)
+                ? "The fields of feed '" + feed + "' named like a kind of event (type, action...) have values in only "
+                  + "some of its records. These could tell its kinds apart:\n"
+                : "No field of feed '" + feed + "' is named like a kind of event (type, action...), but these could "
+                  + "tell its kinds apart:\n") + choice.said();
     }
 
     // With no forms: the agent asks the user which field, in the chat.
@@ -1449,8 +1452,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         result.put("candidates", choice.candidates().stream().map(candidate -> entry("field", candidate.field(),
                 "values", candidate.values().subList(0, Math.min(10, candidate.values().size())), "records",
                 candidate.records())).toList());
-        result.put("hint", "Nothing was surveyed yet. No field is named like a kind of event, but these could tell "
-                           + "the kinds apart. Ask the user in the chat which one does (show them the candidates "
+        result.put("hint", "Nothing was surveyed yet. No field named like a kind of event has a value in most "
+                           + "records, but these could tell the kinds apart. Ask the user in the chat which one "
+                           + "does (show them the candidates "
                            + "and their values), or whether the records are all one kind, then call " + NAME
                            + " again with " + KIND_FIELD_ARG + " as they said. Don't choose for them.");
         return result;
