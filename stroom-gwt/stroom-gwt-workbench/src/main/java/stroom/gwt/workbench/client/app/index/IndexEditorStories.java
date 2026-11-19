@@ -303,6 +303,23 @@ public final class IndexEditorStories {
                     play.expect(maxDocs).toHaveValue("2147483647");
                     DocEditors.expectNoProblems(play);
                 })
+                // No partition is saved as NONE (#6052): it was the box's empty choice, which the
+                // server turned into Month
+                .story("NoPartitionSaved", context -> render(context, false, false))
+                .withPlay(play -> {
+                    openSettings(play);
+                    play.click(play.within(play.querySelector("#indexSettingsPartitionBy"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(play.screen().findByRole("option", "No partition"));
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/index/v2/index-events")
+                                    .withJsonBodyContaining("{\"partitionBy\": \"NONE\"}")
+                                    .toSpyMatcher()));
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Settings tab when the user may only view the index
                 .story("SettingsReadOnly", context -> render(context, false, true))
                 .withPlay(play -> {

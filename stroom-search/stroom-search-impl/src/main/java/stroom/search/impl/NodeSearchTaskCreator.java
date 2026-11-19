@@ -117,7 +117,8 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
         Long partitionFrom = null;
         Long partitionTo = null;
 
-        if (timeRange != null) {
+        // An index that is not partitioned by time has no partition times to restrict the shards by.
+        if (timeRange != null && TimePartitionFactory.isTimePartitioned(indexDoc)) {
             final TimeFilter timeFilter = DateExpressionParser
                     .getTimeFilter(timeRange, task.getDateTimeSettings());
 

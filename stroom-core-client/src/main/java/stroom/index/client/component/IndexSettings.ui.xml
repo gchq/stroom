@@ -14,9 +14,9 @@
                             minValue="1000" maxValue="2147483647"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsPartitionBy" label="Partition By"
-                        helpText="Split the index into time-based partitions by Year, Month, Week or Day, so old data can be removed by partition. Choosing No partition is currently saved as Month. Default is Month."
+                        helpText="Split the index into time-based partitions by Year, Month, Week or Day, so old data can be removed by partition, or choose No partition to keep all data in one partition, which the Retention Period never deletes. Default is Month."
                         screenReaderText="Time unit used to divide the index into partitions.">
-            <l:SelectionBox ui:field="partitionBy" nonSelectString="No partition"/>
+            <l:SelectionBox ui:field="partitionBy"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsPartitionSize" label="Partition Size"
                         helpText="The number of 'Partition By' units in each partition, between 1 and 100. For example, 3 with Month gives a partition per quarter. Default is 1."
@@ -36,7 +36,7 @@
             <form:TextBox ui:field="timeField"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsRetentionPeriod" label="Retention Period"
-                        helpText="How long to keep indexed data. Shards in partitions that ended longer ago than this are deleted. Choose Forever to keep all data."
+                        helpText="How long to keep indexed data. Shards in partitions that ended longer ago than this are deleted. Choose Forever to keep all data. Data written with No partition has no partition end, so it is kept whatever this is set to."
                         screenReaderText="Older partitions are deleted. Forever keeps all data.">
             <l:SelectionBox ui:field="retentionAge"/>
         </form:FormGroup>

@@ -24,6 +24,7 @@ import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.index.shared.LuceneIndexField;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
@@ -206,11 +207,44 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     }
 
+    /// An index with no partition must put every document into one partition, even when the documents have
+    /// a value for the index's time field.
+    @Test
+    void testNoPartition() {
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("sid"));
+        indexFields.add(LuceneIndexField.createDateField("eventTime"));
+
+        final List<IndexDocument> documents = doTest(
+                "TestIndexDocumentFilter/SimpleDocuments.xml",
+                indexFields,
+                PartitionBy.NONE,
+                "eventTime");
+
+        // All three documents are in the one shard writer that doTest() insists on, including the one that
+        // has an event time.
+        assertThat(documents).hasSize(3);
+    }
+
     private List<IndexDocument> doTest(final String resourceName, final List<LuceneIndexField> indexFields) {
+        return doTest(resourceName, indexFields, null, null);
+    }
+
+    private List<IndexDocument> doTest(final String resourceName,
+                                       final List<LuceneIndexField> indexFields,
+                                       final PartitionBy partitionBy,
+                                       final String timeField) {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
+            final LuceneIndexDoc.Builder indexBuilder = indexStore.readDocument(indexRef).copy().fields(indexFields);
+            if (partitionBy != null) {
+                indexBuilder.partitionBy(partitionBy);
+            }
+            if (timeField != null) {
+                indexBuilder.timeField(timeField);
+            }
+            LuceneIndexDoc index = indexBuilder.build();
             index = indexStore.writeDocument(index);
 
             // Setup the error handler.

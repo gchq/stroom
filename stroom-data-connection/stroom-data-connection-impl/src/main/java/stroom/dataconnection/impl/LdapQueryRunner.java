@@ -102,14 +102,21 @@ class LdapQueryRunner {
             cancellation.register(() -> closeInBackground(ldapConnection));
             try {
                 ASN1OctetString cookie = null;
-                do {
+                // Checked before each page, as a search started on a connection that is closing may fail
+                // in the SDK.
+                while (!search.stopped()) {
                     final SearchRequest request = searchRequest(connection, filter, attributes, limits, cookie);
                     final SearchResult result = search.readPage(ldapConnection, request);
                     progress.accept(LogUtil.message("LDAP search of {} has read {} entries",
                             connection.url(), search.counter.rowsRead()));
                     cookie = nextCookie(result);
-                } while (cookie != null && !search.stopped());
-            } catch (final LDAPException | EntrySourceException e) {
+                    if (cookie == null) {
+                        break;
+                    }
+                }
+            } catch (final LDAPException | EntrySourceException | RuntimeException e) {
+                // Cancelling closes the connection in the background, so a search started just before then
+                // may fail with a runtime exception from the SDK, such as its timer being cancelled.
                 if (!cancellation.isCancelled()) {
                     throw e;
                 }

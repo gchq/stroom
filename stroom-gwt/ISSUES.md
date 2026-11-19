@@ -90,6 +90,8 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 ### The replay dialog says Edit Schedule
 
+**Fixed** (#6050, 19 November 2026, 7.14 merge): a replay is sent with no UUID (`ReplayScheduleFactory`, the server gives it one), so the dialog says Create Schedule.
+
 **Confirmed** (10 November 2026, 7.14 merge). Replaying an execution (an analytic's, report's or
 data generator's Execution tab, Replay Selected Execution) opens the schedule dialog captioned
 "Edit Schedule", though OK creates a new schedule. `ScheduledProcessEditorController.show` says
@@ -119,6 +121,8 @@ the credentials are saved, including edits that don't change it.
 
 ### Overnight processing periods never match after midnight
 
+**Fixed** (#6051, 19 November 2026, 7.14 merge): `ProcessorProfileCache` matches the part after midnight.
+
 **Re-checked** (6 November 2026, against the code): still open: `ProcessorProfileCache.java:155-161` (in `stroom-processor/stroom-processor-impl`) takes the start from the current day and moves only the end on a day.
 
 **Reported.** In a processor profile, a period whose end is earlier than its start (e.g. 22:00 to
@@ -126,6 +130,8 @@ the credentials are saved, including edits that don't change it.
 day, so the part after midnight never matches.
 
 ### Index "No partition" is saved as Month
+
+**Fixed** (#6052, 19 November 2026, 7.14 merge): `PartitionBy.NONE` is offered as No partition and kept by the server; story `App/Index/IndexEditor` `NoPartitionSaved`.
 
 **Re-checked** (6 November 2026, against the code): the client no longer offers No partition (`IndexSettings.java:70-73`); the server still turns none into Month (`LuceneIndexDoc.java:127`).
 

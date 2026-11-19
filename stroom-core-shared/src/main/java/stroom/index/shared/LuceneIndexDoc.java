@@ -231,6 +231,8 @@ public class LuceneIndexDoc extends AbstractDoc {
     }
 
     public enum PartitionBy implements HasDisplayValue {
+        // The index is not partitioned by time, so all documents go into a single partition.
+        NONE("No partition"),
         DAY("Day"),
         WEEK("Week"),
         MONTH("Month"),

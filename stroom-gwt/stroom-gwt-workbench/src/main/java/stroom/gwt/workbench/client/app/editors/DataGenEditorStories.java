@@ -154,7 +154,8 @@ public final class DataGenEditorStories {
                     DocEditors.expectNoProblems(play);
                 })
                 // Replaying an execution makes a new schedule for its time: a copy of its schedule,
-                // with a UUID of its own (#6008: it had the original's, which the server refused)
+                // sent without a UUID for the server to give it one (#6008: it had the original's,
+                // which the server refused), so the dialog says Create Schedule (#6050)
                 .story("ReplayExecution", context -> render(context, false))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Execution")).toBeInTheDocument());
@@ -163,8 +164,7 @@ public final class DataGenEditorStories {
                     play.click(play.findByText("Complete"));
                     play.click(play.getByRole("button", "Replay Selected Execution"));
                     final Play screen = play.screen();
-                    // Edit Schedule, though it creates one (ISSUES.md: The replay dialog says Edit)
-                    final Play dialog = screen.within(screen.findByText("Edit Schedule", StroomDom.DIALOG_TITLE)
+                    final Play dialog = screen.within(screen.findByText("Create Schedule", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     play.expect(dialog.getByDisplayValue("Nightly (replay)")).toBeInTheDocument();
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -173,7 +173,6 @@ public final class DataGenEditorStories {
                                     .withBody("a copy named 'Nightly (replay)' without the original's UUID",
                                             body -> body != null
                                                     && body.contains("Nightly (replay)")
-                                                    && body.contains("\"uuid\"")
                                                     && !body.contains("\"sched-1\""))
                                     .toSpyMatcher()));
                     DocEditors.expectNoProblems(play);

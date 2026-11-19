@@ -24386,7 +24386,7 @@
           },
           "partitionBy" : {
             "type" : "string",
-            "enum" : [ "DAY", "WEEK", "MONTH", "YEAR" ]
+            "enum" : [ "NONE", "DAY", "WEEK", "MONTH", "YEAR" ]
           },
           "partitionSize" : {
             "type" : "integer",
