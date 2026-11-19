@@ -487,7 +487,11 @@ class TestCatalogueCheck {
         }
         final long started = System.nanoTime();
 
-        final CatalogueCheckResult check = check(catalogue(catalogued.toArray(EventType[]::new)), lines);
+        // The regex budget is the check's guard against a slow pattern, not what this test measures: a generous
+        // one, so a loaded machine (seen: load average 20 with an eval run alongside) can't trip it.
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(catalogued.toArray(EventType[]::new)),
+                CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null)
+                        .withRegexBudget(Duration.ofSeconds(5)), null);
 
         final Duration took = Duration.ofNanos(System.nanoTime() - started);
         assertThat(took).isLessThan(Duration.ofSeconds(10));
