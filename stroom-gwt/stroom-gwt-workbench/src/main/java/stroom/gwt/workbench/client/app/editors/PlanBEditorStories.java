@@ -242,6 +242,19 @@ public final class PlanBEditorStories {
                     }
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A state store has no condense settings, so changing it to a type that has them
+                // shows a new store's default, 1 day (before, the form's own 1 year, which was saved)
+                .story("ChangingTypeGivesCondenseItsDefault", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toBeInTheDocument());
+                    play.click(stateType(play));
+                    play.click(play.screen().findByText("Temporal State", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(selection(play, "Condense Data", "Condense Age"))
+                            .toHaveValue("Days"));
+                    final Play condense = play.within(play.getByText("Condense Data", GROUP_LABEL).closest(GROUP));
+                    play.expect(condense.getByRole("spinbutton")).toHaveValue("1");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Editing a setting makes the document dirty, so Save is enabled
                 .story("EditEnablesSave", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {

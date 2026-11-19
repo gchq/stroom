@@ -50,6 +50,8 @@ file. Kept elsewhere, on purpose:
 
 ### A view's Meta Filter only applies to analytic rules
 
+**Left** (19 November 2026): views are to be looked at as a whole later.
+
 **Re-checked** (6 November 2026, against the code): still open: the TODO is at `ViewSearchProvider.java:190`; `ViewDoc.getFilter()` is read only by the analytic executors (`TableBuilderAnalyticExecutor`, `AnalyticRuleProcessors`).
 
 **Reported.** `ViewSearchProvider` has `// TODO : ADD SOMETHING FOR VIEWDOC FILTER`, so ordinary
@@ -58,6 +60,8 @@ searches of a view ignore its Meta Filter; only analytic rule processing applies
 * `stroom-view/stroom-view-impl/src/main/java/stroom/view/impl/ViewSearchProvider.java`
 
 ### Some Ask Stroom AI settings ignore the user's own values
+
+**Left** (19 November 2026): a big change to Ask Stroom AI is coming, so it isn't touched now.
 
 **Re-checked** (6 November 2026, against the code): still open: `AskStroomAIService` takes debug detail, the history cap, the chat system prompt and the download timeout from `defaultConfigProvider.get()`; only the model, table analysis and the history summary prompt come from the user's config.
 
@@ -71,6 +75,8 @@ have no effect unless an administrator saves them as the default.
 ## Wrong values and failures
 
 ### Solr clients can't be made: SolrJ needs a Jetty client the app doesn't have
+
+**Left** (19 November 2026): Solr support may be removed.
 
 **Re-checked** (6 November 2026, against the code): still open as far as the build shows: SolrJ 9.10.1, Jetty 12 forced app-wide (now by `jetty-bom` 12.1.14, `gradle/libs.versions.toml`), and `SolrClientFactory` builds `Http2SolrClient`. That it fails needs a run against Solr.
 
@@ -105,6 +111,8 @@ let the opener say which it is (e.g. a caption or an `isNew` argument to `show`)
 
 ### Analytic notification limit resets on restart
 
+**Tracked** in GitHub issue #6057 (19 November 2026), for discussion.
+
 **Re-checked** (6 November 2026, against the code): still open: `NotificationStateService` keeps its state in an in-memory map.
 
 **Reported.** The notification count is held in memory on each node (`NotificationStateService`),
@@ -113,6 +121,8 @@ so it resets when Stroom restarts. With Resume Notifications After blank, sendin
 * `stroom-analytics/stroom-analytics-impl/src/main/java/stroom/analytics/impl/NotificationStateService.java`
 
 ### Credential expiry isn't enforced
+
+**Tracked** in GitHub issue #6058 (19 November 2026). The expiry is mainly for information (e.g. a certificate's), but could also be enforced, generically, when a credential is retrieved.
 
 **Re-checked** (6 November 2026, against the code): expiry: still open (nothing on the server reads `getExpiryTimeMs()` outside the credentials DAO and service, `stroom-credentials/stroom-credentials-impl/.../CredentialsService.java`). Uploading the key store again on every save: **fixed**, saving an existing credential keeps its secret (`CredentialsService` lines 220-245), and changing it is Replace Secret.
 
@@ -150,6 +160,21 @@ client offers it again.
 that into Month, so the choice can never be kept (`IndexSettings`).
 
 ### Other values that disagree
+
+**Fixed** (19 November 2026), the last three:
+
+* Batch Edit Schedules' Run As User picker now asks for `FindUserContext.RUN_AS`, as the single
+  schedule editor does. Test: `TestBatchExecutionScheduleEditorController` (failed before).
+* Plan B condense's fallback wasn't only cosmetic: changing a store from a type without condense
+  settings (e.g. State) to one with them (e.g. Temporal State) gives the form null, so it showed and
+  saved 1 year where a new store has 1 day. `CondenseSettingsForm` now takes the model's default
+  (`DurationSetting`). Play: `App/Editors/PlanBEditor` `ChangingTypeGivesCondenseItsDefault`
+  (failed before).
+* `SessionDb.condense()`: nested sessions can occur, as `insert` stores what it is given. The merged
+  session now ends at whichever end is later, and each session is compared with the merged one
+  rather than the last read, so [0, 10] and [2, 5] give [0, 10], not [0, 5], and [7, 8] after them
+  joins too. Tests: `TestSessionDb` `testCondenseKeepsTheEndOfASessionWithOneNestedInIt` and
+  `testCondenseMergesASessionInsideTheMergedOne` (both failed before).
 
 **Re-checked** (6 November 2026, against the code): still open: the batch schedule's Run As User picker (`BatchExecutionScheduleEditorController` never sets `FindUserContext.RUN_AS`, as `ScheduledProcessEditorController.java:102` does; which users are wrongly listed needs a run); Plan B condense's 1-year fallback (the widget, `CondenseSettingsForm.java:63,82`); `SessionDb.condense()` taking the later session's end (`SessionDb.java:522-527`; whether nested sessions occur needs data). **Fixed:** date boxes now always write `Z` or an offset in the user's time zone (`DateTimeModel.formatIso`), the data upload's Effective Date included. Send Empty Reports and Reprocess's Max Create Time are not bugs, as recorded. `WordListPresenter` is gone (`EffectiveWordsList`).
 
@@ -508,6 +533,8 @@ with the `+`).
 
 ### A visualisation's selection offers only Name and Value to selection handlers
 
+**Tracked** in GitHub issue #6059 (19 November 2026), for discussion.
+
 **Re-checked** (6 November 2026, against the code): still open (`VisSelectionModel.java:44-46`, now in `stroom-core-client/.../query/client/result/vis/`).
 
 **Confirmed.** A visualisation can send any keys in its selection (`stroom.select`), and Stroom
@@ -522,6 +549,8 @@ its inputs are) and offer those.
 * `stroom-core-client/src/main/java/stroom/query/client/VisComponentSelection.java`
 
 ### GeoMap's map tiles are blocked in an asset-based visualisation
+
+**Tracked** in GitHub issue #6060 (19 November 2026).
 
 **Re-checked** (6 November 2026, against the code): still open in the code: `DocumentAssetServlet.java:212-219` still has `img-src 'self' data:`, with no setting for other origins; a blank map needs a running Stroom to see.
 
