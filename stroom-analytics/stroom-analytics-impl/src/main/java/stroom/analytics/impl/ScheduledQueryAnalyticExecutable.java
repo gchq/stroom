@@ -27,6 +27,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
+import stroom.query.api.HoppingWindow;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
@@ -35,9 +36,12 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ConditionalFormattingMapper;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -50,6 +54,7 @@ import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.RowValueFilter;
 import stroom.query.common.v2.SimpleMapper;
 import stroom.query.common.v2.ValFilter;
+import stroom.query.common.v2.WholeWindowFilter;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
@@ -192,11 +197,20 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                     final ColumnFormatter fieldFormatter =
                             new ColumnFormatter(new FormatterFactory(expressionContext.getDateTimeSettings()));
 
+                    // The rows of time windows that the time range of the query cuts short are not
+                    // judged, as they are worked out from part of their events.
+                    final Predicate<Item> wholeWindowFilter = createWholeWindowFilter(
+                            mappedRequest,
+                            tableSettings,
+                            compiledColumns,
+                            dataStore.getColumns(),
+                            effectiveExecutionTime);
+
                     try (final DuplicateCheck duplicateCheck =
                             duplicateCheckFactory.create(doc, compiledColumns)) {
                         detectionConsumerProxy.start();
                         final Consumer<Item> itemConsumer = item -> {
-                            if (duplicateCheck.check(item)) {
+                            if (wholeWindowFilter.test(item) && duplicateCheck.check(item)) {
                                 Long streamId = null;
                                 Long eventId = null;
                                 final List<DetectionValue> values = new ArrayList<>();
@@ -507,6 +521,42 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
 
     // --------------------------------------------------------------------------------
 
+
+    // Creates a test of whether a row is of a time window that lies wholly inside the time that was
+    // searched, which ends at the time the rule is run for if the query's time range has no earlier
+    // end. Every row passes if the query has no window clause.
+    private Predicate<Item> createWholeWindowFilter(final SearchRequest searchRequest,
+                                                    final TableSettings tableSettings,
+                                                    final CompiledColumns compiledColumns,
+                                                    final List<Column> columns,
+                                                    final Instant effectiveExecutionTime) {
+        if (!(tableSettings.getWindow() instanceof final HoppingWindow window)) {
+            return item -> true;
+        }
+        int windowKeyIndex = -1;
+        for (int i = 0; i < columns.size(); i++) {
+            if (SearchRequestFactory.WINDOW_COLUMN_NAME.equals(columns.get(i).getName())) {
+                windowKeyIndex = i;
+            }
+        }
+        if (windowKeyIndex == -1) {
+            return item -> true;
+        }
+
+        final TimeRange timeRange = searchRequest.getQuery().getTimeRange();
+        final TimeFilter searched = timeRange == null
+                ? new TimeFilter(0L, Long.MAX_VALUE)
+                : DateExpressionParser.getTimeFilter(timeRange, searchRequest.getDateTimeSettings());
+        final WholeWindowFilter wholeWindowFilter = new WholeWindowFilter(
+                window,
+                compiledColumns.getValueReferenceIndex().getWindowShifts(),
+                new TimeFilter(searched.getFrom(), Math.min(searched.getTo(), effectiveExecutionTime.toEpochMilli())));
+        final int index = windowKeyIndex;
+        return item -> {
+            final Long windowKey = NullSafe.get(item.getValue(index), Val::toLong);
+            return windowKey != null && wholeWindowFilter.isWhole(windowKey);
+        };
+    }
 
     private record MappedRequestBundle(SearchRequest mappedRequest,
                                        SearchRequest sampleRequest,

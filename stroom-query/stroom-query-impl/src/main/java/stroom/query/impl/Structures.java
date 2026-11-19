@@ -338,6 +338,11 @@ class Structures {
                         gets a row for it if a window either side reads it.
 
                         Rows with no time in the window's field are left out.
+
+                        A rule judges a window only when it has all of its events. A rule that is run on
+                        a schedule leaves out a window that the time range of its query cuts short, so
+                        give it a time range of whole windows, such as `day() - 7d` to `day()` for
+                        windows of a day.
                         """,
                 "window ${1:time_field} by ${2:size}\n$0");
         add(list, name(TokenType.FILTER),
