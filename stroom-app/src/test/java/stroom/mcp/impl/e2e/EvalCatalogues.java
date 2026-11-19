@@ -162,9 +162,12 @@ final class EvalCatalogues {
         for (final Map<String, Object> field : list(rule.get("fields"))) {
             final String path = String.valueOf(field.get("path"));
             if (path.startsWith(EVENT_DETAIL)) {
-                final String element = path.substring(EVENT_DETAIL.length()).split("/")[0];
-                if (!DETAIL_META.contains(element)) {
-                    return element;
+                final String[] parts = path.substring(EVENT_DETAIL.length()).split("/");
+                if (!DETAIL_META.contains(parts[0])) {
+                    // Network's action is its child: Network/Connect.
+                    return "Network".equals(parts[0]) && parts.length > 2
+                            ? parts[0] + "/" + parts[1]
+                            : parts[0];
                 }
             }
         }

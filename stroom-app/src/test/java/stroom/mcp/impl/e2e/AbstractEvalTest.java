@@ -509,8 +509,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             // A build on a promoted feed processes only what its survey has read: surveyed, as an agent would.
             json("survey_feed", args("feed", feed, "build", build));
         } else if (CATALOGUES) {
-            // The build's own samples, surveyed before they are catalogued, as the plan has it.
-            surveyed(build, feed, raws);
+            // The build's own samples, surveyed before they are catalogued, as the plan has it; a survey refused for
+            // nothing readable (damaged lines) is kept in the build's record, and cataloguing goes on without it.
+            McpTestClient.text(client.call("survey_feed", args("feed", feed, "build", build, "stream_ids", raws)));
         }
         if (CATALOGUES) {
             confirmCatalogue(evalCase, score, build, raws);

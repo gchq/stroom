@@ -67,6 +67,8 @@ class TestEvalCatalogues {
                 assertThat(typeId).as(id).matches(VERB_OBJECT);
                 assertThat((String) type.get("description")).as("%s %s", id, typeId).isNotBlank();
                 assertThat(type).as("%s %s", id, typeId).containsEntry("status", "confirmed");
+                // Network's action element is its child (Network/Connect), as the schema has it.
+                assertThat(String.valueOf(type.get("event_detail"))).as("%s %s", id, typeId).isNotEqualTo("Network");
                 final List<Map<String, Object>> ways = (List<Map<String, Object>>) type.get("recognised_by");
                 assertThat(ways).as("%s %s", id, typeId).isNotEmpty();
                 // A sole event type may be recognised by every record; any other is recognised by a condition.
