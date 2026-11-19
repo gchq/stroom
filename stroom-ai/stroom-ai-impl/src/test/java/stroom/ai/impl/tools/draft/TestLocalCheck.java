@@ -723,4 +723,34 @@ class TestLocalCheck extends DraftFixtures {
         assertThat(pieces.note()).isNull();
         assertThat(pieces.records()).hasSize(2);
     }
+
+    @Test
+    void jsonLinesWhoseLinesHoldArraysOfObjectsAreReadAsLines() {
+        // Seen in the catalogue's lanes (2026-11-19): JSON lines whose first line holds an array of objects were read
+        // as one object wrapping the records, and the second line then failed to parse ("Extra data").
+        final TranslationMapping json = TranslationMapping.fromJson(JsonValues.map(ToolJson.loads("""
+                {"input": "json",
+                 "common": [{"path": "EventSource/User/Id", "field": "user"}], "events": [{"name": "a"}]}""")));
+        final String sample = """
+                {"user": "a", "targets": [{"id": 1}, {"id": 2}]}
+                {"user": "b", "targets": [{"id": 3}]}
+                {"user": "c"}
+                """;
+
+        final LocalCheck.SampleRecords read = LocalCheck.sampleRecords(json, sample, null);
+
+        assertThat(read.note()).isNull();
+        assertThat(read.records().stream().map(record -> (Object) ((Map<?, ?>) record).get("user")).toList())
+                .containsExactly("a", "b", "c");
+        // One object wrapping the records, on one line or several, is still the parser's one record.
+        final String wrapped = """
+                {"Records": [
+                  {"user": "a"},
+                  {"user": "b"}
+                ]}
+                """;
+        assertThat(LocalCheck.sampleRecords(json, wrapped, null).records()).hasSize(1);
+        assertThat(LocalCheck.sampleRecords(json, "{\"Records\": [{\"user\": \"a\"}, {\"user\": \"b\"}]}",
+                null).records()).hasSize(1);
+    }
 }

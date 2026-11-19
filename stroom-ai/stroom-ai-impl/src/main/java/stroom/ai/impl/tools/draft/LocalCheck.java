@@ -408,7 +408,7 @@ public final class LocalCheck {
 
     private static SampleRecords jsonRecords(final String text, final int cut) {
         final List<Object> values = new ArrayList<>();
-        if (text.startsWith("{") && SampleProfiler.wrappedRecords(text) != null) {
+        if (text.startsWith("{") && !jsonLines(text) && SampleProfiler.wrappedRecords(text) != null) {
             // One object wrapping the records (CloudTrail): the parser's one record; for_each reads its items.
             values.add(ToolJson.loads(text));
         } else if (text.startsWith("[")) {
@@ -440,6 +440,21 @@ public final class LocalCheck {
                 ? cutStrings(value, cut)
                 : value)));
         return new SampleRecords(records, null);
+    }
+
+    // Whether a text is JSON lines: its first line is a whole JSON object and another line follows. Its lines are
+    // read as records even where one holds an array of objects, which a single object wrapping the records (written
+    // on one line, or over several) would.
+    private static boolean jsonLines(final String text) {
+        final int newLine = text.indexOf('\n');
+        if (newLine < 0 || ToolText.isBlank(text.substring(newLine + 1))) {
+            return false;
+        }
+        try {
+            return ToolJson.loads(text.substring(0, newLine)) instanceof Map;
+        } catch (final ToolJson.JsonDecodeException e) {
+            return false;
+        }
     }
 
     // A JSON value with each string longer than the cut cut to it, as Stroom's JSONParser cuts them.
