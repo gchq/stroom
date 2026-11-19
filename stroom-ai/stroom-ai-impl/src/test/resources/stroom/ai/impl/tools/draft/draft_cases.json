@@ -112,7 +112,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -222,7 +223,8 @@
         "data_name": "sev",
         "field": "sev"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -316,7 +318,8 @@
         "data_name": "process.args",
         "field": "process.args"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -463,7 +466,8 @@
         "data_name": "message.ok",
         "field": "message.ok"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -593,7 +597,8 @@
         "data_name": "path",
         "field": "path"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -689,7 +694,8 @@
         "data_name": "structured",
         "field": "structured"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1004,7 +1010,8 @@
         "data_name": "proto",
         "field": "proto"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1109,7 +1116,8 @@
         "data_name": "col5",
         "field": "col5"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1234,7 +1242,8 @@
         "data_name": "@action",
         "field": "@action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1322,7 +1331,8 @@
         "data_name": "host",
         "field": "host"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1470,7 +1480,8 @@
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1669,7 +1680,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -1839,7 +1851,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -2012,7 +2025,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -2100,7 +2114,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -2195,7 +2210,8 @@
          }
         ]
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -2675,7 +2691,8 @@
         "data_name": "bytes_received",
         "field": "bytes_received"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -2926,7 +2943,8 @@
         "data_name": "event.resource",
         "field": "event.resource"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -3089,7 +3107,8 @@
         "data_name": "name",
         "field": "name"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -3186,7 +3205,8 @@
         "data_name": "res",
         "field": "res"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -3461,7 +3481,8 @@
         "data_name": "bytes_out",
         "field": "bytes_out"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -3995,7 +4016,8 @@
         "data_name": "fileHash",
         "field": "fileHash"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -4261,7 +4283,8 @@
         "field": "comment",
         "transform": "unescape_quotes"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -4367,7 +4390,8 @@
         "data_name": "col6",
         "field": "col6"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -4486,7 +4510,8 @@
         "data_name": "location",
         "field": "location"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -4882,7 +4907,8 @@
         "data_name": "referer",
         "field": "referer"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "nil_values": [
@@ -5240,7 +5266,8 @@
         "data_name": "EventData/Data[@Name='FailureReason']",
         "field": "EventData/Data[@Name='FailureReason']"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -5331,7 +5358,8 @@
         "data_name": "col2",
         "field": "col2"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -5435,7 +5463,8 @@
         "data_name": "component",
         "field": "component"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -5538,7 +5567,8 @@
         "data_name": "granted",
         "field": "granted"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -5814,7 +5844,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -6217,7 +6248,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -6528,7 +6560,8 @@
         "data_name": "outcome.reason",
         "field": "outcome.reason"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -6823,7 +6856,8 @@
         "data_name": "remip",
         "field": "remip"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -7683,7 +7717,8 @@
         "data_name": "EventData/Data[@Name='ShareName']",
         "field": "EventData/Data[@Name='ShareName']"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -7829,7 +7864,8 @@
         "data_name": "department",
         "field": "department"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -7926,7 +7962,8 @@
         "data_name": "department",
         "field": "department"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -8025,7 +8062,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -9558,7 +9596,8 @@
         "data_name": "client",
         "field": "client"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -10177,7 +10216,8 @@
         "data_name": "access_method",
         "field": "access_method"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -10842,7 +10882,8 @@
         "data_name": "access_method",
         "field": "access_method"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -11161,7 +11202,8 @@
         "data_name": "cat",
         "field": "cat"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -11476,7 +11518,8 @@
         "data_name": "cat",
         "field": "cat"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -11618,7 +11661,8 @@
         "data_name": "sev",
         "field": "sev"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -11679,7 +11723,8 @@
         "path": "EventDetail/TypeId",
         "value": "Other"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -11867,7 +11912,8 @@
         "data_name": "cs-bytes",
         "field": "cs-bytes"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -12173,7 +12219,8 @@
         "data_name": "requestParameters.key",
         "field": "requestParameters.key"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -12271,7 +12318,8 @@
         "data_name": "col2",
         "field": "col2"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -12377,7 +12425,8 @@
         "data_name": "thread",
         "field": "thread"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -12492,7 +12541,8 @@
         "data_name": "thread",
         "field": "thread"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -12629,7 +12679,8 @@
         "field": "comment",
         "transform": "unescape_quotes"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -12779,7 +12830,8 @@
         "field": "comment",
         "transform": "unescape_quotes"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -13099,7 +13151,8 @@
         "data_name": "col47",
         "field": "col47"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -13835,7 +13888,8 @@
         "data_name": "session_end_reason",
         "field": "session_end_reason"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -14565,7 +14619,8 @@
         "data_name": "session_end_reason",
         "field": "session_end_reason"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -14808,7 +14863,8 @@
         "data_name": "col5",
         "field": "col5"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -14970,7 +15026,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -15155,7 +15212,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -15296,7 +15354,8 @@
         "data_name": "_src_ip",
         "field": "_src_ip"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -15423,7 +15482,8 @@
         "data_name": "_src_ip",
         "field": "_src_ip"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -15623,7 +15683,8 @@
         "data_name": "file.name",
         "field": "file.name"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -15823,7 +15884,8 @@
         "data_name": "file.name",
         "field": "file.name"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -16223,7 +16285,8 @@
         "data_name": "policyid",
         "field": "policyid"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -16754,7 +16817,8 @@
         "data_name": "attack",
         "field": "attack"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -16956,7 +17020,8 @@
         "data_name": "json.result",
         "field": "json.result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -17125,7 +17190,8 @@
         "data_name": "json.result",
         "field": "json.result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -17294,7 +17360,8 @@
         "data_name": "json.result",
         "field": "json.result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -17568,7 +17635,8 @@
         "data_name": "payload/Envelope/Body/UpdateAccount/Result",
         "field": "payload/Envelope/Body/UpdateAccount/Result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -17864,7 +17932,8 @@
         "data_name": "payload/Envelope/Body/UpdateAccount/Result",
         "field": "payload/Envelope/Body/UpdateAccount/Result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18102,7 +18171,8 @@
         "data_name": "size",
         "field": "size"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18322,7 +18392,8 @@
         "data_name": "size",
         "field": "size"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18480,7 +18551,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18636,7 +18708,8 @@
         "data_name": "result",
         "field": "result"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18722,7 +18795,8 @@
         "data_name": "time",
         "field": "time"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18842,7 +18916,8 @@
         "data_name": "level",
         "field": "level"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -18977,7 +19052,8 @@
         "data_name": "level",
         "field": "level"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -19199,7 +19275,8 @@
         "data_name": "t",
         "field": "t"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -19614,7 +19691,8 @@
         "data_name": "ult",
         "field": "ult"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -19881,7 +19959,8 @@
         "data_name": "bytes_received",
         "field": "bytes_received"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -20135,7 +20214,8 @@
         "data_name": "bytes_received",
         "field": "bytes_received"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -20299,7 +20379,8 @@
         "data_name": "logid",
         "field": "logid"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -20709,7 +20790,8 @@
         "data_name": "rule_id",
         "field": "rule_id"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -20894,7 +20976,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -21196,7 +21279,8 @@
         "data_name": "granted",
         "field": "granted"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -21283,7 +21367,8 @@
         "data_name": "time",
         "field": "time"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -21342,7 +21427,8 @@
         "path": "EventDetail/TypeId",
         "value": "Other"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -21449,7 +21535,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -21790,7 +21877,8 @@
         "data_name": "secret_id",
         "field": "secret_id"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -22170,7 +22258,8 @@
         "data_name": "bytes_received",
         "field": "bytes_received"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -22675,7 +22764,8 @@
         "data_name": "bytes_received",
         "field": "bytes_received"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -22910,7 +23000,8 @@
         "data_name": "message.timestamp",
         "field": "message.timestamp"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -23050,7 +23141,8 @@
         "data_name": "event_type",
         "field": "event_type"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -23135,7 +23227,8 @@
         "data_name": "data/data/data/@value",
         "field": "data/data/data/@value"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -23344,7 +23437,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -23852,7 +23946,8 @@
         "data_name": "res",
         "field": "res"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -24211,7 +24306,8 @@
         "data_name": "rule_id",
         "field": "rule_id"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -24535,7 +24631,8 @@
         "data_name": "rule_id",
         "field": "rule_id"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -24647,7 +24744,8 @@
         "data_name": "sc-status",
         "field": "sc-status"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "ignored_fields": [
@@ -24781,7 +24879,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -24860,7 +24959,8 @@
         "data_name": "date",
         "field": "date"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -24949,7 +25049,8 @@
         "data_name": "ts",
         "field": "ts"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25023,7 +25124,8 @@
         "data_name": "time",
         "field": "time"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25156,7 +25258,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25282,7 +25385,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25407,7 +25511,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25492,7 +25597,8 @@
         "data_name": "col4",
         "field": "col4"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25587,7 +25693,8 @@
         "field": "col5",
         "transform": "unescape_quotes"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25684,7 +25791,8 @@
         "data_name": "pid",
         "field": "pid"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -25911,7 +26019,8 @@
         "data_name": "proto",
         "field": "proto"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ],
     "nil_values": [
@@ -26190,7 +26299,8 @@
         "data_name": "act",
         "field": "act"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -26485,7 +26595,8 @@
         "data_name": "act",
         "field": "act"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -26658,7 +26769,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -26784,7 +26896,8 @@
         "data_name": "event",
         "field": "event"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -26896,7 +27009,8 @@
         "data_name": "event",
         "field": "event"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27019,7 +27133,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27133,7 +27248,8 @@
         "data_name": "event",
         "field": "event"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27244,7 +27360,8 @@
         "data_name": "event",
         "field": "event"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27355,7 +27472,8 @@
         "data_name": "event",
         "field": "event"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27466,7 +27584,8 @@
         "data_name": "event",
         "field": "event"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27591,7 +27710,8 @@
         "data_name": "tags",
         "field": "tags"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27712,7 +27832,8 @@
         "data_name": "action",
         "field": "action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27830,7 +27951,8 @@
         "data_name": "@action",
         "field": "@action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -27948,7 +28070,8 @@
         "data_name": "Action",
         "field": "Action"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -28063,7 +28186,8 @@
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },
@@ -28301,7 +28425,8 @@
         "data_name": "logoutmethod",
         "field": "logoutmethod"
        }
-      ]
+      ],
+      "catch_all": true
      }
     ]
    },

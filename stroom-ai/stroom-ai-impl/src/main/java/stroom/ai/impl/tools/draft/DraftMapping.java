@@ -2341,7 +2341,9 @@ public final class DraftMapping {
                 fields.add(dict(PATH, "EventDetail/TypeId", VALUE, "Other"));
             }
             fields.addAll(unknownData);
-            rules.add(dict("name", "other", FIELDS, fields));
+            // The rule for the records no other rule takes, flagged as the catalogue's catch-all is, so processing
+            // logs what it catches (Caught by) from the flag, never by inference.
+            rules.add(dict("name", "other", FIELDS, fields, "catch_all", true));
             return null;
         }
 

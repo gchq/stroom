@@ -166,7 +166,8 @@
       "data_name": "action",
       "field": "action"
      }
-    ]
+    ],
+    "catch_all": true
    }
   ]
  },
@@ -490,7 +491,8 @@
       "data_name": "bytes_received",
       "field": "bytes_received"
      }
-    ]
+    ],
+    "catch_all": true
    }
   ]
  },
@@ -938,7 +940,8 @@
       "data_name": "bytes_received",
       "field": "bytes_received"
      }
-    ]
+    ],
+    "catch_all": true
    }
   ]
  },
@@ -1114,7 +1117,8 @@
       "data_name": "message.timestamp",
       "field": "message.timestamp"
      }
-    ]
+    ],
+    "catch_all": true
    }
   ],
   "ignored_fields": [
@@ -1397,7 +1401,8 @@
       "data_name": "action",
       "field": "action"
      }
-    ]
+    ],
+    "catch_all": true
    }
   ]
  },

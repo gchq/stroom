@@ -758,6 +758,20 @@ class TestDraftMapping extends DraftFixtures {
         }
     }
 
+    @Test
+    void aDraftBeforeAnyCatalogueFlagsItsRuleForTheRestAsTheCatchAll() {
+        // Seen in TestE2eForkedSchema: the draft's last rule wrote Unknown for the records no other rule takes, but
+        // unflagged, so Caught by wasn't logged from it as the catalogue's catch-all's is (the Contracts: never by
+        // inference).
+        final Map<String, Object> draft = draft(Map.of("fw.csv", REPLY_SAMPLE), "FW", "FW", "Prod");
+        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(draft).get("events"));
+
+        assertThat(rules.getLast()).containsEntry("name", "other").containsEntry("catch_all", true)
+                .doesNotContainKey("when");
+        assertThat(rules.subList(0, rules.size() - 1)).noneMatch(rule -> rule.containsKey("catch_all"));
+        assertThat(TranslationMapping.parse(mappingOf(draft)).events().getLast().catchAll()).isTrue();
+    }
+
     // Drafts of record shapes, sample profiles, times and stream meta.
 
     @Test

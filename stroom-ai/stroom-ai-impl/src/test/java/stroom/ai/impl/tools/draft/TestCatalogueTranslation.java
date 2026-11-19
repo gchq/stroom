@@ -234,7 +234,11 @@ class TestCatalogueTranslation extends DraftFixtures {
                 Map.of("source", "Acme", "fields", List.of()), CHECK, null);
 
         assertThat(notes(draft)).anyMatch(note -> note.startsWith("No catalogue of event types yet"));
-        assertThat(JsonValues.maps(mappingOf(draft).get("events"))).noneMatch(rule -> rule.containsKey("catch_all"));
+        // Its own rule for the rest flagged as the catalogue's catch-all is (Unknown, the records' fields as Data), so
+        // processing logs Caught by from the flag; no other rule is.
+        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(draft).get("events"));
+        assertThat(rules.getLast()).containsEntry("catch_all", true);
+        assertThat(rules.subList(0, rules.size() - 1)).noneMatch(rule -> rule.containsKey("catch_all"));
     }
 
     @Test
