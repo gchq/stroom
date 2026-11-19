@@ -26,18 +26,19 @@ import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.HoppingWindow;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeFilter;
-import stroom.query.common.v2.CompiledWindow.WindowProcessor;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.ChildData;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
+import stroom.query.language.functions.TimeWindows;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ref.DataReader;
@@ -52,6 +53,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
@@ -127,7 +129,12 @@ public class LmdbDataStore implements DataStore {
     private final KeyFactory keyFactory;
     private final LmdbPayloadCreator payloadCreator;
     private final TransferState transferState = new TransferState();
-    private final WindowProcessor windowProcessor;
+    // The time windows of the table's window clause and where its time field is in a row, or null
+    // and -1 if it has none.
+    private final TimeWindows timeWindows;
+    private final int windowTimeFieldIndex;
+    private final String windowTimeField;
+    private final AtomicBoolean reportedRowWithNoWindowTime = new AtomicBoolean();
     private final StoredValueMapper storedValueMapper;
 
     private final int maxPutsBeforeCommit;
@@ -172,7 +179,15 @@ public class LmdbDataStore implements DataStore {
                         .map(SearchRequestSource::getSourceType)
                         .orElse(SourceType.DASHBOARD_UI);
 
-        this.windowProcessor = CompiledWindow.create(tableSettings.getWindow()).createWindowProcessor(fieldIndex);
+        if (tableSettings.getWindow() instanceof final HoppingWindow hoppingWindow) {
+            timeWindows = TimeWindows.create(hoppingWindow);
+            windowTimeField = hoppingWindow.getTimeField();
+            windowTimeFieldIndex = fieldIndex.create(windowTimeField);
+        } else {
+            timeWindows = null;
+            windowTimeField = null;
+            windowTimeFieldIndex = -1;
+        }
         final List<Column> columns = Objects
                 .requireNonNullElse(tableSettings.getColumns(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize(), bufferFactory);
@@ -259,12 +274,35 @@ public class LmdbDataStore implements DataStore {
         // Filter incoming data.
         if (valueFilter.test(values)) {
             // Now add the rows if we aren't filtering.
-            windowProcessor.process(values, this::addInternal);
+            if (timeWindows == null) {
+                addInternal(values, 0);
+            } else {
+                addToWindows(values);
+            }
         }
     }
 
+    // Adds a row once for each time window it is in, so that it is grouped into each of them.
+    private void addToWindows(final Val[] values) {
+        final Val time = windowTimeFieldIndex < values.length
+                ? values[windowTimeFieldIndex]
+                : null;
+        final Long timeMs = time == null
+                ? null
+                : time.toLong();
+        if (timeMs == null) {
+            // A row with no time can't be put in a window, so it is left out. Say so once.
+            if (reportedRowWithNoWindowTime.compareAndSet(false, true)) {
+                errorConsumer.add(Severity.WARNING, () -> "Rows with no time in the window field '"
+                                                          + windowTimeField + "' are left out of the results");
+            }
+            return;
+        }
+        timeWindows.forEachWindow(timeMs, windowKey -> addInternal(values, windowKey));
+    }
+
     private void addInternal(final Val[] values,
-                             final int period) {
+                             final long windowKey) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
         LOGGER.trace("add() called for {} values", values.length);
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
@@ -277,7 +315,7 @@ public class LmdbDataStore implements DataStore {
         final LmdbKV[] rows = new LmdbKV[groupIndicesByDepth.length];
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
-            storedValues.setPeriod(period);
+            storedValues.setWindowKey(windowKey);
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
             for (int columnIndex = 0; columnIndex < compiledColumnArray.length; columnIndex++) {

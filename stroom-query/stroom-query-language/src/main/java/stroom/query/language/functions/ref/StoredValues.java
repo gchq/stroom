@@ -21,7 +21,7 @@ import java.util.Arrays;
 public class StoredValues {
 
     private final Object[] values;
-    private int period;
+    private long windowKey;
 
     public StoredValues(final Object[] values) {
         this.values = values;
@@ -35,12 +35,19 @@ public class StoredValues {
         this.values[index] = val;
     }
 
-    public int getPeriod() {
-        return period;
+    /// Gets the key of the time window that the row being added is in, for a query with a `window`
+    /// clause. It is held only while a row is added, and is not stored with the values.
+    ///
+    /// @return The window key, as given by `TimeWindows`.
+    public long getWindowKey() {
+        return windowKey;
     }
 
-    public void setPeriod(final int period) {
-        this.period = period;
+    /// Sets the key of the time window that the row being added is in.
+    ///
+    /// @param windowKey The window key, as given by `TimeWindows`.
+    public void setWindowKey(final long windowKey) {
+        this.windowKey = windowKey;
     }
 
     @Override
@@ -71,7 +78,7 @@ public class StoredValues {
         final Object[] arr = new Object[values.length];
         System.arraycopy(values, 0, arr, 0, values.length);
         final StoredValues copy = new StoredValues(arr);
-        copy.setPeriod(period);
+        copy.setWindowKey(windowKey);
         return copy;
     }
 }

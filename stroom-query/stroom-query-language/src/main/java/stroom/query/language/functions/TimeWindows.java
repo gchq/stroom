@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.query.common.v2;
+package stroom.query.language.functions;
 
+import stroom.query.api.HoppingWindow;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -110,6 +112,48 @@ public final class TimeWindows {
         this.fixedStandardOffsetMillis = zoneId.getRules().isFixedOffset()
                 ? zoneId.getRules().getStandardOffset(Instant.EPOCH).getTotalSeconds() * MILLIS_PER_SECOND
                 : null;
+    }
+
+    /// Creates the windows that a `window` clause was parsed into.
+    ///
+    /// @param window The parsed clause.
+    /// @return The windows.
+    /// @throws IllegalArgumentException If the clause can't be used. The message says why, in words
+    ///                                  fit to show the query's author.
+    public static TimeWindows create(final HoppingWindow window) {
+        Objects.requireNonNull(window, "Window is null");
+        final String offset = window.getOffset();
+        final boolean offsetEarlier = offset != null && offset.startsWith("-");
+        final String unsignedOffset = offsetEarlier
+                ? offset.substring(1)
+                : offset;
+        final ZoneId zoneId;
+        try {
+            zoneId = window.getTimeZone() == null
+                    ? ZoneOffset.UTC
+                    : ZoneId.of(window.getTimeZone());
+        } catch (final RuntimeException e) {
+            throw new IllegalArgumentException("Unknown time zone '" + window.getTimeZone() + "'", e);
+        }
+        return create(
+                parseDuration(window.getWindowSize(), "window size"),
+                window.getAdvanceSize() == null
+                        ? null
+                        : parseDuration(window.getAdvanceSize(), "advance"),
+                unsignedOffset == null
+                        ? null
+                        : parseDuration(unsignedOffset, "offset"),
+                offsetEarlier,
+                zoneId);
+    }
+
+    private static SimpleDuration parseDuration(final String string, final String name) {
+        try {
+            return SimpleDurationUtil.parse(string);
+        } catch (final ParseException | RuntimeException e) {
+            throw new IllegalArgumentException(
+                    "The " + name + " '" + string + "' is not a duration, such as 1d", e);
+        }
     }
 
     /// Creates the windows of a `window` clause.

@@ -40,7 +40,7 @@ import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeRange;
-import stroom.query.api.Window;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QueryFieldProvider;
@@ -52,7 +52,6 @@ import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenGroup;
 import stroom.query.api.token.TokenType;
-import stroom.query.common.v2.CompiledWindow;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.language.functions.Expression;
@@ -60,6 +59,8 @@ import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
+import stroom.query.language.functions.TimeWindows;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.query.language.token.StructureBuilder;
 import stroom.query.language.token.Tokeniser;
 import stroom.security.api.SecurityContext;
@@ -74,6 +75,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.text.ParseException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -95,6 +97,13 @@ public class SearchRequestFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchRequestFactory.class);
 
     public static final String TABLE_COMPONENT_ID = "table";
+    /// The name of the hidden column that the rows of a query with a window clause are grouped by.
+    public static final String WINDOW_COLUMN_NAME = "__window__";
+    private static final String WINDOW_KEY_FUNCTION = "windowKey()";
+    private static final String WINDOW_START_FUNCTION = "windowStart()";
+    private static final String WINDOW_EXAMPLE = "as in 'window EventTime by 1d advance 1h offset 6h'";
+    // The most windows one event may be in. A query that would put an event in more is refused.
+    private static final int MAX_WINDOW_COPIES_PER_EVENT = 100;
     public static final String VIS_COMPONENT_ID = "vis";
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
@@ -204,7 +213,7 @@ public class SearchRequestFactory {
         private final Set<String> addedFields = new HashSet<>();
         private final List<AbstractToken> additionalFields = new ArrayList<>();
         private boolean inHaving;
-        private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
+        private boolean hasWindow;
 
         // True if this builder parses a bracketed query inside another query.
         private final boolean bracketed;
@@ -987,7 +996,8 @@ public class SearchRequestFactory {
                             checkTokenOrder(token, consumedTokens);
                             processWindow(
                                     keywordGroup,
-                                    tableSettingsBuilder);
+                                    tableSettingsBuilder,
+                                    queryBuilder);
                             remaining.removeFirst();
                         }
                         case FILTER -> {
@@ -1076,7 +1086,7 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping. A bracketed query's
             // rows are not events, so neither it nor a query reading one has them.
-            if (groupDepth == 0 && !bracketed && !joinClauses.hasBracketedFrom()) {
+            if (groupDepth == 0 && !hasWindow && !bracketed && !joinClauses.hasBracketedFrom()) {
                 if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
@@ -1142,96 +1152,162 @@ public class SearchRequestFactory {
             return resultRequests;
         }
 
+        // Parses a window clause, as in `window EventTime by 1d advance 1h offset 6h`.
         private void processWindow(final KeywordGroup keywordGroup,
-                                   final TableSettings.Builder builder) {
+                                   final TableSettings.Builder builder,
+                                   final Query.Builder queryBuilder) {
+            if (joinClauses.hasWindowedJoin()) {
+                throw new TokenException(keywordGroup, "A window clause can't be used in a query that has a "
+                                                       + "join with a time window, as in 'within 10m after'");
+            }
             final List<AbstractToken> children = new ArrayList<>(keywordGroup.getChildren());
 
-            final HoppingWindow.Builder hoppingWindowBuilder = HoppingWindow.builder();
-
-            // Get field name.
-            if (!children.isEmpty()) {
-                final AbstractToken token = children.getFirst();
-                if (!TokenType.isString(token)) {
-                    throw new TokenException(token, "Syntax exception");
-                }
-                final String field = token.getUnescapedText();
-                hoppingWindowBuilder.timeField(field);
-                children.removeFirst();
-            } else {
-                throw new TokenException(keywordGroup, "Expected field");
+            // Get the time field.
+            if (children.isEmpty()) {
+                throw new TokenException(keywordGroup, "Expected the time field of the window, " + WINDOW_EXAMPLE);
             }
-
-            // Get `by` and duration.
-            final int byIndex = getTokenIndex(children, token -> TokenType.BY.equals(token.getTokenType()));
-            if (byIndex == -1) {
-                throw new TokenException(keywordGroup, "Syntax exception, expected by");
-            } else if (children.size() > byIndex + 1) {
-                final AbstractToken token = children.get(byIndex + 1);
-                if (!TokenType.DURATION.equals(token.getTokenType())) {
-                    throw new TokenException(token, "Syntax exception, expected valid window duration");
-                }
-                final String durationString = token.getUnescapedText();
-                hoppingWindowBuilder.windowSize(durationString);
-                hoppingWindowBuilder.advanceSize(durationString);
-
-                // We found the duration so remove the tokens.
-                children.remove(byIndex + 1);
-                children.remove(byIndex);
-            } else {
-                throw new TokenException(children.get(byIndex), "Syntax exception, expected window duration");
+            final AbstractToken fieldToken = children.removeFirst();
+            if (!TokenType.isString(fieldToken)) {
+                throw new TokenException(fieldToken, "Expected the time field of the window, " + WINDOW_EXAMPLE);
             }
+            final String field = fieldToken.getUnescapedText();
 
-            // Get `advance` and duration.
-            final int advanceIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
-                                                                      token.getUnescapedText().equalsIgnoreCase(
-                                                                              "advance"));
-            if (advanceIndex != -1) {
-                if (children.size() > advanceIndex + 1) {
-                    final AbstractToken token = children.get(advanceIndex + 1);
-                    if (!TokenType.DURATION.equals(token.getTokenType())) {
-                        throw new TokenException(token, "Syntax exception, expected valid advance duration");
+            // Get `by` and the size.
+            if (children.isEmpty() || !TokenType.BY.equals(children.getFirst().getTokenType())) {
+                throw new TokenException(children.isEmpty()
+                        ? fieldToken
+                        : children.getFirst(), "Expected 'by' and the size of the window, " + WINDOW_EXAMPLE);
+            }
+            final AbstractToken byToken = children.removeFirst();
+            final String size = removeWindowDuration(children, byToken, "the size of the window");
+
+            // Get `advance` and `offset`, in either order.
+            String advance = null;
+            String offset = null;
+            while (!children.isEmpty()) {
+                final AbstractToken optionToken = children.removeFirst();
+                final String option = TokenType.isString(optionToken)
+                        ? optionToken.getUnescapedText().toLowerCase(Locale.ROOT)
+                        : "";
+                switch (option) {
+                    case "advance" -> {
+                        if (advance != null) {
+                            throw new TokenException(optionToken, "The window already has an advance");
+                        }
+                        advance = removeWindowDuration(children, optionToken, "how far the window advances");
                     }
-                    final String advanceString = token.getUnescapedText();
-                    hoppingWindowBuilder.advanceSize(advanceString);
-
-                    // We found the duration so remove the tokens.
-                    children.remove(advanceIndex + 1);
-                    children.remove(advanceIndex);
-                } else {
-                    throw new TokenException(children.get(advanceIndex), "Syntax exception, expected advance duration");
+                    case "offset" -> {
+                        if (offset != null) {
+                            throw new TokenException(optionToken, "The window already has an offset");
+                        }
+                        final boolean earlier = !children.isEmpty()
+                                                && TokenType.MINUS.equals(children.getFirst().getTokenType());
+                        if (earlier) {
+                            children.removeFirst();
+                        }
+                        offset = (earlier
+                                ? "-"
+                                : "") + removeWindowDuration(children, optionToken, "the offset of the window");
+                    }
+                    case "using" -> throw new TokenException(optionToken, "A window clause no longer takes "
+                            + "'using'. Write the function where its value is wanted, as in 'count()', and "
+                            + "use lag() for the value of an earlier window, as in 'lag(count(), 1)'");
+                    default -> throw new TokenException(optionToken, "Expected 'advance' or 'offset', "
+                                                                     + WINDOW_EXAMPLE);
                 }
             }
 
-            // Get `using` and function.
-            final int usingIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
-                                                                    token.getUnescapedText().equalsIgnoreCase("using"));
-            if (usingIndex != -1) {
-                if (children.size() > usingIndex + 1) {
-                    final AbstractToken token = children.get(usingIndex + 1);
-//                    if (!TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
-//                        throw new TokenException(token, "Syntax exception, expected valid using function");
-//                    }
-                    final String function = token.getUnescapedText();
-                    hoppingWindowBuilder.function(function);
-
-                    // We found the duration so remove the tokens.
-                    children.remove(usingIndex + 1);
-                    children.remove(usingIndex);
-                } else {
-                    throw new TokenException(children.get(usingIndex), "Syntax exception, expected using function");
-                }
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(expressionContext.getDateTimeSettings());
+            final HoppingWindow window = new HoppingWindow(field, size, advance, offset, zoneId.getId());
+            final TimeWindows timeWindows;
+            try {
+                timeWindows = TimeWindows.create(window);
+            } catch (final IllegalArgumentException e) {
+                throw new TokenException(keywordGroup, e.getMessage());
             }
-
-            if (!children.isEmpty()) {
-                throw new TokenException(children.getFirst(), "Unexpected token");
+            if (timeWindows.getWindowsPerTime() > MAX_WINDOW_COPIES_PER_EVENT) {
+                throw new TokenException(keywordGroup, "Each event would be in "
+                        + timeWindows.getWindowsPerTime() + " windows, and the most allowed is "
+                        + MAX_WINDOW_COPIES_PER_EVENT + ". Use a larger advance or a smaller window");
             }
+            checkWindowFieldIsDate(fieldToken, field, queryBuilder);
 
-            final Window window = hoppingWindowBuilder.build();
-            final CompiledWindow compiledWindow = CompiledWindow.create(window);
-            // Add time window fields, so they can be used by other expressions.
-            compiledWindow.addWindowFields(expressionContext, fieldIndex, expressionMap);
-            optionalCompiledWindow = Optional.of(compiledWindow);
+            // Make sure the time field is fetched, and let the window functions of later clauses find
+            // the windows.
+            fieldIndex.create(field);
+            expressionContext = expressionContext.copy().window(window).build();
             builder.window(window);
+            hasWindow = true;
+        }
+
+        private String removeWindowDuration(final List<AbstractToken> children,
+                                            final AbstractToken before,
+                                            final String what) {
+            if (children.isEmpty()) {
+                throw new TokenException(before, "Expected " + what + ", " + WINDOW_EXAMPLE);
+            }
+            final AbstractToken token = children.removeFirst();
+            if (!TokenType.DURATION.equals(token.getTokenType())) {
+                throw new TokenException(token, "Expected " + what + " as a duration such as 1d or 30m, "
+                                                + WINDOW_EXAMPLE);
+            }
+            return token.getUnescapedText();
+        }
+
+        // Refuses a window field that the data source says is not a date. A field the data source
+        // doesn't list is let through, as an extraction pipeline can add fields of its own; rows that
+        // turn out to have no time in it are left out when the query runs.
+        private void checkWindowFieldIsDate(final AbstractToken fieldToken,
+                                            final String field,
+                                            final Query.Builder queryBuilder) {
+            final Query query = queryBuilder.build();
+            final DocRef dataSource = query.getDataSource();
+            if (dataSource == null || joinClauses.hasBracketedFrom()) {
+                return;
+            }
+            final FindFieldCriteria criteria = new FindFieldCriteria(
+                    PageRequest.createDefault(),
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
+                    dataSource,
+                    field,
+                    null,
+                    query.getNativeQuery());
+            final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
+            for (final QueryField queryField : NullSafe.list(NullSafe.get(resultPage, ResultPage::getValues))) {
+                if (field.equals(queryField.getFldName())
+                    && queryField.getFldType() != null
+                    && !FieldType.DATE.equals(queryField.getFldType())) {
+                    throw new TokenException(fieldToken, "The window field '" + field + "' is not a date field, "
+                            + "it is " + queryField.getFldType().getDisplayValue());
+                }
+            }
+        }
+
+        // The hidden columns that the rows of a query with a window clause are grouped by. The first
+        // holds the window's key, which is what tells windows apart. The second holds the window's
+        // start under the name that a result store keyed by time, such as a table builder rule's,
+        // takes a row's time from.
+        private List<Column> createWindowColumns(final AbstractToken token) {
+            return List.of(
+                    createWindowColumn(token, WINDOW_COLUMN_NAME, WINDOW_KEY_FUNCTION),
+                    createWindowColumn(token, FieldIndex.DEFAULT_TIME_FIELD_NAME, WINDOW_START_FUNCTION));
+        }
+
+        private Column createWindowColumn(final AbstractToken token, final String name, final String function) {
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+            try {
+                final Expression expression = expressionParser.parse(expressionContext, fieldIndex, function);
+                return Column.builder()
+                        .id(name)
+                        .name(name)
+                        .expression(expression.toString())
+                        .group(0)
+                        .visible(false)
+                        .special(true)
+                        .build();
+            } catch (final ParseException e) {
+                throw new TokenException(token, e.getMessage());
+            }
         }
 
         private void processEval(final KeywordGroup keywordGroup) {
@@ -1371,10 +1447,11 @@ public class SearchRequestFactory {
                         fieldExpression);
             }
 
-            // Modify columns if we have a time window.
-            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
-                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
-            tableSettingsBuilder.addColumns(modifiedColumns);
+            // Group the rows by window if we have a time window.
+            if (hasWindow) {
+                columns.addAll(createWindowColumns(keywordGroup));
+            }
+            tableSettingsBuilder.addColumns(columns);
         }
 
         private void addColumn(final Map<String, Sort> sortMap,

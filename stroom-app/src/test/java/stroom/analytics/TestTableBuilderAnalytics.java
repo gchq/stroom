@@ -92,26 +92,20 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 2);
     }
 
+    /**
+     * A year window gives the same detections as grouping by the year that each event is in, which is what
+     * {@link #testHavingCount()} does.
+     */
     @Test
     void testWindowCount() {
         final String query = """
                 from index_view
                 where UserId = user5
-                window EventTime by 1y advance 1y
+                window EventTime by 1y
+                eval count = count()
                 group by UserId
-                select UserId""";
-        basicTest(query, 9, 3);
-    }
-
-    @Test
-    void testWindowCountHaving() {
-        final String query = """
-                from index_view
-                where UserId = user5
-                window EventTime by 1y advance 1y
-                group by UserId
-                having "period0" = 0
-                select UserId""";
+                having count > 3
+                select windowStart() as Year, UserId, count""";
         basicTest(query, 9, 2);
     }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.common.v2;
+package stroom.query.language.functions;
 
 import stroom.util.shared.time.SimpleDuration;
 

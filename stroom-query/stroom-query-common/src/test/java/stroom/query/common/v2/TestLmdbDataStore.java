@@ -24,6 +24,7 @@ import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
+import stroom.query.api.HoppingWindow;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.QueryKey;
@@ -37,7 +38,9 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -53,7 +56,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -68,6 +73,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestLmdbDataStore extends AbstractDataStoreTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbDataStore.class);
+
+    private ErrorConsumerImpl lastErrorConsumer;
 
     private Path tempDir;
     private ExecutorService executorService;
@@ -115,6 +122,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .config(resultStoreConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir);
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
+        lastErrorConsumer = errorConsumer;
         return new LmdbDataStore(
                 searchRequestSource,
                 lmdbEnvBuilder,
@@ -133,6 +141,126 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 AnnotationMapperFactory.NO_OP,
                 //TODO: DS
                 null);
+    }
+
+    @Test
+    void windowGroupsRowsByTheWindowTheyAreIn() {
+        final TableSettings tableSettings = windowTable("1d", null);
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T09:14:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T23:59:59.999Z", "user1");
+        addEvent(dataStore, "2026-03-11T00:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T12:00:00Z", "user2");
+
+        assertThat(windowRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
+                List.of("user1", "2026-03-10T00:00:00.000Z", "2026-03-11T00:00:00.000Z", "2"),
+                List.of("user1", "2026-03-11T00:00:00.000Z", "2026-03-12T00:00:00.000Z", "1"),
+                List.of("user2", "2026-03-10T00:00:00.000Z", "2026-03-11T00:00:00.000Z", "1"));
+    }
+
+    @Test
+    void hoppingWindowCountsARowInEveryWindowThatCoversIt() {
+        final TableSettings tableSettings = windowTable("1h", "30m");
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T10:10:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T10:40:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T11:20:00Z", "user1");
+
+        // The hour from 10:30 holds the events at 10:40 and 11:20, which the old window code never
+        // counted together.
+        assertThat(windowRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
+                List.of("user1", "2026-03-10T09:30:00.000Z", "2026-03-10T10:30:00.000Z", "1"),
+                List.of("user1", "2026-03-10T10:00:00.000Z", "2026-03-10T11:00:00.000Z", "2"),
+                List.of("user1", "2026-03-10T10:30:00.000Z", "2026-03-10T11:30:00.000Z", "2"),
+                List.of("user1", "2026-03-10T11:00:00.000Z", "2026-03-10T12:00:00.000Z", "1"));
+    }
+
+    @Test
+    void rowWithNoWindowTimeIsLeftOutAndReportedOnce() {
+        final TableSettings tableSettings = windowTable("1d", null);
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T09:14:00Z", "user1");
+        dataStore.accept(Val.of(ValNull.INSTANCE, ValString.create("user1")));
+        dataStore.accept(Val.of(ValString.create("not a time"), ValString.create("user1")));
+        // A date written as text is still a time.
+        dataStore.accept(Val.of(ValString.create("2026-03-10T10:00:00.000Z"), ValString.create("user1")));
+
+        assertThat(windowRows(dataStore, tableSettings)).containsExactly(
+                List.of("user1", "2026-03-10T00:00:00.000Z", "2026-03-11T00:00:00.000Z", "2"));
+        assertThat(lastErrorConsumer.getErrorMessages())
+                .hasSize(1)
+                .first()
+                .satisfies(message -> assertThat(message.getMessage())
+                        .contains("Rows with no time in the window field 'EventTime' are left out"));
+    }
+
+    // A table of events per user per window, as `window EventTime by <size> advance <advance>` with
+    // `group by UserId` and `select UserId, windowStart(), windowEnd(), count()` is parsed into.
+    private TableSettings windowTable(final String size, final String advance) {
+        final HoppingWindow window = new HoppingWindow("EventTime", size, advance, null, "Z");
+        final String windows = "'window:" + size + "|" + (advance == null
+                ? ""
+                : advance) + "||Z'";
+        return TableSettings.builder()
+                .window(window)
+                .addColumns(Column.builder()
+                        .id("UserId")
+                        .name("UserId")
+                        .expression(ParamUtil.create("UserId"))
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Starts")
+                        .name("Starts")
+                        .expression("windowStart(" + windows + ")")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Ends")
+                        .name("Ends")
+                        .expression("windowEnd(" + windows + ")")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Events")
+                        .name("Events")
+                        .expression("count()")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("__window__")
+                        .name("__window__")
+                        .expression("windowKey(" + windows + ")")
+                        .group(0)
+                        .visible(false)
+                        .special(true)
+                        .build())
+                .build();
+    }
+
+    // The store asks for the window's time field first, so it is the first value of a row.
+    private void addEvent(final DataStore dataStore, final String time, final String userId) {
+        dataStore.accept(Val.of(ValDate.create(Instant.parse(time).toEpochMilli()), ValString.create(userId)));
+    }
+
+    private List<List<String>> windowRows(final DataStore dataStore, final TableSettings tableSettings) {
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        final ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 100))
+                .build();
+        final TableResult tableResult = (TableResult) new TableResultCreator().create(dataStore, tableResultRequest);
+        return tableResult
+                .getRows()
+                .stream()
+                .map(row -> row.getValues().subList(0, 4))
+                .toList();
     }
 
     @Test
