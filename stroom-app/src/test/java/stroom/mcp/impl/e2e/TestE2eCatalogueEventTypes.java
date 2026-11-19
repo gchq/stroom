@@ -248,6 +248,22 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 .contains("Import-Bulk", "starts_with", "contains");
     }
 
+    // ### An event type recognised by a value its record alone holds (each record's object is its own): refused,
+    // suggesting starts_with or a regex with a named group; the rare purge, on a field of few values, is not.
+    @Test
+    void anEventTypeRecognisedByAValueUniqueToItsRecordIsRefused() {
+        final String build = "e2e-cat-unique";
+        final List<Long> raw = surveyedSample(build, "E2E-CAT-UNIQUE", sample());
+        final String reply = replyText(CATALOGUE, args("build", build, "stream_ids", raw, "proposals", List.of(
+                eventType("Update-Record", "Update", "high", when("object", "equals", "rec-3")))));
+        dump("unique", reply);
+        assertThat(reply).contains("Update-Record", "nearly one a record", "starts_with", "named group");
+        final Map<String, Object> purge = proposed(build, raw, List.of(
+                eventType("Delete-Records", "Delete", "high", when("action", "equals", "purge"))));
+        assertThat(list(checkOf(purge), "problems")).isEmpty();
+        assertThat(countsOf(purge)).containsEntry("Delete-Records", 1L);
+    }
+
     // ### TypeId: Verb-Object or refused; unique or refused; a default suggested when none is given.
     @Test
     void typeIdsAreVerbObjectUniqueAndDefaulted() {

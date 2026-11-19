@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Unparsed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.Condition;
+import stroom.ai.impl.tools.generation.XPathText;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
@@ -65,7 +66,10 @@ import java.util.function.Predicate;
 /// * **Problems**: the catalogue's own ([CatalogueValidation]), and what its records show: a field no record has; a
 ///   regex over its time budget (timed in Saxon's engine, as processing runs it); a regex or `contains` over values
 ///   longer than [#LONG_VALUE] where `starts_with` or `contains` recognises the same records; a condition that
-///   depends on processing's string cut; an event type recognised by every record of a line format that shares it.
+///   depends on processing's string cut; an event type recognised by every record of a line format that shares it;
+///   an `equals` or `one_of` naming a value one or two records hold, on a field whose values are nearly each their own
+///   record's (at least [#UNIQUE_FIELD_RECORDS] records hold it, its distinct values at least
+///   [#UNIQUE_FIELD_SHARE] of them), with `starts_with` or a `matches` with a named group suggested.
 /// * **Order**: the catalogue's ([CatalogueOrder]).
 ///
 /// Each tested field is read once a record and each condition tested once a distinct value ([RecordIndex]), so
@@ -75,6 +79,15 @@ public final class CatalogueCheck {
     /// A value longer than this is long: a regex over it reads it all (processing's JSONParser cuts strings here by
     /// default).
     public static final int LONG_VALUE = LocalCheck.JSON_PARSER_CUT;
+
+    /// The fewest records holding a field before its values may be judged each their own record's ([#uniqueValues]):
+    /// fewer, and a field of values each its own record's can't be told from a field of codes each seen once.
+    static final int UNIQUE_FIELD_RECORDS = 20;
+    /// A field whose distinct values are at least this share of the records holding it has values nearly each their
+    /// own record's.
+    static final double UNIQUE_FIELD_SHARE = 0.8;
+    /// A value held by at most this many records, on such a field, is one of those values each its own record's.
+    static final int UNIQUE_VALUE_RECORDS = 2;
 
     // The most records of an event type read for whether it may be several, and of a shape for its examples.
     private static final int SEVERAL_READ = 2_000;
@@ -337,6 +350,7 @@ public final class CatalogueCheck {
                 }
                 longValues(c).ifPresent(out::add);
                 cutProblem(c).ifPresent(out::add);
+                uniqueValues(c).ifPresent(out::add);
             }
             conditionProblems.put(c, out);
             return out;
@@ -431,6 +445,40 @@ public final class CatalogueCheck {
                 }
             }
             return out;
+        }
+
+        // An equals or one_of naming a value only one or two records hold, on a field whose values are nearly each
+        // their own record's: at least UNIQUE_FIELD_RECORDS records hold the field, and its distinct values are at
+        // least UNIQUE_FIELD_SHARE of them (a message holding an object's id, a different one each record). Such an
+        // event type recognises next to no records, and in processing every new value is uncatalogued. The field's
+        // variety decides, not the value's own count: a code seen once on a field of few values (a vendor's code
+        // rare in a small sample) is never refused, nor a value many records hold on a varied field.
+        private Optional<String> uniqueValues(final Condition c) {
+            final List<String> named = c.equalTo() != null
+                    ? List.of(c.equalTo())
+                    : c.oneOf();
+            if (named == null || named.isEmpty()) {
+                return Optional.empty();
+            }
+            final RecordIndex.Variety variety = index.variety(c.field());
+            if (variety.holding() < UNIQUE_FIELD_RECORDS
+                || variety.distinct() < variety.holding() * UNIQUE_FIELD_SHARE) {
+                return Optional.empty();
+            }
+            for (final String value : named) {
+                final int records = variety.recordsHolding(XPathText.literalText(value));
+                if (records > 0 && records <= UNIQUE_VALUE_RECORDS) {
+                    return Optional.of("the field " + c.field() + " has " + variety.distinct() + " different values "
+                            + "over the " + variety.holding() + " records holding it, nearly one a record, and '"
+                            + value + "' is held by " + records + (records == 1
+                            ? " record"
+                            : " records") + ": an event type recognised by one of its values recognises next to "
+                            + "no records, and in processing every record with a new value would be uncatalogued; "
+                            + "recognise the event type by what its values share: starts_with their fixed start, or "
+                            + "matches with a regex whose named group (names) keeps the part that varies");
+                }
+            }
+            return Optional.empty();
         }
 
         // A condition whose verdict on some record read whole differs from processing's, which cuts strings first.

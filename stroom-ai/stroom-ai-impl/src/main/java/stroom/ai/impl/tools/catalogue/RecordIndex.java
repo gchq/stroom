@@ -66,6 +66,7 @@ final class RecordIndex {
     private final Map<Condition, Boolean> overBudget = new HashMap<>();
     private final Map<String, Map<String, List<List<String>>>> byValue = new HashMap<>();
     private final Map<String, String[]> unparsed = new HashMap<>();
+    private final Map<String, Variety> varieties = new HashMap<>();
     private List<Map<String, Object>> flat;
     private Set<String> fieldNames;
     private BitSet differing;
@@ -206,6 +207,28 @@ final class RecordIndex {
                 }
             }
             return out;
+        });
+    }
+
+    // How varied a field's values are: the records holding a value of it with text in it, and how many records hold
+    // each of its values (an array's items each a value).
+    Variety variety(final String field) {
+        return varieties.computeIfAbsent(field, name -> {
+            int holding = 0;
+            final Map<String, Integer> byValue = new HashMap<>();
+            for (final Map.Entry<List<String>, int[]> group : groups(name).entrySet()) {
+                if (group.getKey() == UNTOLD) {
+                    continue;
+                }
+                final Set<String> held = new LinkedHashSet<>();
+                group.getKey().stream().filter(value -> !value.isBlank()).forEach(held::add);
+                if (!held.isEmpty()) {
+                    final int records = group.getValue().length;
+                    holding += records;
+                    held.forEach(value -> byValue.merge(value, records, Integer::sum));
+                }
+            }
+            return new Variety(holding, Map.copyOf(byValue));
         });
     }
 
@@ -569,5 +592,17 @@ final class RecordIndex {
     // Where a condition holds and where it can't be told.
     record Verdicts(BitSet holds, BitSet unknown) {
 
+    }
+
+    // A field's variety: the records holding a value of it, and the records holding each value.
+    record Variety(int holding, Map<String, Integer> recordsByValue) {
+
+        int distinct() {
+            return recordsByValue.size();
+        }
+
+        int recordsHolding(final String value) {
+            return recordsByValue.getOrDefault(value, 0);
+        }
     }
 }

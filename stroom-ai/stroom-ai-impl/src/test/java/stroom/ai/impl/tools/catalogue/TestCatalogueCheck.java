@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -467,6 +468,86 @@ class TestCatalogueCheck {
     }
 
     @Test
+    void anEqualsOnAValueUniqueToItsRecordIsRefusedSuggestingStartsWithOrANamedGroup() {
+        final List<String> lines = modifiedObjects(30, 0);
+        final String first = "Object " + uuid(0) + " has been modified";
+        final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.message", first)));
+
+        final CatalogueCheckResult check = check(catalogue(modified), lines);
+
+        assertThat(check.refused()).isTrue();
+        assertThat(said(check)).containsExactly("Update-Object#0: the field event.message has 30 different values "
+                + "over the 30 records holding it, nearly one a record, and '" + first + "' is held by 1 record: "
+                + "an event type recognised by one of its values recognises next to no records, and in processing "
+                + "every record with a new value would be uncatalogued; recognise the event type by what its "
+                + "values share: starts_with their fixed start, or matches with a regex whose named group (names) "
+                + "keeps the part that varies");
+    }
+
+    @Test
+    void aOneOfOnValuesUniqueToTheirRecordsIsRefused() {
+        final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
+                way(Condition.fromJson(Map.of("field", "event.message", "one_of", List.of(
+                        "Object " + uuid(1) + " has been modified", "Object " + uuid(2) + " has been modified")))));
+
+        final CatalogueCheckResult check = check(catalogue(modified), modifiedObjects(30, 0));
+
+        assertThat(check.refused()).isTrue();
+        assertThat(said(check)).singleElement().asString()
+                .contains("the field event.message has 30 different values over the 30 records holding it")
+                .contains("starts_with their fixed start, or matches with a regex whose named group");
+    }
+
+    @Test
+    void aValueManyRecordsHoldOnAVariedFieldIsNotRefused() {
+        // 25 messages each its own, and a heartbeat five records hold: the field is varied, the value is not.
+        final List<String> lines = modifiedObjects(25, 5);
+        final EventType heartbeat = type("Process-Heartbeat", "Heartbeat", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.message", "Heartbeat")));
+
+        final CatalogueCheckResult check = check(catalogue(heartbeat), lines);
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.counts().get("Process-Heartbeat").records()).isEqualTo(5);
+    }
+
+    @Test
+    void aRareCodeOnAFieldOfFewValuesIsNotRefused() {
+        // A real vendor code seen once in the sample: the field has three values over 40 records.
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 40; n++) {
+            final String code = n == 0
+                    ? "4740"
+                    : n % 2 == 0
+                            ? "4624"
+                            : "4625";
+            lines.add(line(event("com.example.Audit", "code", code, "message", "Event " + n)));
+        }
+        final EventType locked = type("Lock-Account", "Account locked", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.code", "4740")));
+
+        final CatalogueCheckResult check = check(catalogue(locked), lines);
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.counts().get("Lock-Account").records()).isEqualTo(1);
+    }
+
+    @Test
+    void aSmallSampleOfValuesEachTheirOwnIsNotRefused() {
+        // Too few records to tell a field of values each their own from a field of codes each seen once.
+        final List<String> lines = modifiedObjects(CatalogueCheck.UNIQUE_FIELD_RECORDS - 1, 0);
+        final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.message", "Object " + uuid(0) + " has been modified")));
+
+        assertThat(check(catalogue(modified), lines).problems()).isEmpty();
+        // One record more, and it is.
+        assertThat(check(catalogue(modified), modifiedObjects(CatalogueCheck.UNIQUE_FIELD_RECORDS, 0)).problems())
+                .singleElement()
+                .satisfies(problem -> assertThat(problem.problem()).contains("nearly one a record"));
+    }
+
+    @Test
     void threeHundredEventTypesOverThousandsOfRecordsAreCheckedInSeconds() {
         final int types = 300;
         final int records = 6_000;
@@ -538,6 +619,22 @@ class TestCatalogueCheck {
         lines.add(line(event(EXECUTABLE, "log_type", "Integration", "level", "WARN", "activity", "Pega-Run",
                 "message", "Activity ran long")));
         return lines;
+    }
+
+    // Records each of a modified object, its message holding the object's UUID, then heartbeats alike.
+    private static List<String> modifiedObjects(final int modified, final int heartbeats) {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < modified; n++) {
+            lines.add(line(event("com.example.Audit", "message", "Object " + uuid(n) + " has been modified")));
+        }
+        for (int n = 0; n < heartbeats; n++) {
+            lines.add(line(event("com.example.Audit", "message", "Heartbeat")));
+        }
+        return lines;
+    }
+
+    private static String uuid(final int n) {
+        return new UUID(0x3f2a5c7e9b1d4f60L + n, 0x8a9b0c1d2e3f4051L * (n + 1)).toString();
     }
 
     private Map<String, Object> soap(final String status, final String message) {
