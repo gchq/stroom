@@ -49,6 +49,9 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 The output of cataloguing is a catalogue of **event types**: what types of event the source writes, what each means,
 and how a **record** of each is **recognised**. You propose them from the evidence and what you know of the product;
 the tool checks every proposal against every sampled record of the build's source types; the user confirms them.
+The records are read as the build's latest mapping reads them (its extractions, pairs, held JSON or XML, `for_each`
+items), so the fields those give are fields conditions may test; before there is a mapping, give `reading` (its
+reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_each`...), kept for the calls after.
 
 - **Evidence** (call without proposals): `fields` that tell records apart (their values and counts; hosts, nodes,
   severities and times left out), record `shapes` (fields present together, with counts), `examples` (rare records
@@ -65,7 +68,7 @@ the tool checks every proposal against every sampled record of the build's sourc
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no
   lookaround, at most 500 characters; prefer `starts_with` or `contains` over long values), `present`; `not: true` for
   the test not to hold (a missing field makes it hold). `names` names a `matches` regex's capture groups, fields the
-  translation may read. Fields as the draft names them (`event.logger_name` inside a held JSON string; a key holding a
+  translation may read. Fields as the draft names them (`event.component` inside a held JSON string; a key holding a
   dot in brackets, `['log.level']`). Never the build's source type field: told by the records' other fields or
   shape. Only the source's one event type (or a line format's) may have no conditions: every record.
 - **Proposals**: `[{op: add | change | remove, type_id, ...}]`, by TypeId, never the whole catalogue; `change` gives
@@ -221,13 +224,14 @@ a User with its own Id and Domain:
 | Key | |
 | --- | --- |
 | `name` | Required, unique |
-| `when` | Conditions, all of which must hold: a `field` with `equals`, `one_of`, `matches`, `in_dictionary` or `present: true`/`false` |
+| `when` | Conditions, all of which must hold: a `field` with `equals`, `one_of`, `starts_with`, `contains`, `matches`, `in_dictionary` or `present: true`/`false`; `not: true` for the test not to hold (a missing field makes it hold) |
 | `fields` | Its entries, written as well as `common` |
 | `data` | Fields carried as Data of its action element |
 | `drop: true` | Records it matches are left untranslated |
 | `allow_unknown`, `keep_unknown` | Only with the user's agreement: see the xslt guide |
+| `catch_all: true` | The rule for uncatalogued records, the records no other rule takes: last, with no `when` (a line format's: only its variant condition); processing logs what it catches |
 
-`EventDetail/TypeId` is required in every Event, and differs between kinds of event.
+`EventDetail/TypeId` is required in every Event, and differs between event types.
 
 ## Changing a mapping
 
