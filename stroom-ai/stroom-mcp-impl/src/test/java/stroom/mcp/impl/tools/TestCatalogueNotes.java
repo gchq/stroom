@@ -22,9 +22,12 @@ import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.docstore.api.DocFinder;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -40,8 +43,9 @@ class TestCatalogueNotes {
     private static final String BUILD = "acme-v2";
 
     private final BuildWorld world = new BuildWorld();
+    private final DocFinder docFinder = Mockito.mock(DocFinder.class);
     private final CatalogueNotes notes = new CatalogueNotes(world.guard(), world.documentAccess,
-            new DocumentWrites(world.documentAccess));
+            new DocumentWrites(world.documentAccess), new FeedNames(() -> docFinder, world.documentAccess));
 
     @Test
     void aNextVersionStartsFromThePromotedCatalogueCarriedInAsAWorkingCopy() {
@@ -58,6 +62,32 @@ class TestCatalogueNotes {
         assertThat(notes.changedSincePromoted(BUILD).orElseThrow().none()).isTrue();
         // The build has notes now: not carried again.
         assertThat(notes.carryInto(BUILD, pipeline)).isEmpty();
+    }
+
+    @Test
+    void aNextVersionStartsFromThePromotedCatalogueBesideItsFeedBeforeThePipelineIsCopied() {
+        final DocRef pipeline = promoted();
+        final DocRef feed = world.add(FeedDoc.TYPE, "ACME", world.folder("System/Feeds/Acme").uuid, "promoted-feed")
+                .docRef();
+        Mockito.when(docFinder.findByName(FeedDoc.TYPE, "*", true)).thenReturn(List.of(feed));
+
+        assertThat(notes.carryBesideFeeds(BUILD, List.of("OTHER"))).isEmpty();
+        final String said = notes.carryBesideFeeds(BUILD, List.of("acme")).orElseThrow();
+
+        assertThat(said).contains("'Acme source notes' carried into the build", "2 event type(s)");
+        final Catalogue carried = notes.catalogue(BUILD).orElseThrow();
+        assertThat(carried.eventTypes()).extracting(EventType::typeId).containsExactly("Authenticate-Logon",
+                "Authenticate-Logoff");
+        assertThat(carried.eventTypes()).allSatisfy(type -> assertThat(type.confirmed()).isTrue());
+        assertThat(notes.promoted(BUILD)).contains(carried);
+        // Carried once: neither again nor by the pipeline's copy later.
+        assertThat(notes.carryBesideFeeds(BUILD, List.of("ACME"))).isEmpty();
+        assertThat(notes.carryInto(BUILD, pipeline)).isEmpty();
+        assertThat(world.docs.values().stream()
+                .filter(DocumentationDoc.class::isInstance)
+                .map(DocumentationDoc.class::cast)
+                .filter(doc -> doc.getName().equals("Acme source notes")))
+                .hasSize(2);
     }
 
     @Test

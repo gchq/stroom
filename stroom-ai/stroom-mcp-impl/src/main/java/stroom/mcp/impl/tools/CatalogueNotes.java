@@ -59,15 +59,21 @@ class CatalogueNotes {
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
     private final DocumentWrites documentWrites;
+    private final FeedNames feedNames;
 
     /// @param guard          Finds the build's documents and creates them.
     /// @param documentAccess Reads documents and the explorer tree, as the user.
     /// @param documentWrites Reads and writes Documentation docs.
+    /// @param feedNames      Finds feeds by name.
     @Inject
-    CatalogueNotes(final WriteGuard guard, final DocumentAccess documentAccess, final DocumentWrites documentWrites) {
+    CatalogueNotes(final WriteGuard guard,
+                   final DocumentAccess documentAccess,
+                   final DocumentWrites documentWrites,
+                   final FeedNames feedNames) {
         this.guard = guard;
         this.documentAccess = documentAccess;
         this.documentWrites = documentWrites;
+        this.feedNames = feedNames;
     }
 
     /// @param build A build.
@@ -112,24 +118,61 @@ class CatalogueNotes {
             if (notesDoc(build).isPresent()) {
                 return Optional.empty();
             }
-            final Optional<DocRef> promoted = promotedNotes(promotedPipeline);
-            if (promoted.isEmpty()) {
-                return Optional.empty();
-            }
-            final DocRef copy = guard.create(DocumentationDoc.TYPE, promoted.get().getName(), build,
-                    promoted.get().getUuid(), false, null);
-            documentWrites.copyFields(promoted.get(), copy, BuildDocumentation.DOC_FIELDS);
-            final Catalogue catalogue = SourceNotes.catalogue(notesOf(copy));
-            return Optional.of("the source notes '" + promoted.get().getName() + "' carried into the build (a "
-                               + "working copy, written back at promotion)" + (catalogue == null
-                    ? ""
-                    : ", so its catalogue starts from the promoted one: " + catalogue.eventTypes().size()
-                      + " event type(s)"));
+            return promotedNotes(promotedPipeline).map(promoted -> carried(build, promoted));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No source notes carried into build {}: {}", build, e.getMessage()),
                     e);
             return Optional.empty();
         }
+    }
+
+    /// A next version's build starts from the promoted catalogue whether or not copy_pipeline has run (seen in eval
+    /// case 70: the agent catalogued the next version before copying the pipeline, found no catalogue and started
+    /// over, the confirmed event types lost): the source notes beside a promoted feed the build works from carried
+    /// in as [#carryInto] carries them, unless the build has notes of its own already, so a later copy_pipeline
+    /// carries nothing more.
+    ///
+    /// @param build The build.
+    /// @param feeds The existing feeds it works from.
+    /// @return What was carried, said; empty when nothing was (the build has notes, or none were found).
+    Optional<String> carryBesideFeeds(final String build, final List<String> feeds) {
+        try {
+            if (feeds.isEmpty() || notesDoc(build).isPresent()) {
+                return Optional.empty();
+            }
+            for (final String feed : feeds) {
+                for (final DocRef ref : feedNames.feedsNamed(feed)) {
+                    if (guard.buildOf(ref).isPresent()) {
+                        // A feed of a build is no promoted feed.
+                        continue;
+                    }
+                    final Optional<DocRef> promoted = promotedNotes(ref)
+                            .filter(notes -> guard.buildOf(notes).isEmpty());
+                    if (promoted.isPresent()) {
+                        return Optional.of(carried(build, promoted.get()));
+                    }
+                }
+            }
+            return Optional.empty();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No source notes carried into build {} from feeds {}: {}", build,
+                    feeds, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    // The promoted notes carried into the build as a working copy (written back at promotion): what was carried,
+    // said.
+    private String carried(final String build, final DocRef promoted) {
+        final DocRef copy = guard.create(DocumentationDoc.TYPE, promoted.getName(), build, promoted.getUuid(), false,
+                null);
+        documentWrites.copyFields(promoted, copy, BuildDocumentation.DOC_FIELDS);
+        final Catalogue catalogue = SourceNotes.catalogue(notesOf(copy));
+        return "the source notes '" + promoted.getName() + "' carried into the build (a working copy, written back "
+               + "at promotion)" + (catalogue == null
+                ? ""
+                : ", so its catalogue starts from the promoted one: " + catalogue.eventTypes().size()
+                  + " event type(s)");
     }
 
     /// Writes the catalogue into the build's source notes, its other notes kept: the doc the build has, else a new
@@ -204,9 +247,9 @@ class CatalogueNotes {
         return NullSafe.map(SourceNotes.readNotes(documentWrites.text(ref)));
     }
 
-    // The source notes doc beside a promoted pipeline: in its folder, or one of the folders above it.
-    private Optional<DocRef> promotedNotes(final DocRef pipeline) {
-        Optional<DocRef> folder = documentAccess.parent(pipeline);
+    // The source notes doc beside a promoted pipeline (or feed): in its folder, or one of the folders above it.
+    private Optional<DocRef> promotedNotes(final DocRef promoted) {
+        Optional<DocRef> folder = documentAccess.parent(promoted);
         for (int up = 0; up < FOLDERS_UP && folder.isPresent(); up++) {
             final Optional<DocRef> notes = documentAccess.children(folder.get()).stream()
                     .map(ExplorerNode::getDocRef)

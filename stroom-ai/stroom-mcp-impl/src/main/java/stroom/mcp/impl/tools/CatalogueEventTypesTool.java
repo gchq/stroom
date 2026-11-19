@@ -304,6 +304,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give build");
         }
         final Optional<String> unsurveyed = unsurveyed(build);
+        final Optional<String> carried = carriedFromPromoted(build);
         final String givenSource = stringArg(call, SOURCE_ARG);
         final Map<String, Object> notesNow = notes.notesOf(context, build, givenSource);
         final String source = NullSafe.nonBlankStringElse(givenSource,
@@ -316,8 +317,25 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                         ? confirmed(calling)
                         : listed(calling);
         unsurveyed.ifPresent(why -> result.put("survey", why));
+        carried.ifPresent(said -> result.put("carried", said));
         sincePromoted(build).ifPresent(said -> result.put("since_promoted", said));
         return result;
+    }
+
+    // A next version's build starts from the promoted catalogue beside the feed it works from, whether or not
+    // copy_pipeline has run yet (seen in eval case 70: catalogued before the copy, the confirmed event types were
+    // lost): what was carried, said; empty when nothing was.
+    private Optional<String> carriedFromPromoted(final String build) {
+        if (catalogueNotesProvider == null) {
+            return Optional.empty();
+        }
+        try {
+            return catalogueNotesProvider.get().carryBesideFeeds(build, plan.worksFrom(build));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No promoted catalogue carried into {}: {}", build, e.getMessage()),
+                    e);
+            return Optional.empty();
+        }
     }
 
     // What changed in the build's catalogue since the promoted one it started from (a feed's next version), in

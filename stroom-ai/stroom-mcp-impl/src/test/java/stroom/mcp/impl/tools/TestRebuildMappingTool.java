@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.XsltDoc;
 
@@ -122,7 +123,8 @@ class TestRebuildMappingTool {
     @SuppressWarnings("unchecked")
     void aHandEditedRuleIsReadBackIntoTheBuildsCatalogue() {
         tool.setCatalogueNotes(() -> new CatalogueNotes(world.world.guard(), world.world.documentAccess,
-                new DocumentWrites(world.world.documentAccess)));
+                new DocumentWrites(world.world.documentAccess),
+                new FeedNames(() -> Mockito.mock(DocFinder.class), world.world.documentAccess)));
         final Map<String, Object> logon = new LinkedHashMap<>();
         logon.put("type_id", "Logon");
         logon.put("title", "User logon");

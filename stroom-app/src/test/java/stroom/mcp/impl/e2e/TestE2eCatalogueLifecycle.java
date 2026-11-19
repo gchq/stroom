@@ -145,6 +145,47 @@ class TestE2eCatalogueLifecycle extends AbstractE2eTest {
                         "Authenticate-Logon");
     }
 
+    // Seen in eval case 70: the next version catalogued before copy_pipeline found no catalogue and started over,
+    // the confirmed event types lost. The promoted catalogue beside the feed is carried in either way, once.
+    @Test
+    void aNextVersionCataloguedBeforeItsPipelineIsCopiedStartsFromThePromotedCatalogue() {
+        final Translated first = translated("cat-life-early-v1", "CAT-LIFE-EARLY");
+        agreed("write_documentation", args("build", first.build(), "pipeline_uuid", first.pipeline(), "markdown",
+                "## Purpose and data\n\nLogons.\n", "change", "Created", "stream_ids", List.of(first.raw())));
+        promote(first.build());
+
+        // ### The next version's build works from the promoted feed, and catalogues before any copy.
+        final String next = "cat-life-early-v2";
+        final List<Long> checkedOn = List.of(first.raw());
+        surveyed(next, first.feed(), checkedOn);
+        final Map<String, Object> listed = json(CATALOGUE, args("build", next, "stream_ids", checkedOn));
+        dump("next version listed before copy_pipeline", listed);
+        assertThat(String.valueOf(listed.get("carried"))).contains("carried into the build", "2 event type(s)");
+        assertThat(countsOf(listed)).containsOnlyKeys("Authenticate-Logon", "Authenticate-Logoff");
+        assertThat(eventTypesOf(next).values()).allSatisfy(type -> assertThat(type)
+                .containsEntry("status", "confirmed"));
+        assertThat(map(catalogueOf(next), "catch_all")).containsEntry("status", "confirmed");
+
+        // ### An event type the promoted catalogue lacks (views, not in the sample) proposed as an addition; the rest
+        // kept.
+        final Map<String, Object> added = proposed(next, checkedOn, List.of(withKeys(eventType("View-Resource",
+                "View", "high", when("action", "equals", "view")), "actor", "user", "affected", "resource",
+                "affected_as", "Resource")));
+        assertThat(countsOf(added)).containsKeys("Authenticate-Logon", "Authenticate-Logoff")
+                .containsEntry("View-Resource", 0L);
+        assertThat(eventTypesOf(next).get("Authenticate-Logon")).containsEntry("status", "confirmed");
+        assertThat(eventTypesOf(next).get("View-Resource")).containsEntry("status", "proposed");
+
+        // ### The pipeline copied later: the notes not carried again, nothing duplicated or lost.
+        agreed("copy_pipeline", args("build", next, "source_uuid", first.pipeline(), "new_name",
+                first.feed() + "-Events-V1.1"));
+        assertThat(eventTypesOf(next)).containsOnlyKeys("Authenticate-Logon", "Authenticate-Logoff",
+                "View-Resource");
+        assertThat(eventTypesOf(next).get("Authenticate-Logoff")).containsEntry("status", "confirmed");
+        final Map<String, Object> since = json(CATALOGUE, args("build", next, "stream_ids", checkedOn));
+        assertThat(jsonOf(since.get("since_promoted"))).contains("added", "View-Resource");
+    }
+
     @Test
     void aHandEditIsReadBackIntoTheCatalogueAndOneItCannotExpressIsNamed() {
         final Translated built = translated("cat-life-edit", "CAT-LIFE-EDIT");
