@@ -163,6 +163,36 @@ class TestCatalogueValidation {
         assertThat(CatalogueValidation.problems(catalogue(null, alert, authorise, nonsense), null)).isEmpty();
     }
 
+    @Test
+    void anEventTypeItsConditionsSingleOutNamesItsActionElement() {
+        // Seen in eval case 56 on Haiku (2026-11-20): seven event types proposed with an action but no event_detail,
+        // confirmed by the user as "Unknown", then every save refused ("writes EventDetail/Unknown ... yet its
+        // conditions single these records out"), and the build stuck between the two.
+        final EventType none = new EventType("Read-Mail", "Mail read", null, null, "Read", null, null, null, null,
+                List.of(way(equalsTo("Operation", "MailItemsAccessed"))), false, EventType.AGENT_KNOWLEDGE, "high",
+                null, EventType.PROPOSED);
+        final EventType unknown = new EventType("Send-Mail", "Mail sent", null, "Unknown", null, null, null, null,
+                null, List.of(way(equalsTo("Operation", "Send"))), false, EventType.AGENT_KNOWLEDGE, "high", null,
+                EventType.PROPOSED);
+
+        assertThat(said(catalogue(null, none, unknown))).containsExactly(
+                "Read-Mail: event type Read-Mail: no event_detail, so its records would be translated as Unknown, "
+                + "which the translation refuses for records its conditions single out: give the action element "
+                + "that describes them (Authenticate, View, Create, Update, Delete, Send, Network/Permit...)",
+                "Send-Mail: event type Send-Mail: no event_detail, so its records would be translated as Unknown, "
+                + "which the translation refuses for records its conditions single out: give the action element "
+                + "that describes them (Authenticate, View, Create, Update, Delete, Send, Network/Permit...)");
+        // A sole event type recognised by every record, and one dropped, need none.
+        final EventType sole = new EventType("Process-Line", "Line", null, null, null, null, null, null, null,
+                List.of(), false, EventType.AGENT_KNOWLEDGE, "high", null, EventType.PROPOSED);
+        assertThat(said(catalogue(null, sole))).isEmpty();
+        final EventType dropped = new EventType("Process-Heartbeat", "Heartbeat", null, null, null, null, null, null,
+                null, List.of(way(equalsTo("Operation", "Ping"))), true, EventType.USER_CONFIRMED, "high", null,
+                EventType.CONFIRMED);
+        assertThat(said(catalogue(null, dropped, type("Process-Request", "Request", way(equalsTo("Operation",
+                "Run")))))).isEmpty();
+    }
+
     private static List<String> said(final Catalogue catalogue) {
         final List<String> out = new ArrayList<>();
         CatalogueValidation.problems(catalogue, SCHEMA).forEach(problem -> out.add(problem.typeId()

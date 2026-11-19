@@ -49,6 +49,8 @@ public final class CatalogueValidation {
     // What separates the names of a field, in any of its spellings: JSON's dots, XML's slashes, a held value's >,
     // an attribute's @.
     private static final Pattern NAME_PARTS = Pattern.compile("[./>@]+");
+    // The action element saying what happened is not known.
+    private static final String UNKNOWN = "Unknown";
 
     private CatalogueValidation() {
         // Static only.
@@ -184,10 +186,20 @@ public final class CatalogueValidation {
     // What it means, checked against the schema as record_source_notes checks its events.
     private static void meaning(final EventSchema schema, final EventType type, final List<Problem> problems) {
         final String detail = type.eventDetail();
-        if (detail == null || detail.isBlank()) {
+        final String label = "event type " + type.typeId();
+        if (detail == null || detail.isBlank() || UNKNOWN.equals(ToolText.strip(detail.strip(), "/"))) {
+            // As the translation has it (a rule its conditions single out writes an action element, not Unknown):
+            // seen in eval case 56, seven event types confirmed as Unknown, then every save refused.
+            if (!type.drop() && type.recognisedBy().stream().anyMatch(way -> !way.when().isEmpty())) {
+                problems.add(new Problem(type.typeId(), -1, label + ": no event_detail, so its records would be "
+                                                            + "translated as Unknown, which the translation refuses "
+                                                            + "for records its conditions single out: give the "
+                                                            + "action element that describes them (Authenticate, "
+                                                            + "View, Create, Update, Delete, Send, "
+                                                            + "Network/Permit...)"));
+            }
             return;
         }
-        final String label = "event type " + type.typeId();
         final String detailProblem = SourceNotes.detailProblem(schema, detail);
         if (detailProblem != null) {
             problems.add(new Problem(type.typeId(), -1, label + ": " + detailProblem));
