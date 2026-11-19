@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheck;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
+import stroom.ai.impl.tools.catalogue.CatalogueDiff;
 import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.catalogue.CatalogueSeed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation;
@@ -53,6 +54,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -139,6 +141,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final TranslationBuilds builds;
     private final LongSupplier clock;
+    private Provider<CatalogueNotes> catalogueNotesProvider;
 
     @Inject
     CatalogueEventTypesTool(final RecordSourceNotesTool notes,
@@ -169,6 +172,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         this.plan = plan;
         this.builds = builds;
         this.clock = clock;
+    }
+
+    /// Where the build's catalogue is kept across versions (set by injection; none in tests that make the tool
+    /// themselves): a next version's listing and confirmation say what changed since the promoted catalogue.
+    ///
+    /// @param catalogueNotes The build's catalogue.
+    @Inject
+    void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
+        this.catalogueNotesProvider = catalogueNotes;
     }
 
     @Override
@@ -271,7 +283,25 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                         ? confirmed(calling)
                         : listed(calling);
         unsurveyed.ifPresent(why -> result.put("survey", why));
+        sincePromoted(build).ifPresent(said -> result.put("since_promoted", said));
         return result;
+    }
+
+    // What changed in the build's catalogue since the promoted one it started from (a feed's next version), in
+    // words: the event types added, changed and removed; empty for a first version, or when nothing changed.
+    private Optional<List<String>> sincePromoted(final String build) {
+        if (catalogueNotesProvider == null) {
+            return Optional.empty();
+        }
+        try {
+            return catalogueNotesProvider.get().changedSincePromoted(build)
+                    .filter(diff -> !diff.none())
+                    .map(CatalogueDiff.Diff::said);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("What changed since the promoted catalogue of {} wasn't read: {}",
+                    build, e.getMessage()), e);
+            return Optional.empty();
+        }
     }
 
     // The catalogue so far, its scope the build's now; an empty one before the source is catalogued.

@@ -297,7 +297,7 @@ class TestCatalogueEventTypesTool {
         assertThat(kept.eventType("Delete-Records").basis()).isEqualTo("user_confirmed");
         assertThat(kept.eventType("Export-Report").basis()).isEqualTo("agent_knowledge");
         assertThat(kept.catchAll()).isEqualTo(new Catalogue.CatchAll("confirmed",
-                "The user keeps the rest as Unknown"));
+                "The user keeps the rest as Unknown", null));
     }
 
     @Test

@@ -90,7 +90,8 @@ final class CatalogueProposals {
             return new Applied(catalogue, refused);
         }
         final Catalogue.CatchAll catchAll = catalogue.catchAll().confirmed()
-                ? new Catalogue.CatchAll(EventType.PROPOSED, catalogue.catchAll().allowUnknown())
+                ? new Catalogue.CatchAll(EventType.PROPOSED, catalogue.catchAll().allowUnknown(),
+                catalogue.catchAll().translation())
                 : catalogue.catchAll();
         return new Applied(new Catalogue(CatalogueOrder.ordered(types), catchAll, catalogue.scope()), refused);
     }

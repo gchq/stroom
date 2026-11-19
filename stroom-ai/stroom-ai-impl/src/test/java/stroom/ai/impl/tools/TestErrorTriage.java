@@ -115,7 +115,8 @@ class TestErrorTriage {
         final ErrorTriage.Classified classified = RULES.classify("INFO", "translationFilter", true, message);
 
         assertThat(classified.classification()).isEqualTo(ErrorTriage.BENIGN);
-        assertThat(classified.reason()).startsWith("A kind of record a catch-all rule took").contains("catalogue_event_types");
+        assertThat(classified.reason()).startsWith("A kind of record a catch-all rule took")
+                .contains("catalogue_event_types");
     }
 
     @Test

@@ -106,7 +106,8 @@ class TestCatalogue {
                 "allow_unknown", "Kept as Unknown: the records are rare"));
 
         final Catalogue agreed = new Catalogue(List.of(), null, null).withCatchAllConfirmedByUser("The user's reason");
-        assertThat(agreed.catchAll()).isEqualTo(new Catalogue.CatchAll(EventType.CONFIRMED, "The user's reason"));
+        assertThat(agreed.catchAll()).isEqualTo(new Catalogue.CatchAll(EventType.CONFIRMED, "The user's reason",
+                null));
         // Without a reason given, none is written.
         assertThat(Catalogue.CatchAll.PROPOSED.toJson()).isEqualTo(Map.of("status", "proposed"));
     }

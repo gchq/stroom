@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueDiff;
 import stroom.ai.impl.tools.draft.SourceNotes;
@@ -31,6 +32,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,10 +142,15 @@ class CatalogueNotes {
     void write(final ToolSession session, final String build, final String source, final Catalogue catalogue) {
         final Optional<WriteGuard.BuildDoc> there = notesDoc(build);
         final String name = there.map(WriteGuard.BuildDoc::name).orElse(source + SourceNotes.NOTES_SUFFIX);
-        final String text = there.map(doc -> documentWrites.text(doc.docRef())).orElse("# " + name + "\n");
+        final String text = there.map(doc -> documentWrites.text(doc.docRef())).orElse("");
         final Map<String, Object> notes = new LinkedHashMap<>(NullSafe.map(SourceNotes.readNotes(text)));
-        notes.putAll(catalogue.toJson());
-        final String written = withBlock(text, SourceNotes.block(notes));
+        if (NullSafe.isBlankString(ToolText.str(notes.getOrDefault("summary", "")))) {
+            // A doc written by hand: its prose under the heading kept as the summary.
+            prose(text).ifPresent(summary -> notes.put("summary", summary));
+        }
+        // Written as catalogue_event_types writes it: the JSON block and the "Event types" table together.
+        final String written = RecordSourceNotesTool.textWithCatalogue(NullSafe.nonBlankStringElse(
+                ToolText.str(notes.getOrDefault("source", "")), source), notes, catalogue.toJson());
         if (there.isPresent()) {
             guard.checkInBuild(session, there.get().docRef());
             documentWrites.writeText(there.get().docRef(), written);
@@ -162,6 +169,23 @@ class CatalogueNotes {
             return text.substring(0, found.start()) + block + text.substring(found.end());
         }
         return text.stripTrailing() + "\n\n" + block + "\n";
+    }
+
+    // A notes doc's prose: what is under its heading, before its first section or its block.
+    private static Optional<String> prose(final String text) {
+        final List<String> kept = new ArrayList<>();
+        for (final String line : text.lines().toList()) {
+            if (line.startsWith("## ") || line.startsWith("<!--")) {
+                break;
+            }
+            if (!line.startsWith("# ")) {
+                kept.add(line);
+            }
+        }
+        final String prose = String.join("\n", kept).strip();
+        return prose.isEmpty()
+                ? Optional.empty()
+                : Optional.of(prose);
     }
 
     // The build's source notes doc (one a build), at its top.

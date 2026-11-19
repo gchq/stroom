@@ -311,19 +311,35 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final Map<String, WriteGuard.BuildDoc> contents = contents(build);
         final String notesName = notesName(contents, source);
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
-        final List<Map<String, Object>> fields = merged(earlier.get("fields"), List.of(), FIELD_KEYS,
-                FIELD_REQUIRED);
-        final String summary = NullSafe.nonBlankStringElse(text(earlier.get("summary")),
-                "The source's event types, as the agent proposed them and the user confirmed them.");
         final Map<String, Object> kept = new LinkedHashMap<>(catalogue.toJson());
         kept.put(CONFIRMING, NullSafe.map(confirming));
-        final DocumentationDoc doc = written(context.session(), contents, build, notesName, notesText(source,
-                summary, fields, JsonValues.strings(earlier.get("references")),
-                JsonValues.strings(earlier.get("documents")), catalogueKept(earlier, kept)));
+        final DocumentationDoc doc = written(context.session(), contents, build, notesName,
+                textWithCatalogue(source, earlier, kept));
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("uuid", doc.getUuid());
         out.put("name", doc.getName());
         return out;
+    }
+
+    /// The one place a source notes doc's text is made with its catalogue (for `catalogue_event_types`, and for
+    /// [CatalogueNotes#write], a hand edit read back): the JSON block's catalogue keys and the "Event types" table
+    /// written together, so the table never goes stale; the field dictionary, documents and references as the notes
+    /// hold them.
+    ///
+    /// @param source  The source's name.
+    /// @param earlier The notes as they are ([SourceNotes#readNotes]), or empty for none.
+    /// @param given   The catalogue's keys to write (`event_types`, `catch_all`, `scope`, [#CONFIRMING]); those not
+    ///                given are kept as the notes have them.
+    /// @return The doc's text.
+    static String textWithCatalogue(final String source,
+                                    final Map<String, Object> earlier,
+                                    final Map<String, Object> given) {
+        final List<Map<String, Object>> fields = merged(earlier.get("fields"), List.of(), FIELD_KEYS,
+                FIELD_REQUIRED);
+        final String summary = NullSafe.nonBlankStringElse(text(earlier.get("summary")),
+                "The source's event types, as the agent proposed them and the user confirmed them.");
+        return notesText(source, summary, fields, JsonValues.strings(earlier.get("references")),
+                JsonValues.strings(earlier.get("documents")), catalogueKept(earlier, given));
     }
 
     // The catalogue's keys of the earlier notes, with those given in their place; an empty value removes one.
