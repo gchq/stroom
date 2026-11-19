@@ -53,10 +53,12 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Pattern;
 
 /**
  * Allows access to the document assets over HTTP, so that the UI can pull in assets as necessary.
@@ -203,20 +205,33 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
      */
     static final String CONTENT_SECURITY_POLICY_INERT = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
 
-    /**
-     * Policy for every other asset of a Visualisation. Visualisations legitimately serve executable
-     * HTML from this store, so scripting cannot be denied here. What is denied is the set of capabilities no asset
-     * needs: plugins, form submission, and - the valuable one - re-pointing the document base, which
-     * would otherwise let an asset resolve its own relative URLs against another origin.
-     */
-    static final String CONTENT_SECURITY_POLICY_ASSET = "default-src 'self'; " +
-                                                        "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
-                                                        "style-src 'self' 'unsafe-inline'; " +
-                                                        "img-src 'self' data:; " +
-                                                        "object-src 'none'; " +
-                                                        "base-uri 'none'; " +
-                                                        "form-action 'none'; " +
-                                                        "frame-ancestors 'self'";
+    /// The part of [#CONTENT_SECURITY_POLICY_ASSET] up to and including the default image sources.
+    private static final String CONTENT_SECURITY_POLICY_ASSET_START =
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data:";
+
+    /// The part of [#CONTENT_SECURITY_POLICY_ASSET] after the image sources.
+    private static final String CONTENT_SECURITY_POLICY_ASSET_END =
+            "; " +
+            "object-src 'none'; " +
+            "base-uri 'none'; " +
+            "form-action 'none'; " +
+            "frame-ancestors 'self'";
+
+    /// Policy for every other asset of a Visualisation, when no extra image origins are configured.
+    /// Visualisations legitimately serve executable HTML from this store, so scripting cannot be denied
+    /// here. What is denied is the set of capabilities no asset needs: plugins, form submission, and - the
+    /// valuable one - re-pointing the document base, which would otherwise let an asset resolve its own
+    /// relative URLs against another origin. See [#assetContentSecurityPolicy] for how configured
+    /// image origins, e.g. a GeoMap's tile server, are added.
+    static final String CONTENT_SECURITY_POLICY_ASSET =
+            CONTENT_SECURITY_POLICY_ASSET_START + CONTENT_SECURITY_POLICY_ASSET_END;
+
+    /// Matches an allowed image origin that can safely be added to the policy.
+    private static final Pattern ALLOWED_IMAGE_ORIGIN_PATTERN =
+            Pattern.compile(DocumentAssetConfig.ALLOWED_IMAGE_ORIGIN_PATTERN);
 
     /**
      * Number of locks to use to control access to the cache
@@ -237,6 +252,9 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
      * The service to resolve DocRefs
      */
     private final ExplorerNodeService explorerNodeService;
+
+    /// Config, read on each request for the properties that can change without a restart
+    private final Provider<DocumentAssetConfig> configProvider;
 
     /**
      * File extension to mimetype
@@ -272,6 +290,7 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
         this.service = service;
         this.securityContext = securityContext;
         this.explorerNodeService = explorerNodeService;
+        this.configProvider = configProvider;
         final DocumentAssetConfig config = configProvider.get();
         this.mimetypes = config.getMimetypes();
         this.defaultMimetype = config.getDefaultMimetype();
@@ -434,6 +453,7 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
 
                 final String mimetype = getMimetype(path, mimetypes, defaultMimetype);
                 final boolean ownerMayServeExecutableContent = mayServeExecutableContent(docRef);
+                final List<String> allowedImageOrigins = configProvider.get().getAllowedImageOrigins();
 
                 if (etagValid != null && (etagValid.equals(eTag))) {
                     response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
@@ -442,14 +462,14 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
                     // A client updates the headers it has cached from a revalidation response, so these
                     // have to be sent here too. Omitting them lets an entry cached before this code
                     // existed carry on being served without them.
-                    setSecurityHeaders(response, mimetype, ownerMayServeExecutableContent);
+                    setSecurityHeaders(response, mimetype, ownerMayServeExecutableContent, allowedImageOrigins);
                 } else {
                     try (final InputStream dataStream = getInputStreamForAsset(docId, path)) {
                         response.setContentType(mimetype);
                         response.setStatus(HttpServletResponse.SC_OK);
                         response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
                         response.setHeader(ETAG_HEADER, eTag);
-                        setSecurityHeaders(response, mimetype, ownerMayServeExecutableContent);
+                        setSecurityHeaders(response, mimetype, ownerMayServeExecutableContent, allowedImageOrigins);
                         try (final ServletOutputStream responseStream = response.getOutputStream()) {
                             dataStream.transferTo(responseStream);
                         }
@@ -597,17 +617,20 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
      *                                       parameters, e.g. {@code ; charset=utf-8}.
      * @param ownerMayServeExecutableContent Whether the owning document may serve executable content,
      *                                       from {@link #mayServeExecutableContent}.
+     * @param allowedImageOrigins            The origins, besides Stroom's own, that an executable asset
+     *                                       may load images from. Must not be null.
      */
     static void setSecurityHeaders(final HttpServletResponse response,
                                    final String mimetype,
-                                   final boolean ownerMayServeExecutableContent) {
+                                   final boolean ownerMayServeExecutableContent,
+                                   final List<String> allowedImageOrigins) {
         response.setHeader(CONTENT_TYPE_OPTIONS_HEADER, CONTENT_TYPE_OPTIONS_NOSNIFF);
 
         final String baseMimetype = baseMimetype(mimetype);
         final boolean scriptableMarkup = isScriptableMarkup(baseMimetype);
 
         if (ownerMayServeExecutableContent && !scriptableMarkup) {
-            response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_ASSET);
+            response.setHeader(CONTENT_SECURITY_POLICY_HEADER, assetContentSecurityPolicy(allowedImageOrigins));
         } else {
             final boolean rasterImage = baseMimetype.startsWith(IMAGE_MIMETYPE_PREFIX) && !scriptableMarkup;
             if (!rasterImage) {
@@ -618,6 +641,29 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
             // A backstop should the response become a document regardless.
             response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_INERT);
         }
+    }
+
+    /// Builds the policy for an asset that may execute, adding the given origins to its image sources so
+    /// that, for example, a GeoMap can show tiles from an external tile server.
+    ///
+    /// Each origin is added only if it matches [DocumentAssetConfig#ALLOWED_IMAGE_ORIGIN_PATTERN]: an
+    /// `http` or `https` source with a host. Anything else could allow every host, or add other sources,
+    /// keywords or whole directives, so it is left out. Config validation reports such entries to the
+    /// administrator; this is the backstop.
+    ///
+    /// @param allowedImageOrigins The origins to add to `img-src`. Must not be null.
+    /// @return The policy. Equal to [#CONTENT_SECURITY_POLICY_ASSET] when no origin is added.
+    static String assetContentSecurityPolicy(final List<String> allowedImageOrigins) {
+        final StringBuilder policy = new StringBuilder(CONTENT_SECURITY_POLICY_ASSET_START);
+        for (final String origin : allowedImageOrigins) {
+            if (origin != null && ALLOWED_IMAGE_ORIGIN_PATTERN.matcher(origin).matches()) {
+                policy.append(' ').append(origin);
+            } else {
+                LOGGER.debug("Ignoring invalid allowed image origin '{}'", origin);
+            }
+        }
+        policy.append(CONTENT_SECURITY_POLICY_ASSET_END);
+        return policy.toString();
     }
 
     /**

@@ -548,6 +548,7 @@ appConfig:
       svg: "XML"
       txt: "TEXT"
       xml: "XML"
+    allowedImageOrigins: []
     assetCacheDir: "asset_cache"
     clearAssetCacheOnStartup: false
     default: "application/octet-stream"
