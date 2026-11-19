@@ -16,10 +16,10 @@
     <xsl:variable name="action" select="*[@key='action'][normalize-space(.)]"/>
     <xsl:variable name="event_type" select="*[@key='event_type'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$event_type = 'TRAFFIC' and $action = 'ALLOW'">
+      <xsl:when test="$event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'TRAFFIC' and $action/(if (self::*:array) then * else .)[normalize-space(.)] = 'ALLOW'">
         <xsl:apply-templates select="." mode="event_type_traffic_permitted"/>
       </xsl:when>
-      <xsl:when test="$event_type = 'LOGIN'">
+      <xsl:when test="$event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'LOGIN'">
         <xsl:apply-templates select="." mode="event_type_login"/>
       </xsl:when>
       <xsl:otherwise>

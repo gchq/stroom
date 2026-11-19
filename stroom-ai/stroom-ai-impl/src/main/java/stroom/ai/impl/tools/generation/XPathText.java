@@ -219,6 +219,17 @@ public final class XPathText {
                 : "") + ")//fn:group[@nr=1])[1] return string($g)";
     }
 
+    /// The step reading a JSON field's values one by one: an array's items (Stroom's JSON as XML gives an array's
+    /// items run together as its text), any other value itself. Items that are objects or arrays are one item each,
+    /// their own text run together.
+    public static final String ITEMS_STEP = "/(if (self::*:array) then * else .)";
+
+    /// @param source A JSON field's input.
+    /// @return Its values one by one ([#ITEMS_STEP]).
+    public static String itemsText(final String source) {
+        return source + ITEMS_STEP;
+    }
+
     /// @param source The input.
     /// @param value  The value.
     /// @return The test that the input is the value.

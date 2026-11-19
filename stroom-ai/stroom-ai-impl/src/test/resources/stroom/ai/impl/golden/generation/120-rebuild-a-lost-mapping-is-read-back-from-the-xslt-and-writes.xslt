@@ -15,7 +15,7 @@
     <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="*[@key='action'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$action = 'login'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:otherwise>

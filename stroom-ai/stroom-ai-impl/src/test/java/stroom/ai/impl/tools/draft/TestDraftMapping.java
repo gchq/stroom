@@ -214,6 +214,27 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aJsonArraysKindIsToldByItsItemsNotItsJsonText() {
+        // Seen in eval case 46 (ECS's event.category): a rule testing event_type equals '["LOGIN"]', the array's JSON
+        // text, which no record's items ever are.
+        final String sample = """
+                {"timestamp":"2026-10-01T09:00:12Z","event_type":["LOGIN"],"username":"alice","message":"in"}
+                {"timestamp":"2026-10-01T09:01:12Z","event_type":["LOGIN"],"username":"bob","message":"in"}
+                {"timestamp":"2026-10-01T09:02:12Z","event_type":["FILE","DELETE"],"username":"bob","message":"rm"}
+                """;
+        final Map<String, Object> draft = draft(Map.of("a.jsonl", sample), "App");
+        final List<Object> whens = JsonValues.maps(mappingOf(draft).get("events")).stream()
+                .map(rule -> rule.get("when"))
+                .filter(JsonValues::truthy)
+                .toList();
+        assertThat(whens).contains((Object) json("""
+                [{"field": "event_type", "equals": "LOGIN"}]"""));
+        assertThat(whens).contains((Object) json("""
+                [{"field": "event_type", "equals": "FILE"}, {"field": "event_type", "equals": "DELETE"}]"""));
+        assertThat(ToolJson.dumps(whens)).doesNotContain("[\\\"");
+    }
+
+    @Test
     void theEnvironmentGivenIsTheDrafts() {
         // draft_translation_mapping's environment, from the field inventory test.
         final Map<String, Object> drafted = DraftMapping.draft(Map.of("fw.jsonl", FW_JSON), "FortiOS firewall", null,

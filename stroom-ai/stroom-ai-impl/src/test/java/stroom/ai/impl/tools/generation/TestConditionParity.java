@@ -59,17 +59,32 @@ class TestConditionParity extends XsltRuns {
         // A nested key dotted; a flat key holding a dot spelt in brackets, never misread as the nested one.
         assertThat(verdicts(nested, equalsTo("event.app", "Auth"))).startsWith(true, false);
         assertThat(verdicts(nested, equalsTo("log.level", "nested"))).containsExactly(false, false, true, true,
-                false, false, false, false, false, false, false, false, false);
+                false, false, false, false, false, false, false, false, false, false, false);
         assertThat(verdicts(nested, equalsTo("['log.level']", "flat"))).containsExactly(false, false, true, true,
-                false, false, false, false, false, false, false, false, false);
+                false, false, false, false, false, false, false, false, false, false, false);
         // Decoded: JSON's escapes are compared as the characters they stand for.
         assertThat(verdicts(nested, equalsTo("msg", "say \"hi\" \\ C:\\temp é 🚀"))).element(4).isEqualTo(true);
-        // An array, as the generated XPath reads it today: the array element's text, its values run together
-        // (*[@key='tags'] = 'b' compares 'ab'). The design's contract says any of its values: a contract question,
-        // raised (2026-11-19), not changed here; the two agree either way.
-        assertThat(verdicts(nested, equalsTo("tags", "ab"))).element(5).isEqualTo(true);
-        assertThat(verdicts(nested, equalsTo("tags", "b"))).element(5).isEqualTo(false);
-        assertThat(verdicts(nested, not(equalsTo("tags", "b")))).element(5).isEqualTo(true);
+        // An array compared item by item (the contract): any item holds; not holds when none does. Its items run
+        // together ('ab', as Stroom's JSON as XML gives the array's text) are no item.
+        assertThat(verdicts(nested, equalsTo("tags", "b"))).element(5).isEqualTo(true);
+        assertThat(verdicts(nested, equalsTo("tags", "ab"))).element(5).isEqualTo(false);
+        assertThat(verdicts(nested, not(equalsTo("tags", "b")))).element(5).isEqualTo(false);
+        assertThat(verdicts(nested, not(equalsTo("tags", "z")))).element(5).isEqualTo(true);
+        assertThat(verdicts(nested, Map.of("field", "tags", "one_of", List.of("z", "a")))).element(5)
+                .isEqualTo(true);
+        assertThat(verdicts(nested, startsWith("tags", "b"))).element(5).isEqualTo(true);
+        assertThat(verdicts(nested, Map.of("field", "tags", "matches", "^b$"))).element(5).isEqualTo(true);
+        // An item that is an object or an array is one item: its own members' text run together, one level only.
+        assertThat(verdicts(nested, equalsTo("tags", "b"))).element(11).isEqualTo(true);
+        assertThat(verdicts(nested, equalsTo("tags", "n1n2"))).element(13).isEqualTo(true);
+        assertThat(verdicts(nested, equalsTo("tags", "n1"))).element(13).isEqualTo(false);
+        assertThat(verdicts(nested, equalsTo("tags", "c"))).element(13).isEqualTo(true);
+        // A key of the objects an array holds is no field of the record: a condition about one item belongs to a
+        // repeated group.
+        assertThat(verdicts(nested, present("tags.k", true))).element(11).isEqualTo(false);
+        // Blank and nil items count as no item: an array of them is no value.
+        assertThat(verdicts(nested, present("tags", true))).element(14).isEqualTo(false);
+        assertThat(verdicts(nested, not(equalsTo("tags", "--")))).element(14).isEqualTo(true);
         // A missing field makes a not condition hold; a nil value counts as missing.
         assertThat(verdicts(nested, not(equalsTo("msg", "x")))).element(12).isEqualTo(true);
         assertThat(verdicts(nested, present("msg", true))).element(7).isEqualTo(false);
@@ -80,6 +95,9 @@ class TestConditionParity extends XsltRuns {
         assertThat(verdicts(held, equalsTo("held.logger_name", "com.x.Twice"))).element(1).isEqualTo(true);
         assertThat(verdicts(held, present("held.logger_name", true))).element(2).isEqualTo(false);
         assertThat(verdicts(held, not(startsWith("held.logger_name", "com")))).element(2).isEqualTo(true);
+        // An array in held JSON, item by item too.
+        assertThat(verdicts(held, equalsTo("held.tags", "t2"))).element(7).isEqualTo(true);
+        assertThat(verdicts(held, equalsTo("held.tags", "t1t2"))).element(7).isEqualTo(false);
 
         final Case xml = byName.get("xml input, namespaced");
         // XML by local name in the record's namespace, entities and CDATA decoded, repeated elements any.
@@ -264,13 +282,16 @@ class TestConditionParity extends XsltRuns {
                 "{\"msg\": 42, \"event\": {\"app\": null}}",
                 "{\"msg\": \"a\\rb\\n\", \"event\": {\"app\": {\"deep\": \"x\"}}}",
                 "{\"msg\": \"nul\\u0000 and ff\\f\", \"tags\": [\"x\", {\"k\": \"b\"}]}",
-                "{}");
+                "{}",
+                "{\"tags\": [[\"n1\", \"n2\"], \"c\", null, 7]}",
+                "{\"tags\": [\"-\", \"-\", \" \"]}");
         out.add(new Case("json, nested and flat keys", Map.of("input", "json", "json_layout", "lines",
                 "nil_values", List.of("-")), String.join("\n", nested), TestSourceTypeReadingParity.stroomRecords(
                 nested), null, 0, nested.size(),
-                List.of("event.app", "event.level", "log.level", "['log.level']", "msg", "tags", "event"),
+                List.of("event.app", "event.level", "log.level", "['log.level']", "msg", "tags", "tags.k", "event"),
                 List.of("Auth", "INFO", "flat", "nested", "Request: get /a", "say \"hi\" \\ C:\\temp é 🚀", "a",
-                        "b", "  padded  ", "-", "42", "a\u2028b", "a\rb\n", "x", "nul and ff\f")));
+                        "b", "ab", "n1n2", "c", "  padded  ", "-", "42", "a\u2028b", "a\rb\n", "x",
+                        "nul and ff\f")));
 
         final List<String> held = new ArrayList<>(List.of(
                 "{\"held\": \"{\\\"logger_name\\\": \\\"com.x.Auth\\\", \\\"eventType\\\": \\\"Password change\\\"}\"}",

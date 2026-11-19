@@ -17,10 +17,10 @@
   <xsl:template match="*" mode="item">
     <xsl:param name="record" tunnel="yes"/>
     <xsl:choose>
-      <xsl:when test="exists($record/*[@key='host'][matches(., '^qa-')])">
+      <xsl:when test="exists($record/*[@key='host'][normalize-space(.)]/(if (self::*:array) then * else .)[normalize-space(.)][matches(., '^qa-')])">
         <!-- drop: QA traffic: left untranslated on purpose -->
       </xsl:when>
-      <xsl:when test="*[@key='action'] = 'HEARTBEAT'">
+      <xsl:when test="*[@key='action'][normalize-space(.)]/(if (self::*:array) then * else .)[normalize-space(.)] = 'HEARTBEAT'">
         <!-- drop: heartbeats are not events: left untranslated on purpose -->
       </xsl:when>
       <xsl:otherwise>

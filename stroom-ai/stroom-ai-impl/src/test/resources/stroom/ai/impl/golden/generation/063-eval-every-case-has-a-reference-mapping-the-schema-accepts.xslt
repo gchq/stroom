@@ -15,7 +15,7 @@
     <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="user" select="*[@key='user'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$user">
+      <xsl:when test="exists($user/(if (self::*:array) then * else .)[normalize-space(.)])">
         <xsl:apply-templates select="." mode="event_type_user_access"/>
       </xsl:when>
       <xsl:when test="not($user)">

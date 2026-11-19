@@ -988,6 +988,11 @@ public final class XsltGenerator {
             src = c.field() != null && derived.containsKey(c.field())
                     ? c.field()
                     : source(c.field(), c.xpath(), c.scope());
+        } else if (isJsonField(c)) {
+            // A JSON field's values one by one, so an array's items are compared each (any item; not: none), each
+            // with text and no nil value, as the field's own values are.
+            src = XPathText.itemsText(ref(c.field(), c.xpath(), "condition", c.scope())) + "[normalize-space(.)]"
+                  + nil();
         } else {
             src = ref(c.field(), c.xpath(), "condition", c.scope());
         }
@@ -997,12 +1002,27 @@ public final class XsltGenerator {
                     ? XPathText.notText(test)
                     : test;
         }
-        final String has = raw
-                ? "exists(" + src + "[normalize-space(.)])"
-                : has(c.field(), c.xpath(), "condition", c.scope());
+        final String has;
+        if (raw) {
+            has = "exists(" + src + "[normalize-space(.)])";
+        } else if (isJsonField(c)) {
+            has = "exists(" + src + ")";
+        } else {
+            has = has(c.field(), c.xpath(), "condition", c.scope());
+        }
         return Boolean.TRUE.equals(c.present())
                 ? has
                 : XPathText.notText(has);
+    }
+
+    // Whether a condition's field is a key of JSON (the JSON input's, or JSON a field holds), whose value may be an
+    // array: not an xpath, a derived field, an item's or a path into held XML.
+    private boolean isJsonField(final Condition c) {
+        if (c.field() == null || c.xpath() != null || derived.containsKey(c.field())
+            || ITEM_SCOPE.equals(c.scope()) || longestPrefix(m.xmlFields(), c.field(), "/") != null) {
+            return false;
+        }
+        return "json".equals(m.input()) || MappingFacts.heldJsonField(m.jsonFields(), c.field()) != null;
     }
 
     // A condition's test of the input's value (all but present), before any not; null for present.

@@ -22,16 +22,16 @@
     <xsl:param name="record" tunnel="yes"/>
     <xsl:variable name="action" select="*[@key='action'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="exists($record/*[@key='host'][matches(., '^qa-')])">
+      <xsl:when test="exists($record/*[@key='host'][normalize-space(.)]/(if (self::*:array) then * else .)[normalize-space(.)][matches(., '^qa-')])">
         <!-- drop: QA traffic: left untranslated on purpose -->
       </xsl:when>
-      <xsl:when test="$action = 'HEARTBEAT'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'HEARTBEAT'">
         <!-- drop: heartbeats are not events: left untranslated on purpose -->
       </xsl:when>
-      <xsl:when test="$action = 'LOGIN'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'LOGIN'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
-      <xsl:when test="$action = 'LOGOUT'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'LOGOUT'">
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:otherwise>

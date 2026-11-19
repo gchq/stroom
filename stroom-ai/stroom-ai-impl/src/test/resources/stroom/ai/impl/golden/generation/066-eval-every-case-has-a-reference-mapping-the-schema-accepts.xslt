@@ -21,19 +21,19 @@
     <xsl:param name="record-no" tunnel="yes"/>
     <xsl:variable name="event_name" select="*[@key='eventName'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$event_name = 'ConsoleLogin'">
+      <xsl:when test="$event_name/(if (self::*:array) then * else .)[normalize-space(.)] = 'ConsoleLogin'">
         <xsl:apply-templates select="." mode="event_type_console_login"/>
       </xsl:when>
-      <xsl:when test="$event_name = 'GetObject'">
+      <xsl:when test="$event_name/(if (self::*:array) then * else .)[normalize-space(.)] = 'GetObject'">
         <xsl:apply-templates select="." mode="event_type_object_read"/>
       </xsl:when>
-      <xsl:when test="$event_name = 'DeleteObject'">
+      <xsl:when test="$event_name/(if (self::*:array) then * else .)[normalize-space(.)] = 'DeleteObject'">
         <xsl:apply-templates select="." mode="event_type_object_delete"/>
       </xsl:when>
-      <xsl:when test="$event_name = 'CreateUser'">
+      <xsl:when test="$event_name/(if (self::*:array) then * else .)[normalize-space(.)] = 'CreateUser'">
         <xsl:apply-templates select="." mode="event_type_user_create"/>
       </xsl:when>
-      <xsl:when test="$event_name = 'PutBucketPolicy'">
+      <xsl:when test="$event_name/(if (self::*:array) then * else .)[normalize-space(.)] = 'PutBucketPolicy'">
         <xsl:apply-templates select="." mode="event_type_policy_change"/>
       </xsl:when>
       <xsl:otherwise>

@@ -39,6 +39,11 @@ public final class XPathTrees {
     /// A string slot in a pattern.
     public static final Pattern STRING_SLOT = Pattern.compile("QXL(\\d+)QX");
 
+    private static final Pattern WHITE_SPACE = Pattern.compile("\\s+");
+    // XPathText.ITEMS_STEP without its slash, brackets and white space.
+    private static final String ITEMS = WHITE_SPACE.matcher(XPathText.ITEMS_STEP).replaceAll("")
+            .replaceAll("^/\\(|\\)$", "");
+
     private XPathTrees() {
         // Static only.
     }
@@ -69,6 +74,11 @@ public final class XPathTrees {
                && "=".equals(node.get(0).symbol()) && isDotCheck(node.get(0).get(0));
     }
 
+    // Whether a step, its predicates and brackets taken off, is the generator's items step (white space aside).
+    private static boolean isItemsStep(final XPathNode step) {
+        return WHITE_SPACE.matcher(step.text()).replaceAll("").equals(ITEMS);
+    }
+
     /// @param node A parsed expression.
     /// @return The expression as the reader compares it: brackets around one expression taken off, and the
     /// generator's has-a-value predicates (`[normalize-space(.)]`, and the one leaving out nil values), which only
@@ -88,6 +98,10 @@ public final class XPathTrees {
             return children.getFirst();
         }
         if ("(".equals(node.symbol()) && children.size() == 1) {
+            return children.getFirst();
+        }
+        if ("/".equals(node.symbol()) && children.size() == 2 && isItemsStep(children.get(1))) {
+            // A JSON field's values one by one (XPathText.ITEMS_STEP): the field, for the reader.
             return children.getFirst();
         }
         final String text = text(node, children);

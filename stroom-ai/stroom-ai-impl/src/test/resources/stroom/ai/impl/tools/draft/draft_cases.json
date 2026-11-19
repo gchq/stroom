@@ -15454,7 +15454,7 @@
       "when": [
        {
         "field": "event.category",
-        "equals": "[\"authentication\"]"
+        "equals": "authentication"
        }
       ],
       "fields": [
@@ -15493,7 +15493,7 @@
       "when": [
        {
         "field": "event.category",
-        "equals": "[\"file\"]"
+        "equals": "file"
        }
       ],
       "fields": [
@@ -15653,7 +15653,7 @@
       "when": [
        {
         "field": "event.category",
-        "equals": "[\"authentication\"]"
+        "equals": "authentication"
        }
       ],
       "fields": [
@@ -15692,7 +15692,7 @@
       "when": [
        {
         "field": "event.category",
-        "equals": "[\"file\"]"
+        "equals": "file"
        }
       ],
       "fields": [

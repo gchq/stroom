@@ -15,13 +15,13 @@
     <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="*[@key='_action'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$action = 'login'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
-      <xsl:when test="$action = 'logout'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'logout'">
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
-      <xsl:when test="$action = 'disk_alert'">
+      <xsl:when test="$action/(if (self::*:array) then * else .)[normalize-space(.)] = 'disk_alert'">
         <xsl:apply-templates select="." mode="event_type_disk"/>
       </xsl:when>
       <xsl:otherwise>

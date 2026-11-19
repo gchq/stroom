@@ -24,21 +24,21 @@
     <!-- Fields of the record no rule reads are logged (mcp_unread_fields), but for records left untranslated on purpose -->
     <xsl:variable name="json_time" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
-    <xsl:if test="not((not($json_time)))">
+    <xsl:if test="not((not(exists($json_time/(if (self::*:array) then * else .)[normalize-space(.)]))))">
       <xsl:call-template name="mcp_unread_fields"/>
     </xsl:if>
     <xsl:variable name="json_action" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="not($json_time)">
+      <xsl:when test="not(exists($json_time/(if (self::*:array) then * else .)[normalize-space(.)]))">
         <!-- drop: damaged lines (not JSON): left untranslated on purpose -->
       </xsl:when>
-      <xsl:when test="$json_action = 'login'">
+      <xsl:when test="$json_action/(if (self::*:array) then * else .)[normalize-space(.)] = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
-      <xsl:when test="$json_action = 'logout'">
+      <xsl:when test="$json_action/(if (self::*:array) then * else .)[normalize-space(.)] = 'logout'">
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
-      <xsl:when test="$json_action = 'password_change'">
+      <xsl:when test="$json_action/(if (self::*:array) then * else .)[normalize-space(.)] = 'password_change'">
         <xsl:apply-templates select="." mode="event_type_password"/>
       </xsl:when>
       <xsl:otherwise>

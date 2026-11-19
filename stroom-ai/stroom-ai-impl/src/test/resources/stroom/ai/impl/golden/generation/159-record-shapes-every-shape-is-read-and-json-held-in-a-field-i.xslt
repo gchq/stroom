@@ -27,16 +27,16 @@
     <xsl:variable name="message_event_type" select="mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'][normalize-space(.)]"/>
     <xsl:variable name="event_type_2" select="*[@key='event_type'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$event_type_2 = 'login'">
+      <xsl:when test="$event_type_2/(if (self::*:array) then * else .)[normalize-space(.)] = 'login'">
         <xsl:apply-templates select="." mode="event_type_login"/>
       </xsl:when>
-      <xsl:when test="$event_type_2 = 'logout'">
+      <xsl:when test="$event_type_2/(if (self::*:array) then * else .)[normalize-space(.)] = 'logout'">
         <xsl:apply-templates select="." mode="event_type_logout"/>
       </xsl:when>
-      <xsl:when test="$message_event_type = 'user_authentication_check'">
+      <xsl:when test="$message_event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'user_authentication_check'">
         <xsl:apply-templates select="." mode="event_type_user_authentication_check"/>
       </xsl:when>
-      <xsl:when test="$message_event_type = 'password_change'">
+      <xsl:when test="$message_event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'password_change'">
         <xsl:apply-templates select="." mode="event_type_password_change"/>
       </xsl:when>
       <xsl:otherwise>

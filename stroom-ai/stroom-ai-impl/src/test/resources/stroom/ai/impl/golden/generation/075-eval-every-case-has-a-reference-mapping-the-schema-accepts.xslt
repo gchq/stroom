@@ -31,13 +31,13 @@
     <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="operation" select="*[@key='operation'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$operation = 'Login'">
+      <xsl:when test="$operation/(if (self::*:array) then * else .)[normalize-space(.)] = 'Login'">
         <xsl:apply-templates select="." mode="event_type_login"/>
       </xsl:when>
-      <xsl:when test="$operation = 'GetAccount'">
+      <xsl:when test="$operation/(if (self::*:array) then * else .)[normalize-space(.)] = 'GetAccount'">
         <xsl:apply-templates select="." mode="event_type_read"/>
       </xsl:when>
-      <xsl:when test="$operation = 'UpdateAccount'">
+      <xsl:when test="$operation/(if (self::*:array) then * else .)[normalize-space(.)] = 'UpdateAccount'">
         <xsl:apply-templates select="." mode="event_type_update"/>
       </xsl:when>
       <xsl:otherwise>

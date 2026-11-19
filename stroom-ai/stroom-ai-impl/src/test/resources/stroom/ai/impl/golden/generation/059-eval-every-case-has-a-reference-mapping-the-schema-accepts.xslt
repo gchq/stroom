@@ -16,22 +16,22 @@
     <xsl:variable name="type" select="*[@key='type'][normalize-space(.)]"/>
     <xsl:variable name="event_type" select="*[@key='eventType'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$event_type = 'user.session.start'">
+      <xsl:when test="$event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'user.session.start'">
         <xsl:apply-templates select="." mode="event_type_new_session_start"/>
       </xsl:when>
-      <xsl:when test="$event_type = 'user.session.end'">
+      <xsl:when test="$event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'user.session.end'">
         <xsl:apply-templates select="." mode="event_type_new_session_end"/>
       </xsl:when>
-      <xsl:when test="$event_type = 'user.account.lock'">
+      <xsl:when test="$event_type/(if (self::*:array) then * else .)[normalize-space(.)] = 'user.account.lock'">
         <xsl:apply-templates select="." mode="event_type_new_account_lock"/>
       </xsl:when>
-      <xsl:when test="$type = 'login'">
+      <xsl:when test="$type/(if (self::*:array) then * else .)[normalize-space(.)] = 'login'">
         <xsl:apply-templates select="." mode="event_type_legacy_login"/>
       </xsl:when>
-      <xsl:when test="$type = 'logout'">
+      <xsl:when test="$type/(if (self::*:array) then * else .)[normalize-space(.)] = 'logout'">
         <xsl:apply-templates select="." mode="event_type_legacy_logout"/>
       </xsl:when>
-      <xsl:when test="$type = 'password_change'">
+      <xsl:when test="$type/(if (self::*:array) then * else .)[normalize-space(.)] = 'password_change'">
         <xsl:apply-templates select="." mode="event_type_legacy_password_change"/>
       </xsl:when>
       <xsl:otherwise>

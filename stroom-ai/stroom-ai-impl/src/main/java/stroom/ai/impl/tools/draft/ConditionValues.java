@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,8 +38,10 @@ import java.util.regex.Pattern;
 /// tests over them: the one evaluator of the conditions ([LocalCheck#holds]).
 ///
 /// * A field's values are its nodes' string values, as XPath's general comparison reads them: every element a path
-///   selects (XML's repeated elements), an element's text and its descendants' (unstripped), a JSON object's or
-///   array's members' text run together, as `*[@key='tags']` gives it.
+///   selects (XML's repeated elements), an element's text and its descendants' (unstripped), a JSON object's
+///   members' text run together, as `*[@key='event']` gives it. A JSON array's values are its items, one by one
+///   (the generated XPath's [XPathText#ITEMS_STEP]); an item that is an object or array is one value, its text run
+///   together.
 /// * A value counts only when it has text and isn't one of the mapping's nil values (the XSLT's
 ///   `[normalize-space(.)]` and nil predicates); a `not` holds when no value that counts passes the test, so when
 ///   the field is missing.
@@ -171,7 +174,9 @@ final class ConditionValues {
     // the record) its members' text run together; NUL dropped.
     private static List<String> mapValues(final Map<?, ?> map, final String field, final boolean json) {
         if (map.containsKey(field)) {
-            return List.of(withoutNul(stringValue(map.get(field))));
+            return json
+                    ? items(map.get(field)).stream().map(item -> withoutNul(stringValue(item))).toList()
+                    : List.of(withoutNul(stringValue(map.get(field))));
         }
         if (!json) {
             return List.of();
@@ -275,7 +280,16 @@ final class ConditionValues {
             }
             at = map.get(key);
         }
-        return List.of(NOT_XML_10.matcher(stringValue(at)).replaceAll(REPLACEMENT));
+        return items(at).stream().map(item -> NOT_XML_10.matcher(stringValue(item)).replaceAll(REPLACEMENT))
+                .toList();
+    }
+
+    // A JSON value's values one by one, as the generated XPath's items step reads them: an array's items (each
+    // object or array among them one item), any other value itself.
+    private static List<?> items(final Object value) {
+        return value instanceof final List<?> list
+                ? list
+                : Collections.singletonList(value);
     }
 
     // The JSON a field holds: nothing for an empty value, or one that doesn't parse; a JSON string whose text is an
