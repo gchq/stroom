@@ -5,6 +5,10 @@ request: >
   Onboard these workstation session events: XML where each event element carries its values as attributes
   (time, user, host, action). The action is lock or unlock of the screen. Index them.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Authenticate/Action]
@@ -26,12 +30,19 @@ reference:
       - {path: EventSource/Generator, value: session-agent}
       - {path: EventSource/Device/HostName, field: "@host"}
       - {path: EventSource/User/Id, field: "@user"}
-      - {path: EventDetail/TypeId, field: "@action"}
       - {path: EventDetail/Authenticate/User/Id, field: "@user"}
     events:
       - name: lock
         when: [{field: "@action", equals: lock}]
-        fields: [{path: EventDetail/Authenticate/Action, value: ScreenLock}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-ScreenLock}
+          - {path: EventDetail/Description, value: A user locked their screen}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: "@action"}
+          - {path: EventDetail/Authenticate/Action, value: ScreenLock}
       - name: unlock
         when: [{field: "@action", equals: unlock}]
-        fields: [{path: EventDetail/Authenticate/Action, value: ScreenUnlock}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-ScreenUnlock}
+          - {path: EventDetail/Description, value: A user unlocked their screen}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: "@action"}
+          - {path: EventDetail/Authenticate/Action, value: ScreenUnlock}

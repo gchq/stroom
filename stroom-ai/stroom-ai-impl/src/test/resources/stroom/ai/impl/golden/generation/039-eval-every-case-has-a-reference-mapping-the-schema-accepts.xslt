@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="" exclude-result-prefixes="stroom xs">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="" exclude-result-prefixes="stroom xs mcp">
   <xsl:template match="events">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="event" mode="event"/>
@@ -21,30 +21,36 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <!-- Rule 'lock': records where @action = lock. Writes an Authenticate event (TypeId from @action). -->
+  <!-- Rule 'lock': records where @action = lock. Writes an Authenticate event (TypeId Authenticate-ScreenLock) from
+       @action. -->
   <xsl:template match="node()" mode="event_type_lock">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-ScreenLock</TypeId>
+        <Description>A user locked their screen</Description>
         <Authenticate>
           <Action>ScreenLock</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('action', @action)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'unlock': records where @action = unlock. Writes an Authenticate event (TypeId from @action). -->
+  <!-- Rule 'unlock': records where @action = unlock. Writes an Authenticate event (TypeId Authenticate-ScreenUnlock)
+       from @action. -->
   <xsl:template match="node()" mode="event_type_unlock">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-ScreenUnlock</TypeId>
+        <Description>A user unlocked their screen</Description>
         <Authenticate>
           <Action>ScreenUnlock</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('action', @action)"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -83,14 +89,6 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'lock', 'unlock' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="(@action)[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(@action)[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- user: shared by the rules 'lock', 'unlock' -->
   <xsl:template match="node()" mode="user">
     <xsl:if test="(@user)[normalize-space(.)]">
@@ -101,4 +99,12 @@
       </User>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

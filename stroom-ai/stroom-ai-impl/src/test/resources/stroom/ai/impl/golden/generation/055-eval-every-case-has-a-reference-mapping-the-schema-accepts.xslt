@@ -43,33 +43,36 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <!-- Rule 'logon': records where System/EventID = 4624. Writes an Authenticate event (TypeId from System/EventID)
-       from EventData/Data[@Name='TargetUserName'], EventData/Data[@Name='IpAddress'],
+  <!-- Rule 'logon': records where System/EventID = 4624. Writes an Authenticate event (TypeId Authenticate-Logon)
+       from System/EventID, EventData/Data[@Name='TargetUserName'], EventData/Data[@Name='IpAddress'],
        EventData/Data[@Name='TargetDomainName'], EventData/Data[@Name='LogonType']. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>An account was successfully logged on</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="logon_type"/>
           <xsl:apply-templates select="." mode="authenticate_user"/>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'failed logon': records where System/EventID = 4625. Writes an Authenticate event (TypeId from
-       System/EventID) from EventData/Data[@Name='TargetUserName'], EventData/Data[@Name='IpAddress'],
-       EventData/Data[@Name='TargetDomainName'], EventData/Data[@Name='LogonType'],
-       EventData/Data[@Name='FailureReason']. -->
+  <!-- Rule 'failed logon': records where System/EventID = 4625. Writes an Authenticate event (TypeId
+       Authenticate-FailedLogon) from System/EventID, EventData/Data[@Name='TargetUserName'],
+       EventData/Data[@Name='IpAddress'], EventData/Data[@Name='TargetDomainName'],
+       EventData/Data[@Name='LogonType'], EventData/Data[@Name='FailureReason']. -->
   <xsl:template match="node()" mode="event_type_failed_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-FailedLogon</TypeId>
+        <Description>An account failed to log on</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="logon_type"/>
@@ -82,12 +85,13 @@
               </Description>
             </xsl:if>
           </Outcome>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where System/EventID = 4634. Writes an Authenticate event (TypeId from System/EventID)
-       from EventData/Data[@Name='TargetUserName']. -->
+  <!-- Rule 'logoff': records where System/EventID = 4634. Writes an Authenticate event (TypeId Authenticate-Logoff)
+       from System/EventID, EventData/Data[@Name='TargetUserName']. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
@@ -98,22 +102,26 @@
         <xsl:apply-templates select="." mode="user"/>
       </EventSource>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>An account was logged off</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="event_detail_authenticate_user"/>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'special privileges': records where System/EventID = 4672. Writes an Authenticate event (TypeId from
-       System/EventID) from EventData/Data[@Name='SubjectUserName'], EventData/Data[@Name='PrivilegeList']. -->
+  <!-- Rule 'special privileges': records where System/EventID = 4672. Writes an Authenticate event (TypeId
+       Authenticate-SpecialPrivileges) from System/EventID, EventData/Data[@Name='SubjectUserName'],
+       EventData/Data[@Name='PrivilegeList']. -->
   <xsl:template match="node()" mode="event_type_special_privileges">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source_2"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-SpecialPrivileges</TypeId>
+        <Description>Special privileges assigned to new logon</Description>
         <Authenticate>
           <Action>ElevatePrivilege</Action>
           <xsl:if test="(EventData/Data[@Name='SubjectUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
@@ -123,43 +131,47 @@
               </Id>
             </User>
           </xsl:if>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
           <xsl:sequence select="mcp:data('privileges', EventData/Data[@Name='PrivilegeList'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'account locked': records where System/EventID = 4740. Writes an Authenticate event (TypeId from
-       System/EventID) from EventData/Data[@Name='SubjectUserName'], EventData/Data[@Name='TargetUserName']. -->
+  <!-- Rule 'account locked': records where System/EventID = 4740. Writes an Authenticate event (TypeId
+       Lock-UserAccount) from System/EventID, EventData/Data[@Name='SubjectUserName'],
+       EventData/Data[@Name='TargetUserName']. -->
   <xsl:template match="node()" mode="event_type_account_locked">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source_2"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Lock-UserAccount</TypeId>
+        <Description>A user account was locked out</Description>
         <Authenticate>
           <Action>AccountLock</Action>
           <xsl:apply-templates select="." mode="event_detail_authenticate_user"/>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'account created': records where System/EventID = 4720. Writes a Create event (TypeId from System/EventID)
-       from EventData/Data[@Name='SubjectUserName'], EventData/Data[@Name='TargetUserName'],
+  <!-- Rule 'account created': records where System/EventID = 4720. Writes a Create event (TypeId Create-UserAccount)
+       from System/EventID, EventData/Data[@Name='SubjectUserName'], EventData/Data[@Name='TargetUserName'],
        EventData/Data[@Name='TargetDomainName']. -->
   <xsl:template match="node()" mode="event_type_account_created">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source_2"/>
-      <xsl:if test="(System/EventID)[normalize-space(.)][not(normalize-space(.) = ('-'))] or (EventData/Data[@Name='TargetUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))] or (EventData/Data[@Name='TargetDomainName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
-        <EventDetail>
-          <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:if test="(EventData/Data[@Name='TargetUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))] or (EventData/Data[@Name='TargetDomainName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
-            <Create>
-              <xsl:apply-templates select="." mode="authenticate_user"/>
-            </Create>
-          </xsl:if>
-        </EventDetail>
-      </xsl:if>
+      <EventDetail>
+        <TypeId>Create-UserAccount</TypeId>
+        <Description>A user account was created</Description>
+        <xsl:if test="(EventData/Data[@Name='TargetUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))] or (EventData/Data[@Name='TargetDomainName'])[normalize-space(.)][not(normalize-space(.) = ('-'))] or (System/EventID)[normalize-space(.)][not(normalize-space(.) = ('-'))]">
+          <Create>
+            <xsl:apply-templates select="." mode="authenticate_user"/>
+            <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
+          </Create>
+        </xsl:if>
+      </EventDetail>
     </Event>
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'failed logon', 'logoff', 'special privileges', 'account locked',
@@ -229,15 +241,6 @@
           <xsl:value-of select="(EventData/Data[@Name='TargetUserName'])[1]"/>
         </Id>
       </User>
-    </xsl:if>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'failed logon', 'logoff', 'special privileges', 'account locked',
-       'account created' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="(System/EventID)[normalize-space(.)][not(normalize-space(.) = ('-'))]">
-      <TypeId>
-        <xsl:value-of select="(System/EventID)[1]"/>
-      </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- logon_type: shared by the rules 'logon', 'failed logon' -->

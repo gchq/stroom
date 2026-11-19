@@ -30,15 +30,6 @@
    {
     "path": "EventSource/User/Id",
     "field": "user"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "action"
-   },
-   {
-    "path": "EventDetail/Description",
-    "field": "comment",
-    "transform": "unescape_quotes"
    }
   ],
   "events": [
@@ -51,6 +42,21 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Create-Ticket"
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": "comment",
+      "transform": "unescape_quotes",
+      "default": "A ticket was opened"
+     },
+     {
+      "path": "EventDetail/Create/Data",
+      "field": "action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Create/Object/Type",
       "value": "Ticket"
@@ -80,6 +86,16 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Update-Ticket"
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": "comment",
+      "transform": "unescape_quotes",
+      "default": "A ticket was changed"
+     },
+     {
       "path": "EventDetail/Update/After/Object/Type",
       "value": "Ticket"
      },
@@ -105,8 +121,8 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[create] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[change] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[create] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[change] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -115,6 +131,7 @@
      "data[@name='action']/@value = 'create'"
     ],
     "fields": [
+     "EventDetail/Create/Data[action]",
      "EventDetail/Create/Data[priority]",
      "EventDetail/Create/Object/Id",
      "EventDetail/Create/Object/Type",

@@ -25,8 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'request': every record. Writes a Network/Open event (TypeId from action) from client_ip, url, category,
-       method, status, bytes, action. -->
+  <!-- Rule 'request': every record. Writes a Network/Open event (TypeId Network-WebRequest) from action, client_ip,
+       url, category, method, status, bytes. -->
   <xsl:template match="node()" mode="event_type_request">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
@@ -62,13 +62,12 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
+        <TypeId>Network-WebRequest</TypeId>
+        <Description>A web request passed through the proxy</Description>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
-        <TypeId>
-          <xsl:value-of select="if ($action) then $action[1] else 'request'"/>
-        </TypeId>
         <xsl:variable name="category" select="data[@name='category']/@value[normalize-space(.)]"/>
         <xsl:variable name="url" select="data[@name='url']/@value[normalize-space(.)]"/>
-        <xsl:if test="$client_ip or $url or $category or $action[1] = ('allowed', 'blocked') or data[@name='method']/@value[normalize-space(.)] or data[@name='status']/@value[normalize-space(.)] or data[@name='bytes']/@value[normalize-space(.)]">
+        <xsl:if test="$client_ip or $url or $category or $action[1] = ('allowed', 'blocked') or $action or data[@name='method']/@value[normalize-space(.)] or data[@name='status']/@value[normalize-space(.)] or data[@name='bytes']/@value[normalize-space(.)]">
           <Network>
             <Open>
               <xsl:if test="$client_ip">
@@ -93,6 +92,7 @@
                   </Permitted>
                 </Outcome>
               </xsl:if>
+              <xsl:sequence select="mcp:data('action', $action)"/>
               <xsl:sequence select="mcp:data('method', data[@name='method']/@value)"/>
               <xsl:sequence select="mcp:data('status', data[@name='status']/@value)"/>
               <xsl:sequence select="mcp:data('bytes', data[@name='bytes']/@value)"/>

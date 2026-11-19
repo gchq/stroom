@@ -5,6 +5,10 @@ request: >
   Onboard sudo logs from our web servers (classic RFC 3164 syslog, so the timestamp has no year; these are from
   2026). Each line is a user running a command as another user (usually root). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Process]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Process/Command]
@@ -40,7 +44,8 @@ reference:
     events:
       - name: sudo command
         fields:
-          - {path: EventDetail/TypeId, value: Sudo}
+          - {path: EventDetail/TypeId, value: Process-Sudo}
+          - {path: EventDetail/Description, value: A user ran a command as another user with sudo}
           - {path: EventDetail/Process/Action, value: Execute}
           - {path: EventDetail/Process/Type, value: Application}
           - {path: EventDetail/Process/Command, field: command}

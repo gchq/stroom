@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="urn:example:fileaudit" exclude-result-prefixes="stroom xs">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="urn:example:fileaudit" exclude-result-prefixes="stroom xs mcp">
   <xsl:template match="audit">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="entry" mode="event"/>
@@ -21,31 +21,35 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <!-- Rule 'read': records where op = read. Writes a View event (TypeId File-Read) from path. -->
+  <!-- Rule 'read': records where op = read. Writes a View event (TypeId View-File) from op, path. -->
   <xsl:template match="node()" mode="event_type_read">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>File-Read</TypeId>
-        <xsl:if test="(path)[normalize-space(.)]">
+        <TypeId>View-File</TypeId>
+        <Description>A file on the share was read</Description>
+        <xsl:if test="(path)[normalize-space(.)] or (op)[normalize-space(.)]">
           <View>
             <xsl:apply-templates select="." mode="file"/>
+            <xsl:sequence select="mcp:data('op', op)"/>
           </View>
         </xsl:if>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'delete': records where op = delete. Writes a Delete event (TypeId File-Delete) from path. -->
+  <!-- Rule 'delete': records where op = delete. Writes a Delete event (TypeId Delete-File) from op, path. -->
   <xsl:template match="node()" mode="event_type_delete">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>File-Delete</TypeId>
-        <xsl:if test="(path)[normalize-space(.)]">
+        <TypeId>Delete-File</TypeId>
+        <Description>A file on the share was deleted</Description>
+        <xsl:if test="(path)[normalize-space(.)] or (op)[normalize-space(.)]">
           <Delete>
             <xsl:apply-templates select="." mode="file"/>
+            <xsl:sequence select="mcp:data('op', op)"/>
           </Delete>
         </xsl:if>
       </EventDetail>
@@ -95,4 +99,12 @@
       </File>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

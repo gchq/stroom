@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XPathChecks;
+import stroom.mcp.impl.McpGoldenFiles;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -55,8 +56,10 @@ class TestMappingSampleCheck {
     @Test
     void eachEvaluationCasesReferenceMappingPassesTheChecksOffline() {
         // What build_translation_xslt checks before it saves, for each evaluation case's reference mapping (the
-        // cases whose samples are under 60 KB): every one passes.
-        for (final Map<String, Object> c : cases()) {
+        // cases whose samples are under 60 KB, their mappings the cases' own, TestEvalReferenceCopies): every one
+        // passes. With -DtestUpdateGoldenFiles=true, each case's problems and warnings are recorded as they are now.
+        final List<Map<String, Object>> cases = cases();
+        for (final Map<String, Object> c : cases) {
             final TranslationMapping mapping = TranslationMapping.parse(c.get("mapping"));
             @SuppressWarnings("unchecked") final List<String> texts = (List<String>) c.get("texts");
             @SuppressWarnings("unchecked") final Map<String, Object> spec = (Map<String, Object>) c.get("splitter");
@@ -65,9 +68,18 @@ class TestMappingSampleCheck {
                     : SplitterSpec.fromMap(spec);
             final List<String> problems = new ArrayList<>(XsltGenerator.generate(mapping, TranslationWorld.SCHEMA,
                     TranslationWorld.VERSION).problems());
-            problems.addAll(strings(MappingSampleCheck.check(mapping, texts, splitter, TranslationWorld.SCHEMA,
-                    false, Clock.systemUTC()).get("problems")));
+            final Map<String, Object> checked = MappingSampleCheck.check(mapping, texts, splitter,
+                    TranslationWorld.SCHEMA, false, Clock.systemUTC());
+            problems.addAll(strings(checked.get("problems")));
+            if (McpGoldenFiles.updating()) {
+                c.put("problems", problems);
+                c.put("warnings", strings(checked.get("warnings")));
+            }
             assertThat(problems).as(String.valueOf(c.get("id"))).isEqualTo(c.get("problems"));
+        }
+        if (McpGoldenFiles.updating()) {
+            McpGoldenFiles.assertResourceMatches("/stroom/mcp/impl/tools/offline_cases.json",
+                    ToolJson.dumps(cases, 0, false));
         }
     }
 

@@ -7,6 +7,10 @@ request: >
   holds named Data values. The ids are 4624 (logon), 4625 (failed logon), 4634 (logoff), 4672 (special privileges
   assigned to a new logon), 4720 (a user account created) and 4740 (an account locked out). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 6}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 8
   event_types: [Authenticate, Create]
   forbidden_types: [Unknown]
@@ -41,11 +45,13 @@ reference:
       - {path: EventSource/System/Environment, value: Eval}
       - {path: EventSource/Generator, field: System/Provider/@Name}
       - {path: EventSource/Device/HostName, field: System/Computer}
-      - {path: EventDetail/TypeId, field: System/EventID}
     events:
       - name: logon
         when: [{field: System/EventID, equals: '4624'}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: An account was successfully logged on}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: System/EventID}
           - {path: EventSource/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
           - {path: EventSource/Client/IPAddress, field: "EventData/Data[@Name='IpAddress']"}
           - {path: EventDetail/Authenticate/Action, value: Logon}
@@ -55,6 +61,9 @@ reference:
       - name: failed logon
         when: [{field: System/EventID, equals: '4625'}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
+          - {path: EventDetail/Description, value: An account failed to log on}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: System/EventID}
           - {path: EventSource/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
           - {path: EventSource/Client/IPAddress, field: "EventData/Data[@Name='IpAddress']"}
           - {path: EventDetail/Authenticate/Action, value: Logon}
@@ -66,12 +75,18 @@ reference:
       - name: logoff
         when: [{field: System/EventID, equals: '4634'}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: An account was logged off}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: System/EventID}
           - {path: EventSource/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
       - name: special privileges
         when: [{field: System/EventID, equals: '4672'}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-SpecialPrivileges}
+          - {path: EventDetail/Description, value: Special privileges assigned to new logon}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: System/EventID}
           - {path: EventSource/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
           - {path: EventDetail/Authenticate/Action, value: ElevatePrivilege}
           - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
@@ -79,12 +94,18 @@ reference:
       - name: account locked
         when: [{field: System/EventID, equals: '4740'}]
         fields:
+          - {path: EventDetail/TypeId, value: Lock-UserAccount}
+          - {path: EventDetail/Description, value: A user account was locked out}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: System/EventID}
           - {path: EventSource/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
           - {path: EventDetail/Authenticate/Action, value: AccountLock}
           - {path: EventDetail/Authenticate/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
       - name: account created
         when: [{field: System/EventID, equals: '4720'}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-UserAccount}
+          - {path: EventDetail/Description, value: A user account was created}
+          - {path: EventDetail/Create/Data, data_name: EventID, field: System/EventID}
           - {path: EventSource/User/Id, field: "EventData/Data[@Name='SubjectUserName']"}
           - {path: EventDetail/Create/User/Id, field: "EventData/Data[@Name='TargetUserName']"}
           - {path: EventDetail/Create/User/Domain, field: "EventData/Data[@Name='TargetDomainName']"}

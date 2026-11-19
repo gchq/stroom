@@ -34,7 +34,7 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "IDS-Alert"
+      "value": "Alert-Intrusion"
      },
      {
       "path": "EventDetail/Description",

@@ -6,6 +6,10 @@ capabilities: [schema_variation]
 request: |
   Onboard the domain controllers' Security events, forwarded as Windows event XML: one <Event> per line with no root element, in the Windows event namespace. The sample has one of each of the 22 event ids we collect, and our analysts search on every one, so each needs its proper event type: none should be an unknown event. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 17}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 22
   event_types:
   - Authenticate
@@ -66,14 +70,17 @@ reference:
       field: System/Provider/@Name
     - path: EventSource/Device/HostName
       field: System/Computer
-    - path: EventDetail/TypeId
-      field: System/EventID
     events:
     - name: an account was successfully logged on
       when:
       - field: System/EventID
         equals: '4624'
       fields:
+      - path: EventDetail/TypeId
+        value: Authenticate-Logon
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: An account was successfully logged on
       - path: EventSource/User/Id
@@ -89,6 +96,11 @@ reference:
       - field: System/EventID
         equals: '4625'
       fields:
+      - path: EventDetail/TypeId
+        value: Authenticate-FailedLogon
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: An account failed to log on
       - path: EventSource/User/Id
@@ -106,6 +118,11 @@ reference:
       - field: System/EventID
         equals: '4634'
       fields:
+      - path: EventDetail/TypeId
+        value: Authenticate-Logoff
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: An account was logged off
       - path: EventSource/User/Id
@@ -119,6 +136,11 @@ reference:
       - field: System/EventID
         equals: '4647'
       fields:
+      - path: EventDetail/TypeId
+        value: Authenticate-UserLogoff
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: User initiated logoff
       - path: EventSource/User/Id
@@ -132,6 +154,11 @@ reference:
       - field: System/EventID
         equals: '4648'
       fields:
+      - path: EventDetail/TypeId
+        value: Authenticate-ExplicitCredentials
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A logon was attempted using explicit credentials
       - path: EventSource/User/Id
@@ -148,6 +175,11 @@ reference:
       - field: System/EventID
         equals: '4672'
       fields:
+      - path: EventDetail/TypeId
+        value: Authenticate-SpecialPrivileges
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: Special privileges assigned to new logon
       - path: EventSource/User/Id
@@ -164,6 +196,11 @@ reference:
       - field: System/EventID
         equals: '4688'
       fields:
+      - path: EventDetail/TypeId
+        value: Process-Start
+      - path: EventDetail/Process/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A new process has been created
       - path: EventSource/User/Id
@@ -181,6 +218,11 @@ reference:
       - field: System/EventID
         equals: '4689'
       fields:
+      - path: EventDetail/TypeId
+        value: Process-Exit
+      - path: EventDetail/Process/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A process has exited
       - path: EventSource/User/Id
@@ -196,6 +238,11 @@ reference:
       - field: System/EventID
         equals: '4697'
       fields:
+      - path: EventDetail/TypeId
+        value: Install-Service
+      - path: EventDetail/Install/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A service was installed in the system
       - path: EventSource/User/Id
@@ -210,6 +257,11 @@ reference:
       - field: System/EventID
         equals: '4719'
       fields:
+      - path: EventDetail/TypeId
+        value: Update-AuditPolicy
+      - path: EventDetail/Update/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: System audit policy was changed
       - path: EventSource/User/Id
@@ -226,6 +278,11 @@ reference:
       - field: System/EventID
         equals: '4720'
       fields:
+      - path: EventDetail/TypeId
+        value: Create-UserAccount
+      - path: EventDetail/Create/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A user account was created
       - path: EventSource/User/Id
@@ -237,6 +294,11 @@ reference:
       - field: System/EventID
         equals: '4722'
       fields:
+      - path: EventDetail/TypeId
+        value: Enable-UserAccount
+      - path: EventDetail/Update/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A user account was enabled
       - path: EventSource/User/Id
@@ -251,6 +313,11 @@ reference:
       - field: System/EventID
         equals: '4723'
       fields:
+      - path: EventDetail/TypeId
+        value: Change-Password
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: An attempt was made to change an account's password
       - path: EventSource/User/Id
@@ -264,6 +331,11 @@ reference:
       - field: System/EventID
         equals: '4724'
       fields:
+      - path: EventDetail/TypeId
+        value: Reset-Password
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: An attempt was made to reset an account's password
       - path: EventSource/User/Id
@@ -277,6 +349,11 @@ reference:
       - field: System/EventID
         equals: '4725'
       fields:
+      - path: EventDetail/TypeId
+        value: Disable-UserAccount
+      - path: EventDetail/Update/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A user account was disabled
       - path: EventSource/User/Id
@@ -291,6 +368,11 @@ reference:
       - field: System/EventID
         equals: '4726'
       fields:
+      - path: EventDetail/TypeId
+        value: Delete-UserAccount
+      - path: EventDetail/Delete/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A user account was deleted
       - path: EventSource/User/Id
@@ -302,6 +384,11 @@ reference:
       - field: System/EventID
         equals: '4728'
       fields:
+      - path: EventDetail/TypeId
+        value: Add-GroupMember
+      - path: EventDetail/Authorise/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A member was added to a security-enabled global group
       - path: EventSource/User/Id
@@ -317,6 +404,11 @@ reference:
       - field: System/EventID
         equals: '4729'
       fields:
+      - path: EventDetail/TypeId
+        value: Remove-GroupMember
+      - path: EventDetail/Authorise/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A member was removed from a security-enabled global group
       - path: EventSource/User/Id
@@ -332,6 +424,11 @@ reference:
       - field: System/EventID
         equals: '4740'
       fields:
+      - path: EventDetail/TypeId
+        value: Lock-UserAccount
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A user account was locked out
       - path: EventSource/User/Id
@@ -345,6 +442,11 @@ reference:
       - field: System/EventID
         equals: '4767'
       fields:
+      - path: EventDetail/TypeId
+        value: Unlock-UserAccount
+      - path: EventDetail/Authenticate/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A user account was unlocked
       - path: EventSource/User/Id
@@ -358,6 +460,11 @@ reference:
       - field: System/EventID
         equals: '1102'
       fields:
+      - path: EventDetail/TypeId
+        value: Clear-AuditLog
+      - path: EventDetail/Delete/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: The audit log was cleared
       - path: EventSource/User/Id
@@ -371,6 +478,11 @@ reference:
       - field: System/EventID
         equals: '5140'
       fields:
+      - path: EventDetail/TypeId
+        value: Access-NetworkShare
+      - path: EventDetail/View/Data
+        data_name: EventID
+        field: System/EventID
       - path: EventDetail/Description
         value: A network share object was accessed
       - path: EventSource/User/Id

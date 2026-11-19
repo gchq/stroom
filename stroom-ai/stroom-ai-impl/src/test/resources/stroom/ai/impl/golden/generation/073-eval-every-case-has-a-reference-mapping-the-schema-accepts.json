@@ -34,10 +34,6 @@
    {
     "path": "EventSource/Client/IPAddress",
     "field": "srcip"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "logid"
    }
   ],
   "events": [
@@ -50,6 +46,24 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Network-Traffic"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "The firewall logged a session"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
      {
       "path": "EventDetail/Network/Open/Source/Device/IPAddress",
       "field": "srcip"
@@ -95,6 +109,25 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-AdminLogon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "subtype",
+      "data_name": "subtype"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
      },
@@ -126,6 +159,24 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Alert-Intrusion"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "The firewall detected an intrusion attempt"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
       "path": "EventDetail/Alert/Type",
       "value": "Other"
      },
@@ -156,11 +207,8 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[traffic] TypeId is read from logid, which its records may lack: those get TypeId 'traffic', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[traffic] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[admin-login] TypeId is read from logid, which its records may lack: those get TypeId 'admin-login', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[admin-login] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[ips] TypeId is read from logid, which its records may lack: those get TypeId 'ips', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[ips] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
@@ -170,7 +218,10 @@
      "data[@name='type']/@value = 'traffic'"
     ],
     "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Open/Data[logid]",
      "EventDetail/Network/Open/Data[service]",
+     "EventDetail/Network/Open/Data[type]",
      "EventDetail/Network/Open/Destination/Device/IPAddress",
      "EventDetail/Network/Open/Destination/Port",
      "EventDetail/Network/Open/Outcome/Permitted",
@@ -194,6 +245,9 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[logid]",
+     "EventDetail/Authenticate/Data[subtype]",
+     "EventDetail/Authenticate/Data[type]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -214,9 +268,12 @@
     ],
     "fields": [
      "EventDetail/Alert/Data[action]",
+     "EventDetail/Alert/Data[logid]",
+     "EventDetail/Alert/Data[type]",
      "EventDetail/Alert/Description",
      "EventDetail/Alert/Severity",
      "EventDetail/Alert/Type",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

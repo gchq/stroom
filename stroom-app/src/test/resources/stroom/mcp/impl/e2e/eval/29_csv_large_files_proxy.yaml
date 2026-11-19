@@ -9,6 +9,10 @@ request: >
 # The trap: the files are too large to pass through the chat. upload_sample files= gives a command per file for the
 # user's terminal (run here by the harness, as the user would), which sends each file whole.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 32000
   event_types: [Network]
   forbidden_types: [Unknown]
@@ -28,10 +32,12 @@ reference:
       - {path: EventSource/Device/HostName, value: proxy01.example.org}
       - {path: EventSource/User/Id, field: user}
       - {path: EventSource/Client/IPAddress, field: client_ip}
-      - {path: EventDetail/TypeId, field: action}
     events:
       - name: request
         fields:
+          - {path: EventDetail/TypeId, value: Network-WebRequest}
+          - {path: EventDetail/Description, value: A web request passed through the proxy}
+          - {path: EventDetail/Network/Open/Data, data_name: action, field: action}
           - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: client_ip}
           - {path: EventDetail/Network/Open/Destination/Data, data_name: url, field: url}
           - {path: EventDetail/Network/Open/Destination/Data, data_name: category, field: category}

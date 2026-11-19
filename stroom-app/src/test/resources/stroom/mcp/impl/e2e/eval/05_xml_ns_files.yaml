@@ -5,6 +5,10 @@ request: >
   Onboard this file server audit log. It is XML in the urn:example:fileaudit namespace; each entry is one file
   operation (read or delete) by an account on a machine. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [View, Delete]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Device/HostName]
@@ -31,10 +35,14 @@ reference:
       - name: read
         when: [{field: op, equals: read}]
         fields:
-          - {path: EventDetail/TypeId, value: File-Read}
+          - {path: EventDetail/TypeId, value: View-File}
+          - {path: EventDetail/Description, value: A file on the share was read}
+          - {path: EventDetail/View/Data, data_name: op, field: op}
           - {path: EventDetail/View/File/Path, field: path}
       - name: delete
         when: [{field: op, equals: delete}]
         fields:
-          - {path: EventDetail/TypeId, value: File-Delete}
+          - {path: EventDetail/TypeId, value: Delete-File}
+          - {path: EventDetail/Description, value: A file on the share was deleted}
+          - {path: EventDetail/Delete/Data, data_name: op, field: op}
           - {path: EventDetail/Delete/File/Path, field: path}

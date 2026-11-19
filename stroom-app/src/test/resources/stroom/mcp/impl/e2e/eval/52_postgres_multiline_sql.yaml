@@ -8,6 +8,10 @@ capabilities: [multiline, event_boundaries, schema_variation]
 request: >
   Onboard our PostgreSQL server's log (statement logging is on; the file is on my disk). Index the activity.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 5}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 600
   event_types: [Authenticate, View, Update, Delete]
   forbidden_types: [Unknown]
@@ -33,31 +37,38 @@ reference:
       - {path: EventSource/Generator, value: PostgreSQL}
       - {path: EventSource/Device/HostName, value: pg01}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, any_of: [verb, level]}
       - {path: EventDetail/Description, field: message}
     events:
       - name: connect
         when: [{field: message, matches: '^connection authorized'}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user}
       - name: disconnect
         when: [{field: message, matches: '^disconnection'}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user}
       - name: query
         when: [{field: verb, equals: SELECT}]
         fields:
+          - {path: EventDetail/TypeId, value: Select-Rows}
+          - {path: EventDetail/View/Data, data_name: verb, field: verb}
           - {path: EventDetail/View/Object/Type, value: Database query}
           - {path: EventDetail/View/Object/Name, field: database}
       - name: update
         when: [{field: verb, equals: UPDATE}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Rows}
+          - {path: EventDetail/Update/Data, data_name: verb, field: verb}
           - {path: EventDetail/Update/After/Object/Type, value: Database rows}
           - {path: EventDetail/Update/After/Object/Name, field: database}
       - name: delete
         when: [{field: verb, equals: DELETE}]
         fields:
+          - {path: EventDetail/TypeId, value: Delete-Rows}
+          - {path: EventDetail/Delete/Data, data_name: verb, field: verb}
           - {path: EventDetail/Delete/Object/Type, value: Database rows}
           - {path: EventDetail/Delete/Object/Name, field: database}

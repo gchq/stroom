@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs mcp">
   <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
        (the mapping's log_unmapped_fields) -->
   <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
@@ -18,8 +18,11 @@
       <xsl:when test="$action = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
-      <xsl:when test="$action = ('logout', 'timeout')">
+      <xsl:when test="$action = 'logout'">
         <xsl:apply-templates select="." mode="event_type_logoff"/>
+      </xsl:when>
+      <xsl:when test="$action = 'timeout'">
+        <xsl:apply-templates select="." mode="event_type_timeout"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')'))"/>
@@ -39,13 +42,15 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId VPN-Logon) from result. -->
+  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       action, result. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>VPN-Logon</TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in to the VPN</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
@@ -56,28 +61,30 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where action in logout, timeout. Writes an Authenticate event (TypeId from action) from
+  <!-- Rule 'logoff': records where action = logout. Writes an Authenticate event (TypeId Authenticate-Logoff) from
        action. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'logout') then 'VPN-Logoff' else if ((data[@name='action']/@value)[1] = 'timeout') then 'VPN-Timeout' else 'logoff'"/>
-        </TypeId>
-        <Authenticate>
-          <Action>Logoff</Action>
-          <xsl:apply-templates select="." mode="user"/>
-        </Authenticate>
-      </EventDetail>
+      <xsl:apply-templates select="." mode="event_detail"/>
     </Event>
   </xsl:template>
-  <!-- event_time: shared by the rules 'logon', 'logoff' -->
+  <!-- Rule 'timeout': records where action = timeout. Writes an Authenticate event (TypeId Authenticate-Logoff) from
+       action. -->
+  <xsl:template match="node()" mode="event_type_timeout">
+    <Event>
+      <xsl:apply-templates select="." mode="event_time"/>
+      <xsl:apply-templates select="." mode="event_source"/>
+      <xsl:apply-templates select="." mode="event_detail"/>
+    </Event>
+  </xsl:template>
+  <!-- event_time: shared by the rules 'logon', 'logoff', 'timeout' -->
   <xsl:template match="node()" mode="event_time">
     <xsl:if test="exists(((data[@name='time']/@value, data[@name='timestamp']/@value)[normalize-space(.)][1])[normalize-space(.)])">
       <EventTime>
@@ -87,7 +94,7 @@
       </EventTime>
     </xsl:if>
   </xsl:template>
-  <!-- event_source: shared by the rules 'logon', 'logoff' -->
+  <!-- event_source: shared by the rules 'logon', 'logoff', 'timeout' -->
   <xsl:template match="node()" mode="event_source">
     <EventSource>
       <System>
@@ -116,7 +123,7 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- user: shared by the rules 'logon', 'logoff' -->
+  <!-- user: shared by the rules 'logon', 'logoff', 'timeout' -->
   <xsl:template match="node()" mode="user">
     <xsl:if test="exists(((data[@name='user']/@value, data[@name='username']/@value)[normalize-space(.)][1])[normalize-space(.)])">
       <User>
@@ -126,4 +133,24 @@
       </User>
     </xsl:if>
   </xsl:template>
+  <!-- event_detail: shared by the rules 'logoff', 'timeout' -->
+  <xsl:template match="node()" mode="event_detail">
+    <EventDetail>
+      <TypeId>Authenticate-Logoff</TypeId>
+      <Description>A user signed out of the VPN, or their session timed out</Description>
+      <Authenticate>
+        <Action>Logoff</Action>
+        <xsl:apply-templates select="." mode="user"/>
+        <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
+      </Authenticate>
+    </EventDetail>
+  </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

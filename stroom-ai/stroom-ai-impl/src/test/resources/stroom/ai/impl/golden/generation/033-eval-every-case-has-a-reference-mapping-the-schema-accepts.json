@@ -32,10 +32,6 @@
     "xpath": "json-to-xml(*[@key='message'])/*/*[@key='user']"
    },
    {
-    "path": "EventDetail/TypeId",
-    "xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']"
-   },
-   {
     "path": "EventDetail/Authenticate/User/Id",
     "xpath": "json-to-xml(*[@key='message'])/*/*[@key='user']"
    },
@@ -55,6 +51,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in to the application"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']",
+      "data_name": "event"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
      }
@@ -70,6 +79,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed out of the application"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']",
+      "data_name": "event"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      }
@@ -81,9 +103,7 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] TypeId is read from its input, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] TypeId is read from its input, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
@@ -94,8 +114,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[event]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -112,8 +134,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[event]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",

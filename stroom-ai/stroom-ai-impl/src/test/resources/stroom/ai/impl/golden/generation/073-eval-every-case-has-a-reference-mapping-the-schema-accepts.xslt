@@ -42,22 +42,21 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'traffic': records where type = traffic. Writes a Network/Open event (TypeId from logid) from srcip,
-       srcport, dstip, dstport, service, action. -->
+  <!-- Rule 'traffic': records where type = traffic. Writes a Network/Open event (TypeId Network-Traffic) from type,
+       logid, srcip, srcport, dstip, dstport, service, action. -->
   <xsl:template match="node()" mode="event_type_traffic">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logid']/@value[normalize-space(.)]) then (data[@name='logid']/@value)[1] else 'traffic'"/>
-        </TypeId>
+        <TypeId>Network-Traffic</TypeId>
+        <Description>The firewall logged a session</Description>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <xsl:variable name="dstport" select="data[@name='dstport']/@value[normalize-space(.)]"/>
         <xsl:variable name="dstip" select="data[@name='dstip']/@value[normalize-space(.)]"/>
         <xsl:variable name="srcport" select="data[@name='srcport']/@value[normalize-space(.)]"/>
         <xsl:variable name="srcip" select="data[@name='srcip']/@value[normalize-space(.)]"/>
-        <xsl:if test="$srcip or $srcport or $dstip or $dstport or $action[1] = ('accept', 'deny') or data[@name='service']/@value[normalize-space(.)]">
+        <xsl:if test="$srcip or $srcport or $dstip or $dstport or $action[1] = ('accept', 'deny') or data[@name='type']/@value[normalize-space(.)] or data[@name='logid']/@value[normalize-space(.)] or data[@name='service']/@value[normalize-space(.)]">
           <Network>
             <Open>
               <xsl:if test="$srcip or $srcport">
@@ -99,6 +98,8 @@
                   </Permitted>
                 </Outcome>
               </xsl:if>
+              <xsl:sequence select="mcp:data('type', data[@name='type']/@value)"/>
+              <xsl:sequence select="mcp:data('logid', data[@name='logid']/@value)"/>
               <xsl:sequence select="mcp:data('service', data[@name='service']/@value)"/>
             </Open>
           </Network>
@@ -106,16 +107,14 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'admin-login': records where type = event and subtype = system. Writes an Authenticate event (TypeId from
-       logid) from user, status, msg. -->
+  <!-- Rule 'admin-login': records where type = event and subtype = system. Writes an Authenticate event (TypeId
+       Authenticate-AdminLogon) from type, subtype, logid, user, status, msg. -->
   <xsl:template match="node()" mode="event_type_admin_login">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logid']/@value[normalize-space(.)]) then (data[@name='logid']/@value)[1] else 'admin-login'"/>
-        </TypeId>
+        <TypeId>Authenticate-AdminLogon</TypeId>
         <xsl:if test="data[@name='msg']/@value[normalize-space(.)]">
           <Description>
             <xsl:value-of select="(data[@name='msg']/@value)[1]"/>
@@ -137,19 +136,22 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('type', data[@name='type']/@value)"/>
+          <xsl:sequence select="mcp:data('subtype', data[@name='subtype']/@value)"/>
+          <xsl:sequence select="mcp:data('logid', data[@name='logid']/@value)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'ips': records where type = utm. Writes an Alert event (TypeId from logid) from severity, attack, action. -->
+  <!-- Rule 'ips': records where type = utm. Writes an Alert event (TypeId Alert-Intrusion) from type, logid,
+       severity, attack, action. -->
   <xsl:template match="node()" mode="event_type_ips">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logid']/@value[normalize-space(.)]) then (data[@name='logid']/@value)[1] else 'ips'"/>
-        </TypeId>
+        <TypeId>Alert-Intrusion</TypeId>
+        <Description>The firewall detected an intrusion attempt</Description>
         <Alert>
           <Type>Other</Type>
           <Severity>
@@ -161,6 +163,8 @@
               <xsl:value-of select="(data[@name='attack']/@value)[1]"/>
             </Description>
           </xsl:if>
+          <xsl:sequence select="mcp:data('type', data[@name='type']/@value)"/>
+          <xsl:sequence select="mcp:data('logid', data[@name='logid']/@value)"/>
           <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
         </Alert>
       </EventDetail>

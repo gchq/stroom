@@ -45,10 +45,6 @@
     "field": "remip"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "logid"
-   },
-   {
     "path": "EventDetail/Description",
     "field": "msg"
    }
@@ -63,6 +59,20 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -82,6 +92,20 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-FailedLogon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -106,6 +130,20 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      },
@@ -121,11 +159,8 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[signed in] TypeId is read from logid, which its records may lack: those get TypeId 'signed in', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[signed in] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[failed sign in] TypeId is read from logid, which its records may lack: those get TypeId 'failed sign in', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[failed sign in] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[signed out] TypeId is read from logid, which its records may lack: those get TypeId 'signed out', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[signed out] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
@@ -136,6 +171,8 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[logid]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -155,6 +192,8 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[logid]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -175,6 +214,8 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[logid]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",

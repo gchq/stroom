@@ -32,16 +32,20 @@
    {
     "path": "EventSource/User/Id",
     "field": "holder"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "value": "badge"
    }
   ],
   "events": [
    {
     "name": "badge",
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authorise-BadgeAccess"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A badge was presented at a door"
+     },
      {
       "path": "EventDetail/Authorise/Action",
       "value": "Request"
@@ -73,6 +77,7 @@
      "EventDetail/Authorise/Action",
      "EventDetail/Authorise/Outcome/Success",
      "EventDetail/Authorise/Resource/Name",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/Name",
      "EventSource/Generator",

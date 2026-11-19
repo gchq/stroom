@@ -10,6 +10,10 @@ request: >
 # patterns are lower case), MAC addresses in lower case or Cisco's dotted style (the schema wants upper-case pairs
 # joined by : or -), a port written "443/tcp" (Port is a number), and an empty user (an element with nothing in it).
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 5
   event_types: [Authenticate]
   forbidden_types: [Unknown]
@@ -42,11 +46,13 @@ reference:
       - {path: EventSource/Device/Port, field: service_port}
       - {path: EventSource/Device/Data, data_name: switch_port, field: port}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: result}
     events:
       - name: user access
         when: [{field: user, present: true}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-UserConnect}
+          - {path: EventDetail/Description, value: A user's device asked to join the network}
+          - {path: EventDetail/Authenticate/Data, data_name: result, field: result}
           - {path: EventDetail/Authenticate/Action, value: Connect}
           - {path: EventDetail/Authenticate/User/Id, field: user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {accept: 'true', reject: 'false'}}
@@ -54,7 +60,11 @@ reference:
       # With no user (an empty string), the device is what is authenticated: Authenticate needs one of LogonType,
       # User, Device or Group before Outcome, and Device and User are alternatives.
       - name: device access
+        when: [{field: user, present: false}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-DeviceConnect}
+          - {path: EventDetail/Description, value: A device asked to join the network with no user}
+          - {path: EventDetail/Authenticate/Data, data_name: result, field: result}
           - {path: EventDetail/Authenticate/Action, value: Connect}
           - {path: EventDetail/Authenticate/Device/MACAddress, xpath: "replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')"}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {accept: 'true', reject: 'false'}}

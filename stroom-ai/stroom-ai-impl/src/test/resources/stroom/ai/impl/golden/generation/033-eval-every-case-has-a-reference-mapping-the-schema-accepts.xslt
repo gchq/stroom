@@ -50,45 +50,45 @@
     </xsl:if>
   </xsl:template>
   <!-- Rule 'logon': records where json-to-xml(*[@key='message'])/*/*[@key='event'] = login. Writes an Authenticate
-       event. -->
+       event (TypeId Authenticate-Logon). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="event_detail_type_id" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)]"/>
-          <xsl:if test="count($event_detail_type_id) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_detail_type_id), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($event_detail_type_id)) then $event_detail_type_id[1] else 'logon'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in to the application</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:variable name="authenticate_data" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)]"/>
+          <xsl:if test="count($authenticate_data) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($authenticate_data), ') for ', 'EventDetail/Authenticate/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:sequence select="mcp:data('event', $authenticate_data)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
   <!-- Rule 'logoff': records where json-to-xml(*[@key='message'])/*/*[@key='event'] = logout. Writes an Authenticate
-       event. -->
+       event (TypeId Authenticate-Logoff). -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="event_detail_type_id" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)]"/>
-          <xsl:if test="count($event_detail_type_id) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_detail_type_id), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($event_detail_type_id)) then $event_detail_type_id[1] else 'logoff'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>A user signed out of the application</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:variable name="authenticate_data" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)]"/>
+          <xsl:if test="count($authenticate_data) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($authenticate_data), ') for ', 'EventDetail/Authenticate/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:sequence select="mcp:data('event', $authenticate_data)"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -163,4 +163,12 @@
       </Outcome>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

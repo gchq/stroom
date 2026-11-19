@@ -68,6 +68,7 @@
       </EventSource>
       <EventDetail>
         <TypeId>Process-Start</TypeId>
+        <Description>A process was started on a workstation</Description>
         <Process>
           <Action>Execute</Action>
           <Type>Application</Type>

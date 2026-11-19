@@ -16,7 +16,7 @@
        purpose); called by the rules that translate their records -->
   <xsl:template name="mcp_unread_fields">
     <xsl:if test="$log_unmapped_fields">
-      <xsl:for-each select="data[@name][not(@name = ('action', 'app', 'category', 'dst', 'host', 'referer', 'src', 'time', 'url', 'user'))][normalize-space(string(@value))][not(normalize-space(@value) = ('-'))]">
+      <xsl:for-each select="data[@name][not(@name = ('action', 'app', 'category', 'dst', 'host', 'msg', 'referer', 'src', 'time', 'url', 'user'))][normalize-space(string(@value))][not(normalize-space(@value) = ('-'))]">
         <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
         <xsl:if test="not(string(stroom:get($mcp_unread)))">
           <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
@@ -25,8 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'web request': every record. Writes a Network/Open event (TypeId from action) from src, dst, url,
-       category, referer, action. -->
+  <!-- Rule 'web request': every record. Writes a Network/Open event (TypeId Network-WebRequest) from action, src,
+       dst, url, category, referer. -->
   <xsl:template match="node()" mode="event_type_web_request">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]">
@@ -62,16 +62,19 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
+        <TypeId>Network-WebRequest</TypeId>
+        <xsl:if test="data[@name='msg']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]">
+          <Description>
+            <xsl:value-of select="replace((data[@name='msg']/@value)[1], '\\([&quot;\\])', '$1')"/>
+          </Description>
+        </xsl:if>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
-        <TypeId>
-          <xsl:value-of select="if ($action) then $action[1] else 'web request'"/>
-        </TypeId>
         <xsl:variable name="category" select="data[@name='category']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="url" select="data[@name='url']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="referer" select="data[@name='referer']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="src" select="data[@name='src']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
-        <xsl:if test="$src or $referer or $dst or $url or $category or $action[1] = ('allow', 'block')">
+        <xsl:if test="$src or $referer or $dst or $url or $category or $action[1] = ('allow', 'block') or $action">
           <Network>
             <Open>
               <xsl:if test="$src or $referer">
@@ -106,6 +109,7 @@
                   </Permitted>
                 </Outcome>
               </xsl:if>
+              <xsl:sequence select="mcp:data('action', $action)"/>
             </Open>
           </Network>
         </xsl:if>

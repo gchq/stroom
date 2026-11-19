@@ -6,6 +6,10 @@ request: >
   blocked. Where the filter has no value for a key it writes "-" (no user when the client wasn't signed in, no
   referer): that means nothing, so don't record "-" as a value. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 5
   event_types: [Network]
   forbidden_types: [Unknown]
@@ -38,11 +42,12 @@ reference:
       - {path: EventSource/Generator, field: app}
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
       - {path: EventDetail/Description, field: msg, transform: unescape_backslashes}
     events:
       - name: web request
         fields:
+          - {path: EventDetail/TypeId, value: Network-WebRequest}
+          - {path: EventDetail/Network/Open/Data, data_name: action, field: action}
           - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
           - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
           - {path: EventDetail/Network/Open/Destination/Data, data_name: url, field: url}

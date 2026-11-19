@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs mcp">
   <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
        (the mapping's log_unmapped_fields) -->
   <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
@@ -53,14 +53,15 @@
     </xsl:if>
   </xsl:template>
   <!-- Rule 'new session start': records where eventType = user.session.start. Writes an Authenticate event (TypeId
-       from eventType) from published, actor.alternateId, client.ipAddress, eventType, outcome.result,
+       Authenticate-Logon) from eventType, published, actor.alternateId, client.ipAddress, outcome.result,
        outcome.reason. -->
   <xsl:template match="node()" mode="event_type_new_session_start">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in, or tried to</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
@@ -80,83 +81,94 @@
               </xsl:if>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('eventType', *[@key='eventType'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'new session end': records where eventType = user.session.end. Writes an Authenticate event (TypeId from
-       eventType) from published, actor.alternateId, client.ipAddress, eventType. -->
+  <!-- Rule 'new session end': records where eventType = user.session.end. Writes an Authenticate event (TypeId
+       Authenticate-Logoff) from eventType, published, actor.alternateId, client.ipAddress. -->
   <xsl:template match="node()" mode="event_type_new_session_end">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>A user signed out</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('eventType', *[@key='eventType'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'new account lock': records where eventType = user.account.lock. Writes an Authenticate event (TypeId from
-       eventType) from published, actor.alternateId, client.ipAddress, eventType. -->
+  <!-- Rule 'new account lock': records where eventType = user.account.lock. Writes an Authenticate event (TypeId
+       Lock-UserAccount) from eventType, published, actor.alternateId, client.ipAddress. -->
   <xsl:template match="node()" mode="event_type_new_account_lock">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Lock-UserAccount</TypeId>
+        <Description>An account was locked</Description>
         <Authenticate>
           <Action>AccountLock</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('eventType', *[@key='eventType'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'legacy login': records where type = login. Writes an Authenticate event (TypeId from type) from ts, user,
-       ip, type, ok. -->
+  <!-- Rule 'legacy login': records where type = login. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       type, ts, user, ip, ok. -->
   <xsl:template match="node()" mode="event_type_legacy_login">
     <Event>
       <xsl:apply-templates select="." mode="event_time_2"/>
       <xsl:apply-templates select="." mode="event_source_2"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="event_detail_type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in, or tried to</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="authenticate_user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('type', *[@key='type'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'legacy logout': records where type = logout. Writes an Authenticate event (TypeId from type) from ts,
-       user, ip, type. -->
+  <!-- Rule 'legacy logout': records where type = logout. Writes an Authenticate event (TypeId Authenticate-Logoff)
+       from type, ts, user, ip. -->
   <xsl:template match="node()" mode="event_type_legacy_logout">
     <Event>
       <xsl:apply-templates select="." mode="event_time_2"/>
       <xsl:apply-templates select="." mode="event_source_2"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="event_detail_type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>A user signed out</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="authenticate_user"/>
+          <xsl:sequence select="mcp:data('type', *[@key='type'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'legacy password change': records where type = password_change. Writes an Authenticate event (TypeId from
-       type) from ts, user, ip, type, ok. -->
+  <!-- Rule 'legacy password change': records where type = password_change. Writes an Authenticate event (TypeId
+       Authenticate-PasswordChange) from type, ts, user, ip, ok. -->
   <xsl:template match="node()" mode="event_type_legacy_password_change">
     <Event>
       <xsl:apply-templates select="." mode="event_time_2"/>
       <xsl:apply-templates select="." mode="event_source_2"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="event_detail_type_id"/>
+        <TypeId>Authenticate-PasswordChange</TypeId>
+        <Description>A user changed their password</Description>
         <Authenticate>
           <Action>ChangePassword</Action>
           <xsl:apply-templates select="." mode="authenticate_user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('type', *[@key='type'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -184,11 +196,15 @@
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="*[@key='actor']/*[@key='alternateId'][normalize-space(.)]">
+      <xsl:variable name="actor_alternate_id" select="*[@key='actor']/*[@key='alternateId'][normalize-space(.)]"/>
+      <xsl:if test="$actor_alternate_id">
         <User>
           <Id>
-            <xsl:value-of select="(*[@key='actor']/*[@key='alternateId'])[1]"/>
+            <xsl:value-of select="mcp:strip_domain($actor_alternate_id[1])"/>
           </Id>
+          <Domain>
+            <xsl:value-of select="mcp:domain($actor_alternate_id[1])"/>
+          </Domain>
         </User>
       </xsl:if>
     </EventSource>
@@ -208,21 +224,17 @@
       <HostName>idp.example.org</HostName>
     </Device>
   </xsl:template>
-  <!-- type_id: shared by the rules 'new session start', 'new session end', 'new account lock' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="*[@key='eventType'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='eventType'])[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- user: shared by the rules 'new session start', 'new session end', 'new account lock' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="*[@key='actor']/*[@key='alternateId'][normalize-space(.)]">
+    <xsl:variable name="actor_alternate_id" select="*[@key='actor']/*[@key='alternateId'][normalize-space(.)]"/>
+    <xsl:if test="$actor_alternate_id">
       <User>
         <Id>
-          <xsl:value-of select="(*[@key='actor']/*[@key='alternateId'])[1]"/>
+          <xsl:value-of select="mcp:strip_domain($actor_alternate_id[1])"/>
         </Id>
+        <Domain>
+          <xsl:value-of select="mcp:domain($actor_alternate_id[1])"/>
+        </Domain>
       </User>
     </xsl:if>
   </xsl:template>
@@ -258,14 +270,6 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- event_detail_type_id: shared by the rules 'legacy login', 'legacy logout', 'legacy password change' -->
-  <xsl:template match="node()" mode="event_detail_type_id">
-    <xsl:if test="*[@key='type'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='type'])[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- authenticate_user: shared by the rules 'legacy login', 'legacy logout', 'legacy password change' -->
   <xsl:template match="node()" mode="authenticate_user">
     <xsl:if test="*[@key='user'][normalize-space(.)]">
@@ -286,4 +290,20 @@
       </Outcome>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
+  <xsl:function name="mcp:domain" as="xs:string?">
+    <xsl:param name="value" as="item()?"/>
+    <xsl:sequence select="replace($value, '^(?:([^\\]*)\\.*|[^@]*@(.*))$', '$1$2')"/>
+  </xsl:function>
+  <xsl:function name="mcp:strip_domain" as="xs:string?">
+    <xsl:param name="value" as="item()?"/>
+    <xsl:sequence select="replace(replace($value, '^[^\\]*\\', ''), '@.*$', '')"/>
+  </xsl:function>
 </xsl:stylesheet>

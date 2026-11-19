@@ -51,16 +51,15 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where message matches ^User \S+ logged in. Writes an Authenticate event (TypeId from
-       logger) from user (extracted from message). -->
+  <!-- Rule 'logon': records where message matches ^User \S+ logged in. Writes an Authenticate event (TypeId
+       Authenticate-Logon) from user (extracted from message). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'logon'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
@@ -68,16 +67,15 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where message matches ^User \S+ logged out. Writes an Authenticate event (TypeId from
-       logger) from user (extracted from message). -->
+  <!-- Rule 'logoff': records where message matches ^User \S+ logged out. Writes an Authenticate event (TypeId
+       Authenticate-Logoff) from user (extracted from message). -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'logoff'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
@@ -85,16 +83,15 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logon-failed': records where message matches ^Login failed. Writes an Authenticate event (TypeId from
-       logger) from failed_user, message (failed_user extracted from message). -->
+  <!-- Rule 'logon-failed': records where message matches ^Login failed. Writes an Authenticate event (TypeId
+       Authenticate-FailedLogon) from failed_user, message (failed_user extracted from message). -->
   <xsl:template match="node()" mode="event_type_logon_failed">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'logon-failed'"/>
-        </TypeId>
+        <TypeId>Authenticate-FailedLogon</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
@@ -118,16 +115,15 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'invoice': records where message matches ^Invoice \d+ created. Writes a Create event (TypeId from logger)
-       from message. -->
+  <!-- Rule 'invoice': records where message matches ^Invoice \d+ created. Writes a Create event (TypeId
+       Create-Invoice) from message. -->
   <xsl:template match="node()" mode="event_type_invoice">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'invoice'"/>
-        </TypeId>
+        <TypeId>Create-Invoice</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
         <Create>
           <Object>
             <Type>Invoice</Type>
@@ -141,15 +137,15 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'payment-error': records where level = ERROR. Writes an Alert event (TypeId from logger) from message. -->
+  <!-- Rule 'payment-error': records where level = ERROR. Writes an Alert event (TypeId Alert-PaymentError) from
+       level, message. -->
   <xsl:template match="node()" mode="event_type_payment_error">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'payment-error'"/>
-        </TypeId>
+        <TypeId>Alert-PaymentError</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
         <Alert>
           <Type>Error</Type>
           <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
@@ -157,20 +153,20 @@
               <xsl:value-of select="(data[@name='message']/@value)[1]"/>
             </Description>
           </xsl:if>
+          <xsl:sequence select="mcp:data('level', data[@name='level']/@value)"/>
         </Alert>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'config': records where message matches ^Setting . Writes an Update event (TypeId from logger) from
+  <!-- Rule 'config': records where message matches ^Setting . Writes an Update event (TypeId Update-Setting) from
        setting, old_value, new_value (extracted from message). -->
   <xsl:template match="node()" mode="event_type_config">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'config'"/>
-        </TypeId>
+        <TypeId>Update-Setting</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
         <Update>
           <xsl:variable name="setting_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^Setting (\S+) changed from (\S+) to (\S+) by (\S+).*$')"/>
           <After>
@@ -227,6 +223,14 @@
         </User>
       </xsl:if>
     </EventSource>
+  </xsl:template>
+  <!-- description: shared by the rules 'logon', 'logoff', 'logon-failed', 'invoice', 'payment-error', 'config' -->
+  <xsl:template match="node()" mode="description">
+    <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
+      <Description>
+        <xsl:value-of select="(data[@name='message']/@value)[1]"/>
+      </Description>
+    </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">

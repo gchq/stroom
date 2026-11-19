@@ -39,14 +39,17 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'create': records where action = create. Writes a Create event (TypeId from action) from ticket, priority. -->
+  <!-- Rule 'create': records where action = create. Writes a Create event (TypeId Create-Ticket) from comment,
+       action, ticket, priority. -->
   <xsl:template match="node()" mode="event_type_create">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
-        <xsl:apply-templates select="." mode="description"/>
+        <TypeId>Create-Ticket</TypeId>
+        <Description>
+          <xsl:value-of select="if (data[@name='comment']/@value[normalize-space(.)]) then replace((data[@name='comment']/@value)[1], '&quot;&quot;', '&quot;') else 'A ticket was opened'"/>
+        </Description>
         <Create>
           <Object>
             <Type>Ticket</Type>
@@ -56,20 +59,23 @@
               </Id>
             </xsl:if>
           </Object>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
           <xsl:sequence select="mcp:data('priority', data[@name='priority']/@value)"/>
         </Create>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'change': records where action in update, close, reopen. Writes an Update event (TypeId from action) from
-       ticket, action, priority. -->
+  <!-- Rule 'change': records where action in update, close, reopen. Writes an Update event (TypeId Update-Ticket)
+       from comment, ticket, action, priority. -->
   <xsl:template match="node()" mode="event_type_change">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
-        <xsl:apply-templates select="." mode="description"/>
+        <TypeId>Update-Ticket</TypeId>
+        <Description>
+          <xsl:value-of select="if (data[@name='comment']/@value[normalize-space(.)]) then replace((data[@name='comment']/@value)[1], '&quot;&quot;', '&quot;') else 'A ticket was changed'"/>
+        </Description>
         <Update>
           <After>
             <Object>
@@ -116,22 +122,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'create', 'change' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="data[@name='action']/@value[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(data[@name='action']/@value)[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
-  <!-- description: shared by the rules 'create', 'change' -->
-  <xsl:template match="node()" mode="description">
-    <xsl:if test="data[@name='comment']/@value[normalize-space(.)]">
-      <Description>
-        <xsl:value-of select="replace((data[@name='comment']/@value)[1], '&quot;&quot;', '&quot;')"/>
-      </Description>
-    </xsl:if>
   </xsl:template>
   <xsl:function name="mcp:data" as="element()?">
     <!-- A Data entry, Name and Value, when the value is present (not blank) -->

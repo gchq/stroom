@@ -8,6 +8,10 @@ capabilities: [field_repetition, escaping]
 request: >
   Onboard our mail gateway's delivery log (the file on my disk). Index the messages.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 600
   event_types: [Send]
   forbidden_types: [Unknown]
@@ -27,10 +31,11 @@ reference:
       - {path: EventSource/Generator, value: mailgw}
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/EmailAddress, field: from}
-      - {path: EventDetail/TypeId, field: action}
     events:
       - name: message
         fields:
+          - {path: EventDetail/TypeId, value: Send-Email}
+          - {path: EventDetail/Description, value: "The mail gateway delivered, deferred or rejected a message"}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: from}
           - {path: EventDetail/Send/Destination/User/EmailAddress, field: rcpt, repeat: true}
           - {path: EventDetail/Send/Payload/Email/Id, field: msgid}

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs mcp">
   <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
        (the mapping's log_unmapped_fields) -->
   <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
@@ -42,14 +42,14 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'created': records where action = create. Writes a Create event (TypeId from action) from ticket,
-       customer. -->
+  <!-- Rule 'created': records where action = create. Writes a Create event (TypeId Create-Ticket) from action,
+       ticket, customer. -->
   <xsl:template match="node()" mode="event_type_created">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Create-Ticket</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Create>
           <Object>
@@ -59,37 +59,43 @@
               <Data Name="customer" Value="{replace((data[@name='customer']/@value)[1], '&quot;&quot;', '&quot;')}"/>
             </xsl:if>
           </Object>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
         </Create>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'viewed': records where action = view. Writes a View event (TypeId from action) from ticket. -->
+  <!-- Rule 'viewed': records where action = view. Writes a View event (TypeId View-Ticket) from comment, action,
+       ticket. -->
   <xsl:template match="node()" mode="event_type_viewed">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
-        <xsl:apply-templates select="." mode="description"/>
+        <TypeId>View-Ticket</TypeId>
+        <Description>
+          <xsl:value-of select="if (data[@name='comment']/@value[normalize-space(.)]) then replace((data[@name='comment']/@value)[1], '&quot;&quot;', '&quot;') else 'A ticket was viewed'"/>
+        </Description>
         <View>
           <Object>
             <Type>Ticket</Type>
             <xsl:apply-templates select="." mode="id"/>
           </Object>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
         </View>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'updated': records where action in update, close. Writes an Update event (TypeId from action) from ticket,
-       action. -->
+  <!-- Rule 'updated': records where action in update, close. Writes an Update event (TypeId Update-Ticket) from
+       action, ticket. -->
   <xsl:template match="node()" mode="event_type_updated">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Update-Ticket</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Update>
+          <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
           <After>
             <Object>
               <Type>Ticket</Type>
@@ -98,13 +104,14 @@
                   <xsl:value-of select="(data[@name='ticket']/@value)[1]"/>
                 </Id>
               </xsl:if>
-              <xsl:if test="(data[@name='action']/@value)[1] = ('close', 'update')">
+              <xsl:if test="$action[1] = ('close', 'update')">
                 <State>
-                  <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'close') then 'Closed' else 'Open'"/>
+                  <xsl:value-of select="if ($action[1] = 'close') then 'Closed' else 'Open'"/>
                 </State>
               </xsl:if>
             </Object>
           </After>
+          <xsl:sequence select="mcp:data('action', $action)"/>
         </Update>
       </EventDetail>
     </Event>
@@ -139,15 +146,7 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'created', 'viewed', 'updated' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="data[@name='action']/@value[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(data[@name='action']/@value)[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
-  <!-- description: shared by the rules 'created', 'viewed', 'updated' -->
+  <!-- description: shared by the rules 'created', 'updated' -->
   <xsl:template match="node()" mode="description">
     <xsl:if test="data[@name='comment']/@value[normalize-space(.)]">
       <Description>
@@ -163,4 +162,12 @@
       </Id>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

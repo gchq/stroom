@@ -8,6 +8,10 @@ request: >
 # The trap the test environment met: the separators are en dashes (U+2013) on most lines and hyphens on some, so a
 # regex written with "-" matches some lines and not the rest.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 5
   event_types: [Authenticate]
   forbidden_types: [Unknown]
@@ -44,14 +48,15 @@ reference:
       - name: logged in
         when: [{field: direction, equals: in}]
         fields:
-          - {path: EventDetail/TypeId, value: login}
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: direction, field: direction}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user_ok}
           - {path: EventDetail/Authenticate/Data, data_name: session, field: session}
       - name: failed login
         when: [{field: user_failed, present: true}]
         fields:
-          - {path: EventDetail/TypeId, value: login-failed}
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user_failed}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
@@ -59,7 +64,8 @@ reference:
       - name: logged out
         when: [{field: direction, equals: out}]
         fields:
-          - {path: EventDetail/TypeId, value: logout}
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: direction, field: direction}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user_ok}
           - {path: EventDetail/Authenticate/Data, data_name: session, field: session}

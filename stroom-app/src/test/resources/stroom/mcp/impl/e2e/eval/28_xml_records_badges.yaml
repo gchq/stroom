@@ -7,6 +7,10 @@ request: >
 # The trap: a document whose root is records/record, like a Data Splitter's output, is the source's own XML, in no
 # namespace (not records:2), and becomes Events like any other.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 4
   event_types: ['Authenticate|Authorise']
   forbidden_types: [Unknown]
@@ -33,10 +37,11 @@ reference:
       - {path: EventSource/Generator, value: door-controller}
       - {path: EventSource/Device/Name, field: door}
       - {path: EventSource/User/Id, field: holder}
-      - {path: EventDetail/TypeId, value: badge}
     events:
       - name: badge
         fields:
+          - {path: EventDetail/TypeId, value: Authorise-BadgeAccess}
+          - {path: EventDetail/Description, value: A badge was presented at a door}
           - {path: EventDetail/Authorise/Action, value: Request}
           - {path: EventDetail/Authorise/Resource/Name, field: door}
           - {path: EventDetail/Authorise/Outcome/Success, field: granted}

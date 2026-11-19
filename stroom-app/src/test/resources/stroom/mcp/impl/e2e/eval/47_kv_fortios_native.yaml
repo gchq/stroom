@@ -8,6 +8,10 @@ capabilities: [timestamps, field_variability]
 request: >
   Onboard our FortiGate's logs (the file on my disk is in FortiOS's own format). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 800
   event_types: [Network, Authenticate, Alert]
   forbidden_types: [Unknown]
@@ -28,11 +32,14 @@ reference:
       - {path: EventSource/Device/HostName, field: devname}
       - {path: EventSource/User/Id, field: user}
       - {path: EventSource/Client/IPAddress, field: srcip}
-      - {path: EventDetail/TypeId, field: logid}
     events:
       - name: traffic
         when: [{field: type, equals: traffic}]
         fields:
+          - {path: EventDetail/TypeId, value: Network-Traffic}
+          - {path: EventDetail/Description, value: The firewall logged a session}
+          - {path: EventDetail/Network/Open/Data, data_name: type, field: type}
+          - {path: EventDetail/Network/Open/Data, data_name: logid, field: logid}
           - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: srcip}
           - {path: EventDetail/Network/Open/Source/Port, field: srcport}
           - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dstip}
@@ -42,6 +49,10 @@ reference:
       - name: admin-login
         when: [{field: type, equals: event}, {field: subtype, equals: system}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-AdminLogon}
+          - {path: EventDetail/Authenticate/Data, data_name: type, field: type}
+          - {path: EventDetail/Authenticate/Data, data_name: subtype, field: subtype}
+          - {path: EventDetail/Authenticate/Data, data_name: logid, field: logid}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: status, map: {success: 'true', failed: 'false'}}
@@ -49,6 +60,10 @@ reference:
       - name: ips
         when: [{field: type, equals: utm}]
         fields:
+          - {path: EventDetail/TypeId, value: Alert-Intrusion}
+          - {path: EventDetail/Description, value: The firewall detected an intrusion attempt}
+          - {path: EventDetail/Alert/Data, data_name: type, field: type}
+          - {path: EventDetail/Alert/Data, data_name: logid, field: logid}
           - {path: EventDetail/Alert/Type, value: Other}
           - {path: EventDetail/Alert/Severity, field: severity, map: {critical: Critical, high: Major, medium: Minor}, default: Info}
           - {path: EventDetail/Alert/Description, field: attack}

@@ -55,7 +55,7 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "Badge-Access"
+      "value": "Authenticate-Badge"
      },
      {
       "path": "EventDetail/Description",

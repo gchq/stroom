@@ -38,10 +38,6 @@
     "field": "EventData/Data[@Name='TargetUserName']"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "System/EventID"
-   },
-   {
     "path": "EventDetail/Authenticate/User/Id",
     "field": "EventData/Data[@Name='TargetUserName']"
    },
@@ -62,6 +58,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "An account was successfully logged on"
      },
@@ -80,6 +85,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-FailedLogon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "An account failed to log on"
@@ -104,6 +118,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "An account was logged off"
      },
@@ -119,9 +142,9 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[failed logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[failed logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -131,6 +154,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/Data[LogonType]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -151,6 +175,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/Data[LogonType]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
@@ -172,6 +197,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/Data[LogonType]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",

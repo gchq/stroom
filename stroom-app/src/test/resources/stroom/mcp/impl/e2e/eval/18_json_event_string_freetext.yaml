@@ -8,6 +8,10 @@ request: >
   deleted, with the document in resource) and a free-form message. Keep each message whole as the event's
   description. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 5}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 6
   event_types: [Authenticate, View, Delete]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId, EventDetail/Description]
@@ -32,28 +36,39 @@ reference:
       - {path: EventSource/Generator, value: dms}
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
-      - {path: EventDetail/TypeId, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
       - {path: EventDetail/Description, xpath: "json-to-xml(*[@key='event'])/*/*[@key='message']"}
     events:
       - name: logon
         when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", one_of: [LOGIN_SUCCESS, LOGIN_FAILURE]}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: event_type, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
           - {path: EventDetail/Authenticate/Outcome/Success, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", map: {LOGIN_SUCCESS: "true", LOGIN_FAILURE: "false"}}
       - name: logoff
         when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: LOGOUT}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: event_type, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
       - name: password change
         when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: PASSWORD_CHANGE}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-PasswordChange}
+          - {path: EventDetail/Authenticate/Data, data_name: event_type, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
           - {path: EventDetail/Authenticate/Action, value: ChangePassword}
           - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
       - name: view
         when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: DOCUMENT_VIEW}]
-        fields: [{path: EventDetail/View/Document/Name, xpath: "json-to-xml(*[@key='event'])/*/*[@key='resource']"}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Document}
+          - {path: EventDetail/View/Data, data_name: event_type, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
+          - {path: EventDetail/View/Document/Name, xpath: "json-to-xml(*[@key='event'])/*/*[@key='resource']"}
       - name: delete
         when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: DOCUMENT_DELETE}]
-        fields: [{path: EventDetail/Delete/Document/Name, xpath: "json-to-xml(*[@key='event'])/*/*[@key='resource']"}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Document}
+          - {path: EventDetail/Delete/Data, data_name: event_type, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
+          - {path: EventDetail/Delete/Document/Name, xpath: "json-to-xml(*[@key='event'])/*/*[@key='resource']"}

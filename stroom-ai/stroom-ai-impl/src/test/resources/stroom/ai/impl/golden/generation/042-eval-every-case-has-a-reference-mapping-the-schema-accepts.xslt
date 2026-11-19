@@ -51,34 +51,40 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where action = LOGIN. Writes an Authenticate event (TypeId from action). -->
+  <!-- Rule 'logon': records where action = LOGIN. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       action (extracted from an xpath). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
+          <xsl:sequence select="mcp:data('action', $user_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where action = LOGOUT. Writes an Authenticate event (TypeId from action). -->
+  <!-- Rule 'logoff': records where action = LOGOUT. Writes an Authenticate event (TypeId Authenticate-Logoff) from
+       action (extracted from an xpath). -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
+          <xsl:sequence select="mcp:data('action', $user_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -129,15 +135,6 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
-    <xsl:if test="$user_parts/fn:match//fn:group[@nr=2][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=2])[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="description">
     <xsl:variable name="text" select="(mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[normalize-space(.)]"/>
@@ -172,4 +169,12 @@
       </Outcome>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

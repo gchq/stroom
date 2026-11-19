@@ -42,38 +42,39 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'joiner': records where change = joiner. Writes a Create event (TypeId from change) from employee_id,
-       employee_name, department. -->
+  <!-- Rule 'joiner': records where change = joiner. Writes a Create event (TypeId Create-Employee) from change,
+       employee_id, employee_name, department. -->
   <xsl:template match="node()" mode="event_type_joiner">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:if test="data[@name='change']/@value[normalize-space(.)] or data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
-        <EventDetail>
-          <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:if test="data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
-            <Create>
-              <xsl:apply-templates select="." mode="user"/>
-            </Create>
-          </xsl:if>
-        </EventDetail>
-      </xsl:if>
+      <EventDetail>
+        <TypeId>Create-Employee</TypeId>
+        <Description>An employee joined</Description>
+        <xsl:if test="data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)] or data[@name='change']/@value[normalize-space(.)]">
+          <Create>
+            <xsl:apply-templates select="." mode="user"/>
+            <xsl:sequence select="mcp:data('change', data[@name='change']/@value)"/>
+          </Create>
+        </xsl:if>
+      </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'mover': records where change = mover. Writes an Update event (TypeId from change) from employee_id,
-       employee_name, department. -->
+  <!-- Rule 'mover': records where change = mover. Writes an Update event (TypeId Update-Employee) from change,
+       employee_id, employee_name, department. -->
   <xsl:template match="node()" mode="event_type_mover">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:variable name="department" select="data[@name='department']/@value[normalize-space(.)]"/>
-      <xsl:variable name="employee_name" select="data[@name='employee_name']/@value[normalize-space(.)]"/>
-      <xsl:variable name="employee_id" select="data[@name='employee_id']/@value[normalize-space(.)]"/>
-      <xsl:if test="data[@name='change']/@value[normalize-space(.)] or $employee_id or $employee_name or $department">
-        <EventDetail>
-          <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:if test="$employee_id or $employee_name or $department">
-            <Update>
+      <EventDetail>
+        <TypeId>Update-Employee</TypeId>
+        <Description>An employee moved</Description>
+        <xsl:variable name="department" select="data[@name='department']/@value[normalize-space(.)]"/>
+        <xsl:variable name="employee_name" select="data[@name='employee_name']/@value[normalize-space(.)]"/>
+        <xsl:variable name="employee_id" select="data[@name='employee_id']/@value[normalize-space(.)]"/>
+        <xsl:if test="$employee_id or $employee_name or $department or data[@name='change']/@value[normalize-space(.)]">
+          <Update>
+            <xsl:if test="$employee_id or $employee_name or $department">
               <After>
                 <User>
                   <xsl:if test="$employee_id">
@@ -89,28 +90,29 @@
                   <xsl:sequence select="mcp:data('department', $department)"/>
                 </User>
               </After>
-            </Update>
-          </xsl:if>
-        </EventDetail>
-      </xsl:if>
+            </xsl:if>
+            <xsl:sequence select="mcp:data('change', data[@name='change']/@value)"/>
+          </Update>
+        </xsl:if>
+      </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'leaver': records where change = leaver. Writes a Delete event (TypeId from change) from employee_id,
-       employee_name, department. -->
+  <!-- Rule 'leaver': records where change = leaver. Writes a Delete event (TypeId Delete-Employee) from change,
+       employee_id, employee_name, department. -->
   <xsl:template match="node()" mode="event_type_leaver">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:if test="data[@name='change']/@value[normalize-space(.)] or data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
-        <EventDetail>
-          <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:if test="data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
-            <Delete>
-              <xsl:apply-templates select="." mode="user"/>
-            </Delete>
-          </xsl:if>
-        </EventDetail>
-      </xsl:if>
+      <EventDetail>
+        <TypeId>Delete-Employee</TypeId>
+        <Description>An employee left</Description>
+        <xsl:if test="data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)] or data[@name='change']/@value[normalize-space(.)]">
+          <Delete>
+            <xsl:apply-templates select="." mode="user"/>
+            <xsl:sequence select="mcp:data('change', data[@name='change']/@value)"/>
+          </Delete>
+        </xsl:if>
+      </EventDetail>
     </Event>
   </xsl:template>
   <!-- event_time: shared by the rules 'joiner', 'mover', 'leaver' -->
@@ -142,14 +144,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'joiner', 'mover', 'leaver' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="data[@name='change']/@value[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(data[@name='change']/@value)[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'joiner', 'leaver' -->
   <xsl:template match="node()" mode="user">

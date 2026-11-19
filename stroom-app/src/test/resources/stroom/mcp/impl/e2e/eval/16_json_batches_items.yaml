@@ -6,6 +6,10 @@ request: >
   item in events is one event (time, user, action, roles). Heartbeats are not events, and batches from QA hosts
   (names starting qa-) must be left out entirely. Keep every role as a group of the user. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/User/Id, EventSource/User/Groups/Group/Name,
@@ -35,13 +39,20 @@ reference:
       - {path: EventSource/Device/HostName, field: host, scope: record}
       - {path: EventSource/User/Id, field: user}
       - {path: EventSource/User/Groups/Group/Name, field: roles, repeat: true}
-      - {path: EventDetail/TypeId, field: action}
       - {path: EventDetail/Authenticate/User/Id, field: user}
       - {path: EventDetail/Authenticate/Data, data_name: batch, field: batch, scope: record}
     events:
       - name: logon
         when: [{field: action, equals: LOGIN}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in to the application}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
       - name: logoff
         when: [{field: action, equals: LOGOUT}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: A user signed out of the application}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}

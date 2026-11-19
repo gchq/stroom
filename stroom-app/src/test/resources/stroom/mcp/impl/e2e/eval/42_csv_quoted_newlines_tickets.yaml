@@ -8,6 +8,10 @@ capabilities: [multiline, escaping, optional_fields]
 request: >
   Onboard our service desk's ticket export (the CSV file on my disk). Index the ticket events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 600
   event_types: [Create, Update]
   forbidden_types: [Unknown]
@@ -27,18 +31,23 @@ reference:
       - {path: EventSource/Generator, value: service-desk-export}
       - {path: EventSource/Device/HostName, value: servicedesk01}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
-      - {path: EventDetail/Description, field: comment, transform: unescape_quotes}
     events:
       - name: create
         when: [{field: action, equals: create}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-Ticket}
+          # The record's message where it has one, else the event type's own text.
+          - {path: EventDetail/Description, field: comment, transform: unescape_quotes, default: A ticket was opened}
+          - {path: EventDetail/Create/Data, data_name: action, field: action}
           - {path: EventDetail/Create/Object/Type, value: Ticket}
           - {path: EventDetail/Create/Object/Id, field: ticket}
           - {path: EventDetail/Create/Data, data_name: priority, field: priority}
       - name: change
         when: [{field: action, one_of: [update, close, reopen]}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Ticket}
+          # The record's message where it has one, else the event type's own text.
+          - {path: EventDetail/Description, field: comment, transform: unescape_quotes, default: A ticket was changed}
           - {path: EventDetail/Update/After/Object/Type, value: Ticket}
           - {path: EventDetail/Update/After/Object/Id, field: ticket}
           - {path: EventDetail/Update/Data, data_name: action, field: action}

@@ -5,6 +5,10 @@ request: >
   Onboard the Acme VPN gateway logs below (CSV with a header). Each line is a user logging in to or out of the
   VPN gateway; result says whether it worked. Index the events so analysts can search by user and source IP.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action]
@@ -25,13 +29,20 @@ reference:
       - {path: EventSource/Device/HostName, field: gateway}
       - {path: EventSource/Client/IPAddress, field: src_ip}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
       - {path: EventDetail/Authenticate/User/Id, field: user}
       - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {success: "true", failure: "false"}}
     events:
       - name: logon
         when: [{field: action, equals: login}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in to the VPN}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
       - name: logoff
         when: [{field: action, equals: logout}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: A user signed out of the VPN}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}

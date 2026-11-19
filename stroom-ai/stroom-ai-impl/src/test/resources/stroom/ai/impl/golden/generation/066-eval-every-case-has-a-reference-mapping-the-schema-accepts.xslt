@@ -54,14 +54,15 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'console-login': records where eventName = ConsoleLogin. Writes an Authenticate event (TypeId from
-       eventName) from userIdentity.userName, responseElements.ConsoleLogin. -->
+  <!-- Rule 'console-login': records where eventName = ConsoleLogin. Writes an Authenticate event (TypeId
+       Authenticate-ConsoleLogon) from eventName, userIdentity.userName, responseElements.ConsoleLogin. -->
   <xsl:template match="node()" mode="event_type_console_login">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-ConsoleLogon</TypeId>
+        <Description>A user signed in to the console</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:if test="*[@key='userIdentity']/*[@key='userName'][normalize-space(.)]">
@@ -78,50 +79,56 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('eventName', *[@key='eventName'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'object-read': records where eventName = GetObject. Writes a View event (TypeId from eventName) from
-       requestParameters.key, requestParameters.bucketName, errorCode. -->
+  <!-- Rule 'object-read': records where eventName = GetObject. Writes a View event (TypeId View-Object) from
+       eventName, requestParameters.key, requestParameters.bucketName, errorCode. -->
   <xsl:template match="node()" mode="event_type_object_read">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>View-Object</TypeId>
+        <Description>An object was read from a bucket</Description>
         <View>
           <xsl:apply-templates select="." mode="object"/>
+          <xsl:sequence select="mcp:data('eventName', *[@key='eventName'])"/>
           <xsl:sequence select="mcp:data('bucket', *[@key='requestParameters']/*[@key='bucketName'])"/>
           <xsl:sequence select="mcp:data('error', *[@key='errorCode'])"/>
         </View>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'object-delete': records where eventName = DeleteObject. Writes a Delete event (TypeId from eventName)
-       from requestParameters.key, requestParameters.bucketName, errorCode. -->
+  <!-- Rule 'object-delete': records where eventName = DeleteObject. Writes a Delete event (TypeId Delete-Object) from
+       eventName, requestParameters.key, requestParameters.bucketName, errorCode. -->
   <xsl:template match="node()" mode="event_type_object_delete">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Delete-Object</TypeId>
+        <Description>An object was deleted from a bucket</Description>
         <Delete>
           <xsl:apply-templates select="." mode="object"/>
+          <xsl:sequence select="mcp:data('eventName', *[@key='eventName'])"/>
           <xsl:sequence select="mcp:data('bucket', *[@key='requestParameters']/*[@key='bucketName'])"/>
           <xsl:sequence select="mcp:data('error', *[@key='errorCode'])"/>
         </Delete>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'user-create': records where eventName = CreateUser. Writes a Create event (TypeId from eventName) from
-       requestParameters.userName, errorCode. -->
+  <!-- Rule 'user-create': records where eventName = CreateUser. Writes a Create event (TypeId Create-User) from
+       eventName, requestParameters.userName, errorCode. -->
   <xsl:template match="node()" mode="event_type_user_create">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Create-User</TypeId>
+        <Description>A user was created</Description>
         <Create>
           <Object>
             <Type>IAM user</Type>
@@ -131,19 +138,21 @@
               </Id>
             </xsl:if>
           </Object>
+          <xsl:sequence select="mcp:data('eventName', *[@key='eventName'])"/>
           <xsl:sequence select="mcp:data('error', *[@key='errorCode'])"/>
         </Create>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'policy-change': records where eventName = PutBucketPolicy. Writes an Update event (TypeId from eventName)
-       from requestParameters.bucketName, errorCode. -->
+  <!-- Rule 'policy-change': records where eventName = PutBucketPolicy. Writes an Update event (TypeId
+       Update-BucketPolicy) from eventName, requestParameters.bucketName, errorCode. -->
   <xsl:template match="node()" mode="event_type_policy_change">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Update-BucketPolicy</TypeId>
+        <Description>A bucket's policy was changed</Description>
         <Update>
           <After>
             <Object>
@@ -155,6 +164,7 @@
               </xsl:if>
             </Object>
           </After>
+          <xsl:sequence select="mcp:data('eventName', *[@key='eventName'])"/>
           <xsl:sequence select="mcp:data('error', *[@key='errorCode'])"/>
         </Update>
       </EventDetail>
@@ -217,14 +227,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'console-login', 'object-read', 'object-delete', 'user-create', 'policy-change' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="*[@key='eventName'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='eventName'])[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- object: shared by the rules 'object-read', 'object-delete' -->
   <xsl:template match="node()" mode="object">

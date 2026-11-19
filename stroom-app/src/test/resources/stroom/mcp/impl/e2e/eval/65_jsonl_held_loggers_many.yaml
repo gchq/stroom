@@ -35,6 +35,10 @@ user_knows: >
   records being passed over by the group's pipeline is expected; they are not errors. The system is the ACME
   platform. Promote the build, keeping its documents where the feed's other documents are.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 12}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
   records: 136
   event_types: [Authenticate, View|Export]
   paths: [EventTime/TimeCreated, EventSource/User/Id]
@@ -91,18 +95,21 @@ reference:
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/Id, field: event.user}
       - {path: EventSource/Client/IPAddress, field: event.src_ip}
-      - {path: EventDetail/TypeId, field: event.action}
       - {path: EventDetail/Description, field: event.message}
     events:
       - name: logon
         when: [{field: event.action, one_of: [LOGIN_SUCCESS, MFA_SUCCESS]}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: event.action}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: event.user}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'true'}
       - name: logon_failed
         when: [{field: event.action, one_of: [LOGIN_FAILURE, MFA_FAILURE]}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: event.action}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: event.user}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
@@ -110,68 +117,94 @@ reference:
       - name: logoff
         when: [{field: event.action, one_of: [LOGOUT, SESSION_EXPIRED]}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: event.action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: event.user}
       - name: session_revoked
         when: [{field: event.action, equals: SESSION_REVOKED}]
         fields:
+          - {path: EventDetail/TypeId, value: Revoke-Session}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: event.action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: event.target_user}
       - name: password_change
         when: [{field: event.action, equals: PASSWORD_CHANGE}]
         fields:
+          - {path: EventDetail/TypeId, value: Change-Password}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: event.action}
           - {path: EventDetail/Authenticate/Action, value: ChangePassword}
           - {path: EventDetail/Authenticate/User/Id, field: event.user}
       - name: password_reset
         when: [{field: event.action, equals: PASSWORD_RESET}]
         fields:
+          - {path: EventDetail/TypeId, value: Reset-Password}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: event.action}
           - {path: EventDetail/Authenticate/Action, value: ResetPassword}
           - {path: EventDetail/Authenticate/User/Id, field: event.target_user}
       - name: role_changed
         when: [{field: event.action, one_of: [ROLE_GRANTED, ROLE_REVOKED]}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Role}
+          - {path: EventDetail/Update/Data, data_name: action, field: event.action}
           - {path: EventDetail/Update/After/Object/Type, value: Role membership}
           - {path: EventDetail/Update/After/Object/Id, field: event.target_user}
           - {path: EventDetail/Update/After/Object/Name, field: event.role}
       - name: user_created
         when: [{field: event.action, equals: USER_CREATED}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-User}
+          - {path: EventDetail/Create/Data, data_name: action, field: event.action}
           - {path: EventDetail/Create/Object/Type, value: User}
           - {path: EventDetail/Create/Object/Id, field: event.target_user}
       - name: user_disabled
         when: [{field: event.action, equals: USER_DISABLED}]
         fields:
+          - {path: EventDetail/TypeId, value: Disable-User}
+          - {path: EventDetail/Update/Data, data_name: action, field: event.action}
           - {path: EventDetail/Update/After/Object/Type, value: User}
           - {path: EventDetail/Update/After/Object/Id, field: event.target_user}
       - name: user_deleted
         when: [{field: event.action, equals: USER_DELETED}]
         fields:
+          - {path: EventDetail/TypeId, value: Delete-User}
+          - {path: EventDetail/Delete/Data, data_name: action, field: event.action}
           - {path: EventDetail/Delete/Object/Type, value: User}
           - {path: EventDetail/Delete/Object/Id, field: event.target_user}
       - name: key_created
         when: [{field: event.action, equals: KEY_CREATED}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-Key}
+          - {path: EventDetail/Create/Data, data_name: action, field: event.action}
           - {path: EventDetail/Create/Object/Type, value: API key}
           - {path: EventDetail/Create/Object/Id, field: event.key_id}
       - name: key_revoked
         when: [{field: event.action, equals: KEY_REVOKED}]
         fields:
+          - {path: EventDetail/TypeId, value: Revoke-Key}
+          - {path: EventDetail/Delete/Data, data_name: action, field: event.action}
           - {path: EventDetail/Delete/Object/Type, value: API key}
           - {path: EventDetail/Delete/Object/Id, field: event.key_id}
       - name: export_downloaded
         when: [{field: event.action, equals: EXPORT_DOWNLOADED}]
         fields:
+          - {path: EventDetail/TypeId, value: Download-Export}
+          - {path: EventDetail/View/Data, data_name: action, field: event.action}
           - {path: EventDetail/View/Object/Type, value: Export}
           - {path: EventDetail/View/Object/Id, field: event.export_id}
           - {path: EventDetail/View/Data, data_name: rows, field: event.rows}
       - name: record_viewed
         when: [{field: event.action, equals: RECORD_VIEWED}]
         fields:
+          - {path: EventDetail/TypeId, value: View-Record}
+          - {path: EventDetail/View/Data, data_name: action, field: event.action}
           - {path: EventDetail/View/Object/Type, value: Customer record}
           - {path: EventDetail/View/Object/Id, field: event.record_id}
       - name: setting_changed
         when: [{field: event.action, equals: SETTING_CHANGED}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Setting}
+          - {path: EventDetail/Update/Data, data_name: action, field: event.action}
           - {path: EventDetail/Update/After/Object/Type, value: Setting}
           - {path: EventDetail/Update/After/Object/Id, field: event.setting}
           - {path: EventDetail/Update/After/Object/Data, data_name: value, field: event.new_value}

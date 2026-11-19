@@ -56,10 +56,6 @@
    {
     "path": "EventSource/Client/HostName",
     "field": "source_service"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "eventName"
    }
   ],
   "events": [
@@ -72,6 +68,19 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-ConsoleLogon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in to the console"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "eventName",
+      "data_name": "eventName"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -99,6 +108,19 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "View-Object"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "An object was read from a bucket"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "field": "eventName",
+      "data_name": "eventName"
+     },
      {
       "path": "EventDetail/View/Object/Type",
       "value": "S3 object"
@@ -129,6 +151,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Delete-Object"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "An object was deleted from a bucket"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "eventName",
+      "data_name": "eventName"
+     },
+     {
       "path": "EventDetail/Delete/Object/Type",
       "value": "S3 object"
      },
@@ -158,6 +193,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Create-User"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user was created"
+     },
+     {
+      "path": "EventDetail/Create/Data",
+      "field": "eventName",
+      "data_name": "eventName"
+     },
+     {
       "path": "EventDetail/Create/Object/Type",
       "value": "IAM user"
      },
@@ -182,6 +230,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Update-BucketPolicy"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A bucket's policy was changed"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "eventName",
+      "data_name": "eventName"
+     },
+     {
       "path": "EventDetail/Update/After/Object/Type",
       "value": "S3 bucket policy"
      },
@@ -202,11 +263,11 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[console-login] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[object-read] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[object-delete] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[user-create] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[policy-change] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[console-login] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[object-read] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[object-delete] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[user-create] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[policy-change] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -216,8 +277,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[eventName]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/HostName",
      "EventSource/Client/IPAddress",
@@ -235,9 +298,11 @@
      "*[@key='eventName'] = 'GetObject'"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventDetail/View/Data[bucket]",
      "EventDetail/View/Data[error]",
+     "EventDetail/View/Data[eventName]",
      "EventDetail/View/Object/Id",
      "EventDetail/View/Object/Type",
      "EventSource/Client/HostName",
@@ -258,8 +323,10 @@
     "fields": [
      "EventDetail/Delete/Data[bucket]",
      "EventDetail/Delete/Data[error]",
+     "EventDetail/Delete/Data[eventName]",
      "EventDetail/Delete/Object/Id",
      "EventDetail/Delete/Object/Type",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/HostName",
      "EventSource/Client/IPAddress",
@@ -278,8 +345,10 @@
     ],
     "fields": [
      "EventDetail/Create/Data[error]",
+     "EventDetail/Create/Data[eventName]",
      "EventDetail/Create/Object/Id",
      "EventDetail/Create/Object/Type",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/HostName",
      "EventSource/Client/IPAddress",
@@ -297,10 +366,12 @@
      "*[@key='eventName'] = 'PutBucketPolicy'"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventDetail/Update/After/Object/Id",
      "EventDetail/Update/After/Object/Type",
      "EventDetail/Update/Data[error]",
+     "EventDetail/Update/Data[eventName]",
      "EventSource/Client/HostName",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

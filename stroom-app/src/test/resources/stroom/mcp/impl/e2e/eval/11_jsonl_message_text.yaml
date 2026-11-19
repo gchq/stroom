@@ -6,6 +6,10 @@ request: >
   it received the line; the event itself is the message string: its own timestamp, the user, the action (LOGIN or
   LOGOUT) and a description, which for logins says whether it succeeded and the client address. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Description, EventDetail/Authenticate/Action]
@@ -29,17 +33,20 @@ reference:
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/Client/IPAddress, field: client_ip}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
       - {path: EventDetail/Description, field: desc}
     events:
       - name: logon
         when: [{field: action, equals: LOGIN}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {Successful: "true", Failed: "false"}}
       - name: logoff
         when: [{field: action, equals: LOGOUT}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user}

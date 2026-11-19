@@ -25,7 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'badge': every record. Writes an Authenticate event (TypeId Badge-Access) from door, badge_user, result. -->
+  <!-- Rule 'badge': every record. Writes an Authenticate event (TypeId Authenticate-Badge) from door, badge_user,
+       result. -->
   <xsl:template match="node()" mode="event_type_badge">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
@@ -75,7 +76,7 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>Badge-Access</TypeId>
+        <TypeId>Authenticate-Badge</TypeId>
         <xsl:if test="$door">
           <Description>
             <xsl:value-of select="$door[1]"/>

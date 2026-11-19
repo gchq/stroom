@@ -45,6 +45,10 @@
       "value": "Process-Start"
      },
      {
+      "path": "EventDetail/Description",
+      "value": "A process was started on a workstation"
+     },
+     {
       "path": "EventDetail/Process/Action",
       "value": "Execute"
      },
@@ -79,6 +83,7 @@
     "event": "process start",
     "when": "every record",
     "fields": [
+     "EventDetail/Description",
      "EventDetail/Process/Action",
      "EventDetail/Process/Arguments",
      "EventDetail/Process/Command",
@@ -249,6 +254,24 @@
       "field": null,
       "any_of": null,
       "value": "Process-Start",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": null,
+      "any_of": null,
+      "value": "A process was started on a workstation",
       "xpath": null,
       "meta": null,
       "lookup": null,

@@ -6,6 +6,10 @@ request: >
   printer, the document name, the page count and the printer's location. Document names and locations with commas
   are quoted. Each record is a print job that finished. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 4
   event_types: [Print]
   forbidden_types: [Unknown]
@@ -29,10 +33,11 @@ reference:
       - {path: EventSource/Generator, value: print-server}
       - {path: EventSource/Device/HostName, field: printer}
       - {path: EventSource/User/Id, field: user, transform: unescape_quotes}
-      - {path: EventDetail/TypeId, value: print-job}
     events:
       - name: printed
         fields:
+          - {path: EventDetail/TypeId, value: Print-Document}
+          - {path: EventDetail/Description, value: A document was printed}
           - {path: EventDetail/Print/Action, value: FinishPrint}
           - {path: EventDetail/Print/PrintJob/Document/Title, field: document, transform: unescape_quotes}
           - {path: EventDetail/Print/PrintJob/Pages, field: pages}

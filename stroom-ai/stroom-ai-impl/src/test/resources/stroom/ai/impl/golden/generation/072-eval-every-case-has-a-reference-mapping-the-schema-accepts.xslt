@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs mcp">
   <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
        (the mapping's log_unmapped_fields) -->
   <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
@@ -39,14 +39,15 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where event.action = user-login. Writes an Authenticate event (TypeId from event.action)
-       from user.name, event.outcome. -->
+  <!-- Rule 'logon': records where event.action = user-login. Writes an Authenticate event (TypeId Authenticate-Logon)
+       from event.action, user.name, event.outcome. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:if test="*[@key='user']/*[@key='name'][normalize-space(.)]">
@@ -63,18 +64,20 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('action', *[@key='event']/*[@key='action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'file-delete': records where event.action = file-delete. Writes a Delete event (TypeId from event.action)
-       from file.path, file.name. -->
+  <!-- Rule 'file-delete': records where event.action = file-delete. Writes a Delete event (TypeId Delete-File) from
+       event.action, file.path, file.name. -->
   <xsl:template match="node()" mode="event_type_file_delete">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Delete-File</TypeId>
+        <Description>A file was deleted</Description>
         <Delete>
           <Object>
             <Type>File</Type>
@@ -89,6 +92,7 @@
               </Name>
             </xsl:if>
           </Object>
+          <xsl:sequence select="mcp:data('action', *[@key='event']/*[@key='action'])"/>
         </Delete>
       </EventDetail>
     </Event>
@@ -134,12 +138,12 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'file-delete' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="*[@key='event']/*[@key='action'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='event']/*[@key='action'])[1]"/>
-      </TypeId>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
-  </xsl:template>
+  </xsl:function>
 </xsl:stylesheet>

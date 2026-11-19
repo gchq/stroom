@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs fn">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs fn mcp">
   <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
        (the mapping's log_unmapped_fields) -->
   <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
@@ -40,14 +40,14 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where action = LOGIN. Writes an Authenticate event (TypeId from action) from user, result
-       (extracted from desc, message). -->
+  <!-- Rule 'logon': records where action = LOGIN. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       action, user, result (extracted from desc, message). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
@@ -61,22 +61,25 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('action', $ts_parts/fn:match//fn:group[@nr=3])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where action = LOGOUT. Writes an Authenticate event (TypeId from action) from user
-       (extracted from message). -->
+  <!-- Rule 'logoff': records where action = LOGOUT. Writes an Authenticate event (TypeId Authenticate-Logoff) from
+       action, user (extracted from message). -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+ \S+) (\S+) (\S+) (.*)$')"/>
+          <xsl:sequence select="mcp:data('action', $ts_parts/fn:match//fn:group[@nr=3])"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -125,15 +128,6 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+ \S+) (\S+) (\S+) (.*)$')"/>
-    <xsl:if test="$ts_parts/fn:match//fn:group[@nr=3][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="($ts_parts/fn:match//fn:group[@nr=3])[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="description">
     <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+ \S+) (\S+) (\S+) (.*)$')"/>
@@ -154,4 +148,12 @@
       </User>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

@@ -22,6 +22,10 @@ user_knows: >
   passed over by the Messaging pipeline is expected; they are not errors. The system is Microsoft 365.
   Users' Ids stay whole, with their domain (sam.taylor@contoso.example): don't split the domain off.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 6}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
   records: 161
   event_types: [View, Send, Create|Update, Delete|Move]
   paths: [EventTime/TimeCreated, EventSource/User/Id]
@@ -29,9 +33,10 @@ expected:
     EventSource/User/Id: [sam.taylor@contoso.example, svc-batch@contoso.example, anja.michel@contoso.example]
   # The other workloads' operations: their records are passed over, never translated.
   forbidden_values:
-    EventDetail/TypeId: [FileAccessed, SharingSet, FileDownloaded, FileModified, UserLoggedIn, UserLoginFailed,
-                         Add member to role., Reset user password.]
     EventSource/Generator: [SharePoint, OneDrive, AzureActiveDirectory]
+  # Their operations, the vendor's code, which every event holds as Data: in none.
+  forbidden_texts: [FileAccessed, SharingSet, FileDownloaded, FileModified, UserLoggedIn, UserLoginFailed,
+                    Add member to role., Reset user password.]
   source_types:
     field: Workload
     group:
@@ -62,43 +67,63 @@ reference:
       - {path: EventSource/Device/Name, value: Microsoft 365}
       - {path: EventSource/User/Id, field: UserId}
       - {path: EventSource/Client/IPAddress, field: ClientIP}
-      - {path: EventDetail/TypeId, field: Operation}
     events:
       - name: mail_read
         when: [{field: Operation, equals: MailItemsAccessed}]
         fields:
+          - {path: EventDetail/TypeId, value: View-MailItems}
+          - {path: EventDetail/Description, value: Mail items were accessed}
+          - {path: EventDetail/View/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/View/Object/Type, value: Mailbox}
           - {path: EventDetail/View/Object/Id, field: event.MailboxOwnerUPN}
       - name: mail_send
         when: [{field: Operation, equals: Send}]
         fields:
+          - {path: EventDetail/TypeId, value: Send-Mail}
+          - {path: EventDetail/Description, value: A message was sent}
+          - {path: EventDetail/Send/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
           - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Item.Recipients, repeat: true}
           - {path: EventDetail/Send/Payload/Email/Name, field: event.Item.Subject}
       - name: inbox_rule
         when: [{field: Operation, equals: New-InboxRule}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-InboxRule}
+          - {path: EventDetail/Description, value: An inbox rule was created}
+          - {path: EventDetail/Create/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Create/Object/Type, value: Inbox rule}
           - {path: EventDetail/Create/Object/Id, field: event.MailboxOwnerUPN}
       - name: mail_deleted
         when: [{field: Operation, equals: MoveToDeletedItems}]
         fields:
+          - {path: EventDetail/TypeId, value: Delete-MailItem}
+          - {path: EventDetail/Description, value: A message was moved to Deleted Items}
+          - {path: EventDetail/Delete/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Delete/Object/Type, value: Email}
           - {path: EventDetail/Delete/Object/Id, field: event.MailboxOwnerUPN}
           - {path: EventDetail/Delete/Data, data_name: folder, field: event.Folder.Path}
       - name: teams_message
         when: [{field: Operation, equals: MessageSent}]
         fields:
+          - {path: EventDetail/TypeId, value: Send-TeamsMessage}
+          - {path: EventDetail/Description, value: A message was posted in Teams}
+          - {path: EventDetail/Send/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
           - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Recipients, repeat: true}
           - {path: EventDetail/Send/Data, data_name: team, field: event.TeamName}
       - name: team_member_added
         when: [{field: Operation, equals: TeamMemberAdded}]
         fields:
+          - {path: EventDetail/TypeId, value: Add-TeamMember}
+          - {path: EventDetail/Description, value: A member was added to a team}
+          - {path: EventDetail/Update/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Update/After/Object/Type, value: Team}
           - {path: EventDetail/Update/After/Object/Id, field: event.TeamName}
       - name: meeting
         when: [{field: Operation, equals: MeetingParticipantDetail}]
         fields:
+          - {path: EventDetail/TypeId, value: View-MeetingDetail}
+          - {path: EventDetail/Description, value: A meeting participant's details were recorded}
+          - {path: EventDetail/View/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/View/Object/Type, value: Teams meeting}
           - {path: EventDetail/View/Object/Id, field: event.MeetingDetailId}

@@ -31,14 +31,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestEvalScore {
 
     private static final String LOGON = event("<EventTime><TimeCreated>2026-09-28T08:01:12.000Z</TimeCreated>"
-                                              + "</EventTime>", "<TypeId>login</TypeId><Authenticate>"
+                                              + "</EventTime>", "<TypeId>Authenticate-Logon</TypeId>"
+                                                                + "<Description>Signed in</Description><Authenticate>"
                                                                 + "<Action>Logon</Action><User><Id>alice</Id></User>"
                                                                 + "<Data Name=\"gateway\" Value=\"vpn-gw1\"/>"
                                                                 + "</Authenticate>");
     private static final String DENY = event("<EventTime><TimeCreated>2026-09-28T08:02:00.000Z</TimeCreated>"
-                                             + "</EventTime>", "<TypeId>deny</TypeId><Network><Deny><Source>"
-                                                               + "<Device><IPAddress>10.0.0.1</IPAddress></Device>"
-                                                               + "</Source></Deny></Network>");
+                                             + "</EventTime>", "<TypeId>Network-Deny</TypeId>"
+                                                               + "<Description>Denied</Description><Network><Deny>"
+                                                               + "<Source><Device><IPAddress>10.0.0.1</IPAddress>"
+                                                               + "</Device></Source></Deny></Network>");
 
     @Test
     void eventsHoldingWhatTheCaseExpectsAreStage1() {
@@ -354,7 +356,7 @@ class TestEvalScore {
     @Test
     void textsAreLookedForAnywhereInAnEvent() {
         final String quoted = event("<EventTime><TimeCreated>2026-09-28T08:01:12.000Z</TimeCreated></EventTime>",
-                "<TypeId>block</TypeId><Description>say \"hi\"</Description><Network><Open><Destination>"
+                "<TypeId>Network-Block</TypeId><Description>say \"hi\"</Description><Network><Open><Destination>"
                 + "<Data Name=\"msg\" Value=\"a &quot;b&quot; c\"/></Destination></Open></Network>");
         final Map<String, Object> expected = Map.of("records", 1, "texts", List.of("say \"hi\"", "a \"b\" c"),
                 "forbidden_texts", List.of("say \\\"hi\\\""));
@@ -579,7 +581,8 @@ class TestEvalScore {
 
     // An event of a TypeId, its Data under Authenticate.
     private static String typed(final String typeId, final String data) {
-        return event("", "<TypeId>" + typeId + "</TypeId><Authenticate><Action>Logon</Action>" + data
+        return event("", "<TypeId>" + typeId + "</TypeId><Description>d</Description><Authenticate>"
+                         + "<Action>Logon</Action>" + data
                          + "</Authenticate>");
     }
 

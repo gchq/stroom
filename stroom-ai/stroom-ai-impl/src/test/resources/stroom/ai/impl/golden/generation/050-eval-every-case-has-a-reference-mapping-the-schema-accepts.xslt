@@ -45,15 +45,16 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'connected': records where event = CONNECT. Writes a Network/Connect event (TypeId from event) from
-       client_addr, client_port, proto, source_zone, tls_ja3, server_addr, server_port, destination_zone,
-       destination_key, conn_id, .... -->
+  <!-- Rule 'connected': records where event = CONNECT. Writes a Network/Connect event (TypeId Network-Connect) from
+       event, client_addr, client_port, proto, source_zone, tls_ja3, server_addr, server_port, destination_zone,
+       destination_key, .... -->
   <xsl:template match="node()" mode="event_type_connected">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Network-Connect</TypeId>
+        <Description>A client connected through the load balancer</Description>
         <Network>
           <Connect>
             <Source>
@@ -64,6 +65,7 @@
               <xsl:sequence select="mcp:data('tls_ja3', data[@name='tls_ja3']/@value)"/>
             </Source>
             <xsl:apply-templates select="." mode="destination"/>
+            <xsl:sequence select="mcp:data('event', data[@name='event']/@value)"/>
             <xsl:sequence select="mcp:data('conn_id', data[@name='conn_id']/@value)"/>
             <xsl:sequence select="mcp:data('policy', data[@name='policy']/@value)"/>
           </Connect>
@@ -71,15 +73,16 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'closed': records where event = DISCONNECT. Writes a Network/Close event (TypeId from event) from
-       client_addr, client_port, proto, source_zone, server_addr, server_port, destination_zone,
-       destination_key, conn_id, bytes_in, .... -->
+  <!-- Rule 'closed': records where event = DISCONNECT. Writes a Network/Close event (TypeId Network-Close) from
+       event, client_addr, client_port, proto, source_zone, server_addr, server_port, destination_zone,
+       destination_key, conn_id, .... -->
   <xsl:template match="node()" mode="event_type_closed">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Network-Close</TypeId>
+        <Description>A connection through the load balancer closed</Description>
         <Network>
           <Close>
             <Source>
@@ -89,6 +92,7 @@
               <xsl:sequence select="mcp:data('source_zone', data[@name='source_zone']/@value)"/>
             </Source>
             <xsl:apply-templates select="." mode="destination"/>
+            <xsl:sequence select="mcp:data('event', data[@name='event']/@value)"/>
             <xsl:sequence select="mcp:data('conn_id', data[@name='conn_id']/@value)"/>
             <xsl:sequence select="mcp:data('bytes_in', data[@name='bytes_in']/@value)"/>
             <xsl:sequence select="mcp:data('bytes_out', data[@name='bytes_out']/@value)"/>
@@ -123,14 +127,6 @@
         </Device>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'connected', 'closed' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="data[@name='event']/@value[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(data[@name='event']/@value)[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- device: shared by the rules 'connected', 'closed' -->
   <xsl:template match="node()" mode="device">

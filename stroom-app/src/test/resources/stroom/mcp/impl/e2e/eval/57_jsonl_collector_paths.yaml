@@ -23,6 +23,10 @@ user_knows: >
   being passed over by the group's pipeline is expected; they are not errors. The system is the Linux estate's log
   collector.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
   records: 160
   event_types: []
   paths: [EventTime/TimeCreated]
@@ -64,17 +68,19 @@ reference:
       - {path: EventSource/Client/IPAddress, any_of: [client, error_client]}
     events:
       - name: access
-        when: [{field: LogFilePath, equals: /var/log/httpd/access_log}]
+        when: [{field: status, present: true}]
         fields:
-          - {path: EventDetail/TypeId, value: HTTP request}
+          - {path: EventDetail/TypeId, value: View-WebPage}
+          - {path: EventDetail/Description, value: The web server answered a request}
           - {path: EventDetail/View/Resource/URL, field: url}
           - {path: EventDetail/View/Resource/HTTPMethod, field: method}
           - {path: EventDetail/View/Resource/ResponseCode, field: status}
           - {path: EventDetail/View/Data, data_name: bytes, field: bytes}
       - name: error
-        when: [{field: LogFilePath, equals: /var/log/httpd/error_log}]
+        when: [{field: error, present: true}]
         fields:
-          - {path: EventDetail/TypeId, value: HTTP error}
+          - {path: EventDetail/TypeId, value: Alert-HTTPError}
+          - {path: EventDetail/Description, field: error}
           - {path: EventDetail/Alert/Type, value: Error}
           - {path: EventDetail/Alert/Severity, field: level, map: {error: Major, warn: Minor, notice: Info}, default: Info}
           - {path: EventDetail/Alert/Description, field: error}

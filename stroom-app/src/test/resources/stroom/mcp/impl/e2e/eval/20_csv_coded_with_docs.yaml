@@ -27,6 +27,7 @@ source_docs: |
   | A17 | Account logged on |
   | A18 | Account failed to log on |
   | A40 | Account logged off |
+  | A52 | Account password changed |
 
   ## Results
 
@@ -36,6 +37,10 @@ source_docs: |
   | R7 | Failure: wrong password |
   | R9 | Failure: account locked out |
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, documentation_only: 1}
   records: 4
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action,
@@ -62,13 +67,36 @@ reference:
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/Client/IPAddress, field: src}
       - {path: EventSource/User/Id, field: usr}
-      - {path: EventDetail/TypeId, field: evt}
       - {path: EventDetail/Authenticate/User/Id, field: usr}
       - {path: EventDetail/Authenticate/Outcome/Success, field: res, map: {R0: "true", R7: "false", R9: "false"}}
     events:
+      # Each documented operation its own event type, its Description the documentation's text.
       - name: logon
-        when: [{field: evt, one_of: [A17, A18]}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+        when: [{field: evt, equals: A17}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: evt, field: evt}
+          - {path: EventDetail/Description, value: Account logged on}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+      - name: failed logon
+        when: [{field: evt, equals: A18}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
+          - {path: EventDetail/Authenticate/Data, data_name: evt, field: evt}
+          - {path: EventDetail/Description, value: Account failed to log on}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
       - name: logoff
         when: [{field: evt, equals: A40}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: evt, field: evt}
+          - {path: EventDetail/Description, value: Account logged off}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+      # Documented, with no record in the sample: an event type from the documentation all the same.
+      - name: password change
+        when: [{field: evt, equals: A52}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-PasswordChange}
+          - {path: EventDetail/Authenticate/Data, data_name: evt, field: evt}
+          - {path: EventDetail/Description, value: Account password changed}
+          - {path: EventDetail/Authenticate/Action, value: ChangePassword}

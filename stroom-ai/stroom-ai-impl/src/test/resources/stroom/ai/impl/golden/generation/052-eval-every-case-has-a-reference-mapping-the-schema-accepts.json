@@ -32,10 +32,6 @@
     "field": "agent"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "action"
-   },
-   {
     "path": "EventDetail/Description",
     "field": "comment",
     "transform": "unescape_quotes"
@@ -51,6 +47,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Create-Ticket"
+     },
+     {
+      "path": "EventDetail/Create/Data",
+      "field": "action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Create/Object/Type",
       "value": "Ticket"
@@ -77,6 +82,21 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "View-Ticket"
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": "comment",
+      "transform": "unescape_quotes",
+      "default": "A ticket was viewed"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
       "path": "EventDetail/View/Object/Type",
       "value": "Ticket"
      },
@@ -98,6 +118,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Update-Ticket"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Update/After/Object/Type",
       "value": "Ticket"
@@ -122,9 +151,9 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[created] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[viewed] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[updated] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[created] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[viewed] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[updated] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -133,6 +162,7 @@
      "data[@name='action']/@value = 'create'"
     ],
     "fields": [
+     "EventDetail/Create/Data[action]",
      "EventDetail/Create/Object/Data[customer]",
      "EventDetail/Create/Object/Id",
      "EventDetail/Create/Object/Type",
@@ -154,6 +184,7 @@
     "fields": [
      "EventDetail/Description",
      "EventDetail/TypeId",
+     "EventDetail/View/Data[action]",
      "EventDetail/View/Object/Id",
      "EventDetail/View/Object/Type",
      "EventSource/Device/HostName",
@@ -175,6 +206,7 @@
      "EventDetail/Update/After/Object/Id",
      "EventDetail/Update/After/Object/State",
      "EventDetail/Update/After/Object/Type",
+     "EventDetail/Update/Data[action]",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",

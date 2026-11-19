@@ -38,10 +38,6 @@
    {
     "path": "EventSource/Client/IPAddress",
     "field": "client_ip"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "operation"
    }
   ],
   "events": [
@@ -54,6 +50,19 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A client signed in through the gateway"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "operation",
+      "data_name": "operation"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -82,6 +91,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "View-Account"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A client read an account"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "field": "operation",
+      "data_name": "operation"
+     },
+     {
       "path": "EventDetail/View/Object/Type",
       "value": "Account"
      },
@@ -109,6 +131,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Update-Account"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A client updated an account"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "operation",
+      "data_name": "operation"
+     },
+     {
       "path": "EventDetail/Update/After/Object/Type",
       "value": "Account"
      },
@@ -132,9 +167,9 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[login] required ['EventTime', 'EventSource/Generator', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[read] required ['EventTime', 'EventSource/Generator', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[update] required ['EventTime', 'EventSource/Generator', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[login] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[read] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[update] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -144,8 +179,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[operation]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -162,7 +199,9 @@
      "*[@key='operation'] = 'GetAccount'"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/TypeId",
+     "EventDetail/View/Data[operation]",
      "EventDetail/View/Object/Id",
      "EventDetail/View/Object/Type",
      "EventDetail/View/Outcome/Success",
@@ -181,9 +220,11 @@
      "*[@key='operation'] = 'UpdateAccount'"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventDetail/Update/After/Object/Id",
      "EventDetail/Update/After/Object/Type",
+     "EventDetail/Update/Data[operation]",
      "EventDetail/Update/Outcome/Success",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

@@ -36,10 +36,6 @@
    {
     "path": "EventSource/Client/IPAddress",
     "field": "src"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "xpath": "concat(data[@name='type']/@value, '-', data[@name='subtype']/@value)"
    }
   ],
   "events": [
@@ -52,6 +48,24 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Network-Session"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "The firewall logged a session"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "subtype",
+      "data_name": "subtype"
+     },
      {
       "path": "EventDetail/Network/Open/Source/Device/IPAddress",
       "field": "src"
@@ -99,7 +113,6 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[session] TypeId is read from its input, which its records may lack: those get TypeId 'session', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[session] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
@@ -109,9 +122,12 @@
      "data[@name='type']/@value = 'TRAFFIC'"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/Network/Open/Data[app]",
      "EventDetail/Network/Open/Data[end_reason]",
      "EventDetail/Network/Open/Data[rule]",
+     "EventDetail/Network/Open/Data[subtype]",
+     "EventDetail/Network/Open/Data[type]",
      "EventDetail/Network/Open/Destination/Device/IPAddress",
      "EventDetail/Network/Open/Destination/Port",
      "EventDetail/Network/Open/Outcome/Permitted",

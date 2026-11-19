@@ -58,14 +58,15 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'login': records where operation = Login. Writes an Authenticate event (TypeId from operation) from
-       payload//User, payload//Result. -->
+  <!-- Rule 'login': records where operation = Login. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       operation, payload//User, payload//Result. -->
   <xsl:template match="node()" mode="event_type_login">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A client signed in through the gateway</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:if test="mcp:parse-xml((*[@key='payload'])[1])//*:User[normalize-space(.)]">
@@ -76,18 +77,20 @@
             </User>
           </xsl:if>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('operation', *[@key='operation'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'read': records where operation = GetAccount. Writes a View event (TypeId from operation) from
+  <!-- Rule 'read': records where operation = GetAccount. Writes a View event (TypeId View-Account) from operation,
        payload//Account/@id, payload//Result. -->
   <xsl:template match="node()" mode="event_type_read">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>View-Account</TypeId>
+        <Description>A client read an account</Description>
         <View>
           <Object>
             <Type>Account</Type>
@@ -98,18 +101,20 @@
             </xsl:if>
           </Object>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('operation', *[@key='operation'])"/>
         </View>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'update': records where operation = UpdateAccount. Writes an Update event (TypeId from operation) from
-       payload//Account/@id, payload//Result. -->
+  <!-- Rule 'update': records where operation = UpdateAccount. Writes an Update event (TypeId Update-Account) from
+       operation, payload//Account/@id, payload//Result. -->
   <xsl:template match="node()" mode="event_type_update">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Update-Account</TypeId>
+        <Description>A client updated an account</Description>
         <Update>
           <After>
             <Object>
@@ -122,6 +127,7 @@
             </Object>
           </After>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('operation', *[@key='operation'])"/>
         </Update>
       </EventDetail>
     </Event>
@@ -167,14 +173,6 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'login', 'read', 'update' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="*[@key='operation'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='operation'])[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- outcome: shared by the rules 'login', 'read', 'update' -->
   <xsl:template match="node()" mode="outcome">
     <xsl:if test="exists($payload_result_to_success?((mcp:parse-xml((*[@key='payload'])[1])//*:Result)[1]))">
@@ -185,4 +183,12 @@
       </Outcome>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

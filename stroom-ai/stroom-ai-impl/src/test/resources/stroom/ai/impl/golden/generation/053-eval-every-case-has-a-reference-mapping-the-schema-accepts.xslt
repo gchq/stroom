@@ -25,7 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'printed': every record. Writes a Print event (TypeId print-job) from document, pages, printer, location. -->
+  <!-- Rule 'printed': every record. Writes a Print event (TypeId Print-Document) from document, pages, printer,
+       location. -->
   <xsl:template match="node()" mode="event_type_printed">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
@@ -58,7 +59,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>print-job</TypeId>
+        <TypeId>Print-Document</TypeId>
+        <Description>A document was printed</Description>
         <Print>
           <Action>FinishPrint</Action>
           <xsl:variable name="pages" select="data[@name='pages']/@value[normalize-space(.)]"/>

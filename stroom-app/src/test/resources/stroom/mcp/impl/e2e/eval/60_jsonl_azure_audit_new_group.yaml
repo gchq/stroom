@@ -19,6 +19,10 @@ user_knows: >
   records being passed over by the Identity pipeline is expected; they are not errors. The system is Microsoft 365.
   Users' Ids stay whole, with their domain (sam.taylor@contoso.example), as Messaging writes them.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 4}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
   records: 72
   event_types: [Authenticate, Authorise|Update]
   paths: [EventTime/TimeCreated, EventSource/User/Id]
@@ -26,8 +30,9 @@ expected:
     EventSource/User/Id: [kate.jones@contoso.example, svc-batch@contoso.example, sam.taylor@contoso.example]
   # The other workloads' operations: their records are passed over, never translated.
   forbidden_values:
-    EventDetail/TypeId: [FileAccessed, SharingSet, MailItemsAccessed, Send, MessageSent, TeamMemberAdded]
     EventSource/Generator: [SharePoint, OneDrive, ExchangeOnline, MicrosoftTeams]
+  # Their operations, the vendor's code, which every event holds as Data: in none.
+  forbidden_texts: [FileAccessed, SharingSet, MailItemsAccessed, Send, MessageSent, TeamMemberAdded]
   source_types:
     field: Workload
     group:
@@ -60,17 +65,22 @@ reference:
       - {path: EventSource/Device/Name, value: Microsoft 365}
       - {path: EventSource/User/Id, field: UserId}
       - {path: EventSource/Client/IPAddress, field: ClientIP}
-      - {path: EventDetail/TypeId, field: Operation}
     events:
       - name: logon
         when: [{field: Operation, equals: UserLoggedIn}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in}
+          - {path: EventDetail/Authenticate/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: UserId}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'true'}
       - name: logon_failed
         when: [{field: Operation, equals: UserLoginFailed}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
+          - {path: EventDetail/Description, value: A user failed to sign in}
+          - {path: EventDetail/Authenticate/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: UserId}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
@@ -78,10 +88,16 @@ reference:
       - name: password_reset
         when: [{field: Operation, equals: Reset user password.}]
         fields:
+          - {path: EventDetail/TypeId, value: Reset-Password}
+          - {path: EventDetail/Description, value: A user's password was reset}
+          - {path: EventDetail/Authenticate/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authenticate/Action, value: ResetPassword}
           - {path: EventDetail/Authenticate/User/Id, field: UserId}
       - name: role_member_added
         when: [{field: Operation, equals: Add member to role.}]
         fields:
+          - {path: EventDetail/TypeId, value: Add-RoleMember}
+          - {path: EventDetail/Description, value: A member was added to a role}
+          - {path: EventDetail/Update/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Update/After/Object/Type, value: Role membership}
           - {path: EventDetail/Update/After/Object/Id, field: UserId}

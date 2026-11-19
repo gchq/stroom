@@ -6,6 +6,10 @@ request: >
   time; the real event is JSON held as a string in the message field: user, event (login or logout) and ok.
   Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Authenticate/Action]
@@ -23,13 +27,20 @@ reference:
       - {path: EventSource/Generator, value: log-shipper}
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/Id, xpath: "json-to-xml(*[@key='message'])/*/*[@key='user']"}
-      - {path: EventDetail/TypeId, xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']"}
       - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='message'])/*/*[@key='user']"}
       - {path: EventDetail/Authenticate/Outcome/Success, xpath: "json-to-xml(*[@key='message'])/*/*[@key='ok']"}
     events:
       - name: logon
         when: [{xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']", equals: login}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in to the application}
+          - {path: EventDetail/Authenticate/Data, data_name: event, xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']"}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
       - name: logoff
         when: [{xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']", equals: logout}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: A user signed out of the application}
+          - {path: EventDetail/Authenticate/Data, data_name: event, xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']"}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}

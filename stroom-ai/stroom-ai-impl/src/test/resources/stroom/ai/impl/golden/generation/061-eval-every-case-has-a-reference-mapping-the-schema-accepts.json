@@ -28,10 +28,6 @@
    {
     "path": "EventSource/Device/HostName",
     "field": "System/Computer"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "System/EventID"
    }
   ],
   "events": [
@@ -44,6 +40,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "An account was successfully logged on"
@@ -75,6 +80,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-FailedLogon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "An account failed to log on"
@@ -111,6 +125,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "An account was logged off"
      },
@@ -138,6 +161,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-UserLogoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "User initiated logoff"
      },
@@ -164,6 +196,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-ExplicitCredentials"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "A logon was attempted using explicit credentials"
@@ -197,6 +238,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-SpecialPrivileges"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "Special privileges assigned to new logon"
      },
@@ -228,6 +278,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Process-Start"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "A new process has been created"
@@ -264,6 +323,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Process-Exit"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A process has exited"
      },
@@ -295,6 +363,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Install-Service"
+     },
+     {
+      "path": "EventDetail/Install/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A service was installed in the system"
      },
@@ -322,6 +399,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Update-AuditPolicy"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "System audit policy was changed"
@@ -355,6 +441,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Create-UserAccount"
+     },
+     {
+      "path": "EventDetail/Create/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A user account was created"
      },
@@ -377,6 +472,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Enable-UserAccount"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "A user account was enabled"
@@ -406,6 +510,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Change-Password"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "An attempt was made to change an account's password"
      },
@@ -433,6 +546,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Reset-Password"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "An attempt was made to reset an account's password"
      },
@@ -459,6 +581,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Disable-UserAccount"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "A user account was disabled"
@@ -488,6 +619,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Delete-UserAccount"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A user account was deleted"
      },
@@ -510,6 +650,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Add-GroupMember"
+     },
+     {
+      "path": "EventDetail/Authorise/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "A member was added to a security-enabled global group"
@@ -542,6 +691,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Remove-GroupMember"
+     },
+     {
+      "path": "EventDetail/Authorise/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A member was removed from a security-enabled global group"
      },
@@ -573,6 +731,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Lock-UserAccount"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A user account was locked out"
      },
@@ -599,6 +766,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Unlock-UserAccount"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
      {
       "path": "EventDetail/Description",
       "value": "A user account was unlocked"
@@ -627,6 +803,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Clear-AuditLog"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "The audit log was cleared"
      },
@@ -654,6 +839,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Access-NetworkShare"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "field": "System/EventID",
+      "data_name": "EventID"
+     },
+     {
       "path": "EventDetail/Description",
       "value": "A network share object was accessed"
      },
@@ -677,28 +871,28 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[an account was successfully logged on] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[an account failed to log on] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[an account was logged off] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[user initiated logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a logon was attempted using explicit credentials] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[special privileges assigned to new logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a new process has been created] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a process has exited] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a service was installed in the system] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Install/Software/Name'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[system audit policy was changed] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a user account was created] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a user account was enabled] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[an attempt was made to change an accounts password] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[an attempt was made to reset an accounts password] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a user account was disabled] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a user account was deleted] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a member was added to a security-enabled global group] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a member was removed from a security-enabled global group] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a user account was locked out] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a user account was unlocked] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[the audit log was cleared] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[a network share object was accessed] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[an account was successfully logged on] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[an account failed to log on] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[an account was logged off] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[user initiated logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a logon was attempted using explicit credentials] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[special privileges assigned to new logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a new process has been created] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a process has exited] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a service was installed in the system] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Install/Software/Name'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[system audit policy was changed] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a user account was created] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a user account was enabled] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[an attempt was made to change an accounts password] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[an attempt was made to reset an accounts password] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a user account was disabled] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a user account was deleted] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a member was added to a security-enabled global group] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a member was removed from a security-enabled global group] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a user account was locked out] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a user account was unlocked] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[the audit log was cleared] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[a network share object was accessed] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -708,6 +902,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -727,6 +922,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -747,6 +943,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -765,6 +962,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -783,6 +981,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/Data[target_server]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -802,6 +1001,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/Data[privileges]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -824,6 +1024,7 @@
      "EventDetail/Process/Action",
      "EventDetail/Process/Arguments",
      "EventDetail/Process/Command",
+     "EventDetail/Process/Data[EventID]",
      "EventDetail/Process/Type",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
@@ -843,6 +1044,7 @@
      "EventDetail/Description",
      "EventDetail/Process/Action",
      "EventDetail/Process/Command",
+     "EventDetail/Process/Data[EventID]",
      "EventDetail/Process/Type",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
@@ -860,6 +1062,7 @@
     ],
     "fields": [
      "EventDetail/Description",
+     "EventDetail/Install/Data[EventID]",
      "EventDetail/Install/Software/Data[file]",
      "EventDetail/Install/Software/Name",
      "EventDetail/TypeId",
@@ -882,6 +1085,7 @@
      "EventDetail/Update/After/Configuration/Data[change]",
      "EventDetail/Update/After/Configuration/Name",
      "EventDetail/Update/After/Configuration/Type",
+     "EventDetail/Update/Data[EventID]",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
@@ -896,6 +1100,7 @@
      "System/EventID = '4720'"
     ],
     "fields": [
+     "EventDetail/Create/Data[EventID]",
      "EventDetail/Create/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -917,6 +1122,7 @@
      "EventDetail/TypeId",
      "EventDetail/Update/After/User/Data[change]",
      "EventDetail/Update/After/User/Id",
+     "EventDetail/Update/Data[EventID]",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
@@ -932,6 +1138,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -950,6 +1157,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -971,6 +1179,7 @@
      "EventDetail/TypeId",
      "EventDetail/Update/After/User/Data[change]",
      "EventDetail/Update/After/User/Id",
+     "EventDetail/Update/Data[EventID]",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
@@ -985,6 +1194,7 @@
      "System/EventID = '4726'"
     ],
     "fields": [
+     "EventDetail/Delete/Data[EventID]",
      "EventDetail/Delete/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -1004,6 +1214,7 @@
     "fields": [
      "EventDetail/Authorise/Action",
      "EventDetail/Authorise/AddGroups/Group/Id",
+     "EventDetail/Authorise/Data[EventID]",
      "EventDetail/Authorise/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -1022,6 +1233,7 @@
     ],
     "fields": [
      "EventDetail/Authorise/Action",
+     "EventDetail/Authorise/Data[EventID]",
      "EventDetail/Authorise/RemoveGroups/Group/Id",
      "EventDetail/Authorise/User/Id",
      "EventDetail/Description",
@@ -1041,6 +1253,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -1059,6 +1272,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[EventID]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -1076,6 +1290,7 @@
      "System/EventID = '1102'"
     ],
     "fields": [
+     "EventDetail/Delete/Data[EventID]",
      "EventDetail/Delete/Object/Name",
      "EventDetail/Delete/Object/Type",
      "EventDetail/Description",
@@ -1096,6 +1311,7 @@
     "fields": [
      "EventDetail/Description",
      "EventDetail/TypeId",
+     "EventDetail/View/Data[EventID]",
      "EventDetail/View/Folder/Path",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

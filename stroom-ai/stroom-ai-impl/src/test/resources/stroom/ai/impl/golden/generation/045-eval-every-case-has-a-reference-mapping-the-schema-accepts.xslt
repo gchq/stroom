@@ -52,34 +52,40 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where action = LOGIN. Writes an Authenticate event (TypeId from action). -->
+  <!-- Rule 'logon': records where action = LOGIN. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       action. -->
   <xsl:template match="node()" mode="event_type_logon">
     <xsl:param name="record" tunnel="yes"/>
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in to the application</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:sequence select="mcp:data('batch', $record/*[@key='batch'])"/>
+          <xsl:sequence select="mcp:data('action', *[@key='action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where action = LOGOUT. Writes an Authenticate event (TypeId from action). -->
+  <!-- Rule 'logoff': records where action = LOGOUT. Writes an Authenticate event (TypeId Authenticate-Logoff) from
+       action. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <xsl:param name="record" tunnel="yes"/>
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>A user signed out of the application</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:sequence select="mcp:data('batch', $record/*[@key='batch'])"/>
+          <xsl:sequence select="mcp:data('action', *[@key='action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -132,14 +138,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="*[@key='action'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='action'])[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">

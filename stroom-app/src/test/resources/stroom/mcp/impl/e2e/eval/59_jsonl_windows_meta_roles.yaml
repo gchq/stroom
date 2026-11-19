@@ -23,6 +23,10 @@ user_knows: >
   and workstations send no roles at all. The parts of other hosts being passed over by the group's pipeline is
   expected; they are not errors. The system is Windows.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 4}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
   records: 43
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName|EventSource/Device/Name]
@@ -33,7 +37,8 @@ expected:
     EventSource/Device/HostName|EventSource/Device/Name: [fs01.corp.example, ws-0142.corp.example, web01.corp.example,
                                                           ws-0187.corp.example, dns02.corp.example,
                                                           ws-0203.corp.example]
-    EventDetail/TypeId: ["4688", "4663"]
+  # The other source types' EventIDs, the vendor's code, which every event holds as Data: in none.
+  forbidden_texts: ["4688", "4663"]
   source_types:
     field: meta:WindowsServerInstalledServedRoles
     group:
@@ -63,30 +68,37 @@ reference:
       - {path: EventSource/Device/HostName, field: Hostname}
       - {path: EventSource/User/Id, field: TargetUserName}
       - {path: EventSource/Client/IPAddress, field: IpAddress}
-      - {path: EventDetail/TypeId, field: EventID}
       - {path: EventDetail/Description, field: Message}
     events:
       - name: logon
         when: [{field: EventID, equals: "4624"}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: EventID}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
           - {path: EventDetail/Authenticate/Outcome/Success, value: "true"}
       - name: logon_failed
         when: [{field: EventID, equals: "4625"}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: EventID}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
           - {path: EventDetail/Authenticate/Outcome/Success, value: "false"}
       - name: ticket_granting_ticket
         when: [{field: EventID, equals: "4768"}]
         fields:
+          - {path: EventDetail/TypeId, value: Request-KerberosTicket}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: EventID}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
           - {path: EventDetail/Authenticate/Data, data_name: ticket, value: TGT}
       - name: service_ticket
         when: [{field: EventID, equals: "4769"}]
         fields:
+          - {path: EventDetail/TypeId, value: Request-ServiceTicket}
+          - {path: EventDetail/Authenticate/Data, data_name: EventID, field: EventID}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: TargetUserName}
           - {path: EventDetail/Authenticate/Data, data_name: ticket, value: service}

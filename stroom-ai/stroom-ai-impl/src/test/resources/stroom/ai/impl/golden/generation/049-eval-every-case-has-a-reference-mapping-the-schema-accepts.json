@@ -36,10 +36,6 @@
     "field": "usr"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "evt"
-   },
-   {
     "path": "EventDetail/Authenticate/User/Id",
     "field": "usr"
    },
@@ -59,13 +55,51 @@
     "when": [
      {
       "field": "evt",
-      "one_of": [
-       "A17",
-       "A18"
-      ]
+      "equals": "A17"
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "evt",
+      "data_name": "evt"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "Account logged on"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     }
+    ]
+   },
+   {
+    "name": "failed logon",
+    "when": [
+     {
+      "field": "evt",
+      "equals": "A18"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-FailedLogon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "evt",
+      "data_name": "evt"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "Account failed to log on"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -82,8 +116,49 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "evt",
+      "data_name": "evt"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "Account logged off"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
+     }
+    ]
+   },
+   {
+    "name": "password change",
+    "when": [
+     {
+      "field": "evt",
+      "equals": "A52"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-PasswordChange"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "evt",
+      "data_name": "evt"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "Account password changed"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "ChangePassword"
      }
     ]
    }
@@ -93,19 +168,44 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[failed logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[password change] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
     "event": "logon",
     "when": [
-     "data[@name='evt']/@value = ('A17', 'A18')"
+     "data[@name='evt']/@value = 'A17'"
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[evt]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "failed logon",
+    "when": [
+     "data[@name='evt']/@value = 'A18'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[evt]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -123,8 +223,31 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[evt]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "password change",
+    "when": [
+     "data[@name='evt']/@value = 'A52'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[evt]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

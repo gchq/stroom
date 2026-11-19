@@ -64,10 +64,6 @@
     "field": "user"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "action"
-   },
-   {
     "path": "EventDetail/Description",
     "field": "desc"
    }
@@ -82,6 +78,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -110,6 +115,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      },
@@ -125,8 +139,8 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -136,6 +150,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -156,6 +171,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -347,24 +363,6 @@
     "data_name": null
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "action",
-    "any_of": null,
-    "value": null,
-    "xpath": null,
-    "meta": null,
-    "lookup": null,
-    "dictionary": null,
-    "transform": null,
-    "repeat": false,
-    "scope": null,
-    "time_format": null,
-    "timezone": null,
-    "map": null,
-    "default": null,
-    "data_name": null
-   },
-   {
     "path": "EventDetail/Description",
     "field": "desc",
     "any_of": null,
@@ -402,6 +400,42 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "Authenticate-Logon",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "field": null,
@@ -484,6 +518,42 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "Authenticate-Logoff",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "field": null,

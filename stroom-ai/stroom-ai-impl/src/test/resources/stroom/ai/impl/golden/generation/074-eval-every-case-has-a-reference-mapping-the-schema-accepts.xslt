@@ -59,49 +59,55 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where json.action = login. Writes an Authenticate event (TypeId from json.action) from
-       json.user, json.result. -->
+  <!-- Rule 'logon': records where json.action = login. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       json.action, json.user, json.result. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('action', mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where json.action = logout. Writes an Authenticate event (TypeId from json.action) from
-       json.user. -->
+  <!-- Rule 'logoff': records where json.action = logout. Writes an Authenticate event (TypeId Authenticate-Logoff)
+       from json.action, json.user. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>A user signed out</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('action', mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'password': records where json.action = password_change. Writes an Authenticate event (TypeId from
-       json.action) from json.user, json.result. -->
+  <!-- Rule 'password': records where json.action = password_change. Writes an Authenticate event (TypeId
+       Authenticate-PasswordChange) from json.action, json.user, json.result. -->
   <xsl:template match="node()" mode="event_type_password">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-PasswordChange</TypeId>
+        <Description>A user changed their password</Description>
         <Authenticate>
           <Action>ChangePassword</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('action', mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -143,14 +149,6 @@
       </xsl:if>
     </EventSource>
   </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff', 'password' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])[1]"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff', 'password' -->
   <xsl:template match="node()" mode="user">
     <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'][normalize-space(.)]">
@@ -171,4 +169,12 @@
       </Outcome>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

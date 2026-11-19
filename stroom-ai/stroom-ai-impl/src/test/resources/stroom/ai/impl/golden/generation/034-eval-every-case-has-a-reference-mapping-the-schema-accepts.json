@@ -47,7 +47,16 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "File-Read"
+      "value": "View-File"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A file on the share was read"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "field": "op",
+      "data_name": "op"
      },
      {
       "path": "EventDetail/View/File/Path",
@@ -66,7 +75,16 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "File-Delete"
+      "value": "Delete-File"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A file on the share was deleted"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "op",
+      "data_name": "op"
      },
      {
       "path": "EventDetail/Delete/File/Path",
@@ -90,7 +108,9 @@
      "op = 'read'"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/TypeId",
+     "EventDetail/View/Data[op]",
      "EventDetail/View/File/Path",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -106,7 +126,9 @@
      "op = 'delete'"
     ],
     "fields": [
+     "EventDetail/Delete/Data[op]",
      "EventDetail/Delete/File/Path",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",

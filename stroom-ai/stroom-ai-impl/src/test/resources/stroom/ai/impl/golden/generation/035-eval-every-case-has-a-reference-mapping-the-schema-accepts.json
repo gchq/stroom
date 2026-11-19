@@ -46,7 +46,11 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "SSH-Logon"
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in over SSH, or tried to"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -88,6 +92,7 @@
      "EventDetail/Authenticate/Data[method]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Client/Port",

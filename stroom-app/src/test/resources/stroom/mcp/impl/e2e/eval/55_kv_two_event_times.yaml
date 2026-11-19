@@ -5,6 +5,10 @@ request: >
   Onboard this application's audit log (key=value pairs, one line an action). The application writes ts when the
   user acted; our log collector adds logged_at when it wrote the line, a few seconds later. Index the events by user.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 4
   event_types: []
   paths: [EventTime/TimeCreated, EventSource/User/Id]
@@ -44,13 +48,18 @@ reference:
       - {path: EventSource/Generator, value: records-app}
       - {path: EventSource/Device/HostName, value: app01}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
     events:
       - name: read
         when: [{field: action, equals: read}]
         fields:
+          - {path: EventDetail/TypeId, value: View-Record}
+          - {path: EventDetail/Description, value: A user read a record}
+          - {path: EventDetail/View/Data, data_name: action, field: action}
           - {path: EventDetail/View/Document/Id, field: record}
       - name: write
         when: [{field: action, equals: write}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Record}
+          - {path: EventDetail/Description, value: A user changed a record}
+          - {path: EventDetail/Update/Data, data_name: action, field: action}
           - {path: EventDetail/Update/After/Document/Id, field: record}

@@ -62,7 +62,16 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "VPN-Logon"
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in to the VPN"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -83,20 +92,50 @@
     "when": [
      {
       "field": "action",
-      "one_of": [
-       "logout",
-       "timeout"
-      ]
+      "equals": "logout"
      }
     ],
     "fields": [
      {
       "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed out of the VPN, or their session timed out"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
       "field": "action",
-      "map": {
-       "logout": "VPN-Logoff",
-       "timeout": "VPN-Timeout"
-      }
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     }
+    ]
+   },
+   {
+    "name": "timeout",
+    "when": [
+     {
+      "field": "action",
+      "equals": "timeout"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed out of the VPN, or their session timed out"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -111,8 +150,8 @@
   "problems": [],
   "warnings": [
    "[logon] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] TypeId is read from action, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[logoff] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[logoff] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[timeout] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -122,8 +161,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -137,11 +178,33 @@
    {
     "event": "logoff",
     "when": [
-     "data[@name='action']/@value = ('logout', 'timeout')"
+     "data[@name='action']/@value = 'logout'"
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "timeout",
+    "when": [
+     "data[@name='action']/@value = 'timeout'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

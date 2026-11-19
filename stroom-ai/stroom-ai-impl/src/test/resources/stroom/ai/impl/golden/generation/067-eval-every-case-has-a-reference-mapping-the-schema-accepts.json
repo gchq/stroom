@@ -41,6 +41,10 @@
   ],
   "common": [
    {
+    "path": "EventDetail/Description",
+    "field": "message"
+   },
+   {
     "path": "EventTime/TimeCreated",
     "field": "time",
     "time_format": "yyyy-MM-dd HH:mm:ss,SSS",
@@ -70,10 +74,6 @@
      "customer",
      "admin"
     ]
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "logger"
    }
   ],
   "events": [
@@ -86,6 +86,10 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -106,6 +110,10 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      },
@@ -124,6 +132,10 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-FailedLogon"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -152,6 +164,10 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Create-Invoice"
+     },
+     {
       "path": "EventDetail/Create/Object/Type",
       "value": "Invoice"
      },
@@ -171,6 +187,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Alert-PaymentError"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "level",
+      "data_name": "level"
+     },
+     {
       "path": "EventDetail/Alert/Type",
       "value": "Error"
      },
@@ -189,6 +214,10 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Update-Setting"
+     },
      {
       "path": "EventDetail/Update/After/Object/Type",
       "value": "Setting"
@@ -215,17 +244,11 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] TypeId is read from logger, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logon] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] TypeId is read from logger, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logoff] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logon-failed] TypeId is read from logger, which its records may lack: those get TypeId 'logon-failed', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logon-failed] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[invoice] TypeId is read from logger, which its records may lack: those get TypeId 'invoice', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[invoice] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[payment-error] TypeId is read from logger, which its records may lack: those get TypeId 'payment-error', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[payment-error] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[config] TypeId is read from logger, which its records may lack: those get TypeId 'config', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[config] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "extract names ['failed_from'], which nothing reads: map each to the element that means it (a Data entry if nothing else fits), or leave it out of names ('')."
   ],
@@ -238,6 +261,7 @@
     "fields": [
      "EventDetail/Authenticate/Action",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -255,6 +279,7 @@
     "fields": [
      "EventDetail/Authenticate/Action",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -274,6 +299,7 @@
      "EventDetail/Authenticate/Outcome/Description",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -291,6 +317,7 @@
     "fields": [
      "EventDetail/Create/Object/Description",
      "EventDetail/Create/Object/Type",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -306,8 +333,10 @@
      "data[@name='level']/@value = 'ERROR'"
     ],
     "fields": [
+     "EventDetail/Alert/Data[level]",
      "EventDetail/Alert/Description",
      "EventDetail/Alert/Type",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -323,6 +352,7 @@
      "exists(data[@name='message']/@value[matches(., '^Setting ')])"
     ],
     "fields": [
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventDetail/Update/After/Object/Id",
      "EventDetail/Update/After/Object/Type",

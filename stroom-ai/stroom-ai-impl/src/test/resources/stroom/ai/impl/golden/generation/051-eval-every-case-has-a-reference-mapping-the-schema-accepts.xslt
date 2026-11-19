@@ -45,14 +45,14 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where cef_signature_id in 1001, 1002. Writes an Authenticate event (TypeId from
-       cef_signature_id) from suser, outcome. -->
+  <!-- Rule 'logon': records where cef_signature_id in 1001, 1002. Writes an Authenticate event (TypeId
+       Authenticate-Logon) from cef_signature_id, suser, outcome. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
@@ -64,98 +64,100 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:sequence select="mcp:data('cef_signature_id', data[@name='cef_signature_id']/@value)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where cef_signature_id = 1003. Writes an Authenticate event (TypeId from
-       cef_signature_id) from suser. -->
+  <!-- Rule 'logoff': records where cef_signature_id = 1003. Writes an Authenticate event (TypeId Authenticate-Logoff)
+       from cef_signature_id, suser. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('cef_signature_id', data[@name='cef_signature_id']/@value)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'web request': records where cef_signature_id in 2001, 2002. Writes a Network/Open event (TypeId from
-       cef_signature_id) from src, dst, dpt, request, cat, act. -->
+  <!-- Rule 'web request': records where cef_signature_id in 2001, 2002. Writes a Network/Open event (TypeId
+       Network-WebRequest) from cef_signature_id, src, dst, dpt, request, cat, act. -->
   <xsl:template match="node()" mode="event_type_web_request">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:variable name="act" select="data[@name='act']/@value[normalize-space(.)]"/>
-      <xsl:variable name="cat" select="data[@name='cat']/@value[normalize-space(.)]"/>
-      <xsl:variable name="request" select="data[@name='request']/@value[normalize-space(.)]"/>
-      <xsl:variable name="dpt" select="data[@name='dpt']/@value[normalize-space(.)]"/>
-      <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)]"/>
-      <xsl:variable name="src" select="data[@name='src']/@value[normalize-space(.)]"/>
-      <xsl:if test="data[@name='cef_signature_id']/@value[normalize-space(.)] or exists(((data[@name='msg']/@value, data[@name='cef_name']/@value)[normalize-space(.)][1])[normalize-space(.)]) or $src or $dst or $dpt or $request or $cat or $act[1] = ('allow', 'block')">
-        <EventDetail>
-          <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:apply-templates select="." mode="description"/>
-          <xsl:if test="$src or $dst or $dpt or $request or $cat or $act[1] = ('allow', 'block')">
-            <Network>
-              <Open>
-                <xsl:if test="$src">
-                  <Source>
+      <EventDetail>
+        <TypeId>Network-WebRequest</TypeId>
+        <xsl:apply-templates select="." mode="description"/>
+        <xsl:variable name="act" select="data[@name='act']/@value[normalize-space(.)]"/>
+        <xsl:variable name="cat" select="data[@name='cat']/@value[normalize-space(.)]"/>
+        <xsl:variable name="request" select="data[@name='request']/@value[normalize-space(.)]"/>
+        <xsl:variable name="dpt" select="data[@name='dpt']/@value[normalize-space(.)]"/>
+        <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)]"/>
+        <xsl:variable name="src" select="data[@name='src']/@value[normalize-space(.)]"/>
+        <xsl:if test="$src or $dst or $dpt or $request or $cat or $act[1] = ('allow', 'block') or data[@name='cef_signature_id']/@value[normalize-space(.)]">
+          <Network>
+            <Open>
+              <xsl:if test="$src">
+                <Source>
+                  <Device>
+                    <IPAddress>
+                      <xsl:value-of select="$src[1]"/>
+                    </IPAddress>
+                  </Device>
+                </Source>
+              </xsl:if>
+              <xsl:if test="$dst or $dpt or $request or $cat">
+                <Destination>
+                  <xsl:if test="$dst">
                     <Device>
                       <IPAddress>
-                        <xsl:value-of select="$src[1]"/>
+                        <xsl:value-of select="$dst[1]"/>
                       </IPAddress>
                     </Device>
-                  </Source>
-                </xsl:if>
-                <xsl:if test="$dst or $dpt or $request or $cat">
-                  <Destination>
-                    <xsl:if test="$dst">
-                      <Device>
-                        <IPAddress>
-                          <xsl:value-of select="$dst[1]"/>
-                        </IPAddress>
-                      </Device>
-                    </xsl:if>
-                    <xsl:if test="$dpt">
-                      <Port>
-                        <xsl:value-of select="$dpt[1]"/>
-                      </Port>
-                    </xsl:if>
-                    <xsl:sequence select="mcp:data('url', $request)"/>
-                    <xsl:sequence select="mcp:data('category', $cat)"/>
-                  </Destination>
-                </xsl:if>
-                <xsl:if test="$act[1] = ('allow', 'block')">
-                  <Outcome>
-                    <Permitted>
-                      <xsl:value-of select="if ($act[1] = 'allow') then 'true' else 'false'"/>
-                    </Permitted>
-                  </Outcome>
-                </xsl:if>
-              </Open>
-            </Network>
-          </xsl:if>
-        </EventDetail>
-      </xsl:if>
+                  </xsl:if>
+                  <xsl:if test="$dpt">
+                    <Port>
+                      <xsl:value-of select="$dpt[1]"/>
+                    </Port>
+                  </xsl:if>
+                  <xsl:sequence select="mcp:data('url', $request)"/>
+                  <xsl:sequence select="mcp:data('category', $cat)"/>
+                </Destination>
+              </xsl:if>
+              <xsl:if test="$act[1] = ('allow', 'block')">
+                <Outcome>
+                  <Permitted>
+                    <xsl:value-of select="if ($act[1] = 'allow') then 'true' else 'false'"/>
+                  </Permitted>
+                </Outcome>
+              </xsl:if>
+              <xsl:sequence select="mcp:data('cef_signature_id', data[@name='cef_signature_id']/@value)"/>
+            </Open>
+          </Network>
+        </xsl:if>
+      </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'malware': records where cef_signature_id = 3001. Writes an Alert event (TypeId from cef_signature_id)
-       from fname, fileHash, act. -->
+  <!-- Rule 'malware': records where cef_signature_id = 3001. Writes an Alert event (TypeId Alert-Malware) from
+       cef_signature_id, fname, fileHash, act. -->
   <xsl:template match="node()" mode="event_type_malware">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Alert-Malware</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Alert>
           <Type>Malware</Type>
           <Severity>Major</Severity>
+          <xsl:sequence select="mcp:data('cef_signature_id', data[@name='cef_signature_id']/@value)"/>
           <xsl:sequence select="mcp:data('file', data[@name='fname']/@value)"/>
           <xsl:sequence select="mcp:data('sha_or_md5', data[@name='fileHash']/@value)"/>
           <xsl:sequence select="mcp:data('action', data[@name='act']/@value)"/>
@@ -211,14 +213,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff', 'web request', 'malware' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="data[@name='cef_signature_id']/@value[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(data[@name='cef_signature_id']/@value)[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff', 'web request', 'malware' -->
   <xsl:template match="node()" mode="description">

@@ -65,8 +65,8 @@ final class EvalScore {
     private static final Pattern VERB_OBJECT_ID = Pattern.compile("[A-Z][A-Za-z]*-[A-Z][A-Za-z0-9]*");
     // What a build case is scored on when it doesn't say: TypeIds of this pattern, and whether every event (but
     // the catch-all's Unknown ones) must have a Description.
-    private static final String DEFAULT_TYPE_ID_PATTERN = ANY;
-    private static final boolean DEFAULT_DESCRIPTION_EVERY_EVENT = false;
+    private static final String DEFAULT_TYPE_ID_PATTERN = VERB_OBJECT;
+    private static final boolean DEFAULT_DESCRIPTION_EVERY_EVENT = true;
     private static final String UNKNOWN = "Unknown";
     private static final String CONFIRMED = "confirmed";
     private static final String DOCUMENTATION = "documentation";

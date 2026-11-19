@@ -9,6 +9,10 @@ capabilities: [multiline, event_boundaries, format_recognition]
 request: >
   Onboard our API pod's container log (from the node's /var/log/pods; the file is on my disk). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 500
   event_types: [Authenticate, Export]
   forbidden_types: [Unknown]
@@ -33,22 +37,30 @@ reference:
       - {path: EventSource/Generator, field: stream}
       - {path: EventSource/Device/HostName, field: pod}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
     events:
       - name: logon
         when: [{field: action, equals: login}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
       - name: logoff
         when: [{field: action, equals: logout}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: A user signed out}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user}
       - name: export
         when: [{field: action, equals: export}]
         fields:
+          - {path: EventDetail/TypeId, value: Export-Data}
+          - {path: EventDetail/Description, value: A user exported data}
+          - {path: EventDetail/Export/Data, data_name: action, field: action}
           - {path: EventDetail/Export/Source/Object/Type, value: Records}
           - {path: EventDetail/Export/Source/Object/Description, field: detail}
           - {path: EventDetail/Export/Data, data_name: rows, field: rows}

@@ -21,6 +21,10 @@ user_knows: >
   for later builds (parked). Records of other source types being passed over by the group's pipeline is expected;
   they are not errors. A few SOAP bodies are cut off by PEGA's logger; keep those records anyway. The system is PEGA.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
   records: 52
   event_types: [View, Create, Update]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName]
@@ -38,6 +42,8 @@ expected:
     passed_over: 548
 files:
   - {name: pega.json, resource: aggregated/pega/pega-1.json, lines: 600}
+# The reference's rules use the event type catalogue's conditions (`not`, the catch_all flag): its reference build
+# waits for the generator to read them (phase 1).
 reference:
   source_types:
     field: sourcetype
@@ -64,7 +70,9 @@ reference:
       - name: get_customer
         when: [{field: operation, equals: GetCustomer}]
         fields:
-          - {path: EventDetail/TypeId, value: GetCustomer}
+          - {path: EventDetail/TypeId, value: View-Customer}
+          - {path: EventDetail/Description, value: A customer record was read through the SOAP service}
+          - {path: EventDetail/View/Data, data_name: operation, field: operation}
           - {path: EventDetail/View/Object/Type, value: Customer}
           - {path: EventDetail/View/Object/Id, field: soap//CustomerId}
           - {path: EventDetail/View/Data, data_name: direction, field: direction}
@@ -72,18 +80,23 @@ reference:
       - name: create_case
         when: [{field: operation, equals: CreateCase}]
         fields:
-          - {path: EventDetail/TypeId, value: CreateCase}
+          - {path: EventDetail/TypeId, value: Create-Case}
+          - {path: EventDetail/Description, value: A case was created through the SOAP service}
+          - {path: EventDetail/Create/Data, data_name: operation, field: operation}
           - {path: EventDetail/Create/Object/Type, value: Case}
           - {path: EventDetail/Create/Data, data_name: customer, field: soap//CustomerId}
           - {path: EventDetail/Create/Data, data_name: correlation, field: soap//CorrelationId}
       - name: update_address
         when: [{field: operation, equals: UpdateAddress}]
         fields:
-          - {path: EventDetail/TypeId, value: UpdateAddress}
+          - {path: EventDetail/TypeId, value: Update-Address}
+          - {path: EventDetail/Description, value: A customer's address was updated through the SOAP service}
+          - {path: EventDetail/Update/Data, data_name: operation, field: operation}
           - {path: EventDetail/Update/After/Object/Type, value: Customer address}
           - {path: EventDetail/Update/After/Object/Id, field: soap//CustomerId}
       - name: cut_off
+        catch_all: true
         allow_unknown: SOAP bodies PEGA's logger cut off, the call unknown
         fields:
-          - {path: EventDetail/TypeId, field: direction}
+          - {path: EventDetail/TypeId, value: Unknown}
           - {path: EventDetail/Unknown/Data, data_name: message, field: message}

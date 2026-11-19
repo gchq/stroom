@@ -60,23 +60,18 @@
     </xsl:if>
   </xsl:template>
   <!-- Rule 'logon': records where json-to-xml(*[@key='event'])/*/*[@key='event_type'] in LOGIN_SUCCESS,
-       LOGIN_FAILURE. Writes an Authenticate event. -->
+       LOGIN_FAILURE. Writes an Authenticate event (TypeId Authenticate-Logon). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
-        <TypeId>
-          <xsl:if test="count($outcome_success) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($outcome_success)) then $outcome_success[1] else 'logon'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
           <xsl:if test="$outcome_success[1] = ('LOGIN_SUCCESS', 'LOGIN_FAILURE')">
             <Outcome>
               <Success>
@@ -87,111 +82,115 @@
               </Success>
             </Outcome>
           </xsl:if>
+          <xsl:if test="count($outcome_success) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/Authenticate/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:sequence select="mcp:data('event_type', $outcome_success)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
   <!-- Rule 'logoff': records where json-to-xml(*[@key='event'])/*/*[@key='event_type'] = LOGOUT. Writes an
-       Authenticate event. -->
+       Authenticate event (TypeId Authenticate-Logoff). -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
-          <xsl:if test="count($outcome_success) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($outcome_success)) then $outcome_success[1] else 'logoff'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
+          <xsl:if test="count($outcome_success) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/Authenticate/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:sequence select="mcp:data('event_type', $outcome_success)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
   <!-- Rule 'password change': records where json-to-xml(*[@key='event'])/*/*[@key='event_type'] = PASSWORD_CHANGE.
-       Writes an Authenticate event. -->
+       Writes an Authenticate event (TypeId Authenticate-PasswordChange). -->
   <xsl:template match="node()" mode="event_type_password_change">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
-          <xsl:if test="count($outcome_success) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($outcome_success)) then $outcome_success[1] else 'password change'"/>
-        </TypeId>
+        <TypeId>Authenticate-PasswordChange</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>ChangePassword</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
+          <xsl:if test="count($outcome_success) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/Authenticate/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:sequence select="mcp:data('event_type', $outcome_success)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
   <!-- Rule 'view': records where json-to-xml(*[@key='event'])/*/*[@key='event_type'] = DOCUMENT_VIEW. Writes a View
-       event. -->
+       event (TypeId View-Document). -->
   <xsl:template match="node()" mode="event_type_view">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
-          <xsl:if test="count($outcome_success) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($outcome_success)) then $outcome_success[1] else 'view'"/>
-        </TypeId>
+        <TypeId>View-Document</TypeId>
         <xsl:apply-templates select="." mode="description"/>
+        <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
         <xsl:variable name="document_name" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='resource'])[normalize-space(.)]"/>
-        <xsl:if test="exists($document_name)">
+        <xsl:if test="exists($document_name) or exists($outcome_success)">
           <View>
-            <Document>
-              <Name>
-                <xsl:if test="count($document_name) gt 1">
-                  <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($document_name), ') for ', 'EventDetail/View/Document/Name, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-                </xsl:if>
-                <xsl:value-of select="$document_name[1]"/>
-              </Name>
-            </Document>
+            <xsl:if test="exists($document_name)">
+              <Document>
+                <Name>
+                  <xsl:if test="count($document_name) gt 1">
+                    <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($document_name), ') for ', 'EventDetail/View/Document/Name, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+                  </xsl:if>
+                  <xsl:value-of select="$document_name[1]"/>
+                </Name>
+              </Document>
+            </xsl:if>
+            <xsl:if test="count($outcome_success) gt 1">
+              <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/View/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+            </xsl:if>
+            <xsl:sequence select="mcp:data('event_type', $outcome_success)"/>
           </View>
         </xsl:if>
       </EventDetail>
     </Event>
   </xsl:template>
   <!-- Rule 'delete': records where json-to-xml(*[@key='event'])/*/*[@key='event_type'] = DOCUMENT_DELETE. Writes a
-       Delete event. -->
+       Delete event (TypeId Delete-Document). -->
   <xsl:template match="node()" mode="event_type_delete">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
-          <xsl:if test="count($outcome_success) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($outcome_success)) then $outcome_success[1] else 'delete'"/>
-        </TypeId>
+        <TypeId>Delete-Document</TypeId>
         <xsl:apply-templates select="." mode="description"/>
+        <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
         <xsl:variable name="document_name" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='resource'])[normalize-space(.)]"/>
-        <xsl:if test="exists($document_name)">
+        <xsl:if test="exists($document_name) or exists($outcome_success)">
           <Delete>
-            <Document>
-              <Name>
-                <xsl:if test="count($document_name) gt 1">
-                  <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($document_name), ') for ', 'EventDetail/Delete/Document/Name, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-                </xsl:if>
-                <xsl:value-of select="$document_name[1]"/>
-              </Name>
-            </Document>
+            <xsl:if test="exists($document_name)">
+              <Document>
+                <Name>
+                  <xsl:if test="count($document_name) gt 1">
+                    <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($document_name), ') for ', 'EventDetail/Delete/Document/Name, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+                  </xsl:if>
+                  <xsl:value-of select="$document_name[1]"/>
+                </Name>
+              </Document>
+            </xsl:if>
+            <xsl:if test="count($outcome_success) gt 1">
+              <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/Delete/Data, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+            </xsl:if>
+            <xsl:sequence select="mcp:data('event_type', $outcome_success)"/>
           </Delete>
         </xsl:if>
       </EventDetail>
@@ -265,4 +264,12 @@
       </User>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

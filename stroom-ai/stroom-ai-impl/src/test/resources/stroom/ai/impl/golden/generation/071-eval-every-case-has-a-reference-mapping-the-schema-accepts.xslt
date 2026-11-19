@@ -42,44 +42,48 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where _action = login. Writes an Authenticate event (TypeId from _action) from _user. -->
+  <!-- Rule 'logon': records where _action = login. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       _action, _user. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('_action', *[@key='_action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where _action = logout. Writes an Authenticate event (TypeId from _action) from _user. -->
+  <!-- Rule 'logoff': records where _action = logout. Writes an Authenticate event (TypeId Authenticate-Logoff) from
+       _action, _user. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:sequence select="mcp:data('_action', *[@key='_action'])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'disk': records where _action = disk_alert. Writes an Alert event (TypeId from _action) from
+  <!-- Rule 'disk': records where _action = disk_alert. Writes an Alert event (TypeId Alert-DiskSpace) from _action,
        short_message, _disk, _pct. -->
   <xsl:template match="node()" mode="event_type_disk">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Alert-DiskSpace</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Alert>
           <Type>Other</Type>
@@ -88,6 +92,7 @@
               <xsl:value-of select="(*[@key='short_message'])[1]"/>
             </Description>
           </xsl:if>
+          <xsl:sequence select="mcp:data('_action', *[@key='_action'])"/>
           <xsl:sequence select="mcp:data('disk', *[@key='_disk'])"/>
           <xsl:sequence select="mcp:data('percent_used', *[@key='_pct'])"/>
         </Alert>
@@ -134,14 +139,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff', 'disk' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="*[@key='_action'][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(*[@key='_action'])[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff', 'disk' -->
   <xsl:template match="node()" mode="description">

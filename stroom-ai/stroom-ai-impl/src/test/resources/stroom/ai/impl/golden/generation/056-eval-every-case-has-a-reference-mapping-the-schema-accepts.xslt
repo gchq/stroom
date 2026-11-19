@@ -45,32 +45,35 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logged in': records where direction = in. Writes an Authenticate event (TypeId login) from user_ok,
-       session (extracted from message). -->
+  <!-- Rule 'logged in': records where direction = in. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       direction, user_ok, session (extracted from message). -->
   <xsl:template match="node()" mode="event_type_logged_in">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>login</TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:variable name="session_parts" select="analyze-string(string((data[@name='message']/@value)[1]), ' session (\S+)$')"/>
+          <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
+          <xsl:variable name="user_ok_parts" select="analyze-string(string($message[1]), '^User ''([^'']+)'' logged (in|out)')"/>
+          <xsl:sequence select="mcp:data('direction', $user_ok_parts/fn:match//fn:group[@nr=2])"/>
+          <xsl:variable name="session_parts" select="analyze-string(string($message[1]), ' session (\S+)$')"/>
           <xsl:sequence select="mcp:data('session', $session_parts/fn:match//fn:group[@nr=1])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'failed login': records where user_failed present. Writes an Authenticate event (TypeId login-failed) from
-       user_failed, reason (extracted from message). -->
+  <!-- Rule 'failed login': records where user_failed present. Writes an Authenticate event (TypeId
+       Authenticate-FailedLogon) from user_failed, reason (extracted from message). -->
   <xsl:template match="node()" mode="event_type_failed_login">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>login-failed</TypeId>
+        <TypeId>Authenticate-FailedLogon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
@@ -96,19 +99,22 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logged out': records where direction = out. Writes an Authenticate event (TypeId logout) from user_ok,
-       session (extracted from message). -->
+  <!-- Rule 'logged out': records where direction = out. Writes an Authenticate event (TypeId Authenticate-Logoff)
+       from direction, user_ok, session (extracted from message). -->
   <xsl:template match="node()" mode="event_type_logged_out">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>logout</TypeId>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:variable name="session_parts" select="analyze-string(string((data[@name='message']/@value)[1]), ' session (\S+)$')"/>
+          <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
+          <xsl:variable name="user_ok_parts" select="analyze-string(string($message[1]), '^User ''([^'']+)'' logged (in|out)')"/>
+          <xsl:sequence select="mcp:data('direction', $user_ok_parts/fn:match//fn:group[@nr=2])"/>
+          <xsl:variable name="session_parts" select="analyze-string(string($message[1]), ' session (\S+)$')"/>
           <xsl:sequence select="mcp:data('session', $session_parts/fn:match//fn:group[@nr=1])"/>
         </Authenticate>
       </EventDetail>

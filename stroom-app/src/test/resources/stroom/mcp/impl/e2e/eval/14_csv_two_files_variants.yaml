@@ -7,6 +7,10 @@ request: >
   device column, and has a new action, timeout, which should count as a logoff. Build one pipeline that handles
   both and index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 6
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action]
@@ -39,11 +43,23 @@ reference:
       - name: logon
         when: [{field: action, equals: login}]
         fields:
-          - {path: EventDetail/TypeId, value: VPN-Logon}
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in to the VPN}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {ok: "true", fail: "false"}}
+      # One event type recognised two ways: a sign-out, and a session timed out.
       - name: logoff
-        when: [{field: action, one_of: [logout, timeout]}]
+        when: [{field: action, equals: logout}]
         fields:
-          - {path: EventDetail/TypeId, field: action, map: {logout: VPN-Logoff, timeout: VPN-Timeout}}
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: "A user signed out of the VPN, or their session timed out"}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+      - name: timeout
+        when: [{field: action, equals: timeout}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: "A user signed out of the VPN, or their session timed out"}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}

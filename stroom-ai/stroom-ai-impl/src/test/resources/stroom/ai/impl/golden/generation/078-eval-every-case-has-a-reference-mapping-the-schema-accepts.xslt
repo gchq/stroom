@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs fn">
+<xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs fn mcp">
   <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
        (the mapping's log_unmapped_fields) -->
   <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
@@ -15,7 +15,7 @@
     <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:variable name="verb_parts" select="analyze-string(string($message[1]), '^statement: (\w+)[\s\S]*$')"/>
-    <xsl:variable name="verb_2" select="$verb_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
+    <xsl:variable name="verb" select="$verb_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="exists($message[matches(., '^connection authorized')])">
         <xsl:apply-templates select="." mode="event_type_connect"/>
@@ -23,17 +23,17 @@
       <xsl:when test="exists($message[matches(., '^disconnection')])">
         <xsl:apply-templates select="." mode="event_type_disconnect"/>
       </xsl:when>
-      <xsl:when test="$verb_2 = 'SELECT'">
+      <xsl:when test="$verb = 'SELECT'">
         <xsl:apply-templates select="." mode="event_type_query"/>
       </xsl:when>
-      <xsl:when test="$verb_2 = 'UPDATE'">
+      <xsl:when test="$verb = 'UPDATE'">
         <xsl:apply-templates select="." mode="event_type_update"/>
       </xsl:when>
-      <xsl:when test="$verb_2 = 'DELETE'">
+      <xsl:when test="$verb = 'DELETE'">
         <xsl:apply-templates select="." mode="event_type_delete"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('message=', string(($message)[1])), concat('verb=', string(($verb_2)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('message=', string(($message)[1])), concat('verb=', string(($verb)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -41,7 +41,7 @@
        purpose); called by the rules that translate their records -->
   <xsl:template name="mcp_unread_fields">
     <xsl:if test="$log_unmapped_fields">
-      <xsl:for-each select="data[@name][not(@name = ('database', 'level', 'message', 'time', 'user'))][normalize-space(string(@value))]">
+      <xsl:for-each select="data[@name][not(@name = ('database', 'message', 'time', 'user'))][normalize-space(string(@value))]">
         <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
         <xsl:if test="not(string(stroom:get($mcp_unread)))">
           <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
@@ -50,16 +50,14 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'connect': records where message matches ^connection authorized. Writes an Authenticate event from user. -->
+  <!-- Rule 'connect': records where message matches ^connection authorized. Writes an Authenticate event (TypeId
+       Authenticate-Logon) from user. -->
   <xsl:template match="node()" mode="event_type_connect">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
-          <xsl:value-of select="if (exists((($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])[normalize-space(.)])) then (($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1]) else 'connect'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
@@ -68,16 +66,14 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'disconnect': records where message matches ^disconnection. Writes an Authenticate event from user. -->
+  <!-- Rule 'disconnect': records where message matches ^disconnection. Writes an Authenticate event (TypeId
+       Authenticate-Logoff) from user. -->
   <xsl:template match="node()" mode="event_type_disconnect">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
-          <xsl:value-of select="if (exists((($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])[normalize-space(.)])) then (($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1]) else 'disconnect'"/>
-        </TypeId>
+        <TypeId>Authenticate-Logoff</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logoff</Action>
@@ -86,30 +82,34 @@
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'query': records where verb = SELECT. Writes a View event from database. -->
+  <!-- Rule 'query': records where verb = SELECT. Writes a View event (TypeId Select-Rows) from verb, database (verb
+       extracted from message). -->
   <xsl:template match="node()" mode="event_type_query">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Select-Rows</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <View>
           <Object>
             <Type>Database query</Type>
             <xsl:apply-templates select="." mode="name"/>
           </Object>
+          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
+          <xsl:sequence select="mcp:data('verb', $verb_parts/fn:match//fn:group[@nr=1])"/>
         </View>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'update': records where verb = UPDATE. Writes an Update event from database. -->
+  <!-- Rule 'update': records where verb = UPDATE. Writes an Update event (TypeId Update-Rows) from verb, database
+       (verb extracted from message). -->
   <xsl:template match="node()" mode="event_type_update">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Update-Rows</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Update>
           <After>
@@ -122,23 +122,28 @@
               </xsl:if>
             </Object>
           </After>
+          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
+          <xsl:sequence select="mcp:data('verb', $verb_parts/fn:match//fn:group[@nr=1])"/>
         </Update>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'delete': records where verb = DELETE. Writes a Delete event from database. -->
+  <!-- Rule 'delete': records where verb = DELETE. Writes a Delete event (TypeId Delete-Rows) from verb, database
+       (verb extracted from message). -->
   <xsl:template match="node()" mode="event_type_delete">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Delete-Rows</TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Delete>
           <Object>
             <Type>Database rows</Type>
             <xsl:apply-templates select="." mode="name"/>
           </Object>
+          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
+          <xsl:sequence select="mcp:data('verb', $verb_parts/fn:match//fn:group[@nr=1])"/>
         </Delete>
       </EventDetail>
     </Event>
@@ -191,15 +196,6 @@
       </User>
     </xsl:if>
   </xsl:template>
-  <!-- type_id: shared by the rules 'query', 'update', 'delete' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
-    <xsl:if test="exists((($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])[normalize-space(.)])">
-      <TypeId>
-        <xsl:value-of select="(($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])"/>
-      </TypeId>
-    </xsl:if>
-  </xsl:template>
   <!-- name: shared by the rules 'query', 'delete' -->
   <xsl:template match="node()" mode="name">
     <xsl:if test="data[@name='database']/@value[normalize-space(.)]">
@@ -208,4 +204,12 @@
       </Name>
     </xsl:if>
   </xsl:template>
+  <xsl:function name="mcp:data" as="element()?">
+    <!-- A Data entry, Name and Value, when the value is present (not blank) -->
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:param name="value" as="item()*"/>
+    <xsl:if test="exists($value[normalize-space(.)])">
+      <Data Name="{$name}" Value="{$value[1]}"/>
+    </xsl:if>
+  </xsl:function>
 </xsl:stylesheet>

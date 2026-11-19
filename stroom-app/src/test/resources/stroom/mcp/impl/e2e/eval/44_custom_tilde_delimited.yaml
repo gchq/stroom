@@ -7,6 +7,10 @@ capabilities: [delimiters]
 request: >
   Onboard our in-house app's access log (the file is on my disk). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 500
   event_types: [Authenticate]
   forbidden_types: [Unknown]
@@ -27,22 +31,30 @@ reference:
       - {path: EventSource/Device/HostName, value: portal01}
       - {path: EventSource/User/Id, field: user}
       - {path: EventSource/Client/IPAddress, field: ip}
-      - {path: EventDetail/TypeId, field: action}
     events:
       - name: logon
         when: [{field: action, equals: LOGIN}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Description, value: A user signed in}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {OK: 'true', FAIL: 'false'}}
       - name: logoff
         when: [{field: action, equals: LOGOUT}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Description, value: A user signed out}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user}
       - name: password
         when: [{field: action, equals: PASSWORD_CHANGE}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-PasswordChange}
+          - {path: EventDetail/Description, value: A user changed their password}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: ChangePassword}
           - {path: EventDetail/Authenticate/User/Id, field: user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {OK: 'true', FAIL: 'false'}}

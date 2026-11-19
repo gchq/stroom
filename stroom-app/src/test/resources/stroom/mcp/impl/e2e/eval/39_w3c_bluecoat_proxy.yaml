@@ -11,6 +11,10 @@ capabilities: [delimiters, format_evolution, timestamps]
 request: >
   Onboard our Blue Coat proxy's access log (the file on my disk). Index the requests.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3000
   event_types: [Network]
   forbidden_types: [Unknown]
@@ -35,10 +39,12 @@ reference:
       - {path: EventSource/Device/IPAddress, field: proxy_ip}
       - {path: EventSource/User/Id, field: cs-username}
       - {path: EventSource/Client/IPAddress, field: c-ip}
-      - {path: EventDetail/TypeId, field: s-action}
     events:
       - name: request
         fields:
+          - {path: EventDetail/TypeId, value: Network-WebRequest}
+          - {path: EventDetail/Description, value: A web request passed through the proxy}
+          - {path: EventDetail/Network/Open/Data, data_name: s-action, field: s-action}
           - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: c-ip}
           - {path: EventDetail/Network/Open/Destination/Device/HostName, field: cs-host}
           - {path: EventDetail/Network/Open/Destination/Port, field: cs-uri-port}

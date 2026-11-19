@@ -25,8 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'connection': every record. Writes a Network/Open event (TypeId from action) from action, src, dst, dport,
-       proto. -->
+  <!-- Rule 'connection': every record. Writes a Network/Open event (TypeId Network-Connection) from src, dst, dport,
+       proto, action. -->
   <xsl:template match="node()" mode="event_type_connection">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
@@ -51,10 +51,9 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
+        <TypeId>Network-Connection</TypeId>
+        <Description>The firewall allowed or denied a connection</Description>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
-        <TypeId>
-          <xsl:value-of select="if ($action) then $action[1] else 'connection'"/>
-        </TypeId>
         <xsl:variable name="proto" select="data[@name='proto']/@value[normalize-space(.)]"/>
         <xsl:variable name="dport" select="data[@name='dport']/@value[normalize-space(.)]"/>
         <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)]"/>

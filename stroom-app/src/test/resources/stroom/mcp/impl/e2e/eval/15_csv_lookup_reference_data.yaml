@@ -7,6 +7,10 @@ request: >
   from it, looked up by user id (the directory has ids in lower case; the events have them in upper case).
   Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   # A badge at a door is as well an Authorise (access to a resource) as an Authenticate, and a department as well a
   # UserDetails Unit or Group as an Organisation: any of them passes, as long as the lookup filled it.
@@ -52,7 +56,7 @@ reference:
     events:
       - name: badge
         fields:
-          - {path: EventDetail/TypeId, value: Badge-Access}
+          - {path: EventDetail/TypeId, value: Authenticate-Badge}
           - {path: EventDetail/Description, field: door}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: badge_user, transform: lower}

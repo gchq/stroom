@@ -25,8 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'request': every record. Writes a Network/Open event (TypeId from s-action) from c-ip, cs-host,
-       cs-uri-port, cs-uri-path, cs-categories, cs-method, sc-status, sc-bytes, x-virus-id, sc-filter-result. -->
+  <!-- Rule 'request': every record. Writes a Network/Open event (TypeId Network-WebRequest) from s-action, c-ip,
+       cs-host, cs-uri-port, cs-uri-path, cs-categories, cs-method, sc-status, sc-bytes, x-virus-id, .... -->
   <xsl:template match="node()" mode="event_type_request">
     <Event>
       <xsl:variable name="event_time_time_created" select="concat(data[@name='date']/@value, 'T', data[@name='time']/@value, 'Z')[normalize-space(.)]"/>
@@ -84,15 +84,14 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (data[@name='s-action']/@value[normalize-space(.)]) then (data[@name='s-action']/@value)[1] else 'request'"/>
-        </TypeId>
+        <TypeId>Network-WebRequest</TypeId>
+        <Description>A web request passed through the proxy</Description>
         <xsl:variable name="sc_filter_result" select="data[@name='sc-filter-result']/@value[normalize-space(.)]"/>
         <xsl:variable name="cs_categories" select="data[@name='cs-categories']/@value[normalize-space(.)]"/>
         <xsl:variable name="cs_uri_path" select="data[@name='cs-uri-path']/@value[normalize-space(.)]"/>
         <xsl:variable name="cs_uri_port" select="data[@name='cs-uri-port']/@value[normalize-space(.)]"/>
         <xsl:variable name="cs_host" select="data[@name='cs-host']/@value[normalize-space(.)]"/>
-        <xsl:if test="$c_ip or $cs_host or $cs_uri_port or $cs_uri_path or $cs_categories or $sc_filter_result[1] = ('OBSERVED', 'DENIED') or data[@name='cs-method']/@value[normalize-space(.)] or data[@name='sc-status']/@value[normalize-space(.)] or data[@name='sc-bytes']/@value[normalize-space(.)] or data[@name='x-virus-id']/@value[normalize-space(.)]">
+        <xsl:if test="$c_ip or $cs_host or $cs_uri_port or $cs_uri_path or $cs_categories or $sc_filter_result[1] = ('OBSERVED', 'DENIED') or data[@name='s-action']/@value[normalize-space(.)] or data[@name='cs-method']/@value[normalize-space(.)] or data[@name='sc-status']/@value[normalize-space(.)] or data[@name='sc-bytes']/@value[normalize-space(.)] or data[@name='x-virus-id']/@value[normalize-space(.)]">
           <Network>
             <Open>
               <xsl:if test="$c_ip">
@@ -129,6 +128,7 @@
                   </Permitted>
                 </Outcome>
               </xsl:if>
+              <xsl:sequence select="mcp:data('s-action', data[@name='s-action']/@value)"/>
               <xsl:sequence select="mcp:data('method', data[@name='cs-method']/@value)"/>
               <xsl:sequence select="mcp:data('status', data[@name='sc-status']/@value)"/>
               <xsl:sequence select="mcp:data('bytes_sent', data[@name='sc-bytes']/@value)"/>

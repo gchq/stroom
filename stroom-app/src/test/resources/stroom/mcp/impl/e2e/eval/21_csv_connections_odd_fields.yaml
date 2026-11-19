@@ -8,6 +8,10 @@ request: >
   connection was routed to), the client's TLS fingerprint, the routing policy, a connection id, and byte counts on
   disconnect. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 10
   event_types: [Network]
   # Every record is a connection made or ended: none is an unknown event.
@@ -45,11 +49,13 @@ reference:
       - {path: EventSource/System/Environment, value: Eval}
       - {path: EventSource/Generator, value: broker}
       - {path: EventSource/Device/HostName, field: sensor}
-      - {path: EventDetail/TypeId, field: event}
     events:
       - name: connected
         when: [{field: event, equals: CONNECT}]
         fields:
+          - {path: EventDetail/TypeId, value: Network-Connect}
+          - {path: EventDetail/Description, value: A client connected through the load balancer}
+          - {path: EventDetail/Network/Connect/Data, data_name: event, field: event}
           - {path: EventDetail/Network/Connect/Source/Device/IPAddress, field: client_addr}
           - {path: EventDetail/Network/Connect/Source/Port, field: client_port}
           - {path: EventDetail/Network/Connect/Source/TransportProtocol, field: proto, map: {TCP: TCP, UDP: UDP}, default: Other}
@@ -64,6 +70,9 @@ reference:
       - name: closed
         when: [{field: event, equals: DISCONNECT}]
         fields:
+          - {path: EventDetail/TypeId, value: Network-Close}
+          - {path: EventDetail/Description, value: A connection through the load balancer closed}
+          - {path: EventDetail/Network/Close/Data, data_name: event, field: event}
           - {path: EventDetail/Network/Close/Source/Device/IPAddress, field: client_addr}
           - {path: EventDetail/Network/Close/Source/Port, field: client_port}
           - {path: EventDetail/Network/Close/Source/TransportProtocol, field: proto, map: {TCP: TCP, UDP: UDP}, default: Other}

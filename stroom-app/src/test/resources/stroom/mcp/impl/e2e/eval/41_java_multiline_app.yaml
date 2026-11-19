@@ -9,6 +9,10 @@ capabilities: [multiline, event_boundaries]
 request: >
   Onboard our billing service's application log (the file on my disk). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 6}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 2000
   event_types: [Authenticate, Create, Alert, Update]
   forbidden_types: [Unknown]
@@ -31,6 +35,7 @@ reference:
       - {field: message, regex: '^.*?\(customer (\S+)\)[\s\S]*$', names: [customer]}
       - {field: message, regex: '^Setting (\S+) changed from (\S+) to (\S+) by (\S+).*$', names: [setting, old_value, new_value, admin]}
     common:
+      - {path: EventDetail/Description, field: message}
       - {path: EventTime/TimeCreated, field: time, time_format: 'yyyy-MM-dd HH:mm:ss,SSS', timezone: UTC}
       - {path: EventSource/System/Name, value: Billing Service}
       - {path: EventSource/System/Environment, value: Eval}
@@ -43,19 +48,19 @@ reference:
       - name: logon
         when: [{field: message, matches: '^User \S+ logged in'}]
         fields:
-          - {path: EventDetail/TypeId, value: Logon}
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: user}
       - name: logoff
         when: [{field: message, matches: '^User \S+ logged out'}]
         fields:
-          - {path: EventDetail/TypeId, value: Logoff}
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user}
       - name: logon-failed
         when: [{field: message, matches: '^Login failed'}]
         fields:
-          - {path: EventDetail/TypeId, value: Logon-Failed}
+          - {path: EventDetail/TypeId, value: Authenticate-FailedLogon}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: failed_user}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
@@ -63,19 +68,20 @@ reference:
       - name: invoice
         when: [{field: message, matches: '^Invoice \d+ created'}]
         fields:
-          - {path: EventDetail/TypeId, value: Invoice-Created}
+          - {path: EventDetail/TypeId, value: Create-Invoice}
           - {path: EventDetail/Create/Object/Type, value: Invoice}
           - {path: EventDetail/Create/Object/Description, field: message}
       - name: payment-error
         when: [{field: level, equals: ERROR}]
         fields:
-          - {path: EventDetail/TypeId, value: Payment-Error}
+          - {path: EventDetail/TypeId, value: Alert-PaymentError}
+          - {path: EventDetail/Alert/Data, data_name: level, field: level}
           - {path: EventDetail/Alert/Type, value: Error}
           - {path: EventDetail/Alert/Description, field: message}
       - name: config
         when: [{field: message, matches: '^Setting '}]
         fields:
-          - {path: EventDetail/TypeId, value: Setting-Changed}
+          - {path: EventDetail/TypeId, value: Update-Setting}
           - {path: EventDetail/Update/After/Object/Type, value: Setting}
           - {path: EventDetail/Update/After/Object/Id, field: setting}
           - {path: EventDetail/Update/Data, data_name: old_value, field: old_value}

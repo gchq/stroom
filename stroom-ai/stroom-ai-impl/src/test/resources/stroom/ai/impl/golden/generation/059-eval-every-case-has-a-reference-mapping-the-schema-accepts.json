@@ -35,21 +35,36 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in, or tried to"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "eventType",
+      "data_name": "eventType"
+     },
+     {
       "path": "EventTime/TimeCreated",
       "field": "published",
       "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
      },
      {
       "path": "EventSource/User/Id",
-      "field": "actor.alternateId"
+      "field": "actor.alternateId",
+      "transform": "strip_domain"
+     },
+     {
+      "path": "EventSource/User/Domain",
+      "field": "actor.alternateId",
+      "transform": "domain"
      },
      {
       "path": "EventSource/Client/IPAddress",
       "field": "client.ipAddress"
-     },
-     {
-      "path": "EventDetail/TypeId",
-      "field": "eventType"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -57,7 +72,13 @@
      },
      {
       "path": "EventDetail/Authenticate/User/Id",
-      "field": "actor.alternateId"
+      "field": "actor.alternateId",
+      "transform": "strip_domain"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Domain",
+      "field": "actor.alternateId",
+      "transform": "domain"
      },
      {
       "path": "EventDetail/Authenticate/Outcome/Success",
@@ -83,21 +104,36 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed out"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "eventType",
+      "data_name": "eventType"
+     },
+     {
       "path": "EventTime/TimeCreated",
       "field": "published",
       "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
      },
      {
       "path": "EventSource/User/Id",
-      "field": "actor.alternateId"
+      "field": "actor.alternateId",
+      "transform": "strip_domain"
+     },
+     {
+      "path": "EventSource/User/Domain",
+      "field": "actor.alternateId",
+      "transform": "domain"
      },
      {
       "path": "EventSource/Client/IPAddress",
       "field": "client.ipAddress"
-     },
-     {
-      "path": "EventDetail/TypeId",
-      "field": "eventType"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -105,7 +141,13 @@
      },
      {
       "path": "EventDetail/Authenticate/User/Id",
-      "field": "actor.alternateId"
+      "field": "actor.alternateId",
+      "transform": "strip_domain"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Domain",
+      "field": "actor.alternateId",
+      "transform": "domain"
      }
     ]
    },
@@ -119,21 +161,36 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Lock-UserAccount"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "An account was locked"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "eventType",
+      "data_name": "eventType"
+     },
+     {
       "path": "EventTime/TimeCreated",
       "field": "published",
       "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
      },
      {
       "path": "EventSource/User/Id",
-      "field": "actor.alternateId"
+      "field": "actor.alternateId",
+      "transform": "strip_domain"
+     },
+     {
+      "path": "EventSource/User/Domain",
+      "field": "actor.alternateId",
+      "transform": "domain"
      },
      {
       "path": "EventSource/Client/IPAddress",
       "field": "client.ipAddress"
-     },
-     {
-      "path": "EventDetail/TypeId",
-      "field": "eventType"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -141,7 +198,13 @@
      },
      {
       "path": "EventDetail/Authenticate/User/Id",
-      "field": "actor.alternateId"
+      "field": "actor.alternateId",
+      "transform": "strip_domain"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Domain",
+      "field": "actor.alternateId",
+      "transform": "domain"
      }
     ]
    },
@@ -155,6 +218,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in, or tried to"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
       "path": "EventTime/TimeCreated",
       "field": "ts",
       "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
@@ -166,10 +242,6 @@
      {
       "path": "EventSource/Client/IPAddress",
       "field": "ip"
-     },
-     {
-      "path": "EventDetail/TypeId",
-      "field": "type"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -195,6 +267,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed out"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
       "path": "EventTime/TimeCreated",
       "field": "ts",
       "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
@@ -206,10 +291,6 @@
      {
       "path": "EventSource/Client/IPAddress",
       "field": "ip"
-     },
-     {
-      "path": "EventDetail/TypeId",
-      "field": "type"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -231,6 +312,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-PasswordChange"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user changed their password"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "type",
+      "data_name": "type"
+     },
+     {
       "path": "EventTime/TimeCreated",
       "field": "ts",
       "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
@@ -242,10 +336,6 @@
      {
       "path": "EventSource/Client/IPAddress",
       "field": "ip"
-     },
-     {
-      "path": "EventDetail/TypeId",
-      "field": "type"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -267,14 +357,14 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[new session start] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[new session end] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[new account lock] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[new session start] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[new session end] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[new account lock] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[legacy login] EventDetail/Authenticate/Outcome/Success: Success is true/false; map the input values, e.g. {'ok': 'true', 'fail': 'false'}, unless they already are",
-   "[legacy login] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[legacy logout] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[legacy login] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[legacy logout] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[legacy password change] EventDetail/Authenticate/Outcome/Success: Success is true/false; map the input values, e.g. {'ok': 'true', 'fail': 'false'}, unless they already are",
-   "[legacy password change] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[legacy password change] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -284,15 +374,19 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[eventType]",
      "EventDetail/Authenticate/Outcome/Description",
      "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Domain",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
      "EventSource/System/Name",
+     "EventSource/User/Domain",
      "EventSource/User/Id",
      "EventTime/TimeCreated"
     ]
@@ -304,13 +398,17 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[eventType]",
+     "EventDetail/Authenticate/User/Domain",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
      "EventSource/System/Name",
+     "EventSource/User/Domain",
      "EventSource/User/Id",
      "EventTime/TimeCreated"
     ]
@@ -322,13 +420,17 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[eventType]",
+     "EventDetail/Authenticate/User/Domain",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
      "EventSource/System/Name",
+     "EventSource/User/Domain",
      "EventSource/User/Id",
      "EventTime/TimeCreated"
     ]
@@ -340,8 +442,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[type]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -359,7 +463,9 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[type]",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -377,8 +483,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[type]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",

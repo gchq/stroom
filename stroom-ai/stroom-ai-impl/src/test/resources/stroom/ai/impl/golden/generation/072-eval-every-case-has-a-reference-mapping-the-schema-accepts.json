@@ -35,10 +35,6 @@
    {
     "path": "EventSource/Client/IPAddress",
     "field": "source.ip"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "event.action"
    }
   ],
   "events": [
@@ -51,6 +47,19 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user signed in"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "event.action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -79,6 +88,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Delete-File"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A file was deleted"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "event.action",
+      "data_name": "action"
+     },
+     {
       "path": "EventDetail/Delete/Object/Type",
       "value": "File"
      },
@@ -98,8 +120,8 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[file-delete] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[file-delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -109,8 +131,10 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -127,9 +151,11 @@
      "*[@key='event']/*[@key='action'] = 'file-delete'"
     ],
     "fields": [
+     "EventDetail/Delete/Data[action]",
      "EventDetail/Delete/Object/Id",
      "EventDetail/Delete/Object/Name",
      "EventDetail/Delete/Object/Type",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
@@ -283,24 +309,6 @@
     "map": null,
     "default": null,
     "data_name": null
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "field": "event.action",
-    "any_of": null,
-    "value": null,
-    "xpath": null,
-    "meta": null,
-    "lookup": null,
-    "dictionary": null,
-    "transform": null,
-    "repeat": false,
-    "scope": null,
-    "time_format": null,
-    "timezone": null,
-    "map": null,
-    "default": null,
-    "data_name": null
    }
   ],
   "events": [
@@ -322,6 +330,60 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "Authenticate-Logon",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": null,
+      "any_of": null,
+      "value": "A user signed in",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "event.action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "field": null,
@@ -404,6 +466,60 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "Delete-File",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": null,
+      "any_of": null,
+      "value": "A file was deleted",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "event.action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Delete/Object/Type",
       "field": null,

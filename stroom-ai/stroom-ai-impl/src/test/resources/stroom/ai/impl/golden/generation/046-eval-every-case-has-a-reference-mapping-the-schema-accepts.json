@@ -28,10 +28,6 @@
     "field": "device"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "action"
-   },
-   {
     "path": "EventDetail/Description",
     "field": "message"
    }
@@ -46,6 +42,20 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Network-Connection"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "event_type",
+      "data_name": "event_type"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Network/Open/Source/Device/IPAddress",
       "field": "src_ip"
@@ -107,6 +117,20 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "event_type",
+      "data_name": "event_type"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
       "path": "EventSource/User/Id",
       "field": "username"
      },
@@ -146,6 +170,20 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "event_type",
+      "data_name": "event_type"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
       "path": "EventSource/User/Id",
       "field": "username"
      },
@@ -177,6 +215,20 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Update-Configuration"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "event_type",
+      "data_name": "event_type"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
       "path": "EventSource/User/Id",
       "field": "username"
      },
@@ -204,6 +256,20 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Export-Configuration"
+     },
+     {
+      "path": "EventDetail/Export/Data",
+      "field": "event_type",
+      "data_name": "event_type"
+     },
+     {
+      "path": "EventDetail/Export/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
       "path": "EventSource/User/Id",
       "field": "username"
      },
@@ -226,6 +292,20 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Alert-System"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "event_type",
+      "data_name": "event_type"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Alert/Type",
       "field": "action",
@@ -254,14 +334,12 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[connection] TypeId is read from action, which its records may lack: those get TypeId 'connection', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[connection] EventDetail/Network/Open/Destination/TransportProtocol: TransportProtocol only takes ['TCP', 'UDP', 'ICMP', 'IGMP', 'Other']; the input value is written as it is, so add a map unless it already uses these values",
    "[connection] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[config change] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[config backup] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[system] TypeId is read from action, which its records may lack: those get TypeId 'system', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[config change] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[config backup] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[system] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
@@ -272,8 +350,10 @@
     ],
     "fields": [
      "EventDetail/Description",
+     "EventDetail/Network/Open/Data[action]",
      "EventDetail/Network/Open/Data[bytes_received]",
      "EventDetail/Network/Open/Data[bytes_sent]",
+     "EventDetail/Network/Open/Data[event_type]",
      "EventDetail/Network/Open/Destination/Device/IPAddress",
      "EventDetail/Network/Open/Destination/Port",
      "EventDetail/Network/Open/Destination/TransportProtocol",
@@ -297,6 +377,8 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[event_type]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -318,6 +400,8 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[event_type]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -340,6 +424,8 @@
      "EventDetail/Description",
      "EventDetail/TypeId",
      "EventDetail/Update/After/Configuration/Name",
+     "EventDetail/Update/Data[action]",
+     "EventDetail/Update/Data[event_type]",
      "EventSource/Client/IPAddress",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -357,6 +443,8 @@
     ],
     "fields": [
      "EventDetail/Description",
+     "EventDetail/Export/Data[action]",
+     "EventDetail/Export/Data[event_type]",
      "EventDetail/Export/Source/Configuration/Name",
      "EventDetail/TypeId",
      "EventSource/Client/IPAddress",
@@ -374,6 +462,8 @@
      "data[@name='event_type']/@value = 'SYSTEM'"
     ],
     "fields": [
+     "EventDetail/Alert/Data[action]",
+     "EventDetail/Alert/Data[event_type]",
      "EventDetail/Alert/Severity",
      "EventDetail/Alert/Type",
      "EventDetail/Description",

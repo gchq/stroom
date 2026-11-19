@@ -37,10 +37,6 @@
     "field": "suser"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "cef_signature_id"
-   },
-   {
     "path": "EventDetail/Description",
     "any_of": [
      "msg",
@@ -61,6 +57,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "cef_signature_id",
+      "data_name": "cef_signature_id"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -89,6 +94,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "cef_signature_id",
+      "data_name": "cef_signature_id"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      },
@@ -110,6 +124,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Network-WebRequest"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "cef_signature_id",
+      "data_name": "cef_signature_id"
+     },
      {
       "path": "EventDetail/Network/Open/Source/Device/IPAddress",
       "field": "src"
@@ -152,6 +175,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Alert-Malware"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "cef_signature_id",
+      "data_name": "cef_signature_id"
+     },
+     {
       "path": "EventDetail/Alert/Type",
       "value": "Malware"
      },
@@ -182,10 +214,10 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[web request] required ['EventTime', 'EventDetail', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[malware] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[web request] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[malware] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -195,6 +227,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[cef_signature_id]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -215,6 +248,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[cef_signature_id]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -234,6 +268,7 @@
     ],
     "fields": [
      "EventDetail/Description",
+     "EventDetail/Network/Open/Data[cef_signature_id]",
      "EventDetail/Network/Open/Destination/Data[category]",
      "EventDetail/Network/Open/Destination/Data[url]",
      "EventDetail/Network/Open/Destination/Device/IPAddress",
@@ -257,6 +292,7 @@
     ],
     "fields": [
      "EventDetail/Alert/Data[action]",
+     "EventDetail/Alert/Data[cef_signature_id]",
      "EventDetail/Alert/Data[file]",
      "EventDetail/Alert/Data[sha_or_md5]",
      "EventDetail/Alert/Severity",

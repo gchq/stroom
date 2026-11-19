@@ -42,13 +42,6 @@
     "field": "user"
    },
    {
-    "path": "EventDetail/TypeId",
-    "any_of": [
-     "verb",
-     "level"
-    ]
-   },
-   {
     "path": "EventDetail/Description",
     "field": "message"
    }
@@ -63,6 +56,10 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -83,6 +80,10 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      },
@@ -101,6 +102,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Select-Rows"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "field": "verb",
+      "data_name": "verb"
+     },
      {
       "path": "EventDetail/View/Object/Type",
       "value": "Database query"
@@ -121,6 +131,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Update-Rows"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "verb",
+      "data_name": "verb"
+     },
+     {
       "path": "EventDetail/Update/After/Object/Type",
       "value": "Database rows"
      },
@@ -140,6 +159,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Delete-Rows"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "field": "verb",
+      "data_name": "verb"
+     },
+     {
       "path": "EventDetail/Delete/Object/Type",
       "value": "Database rows"
      },
@@ -155,13 +183,11 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[connect] TypeId is read from level or verb, which its records may lack: those get TypeId 'connect', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[connect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[disconnect] TypeId is read from level or verb, which its records may lack: those get TypeId 'disconnect', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[disconnect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[query] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[update] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[delete] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[query] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[update] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[delete] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -208,6 +234,7 @@
     "fields": [
      "EventDetail/Description",
      "EventDetail/TypeId",
+     "EventDetail/View/Data[verb]",
      "EventDetail/View/Object/Name",
      "EventDetail/View/Object/Type",
      "EventSource/Device/HostName",
@@ -228,6 +255,7 @@
      "EventDetail/TypeId",
      "EventDetail/Update/After/Object/Name",
      "EventDetail/Update/After/Object/Type",
+     "EventDetail/Update/Data[verb]",
      "EventSource/Device/HostName",
      "EventSource/Generator",
      "EventSource/System/Environment",
@@ -242,6 +270,7 @@
      "verb = 'DELETE'"
     ],
     "fields": [
+     "EventDetail/Delete/Data[verb]",
      "EventDetail/Delete/Object/Name",
      "EventDetail/Delete/Object/Type",
      "EventDetail/Description",

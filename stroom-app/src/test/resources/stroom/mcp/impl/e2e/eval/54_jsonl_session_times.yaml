@@ -5,6 +5,10 @@ request: >
   Onboard this file server's audit log (JSON lines). file_access lines say who opened which file. session lines are
   written when a user's session on the server closes, with when it started and ended. Index the events by user.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 6
   event_types: []
   paths: [EventTime/TimeCreated, EventSource/User/Id]
@@ -32,15 +36,20 @@ reference:
       - {path: EventSource/Generator, value: file-audit}
       - {path: EventSource/Device/HostName, value: fs01}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: type}
     events:
       - name: file_access
         when: [{field: type, equals: file_access}]
         fields:
+          - {path: EventDetail/TypeId, value: View-File}
+          - {path: EventDetail/Description, value: A user opened a file}
+          - {path: EventDetail/View/Data, data_name: type, field: type}
           - {path: EventDetail/View/File/Path, field: file}
       - name: session
         when: [{field: type, equals: session}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Session}
+          - {path: EventDetail/Description, value: A user's session ended}
+          - {path: EventDetail/Authenticate/Data, data_name: type, field: type}
           - {path: EventTime/TimeCreated, field: end, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, field: user}

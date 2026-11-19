@@ -5,6 +5,10 @@ request: >
   Onboard these data-loss-prevention logs: CSV without a header. The columns are time, user, host, source path and
   destination path; each line is a file copied to removable media. Index them.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Copy]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Copy/Source/File/Path, EventDetail/Copy/Destination/File/Path]
@@ -38,6 +42,7 @@ reference:
     events:
       - name: copy to removable media
         fields:
-          - {path: EventDetail/TypeId, value: USB-Copy}
+          - {path: EventDetail/TypeId, value: Copy-File}
+          - {path: EventDetail/Description, value: A file was copied to removable media}
           - {path: EventDetail/Copy/Source/File/Path, field: source}
           - {path: EventDetail/Copy/Destination/File/Path, field: destination}

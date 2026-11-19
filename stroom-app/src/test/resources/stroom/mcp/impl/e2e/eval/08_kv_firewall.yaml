@@ -5,6 +5,10 @@ request: >
   Onboard these firewall logs: a timestamp and firewall name, then key=value pairs for the action (allow or deny),
   source and destination address, destination port and protocol. Each line is a connection attempt. Index them.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Network]
   # Allow and deny are as well modelled by Network/Permit and /Deny as by Open with an outcome.
@@ -44,7 +48,8 @@ reference:
     events:
       - name: connection
         fields:
-          - {path: EventDetail/TypeId, field: action}
+          - {path: EventDetail/TypeId, value: Network-Connection}
+          - {path: EventDetail/Description, value: The firewall allowed or denied a connection}
           - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
           - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
           - {path: EventDetail/Network/Open/Destination/Port, field: dport}

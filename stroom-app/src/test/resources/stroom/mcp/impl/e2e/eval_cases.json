@@ -37,10 +37,6 @@
       "field": "user"
      },
      {
-      "path": "EventDetail/TypeId",
-      "field": "action"
-     },
-     {
       "path": "EventDetail/Authenticate/User/Id",
       "field": "user"
      },
@@ -64,6 +60,19 @@
       ],
       "fields": [
        {
+        "path": "EventDetail/TypeId",
+        "value": "Authenticate-Logon"
+       },
+       {
+        "path": "EventDetail/Description",
+        "value": "A user signed in to the VPN"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "action",
+        "field": "action"
+       },
+       {
         "path": "EventDetail/Authenticate/Action",
         "value": "Logon"
        }
@@ -78,6 +87,19 @@
        }
       ],
       "fields": [
+       {
+        "path": "EventDetail/TypeId",
+        "value": "Authenticate-Logoff"
+       },
+       {
+        "path": "EventDetail/Description",
+        "value": "A user signed out of the VPN"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "action",
+        "field": "action"
+       },
        {
         "path": "EventDetail/Authenticate/Action",
         "value": "Logoff"
@@ -135,7 +157,11 @@
       "fields": [
        {
         "path": "EventDetail/TypeId",
-        "value": "SSH-Logon"
+        "value": "Authenticate-Logon"
+       },
+       {
+        "path": "EventDetail/Description",
+        "value": "A user signed in over SSH, or tried to"
        },
        {
         "path": "EventDetail/Authenticate/Action",

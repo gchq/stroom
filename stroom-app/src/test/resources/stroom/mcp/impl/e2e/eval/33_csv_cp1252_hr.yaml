@@ -12,6 +12,10 @@ request: >
 user_knows: >
   The export comes from our old HR system on Windows, which writes Windows-1252 (cp1252) text, not UTF-8.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 6
   event_types: [Create, Update, Delete]
   forbidden_types: [Unknown]
@@ -43,23 +47,31 @@ reference:
       - {path: EventSource/Generator, value: hr-export}
       - {path: EventSource/Device/HostName, value: hr01.example.org}
       - {path: EventSource/User/Id, field: changed_by}
-      - {path: EventDetail/TypeId, field: change}
     events:
       - name: joiner
         when: [{field: change, equals: joiner}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-Employee}
+          - {path: EventDetail/Description, value: An employee joined}
+          - {path: EventDetail/Create/Data, data_name: change, field: change}
           - {path: EventDetail/Create/User/Id, field: employee_id}
           - {path: EventDetail/Create/User/Name, field: employee_name}
           - {path: EventDetail/Create/User/Data, data_name: department, field: department}
       - name: mover
         when: [{field: change, equals: mover}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Employee}
+          - {path: EventDetail/Description, value: An employee moved}
+          - {path: EventDetail/Update/Data, data_name: change, field: change}
           - {path: EventDetail/Update/After/User/Id, field: employee_id}
           - {path: EventDetail/Update/After/User/Name, field: employee_name}
           - {path: EventDetail/Update/After/User/Data, data_name: department, field: department}
       - name: leaver
         when: [{field: change, equals: leaver}]
         fields:
+          - {path: EventDetail/TypeId, value: Delete-Employee}
+          - {path: EventDetail/Description, value: An employee left}
+          - {path: EventDetail/Delete/Data, data_name: change, field: change}
           - {path: EventDetail/Delete/User/Id, field: employee_id}
           - {path: EventDetail/Delete/User/Name, field: employee_name}
           - {path: EventDetail/Delete/User/Data, data_name: department, field: department}

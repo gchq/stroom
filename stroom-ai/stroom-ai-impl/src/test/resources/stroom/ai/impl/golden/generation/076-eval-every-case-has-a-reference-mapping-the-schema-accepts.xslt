@@ -25,7 +25,7 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'message': every record. Writes a Send event (TypeId from action) from from, rcpt, msgid, subject, size,
+  <!-- Rule 'message': every record. Writes a Send event (TypeId Send-Email) from from, rcpt, msgid, subject, size,
        action. -->
   <xsl:template match="node()" mode="event_type_message">
     <Event>
@@ -59,10 +59,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
-        <TypeId>
-          <xsl:value-of select="if ($action) then $action[1] else 'message'"/>
-        </TypeId>
+        <TypeId>Send-Email</TypeId>
+        <Description>The mail gateway delivered, deferred or rejected a message</Description>
         <Send>
           <xsl:if test="$from">
             <Source>
@@ -104,11 +102,11 @@
           </xsl:if>
           <Outcome>
             <Success>
-              <xsl:value-of select="if ($action[1] = 'deliver') then 'true' else 'false'"/>
+              <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'deliver') then 'true' else 'false'"/>
             </Success>
           </Outcome>
           <xsl:sequence select="mcp:data('size', data[@name='size']/@value)"/>
-          <xsl:sequence select="mcp:data('action', $action)"/>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
         </Send>
       </EventDetail>
     </Event>

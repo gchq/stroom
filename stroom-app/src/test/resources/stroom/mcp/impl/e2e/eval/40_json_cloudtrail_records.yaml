@@ -10,6 +10,10 @@ capabilities: [nesting, event_boundaries, format_recognition, type_inference]
 request: >
   Onboard our AWS CloudTrail logs (a CloudTrail file is on my disk). Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 5}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 800
   event_types: [Authenticate, View, Delete, Create, Update]
   forbidden_types: [Unknown]
@@ -36,17 +40,22 @@ reference:
       - {path: EventSource/User/Id, field: userIdentity.userName}
       - {path: EventSource/Client/IPAddress, field: source_ip}
       - {path: EventSource/Client/HostName, field: source_service}
-      - {path: EventDetail/TypeId, field: eventName}
     events:
       - name: console-login
         when: [{field: eventName, equals: ConsoleLogin}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-ConsoleLogon}
+          - {path: EventDetail/Description, value: A user signed in to the console}
+          - {path: EventDetail/Authenticate/Data, data_name: eventName, field: eventName}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: userIdentity.userName}
           - {path: EventDetail/Authenticate/Outcome/Success, field: responseElements.ConsoleLogin, map: {Success: 'true', Failure: 'false'}}
       - name: object-read
         when: [{field: eventName, equals: GetObject}]
         fields:
+          - {path: EventDetail/TypeId, value: View-Object}
+          - {path: EventDetail/Description, value: An object was read from a bucket}
+          - {path: EventDetail/View/Data, data_name: eventName, field: eventName}
           - {path: EventDetail/View/Object/Type, value: S3 object}
           - {path: EventDetail/View/Object/Id, field: requestParameters.key}
           - {path: EventDetail/View/Data, data_name: bucket, field: requestParameters.bucketName}
@@ -54,6 +63,9 @@ reference:
       - name: object-delete
         when: [{field: eventName, equals: DeleteObject}]
         fields:
+          - {path: EventDetail/TypeId, value: Delete-Object}
+          - {path: EventDetail/Description, value: An object was deleted from a bucket}
+          - {path: EventDetail/Delete/Data, data_name: eventName, field: eventName}
           - {path: EventDetail/Delete/Object/Type, value: S3 object}
           - {path: EventDetail/Delete/Object/Id, field: requestParameters.key}
           - {path: EventDetail/Delete/Data, data_name: bucket, field: requestParameters.bucketName}
@@ -61,12 +73,18 @@ reference:
       - name: user-create
         when: [{field: eventName, equals: CreateUser}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-User}
+          - {path: EventDetail/Description, value: A user was created}
+          - {path: EventDetail/Create/Data, data_name: eventName, field: eventName}
           - {path: EventDetail/Create/Object/Type, value: IAM user}
           - {path: EventDetail/Create/Object/Id, field: requestParameters.userName}
           - {path: EventDetail/Create/Data, data_name: error, field: errorCode}
       - name: policy-change
         when: [{field: eventName, equals: PutBucketPolicy}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-BucketPolicy}
+          - {path: EventDetail/Description, value: A bucket's policy was changed}
+          - {path: EventDetail/Update/Data, data_name: eventName, field: eventName}
           - {path: EventDetail/Update/After/Object/Type, value: S3 bucket policy}
           - {path: EventDetail/Update/After/Object/Id, field: requestParameters.bucketName}
           - {path: EventDetail/Update/Data, data_name: error, field: errorCode}

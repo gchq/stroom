@@ -25,7 +25,7 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'copy to removable media': every record. Writes a Copy event (TypeId USB-Copy) from source, destination. -->
+  <!-- Rule 'copy to removable media': every record. Writes a Copy event (TypeId Copy-File) from source, destination. -->
   <xsl:template match="node()" mode="event_type_copy_to_removable_media">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
@@ -57,7 +57,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>USB-Copy</TypeId>
+        <TypeId>Copy-File</TypeId>
+        <Description>A file was copied to removable media</Description>
         <xsl:variable name="destination" select="data[@name='destination']/@value[normalize-space(.)]"/>
         <xsl:variable name="source" select="data[@name='source']/@value[normalize-space(.)]"/>
         <xsl:if test="$source or $destination">

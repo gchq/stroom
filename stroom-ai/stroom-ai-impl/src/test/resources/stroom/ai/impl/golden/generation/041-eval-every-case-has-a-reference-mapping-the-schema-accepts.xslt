@@ -24,30 +24,32 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <!-- Rule 'logon': records where System/EventID = 4624. Writes an Authenticate event (TypeId from System/EventID). -->
+  <!-- Rule 'logon': records where System/EventID = 4624. Writes an Authenticate event (TypeId Authenticate-Logon)
+       from System/EventID. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
         <Description>An account was successfully logged on</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:sequence select="mcp:data('LogonType', EventData/Data[@Name='LogonType'])"/>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'failed logon': records where System/EventID = 4625. Writes an Authenticate event (TypeId from
-       System/EventID). -->
+  <!-- Rule 'failed logon': records where System/EventID = 4625. Writes an Authenticate event (TypeId
+       Authenticate-FailedLogon) from System/EventID. -->
   <xsl:template match="node()" mode="event_type_failed_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-FailedLogon</TypeId>
         <Description>An account failed to log on</Description>
         <Authenticate>
           <Action>Logon</Action>
@@ -56,22 +58,25 @@
             <Success>false</Success>
           </Outcome>
           <xsl:sequence select="mcp:data('LogonType', EventData/Data[@Name='LogonType'])"/>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where System/EventID = 4634. Writes an Authenticate event (TypeId from System/EventID). -->
+  <!-- Rule 'logoff': records where System/EventID = 4634. Writes an Authenticate event (TypeId Authenticate-Logoff)
+       from System/EventID. -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
         <Description>An account was logged off</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:sequence select="mcp:data('LogonType', EventData/Data[@Name='LogonType'])"/>
+          <xsl:sequence select="mcp:data('EventID', System/EventID)"/>
         </Authenticate>
       </EventDetail>
     </Event>
@@ -116,14 +121,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'failed logon', 'logoff' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:if test="(System/EventID)[normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="(System/EventID)[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'failed logon', 'logoff' -->
   <xsl:template match="node()" mode="user">

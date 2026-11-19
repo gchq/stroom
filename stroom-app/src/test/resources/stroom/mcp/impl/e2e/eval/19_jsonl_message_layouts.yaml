@@ -8,6 +8,10 @@ request: >
   which analysts treat as alerts. Values with spaces are quoted. Anything else is free text: keep it as an event
   too, with the text. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 8
   event_types: [Authenticate, Alert]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]
@@ -23,6 +27,8 @@ sample: |
   {"host": "vpn01", "time": "2026-10-02T08:30:44Z", "severity": "info", "message": "SESSION end user=\"Jane Doe\" duration=1963s"}
   {"host": "vpn01", "time": "2026-10-02T08:31:00Z", "severity": "info", "message": "Heartbeat from monitoring probe 3"}
   {"host": "vpn01", "time": "2026-10-02T09:12:27Z", "severity": "warning", "message": "AUTH fail user=\"svc backup\" src=198.51.100.23 reason=\"account locked\" attempts=5"}
+# The reference's rules use the event type catalogue's conditions (`not`, the catch_all flag): its reference build
+# waits for the generator to read them (phase 1).
 reference:
   mapping:
     input: json
@@ -42,12 +48,13 @@ reference:
       - {path: EventSource/System/Environment, value: Eval}
       - {path: EventSource/Generator, value: vpn}
       - {path: EventSource/Device/HostName, field: host}
-      - {path: EventDetail/TypeId, field: kind}
       - {path: EventDetail/Description, field: message}
     events:
       - name: auth
         when: [{field: kind, equals: AUTH}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: kind, field: kind}
           - {path: EventSource/User/Id, any_of: [user_quoted, user_plain]}
           - {path: EventSource/Client/IPAddress, field: src}
           - {path: EventDetail/Authenticate/Action, value: Logon}
@@ -58,6 +65,8 @@ reference:
       - name: session end
         when: [{field: kind, equals: SESSION}]
         fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: kind, field: kind}
           - {path: EventSource/User/Id, any_of: [user_quoted, user_plain]}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
           - {path: EventDetail/Authenticate/User/Id, any_of: [user_quoted, user_plain]}
@@ -65,13 +74,17 @@ reference:
       - name: tunnel
         when: [{field: kind, equals: TUNNEL}]
         fields:
+          - {path: EventDetail/TypeId, value: Alert-Tunnel}
+          - {path: EventDetail/Alert/Data, data_name: kind, field: kind}
           - {path: EventDetail/Alert/Type, value: Network}
           - {path: EventDetail/Alert/Severity, field: verb, map: {down: Major, up: Info}}
           - {path: EventDetail/Alert/Network/Source/Device/HostName, field: host}
           - {path: EventDetail/Alert/Network/Destination/Device/IPAddress, field: peer}
           - {path: EventDetail/Alert/Data, data_name: tunnel, field: tunnel}
       - name: other
+        catch_all: true
         # The request: anything else is free text, kept as an event with the text.
         allow_unknown: free text with no recognised layout, kept with its text as the request asks
         fields:
+          - {path: EventDetail/TypeId, value: Unknown}
           - {path: EventDetail/Unknown/Data, data_name: severity, field: severity}

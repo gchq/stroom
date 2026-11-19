@@ -5,6 +5,10 @@ request: >
   Onboard these IDS alerts (a JSON array). Each object is one alert from a sensor: signature, severity, and the
   source and destination of the traffic that triggered it. Index them for the SOC.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Alert]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/Alert/Type]
@@ -24,7 +28,7 @@ reference:
     events:
       - name: alert
         fields:
-          - {path: EventDetail/TypeId, value: IDS-Alert}
+          - {path: EventDetail/TypeId, value: Alert-Intrusion}
           - {path: EventDetail/Description, field: sig}
           - {path: EventDetail/Alert/Type, value: IDS}
           - {path: EventDetail/Alert/Severity, field: sev, map: {"1": Critical, "2": Major, "3": Minor}, default: Info}

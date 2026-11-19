@@ -49,45 +49,52 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId from action) from user, result
-       (extracted from an xpath). -->
+  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Authenticate-Logon) from
+       action, user, result (extracted from an xpath). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
+          <xsl:sequence select="mcp:data('action', $user_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'logoff': records where action = logout. Writes an Authenticate event (TypeId from action) from user
-       (extracted from an xpath). -->
+  <!-- Rule 'logoff': records where action = logout. Writes an Authenticate event (TypeId Authenticate-Logoff) from
+       action, user (extracted from an xpath). -->
   <xsl:template match="node()" mode="event_type_logoff">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Authenticate-Logoff</TypeId>
+        <Description>A user signed out</Description>
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
+          <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
+          <xsl:sequence select="mcp:data('action', $user_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'export': records where action = export. Writes an Export event (TypeId from action) from detail, rows,
-       result (extracted from an xpath). -->
+  <!-- Rule 'export': records where action = export. Writes an Export event (TypeId Export-Data) from action, detail,
+       rows, result (extracted from an xpath). -->
   <xsl:template match="node()" mode="event_type_export">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:apply-templates select="." mode="type_id"/>
+        <TypeId>Export-Data</TypeId>
+        <Description>A user exported data</Description>
         <Export>
           <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
           <Source>
@@ -101,6 +108,7 @@
             </Object>
           </Source>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('action', $user_parts/fn:match//fn:group[@nr=2])"/>
           <xsl:sequence select="mcp:data('rows', $user_parts/fn:match//fn:group[@nr=6])"/>
         </Export>
       </EventDetail>
@@ -144,15 +152,6 @@
         </User>
       </xsl:if>
     </EventSource>
-  </xsl:template>
-  <!-- type_id: shared by the rules 'logon', 'logoff', 'export' -->
-  <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
-    <xsl:if test="$user_parts/fn:match//fn:group[@nr=2][normalize-space(.)]">
-      <TypeId>
-        <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=2])[1]"/>
-      </TypeId>
-    </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">

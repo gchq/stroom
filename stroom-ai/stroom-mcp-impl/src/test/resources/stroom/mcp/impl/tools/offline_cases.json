@@ -33,7 +33,7 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "IDS-Alert"
+"value": "Alert-Intrusion"
 },
 {
 "path": "EventDetail/Description",
@@ -81,12 +81,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[alert] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[alert] Data 'source_ip' looks like EventSource/Client/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else.",
-"[alert] Data 'destination_ip' looks like EventSource/Server/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else.",
-"[alert] Data 'destination_port' looks like EventSource/Server/Port, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else."
-]
+"warnings": []
 },
 {
 "id": "03_json_nested_process",
@@ -133,6 +128,10 @@
 "value": "Process-Start"
 },
 {
+"path": "EventDetail/Description",
+"value": "A process was started on a workstation"
+},
+{
 "path": "EventDetail/Process/Action",
 "value": "Execute"
 },
@@ -161,9 +160,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[process start] required ['EventTime', 'EventSource/Device', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "04_json_embedded",
@@ -197,10 +194,6 @@
 "xpath": "json-to-xml(*[@key='message'])/*/*[@key='user']"
 },
 {
-"path": "EventDetail/TypeId",
-"xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']"
-},
-{
 "path": "EventDetail/Authenticate/User/Id",
 "xpath": "json-to-xml(*[@key='message'])/*/*[@key='user']"
 },
@@ -220,6 +213,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed in to the application"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "event",
+"xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
 }
@@ -235,6 +241,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out of the application"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "event",
+"xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 }
@@ -248,11 +267,8 @@
 "splitter": null,
 "problems": [],
 "warnings": [
-"[logon] TypeId is read from its input, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] TypeId is read from its input, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (1 of 3): ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
+"Rules [logon, logoff] took none of the 3 sample records, so this check says nothing of them: before relying on them, step a record of each (step_records at the survey's locations), or give a sample that holds them"
 ]
 },
 {
@@ -302,7 +318,16 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "File-Read"
+"value": "View-File"
+},
+{
+"path": "EventDetail/Description",
+"value": "A file on the share was read"
+},
+{
+"path": "EventDetail/View/Data",
+"data_name": "op",
+"field": "op"
 },
 {
 "path": "EventDetail/View/File/Path",
@@ -321,7 +346,16 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "File-Delete"
+"value": "Delete-File"
+},
+{
+"path": "EventDetail/Description",
+"value": "A file on the share was deleted"
+},
+{
+"path": "EventDetail/Delete/Data",
+"data_name": "op",
+"field": "op"
 },
 {
 "path": "EventDetail/Delete/File/Path",
@@ -336,10 +370,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[read] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "10_xml_attrs_lock",
@@ -376,10 +407,6 @@
 "field": "@user"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "@action"
-},
-{
 "path": "EventDetail/Authenticate/User/Id",
 "field": "@user"
 }
@@ -394,6 +421,19 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-ScreenLock"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user locked their screen"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "@action"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "ScreenLock"
@@ -410,6 +450,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-ScreenUnlock"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user unlocked their screen"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "@action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "ScreenUnlock"
 }
@@ -422,10 +475,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[lock] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[unlock] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "11_jsonl_message_text",
@@ -491,10 +541,6 @@
 "field": "user"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "action"
-},
-{
 "path": "EventDetail/Description",
 "field": "desc"
 }
@@ -509,6 +555,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -537,6 +592,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 },
@@ -554,9 +618,7 @@
 "splitter": null,
 "problems": [],
 "warnings": [
-"[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (1 of 3): ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
 ]
 },
 {
@@ -608,10 +670,6 @@
 "field": "user"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "action"
-},
-{
 "path": "EventDetail/Description",
 "xpath": "json-to-xml(*[@key='payload'])/*/*[@key='msg']"
 },
@@ -639,6 +697,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
 }
@@ -654,6 +721,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 }
@@ -667,9 +743,8 @@
 "splitter": null,
 "problems": [],
 "warnings": [
-"[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (1 of 3): ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
+"Rules [logon, logoff] took none of the 3 sample records, so this check says nothing of them: before relying on them, step a record of each (step_records at the survey's locations), or give a sample that holds them"
 ]
 },
 {
@@ -734,7 +809,16 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "VPN-Logon"
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed in to the VPN"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -755,20 +839,50 @@
 "when": [
 {
 "field": "action",
-"one_of": [
-"logout",
-"timeout"
-]
+"equals": "logout"
 }
 ],
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"field": "action",
-"map": {
-"logout": "VPN-Logoff",
-"timeout": "VPN-Timeout"
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out of the VPN, or their session timed out"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
+"path": "EventDetail/Authenticate/Action",
+"value": "Logoff"
 }
+]
+},
+{
+"name": "timeout",
+"when": [
+{
+"field": "action",
+"equals": "timeout"
+}
+],
+"fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out of the VPN, or their session timed out"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -794,11 +908,7 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[logon] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] TypeId is read from action, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[logoff] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "16_json_batches_items",
@@ -861,10 +971,6 @@
 "repeat": true
 },
 {
-"path": "EventDetail/TypeId",
-"field": "action"
-},
-{
 "path": "EventDetail/Authenticate/User/Id",
 "field": "user"
 },
@@ -886,6 +992,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed in to the application"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
 }
@@ -901,6 +1020,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out of the application"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 }
@@ -914,9 +1046,7 @@
 "splitter": null,
 "problems": [],
 "warnings": [
-"[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['events']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (1 of 7): ['events']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
 ]
 },
 {
@@ -952,10 +1082,6 @@
 "xpath": "json-to-xml(*[@key='event'])/*/*[@key='username']"
 },
 {
-"path": "EventDetail/TypeId",
-"xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
-},
-{
 "path": "EventDetail/Description",
 "xpath": "json-to-xml(*[@key='event'])/*/*[@key='message']"
 }
@@ -973,6 +1099,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "event_type",
+"xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -1001,6 +1136,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "event_type",
+"xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 },
@@ -1019,6 +1163,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-PasswordChange"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "event_type",
+"xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "ChangePassword"
@@ -1039,6 +1192,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "View-Document"
+},
+{
+"path": "EventDetail/View/Data",
+"data_name": "event_type",
+"xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
+},
+{
 "path": "EventDetail/View/Document/Name",
 "xpath": "json-to-xml(*[@key='event'])/*/*[@key='resource']"
 }
@@ -1054,6 +1216,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Delete-Document"
+},
+{
+"path": "EventDetail/Delete/Data",
+"data_name": "event_type",
+"xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
+},
+{
 "path": "EventDetail/Delete/Document/Name",
 "xpath": "json-to-xml(*[@key='event'])/*/*[@key='resource']"
 }
@@ -1067,17 +1238,8 @@
 "splitter": null,
 "problems": [],
 "warnings": [
-"[logon] TypeId is read from its input, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] TypeId is read from its input, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[password change] TypeId is read from its input, which its records may lack: those get TypeId 'password change', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[password change] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[view] TypeId is read from its input, which its records may lack: those get TypeId 'view', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[view] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[delete] TypeId is read from its input, which its records may lack: those get TypeId 'delete', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (1 of 3): ['received']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
+"Rules [logon, logoff, password change, view, delete] took none of the 6 sample records, so this check says nothing of them: before relying on them, step a record of each (step_records at the survey's locations), or give a sample that holds them"
 ]
 },
 {
@@ -1317,11 +1479,6 @@
 "splitter": null,
 "problems": [],
 "warnings": [
-"[auth] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[session end] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[tunnel] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Alert/Network/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[other] TypeId is read from kind, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
 "extract[1] (message): the regex matches 5 of the 8 sample texts; the rest leave ['user_quoted', 'user_plain'] empty. E.g. `TUNNEL down peer=192.0.2.50 name=branch-02`: None of these texts has ` user=`: a key the sample lacks (its records may be elsewhere in the feed), or one spelt otherwise in the text.",
 "extract[2] (message): the regex matches 4 of the 8 sample texts; the rest leave ['src'] empty. E.g. `TUNNEL down peer=192.0.2.50 name=branch-02`: None of these texts has ` src=`: a key the sample lacks (its records may be elsewhere in the feed), or one spelt otherwise in the text.",
 "extract[3] (message): the regex matches 2 of the 8 sample texts; the rest leave ['method'] empty. E.g. `AUTH fail user=jsmith src=203.0.113.9 reason=\"bad password\"`: None of these texts has ` method=`: a key the sample lacks (its records may be elsewhere in the feed), or one spelt otherwise in the text.",
@@ -1368,10 +1525,6 @@
 "field": "suser"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "cef_signature_id"
-},
-{
 "path": "EventDetail/Description",
 "any_of": [
 "msg",
@@ -1392,6 +1545,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "cef_signature_id",
+"field": "cef_signature_id"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -1420,6 +1582,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "cef_signature_id",
+"field": "cef_signature_id"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 },
@@ -1441,6 +1612,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Network-WebRequest"
+},
+{
+"path": "EventDetail/Network/Open/Data",
+"data_name": "cef_signature_id",
+"field": "cef_signature_id"
+},
 {
 "path": "EventDetail/Network/Open/Source/Device/IPAddress",
 "field": "src"
@@ -1482,6 +1662,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Alert-Malware"
+},
+{
+"path": "EventDetail/Alert/Data",
+"data_name": "cef_signature_id",
+"field": "cef_signature_id"
+},
 {
 "path": "EventDetail/Alert/Type",
 "value": "Malware"
@@ -1541,11 +1730,7 @@
 },
 "problems": [],
 "warnings": [
-"[logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[web request] required ['EventTime', 'EventDetail', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[malware] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['pri', 'cef_version', 'cef_vendor', 'cef_device_version', 'cef_severity']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (5 of 21): ['pri', 'cef_version', 'cef_vendor', 'cef_device_version', 'cef_severity']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
 ]
 },
 {
@@ -1580,10 +1765,6 @@
 "field": "agent"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "action"
-},
-{
 "path": "EventDetail/Description",
 "field": "comment",
 "transform": "unescape_quotes"
@@ -1599,6 +1780,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Create-Ticket"
+},
+{
+"path": "EventDetail/Create/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Create/Object/Type",
 "value": "Ticket"
@@ -1625,6 +1815,21 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "View-Ticket"
+},
+{
+"path": "EventDetail/Description",
+"field": "comment",
+"transform": "unescape_quotes",
+"default": "A ticket was viewed"
+},
+{
+"path": "EventDetail/View/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/View/Object/Type",
 "value": "Ticket"
 },
@@ -1646,6 +1851,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Update-Ticket"
+},
+{
+"path": "EventDetail/Update/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Update/After/Object/Type",
 "value": "Ticket"
@@ -1682,11 +1896,7 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[created] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[viewed] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[updated] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "24_csv_noheader_quoted_print",
@@ -1719,16 +1929,20 @@
 "path": "EventSource/User/Id",
 "field": "user",
 "transform": "unescape_quotes"
-},
-{
-"path": "EventDetail/TypeId",
-"value": "print-job"
 }
 ],
 "events": [
 {
 "name": "printed",
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Print-Document"
+},
+{
+"path": "EventDetail/Description",
+"value": "A document was printed"
+},
 {
 "path": "EventDetail/Print/Action",
 "value": "FinishPrint"
@@ -1779,13 +1993,11 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[printed] required ['EventTime', 'EventSource/Device', 'EventDetail/Print/PrintJob', 'EventDetail/Print/PrintJob/Document'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "25_syslog_kv_nil_proxy",
-"size": 863,
+"size": 967,
 "mapping": {
 "input": "data_splitter",
 "nil_values": [
@@ -1818,14 +2030,24 @@
 "field": "user"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "action"
+"path": "EventDetail/Description",
+"field": "msg",
+"transform": "unescape_backslashes"
 }
 ],
 "events": [
 {
 "name": "web request",
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Network-WebRequest"
+},
+{
+"path": "EventDetail/Network/Open/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Network/Open/Source/Device/IPAddress",
 "field": "src"
@@ -1862,7 +2084,7 @@
 ]
 },
 "texts": [
-"<134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - user=alice src=10.2.0.5 dst=93.184.216.34 url=https://example.com/ category=business action=allow referer=-\n<134>1 2026-10-02T11:00:05.000Z wf01 webfilter 2211 - - user=- src=10.2.0.77 dst=198.51.100.40 url=http://198.51.100.40/x.bin category=malware action=block referer=-\n<134>1 2026-10-02T11:01:10.000Z wf01 webfilter 2211 - - user=bob src=10.2.0.9 dst=93.184.216.34 url=https://example.com/news category=news action=allow referer=https://example.com/\n<134>1 2026-10-02T11:02:00.000Z wf02 webfilter 1907 - - user=- src=10.2.1.4 dst=203.0.113.80 url=https://203.0.113.80/login category=phishing action=block referer=https://mail.example.org/\n<134>1 2026-10-02T11:05:30.000Z wf02 webfilter 1907 - - user=alice src=10.2.0.5 dst=192.0.2.15 url=https://intranet.example.org/ category=- action=allow referer=-\n"
+"<134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - user=alice src=10.2.0.5 dst=93.184.216.34 url=https://example.com/ category=business action=allow referer=- msg=\"ok\"\n<134>1 2026-10-02T11:00:05.000Z wf01 webfilter 2211 - - user=- src=10.2.0.77 dst=198.51.100.40 url=http://198.51.100.40/x.bin category=malware action=block referer=- msg=\"blocked \\\"x.bin\\\": malware\"\n<134>1 2026-10-02T11:01:10.000Z wf01 webfilter 2211 - - user=bob src=10.2.0.9 dst=93.184.216.34 url=https://example.com/news category=news action=allow referer=https://example.com/ msg=\"ok\"\n<134>1 2026-10-02T11:02:00.000Z wf02 webfilter 1907 - - user=- src=10.2.1.4 dst=203.0.113.80 url=https://203.0.113.80/login category=phishing action=block referer=https://mail.example.org/ msg=\"say \\\"hi\\\" to phishing\"\n<134>1 2026-10-02T11:05:30.000Z wf02 webfilter 1907 - - user=alice src=10.2.0.5 dst=192.0.2.15 url=https://intranet.example.org/ category=- action=allow referer=- msg=\"saved to C:\\\\temp\"\n"
 ],
 "splitter": {
 "kind": "syslog",
@@ -1888,9 +2110,7 @@
 },
 "problems": [],
 "warnings": [
-"[web request] TypeId is read from action, which its records may lack: those get TypeId 'web request', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[web request] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['pri', 'pid', 'msgid', 'structured', 'message']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (5 of 16): ['pri', 'pid', 'msgid', 'structured', 'message']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
 ]
 },
 {
@@ -1987,7 +2207,12 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "login"
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "direction",
+"field": "direction"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2015,7 +2240,7 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "login-failed"
+"value": "Authenticate-FailedLogon"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2046,7 +2271,12 @@
 "fields": [
 {
 "path": "EventDetail/TypeId",
-"value": "logout"
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "direction",
+"field": "direction"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2087,10 +2317,7 @@
 },
 "problems": [],
 "warnings": [
-"[logged in] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[failed login] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logged out] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['level']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
+"fields in the sample that nothing reads (1 of 4): ['level']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
 "extract[0] (message): the regex matches 4 of the 5 sample texts; the rest leave ['user_ok', 'direction'] empty. E.g. `Login failed for user 'bob' from 203.0.113.9 – reason: bad password`: It matches as far as `` and stops there: the regex goes on with `User '([^']+)' logged (in|out)`, the text with `Login failed for user 'bob' fr…`.",
 "extract[1] (message): the regex matches 1 of the 5 sample texts; the rest leave ['user_failed'] empty. E.g. `User 'alice' logged in from 10.0.0.5 – session a1b2c3`: It matches as far as `` and stops there: the regex goes on with `Login failed for user '([^']+)…`, the text with `User 'alice' logged in from 10…`.",
 "extract[2] (message): the regex matches 3 of the 5 sample texts; the rest leave ['client'] empty. E.g. `User 'alice' logged out – session a1b2c3`: None of these texts has ` from `: a key the sample lacks (its records may be elsewhere in the feed), or one spelt otherwise in the text.",
@@ -2130,16 +2357,20 @@
 {
 "path": "EventSource/User/Id",
 "field": "holder"
-},
-{
-"path": "EventDetail/TypeId",
-"value": "badge"
 }
 ],
 "events": [
 {
 "name": "badge",
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authorise-BadgeAccess"
+},
+{
+"path": "EventDetail/Description",
+"value": "A badge was presented at a door"
+},
 {
 "path": "EventDetail/Authorise/Action",
 "value": "Request"
@@ -2161,10 +2392,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[badge] EventDetail/Authorise/Outcome/Success: Success is true/false; map the input values, e.g. {'ok': 'true', 'fail': 'false'}, unless they already are",
-"[badge] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "30_jsonl_two_shapes_idp",
@@ -2201,21 +2429,36 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed in, or tried to"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "eventType",
+"field": "eventType"
+},
+{
 "path": "EventTime/TimeCreated",
 "field": "published",
 "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
 },
 {
 "path": "EventSource/User/Id",
-"field": "actor.alternateId"
+"field": "actor.alternateId",
+"transform": "strip_domain"
+},
+{
+"path": "EventSource/User/Domain",
+"field": "actor.alternateId",
+"transform": "domain"
 },
 {
 "path": "EventSource/Client/IPAddress",
 "field": "client.ipAddress"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "eventType"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2223,7 +2466,13 @@
 },
 {
 "path": "EventDetail/Authenticate/User/Id",
-"field": "actor.alternateId"
+"field": "actor.alternateId",
+"transform": "strip_domain"
+},
+{
+"path": "EventDetail/Authenticate/User/Domain",
+"field": "actor.alternateId",
+"transform": "domain"
 },
 {
 "path": "EventDetail/Authenticate/Outcome/Success",
@@ -2249,21 +2498,36 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "eventType",
+"field": "eventType"
+},
+{
 "path": "EventTime/TimeCreated",
 "field": "published",
 "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
 },
 {
 "path": "EventSource/User/Id",
-"field": "actor.alternateId"
+"field": "actor.alternateId",
+"transform": "strip_domain"
+},
+{
+"path": "EventSource/User/Domain",
+"field": "actor.alternateId",
+"transform": "domain"
 },
 {
 "path": "EventSource/Client/IPAddress",
 "field": "client.ipAddress"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "eventType"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2271,7 +2535,13 @@
 },
 {
 "path": "EventDetail/Authenticate/User/Id",
-"field": "actor.alternateId"
+"field": "actor.alternateId",
+"transform": "strip_domain"
+},
+{
+"path": "EventDetail/Authenticate/User/Domain",
+"field": "actor.alternateId",
+"transform": "domain"
 }
 ]
 },
@@ -2285,21 +2555,36 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Lock-UserAccount"
+},
+{
+"path": "EventDetail/Description",
+"value": "An account was locked"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "eventType",
+"field": "eventType"
+},
+{
 "path": "EventTime/TimeCreated",
 "field": "published",
 "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
 },
 {
 "path": "EventSource/User/Id",
-"field": "actor.alternateId"
+"field": "actor.alternateId",
+"transform": "strip_domain"
+},
+{
+"path": "EventSource/User/Domain",
+"field": "actor.alternateId",
+"transform": "domain"
 },
 {
 "path": "EventSource/Client/IPAddress",
 "field": "client.ipAddress"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "eventType"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2307,7 +2592,13 @@
 },
 {
 "path": "EventDetail/Authenticate/User/Id",
-"field": "actor.alternateId"
+"field": "actor.alternateId",
+"transform": "strip_domain"
+},
+{
+"path": "EventDetail/Authenticate/User/Domain",
+"field": "actor.alternateId",
+"transform": "domain"
 }
 ]
 },
@@ -2321,6 +2612,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed in, or tried to"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "type",
+"field": "type"
+},
+{
 "path": "EventTime/TimeCreated",
 "field": "ts",
 "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
@@ -2332,10 +2636,6 @@
 {
 "path": "EventSource/Client/IPAddress",
 "field": "ip"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "type"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2361,6 +2661,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "type",
+"field": "type"
+},
+{
 "path": "EventTime/TimeCreated",
 "field": "ts",
 "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
@@ -2372,10 +2685,6 @@
 {
 "path": "EventSource/Client/IPAddress",
 "field": "ip"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "type"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2397,6 +2706,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-PasswordChange"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user changed their password"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "type",
+"field": "type"
+},
+{
 "path": "EventTime/TimeCreated",
 "field": "ts",
 "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
@@ -2408,10 +2730,6 @@
 {
 "path": "EventSource/Client/IPAddress",
 "field": "ip"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "type"
 },
 {
 "path": "EventDetail/Authenticate/Action",
@@ -2434,16 +2752,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[new session start] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[new session end] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[new account lock] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[legacy login] EventDetail/Authenticate/Outcome/Success: Success is true/false; map the input values, e.g. {'ok': 'true', 'fail': 'false'}, unless they already are",
-"[legacy login] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[legacy logout] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[legacy password change] EventDetail/Authenticate/Outcome/Success: Success is true/false; map the input values, e.g. {'ok': 'true', 'fail': 'false'}, unless they already are",
-"[legacy password change] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "31_kv_awkward_times_fortigate",
@@ -2490,10 +2799,6 @@
 "field": "remip"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "logid"
-},
-{
 "path": "EventDetail/Description",
 "field": "msg"
 }
@@ -2508,6 +2813,20 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "logid",
+"field": "logid"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -2527,6 +2846,20 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-FailedLogon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "logid",
+"field": "logid"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -2550,6 +2883,20 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "logid",
+"field": "logid"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
@@ -2579,13 +2926,7 @@
 },
 "problems": [],
 "warnings": [
-"[signed in] TypeId is read from logid, which its records may lack: those get TypeId 'signed in', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[signed in] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[failed sign in] TypeId is read from logid, which its records may lack: those get TypeId 'failed sign in', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[failed sign in] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[signed out] TypeId is read from logid, which its records may lack: those get TypeId 'signed out', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[signed out] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"fields in the sample that nothing reads: ['itime', 'date', 'time', 'type', 'subtype']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+"fields in the sample that nothing reads (5 of 12): ['itime', 'date', 'time', 'type', 'subtype']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
 ]
 },
 {
@@ -2618,10 +2959,6 @@
 {
 "path": "EventSource/User/Id",
 "field": "changed_by"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "change"
 }
 ],
 "events": [
@@ -2634,6 +2971,19 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Create-Employee"
+},
+{
+"path": "EventDetail/Description",
+"value": "An employee joined"
+},
+{
+"path": "EventDetail/Create/Data",
+"data_name": "change",
+"field": "change"
+},
 {
 "path": "EventDetail/Create/User/Id",
 "field": "employee_id"
@@ -2659,6 +3009,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Update-Employee"
+},
+{
+"path": "EventDetail/Description",
+"value": "An employee moved"
+},
+{
+"path": "EventDetail/Update/Data",
+"data_name": "change",
+"field": "change"
+},
+{
 "path": "EventDetail/Update/After/User/Id",
 "field": "employee_id"
 },
@@ -2682,6 +3045,19 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Delete-Employee"
+},
+{
+"path": "EventDetail/Description",
+"value": "An employee left"
+},
+{
+"path": "EventDetail/Delete/Data",
+"data_name": "change",
+"field": "change"
+},
 {
 "path": "EventDetail/Delete/User/Id",
 "field": "employee_id"
@@ -2714,11 +3090,7 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[joiner] required ['EventTime', 'EventDetail', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[mover] required ['EventTime', 'EventDetail', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[leaver] required ['EventTime', 'EventDetail', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "34_jsonl_schema_traps_nac",
@@ -2779,10 +3151,6 @@
 {
 "path": "EventSource/User/Id",
 "field": "user"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "result"
 }
 ],
 "events": [
@@ -2795,6 +3163,19 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-UserConnect"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user's device asked to join the network"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "result",
+"field": "result"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Connect"
@@ -2820,7 +3201,26 @@
 },
 {
 "name": "device access",
+"when": [
+{
+"field": "user",
+"present": false
+}
+],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-DeviceConnect"
+},
+{
+"path": "EventDetail/Description",
+"value": "A device asked to join the network with no user"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "result",
+"field": "result"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Connect"
@@ -2851,12 +3251,7 @@
 ],
 "splitter": null,
 "problems": [],
-"warnings": [
-"[user access] TypeId is read from result, which its records may lack: those get TypeId 'user access', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[user access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[device access] TypeId is read from result, which its records may lack: those get TypeId 'device access', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-"[device access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "42_csv_quoted_newlines_tickets",
@@ -2888,15 +3283,6 @@
 {
 "path": "EventSource/User/Id",
 "field": "user"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "action"
-},
-{
-"path": "EventDetail/Description",
-"field": "comment",
-"transform": "unescape_quotes"
 }
 ],
 "events": [
@@ -2909,6 +3295,21 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Create-Ticket"
+},
+{
+"path": "EventDetail/Description",
+"field": "comment",
+"transform": "unescape_quotes",
+"default": "A ticket was opened"
+},
+{
+"path": "EventDetail/Create/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Create/Object/Type",
 "value": "Ticket"
@@ -2937,6 +3338,16 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Update-Ticket"
+},
+{
+"path": "EventDetail/Description",
+"field": "comment",
+"transform": "unescape_quotes",
+"default": "A ticket was changed"
+},
 {
 "path": "EventDetail/Update/After/Object/Type",
 "value": "Ticket"
@@ -2975,10 +3386,7 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[create] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[change] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "44_custom_tilde_delimited",
@@ -3015,10 +3423,6 @@
 {
 "path": "EventSource/Client/IPAddress",
 "field": "ip"
-},
-{
-"path": "EventDetail/TypeId",
-"field": "action"
 }
 ],
 "events": [
@@ -3031,6 +3435,19 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed in"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -3059,6 +3476,19 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user signed out"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 },
@@ -3077,6 +3507,19 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-PasswordChange"
+},
+{
+"path": "EventDetail/Description",
+"value": "A user changed their password"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "ChangePassword"
@@ -3118,11 +3561,7 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[logon] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[password] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 },
 {
 "id": "51_kv_unicode_ansi",
@@ -3160,10 +3599,6 @@
 "field": "name"
 },
 {
-"path": "EventDetail/TypeId",
-"field": "action"
-},
-{
 "path": "EventDetail/Description",
 "field": "msg",
 "transform": "strip_control"
@@ -3179,6 +3614,15 @@
 }
 ],
 "fields": [
+{
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logon"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
 {
 "path": "EventDetail/Authenticate/Action",
 "value": "Logon"
@@ -3207,6 +3651,15 @@
 ],
 "fields": [
 {
+"path": "EventDetail/TypeId",
+"value": "Authenticate-Logoff"
+},
+{
+"path": "EventDetail/Authenticate/Data",
+"data_name": "action",
+"field": "action"
+},
+{
 "path": "EventDetail/Authenticate/Action",
 "value": "Logoff"
 },
@@ -3234,9 +3687,6 @@
 "directives": []
 },
 "problems": [],
-"warnings": [
-"[logon] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-"[logoff] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
-]
+"warnings": []
 }
 ]

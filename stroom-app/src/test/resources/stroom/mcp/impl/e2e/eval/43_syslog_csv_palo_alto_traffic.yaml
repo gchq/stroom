@@ -9,6 +9,10 @@ capabilities: [mixed_formats, delimiters, schema_inference]
 request: >
   Onboard our Palo Alto firewall's traffic logs (a file of them is on my disk). Index the sessions.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 2500
   event_types: [Network]
   forbidden_types: [Unknown]
@@ -35,11 +39,14 @@ reference:
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/User/Id, field: srcuser, transform: strip_domain}
       - {path: EventSource/Client/IPAddress, field: src}
-      - {path: EventDetail/TypeId, xpath: "concat(data[@name='type']/@value, '-', data[@name='subtype']/@value)"}
     events:
       - name: session
         when: [{field: type, equals: TRAFFIC}]
         fields:
+          - {path: EventDetail/TypeId, value: Network-Session}
+          - {path: EventDetail/Description, value: The firewall logged a session}
+          - {path: EventDetail/Network/Open/Data, data_name: type, field: type}
+          - {path: EventDetail/Network/Open/Data, data_name: subtype, field: subtype}
           - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
           - {path: EventDetail/Network/Open/Source/Port, field: sport}
           - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}

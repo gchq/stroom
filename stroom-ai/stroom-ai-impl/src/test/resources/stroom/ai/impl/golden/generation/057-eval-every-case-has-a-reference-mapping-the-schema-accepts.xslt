@@ -8,7 +8,7 @@
   <xsl:template match="*" mode="event">
     <xsl:apply-templates select="." mode="event_type_badge"/>
   </xsl:template>
-  <!-- Rule 'badge': every record. Writes an Authorise event (TypeId badge) from door, granted. -->
+  <!-- Rule 'badge': every record. Writes an Authorise event (TypeId Authorise-BadgeAccess) from door, granted. -->
   <xsl:template match="node()" mode="event_type_badge">
     <Event>
       <xsl:if test="(when)[normalize-space(.)]">
@@ -41,7 +41,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>badge</TypeId>
+        <TypeId>Authorise-BadgeAccess</TypeId>
+        <Description>A badge was presented at a door</Description>
         <Authorise>
           <xsl:if test="$door">
             <Resource>

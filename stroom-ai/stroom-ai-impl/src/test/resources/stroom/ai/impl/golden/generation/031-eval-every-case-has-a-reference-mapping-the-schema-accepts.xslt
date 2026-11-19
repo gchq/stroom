@@ -25,7 +25,7 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'alert': every record. Writes an Alert event (TypeId IDS-Alert) from sig, sev, src, dst, dport. -->
+  <!-- Rule 'alert': every record. Writes an Alert event (TypeId Alert-Intrusion) from sig, sev, src, dst, dport. -->
   <xsl:template match="node()" mode="event_type_alert">
     <Event>
       <xsl:if test="*[@key='ts'][normalize-space(.)]">
@@ -50,7 +50,7 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>IDS-Alert</TypeId>
+        <TypeId>Alert-Intrusion</TypeId>
         <xsl:variable name="sig" select="*[@key='sig'][normalize-space(.)]"/>
         <xsl:if test="$sig">
           <Description>

@@ -94,7 +94,12 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "login"
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "direction",
+      "data_name": "direction"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -122,7 +127,7 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "login-failed"
+      "value": "Authenticate-FailedLogon"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -153,7 +158,12 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "logout"
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "direction",
+      "data_name": "direction"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -188,6 +198,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[direction]",
      "EventDetail/Authenticate/Data[session]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -229,6 +240,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[direction]",
      "EventDetail/Authenticate/Data[session]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -483,7 +495,7 @@
       "path": "EventDetail/TypeId",
       "field": null,
       "any_of": null,
-      "value": "login",
+      "value": "Authenticate-Logon",
       "xpath": null,
       "meta": null,
       "lookup": null,
@@ -496,6 +508,24 @@
       "map": null,
       "default": null,
       "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "direction",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "direction"
      },
      {
       "path": "EventDetail/Authenticate/Action",
@@ -580,7 +610,7 @@
       "path": "EventDetail/TypeId",
       "field": null,
       "any_of": null,
-      "value": "login-failed",
+      "value": "Authenticate-FailedLogon",
       "xpath": null,
       "meta": null,
       "lookup": null,
@@ -695,7 +725,7 @@
       "path": "EventDetail/TypeId",
       "field": null,
       "any_of": null,
-      "value": "logout",
+      "value": "Authenticate-Logoff",
       "xpath": null,
       "meta": null,
       "lookup": null,
@@ -708,6 +738,24 @@
       "map": null,
       "default": null,
       "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "direction",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "direction"
      },
      {
       "path": "EventDetail/Authenticate/Action",

@@ -31,16 +31,20 @@
     "path": "EventSource/User/Id",
     "field": "user",
     "transform": "unescape_quotes"
-   },
-   {
-    "path": "EventDetail/TypeId",
-    "value": "print-job"
    }
   ],
   "events": [
    {
     "name": "printed",
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Print-Document"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A document was printed"
+     },
      {
       "path": "EventDetail/Print/Action",
       "value": "FinishPrint"
@@ -79,6 +83,7 @@
     "event": "printed",
     "when": "every record",
     "fields": [
+     "EventDetail/Description",
      "EventDetail/Print/Action",
      "EventDetail/Print/Data[printer_location]",
      "EventDetail/Print/PrintJob/Document/Title",

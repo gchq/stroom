@@ -35,10 +35,6 @@
     "field": "@user"
    },
    {
-    "path": "EventDetail/TypeId",
-    "field": "@action"
-   },
-   {
     "path": "EventDetail/Authenticate/User/Id",
     "field": "@user"
    }
@@ -53,6 +49,19 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-ScreenLock"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user locked their screen"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "@action",
+      "data_name": "action"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "ScreenLock"
@@ -69,6 +78,19 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-ScreenUnlock"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user unlocked their screen"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "@action",
+      "data_name": "action"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "ScreenUnlock"
      }
@@ -80,8 +102,8 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[lock] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[unlock] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+   "[lock] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[unlock] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
@@ -91,7 +113,9 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -108,7 +132,9 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
      "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
      "EventDetail/TypeId",
      "EventSource/Device/HostName",
      "EventSource/Generator",

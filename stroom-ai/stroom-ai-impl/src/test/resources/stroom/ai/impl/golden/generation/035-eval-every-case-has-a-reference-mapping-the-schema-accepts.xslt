@@ -25,7 +25,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'ssh logon': every record. Writes an Authenticate event (TypeId SSH-Logon) from user, result, method. -->
+  <!-- Rule 'ssh logon': every record. Writes an Authenticate event (TypeId Authenticate-Logon) from user, result,
+       method. -->
   <xsl:template match="node()" mode="event_type_ssh_logon">
     <Event>
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
@@ -78,7 +79,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>SSH-Logon</TypeId>
+        <TypeId>Authenticate-Logon</TypeId>
+        <Description>A user signed in over SSH, or tried to</Description>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:if test="$user">

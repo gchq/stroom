@@ -32,10 +32,6 @@
     "xpath": "json-to-xml(*[@key='event'])/*/*[@key='username']"
    },
    {
-    "path": "EventDetail/TypeId",
-    "xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']"
-   },
-   {
     "path": "EventDetail/Description",
     "xpath": "json-to-xml(*[@key='event'])/*/*[@key='message']"
    }
@@ -53,6 +49,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']",
+      "data_name": "event_type"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logon"
@@ -81,6 +86,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']",
+      "data_name": "event_type"
+     },
+     {
       "path": "EventDetail/Authenticate/Action",
       "value": "Logoff"
      },
@@ -99,6 +113,15 @@
      }
     ],
     "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-PasswordChange"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']",
+      "data_name": "event_type"
+     },
      {
       "path": "EventDetail/Authenticate/Action",
       "value": "ChangePassword"
@@ -119,6 +142,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "View-Document"
+     },
+     {
+      "path": "EventDetail/View/Data",
+      "xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']",
+      "data_name": "event_type"
+     },
+     {
       "path": "EventDetail/View/Document/Name",
       "xpath": "json-to-xml(*[@key='event'])/*/*[@key='resource']"
      }
@@ -134,6 +166,15 @@
     ],
     "fields": [
      {
+      "path": "EventDetail/TypeId",
+      "value": "Delete-Document"
+     },
+     {
+      "path": "EventDetail/Delete/Data",
+      "xpath": "json-to-xml(*[@key='event'])/*/*[@key='event_type']",
+      "data_name": "event_type"
+     },
+     {
       "path": "EventDetail/Delete/Document/Name",
       "xpath": "json-to-xml(*[@key='event'])/*/*[@key='resource']"
      }
@@ -145,15 +186,10 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] TypeId is read from its input, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[logoff] TypeId is read from its input, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[password change] TypeId is read from its input, which its records may lack: those get TypeId 'password change', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[password change] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[view] TypeId is read from its input, which its records may lack: those get TypeId 'view', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[view] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
-   "[delete] TypeId is read from its input, which its records may lack: those get TypeId 'delete', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
@@ -164,6 +200,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[event_type]",
      "EventDetail/Authenticate/Outcome/Success",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
@@ -183,6 +220,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[event_type]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -201,6 +239,7 @@
     ],
     "fields": [
      "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[event_type]",
      "EventDetail/Authenticate/User/Id",
      "EventDetail/Description",
      "EventDetail/TypeId",
@@ -220,6 +259,7 @@
     "fields": [
      "EventDetail/Description",
      "EventDetail/TypeId",
+     "EventDetail/View/Data[event_type]",
      "EventDetail/View/Document/Name",
      "EventSource/Device/HostName",
      "EventSource/Generator",
@@ -235,6 +275,7 @@
      "mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'] = 'DOCUMENT_DELETE'"
     ],
     "fields": [
+     "EventDetail/Delete/Data[event_type]",
      "EventDetail/Delete/Document/Name",
      "EventDetail/Description",
      "EventDetail/TypeId",

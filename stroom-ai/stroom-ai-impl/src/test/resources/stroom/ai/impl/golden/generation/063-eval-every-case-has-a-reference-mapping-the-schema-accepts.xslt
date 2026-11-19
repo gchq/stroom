@@ -18,12 +18,11 @@
       <xsl:when test="$user">
         <xsl:apply-templates select="." mode="event_type_user_access"/>
       </xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="not($user)">
         <xsl:apply-templates select="." mode="event_type_device_access"/>
-        <xsl:call-template name="mcp_log_kind">
-          <xsl:with-param name="group" select="concat('device access|', string-join((string(($user)[1])), '|'))"/>
-          <xsl:with-param name="line" select="concat('Caught by rule ''device access'': record ', $record-no, ' (', string-join((concat('user=', string(($user)[1]))), ' | '), ')')"/>
-        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('user=', string(($user)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -40,26 +39,15 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- mcp_log_kind: a record a rule keeps as Unknown on purpose, or a catch-all rule takes, logged once a stream for
-       each kind (the rule and the values the rules test) -->
-  <xsl:template name="mcp_log_kind">
-    <xsl:param name="group"/>
-    <xsl:param name="line"/>
-    <xsl:if test="not(string(stroom:get(concat('mcp-kind:', $group))))">
-      <xsl:value-of select="stroom:put(concat('mcp-kind:', $group), 'y')"/>
-      <xsl:sequence select="stroom:log('INFO', $line)"/>
-    </xsl:if>
-  </xsl:template>
-  <!-- Rule 'user access': records where user present. Writes an Authenticate event (TypeId from result) from user,
-       result, service_protocol (service_protocol extracted from service). -->
+  <!-- Rule 'user access': records where user present. Writes an Authenticate event (TypeId Authenticate-UserConnect)
+       from result, user, service_protocol (service_protocol extracted from service). -->
   <xsl:template match="node()" mode="event_type_user_access">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (*[@key='result'][normalize-space(.)]) then (*[@key='result'])[1] else 'user access'"/>
-        </TypeId>
+        <TypeId>Authenticate-UserConnect</TypeId>
+        <Description>A user's device asked to join the network</Description>
         <Authenticate>
           <Action>Connect</Action>
           <xsl:if test="*[@key='user'][normalize-space(.)]">
@@ -70,22 +58,22 @@
             </User>
           </xsl:if>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('result', *[@key='result'])"/>
           <xsl:variable name="service_port_parts" select="analyze-string(string((*[@key='service'])[1]), '^(\d+)/(\w+)$')"/>
           <xsl:sequence select="mcp:data('protocol', $service_port_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
     </Event>
   </xsl:template>
-  <!-- Rule 'device access': records no other rule matches. Writes an Authenticate event (TypeId from result) from
-       result, service_protocol (service_protocol extracted from service). -->
+  <!-- Rule 'device access': records where user empty. Writes an Authenticate event (TypeId
+       Authenticate-DeviceConnect) from result, service_protocol (service_protocol extracted from service). -->
   <xsl:template match="node()" mode="event_type_device_access">
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <TypeId>
-          <xsl:value-of select="if (*[@key='result'][normalize-space(.)]) then (*[@key='result'])[1] else 'device access'"/>
-        </TypeId>
+        <TypeId>Authenticate-DeviceConnect</TypeId>
+        <Description>A device asked to join the network with no user</Description>
         <Authenticate>
           <Action>Connect</Action>
           <xsl:variable name="device_mac_address" select="replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')[normalize-space(.)]"/>
@@ -100,6 +88,7 @@
             </Device>
           </xsl:if>
           <xsl:apply-templates select="." mode="outcome"/>
+          <xsl:sequence select="mcp:data('result', *[@key='result'])"/>
           <xsl:variable name="service_port_parts" select="analyze-string(string((*[@key='service'])[1]), '^(\d+)/(\w+)$')"/>
           <xsl:sequence select="mcp:data('protocol', $service_port_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>

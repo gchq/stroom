@@ -7,6 +7,10 @@ request: >
   ticket, or closing it (an update too). Keep the comment as the description, exactly as the agent typed it. Times
   are UTC. Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 5
   event_types: [Create, View, Update]
   forbidden_types: [Unknown]
@@ -32,23 +36,30 @@ reference:
       - {path: EventSource/Generator, value: helpdesk-audit}
       - {path: EventSource/Device/HostName, value: helpdesk.example.org}
       - {path: EventSource/User/Id, field: agent}
-      - {path: EventDetail/TypeId, field: action}
       - {path: EventDetail/Description, field: comment, transform: unescape_quotes}
     events:
       - name: created
         when: [{field: action, equals: create}]
         fields:
+          - {path: EventDetail/TypeId, value: Create-Ticket}
+          - {path: EventDetail/Create/Data, data_name: action, field: action}
           - {path: EventDetail/Create/Object/Type, value: Ticket}
           - {path: EventDetail/Create/Object/Id, field: ticket}
           - {path: EventDetail/Create/Object/Data, data_name: customer, field: customer, transform: unescape_quotes}
       - name: viewed
         when: [{field: action, equals: view}]
         fields:
+          - {path: EventDetail/TypeId, value: View-Ticket}
+          # A view has no comment: the record's message where it has one, else the event type's own text.
+          - {path: EventDetail/Description, field: comment, transform: unescape_quotes, default: A ticket was viewed}
+          - {path: EventDetail/View/Data, data_name: action, field: action}
           - {path: EventDetail/View/Object/Type, value: Ticket}
           - {path: EventDetail/View/Object/Id, field: ticket}
       - name: updated
         when: [{field: action, one_of: [update, close]}]
         fields:
+          - {path: EventDetail/TypeId, value: Update-Ticket}
+          - {path: EventDetail/Update/Data, data_name: action, field: action}
           - {path: EventDetail/Update/After/Object/Type, value: Ticket}
           - {path: EventDetail/Update/After/Object/Id, field: ticket}
           - {path: EventDetail/Update/After/Object/State, field: action, map: {close: Closed, update: Open}}

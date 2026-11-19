@@ -9,6 +9,10 @@ capabilities: [large_samples, event_boundaries]
 request: >
   Onboard our IDS alert export (the JSON file on my disk) to Stroom. Index the alerts.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 1}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 2500
   event_types: [Alert]
   forbidden_types: [Unknown]
@@ -29,7 +33,7 @@ reference:
     events:
       - name: alert
         fields:
-          - {path: EventDetail/TypeId, value: IDS-Alert}
+          - {path: EventDetail/TypeId, value: Alert-Intrusion}
           - {path: EventDetail/Description, field: sig}
           - {path: EventDetail/Alert/Type, value: IDS}
           - {path: EventDetail/Alert/Severity, field: sev, map: {"1": Critical, "2": Major, "3": Minor}, default: Info}

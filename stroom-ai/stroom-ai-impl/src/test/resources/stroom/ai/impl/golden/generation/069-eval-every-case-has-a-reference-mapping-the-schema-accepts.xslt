@@ -35,8 +35,8 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'session': records where type = TRAFFIC. Writes a Network/Open event from src, sport, dst, dport, rule,
-       app, session_end_reason, action. -->
+  <!-- Rule 'session': records where type = TRAFFIC. Writes a Network/Open event (TypeId Network-Session) from type,
+       subtype, src, sport, dst, dport, rule, app, session_end_reason, action. -->
   <xsl:template match="node()" mode="event_type_session">
     <Event>
       <xsl:if test="data[@name='generated_time']/@value[normalize-space(.)]">
@@ -76,13 +76,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>
-          <xsl:variable name="event_detail_type_id" select="concat(data[@name='type']/@value, '-', data[@name='subtype']/@value)[normalize-space(.)]"/>
-          <xsl:if test="count($event_detail_type_id) gt 1">
-            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_detail_type_id), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
-          </xsl:if>
-          <xsl:value-of select="if (exists($event_detail_type_id)) then $event_detail_type_id[1] else 'session'"/>
-        </TypeId>
+        <TypeId>Network-Session</TypeId>
+        <Description>The firewall logged a session</Description>
         <Network>
           <Open>
             <xsl:variable name="sport" select="data[@name='sport']/@value[normalize-space(.)]"/>
@@ -125,6 +120,8 @@
                 <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'allow') then 'true' else 'false'"/>
               </Permitted>
             </Outcome>
+            <xsl:sequence select="mcp:data('type', data[@name='type']/@value)"/>
+            <xsl:sequence select="mcp:data('subtype', data[@name='subtype']/@value)"/>
             <xsl:sequence select="mcp:data('rule', data[@name='rule']/@value)"/>
             <xsl:sequence select="mcp:data('app', data[@name='app']/@value)"/>
             <xsl:sequence select="mcp:data('end_reason', data[@name='session_end_reason']/@value)"/>

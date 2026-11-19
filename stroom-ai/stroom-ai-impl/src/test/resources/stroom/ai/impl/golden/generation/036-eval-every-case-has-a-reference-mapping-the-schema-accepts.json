@@ -43,7 +43,11 @@
     "fields": [
      {
       "path": "EventDetail/TypeId",
-      "value": "Sudo"
+      "value": "Process-Sudo"
+     },
+     {
+      "path": "EventDetail/Description",
+      "value": "A user ran a command as another user with sudo"
      },
      {
       "path": "EventDetail/Process/Action",
@@ -81,6 +85,7 @@
     "event": "sudo command",
     "when": "every record",
     "fields": [
+     "EventDetail/Description",
      "EventDetail/Process/Action",
      "EventDetail/Process/Arguments",
      "EventDetail/Process/Command",

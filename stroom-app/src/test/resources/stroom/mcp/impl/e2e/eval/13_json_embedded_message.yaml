@@ -6,6 +6,10 @@ request: >
   record in the payload field as a string: ts, level and msg. The msg text is the event itself:
   "user=<id> action=<LOGIN or LOGOUT> src=<client address> result=<success or failure>". Index the events.
 expected:
+  # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
+  # and, once catalogue_event_types confirms one, its checks.
+  type_ids: {min_distinct: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action]
@@ -28,14 +32,19 @@ reference:
       - {path: EventSource/Device/HostName, field: host}
       - {path: EventSource/Client/IPAddress, field: src}
       - {path: EventSource/User/Id, field: user}
-      - {path: EventDetail/TypeId, field: action}
       - {path: EventDetail/Description, xpath: "json-to-xml(*[@key='payload'])/*/*[@key='msg']"}
       - {path: EventDetail/Authenticate/User/Id, field: user}
       - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {success: "true", failure: "false"}}
     events:
       - name: logon
         when: [{field: action, equals: LOGIN}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
       - name: logoff
         when: [{field: action, equals: LOGOUT}]
-        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}

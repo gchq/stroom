@@ -25,7 +25,7 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- Rule 'sudo command': every record. Writes a Process event (TypeId Sudo) from command, args, pwd. -->
+  <!-- Rule 'sudo command': every record. Writes a Process event (TypeId Process-Sudo) from command, args, pwd. -->
   <xsl:template match="node()" mode="event_type_sudo_command">
     <Event>
       <xsl:variable name="event_time_time_created" select="concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))[normalize-space(.)]"/>
@@ -68,7 +68,8 @@
         </xsl:if>
       </EventSource>
       <EventDetail>
-        <TypeId>Sudo</TypeId>
+        <TypeId>Process-Sudo</TypeId>
+        <Description>A user ran a command as another user with sudo</Description>
         <Process>
           <Action>Execute</Action>
           <Type>Application</Type>
