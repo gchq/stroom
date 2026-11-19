@@ -26,7 +26,7 @@
         </form:FormGroup>
         <form:FormGroup ui:field="imageGroup" identity="floorMapLayerImage" label="Image">
             <g:FlowPanel addStyleNames="floor-map-layer-style__image floor-map-layer-style__wide">
-                <g:SimplePanel ui:field="assetPickerPanel" addStyleNames="floor-map-layer-style__asset-picker">
+                <g:SimplePanel addStyleNames="floor-map-layer-style__asset-picker">
                     <dd:DropDownBox ui:field="assetBox"/>
                 </g:SimplePanel>
                 <b:Button ui:field="uploadButton"

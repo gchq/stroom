@@ -32,7 +32,6 @@ import stroom.widget.text.client.Html;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The layer appearance dialog's content, which its [FloorMapLayerStyleController] shows.
@@ -79,8 +78,6 @@ public class FloorMapLayerStyle extends Component {
     FloorMapIconPicker iconPicker;
     @UiField
     FormGroup imageGroup;
-    @UiField
-    SimplePanel assetPickerPanel;
     @UiField
     DropDownBox assetBox;
     @UiField
