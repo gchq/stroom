@@ -69,4 +69,13 @@ class TestLuceneIndexDoc {
     void testPartitionBy_noneDisplayValue() {
         assertThat(PartitionBy.NONE.getDisplayValue()).isEqualTo("No partition");
     }
+
+    @Test
+    void testPartitionBy_isTimeBased() {
+        assertThat(PartitionBy.NONE.isTimeBased()).isFalse();
+        assertThat(PartitionBy.DAY.isTimeBased()).isTrue();
+        assertThat(PartitionBy.WEEK.isTimeBased()).isTrue();
+        assertThat(PartitionBy.MONTH.isTimeBased()).isTrue();
+        assertThat(PartitionBy.YEAR.isTimeBased()).isTrue();
+    }
 }

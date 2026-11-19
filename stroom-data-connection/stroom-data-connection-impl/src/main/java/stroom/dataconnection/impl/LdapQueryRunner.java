@@ -120,8 +120,15 @@ class LdapQueryRunner {
                 if (!cancellation.isCancelled()) {
                     throw e;
                 }
-                LOGGER.debug(() -> LogUtil.message("LDAP search of {} cancelled: {}", connection.url(),
-                        e.getMessage()));
+                if (e instanceof RuntimeException) {
+                    // Kept quiet for the user, but logged in full, as it may be a bug rather than the SDK
+                    // failing on the closing connection.
+                    LOGGER.warn(() -> LogUtil.message("LDAP search of {} failed while being cancelled: {}",
+                            connection.url(), e.getMessage()), e);
+                } else {
+                    LOGGER.debug(() -> LogUtil.message("LDAP search of {} cancelled: {}", connection.url(),
+                            e.getMessage()));
+                }
             } finally {
                 cancellation.unregister();
             }
