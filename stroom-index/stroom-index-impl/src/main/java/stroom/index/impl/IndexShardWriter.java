@@ -18,6 +18,8 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
 
+import java.util.function.BooleanSupplier;
+
 public interface IndexShardWriter {
 
     void addDocument(IndexDocument document) throws IndexException;
@@ -33,4 +35,28 @@ public interface IndexShardWriter {
     long getIndexShardId();
 
     long getCreationTime();
+
+    /// Gives the writer a way to check that this node still holds the lease on the shard. The writer must
+    /// then refuse to add documents or commit once the lease is no longer held, and discard what it has not
+    /// committed, because another node may by then be writing to the shard. A writer that is never given a
+    /// check, as for a shard on a local volume, always writes.
+    ///
+    /// @param leaseHeld Returns true while this node holds the lease on the shard.
+    default void setLeaseCheck(final BooleanSupplier leaseHeld) {
+        // Writers that can't be used on shared volumes need no lease.
+    }
+
+    /// Says whether the shard holds commits that this writer has replaced but is keeping for a while, for
+    /// the sake of readers on other nodes that may still be using them.
+    ///
+    /// @return True if there are replaced commits still to be removed.
+    default boolean hasReplacedCommits() {
+        return false;
+    }
+
+    /// Removes any commits this writer is keeping that have been replaced, whatever their age. Only for use
+    /// once the period they had to be kept for is known to have passed.
+    default void pruneReplacedCommits() {
+        // Writers that keep no replaced commits have nothing to remove.
+    }
 }

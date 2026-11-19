@@ -23,4 +23,5 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index INDEX_SHARD_INDEX_SHARD_INDEX_UUID = Internal.createIndex(DSL.name("index_shard_index_uuid"), IndexShard.INDEX_SHARD, new OrderField[] { IndexShard.INDEX_SHARD.INDEX_UUID }, false);
+    public static final Index INDEX_SHARD_INDEX_SHARD_LEASE_INSTANCE_ID = Internal.createIndex(DSL.name("index_shard_lease_instance_id"), IndexShard.INDEX_SHARD, new OrderField[] { IndexShard.INDEX_SHARD.LEASE_INSTANCE_ID }, false);
 }

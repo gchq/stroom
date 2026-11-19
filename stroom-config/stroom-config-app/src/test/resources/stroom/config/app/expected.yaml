@@ -718,6 +718,8 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       replacedCommitRetention: "PT30M"
+      shardLeaseDuration: "PT1M"
+      shardLeaseRenewInterval: "PT20S"
       slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:

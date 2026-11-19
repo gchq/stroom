@@ -42,6 +42,8 @@ class RetainReplacedCommitsDeletionPolicy extends IndexDeletionPolicy {
     private final LongSupplier clock;
     // When each replaced commit was first seen to have been replaced, by commit generation.
     private final Map<Long, Long> replacedTimes = new HashMap<>();
+    // Set once every replaced commit is known to be old enough to delete.
+    private boolean expireAll;
 
     /// Creates the policy.
     ///
@@ -69,6 +71,12 @@ class RetainReplacedCommitsDeletionPolicy extends IndexDeletionPolicy {
         return replacedTimes.size();
     }
 
+    /// Makes the policy delete every replaced commit the next time Lucene consults it, whatever their
+    /// age. For use on a shard whose retention period is known to have passed since it was last written.
+    synchronized void expireAll() {
+        expireAll = true;
+    }
+
     // The commits are given oldest first, and the last one is the current commit, which is always kept.
     private void deleteExpiredCommits(final List<? extends IndexCommit> commits) {
         final long nowMs = clock.getAsLong();
@@ -77,7 +85,7 @@ class RetainReplacedCommitsDeletionPolicy extends IndexDeletionPolicy {
             final IndexCommit commit = commits.get(i);
             final long generation = commit.getGeneration();
             final long replacedTimeMs = replacedTimes.getOrDefault(generation, nowMs);
-            if (nowMs - replacedTimeMs >= retentionMs) {
+            if (expireAll || nowMs - replacedTimeMs >= retentionMs) {
                 commit.delete();
             } else {
                 stillRetained.put(generation, replacedTimeMs);

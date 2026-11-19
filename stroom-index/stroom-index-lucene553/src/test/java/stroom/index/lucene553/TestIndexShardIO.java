@@ -20,8 +20,10 @@ import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.LuceneVersionUtil;
@@ -33,8 +35,11 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 
+import org.apache.lucene553.index.DirectoryReader;
 import org.apache.lucene553.search.IndexSearcher;
 import org.apache.lucene553.search.SearcherManager;
+import org.apache.lucene553.store.Directory;
+import org.apache.lucene553.store.NIOFSDirectory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -45,8 +50,10 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestIndexShardIO extends StroomUnitTest {
 
@@ -74,6 +81,159 @@ class TestIndexShardIO extends StroomUnitTest {
         pathCreator = new SimplePathCreator(
                 () -> tempDir.resolve("home"),
                 () -> tempDir);
+    }
+
+    @Test
+    void testLeaseHeld_documentsAreCommitted() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.setLeaseCheck(() -> true);
+
+        writer.addDocument(buildDocument(1));
+        writer.flush();
+        writer.addDocument(buildDocument(2));
+        writer.close();
+
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(2);
+    }
+
+    @Test
+    void testLeaseLost_addingIsRefused() throws IOException {
+        final AtomicBoolean leaseHeld = new AtomicBoolean(true);
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.setLeaseCheck(leaseHeld::get);
+        writer.addDocument(buildDocument(1));
+
+        leaseHeld.set(false);
+
+        // An IndexException, which is what makes the caller stop using this shard and choose another.
+        assertThatThrownBy(() -> writer.addDocument(buildDocument(2)))
+                .isInstanceOf(IndexException.class)
+                .hasMessageContaining("lease");
+        assertThat(writer.getDocumentCount()).isEqualTo(1);
+        writer.close();
+    }
+
+    @Test
+    void testLeaseLostBeforeCommit_uncommittedDocumentsAreDiscarded() throws IOException {
+        final AtomicBoolean leaseHeld = new AtomicBoolean(true);
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.setLeaseCheck(leaseHeld::get);
+        writer.addDocument(buildDocument(1));
+        writer.flush();
+        writer.addDocument(buildDocument(2));
+        writer.addDocument(buildDocument(3));
+
+        // Another node may be writing to the shard by now, so this commit must not happen.
+        leaseHeld.set(false);
+        writer.flush();
+
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(1);
+        // The writer's count goes back to what is really in the shard.
+        assertThat(writer.getDocumentCount()).isEqualTo(1);
+
+        // The writer is finished with. Getting the lease back does not revive it.
+        leaseHeld.set(true);
+        assertThatThrownBy(() -> writer.addDocument(buildDocument(4)))
+                .isInstanceOf(IndexException.class);
+        writer.flush();
+        writer.close();
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(1);
+    }
+
+    @Test
+    void testLeaseLostBeforeClose_uncommittedDocumentsAreDiscarded() throws IOException {
+        final AtomicBoolean leaseHeld = new AtomicBoolean(true);
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.setLeaseCheck(leaseHeld::get);
+        writer.addDocument(buildDocument(1));
+        writer.flush();
+        writer.addDocument(buildDocument(2));
+
+        // Closing normally commits what is outstanding.
+        leaseHeld.set(false);
+        writer.close();
+
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(1);
+        assertThat(writer.getDocumentCount()).isEqualTo(1);
+
+        // The shard is intact and another writer can carry on with it.
+        final IndexShardWriter nextWriter = createWriter(indexShard);
+        nextWriter.addDocument(buildDocument(5));
+        nextWriter.close();
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(2);
+    }
+
+    @Test
+    void testNoLeaseCheck_alwaysWrites() throws IOException {
+        // As for a shard on a local volume, which has no lease.
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+
+        writer.addDocument(buildDocument(1));
+        writer.close();
+
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(1);
+        assertThat(writer.hasReplacedCommits()).isFalse();
+    }
+
+    @Test
+    void testPruneReplacedCommits() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.addDocument(buildDocument(1));
+        writer.flush();
+        writer.addDocument(buildDocument(2));
+        writer.close();
+
+        // The writer closed while still keeping the commit it had replaced.
+        assertThat(writer.hasReplacedCommits()).isTrue();
+        assertThat(countCommits(dir)).isEqualTo(2);
+
+        // Much later a writer is opened just to remove it.
+        final IndexShardWriter pruningWriter = createWriter(indexShard);
+        pruningWriter.pruneReplacedCommits();
+        pruningWriter.close();
+
+        assertThat(pruningWriter.hasReplacedCommits()).isFalse();
+        assertThat(countCommits(dir)).isEqualTo(1);
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(2);
+    }
+
+    private IndexShard createShardOn(final VolumeType volumeType) throws IOException {
+        final IndexVolume volume = IndexVolume
+                .builder()
+                .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                .volumeType(volumeType)
+                .build();
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
+        return createShard(index, volume);
+    }
+
+    private IndexShardWriter createWriter(final IndexShard indexShard) {
+        return new Lucene553IndexShardWriter(
+                null, new IndexConfig(), indexShard, pathCreator, MAX_DOCS);
+    }
+
+    private int countCommittedDocuments(final IndexShard indexShard) throws IOException {
+        final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
+        try (final Directory directory = new NIOFSDirectory(dir);
+                final DirectoryReader reader = DirectoryReader.open(directory)) {
+            return reader.numDocs();
+        }
+    }
+
+    private int countCommits(final Path dir) throws IOException {
+        try (final Directory directory = new NIOFSDirectory(dir)) {
+            return DirectoryReader.listCommits(directory).size();
+        }
     }
 
     @Test

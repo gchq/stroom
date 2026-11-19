@@ -126,6 +126,21 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      */
     public final TableField<IndexShardRecord, Long> PARTITION_TO_MS = createField(DSL.name("partition_to_ms"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>stroom.index_shard.lease_instance_id</code>.
+     */
+    public final TableField<IndexShardRecord, String> LEASE_INSTANCE_ID = createField(DSL.name("lease_instance_id"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.index_shard.lease_expiry_ms</code>.
+     */
+    public final TableField<IndexShardRecord, Long> LEASE_EXPIRY_MS = createField(DSL.name("lease_expiry_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.index_shard.prune_commits_after_ms</code>.
+     */
+    public final TableField<IndexShardRecord, Long> PRUNE_COMMITS_AFTER_MS = createField(DSL.name("prune_commits_after_ms"), SQLDataType.BIGINT, this, "");
+
     private IndexShard(Name alias, Table<IndexShardRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -162,7 +177,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.INDEX_SHARD_INDEX_SHARD_INDEX_UUID);
+        return Arrays.asList(Indexes.INDEX_SHARD_INDEX_SHARD_INDEX_UUID, Indexes.INDEX_SHARD_INDEX_SHARD_LEASE_INSTANCE_ID);
     }
 
     @Override

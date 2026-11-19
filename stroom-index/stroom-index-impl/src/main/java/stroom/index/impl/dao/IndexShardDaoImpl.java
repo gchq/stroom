@@ -35,6 +35,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.Partition;
 import stroom.query.api.ExpressionItem;
@@ -68,6 +69,7 @@ import org.jooq.impl.DSL;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,6 +87,12 @@ import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GRO
 class IndexShardDaoImpl implements IndexShardDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
+
+    // The database's clock, so that lease times do not depend on the clocks of the nodes agreeing. Taken
+    // from UTC so that it does not depend on the session's time zone and never jumps when the clocks change.
+    private static final Field<Long> DB_TIME_MS = DSL.field(
+            "CAST(TIMESTAMPDIFF(MICROSECOND, '1970-01-01 00:00:00', UTC_TIMESTAMP(3)) DIV 1000 AS SIGNED)",
+            Long.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> IndexShard
             .builder()
@@ -357,11 +365,138 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
+    public boolean claimLease(final long id,
+                              final String nodeName,
+                              final String instanceId,
+                              final long leaseDurationMs) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.OPENING.getPrimitiveValue())
+                .set(INDEX_SHARD.NODE_NAME, nodeName)
+                .set(INDEX_SHARD.LEASE_INSTANCE_ID, instanceId)
+                .set(INDEX_SHARD.LEASE_EXPIRY_MS, DB_TIME_MS.plus(leaseDurationMs))
+                .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.STATUS.in(
+                        IndexShardStatus.CLOSED.getPrimitiveValue(),
+                        IndexShardStatus.NEW.getPrimitiveValue()))
+                .and(INDEX_SHARD.LEASE_INSTANCE_ID.isNull())
+                .execute()) > 0;
+    }
+
+    @Override
+    public int renewLeases(final String instanceId, final long leaseDurationMs) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.LEASE_EXPIRY_MS, DB_TIME_MS.plus(leaseDurationMs))
+                .where(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
+                .and(INDEX_SHARD.LEASE_EXPIRY_MS.ge(DB_TIME_MS))
+                .execute());
+    }
+
+    @Override
+    public Set<Long> findLeasedShardIds(final String instanceId) {
+        return new HashSet<>(JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .select(INDEX_SHARD.ID)
+                .from(INDEX_SHARD)
+                .where(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
+                .and(INDEX_SHARD.LEASE_EXPIRY_MS.ge(DB_TIME_MS))
+                .fetch(INDEX_SHARD.ID)));
+    }
+
+    @Override
+    public boolean releaseLease(final long id, final String instanceId, final Long pruneCommitsDelayMs) {
+        final Field<Long> pruneCommitsAfterMs = pruneCommitsDelayMs == null
+                ? INDEX_SHARD.PRUNE_COMMITS_AFTER_MS
+                : DB_TIME_MS.plus(pruneCommitsDelayMs);
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                // A shard that has been deleted or marked corrupt while open keeps that status.
+                .set(INDEX_SHARD.STATUS, DSL
+                        .when(INDEX_SHARD.STATUS.in(
+                                        IndexShardStatus.OPENING.getPrimitiveValue(),
+                                        IndexShardStatus.OPEN.getPrimitiveValue(),
+                                        IndexShardStatus.CLOSING.getPrimitiveValue()),
+                                IndexShardStatus.CLOSED.getPrimitiveValue())
+                        .otherwise(INDEX_SHARD.STATUS))
+                .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
+                .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, pruneCommitsAfterMs)
+                .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
+                .execute()) > 0;
+    }
+
+    @Override
+    public List<IndexShard> findUnleasedShardsOnSharedVolumes(final String indexUuid,
+                                                              final String partitionLabel) {
+        return findUnleasedClosedShardsOnSharedVolumes(
+                INDEX_SHARD.INDEX_UUID.eq(indexUuid).and(INDEX_SHARD.PARTITION_NAME.eq(partitionLabel)),
+                Integer.MAX_VALUE);
+    }
+
+    @Override
+    public List<IndexShard> findShardsWithCommitsToPrune(final int limit) {
+        return findUnleasedClosedShardsOnSharedVolumes(
+                INDEX_SHARD.PRUNE_COMMITS_AFTER_MS.le(DB_TIME_MS),
+                limit);
+    }
+
+    private List<IndexShard> findUnleasedClosedShardsOnSharedVolumes(final Condition condition,
+                                                                     final int limit) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                        .select()
+                        .from(INDEX_SHARD)
+                        .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
+                        .where(condition)
+                        .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSED.getPrimitiveValue()))
+                        .and(INDEX_SHARD.LEASE_INSTANCE_ID.isNull())
+                        .and(INDEX_VOLUME.VOLUME_TYPE.eq(VolumeType.SHARED.getPrimitiveValue()))
+                        .orderBy(INDEX_SHARD.ID)
+                        .limit(limit)
+                        .fetch())
+                .map(r -> {
+                    final IndexVolume indexVolume = IndexVolumeDaoImpl.RECORD_TO_INDEX_VOLUME_MAPPER.apply(r);
+                    return RECORD_TO_INDEX_SHARD_MAPPER.apply(r).copy().volume(indexVolume).build();
+                });
+    }
+
+    @Override
+    public void clearPruneCommitsTime(final long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .setNull(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS)
+                .where(INDEX_SHARD.ID.eq(id))
+                .execute());
+    }
+
+    @Override
+    public boolean isLeased(final long id) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .fetchExists(context
+                        .selectOne()
+                        .from(INDEX_SHARD)
+                        .where(INDEX_SHARD.ID.eq(id))
+                        .and(INDEX_SHARD.LEASE_INSTANCE_ID.isNotNull())));
+    }
+
+    @Override
     public void reset(final Long id) {
+        reset(id, INDEX_SHARD.LEASE_INSTANCE_ID.isNull());
+    }
+
+    @Override
+    public void resetAfterRestart(final Long id, final String instanceId) {
+        reset(id, INDEX_SHARD.LEASE_INSTANCE_ID.isNull().or(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId)));
+    }
+
+    private void reset(final Long id, final Condition leaseCondition) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, IndexShardStatus.CLOSED.getPrimitiveValue())
+                .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
+                .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
                 .where(INDEX_SHARD.ID.eq(id))
+                .and(leaseCondition)
                 .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
                         .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue()))
                         .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()))
