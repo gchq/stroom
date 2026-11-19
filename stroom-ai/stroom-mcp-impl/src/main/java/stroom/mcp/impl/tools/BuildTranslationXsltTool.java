@@ -484,6 +484,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
 
     private Map<String, Object> built(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
+        if (request.build() != null || request.uuid() != null) {
+            // A save: refused first, whatever the mapping, while the build's catch-all is unconfirmed.
+            refuseUnconfirmedCatchAll(buildOf(request));
+        }
         final Optional<Map<String, Object>> early = readMapping(context, b);
         if (early.isPresent()) {
             return early.get();
@@ -1597,6 +1601,26 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 .boundTo(shown));
         kept.forEach(rule -> agreedNow.put(rule.name(), TranslationBuilds.unknownKey(rule)));
         return Optional.empty();
+    }
+
+    // A catalogued build is saved only once its catalogue's catch-all is confirmed: the user agreed in its form
+    // what the records no event type recognises become (seen in a Haiku run: the user declined the catch-all, the
+    // agent drafted without build= and the translation was saved with the catch-all unconfirmed).
+    private void refuseUnconfirmedCatchAll(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return;
+        }
+        final Catalogue catalogue = SourceNotes.catalogue(builds.notesInBuild(build));
+        if (catalogue == null || catalogue.catchAll().confirmed()) {
+            return;
+        }
+        throw new ToolRefusal("Nothing saved: build '" + build + "' has a catalogue of event types whose catch-all "
+                              + "(what the uncatalogued records, those no event type recognises, become) the user "
+                              + "hasn't confirmed. Call catalogue_event_types build=" + build + " confirm=true: a "
+                              + "short form asks them. If they declined it, ask them in the chat what those records "
+                              + "should become and call catalogue_event_types again with their answer. Then "
+                              + "draft_translation_mapping build=" + build + ", which follows the catalogue, and "
+                              + "save its mapping.");
     }
 
     // The agreement the user gave the catalogue's catch-all in catalogue_event_types's form (its allow_unknown), or

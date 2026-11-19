@@ -264,6 +264,60 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(countsOf(purge)).containsEntry("Delete-Records", 1L);
     }
 
+    // ### The user declines the catch-all: they want something else for the uncatalogued records. The agent is told
+    // to ask them in the chat and call again with their answer; a translation is not saved while the catch-all is
+    // unconfirmed (seen in a Haiku run: drafted without build= and saved); their answer, another event for those
+    // records, is put to them in the catch-all's form, and the draft writes it.
+    @Test
+    void aDeclinedCatchAllIsAskedAboutInTheChatAndNoTranslationIsSavedUntilItIsConfirmed() {
+        final String build = "e2e-cat-declined";
+        final String feed = "E2E-CAT-DECLINED";
+        final List<Long> raw = surveyedSample(build, feed, sample());
+        final Map<String, Object> bypass = json("draft_translation_mapping", args("stream_ids", raw, "source_name",
+                "Records app", "system_name", "Records", "environment", "Test"));
+        proposed(build, raw, List.of(
+                withKeys(eventType("Authenticate-Logon", "Authenticate", "high", when("action", "equals", "login")),
+                        "action", "Logon", "actor", "user"),
+                withKeys(eventType("Authenticate-Logoff", "Authenticate", "high", when("action", "equals", "logout")),
+                        "action", "Logoff", "actor", "user"),
+                eventType("Export-Report", "Export", "high", when("action", "equals", "export"))));
+        client.answeringWith(form -> form.message().contains("Keep the uncatalogued records")
+                ? McpTestClient.decline(form)
+                : McpTestClient.agree(form));
+        String declined = "";
+        for (int round = 0; round < 4 && !declined.contains("declined the catch-all"); round++) {
+            declined = replyText(CATALOGUE, args("build", build, "confirm", true));
+        }
+        dump("catch-all declined", declined);
+        assertThat(declined).contains("declined the catch-all", "Ask the user in the chat", "op: add",
+                "catch_all={translation:");
+        assertThat(map(catalogueOf(build), "catch_all")).containsEntry("status", "proposed");
+
+        // ### Not saved while the catch-all is unconfirmed, the draft made without build= or not.
+        assertThat(refusal("build_translation_xslt", args("mapping", timeChosen(map(bypass, "mapping")),
+                "stream_ids", raw, "build", build, "name", feed + "-Events", "schema_version", VERSION)))
+                .contains("catch-all", "catalogue_event_types build=" + build + " confirm=true");
+
+        // ### Their answer in the chat: the purges are deletions. Put to them in the catch-all's form, confirmed.
+        client.answeringWith(McpTestClient::agree);
+        final int formsBefore = client.forms().size();
+        Map<String, Object> step = Map.of();
+        for (int round = 0; round < 4 && !"confirmed".equals(step.get("status")); round++) {
+            step = json(CATALOGUE, args("build", build, "confirm", true, "catch_all", Map.of("translation",
+                    Map.of("type_id", "Delete-Records", "event_detail", "Delete", "description",
+                            "Audit records deleted"))));
+        }
+        assertThat(step).containsEntry("status", "confirmed");
+        assertThat(formsSince(formsBefore).getLast().message()).contains("Delete-Records events");
+        assertThat(map(catalogueOf(build), "catch_all")).containsEntry("status", "confirmed");
+        assertThat(jsonOf(map(catalogueOf(build), "catch_all"))).contains("Delete-Records");
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", raw, "build", build,
+                "source_name", "Records app", "system_name", "Records", "environment", "Test"));
+        final List<Map<String, Object>> rules = list(map(draft, "mapping"), "events");
+        assertThat(rules.getLast()).containsEntry("catch_all", true);
+        assertThat(jsonOf(rules.getLast())).contains("Delete-Records", "Audit records deleted");
+    }
+
     // ### TypeId: Verb-Object or refused; unique or refused; a default suggested when none is given.
     @Test
     void typeIdsAreVerbObjectUniqueAndDefaulted() {

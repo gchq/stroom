@@ -446,6 +446,46 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void aDeclinedCatchAllTellsTheAgentToAskTheUserAndTheirAnswerIsPutToThemInItsForm() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
+        final BuildToolCalls.FormUser accepting = user(McpAnswers.ACCEPT);
+        call(Map.of("build", BUILD, "confirm", true), accepting.context());
+        final Map<String, Object> catchAll = call(Map.of("build", BUILD, "confirm", true), accepting.context());
+        assertThat(String.valueOf(catchAll.get("table"))).contains("Uncatalogued records", "Unknown events");
+
+        final String declined = text(Map.of("build", BUILD, "confirm", true), BuildToolCalls.declining().context());
+
+        assertThat(declined).contains("The user declined the catch-all", "Ask the user in the chat what those "
+                                      + "records should become", "op: add", "catch_all={translation:",
+                "the only place it is confirmed");
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isFalse();
+
+        // Their answer in the chat: another event for those records, put to them in the catch-all's form.
+        final Map<String, Object> answer = Map.of("build", BUILD, "confirm", true, "catch_all", Map.of(
+                "translation", Map.of("type_id", "Process-Records", "event_detail", "Process", "description",
+                        "Other records processed")));
+        final Map<String, Object> shown = call(answer, accepting.context());
+        assertThat(shown).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(shown.get("table"))).contains("Process-Records events (Process)");
+        final Map<String, Object> done = call(answer, accepting.context());
+
+        assertThat(done).containsEntry("status", "confirmed");
+        assertThat(accepting.shown().getLast()).contains("Process-Records events (Process)");
+        assertThat(SourceNotes.catalogue(notes()).catchAll()).isEqualTo(new Catalogue.CatchAll("confirmed", null,
+                new Catalogue.CatchAll.Translation("Process-Records", "Process", null, "Other records processed")));
+    }
+
+    @Test
+    void aCatchAllTranslationThatCantBeWrittenIsRefused() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
+
+        assertThat(text(Map.of("build", BUILD, "confirm", true, "catch_all", Map.of("translation",
+                Map.of("type_id", "Records"))), user(McpAnswers.ACCEPT).context()))
+                .contains("The catch-all's translation can't be written", "type_id", "event_detail")
+                .contains("Nothing was changed");
+    }
+
+    @Test
     void whatAnEventTypeActsOnIsWrittenOutToTheLeafItsValueGoesIn() {
         // As record_source_notes wrote it for its events: Document becomes Document/Id, as the translation writes it.
         propose(List.of(withKeys(type("Delete-Records", "Delete", "low", "purge"), "affected", "object",

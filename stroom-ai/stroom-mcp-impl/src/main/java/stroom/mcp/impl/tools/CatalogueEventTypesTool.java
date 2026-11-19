@@ -36,6 +36,7 @@ import stroom.ai.impl.tools.catalogue.CatalogueSeed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation;
 import stroom.ai.impl.tools.catalogue.EventMeaning;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
@@ -119,6 +120,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String PROPOSALS_ARG = "proposals";
     private static final String CONFIRM_ARG = "confirm";
     private static final String CATCH_ALL_ARG = "catch_all";
+    private static final String TRANSLATION = "translation";
     private static final String REVIEWED_ARG = "reviewed";
     private static final String AMENDMENTS = "amendments";
     private static final String STATUS = "status";
@@ -263,8 +265,21 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                                          + "in the chat first); again after each answer.")
                         .addProperty(CATCH_ALL_ARG, ObjectSchema.builder()
                                 .description("With confirm: the catch-all's agreement, {allow_unknown: why the "
-                                             + "uncatalogued records are kept as Unknown}, used at its turn.")
+                                             + "uncatalogued records are kept as Unknown}, used at its turn; or, "
+                                             + "where the user said in the chat they should be another event, "
+                                             + "translation.")
                                 .addStringProperty("allow_unknown", "Why.")
+                                .addProperty(TRANSLATION, ObjectSchema.builder()
+                                        .description("The event the uncatalogued records are written as instead "
+                                                     + "of Unknown, as the user said: {type_id (Verb-Object), "
+                                                     + "event_detail (its action element), action, description}; "
+                                                     + "their fields kept as Data. Put to the user in the "
+                                                     + "catch-all's form.")
+                                        .addStringProperty("type_id", "Verb-Object.")
+                                        .addStringProperty("event_detail", "Its action element.")
+                                        .addStringProperty("action", "Its Action, or left out.")
+                                        .addStringProperty("description", "Its fixed Description.")
+                                        .build())
                                 .build())
                         .addStringProperty(REVIEWED_ARG, "With confirm, for a client without forms: the review_id "
                                                          + "of the needs_review reply, once the user has seen it "
@@ -606,7 +621,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
 
     private Map<String, Object> confirmed(final Calling calling) {
-        final Catalogue catalogue = calling.catalogue();
+        final Catalogue catalogue = withCatchAllTranslation(calling);
         final Map<String, Object> confirming = confirming(calling.notesNow());
         final Records read = read(calling);
         final CatalogueCheckResult check = check(calling, catalogue, read);
@@ -619,7 +634,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         final boolean catchAll = set.isEmpty();
         final String shown = catchAll
-                ? catchAllShown(check)
+                ? catchAllShown(check, catalogue)
                 : CatalogueTables.setTable(set, check);
         final String digest = Consent.reviewId(shown);
         if (JsonValues.map(confirming.get(AMENDED)) != null
@@ -641,8 +656,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         asked(calling, catalogue, confirming, digest);
         final Catalogue now;
         if (catchAll) {
-            consent.require(calling.call(), calling.context(), catchAllRequest(check, catchAllReason(calling))
-                    .boundTo(shown));
+            final Consent.Request request = catchAllRequest(check, catalogue, catchAllReason(calling));
+            try {
+                consent.require(calling.call(), calling.context(), request.boundTo(shown));
+            } catch (final ToolRefusal e) {
+                if (Consent.notAgreed(request.summary(), NAME, false).equals(e.getMessage())) {
+                    throw new ToolRefusal(catchAllDeclined(calling.build(), catalogue, check));
+                }
+                throw e;
+            }
             now = catalogue.withCatchAllConfirmedByUser(catchAllReason(calling));
         } else {
             final String accept = "Accept all " + set.size() + " event type" + (set.size() == 1
@@ -679,7 +701,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             return done(calling, now, check, confirmedNow);
         }
         final String shown = next.isEmpty()
-                ? catchAllShown(check)
+                ? catchAllShown(check, now)
                 : CatalogueTables.setTable(next, check);
         final Map<String, Object> result;
         if (calling.context().userQuestions().canAsk()) {
@@ -739,7 +761,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         result.put("catalogue", compact(catalogue));
         final String what = set.isEmpty()
                 ? "the catch-all for the uncatalogued records (the " + check.uncatalogued().records() + " records "
-                  + "no event type recognises, kept as Unknown)"
+                  + "no event type recognises, kept as " + translatedAs(catalogue.catchAll().translation()) + ")"
                 : "the " + set.size() + " " + confidenceOf(set) + "-confidence event type(s)";
         final String form = NAME + " build=" + calling.build() + " confirm=true: a short form asks them to accept "
                             + what + " or type their amendments.";
@@ -860,23 +882,40 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         notes.recordCatalogue(calling.context(), calling.build(), calling.source(), catalogue, marks);
     }
 
-    // The catch-all's confirmation: the uncatalogued records translated as Unknown, their fields kept as Data.
-    private static Consent.Request catchAllRequest(final CatalogueCheckResult check, final String reason) {
+    // The catch-all's confirmation: the uncatalogued records translated as Unknown (or as the event the user said),
+    // their fields kept as Data.
+    private static Consent.Request catchAllRequest(final CatalogueCheckResult check,
+                                                   final Catalogue catalogue,
+                                                   final String reason) {
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("uncatalogued records", check.uncatalogued().records() + " in the sample, of "
                                             + check.uncatalogued().shapes().size() + " shape(s), in the chat");
-        if (reason != null) {
+        final Catalogue.CatchAll.Translation own = catalogue.catchAll().translation();
+        if (reason != null && own == null) {
             details.put("why", reason);
         }
         return Consent.Request.confirmation(NAME, "Keep the uncatalogued records (those no event type recognises) "
-                                                  + "as Unknown events, their fields kept as Data", details);
+                                                  + "as " + translatedAs(own) + ", their fields kept as Data",
+                details);
+    }
+
+    // What the catch-all writes, in words: Unknown events, or the event the user said.
+    private static String translatedAs(final Catalogue.CatchAll.Translation own) {
+        if (own == null || NullSafe.isBlankString(own.eventDetail())) {
+            return "Unknown events";
+        }
+        return own.typeId() + " events (" + own.eventDetail() + (NullSafe.isBlankString(own.action())
+                ? ""
+                : ", action " + own.action()) + ")";
     }
 
     // What the user is shown of the catch-all: the uncatalogued records' count and shapes.
-    private static String catchAllShown(final CatalogueCheckResult check) {
+    private static String catchAllShown(final CatalogueCheckResult check, final Catalogue catalogue) {
         final List<String> lines = new ArrayList<>(List.of("**Uncatalogued records**: " + check.uncatalogued().records()
                                                             + " of the sample's records no event type recognises, "
-                                                            + "translated as Unknown, their fields kept as Data."));
+                                                            + "translated as "
+                                                            + translatedAs(catalogue.catchAll().translation())
+                                                            + ", their fields kept as Data."));
         final List<String> shapes = CatalogueTables.uncataloguedShapes(check);
         if (!shapes.isEmpty()) {
             lines.add("");
@@ -885,11 +924,80 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return String.join("\n", lines);
     }
 
+    // The user declined the catch-all in its form: they want something else for the uncatalogued records, which
+    // the agent asks them in the chat (seen in a Haiku run: told only "The user did not agree to ...", the agent
+    // drafted without build= and saved a translation whose catch-all was never confirmed).
+    private static String catchAllDeclined(final String build,
+                                           final Catalogue catalogue,
+                                           final CatalogueCheckResult check) {
+        return "The user declined the catch-all: they don't want the " + check.uncatalogued().records()
+               + " uncatalogued records (those no event type recognises) translated as "
+               + translatedAs(catalogue.catchAll().translation()) + ". Nothing is confirmed, and the "
+               + "translation can't be drafted or built until it is. Ask the user in the chat what those records "
+               + "should become, then call " + NAME + " build=" + build + " again with their answer: event types "
+               + "that recognise them (proposals, op: add; drop: true for records they say to drop), or another "
+               + "event for them all (confirm=true catch_all={translation: {type_id, event_detail, action, "
+               + "description}}). The catch-all is then put to them again in its form, the only place it is "
+               + "confirmed.";
+    }
+
+    // The catalogue with the catch-all's translation the call gives (the event the user said in the chat the
+    // uncatalogued records should be): the catch-all theirs to confirm again where it changes it. Refused where the
+    // translation can't be written.
+    private Catalogue withCatchAllTranslation(final Calling calling) {
+        final Catalogue catalogue = calling.catalogue();
+        final Map<String, Object> given = JsonValues.map(argsMap(calling.call()).get(CATCH_ALL_ARG));
+        final Map<String, Object> translation = given == null
+                ? null
+                : JsonValues.map(given.get(TRANSLATION));
+        if (translation == null) {
+            return catalogue;
+        }
+        final Catalogue.CatchAll.Translation own = new Catalogue.CatchAll.Translation(
+                givenText(translation.get("type_id")), givenText(translation.get("event_detail")),
+                givenText(translation.get("action")), givenText(translation.get("description")));
+        final List<String> problems = new ArrayList<>();
+        final String typeIdProblem = TypeIds.problem(own.typeId());
+        if (typeIdProblem != null) {
+            problems.add("type_id: " + typeIdProblem);
+        }
+        if (NullSafe.isBlankString(own.eventDetail())) {
+            problems.add("event_detail: give the action element the records are written under");
+        } else {
+            final EventSchema schema = notes.schemaOrNull(calling.context(), calling.build());
+            if (schema != null) {
+                if (!schema.hasPath("EventDetail/" + own.eventDetail())) {
+                    problems.add("event_detail: EventDetail/" + own.eventDetail() + " is not an action element");
+                } else {
+                    problems.addAll(EventMeaning.parts(schema, "the catch-all", own.eventDetail(), null,
+                            own.action()).problems());
+                }
+            }
+        }
+        if (!problems.isEmpty()) {
+            throw new ToolRefusal("The catch-all's translation can't be written: " + String.join("; ", problems)
+                                  + ". Nothing was changed.");
+        }
+        if (own.equals(catalogue.catchAll().translation())) {
+            return catalogue;
+        }
+        return catalogue.withCatchAll(new Catalogue.CatchAll(EventType.PROPOSED, catalogue.catchAll().allowUnknown(),
+                own));
+    }
+
+    // A text argument as given, stripped; null when it is not given or blank.
+    private static String givenText(final Object value) {
+        return value instanceof final String text && !text.isBlank()
+                ? text.strip()
+                : null;
+    }
+
     private String catchAllReason(final Calling calling) {
         final Map<String, Object> given = JsonValues.map(argsMap(calling.call()).get(CATCH_ALL_ARG));
+        // Not ToolText.str: a catch_all without allow_unknown (its translation alone) gave the reason "None".
         final String reason = given == null
                 ? null
-                : NullSafe.trim(ToolText.str(given.get("allow_unknown")));
+                : givenText(given.get("allow_unknown"));
         return NullSafe.isBlankString(reason)
                 ? calling.catalogue().catchAll().allowUnknown()
                 : reason;
