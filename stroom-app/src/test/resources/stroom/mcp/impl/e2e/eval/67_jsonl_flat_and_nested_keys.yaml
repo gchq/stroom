@@ -5,6 +5,9 @@ capabilities: [field_variability, event_types]
 # other the same fields as flat keys holding dots (`"event.action": ...`, as Elastic's own agents can). A record of
 # either spelling is the same event: one event type recognised two ways, never two event types, and never a flat
 # record caught as uncatalogued. The trap: `event.action` read only as the nested object's, the flat records Unknown.
+# Out of scope for agent runs for now (the user, 2026-11-20): a feed is taken to name its event fields consistently,
+# so an agent that reads one spelling isn't scored down for it. Kept for the reference run, which shows the
+# generator reads both spellings.
 request: >
   Onboard our endpoint agent's events (JSON lines, below). Two shippers forward them: one nests the fields
   (event.action inside an event object), the other writes the same names as flat keys with dots in them. They are
@@ -14,6 +17,8 @@ user_knows: >
   mean: a sign-in, a sign-out or a file deletion whichever shipper sent it. message says what happened. The system is
   Endpoint Agent.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   records: 8
   event_types: [Authenticate, Delete]
   forbidden_types: [Unknown]
@@ -27,9 +32,7 @@ expected:
       - [{action: user-login}]
       - [{action: file-delete}]
   unknown_at_most: 0
-  # Each of the three event types recognised two ways (nested and flat), whatever the agent names them.
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true,
-              recognised_two_ways: 3}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
 sample: |
   {"@timestamp": "2026-11-19T08:00:00.000Z", "event": {"action": "user-login", "outcome": "success"}, "log": {"level": "info"}, "user": {"name": "alice"}, "host": {"name": "ws01"}, "message": "alice signed in"}
   {"@timestamp": "2026-11-19T08:01:00.000Z", "event.action": "user-login", "event.outcome": "failure", "log.level": "warn", "user.name": "bob", "host.name": "ws02", "message": "bob failed to sign in"}

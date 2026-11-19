@@ -28,7 +28,7 @@ expected:
     same:
       - [{sender: billing@evil.example}, {sender: post@evil.example}]
   unknown_at_most: 0
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
 sample: |
   [{"gateway": "mx-gw1", "batch": 101, "alerts": [{"time": "2026-11-19T09:00:00Z", "tags": ["inbound", "malware", "high"], "sender": "billing@evil.example", "recipient": "alice@corp.example", "subject": "Invoice overdue"}, {"time": "2026-11-19T09:00:05Z", "tags": ["inbound", "phishing"], "sender": "it-help@evil.example", "recipient": "bob@corp.example", "subject": "Reset your password"}]},
    {"gateway": "mx-gw2", "batch": 102, "alerts": [{"time": "2026-11-19T09:01:00Z", "tags": ["outbound", "policy", "low"], "sender": "carol@corp.example", "recipient": "someone@partner.example", "subject": "Customer list"}]},

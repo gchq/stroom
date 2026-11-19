@@ -67,9 +67,10 @@ final class EvalScore {
     // which the catalogue takes, scored not Verb-Object).
     private static final Pattern VERB_OBJECT_ID = TypeIds.VERB_OBJECT;
     // What a build case is scored on when it doesn't say: TypeIds of this pattern, and whether every event (but
-    // the catch-all's Unknown ones) must have a Description.
+    // the catch-all's Unknown ones) must have a Description: not unless the case says so (a description is optional,
+    // decided by the user 2026-11-20; a case whose records say what happened asks for one on every event).
     private static final String DEFAULT_TYPE_ID_PATTERN = VERB_OBJECT;
-    private static final boolean DEFAULT_DESCRIPTION_EVERY_EVENT = true;
+    private static final boolean DEFAULT_DESCRIPTION_EVERY_EVENT = false;
     private static final String UNKNOWN = "Unknown";
     private static final String CONFIRMED = "confirmed";
     private static final String DOCUMENTATION = "documentation";
@@ -346,7 +347,8 @@ final class EvalScore {
     ///
     /// - `catch_all_confirmed`: the catch-all's status is `confirmed`.
     /// - `no_overlaps`: the check found no record two event types recognise.
-    /// - `description_every`: every event type has a description.
+    /// - `description_every`: every event type has a description (optional in the catalogue; for a case that needs
+    ///   one).
     /// - `no_condition_on_source_type_field`: no way of recognising an event type tests the scope's source type
     ///   field (`event>log_type` is `event.log_type` too).
     /// - `recognised_two_ways`: each event type named, or at least so many, is recognised two or more ways.

@@ -27,6 +27,8 @@ user_knows: >
   event types are as the agent proposes them; the user accepts them when they are told apart that way. time is when
   the event happened (epoch milliseconds). userid is the operator. The system is Pega Platform.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   records: 285
   event_types: [Authenticate, Authorise, Update, Process]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId, EventDetail/Description]
@@ -45,7 +47,7 @@ expected:
   unknown_at_most: 0
   data:
     - {name: logger_name, at: 'EventDetail/*'}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true,
+  catalogue: {catch_all_confirmed: true, no_overlaps: true,
               no_condition_on_source_type_field: true}
   source_types:
     field: event>log_type

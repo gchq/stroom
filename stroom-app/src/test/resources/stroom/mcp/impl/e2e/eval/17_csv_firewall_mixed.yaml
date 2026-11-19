@@ -8,10 +8,12 @@ request: >
   configuration saved, CPU, VPN tunnel down and up), which analysts treat as alerts. Columns that don't apply to a
   record are empty or hold a space. Times carry their offset. Index the events.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 6}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 20
   event_types: [Network, Authenticate, Alert]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]

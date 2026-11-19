@@ -8,10 +8,12 @@ capabilities: [timestamps, field_variability]
 request: >
   Onboard our FortiGate's logs (the file on my disk is in FortiOS's own format). Index the events.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 3}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 800
   event_types: [Network, Authenticate, Alert]
   forbidden_types: [Unknown]

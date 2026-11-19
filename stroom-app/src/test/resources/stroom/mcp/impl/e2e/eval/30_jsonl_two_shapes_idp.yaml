@@ -16,7 +16,7 @@ expected:
       - [{eventType: user.session.start}, {type: login}]
       - [{eventType: user.session.end}, {type: logout}]
   # A sign-in and a sign-out each recognised two ways (one a shape), whatever the agent names them.
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, recognised_two_ways: 2}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, recognised_two_ways: 2}
   records: 8
   event_types: [Authenticate]
   forbidden_types: [Unknown]

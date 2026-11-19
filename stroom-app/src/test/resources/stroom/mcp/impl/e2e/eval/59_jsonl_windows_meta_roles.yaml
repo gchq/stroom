@@ -23,10 +23,12 @@ user_knows: >
   and workstations send no roles at all. The parts of other hosts being passed over by the group's pipeline is
   expected; they are not errors. The system is Windows.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 4}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, no_condition_on_source_type_field: true}
   records: 43
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/Device/HostName|EventSource/Device/Name]

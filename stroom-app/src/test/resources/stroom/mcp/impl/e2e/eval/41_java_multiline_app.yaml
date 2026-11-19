@@ -13,10 +13,12 @@ user_knows: >
   The service runs on the host billing01, which is not in the log. The system is Billing Service. Payment errors
   are what the analysts alert on.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 6}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 2000
   event_types: [Authenticate, Create, Alert, Update]
   forbidden_types: [Unknown]

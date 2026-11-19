@@ -8,10 +8,12 @@ capabilities: [multiline, event_boundaries, schema_variation]
 request: >
   Onboard our PostgreSQL server's log (statement logging is on; the file is on my disk). Index the activity.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 5}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 600
   event_types: [Authenticate, View, Update, Delete]
   forbidden_types: [Unknown]

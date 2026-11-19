@@ -7,10 +7,12 @@ request: >
   from it, looked up by user id (the directory has ids in lower case; the events have them in upper case).
   Index the events.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 1}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 3
   # A badge at a door is as well an Authorise (access to a resource) as an Authenticate, and a department as well a
   # UserDetails Unit or Group as an Organisation: any of them passes, as long as the lookup filled it.

@@ -473,6 +473,19 @@ class TestEvalScore {
     }
 
     @Test
+    void aDescriptionIsOptionalUnlessTheCaseAsksForOne() {
+        // Decided by the user 2026-11-20: an event type need not have a description, so a case scores Descriptions
+        // only when it says so (one whose records say what happened).
+        final String bare = event("", "<TypeId>Authenticate-Logoff</TypeId>"
+                                      + "<Authenticate><Action>Logoff</Action></Authenticate>");
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", 1)), List.of(bare), List.of(true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
     void theCatalogueIsScoredFromTheSourceNotesAndTheCheck() {
         final Map<String, Object> expected = new LinkedHashMap<>();
         expected.put("catch_all_confirmed", true);

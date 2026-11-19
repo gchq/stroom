@@ -332,7 +332,7 @@ expected:
   type_ids: {min_distinct: 100}
   unknown_at_most: 0
   # The 180 documented codes not in the sample: event types from the documentation, not dropped.
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, documentation_only: 150}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, documentation_only: 150}
 files:
   - {name: erp-audit-2026-10-11.csv, generate: {kind: documented_codes, records: 360, seed: 68, codes_sampled: 120}}
 reference:

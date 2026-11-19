@@ -6,10 +6,12 @@ request: >
   it received the line; the event itself is the message string: its own timestamp, the user, the action (LOGIN or
   LOGOUT) and a description, which for logins says whether it succeeded and the client address. Index the events.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 2}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 3
   event_types: [Authenticate]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Description, EventDetail/Authenticate/Action]

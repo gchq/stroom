@@ -6,10 +6,12 @@ request: >
   blocked. Where the filter has no value for a key it writes "-" (no user when the client wasn't signed in, no
   referer): that means nothing, so don't record "-" as a value. Index the events.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 1}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 5
   event_types: [Network]
   forbidden_types: [Unknown]

@@ -28,7 +28,7 @@ expected:
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 7}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, no_condition_on_source_type_field: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, no_condition_on_source_type_field: true}
   records: 192
   event_types: [View, Send, Create|Update, Delete|Move]
   paths: [EventTime/TimeCreated, EventSource/User/Id]

@@ -2935,12 +2935,13 @@ The build's source notes hold the catalogue, an ordered list of event types. Eac
 | --- | --- | --- |
 | **Identity** | `type_id` | Verb-Object (`Authenticate-Logon`, `Update-Password`, `Process-SOAPRequest`; `^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters), unique in the build ignoring case: two event types with one TypeId are refused. A default is suggested (below). Titles are unique ignoring case. |
 | **Meaning** | `title`, `description`, `event_detail`, `action`, `success`/outcome, `actor`, `affected`, `affected_as` | What happened, with the schema checks (`EventMeaning`: an action element taking Data, its Action enumeration, its outcome; `affected_as` written out to its leaf, `User` as `User/Id`). |
-| **Recognition** | `recognised_by`: one or more ways, each conditions (`when`) and `names` | How a record of the type is told (below). More than one way when a type is written in more than one way (two log formats, two loggers): one event type, not two. A type from documentation may have none in the sample (said, not dropped). |
+| **Recognition** | `recognised_by`: one or more ways, each conditions (`when`) and `names` | How a record of the type is told (below). More than one way when a type is written in more than one way (two log formats, two loggers): one event type, not two. A feed is taken to name its event fields consistently (decided by the user 2026-11-20, for now): an event type's fields are read under one spelling, not per way. A type from documentation may have none in the sample (said, not dropped). |
 | **Provenance** | `basis`, `confidence`, `one_type_because`, `status` | `basis`: `draft` (the seed's), `agent_knowledge`, `documentation` or `user_confirmed`; `confidence` high, medium or low; `status` proposed or confirmed. |
 | | `drop` | True for an event type whose records are dropped (the user's word only), written as a `drop_when` rule. |
 
-**Description.** Every event type gives `EventDetail/Description`, which adds context and the freedom to say what
-happened. Where it comes from, in order: (1) a field of the record itself that says what happened (its message),
+**Description.** An event type gives `EventDetail/Description` where it can, which adds context and the freedom to
+say what happened; it is not required (decided by the user 2026-11-20: the check doesn't refuse an event type
+without one). Where it comes from, in order: (1) a field of the record itself that says what happened (its message),
 per record, alone; (2) else the vendor documentation's text for the event type, if provided; (3) else a description
 the agent writes for the event type: fixed text, the same for every record of the type, no record values in it. The
 type's own description is kept in the source notes and shown in the confirmation table whichever is written.

@@ -9,10 +9,12 @@ capabilities: [encoding]
 request: >
   Onboard our app's log (the file on my disk). Index the logons and logoffs.
 expected:
+  # The records say what happened (a message field), so every event has a Description.
+  description_every_event: true
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
   type_ids: {min_distinct: 2}
-  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
   records: 400
   event_types: [Authenticate]
   forbidden_types: [Unknown]
