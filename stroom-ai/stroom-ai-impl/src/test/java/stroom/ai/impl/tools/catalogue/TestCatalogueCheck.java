@@ -242,6 +242,26 @@ class TestCatalogueCheck {
     }
 
     @Test
+    void aConditionTheCheckCantEvaluateIsListedAsNotCheckedWithoutRefusing() {
+        // Settled with the check and the translation lanes (2026-11-19): an xpath, a dictionary, a record-scope test
+        // or a field an extraction gives is said, not blocking, never silently skipped.
+        final EventType byXpath = type("Update-Password", "Password change", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY), Condition.fromJson(Map.of("xpath",
+                        "string(event)", "contains", "Password"))));
+
+        final CatalogueCheckResult check = check(catalogue(byXpath), pegaLines());
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.refused()).isFalse();
+        assertThat(check.notChecked()).singleElement().satisfies(problem -> {
+            assertThat(problem.typeId()).isEqualTo("Update-Password");
+            assertThat(problem.way()).isZero();
+            assertThat(problem.problem()).contains("can't be checked against the records here");
+        });
+        assertThat(check.toJson().get("not_checked")).isEqualTo(List.of(check.notChecked().getFirst().toJson()));
+    }
+
+    @Test
     void aRegexThatRunsPastItsBudgetIsRefusedAndNotRun() {
         final List<String> lines = new ArrayList<>();
         for (int n = 0; n < 5; n++) {

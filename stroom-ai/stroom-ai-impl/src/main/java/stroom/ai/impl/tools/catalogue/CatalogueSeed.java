@@ -54,14 +54,27 @@ public final class CatalogueSeed {
     /// @return One proposed event type for each rule that tells records apart (has conditions), in the draft's
     /// order: its rule's conditions the one way it is recognised, its action element, Action, outcome and who acted
     /// as the rule writes them, its TypeId the rule's own fixed Verb-Object one or the default ([TypeIds]), made
-    /// unique. The rule for the rest of the records (no conditions) is the catch-all's, not an event type.
+    /// unique. The rule for the rest of the records (no conditions) is the catch-all's, not an event type; but a
+    /// draft of that one rule alone, writing an event (not Unknown), seeds a sole event type, recognised by every
+    /// record (stroom-ai/DESIGN.md, A sole event type).
     public static List<EventType> fromDraft(final Map<String, Object> draft) {
         final Map<?, ?> mapping = draft.get("mapping") instanceof final Map<?, ?> map
                 ? map
                 : Map.of();
         final List<EventType> out = new ArrayList<>();
         final Set<String> typeIds = new HashSet<>();
-        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+        final List<Map<String, Object>> rules = JsonValues.maps(mapping.get("events"));
+        if (rules.size() == 1 && JsonValues.maps(rules.getFirst().get("when")).isEmpty()) {
+            final EventType sole = eventType(rules.getFirst(), List.of());
+            if (sole.eventDetail() != null) {
+                final String typeId = fixedTypeId(rules.getFirst());
+                out.add(sole.withTypeId(typeId != null
+                        ? typeId
+                        : TypeIds.defaultTypeId(sole)));
+            }
+            return out;
+        }
+        for (final Map<String, Object> rule : rules) {
             final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
             if (when.isEmpty()) {
                 continue;
@@ -99,7 +112,10 @@ public final class CatalogueSeed {
         }
         final List<Condition> conditions = when.stream().map(Condition::fromJson).toList();
         return new EventType(null, ToolText.str(rule.get("name")), null, detail, action, success, actor, null, null,
-                List.of(new Way(conditions, List.of())), false, EventType.DRAFT, "low", null, EventType.PROPOSED);
+                conditions.isEmpty()
+                        ? List.of()
+                        : List.of(new Way(conditions, List.of())), false, EventType.DRAFT, "low", null,
+                EventType.PROPOSED);
     }
 
     // The action element a rule writes (Network's with its child: Network/Permit); null for Unknown, or none.

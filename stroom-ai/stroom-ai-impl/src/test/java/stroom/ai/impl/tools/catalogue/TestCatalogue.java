@@ -95,6 +95,23 @@ class TestCatalogue {
     }
 
     @Test
+    void theCatchAllCarriesTheUsersAgreementForUncataloguedRecords() {
+        final Catalogue.Read read = Catalogue.parse(Map.of("event_types", List.of(), "catch_all",
+                Map.of("status", "confirmed", "allow_unknown", "Kept as Unknown: the records are rare")));
+
+        assertThat(read.errors()).isEmpty();
+        assertThat(read.catalogue().catchAll().confirmed()).isTrue();
+        assertThat(read.catalogue().catchAll().allowUnknown()).isEqualTo("Kept as Unknown: the records are rare");
+        assertThat(read.catalogue().toJson().get("catch_all")).isEqualTo(Map.of("status", "confirmed",
+                "allow_unknown", "Kept as Unknown: the records are rare"));
+
+        final Catalogue agreed = new Catalogue(List.of(), null, null).withCatchAllConfirmedByUser("The user's reason");
+        assertThat(agreed.catchAll()).isEqualTo(new Catalogue.CatchAll(EventType.CONFIRMED, "The user's reason"));
+        // Without a reason given, none is written.
+        assertThat(Catalogue.CatchAll.PROPOSED.toJson()).isEqualTo(Map.of("status", "proposed"));
+    }
+
+    @Test
     void theUsersConfirmationMakesTheSeedTheUsersAndKeepsOtherBases() {
         final EventType seed = type("Update-Password", EventType.DRAFT);
         final EventType documented = type("Authenticate-Logon", EventType.DOCUMENTATION);

@@ -35,6 +35,8 @@ import java.util.Objects;
 /// @param unparsed     The records whose held values, read by a condition, don't parse.
 /// @param several      Event types whose records may be several event types.
 /// @param problems     What is refused: the catalogue's own problems and those its records show.
+/// @param notChecked   `not_checked`: conditions the check can't evaluate here (an xpath, a dictionary, a
+///                     record-scope test, a field an extraction gives), said and not refused.
 /// @param order        The TypeIds in the catalogue's order (more specific first).
 public record CatalogueCheckResult(Map<String, Count> counts,
                                    List<Overlap> overlaps,
@@ -42,6 +44,7 @@ public record CatalogueCheckResult(Map<String, Count> counts,
                                    Unparsed unparsed,
                                    List<Several> several,
                                    List<Problem> problems,
+                                   List<Problem> notChecked,
                                    List<String> order) {
 
     /// The most overlaps the compact form lists.
@@ -67,11 +70,12 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         overlaps = List.copyOf(Objects.requireNonNullElse(overlaps, List.of()));
         several = List.copyOf(Objects.requireNonNullElse(several, List.of()));
         problems = List.copyOf(Objects.requireNonNullElse(problems, List.of()));
+        notChecked = List.copyOf(Objects.requireNonNullElse(notChecked, List.of()));
         order = List.copyOf(Objects.requireNonNullElse(order, List.of()));
     }
 
     /// @return True if the catalogue can't be confirmed as it is: a problem, an overlap, or a type that may be
-    /// several whose warning blocks it.
+    /// several whose warning blocks it. What is not checked doesn't refuse it.
     public boolean refused() {
         return !problems.isEmpty() || !overlaps.isEmpty() || several.stream().anyMatch(Several::blocking);
     }
@@ -105,6 +109,9 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         out.put("unparsed", unparsed.toJson(full));
         out.put("several", several.stream().map(one -> one.toJson(full)).toList());
         out.put("problems", problems.stream().map(Problem::toJson).toList());
+        if (!notChecked.isEmpty()) {
+            out.put("not_checked", notChecked.stream().map(Problem::toJson).toList());
+        }
         out.put("order", order);
         return out;
     }

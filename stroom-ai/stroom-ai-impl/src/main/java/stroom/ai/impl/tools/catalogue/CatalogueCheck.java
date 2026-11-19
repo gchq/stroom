@@ -226,6 +226,7 @@ public final class CatalogueCheck {
 
         private CatalogueCheckResult result() {
             final List<Problem> problems = new ArrayList<>(CatalogueValidation.problems(catalogue, schema));
+            final List<Problem> notChecked = new ArrayList<>();
             final Map<String, Count> counts = new LinkedHashMap<>();
             for (int t = 0; t < types.size(); t++) {
                 final EventType type = types.get(t);
@@ -242,6 +243,10 @@ public final class CatalogueCheck {
                         for (final String problem : conditionProblems(c)) {
                             problems.add(new Problem(type.typeId(), w, problem));
                         }
+                        final Optional<String> unchecked = notChecked(c);
+                        if (unchecked.isPresent()) {
+                            notChecked.add(new Problem(type.typeId(), w, unchecked.get()));
+                        }
                     }
                 }
                 byWay.add(ways);
@@ -254,7 +259,8 @@ public final class CatalogueCheck {
             final BitSet unparsedRecords = new BitSet(size);
             final Unparsed unparsed = unparsed(unparsedRecords);
             return new CatalogueCheckResult(counts, overlaps(), uncatalogued(unparsedRecords), unparsed, several(),
-                    distinct(problems), CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList());
+                    distinct(problems), distinct(notChecked),
+                    CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList());
         }
 
         // An event type's key in the counts: its TypeId, or its place where it has none (or shares one).
@@ -310,20 +316,16 @@ public final class CatalogueCheck {
             }
             final List<String> out = new ArrayList<>();
             final String field = c.field();
-            if (!LocalCheck.evaluable(c)) {
-                out.add("the condition on " + (field == null
-                        ? c.xpath()
-                        : field) + " can't be checked against the records here (an xpath, a dictionary or a "
-                        + "record-scope field), so the records it recognises aren't counted: tell them by a field's "
-                        + "value");
-            } else if (index.overBudget(c)) {
+            if (notChecked(c).isPresent()) {
+                // Said as not checked ([#notChecked]), not refused.
+                conditionProblems.put(c, out);
+                return out;
+            }
+            if (index.overBudget(c)) {
                 out.add("the regex of " + field + " ran past " + index.sample().regexBudget().toMillis() + " ms over "
                         + "the sample's records and was stopped: it backtracks, and would take as long in processing "
                         + "for every stream; tell the records apart by a short anchored pattern, or by starts_with or "
                         + "contains");
-            } else if (index.untold(field)) {
-                out.add("the condition on " + field + ", a field an extraction gives, can't be checked against the "
-                        + "records here, so the records it recognises aren't counted");
             } else {
                 if (!index.unknown(c).isEmpty()) {
                     out.add("the regex of " + field + " can't be run over " + index.unknown(c).cardinality()
@@ -338,6 +340,24 @@ public final class CatalogueCheck {
             }
             conditionProblems.put(c, out);
             return out;
+        }
+
+        // Why a condition can't be checked against the records here (an xpath, a dictionary, a record-scope test, a
+        // field an extraction gives), so the records it recognises aren't counted: said, not refused (settled with the
+        // check and translation lanes, 2026-11-19), never silently skipped. Empty when it can be.
+        private Optional<String> notChecked(final Condition c) {
+            final String field = c.field();
+            if (!LocalCheck.evaluable(c)) {
+                return Optional.of("the condition on " + (field == null
+                        ? c.xpath()
+                        : field) + " can't be checked against the records here (an xpath, a dictionary or a "
+                                   + "record-scope field), so the records it recognises aren't counted");
+            }
+            if (index.untold(field)) {
+                return Optional.of("the condition on " + field + ", a field an extraction gives, can't be checked "
+                                   + "against the records here, so the records it recognises aren't counted");
+            }
+            return Optional.empty();
         }
 
         // A field no record has, with the record fields its name could have meant.

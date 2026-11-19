@@ -113,6 +113,15 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
                 catchAll.translation()), scope);
     }
 
+    /// @param allowUnknown The user's reason for keeping uncatalogued records as Unknown, or null to keep the one it
+    ///                     has.
+    /// @return It with its catch-all confirmed by the user, with that reason (its own translation kept).
+    public Catalogue withCatchAllConfirmedByUser(final String allowUnknown) {
+        return new Catalogue(eventTypes, new CatchAll(EventType.CONFIRMED, allowUnknown == null
+                ? catchAll.allowUnknown()
+                : allowUnknown, catchAll.translation()), scope);
+    }
+
     /// @param given The catch-all.
     /// @return It with that catch-all.
     public Catalogue withCatchAll(final CatchAll given) {

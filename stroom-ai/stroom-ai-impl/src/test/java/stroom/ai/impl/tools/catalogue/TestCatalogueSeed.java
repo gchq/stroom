@@ -76,6 +76,32 @@ class TestCatalogueSeed {
         assertThat(seed.get(2).eventDetail()).isNull();
     }
 
+    @Test
+    void aDraftOfOneRuleForEveryRecordSeedsASoleEventType() {
+        // stroom-ai/DESIGN.md, A sole event type: records all one event type (every record a logon, told by nothing
+        // in it) are recognised by every record; seeded so, not left to the catch-all as Unknown.
+        final Map<String, Object> draft = new LinkedHashMap<>();
+        draft.put("mapping", Map.of("events", List.of(Map.of("name", "logon", "fields", List.of(
+                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                Map.of("path", "EventSource/User/Id", "field", "user"))))));
+
+        final List<EventType> seed = CatalogueSeed.fromDraft(draft);
+
+        assertThat(seed).singleElement().satisfies(type -> {
+            assertThat(type.recognisedBy()).isEmpty();
+            assertThat(type.eventDetail()).isEqualTo("Authenticate");
+            assertThat(type.action()).isEqualTo("Logon");
+            assertThat(type.actor()).isEqualTo("user");
+            assertThat(type.basis()).isEqualTo(EventType.DRAFT);
+            assertThat(TypeIds.problem(type.typeId())).isNull();
+        });
+        // A draft whose one rule writes Unknown seeds nothing: its records are uncatalogued.
+        final Map<String, Object> unknown = new LinkedHashMap<>();
+        unknown.put("mapping", Map.of("events", List.of(Map.of("name", "other", "fields", List.of(
+                Map.of("path", "EventDetail/Unknown/Data", "data_name", "x", "field", "x"))))));
+        assertThat(CatalogueSeed.fromDraft(unknown)).isEmpty();
+    }
+
     private static Map<String, Object> rule(final String name,
                                             final List<Map<String, Object>> when,
                                             final String path,
