@@ -31,6 +31,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -38,7 +39,7 @@ import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AbstractDataProvider;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /// The credentials, a row each (its name, type, key store type and when it expires), with New,
 /// Delete, Edit and Replace Secret, as the selected one's permissions allow; one can be selected, and
@@ -70,7 +71,7 @@ public class CredentialsList extends Component {
     private Runnable onReplaceSecret = () -> {
     };
 
-    /// Makes an empty list, with no columns until [#addColumns(Function)].
+    /// Makes an empty list, with no columns until [#addColumns(BiFunction)].
     public CredentialsList() {
         initWidget(BINDER.createAndBindUi(this));
         // A credential fetched again after an edit is the same row
@@ -104,8 +105,10 @@ public class CredentialsList extends Component {
 
     /// Adds the columns, once.
     ///
-    /// @param expiryFormat Formats when a credential expires, with how long until then.
-    public void addColumns(final Function<Long, SafeHtml> expiryFormat) {
+    /// @param expiryFormat Formats when a credential expires (ms since the epoch), with how long
+    ///                     until then, given how long before then to show it as expiring (ms, or
+    ///                     null for the default).
+    public void addColumns(final BiFunction<Long, Long, SafeHtml> expiryFormat) {
         dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder(
                                 (CredentialWithPerms cwp) -> cwp.getCredential().getName())
                         .build(),
@@ -133,7 +136,8 @@ public class CredentialsList extends Component {
                                 (CredentialWithPerms cwp) -> getExpires(cwp, expiryFormat))
                         .build(),
                 DataGridUtil.headingBuilder("Expires")
-                        .withToolTip("When these credentials expire")
+                        .withToolTip("When these credentials expire, or the certificates in their "
+                                     + "key store if sooner")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
@@ -206,15 +210,19 @@ public class CredentialsList extends Component {
         }
     }
 
-    // When a credential expires, or "Never"
+    // When a credential expires, or its certificates if sooner (saying so), or "Never"
     private static SafeHtml getExpires(final CredentialWithPerms cwp,
-                                       final Function<Long, SafeHtml> expiryFormat) {
-        final Long expiryTimeMs = NullSafe.get(cwp,
-                CredentialWithPerms::getCredential,
-                Credential::getExpiryTimeMs);
-        return expiryTimeMs == null
-                ? SafeHtmlUtils.fromSafeConstant("Never")
-                : expiryFormat.apply(expiryTimeMs);
+                                       final BiFunction<Long, Long, SafeHtml> expiryFormat) {
+        final Long expiryTimeMs = NullSafe.get(cwp, CredentialWithPerms::getEffectiveExpiryTimeMs);
+        if (expiryTimeMs == null) {
+            return SafeHtmlUtils.fromSafeConstant("Never");
+        }
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder()
+                .append(expiryFormat.apply(expiryTimeMs, cwp.getExpiryWarningPeriodMs()));
+        if (cwp.isCertificateExpiryFirst()) {
+            builder.appendHtmlConstant(" (certificate)");
+        }
+        return builder.toSafeHtml();
     }
 
     private static String getKeyStoreType(final CredentialWithPerms cwp) {

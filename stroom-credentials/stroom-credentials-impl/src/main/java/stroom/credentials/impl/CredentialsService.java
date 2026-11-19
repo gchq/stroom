@@ -85,6 +85,7 @@ public class CredentialsService implements StoredSecrets {
     private final Provider<CredentialsConfig> credentialsConfigProvider;
     private final KeyStoreFilePathChecker keyStoreFilePathChecker;
     private final CredentialExpiryChecker credentialExpiryChecker;
+    private final KeyStoreCertificateExpiryReader certificateExpiryReader;
 
     @SuppressWarnings("unused")
     @Inject
@@ -95,7 +96,8 @@ public class CredentialsService implements StoredSecrets {
                               final PathCreator pathCreator,
                               final Provider<CredentialsConfig> credentialsConfigProvider,
                               final KeyStoreFilePathChecker keyStoreFilePathChecker,
-                              final CredentialExpiryChecker credentialExpiryChecker) {
+                              final CredentialExpiryChecker credentialExpiryChecker,
+                              final KeyStoreCertificateExpiryReader certificateExpiryReader) {
         this.credentialsDao = credentialsDao;
         this.securityContext = securityContext;
         this.permissionServiceProvider = permissionServiceProvider;
@@ -104,6 +106,7 @@ public class CredentialsService implements StoredSecrets {
         this.credentialsConfigProvider = credentialsConfigProvider;
         this.keyStoreFilePathChecker = keyStoreFilePathChecker;
         this.credentialExpiryChecker = credentialExpiryChecker;
+        this.certificateExpiryReader = certificateExpiryReader;
     }
 
     /// Provides a decoration function that will add security permissions to supplied credentials.
@@ -119,7 +122,14 @@ public class CredentialsService implements StoredSecrets {
 
             final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
             final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
-            return new CredentialWithPerms(credential, canEdit, canDelete);
+            final Instant certificateExpiry = certificateExpiryReader.getExpiry(
+                    credential,
+                    () -> credentialsDao.getStoredSecretByUuid(credential.getUuid()));
+            return new CredentialWithPerms(credential,
+                    canEdit,
+                    canDelete,
+                    NullSafe.get(certificateExpiry, Instant::toEpochMilli),
+                    credentialExpiryChecker.getWarningPeriod().toMillis());
         };
     }
 
@@ -476,6 +486,17 @@ public class CredentialsService implements StoredSecrets {
 
     @Override
     public StoredSecret get(final String name) {
+        final StoredSecret storedSecret = getUsable(name);
+        if (storedSecret != null) {
+            credentialExpiryChecker.check(storedSecret.credential());
+        }
+        return storedSecret;
+    }
+
+    /// Gets a stored secret that the user may use, without checking its expiry.
+    ///
+    /// @return The stored secret, or null if there is none with this name.
+    private StoredSecret getUsable(final String name) {
         final StoredSecret storedSecret = credentialsDao.getStoredSecretByName(name);
         if (storedSecret == null) {
             return null;
@@ -483,8 +504,6 @@ public class CredentialsService implements StoredSecrets {
 
         final DocRef docRef = storedSecret.credential().asDocRef();
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
-            // Every use of a secret, including getKeyStore(), comes through here
-            credentialExpiryChecker.check(storedSecret.credential());
             return storedSecret;
         } else {
             throw new PermissionException(securityContext.getUserRef(),
@@ -533,10 +552,13 @@ public class CredentialsService implements StoredSecrets {
             return null;
         }
 
-        final StoredSecret storedSecret = get(name);
+        final StoredSecret storedSecret = getUsable(name);
         if (storedSecret == null) {
             throw new RuntimeException("Unable to find secret '" + name + "'");
         }
+        // Checked here rather than by get(), as a key store's certificates may expire first
+        credentialExpiryChecker.check(storedSecret.credential(),
+                certificateExpiryReader.getExpiry(storedSecret.credential(), () -> storedSecret));
 
         if (storedSecret.secret() instanceof final KeyStoreSecret keyStoreSecret) {
             final Path path = getKeyStoreCachePath();

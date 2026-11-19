@@ -86,7 +86,9 @@ public class CredentialsListController extends Controller {
     public CredentialsListController attach(final CredentialsList view) {
         this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
-        view.addColumns(expiryFormatter::formatWithDuration);
+        view.addColumns((expiryTimeMs, warningPeriodMs) -> warningPeriodMs == null
+                ? expiryFormatter.formatWithDuration(expiryTimeMs)
+                : expiryFormatter.formatWithDuration(expiryTimeMs, warningPeriodMs));
         view.setOnAdd(this::handleAddButtonClick);
         view.setOnDelete(this::handleDeleteButtonClick);
         view.setOnEdit(this::handleEditButtonClick);

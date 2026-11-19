@@ -127,6 +127,48 @@ class TestCredentialExpiryChecker {
                 .isTrue();
     }
 
+    @Test
+    void testCertificateExpiringFirstIsRefused() {
+        credentialsConfig = createConfig(true, null);
+        final Credential credential = createCredential("a", NOW.plus(Duration.ofDays(100)));
+
+        assertThatThrownBy(() -> checker.check(credential, NOW.minus(Duration.ofDays(1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("The certificate in credential 'a'")
+                .hasMessageContaining("Replace its key store");
+    }
+
+    @Test
+    void testCertificateExpiryIsUsedWhenThereIsNoDate() {
+        assertThat(checker.check(createCredential("a", null), NOW.plus(Duration.ofDays(1))))
+                .isTrue();
+    }
+
+    @Test
+    void testDateExpiringFirstIsUsed() {
+        credentialsConfig = createConfig(true, null);
+
+        assertThatThrownBy(() -> checker.check(
+                createCredential("a", NOW.minus(Duration.ofDays(1))),
+                NOW.plus(Duration.ofDays(100))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageStartingWith("Credential 'a'");
+    }
+
+    @Test
+    void testLaterCertificateDoesNotWarn() {
+        assertThat(checker.check(createCredential("a", null), NOW.plus(Duration.ofDays(100))))
+                .isFalse();
+    }
+
+    @Test
+    void testWarningPeriodDefaultsToZeroWhenNotSet() {
+        credentialsConfig = null;
+
+        assertThat(checker.getWarningPeriod())
+                .isEqualTo(Duration.ZERO);
+    }
+
     private static CredentialsConfig createConfig(final boolean refuseExpiredCredentials,
                                                   final StroomDuration expiryWarningPeriod) {
         return new CredentialsConfig(null,

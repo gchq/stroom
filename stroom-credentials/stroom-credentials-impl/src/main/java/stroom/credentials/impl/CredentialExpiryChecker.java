@@ -34,7 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-/// Checks the expiry date of a credential each time its secret is retrieved.
+/// Checks the expiry of a credential each time its secret is retrieved: the earlier of its expiry
+/// date and, for a key store, when its certificates expire.
 ///
 /// An expired credential is refused or used with a warning, depending on
 /// [CredentialsConfig#isRefuseExpiredCredentials()]. A credential that will expire within
@@ -71,46 +72,63 @@ public class CredentialExpiryChecker {
     /// @throws IllegalStateException If the credential has expired and
     ///                               [CredentialsConfig#isRefuseExpiredCredentials()] is set.
     public boolean check(final Credential credential) {
-        final Long expiryTimeMs = NullSafe.get(credential, Credential::getExpiryTimeMs);
-        if (expiryTimeMs == null) {
+        return check(credential, null);
+    }
+
+    /// Checks the expiry of a credential that is about to be used, which is the earlier of its
+    /// expiry date and when the certificates in its key store expire.
+    ///
+    /// @param credential        The credential whose secret has been retrieved. Nothing is done if
+    ///                          it is null.
+    /// @param certificateExpiry When the certificates in its key store expire, or null if it has
+    ///                          none (see [KeyStoreCertificateExpiryReader]).
+    /// @return True if a warning was logged.
+    /// @throws IllegalStateException If the credential has expired and
+    ///                               [CredentialsConfig#isRefuseExpiredCredentials()] is set.
+    public boolean check(final Credential credential, final Instant certificateExpiry) {
+        if (credential == null) {
             return false;
         }
-        final CredentialsConfig config = credentialsConfigProvider.get();
+        final Instant dateExpiry = NullSafe.get(credential.getExpiryTimeMs(), Instant::ofEpochMilli);
+        final boolean certificateFirst = certificateExpiry != null
+                                         && (dateExpiry == null || certificateExpiry.isBefore(dateExpiry));
+        final Instant expiryTime = certificateFirst
+                ? certificateExpiry
+                : dateExpiry;
+        if (expiryTime == null) {
+            return false;
+        }
+        final String what = certificateFirst
+                ? "The certificate in credential '" + credential.getName() + "'"
+                : "Credential '" + credential.getName() + "'";
+        final String action = certificateFirst
+                ? "Replace its key store."
+                : "Replace its secret and update its expiry date.";
         final Instant now = nowSupplier.get();
-        final Instant expiryTime = Instant.ofEpochMilli(expiryTimeMs);
 
         if (!now.isBefore(expiryTime)) {
-            if (config.isRefuseExpiredCredentials()) {
-                throw new IllegalStateException("Credential '" + credential.getName()
-                                                + "' expired at " + expiryTime
-                                                + " and can't be used. Replace its secret and "
-                                                + "update its expiry date.");
+            if (credentialsConfigProvider.get().isRefuseExpiredCredentials()) {
+                throw new IllegalStateException(what + " expired at " + expiryTime + " so it can't be used. "
+                                                + action);
             }
             if (isWarningDue(credential.getUuid(), now)) {
-                LOGGER.warn(() -> LogUtil.message(
-                        "Credential '{}' ({}) expired at {} but is still being used. "
-                        + "Replace its secret and update its expiry date.",
-                        credential.getName(),
-                        credential.getUuid(),
-                        expiryTime));
+                LOGGER.warn(() -> LogUtil.message("{} ({}) expired at {} but is still being used. {}",
+                        what, credential.getUuid(), expiryTime, action));
                 return true;
             }
-        } else if (now.plus(getWarningPeriod(config)).isAfter(expiryTime)
+        } else if (now.plus(getWarningPeriod()).isAfter(expiryTime)
                    && isWarningDue(credential.getUuid(), now)) {
-            LOGGER.warn(() -> LogUtil.message(
-                    "Credential '{}' ({}) will expire at {}. "
-                    + "Replace its secret and update its expiry date before then.",
-                    credential.getName(),
-                    credential.getUuid(),
-                    expiryTime));
+            LOGGER.warn(() -> LogUtil.message("{} ({}) will expire at {}. {}",
+                    what, credential.getUuid(), expiryTime, action));
             return true;
         }
         return false;
     }
 
-    private static Duration getWarningPeriod(final CredentialsConfig config) {
+    /// @return How long before a credential expires to start warning about it, never null.
+    public Duration getWarningPeriod() {
         return NullSafe.getOrElse(
-                config,
+                credentialsConfigProvider.get(),
                 CredentialsConfig::getExpiryWarningPeriod,
                 StroomDuration::getDuration,
                 Duration.ZERO);

@@ -98,7 +98,9 @@ class TestCredentialsService {
                 pathCreator,
                 credentialsConfigProvider,
                 new KeyStoreFilePathChecker(pathCreator, credentialsConfigProvider),
-                new CredentialExpiryChecker(credentialsConfigProvider));
+                new CredentialExpiryChecker(credentialsConfigProvider),
+                new KeyStoreCertificateExpiryReader(
+                        new KeyStoreFilePathChecker(pathCreator, credentialsConfigProvider)));
         // Lenient as getKeyStore() is used internally so doesn't check the app permission
         lenient().when(securityContext.hasAppPermission(AppPermission.CREDENTIALS)).thenReturn(true);
     }
@@ -733,6 +735,45 @@ class TestCredentialsService {
 
         assertThat(credentialsService.get("a credential"))
                 .isSameAs(expired);
+    }
+
+    @Test
+    void testGetKeyStoreWithAnExpiredCertificateIsRefusedWhenConfigured(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        Files.delete(keyStoreFile);
+        TestKeyStoreCertificateExpiryReader.generateKey(keyStoreFile, "key", "-100d", 10);
+        credentialsConfig = new CredentialsConfig(null,
+                null,
+                credentialsConfig.getAllowedKeyStoreFileDirs(),
+                null,
+                null,
+                null,
+                true,
+                null);
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        final Credential credential = new Credential(UUID,
+                "file creds",
+                1_000L,
+                1_000L,
+                "creator",
+                "creator",
+                CredentialType.KEY_STORE_FILE,
+                KeyStoreType.PKCS12,
+                keyStoreFile.toString(),
+                null);
+        when(credentialsDao.getStoredSecretByName("file creds")).thenReturn(new StoredSecret(
+                credential,
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
+                null));
+
+        assertThatThrownBy(() -> credentialsService.getKeyStore("file creds"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("The certificate in credential 'file creds'");
+        // Only the key store's own use checks its certificates
+        assertThat(credentialsService.get("file creds"))
+                .isNotNull();
     }
 
     /// The file is used where it is, so a key store replaced on disk (e.g. by cert-manager) is
