@@ -43,7 +43,9 @@ import stroom.util.shared.PermissionException;
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.util.ssl.JVMDefaultTrustManager;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
@@ -581,6 +583,67 @@ class TestLdapConnector {
 
         assertThat(rows).isEmpty();
         assertThat(summaries.getFirst().rowsRead()).isZero();
+    }
+
+    @Test
+    void searchIsNotStartedOnceCancelled() throws Exception {
+        final QueryCancellation cancellation = new QueryCancellation();
+        cancellation.cancel();
+        final LDAPConnection ldapConnection = closingConnection(() -> {
+        });
+        final List<QueryRunSummary> summaries = new ArrayList<>();
+
+        final List<Val[]> rows = run(connectorUsing(ldapConnection).prepare(doc(), query("(objectClass=person)"), null),
+                summaries, new ArrayList<>(), cancellation, "cn");
+
+        assertThat(rows).isEmpty();
+        assertThat(summaries.getFirst().rowsRead()).isZero();
+        Mockito.verify(ldapConnection, Mockito.never()).asyncSearch(Mockito.any(SearchRequest.class));
+    }
+
+    @Test
+    void searchCancelledAsItStartsStopsQuietly() throws Exception {
+        // Cancelling closes the connection in the background, and a search started while it closes may
+        // fail in the SDK with a runtime exception rather than an LDAP one.
+        final QueryCancellation cancellation = new QueryCancellation();
+        final List<QueryRunSummary> summaries = new ArrayList<>();
+
+        final List<Val[]> rows = run(
+                connectorUsing(closingConnection(cancellation::cancel))
+                        .prepare(doc(), query("(objectClass=person)"), null),
+                summaries, new ArrayList<>(), cancellation, "cn");
+
+        assertThat(rows).isEmpty();
+        assertThat(summaries.getFirst().rowsRead()).isZero();
+    }
+
+    @Test
+    void searchFailingWithoutCancellingIsReported() throws Exception {
+        final LdapConnector connector = connectorUsing(closingConnection(() -> {
+        }));
+
+        assertThatThrownBy(() -> run(connector.prepare(doc(), query("(objectClass=person)"), null),
+                new ArrayList<>(), new ArrayList<>(), new QueryCancellation(), "cn"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Timer already cancelled.");
+    }
+
+    // A connection whose searches fail as the SDK's do when the connection closes as they start, running
+    // the given action first.
+    private static LDAPConnection closingConnection(final Runnable beforeFailing) throws Exception {
+        final LDAPConnection ldapConnection = Mockito.mock(LDAPConnection.class);
+        Mockito.when(ldapConnection.asyncSearch(Mockito.any(SearchRequest.class))).thenAnswer(invocation -> {
+            beforeFailing.run();
+            throw new IllegalStateException("Timer already cancelled.");
+        });
+        return ldapConnection;
+    }
+
+    // A connector whose searches use the given connection.
+    private LdapConnector connectorUsing(final LDAPConnection ldapConnection) throws Exception {
+        final LdapConnectionFactory factory = Mockito.spy(trustingFactory());
+        Mockito.doReturn(ldapConnection).when(factory).connect(Mockito.any(), Mockito.anyInt());
+        return connector(config(true), factory);
     }
 
     @Test

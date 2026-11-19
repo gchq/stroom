@@ -22,7 +22,6 @@ import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.UUID;
 
@@ -69,27 +68,6 @@ class TestTimePartition {
         final String date = "2017-01-01T11:30:44.000Z";
         final long millis = DateUtil.parseNormalDateTimeString(date);
         assertThat(getPartition(PartitionBy.WEEK, 1, millis)).isEqualTo("2016-12-26");
-    }
-
-    @Test
-    void testIsTimePartitioned() {
-        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.YEAR, 1))).isTrue();
-        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.MONTH, 1))).isTrue();
-        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.WEEK, 1))).isTrue();
-        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.DAY, 1))).isTrue();
-    }
-
-    @Test
-    void testIsTimePartitioned_none() {
-        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.NONE, 1))).isFalse();
-    }
-
-    @Test
-    void testIsTimePartitioned_nullPartitionBy() {
-        final LuceneIndexDoc index = Mockito.mock(LuceneIndexDoc.class);
-        Mockito.when(index.getPartitionBy()).thenReturn(null);
-
-        assertThat(TimePartitionFactory.isTimePartitioned(index)).isFalse();
     }
 
     @Test

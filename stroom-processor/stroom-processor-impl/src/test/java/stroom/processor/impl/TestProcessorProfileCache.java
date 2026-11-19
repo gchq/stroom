@@ -762,10 +762,8 @@ class TestProcessorProfileCache {
 
     // ---- Helpers ----
 
-    /**
-     * Creates a ProfilePeriod that covers all days 00:00:00 - 23:59:59
-     * with the specified thread limits.
-     */
+    // Creates a ProfilePeriod that starts at 22:00:00 on the given day and ends at 06:00:00 the next
+    // morning, limited to 50 node threads and 25 cluster threads.
     private ProfilePeriod createOvernightPeriod(final Day startDay) {
         return ProfilePeriod.builder()
                 .uuid("period-1")
@@ -779,6 +777,8 @@ class TestProcessorProfileCache {
                 .build();
     }
 
+    // Creates a ProfilePeriod that covers all days 00:00:00 - 23:59:59
+    // with the specified thread limits.
     private ProfilePeriod createAllDayPeriod(final int maxNodeThreads,
                                              final int maxClusterThreads) {
         return ProfilePeriod.builder()
