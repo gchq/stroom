@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.ElicitationSchema;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -69,6 +70,12 @@ import java.util.WeakHashMap;
 /// never asked again in a form that can't be shown (decided by the user, 2026-11-18): [#takesChatAnswer] says when a
 /// tool takes it. A form not shown is kept for the session, by the tool and its question, so the next call, whatever
 /// its other arguments, knows it.
+///
+/// A form the user put aside by sending a message in the chat instead of answering it, or answered with words that
+/// are none of its answers (a question, say: [#wroteInstead]), is the same from then on for a question or choice:
+/// its answer is said in the chat, and the form isn't shown again (decided by the user, 2026-11-19). The call that
+/// finds it put aside tells the agent to reply to the message first ([McpElicitations#sentInsteadText]). A
+/// confirmation or approval is never taken from the chat: put aside, it is asked in its form again on a later call.
 @Singleton
 public class Consent {
 
@@ -95,6 +102,9 @@ public class Consent {
     private static final String ASKED_IN_CHAT = "\nasked in the chat";
     // Why a form that fits wasn't shown: the client answered it with an error.
     private static final String CLIENT_COULD_NOT_SHOW = "the client couldn't show it";
+    // Why a question's form isn't shown: the user put it aside for a message in the chat, or wrote in it something
+    // that is none of its answers, so its answer is said in the chat.
+    private static final String PUT_ASIDE = "the user put it aside for the chat";
     // The key of [#pick]'s list.
     private static final String PICKED = "picked";
 
@@ -146,7 +156,9 @@ public class Consent {
     /// Whether a tool takes the user's answer to one of its questions as said in the chat (an argument the agent
     /// passes) rather than asking it in a form: where no form can be shown now, or where the question's form
     /// couldn't be shown in this session (too large, or the client couldn't show it), so the agent asked in the
-    /// chat. Never a loop: a form that can't be shown isn't asked again instead of taking the answer the user gave.
+    /// chat, or the user put it aside for a message in the chat, or wrote in it something that is none of its
+    /// answers ([#wroteInstead]). Never a loop: a form that can't be shown, or that the user put aside, isn't asked
+    /// again instead of taking the answer the user gave.
     ///
     /// @param context  The call's context.
     /// @param action   The tool, e.g. `record_source_types`.
@@ -161,7 +173,7 @@ public class Consent {
     /// @param action   The tool.
     /// @param question The question, as for [#takesChatAnswer(ToolCallContext, String, String)].
     /// @return Why the user is asked in the chat, for a tool's hint to begin with: the form was too large to show
-    /// (and why), the client couldn't show it, or no form can be shown now.
+    /// (and why), the client couldn't show it, the user put it aside for the chat, or no form can be shown now.
     public String whyInChat(final ToolCallContext context, final String action, final String question) {
         final Unshown form = context.userQuestions().canAsk()
                 ? unshownFor(context.session(), topic(action, question))
@@ -190,6 +202,51 @@ public class Consent {
     /// form has asked it since.
     public boolean wasAskedInChat(final ToolCallContext context, final String action, final String question) {
         return unshownFor(context.session(), topic(action, question) + ASKED_IN_CHAT) != null;
+    }
+
+    /// The answer the user wrote in a form, as one of the answers it takes: matched whole, ignoring case and the
+    /// spaces around it, never by a word it holds (seen in testing: a question in the form's own-words box taken
+    /// for "use these patterns" as it said "pattern").
+    ///
+    /// @param said     What the user wrote, or null.
+    /// @param accepted The answers taken: the form's options, and any other words that say one of them in full.
+    /// @return The answer of those it is, as written there; empty if it is none of them.
+    public static Optional<String> exactly(final String said, final Collection<String> accepted) {
+        final String given = NullSafe.trim(said);
+        if (NullSafe.isBlankString(given)) {
+            return Optional.empty();
+        }
+        return NullSafe.collection(accepted).stream()
+                .filter(Objects::nonNull)
+                .filter(answer -> answer.strip().equalsIgnoreCase(given))
+                .findFirst();
+    }
+
+    /// What the agent is told when the user wrote in a form, whose answer must be one of its options (or a field's
+    /// name), something that is none of them: it may be a question for the agent, so the agent is told to answer it
+    /// first, and from then on the question's answer is taken as said in the chat ([#takesChatAnswer]), its form not
+    /// shown again.
+    ///
+    /// @param context  The call's context.
+    /// @param action   The tool.
+    /// @param question The question, as for [#takesChatAnswer(ToolCallContext, String, String)].
+    /// @param said     What the user wrote.
+    /// @param then     What the agent does once it has answered, e.g. `ask them in the chat which field ..., and
+    ///                 call survey_feed again with source_type_field as they say.`
+    /// @return The refusal to throw: nothing is done.
+    public ToolRefusal wroteInstead(final ToolCallContext context,
+                                    final String action,
+                                    final String question,
+                                    final String said,
+                                    final String then) {
+        final String topic = topic(action, question);
+        auditLogProvider.get().processed(context.session(), null, "answer", action + ": " + heading(question),
+                "none of its answers: " + heading(said), false);
+        putAside(context.session(), topic);
+        return new ToolRefusal("The user wrote \"" + NullSafe.string(said).strip() + "\" in the form instead of "
+                               + "choosing an answer to '" + heading(question) + "'. Nothing was done. If it's a "
+                               + "question, answer it first; then " + NullSafe.string(then).strip() + " Their "
+                               + "answer is taken as they say it in the chat: the form isn't shown again.");
     }
 
     /// A list for a form's message, short: its first lines, and how many more there are and where they are. Forms
@@ -684,6 +741,12 @@ public class Consent {
                                             final String message,
                                             final Map<String, Object> schema) {
         final String topic = topic(action, question);
+        if (isPutAside(context.session(), topic)) {
+            // Answered in the chat from now on: the form isn't shown again.
+            LOGGER.debug(() -> LogUtil.message("Form for '{}' from {} not shown: the user put it aside for the chat",
+                    heading(message, 80), action));
+            return Optional.empty();
+        }
         final String problem = ElicitationSchema.check(message, schema);
         if (problem != null) {
             notShownNow(context, action, topic, message, problem);
@@ -691,14 +754,39 @@ public class Consent {
         }
         forget(context.session(), topic);
         forget(context.session(), topic + ASKED_IN_CHAT);
+        final ElicitResult answer;
         try {
-            return Optional.of(context.userQuestions().ask(call.name(), UserQuestions.formCallId(call.id(), key),
-                    message, schema));
+            answer = context.userQuestions().ask(call.name(), UserQuestions.formCallId(call.id(), key), message,
+                    schema);
         } catch (final ToolRefusal e) {
             // Only a form that can never be shown is refused so (the client answered it with an error).
             notShownNow(context, action, topic, message, CLIENT_COULD_NOT_SHOW);
             return Optional.empty();
         }
+        final Optional<String> sent = McpElicitations.sentInstead(answer);
+        if (sent.isPresent()) {
+            auditLogProvider.get().processed(context.session(), null, "answer", action + ": " + heading(question),
+                    "put aside: the user sent a message instead", false);
+            putAside(context.session(), topic);
+            throw new ToolRefusal(McpElicitations.sentInsteadText(heading(question), action, sent.get(),
+                    "Their answer to it is said in the chat now: once they've given it, call " + action + " again, "
+                    + "which says how to pass it (its form isn't shown again)."));
+        }
+        return Optional.of(answer);
+    }
+
+    // The question's form put aside for the chat: its answer is taken as said there from now on, and the agent has
+    // been told to ask the user it there (so a 'true' it passes later is the user's yes: [#wasAskedInChat]).
+    private void putAside(final ToolSession session, final String topic) {
+        final Instant now = Instant.now();
+        remember(session, topic, new Unshown(PUT_ASIDE, now));
+        remember(session, topic + ASKED_IN_CHAT, new Unshown("asked in the chat", now));
+    }
+
+    // True if the user put the question's form aside for the chat in the session, and it is kept still.
+    private boolean isPutAside(final ToolSession session, final String topic) {
+        final Unshown form = unshownFor(session, topic);
+        return form != null && PUT_ASIDE.equals(form.problem());
     }
 
     private void notShownNow(final ToolCallContext context,
@@ -886,6 +974,15 @@ public class Consent {
             refuseUnshown(context, request, CLIENT_COULD_NOT_SHOW);
             return;
         }
+        final Optional<String> sent = McpElicitations.sentInstead(answer);
+        if (sent.isPresent()) {
+            // Never taken from the chat (the agent could agree for the user): asked in its form again once the user
+            // says to go on.
+            audit(context.session(), kind, request, "put aside: the user sent a message instead", false);
+            throw new ToolRefusal(McpElicitations.sentInsteadText(request.summary(), request.action(), sent.get(),
+                    "If they say to go on, call " + request.action() + " again: they are asked to agree in the form "
+                    + "again."));
+        }
         final Map<String, Object> content = NullSafe.map(answer.content());
         final boolean accepted = answer.action() == ElicitResult.Action.ACCEPT;
         // With a value to edit, accepting the form is the confirmation; otherwise its yes or no is.
@@ -970,6 +1067,11 @@ public class Consent {
 
     // Why a form wasn't shown, as a tool's reply begins.
     private static String notShown(final String problem) {
+        if (PUT_ASIDE.equals(problem)) {
+            return "The form isn't shown again: the user put it aside for the chat (they sent a message instead of "
+                   + "answering it, or wrote in it something that is none of its answers), so their answer is the "
+                   + "one they say in the chat";
+        }
         return CLIENT_COULD_NOT_SHOW.equals(problem)
                 ? "The client couldn't show the form"
                 : "The form was too large to show (" + problem + ")";

@@ -195,6 +195,81 @@ class TestRecordSourceTypesTool {
     }
 
     @Test
+    void aQuestionTypedInThePatternsFormIsNotTakenForUsingThePatterns() {
+        // Seen in testing: a question typed in a form's own-words box was matched as an answer by the words it
+        // happened to hold ("pattern", "item", "use", "one"...), so the user's question was taken for their answer.
+        patternValues();
+        final String question = "which pattern would match the SOAP events?";
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", question));
+
+        final Map<String, Object> result = once(user.context(), Map.of());
+
+        assertThat(user.shown()).as("the patterns form is shown").first().asString()
+                .contains("65 source types are proposed");
+        assertThat(result).as("%s", result).doesNotContainEntry("status", "needs_review")
+                .doesNotContainKey("rows");
+        assertThat(String.valueOf(result)).contains(question).containsIgnoringCase("question");
+    }
+
+    @Test
+    void aQuestionTypedInThePatternsFormIsNotTakenForOneSourceTypePerValue() {
+        // As above: a question starting "one ..." taken for "One source type per value".
+        patternValues();
+        final String question = "One thing first: what does a pattern row match on?";
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", question));
+
+        final Map<String, Object> result = once(user.context(), Map.of());
+
+        assertThat(result).as("%s", result).doesNotContainEntry("status", "needs_review")
+                .doesNotContainKey("rows");
+        assertThat(String.valueOf(result)).contains(question).containsIgnoringCase("question");
+    }
+
+    @Test
+    void anOptionTypedInThePatternsFormWholeIsTakenWhateverItsCase() {
+        patternValues();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "  use THESE patterns "));
+
+        final Map<String, Object> result = once(user.context(), Map.of());
+
+        assertThat(result).as("%s", result).containsEntry("status", "needs_review");
+        assertThat((List<?>) result.get("rows")).hasSize(65);
+    }
+
+    @Test
+    void aQuestionTypedInThePatternsFormIsAnsweredInTheChatItsFormNotShownAgain() {
+        // As for a form put aside by a message: the next call takes patterns= as the user's chat answer, and a call
+        // without it is told to pass it, the form not shown again.
+        patternValues();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "which pattern is which?"));
+        once(user.context(), Map.of());
+        assertThat(user.shown()).hasSize(1);
+
+        final Map<String, Object> without = once(user.context(), Map.of());
+
+        assertThat(user.shown()).as("forms shown").hasSize(1);
+        assertThat(without).as("%s", without).containsEntry("status", "needs_user");
+        assertThat(String.valueOf(without.get("hint"))).contains("put it aside", "patterns='use' or 'exact'");
+
+        final Map<String, Object> given = once(user.context(), Map.of("patterns", "exact"));
+
+        assertThat(user.shown()).as("forms shown").hasSize(1);
+        assertThat(given).as("%s", given).containsEntry("status", "needs_review");
+        assertThat((List<?>) given.get("rows")).hasSize(130);
+    }
+
+    @Test
+    void wordsThatHoldAnAnswerAsPatternsAreRefusedNotTaken() {
+        patternValues();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
+
+        final Map<String, Object> result = once(user.context(), Map.of("patterns", "one of the patterns"));
+
+        assertThat(String.valueOf(result.get("error"))).contains("is neither 'use'");
+        assertThat(user.shown()).isEmpty();
+    }
+
+    @Test
     void manyPatternsAreAskedInAFormWithinWhatAFormHolds() {
         // Seen in a real run: a line a pattern in the form's message, past what a message holds.
         final Map<String, Object> values = new LinkedHashMap<>();
@@ -797,6 +872,16 @@ class TestRecordSourceTypesTool {
     }
 
     // The build's survey, by this field, having seen these values (each with its records), and no registry.
+    // A survey of many paths, two of each of 65 applications: patterns are proposed, and put to the user.
+    private void patternValues() {
+        final Map<String, Object> values = new LinkedHashMap<>();
+        for (int i = 1; i <= 65; i++) {
+            values.put("/var/log/application" + i + "/audit.log", Map.of("records", 100 + i));
+            values.put("/var/log/application" + i + "/access.log", Map.of("records", 50 + i));
+        }
+        surveyed("file_path", values);
+    }
+
     private void surveyed(final String field, final Map<String, Object> values) {
         final Map<String, Object> sources = new LinkedHashMap<>();
         sources.put(SourceTypeProfiles.FIELD, field);

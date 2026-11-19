@@ -95,6 +95,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     // The answer using the proposed list items.
     static final String USE_ITEMS = "Use these list items";
     static final String ONE_PER_VALUE = "One source type per value";
+    // The answers, in the form or as patterns=, that have a source type per value, each said whole.
+    private static final List<String> PER_VALUE_ANSWERS = List.of(ONE_PER_VALUE, "exact", "one per value",
+            "per value", "a source type per value");
+    // The answers, in the form or as patterns=, that use the proposed patterns or list items, each said whole.
+    private static final List<String> USE_ANSWERS = List.of(USE_PATTERNS, USE_ITEMS, "use", "yes", "patterns",
+            "items", "use patterns", "use items", "use them", "use the patterns", "use the items");
     // Who decided a status that no one chose: an assessment registers every source type as parked.
     private static final String ASSESSED = "assessment";
     private static final String NEEDS_REVIEW = "needs_review";
@@ -218,9 +224,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                    + "form (refused for a translated row where no "
                                                                    + "form can be shown)."))
                         .addStringProperty(PATTERNS_ARG, "Only when no form can be shown, or the reply says its "
-                                                         + "form couldn't be: the user's answer in the chat to the "
-                                                         + "proposed patterns or list items ('use' them, or "
-                                                         + "'exact': a source type per value).")
+                                                         + "form couldn't be (or isn't shown again): the user's "
+                                                         + "answer in the chat to the proposed patterns or list "
+                                                         + "items ('use' them, or 'exact': a source type per "
+                                                         + "value).")
                         .addProperty(SCOPE_ARG, stringArraySchema("Only when no form can be shown, or the reply "
                                                                   + "says the scope form couldn't be: the "
                                                                   + "source types the user chose for this build's "
@@ -692,8 +699,29 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                + "say.");
             return new Rows(List.of(), result);
         }
-        final String said = answer.get().strip().toLowerCase(Locale.ROOT);
-        if (said.startsWith("one") || said.contains("exact") || said.contains("per value")) {
+        final String said = answer.get().strip();
+        // Matched whole, never by a word it holds (seen in testing: a question in the form's own-words box taken for
+        // using the patterns, as it said "pattern").
+        final boolean perValue = Consent.exactly(said, PER_VALUE_ANSWERS).isPresent();
+        if (!perValue && Consent.exactly(said, USE_ANSWERS).isEmpty()) {
+            final String how = proposal.lists()
+                    ? "list items"
+                    : "patterns";
+            if (given2 == null) {
+                throw consent.wroteInstead(context, NAME, proposal.lists()
+                        ? ITEMS_QUESTION
+                        : PATTERNS_QUESTION, said, "ask them in the chat whether to use the proposed " + how
+                                                   + " or have one source type per value, and call " + NAME
+                                                   + " again with " + PATTERNS_ARG + "='use' or 'exact' as they "
+                                                   + "say (or " + ROWS_ARG + " as they say).");
+            }
+            throw new ToolRefusal(PATTERNS_ARG + " '" + said + "' is neither 'use' (the proposed " + how + ") nor "
+                                  + "'exact' (one source type per value): ask the user in the chat how to match the "
+                                  + "source types, and call " + NAME + " again with " + PATTERNS_ARG + " or "
+                                  + ROWS_ARG + " as they say ('name = value', 'name ~ ^pattern' or 'name ∈ item', "
+                                  + "in order).");
+        }
+        if (perValue) {
             final List<SourceTypeRows.Row> exact = new ArrayList<>();
             values.entrySet().stream()
                     .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
@@ -701,12 +729,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                             entry.getKey())));
             return new Rows(exact, null);
         }
-        if (said.startsWith("use") || said.startsWith("yes") || said.contains("pattern") || said.contains("item")) {
-            return new Rows(proposed, null);
-        }
-        throw new ToolRefusal("The user's answer ('" + answer.get().strip() + "') is neither: ask them in the chat "
-                              + "how to match the source types, and call " + NAME + " again with " + ROWS_ARG
-                              + " as they say ('name = value', 'name ~ ^pattern' or 'name ∈ item', in order).");
+        return new Rows(proposed, null);
     }
 
     // The rows as they will be: those given (or proposed), with the registry's translated and placed rows they leave

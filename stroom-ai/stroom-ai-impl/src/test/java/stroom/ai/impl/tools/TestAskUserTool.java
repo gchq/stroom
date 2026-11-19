@@ -97,6 +97,19 @@ class TestAskUserTool {
     }
 
     @Test
+    void questionsPutAsideByAMessageTellTheAgentToReplyToIt() {
+        // The message comes before the re-made call's result in the agent's context, so it is quoted, not said to
+        // follow.
+        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.anyString(), Mockito.any())).thenReturn(new ElicitResult(Action.CANCEL, null,
+                Map.of(McpElicitations.SENT_INSTEAD, "Why do you need to know?")));
+
+        assertThat(run(ARGUMENTS)).contains("sent a message instead", "\"Why do you need to know?\"",
+                        "Reply to their message first", "Don't call ask_user again")
+                .doesNotContain("which follows");
+    }
+
+    @Test
     void anAbsentUserIsNotAsked() {
         Mockito.when(runManager.isUnattended(CHAT_ID)).thenReturn(true);
 

@@ -88,6 +88,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String CONFIRM_ARG = "confirm";
     private static final String ONE_KIND_ARG = "one_kind";
     private static final String KIND_FIELD_ARG = "kind_field";
+    // What the agent does once it has answered words written in the kind field form that name none of its fields.
+    private static final String KIND_FIELD_THEN = "ask them in the chat which field tells the kinds of event apart "
+                                                  + "(or whether the records are all one kind), and call " + NAME
+                                                  + " again with " + KIND_FIELD_ARG + " as they say.";
     // The answer a form suggests for records that are one kind of event.
     private static final String ONE_KIND = "One kind";
 
@@ -754,7 +758,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                                                             + "kind of event (type, action...), but "
                                                                             + "these could tell its kinds apart:\n"
                                                                             + choice.said(),
-                "Which field tells the kinds of event apart?", choice.options());
+                KIND_FIELD_QUESTION, choice.options());
         if (answer.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put(STATUS, "needs_kind_field");
@@ -770,9 +774,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         final List<String> said = KindFields.fromAnswer(answer.get(), choice);
         if (said.isEmpty()) {
-            throw new ToolRefusal("The user's answer ('" + answer.get() + "') names none of the sample's fields: "
-                                  + "ask them in the chat which field tells the kinds of event apart, and call again "
-                                  + "with " + KIND_FIELD_ARG + ".");
+            throw consent.wroteInstead(context, NAME, KIND_FIELD_QUESTION, answer.get(), KIND_FIELD_THEN);
         }
         return new KindsChosen(said, null, true);
     }
@@ -862,7 +864,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                                                             + "are in no kind of event the draft "
                                                                             + "tells apart. These fields could tell "
                                                                             + "them apart:\n" + choice.said(),
-                "Which field tells the kinds of event apart?", choice.options());
+                KIND_FIELD_QUESTION, choice.options());
         if (answer.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put(STATUS, "needs_kind_field");
@@ -880,9 +882,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         final List<String> said = KindFields.fromAnswer(answer.get(), choice);
         if (said.isEmpty()) {
-            throw new ToolRefusal("The user's answer ('" + answer.get() + "') names none of the sample's fields: "
-                                  + "ask them in the chat which field tells the kinds of event apart, and call again "
-                                  + "with " + KIND_FIELD_ARG + ".");
+            throw consent.wroteInstead(context, NAME, KIND_FIELD_QUESTION, answer.get(), KIND_FIELD_THEN);
         }
         return Optional.of(listed(call, context, build, source, notesNow, said));
     }
@@ -938,9 +938,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         final List<String> said = KindFields.fromAnswer(answer.get(), put);
         if (said.isEmpty()) {
-            throw new ToolRefusal("The user's answer ('" + answer.get() + "') names none of the sample's fields: "
-                                  + "ask them in the chat which field tells the kinds of event apart, and call again "
-                                  + "with " + KIND_FIELD_ARG + ".");
+            throw consent.wroteInstead(context, NAME, KIND_FIELD_QUESTION, answer.get(), KIND_FIELD_THEN);
         }
         return new KindsChosen(said, null, true);
     }

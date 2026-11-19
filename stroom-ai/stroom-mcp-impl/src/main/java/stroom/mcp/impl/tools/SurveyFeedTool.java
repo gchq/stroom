@@ -157,6 +157,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // The answers to going ahead with the survey as it is, and to streams that can't be read further in a call.
     static final String ACCEPT = "Go ahead with the survey as it is";
     static final String KEEP_SURVEYING = "Keep surveying";
+    // The answers in the go-ahead form, each said whole, that go ahead with the survey as it is.
+    private static final List<String> GO_AHEAD_ANSWERS = List.of(ACCEPT, "yes", "true", "ok", "okay", "go ahead",
+            "accept", "proceed");
+    // The answers in the go-ahead form, each said whole, that keep on surveying.
+    private static final List<String> KEEP_SURVEYING_ANSWERS = List.of(KEEP_SURVEYING, "no", "keep going",
+            "carry on surveying", "survey more");
+    // The question of the form that asks which field tells the kinds of event apart.
+    private static final String KIND_FIELD_QUESTION = "Which field tells the kinds of event apart?";
+    // The question of the form that asks which field says each record's source.
+    static final String SOURCE_FIELD_QUESTION = "Which field says which source a record came from?";
+    // The answers in that form, each said whole, that say the feed is one source.
+    private static final List<String> ONE_SOURCE_ANSWERS = List.of(SourceTypeFields.NOT_AGGREGATED, "none", "no",
+            "one source", "not aggregated", "not an aggregated feed", "-");
     // The question asked before going ahead with the survey as it is.
     static final String ACCEPT_QUESTION = "Go ahead with the survey as it is?";
     // The question asked of streams read only in part that can't be read further.
@@ -733,15 +746,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 kinds = kindsKept(choice.get().fields(), "tool");
             } else {
                 final Optional<String> answer = consent.answer(call, context, NAME, kindIntro(feed, choice.get()),
-                        "Which field tells the kinds of event apart?", choice.get().options());
+                        KIND_FIELD_QUESTION, choice.get().options());
                 if (answer.isEmpty()) {
                     return needsKindField(feed, choice.get());
                 }
                 final List<String> said = KindFields.fromAnswer(answer.get(), choice.get());
                 if (said.isEmpty()) {
-                    throw new ToolRefusal("The user's answer ('" + answer.get() + "') names none of the fields "
-                                          + "put to them: ask them in the chat which field tells the kinds of event "
-                                          + "apart, and call again with " + KIND_FIELD_ARG + ".");
+                    throw consent.wroteInstead(context, NAME, KIND_FIELD_QUESTION, answer.get(), "ask them in "
+                                               + "the chat which field tells the kinds of event apart (or whether "
+                                               + "the records are all one kind), and call " + NAME + " again with "
+                                               + KIND_FIELD_ARG + " as they say.");
                 }
                 kinds = kindsKept(said, "user");
             }
@@ -1185,24 +1199,29 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 .toList());
         options.add(SourceTypeFields.NOT_AGGREGATED);
         final Optional<String> answer = consent.answer(call, context, NAME, sourceIntro(feed, candidates),
-                "Which field says which source a record came from?", options);
+                SOURCE_FIELD_QUESTION, options);
         if (answer.isEmpty()) {
-            return new SourceDecision(null, null, needsSourceTypeField(feed, candidates), false);
+            return new SourceDecision(null, null, needsSourceTypeField(consent.whyInChat(context, NAME,
+                    SOURCE_FIELD_QUESTION), feed, candidates), false);
         }
         final String said = answer.get().strip();
-        if (saysOneSource(said)) {
+        // An option, or a field's name (or a reading into held values), said whole: anything else (seen in testing:
+        // a question for the agent) is put to the agent to answer, not taken for a field's name.
+        if (Consent.exactly(said, ONE_SOURCE_ANSWERS).isPresent()) {
             return new SourceDecision(sourcesChosen(null, "user"), null, null, false);
         }
         final Optional<SourceTypeFields.Candidate> taken = candidates.stream()
                 .filter(candidate -> said.equalsIgnoreCase(candidate.label()))
                 .findFirst();
         final Optional<String> field = taken.map(SourceTypeFields.Candidate::field)
-                .or(() -> spelt(said, heads.get()));
+                .or(() -> fieldSaid(said, heads.get()));
         if (field.isEmpty()) {
-            throw new ToolRefusal("The user's answer ('" + said + "') names none of the records' fields: ask them "
-                                  + "in the chat which field says each record's source (or whether the feed is "
-                                  + "one source), and call " + NAME + " again with " + SOURCE_TYPE_FIELD_ARG
-                                  + " as they say.");
+            throw consent.wroteInstead(context, NAME, SOURCE_FIELD_QUESTION, said, "ask them in the chat which field "
+                                                                               + "says each record's source (or "
+                                                                               + "whether the feed is one source), "
+                                                                               + "and call " + NAME + " again with "
+                                                                               + SOURCE_TYPE_FIELD_ARG + " as they "
+                                                                               + "say ('none' for one source).");
         }
         return new SourceDecision(SourceTypeReadings.withRowsProposed(sourcesChosen(field.get(), "user"),
                 field.get(), heads.get(), taken.orElse(null)), field.get(), null, false);
@@ -1214,6 +1233,17 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return SourceTypeFields.NOT_AGGREGATED.equalsIgnoreCase(said.strip()) || Set.of("none", "no", "one source",
                 "not aggregated", "-").contains(text) || text.startsWith("not an aggregated")
                || text.startsWith("not aggregated");
+    }
+
+    // A field the user wrote in the form, as the records spell it, or a reading into held values; empty for words
+    // that are neither, including a reading the tools don't take (a question, say, that holds a '|' or a '+').
+    private static Optional<String> fieldSaid(final String said, final List<Map<String, Object>> records) {
+        try {
+            return spelt(said, records);
+        } catch (final ToolRefusal e) {
+            LOGGER.debug(() -> LogUtil.message("'{}' isn't a reading the tools take: {}", said, e.getMessage()));
+            return Optional.empty();
+        }
     }
 
     // A field the user named, as the records spell it (matched ignoring case), or a reading into held values
@@ -1250,15 +1280,18 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                + "source types step lists them for you to choose the source types of this build's group.";
     }
 
-    // With no forms: the agent asks the user which field, in the chat.
-    private static Map<String, Object> needsSourceTypeField(final String feed,
+    // With no form shown: the agent asks the user which field, in the chat (why: no form can be shown, the form
+    // couldn't be, or the user put it aside for the chat).
+    private static Map<String, Object> needsSourceTypeField(final String why,
+                                                            final String feed,
                                                             final List<SourceTypeFields.Candidate> candidates) {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("feed", feed);
         result.put("status", "needs_source_type_field");
         result.put("candidates", candidates.stream().map(SourceTypeReadings::json).toList());
         SourceTypeReadings.heldHint(candidates).ifPresent(hint -> result.put("held", hint));
-        result.put("hint", "Nothing was surveyed yet. The feed looks like it aggregates several sources: the records "
+        result.put("hint", why + ". Nothing was surveyed yet. The feed looks like it aggregates several sources: the "
+                           + "records "
                            + "of each value of these fields differ in their fields or messages. Ask the user in the "
                            + "chat which field says each record's source (show them the candidates and their "
                            + "values), or whether the feed is one source, then call " + NAME + " again with "
@@ -1503,6 +1536,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             return result;
         }
         final String answered = answer.get();
+        if (!inChat && Consent.exactly(answered, GO_AHEAD_ANSWERS).isEmpty()
+            && Consent.exactly(answered, KEEP_SURVEYING_ANSWERS).isEmpty()) {
+            // Words in the form that are neither answer, whole (seen in testing, in another form: a question for the
+            // agent taken for an answer): put to the agent, not taken for keeping on surveying.
+            throw consent.wroteInstead(context, NAME, ACCEPT_QUESTION, answered, "ask them in the chat whether to go "
+                                                                         + "ahead with the survey as it is ("
+                                                                         + said + "), and call " + NAME + " again "
+                                                                         + "with " + ACCEPT_ARG + " as they say "
+                                                                         + "('true' for their yes).");
+        }
         if (!agreesToGoAhead(answered)) {
             result.put("user_says", answered);
             result.put("hint", "The user wants the survey to go on: call " + NAME + " build=" + request.build()

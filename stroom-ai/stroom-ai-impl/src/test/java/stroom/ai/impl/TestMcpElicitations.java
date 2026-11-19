@@ -212,8 +212,11 @@ class TestMcpElicitations {
 
         assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
 
-        // Not answered: the tool is told so, and the card says why.
-        assertThat(result.get(5, TimeUnit.SECONDS).action()).isEqualTo(Action.CANCEL);
+        // Not answered: the server is told so (a cancel, as the protocol has it, and nothing more), and the card says
+        // why.
+        final ElicitResult told = result.get(5, TimeUnit.SECONDS);
+        assertThat(told.action()).isEqualTo(Action.CANCEL);
+        assertThat(McpElicitations.sentInstead(told)).as("what an MCP server is told").isEmpty();
         assertThat(messages.get(card.getId()).getMessage()).contains("\"status\":\"SUPERSEDED\"");
         // Only a form still waiting is put aside.
         assertThat(elicitations.supersedePending(CHAT_ID)).isZero();
@@ -460,8 +463,69 @@ class TestMcpElicitations {
 
         assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
 
-        assertThat(elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM).action())
-                .isEqualTo(Action.CANCEL);
+        // Not answered (a cancel, to a tool that knows no better), but put aside by a message, not closed or run out.
+        final ElicitResult result = elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM);
+        assertThat(result.action()).isEqualTo(Action.CANCEL);
+        assertThat(McpElicitations.sentInstead(result)).as("no message stored here").contains("");
+    }
+
+    @Test
+    void askUsersQuestionsPutAsideByAMessageTellTheToolTheUserSentOneAndWhatItSaid() {
+        // Seen in testing: the user typed a question in the chat instead of answering survey_feed's form; the
+        // re-made call was told only "cancel", as for a form closed or run out, so the agent was told to call the
+        // tool again with the same arguments, the form was shown again, and the question was never answered.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        // As AskStroomAIService steers the run: the message is stored, then the form put aside.
+        final String typed = "What's the difference between event.app and event.logger_name?";
+        aiDao.storeMessage(CHAT_ID, AiMessageType.STEER_MESSAGE, typed);
+        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
+
+        // A later message, sent once the run had carried on, isn't the one that put the form aside.
+        aiDao.storeMessage(CHAT_ID, AiMessageType.STEER_MESSAGE, "And another thing");
+
+        final ElicitResult result = elicitations.askUser(CHAT_ID, "survey_feed", "c1", "Which feed?", FORM);
+
+        // Not the same as a form that ran out: the tool (and so the agent) can tell the user sent a message, and
+        // what it said, as a request for approval answered with a message is told (AskStroomAIService.steer).
+        assertThat(McpElicitations.sentInstead(result)).as("what the re-made call is given").contains(typed);
+        assertThat(McpElicitations.sentInsteadText("Which feed?", "survey_feed", typed, null))
+                .as("what the agent is told").containsIgnoringCase("sent a message instead").contains(typed)
+                .contains("Reply to their message first").doesNotContain("again with the same arguments");
+    }
+
+    @Test
+    void stroomsOwnFormAskedOutsideACallPutAsideByAMessageTellsTheToolWhatItSaid() throws Exception {
+        // A call with no id waits for the answer, as for an MCP server, but is Stroom's own: told what was sent.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final CompletableFuture<ElicitResult> result = CompletableFuture.supplyAsync(() ->
+                elicitations.askUser(CHAT_ID, "survey_feed", null, "Which feed?", FORM));
+        waitForCard();
+        aiDao.storeMessage(CHAT_ID, AiMessageType.STEER_MESSAGE, "Why ask?");
+
+        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
+
+        assertThat(McpElicitations.sentInstead(result.get(5, TimeUnit.SECONDS))).contains("Why ask?");
+    }
+
+    @Test
+    void aFormThatRanOutIsNotTakenForOnePutAside() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final AiChatMessage card = cardFor("c1");
+        messages.put(card.getId(), new AiChatMessage(card.getId(), CHAT_ID, 0L, AiMessageType.ELICITATION, null,
+                JsonUtil.writeValueAsString(JsonUtil.readValue(card.getMessage(), ElicitationRecord.class)
+                        .answered(ElicitationRecord.Status.EXPIRED, null), false), 1, null));
+        aiDao.storeMessage(CHAT_ID, AiMessageType.STEER_MESSAGE, "A message sent later");
+
+        final ElicitResult result = elicitations.askUser(CHAT_ID, "survey_feed", "c1", "Which feed?", FORM);
+
+        assertThat(result.action()).isEqualTo(Action.CANCEL);
+        assertThat(McpElicitations.sentInstead(result)).isEmpty();
     }
 
     @Test

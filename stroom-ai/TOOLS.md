@@ -702,8 +702,9 @@ timeout, with its run slot given back and its time limit paused while it waits.
   120 characters (the model is asked for under 80) with an optional description of up to 500, `recommended`,
   `allowCustom` default true); `intro` (default "Some questions before I carry on").
 * **Returns**: "The user answered:" with each question and its answer, marked "(in their own words)" when not one of
-  the options; or that the user declined (carry on with what was recommended, saying so, or stop) or didn't answer
-  (the chat stopped, they sent a message instead, or it timed out: "Don't carry on as if they had").
+  the options; or that the user declined (carry on with what was recommended, saying so, or stop), sent a message
+  instead (quoted: reply to it first, don't ask again until they've said what they want), or didn't answer (the chat
+  stopped, or it timed out: "Don't carry on as if they had").
 * **Refuses**: questions malformed or over the limits (an over-long option label or description is refused, never
   cut: a cut label read wrongly and no longer matched `recommended`; the model is told to give a short label and put
   the detail in the option's description); a form too large to show as one ("ask again shorter"); and,
@@ -3342,7 +3343,11 @@ and one text field, "What is the group called?", filled with the suggested name,
 (left empty, the suggestion stands). A scope form that still can't be shown (too large, or the client couldn't show
 it) says so in the `needs_user` hint, and the next call takes `scope=` and `group=` as the user said them in the chat
 (`Consent.takesChatAnswer`), never asking the form again (decided by the user, 2026-11-18). The patterns' and list
-items' forms name the first five rows and how many more ("And 60 more (all are in the table shown in the chat)."). A call with forms and no `group` is refused before
+items' forms take their answer whole (`Use these patterns`, `One source type per value`, or `use`/`exact`, any
+case): other words, such as a question, are put to the agent to answer, the question then answered in the chat
+(`patterns=`), never by a word they hold (seen in testing: a question saying "pattern" taken for using the patterns).
+The patterns' and list items' forms name the first five rows and how many more ("And 60 more (all are in the table
+shown in the chat)."). A call with forms and no `group` is refused before
 anything is asked. The name matching an existing group's (any case) is that group's: the source types join it (its
 pipeline and output feed, when `build_translation_xslt` builds it; a promoted one through a working copy of its XSLT),
 said in `joins`; with none chosen, the build changes that group alone (without forms, `scope=[]`, an explicit empty
@@ -6481,6 +6486,20 @@ taken by every tool
 though none declares them (`UserQuestions.RESERVED_ARGS`, kept by the call guard). `Consent.reviewId(shown)` and `wasReviewed`
 bind a `needs_review` reply to what it showed (promotion layouts, index templates, records kept as Unknown). Every
 ask and answer is audited.
+
+A form put aside by a message the user sent in the chat instead of answering it (`McpElicitations.sentInstead`: a
+cancel carrying the message) tells the agent, as the call's result, "The user sent a message instead of answering
+'...': "...". Nothing was done. Reply to their message first. Don't call <tool> again until they've said what they
+want." (one wording, `McpElicitations.sentInsteadText`), never "closed or ran out" (decided by the user, 2026-11-19).
+For a question or choice (`answer`, `choose`, `chooseEach`, `answerEach`, `pick`, `review`), the question is then
+answered in the chat: it is kept for the session as a form not shown is, so `takesChatAnswer` is true for it, the
+tool takes its argument as the user's answer, and a call without it is told to pass it (`whyInChat`: "The form isn't
+shown again: the user put it aside for the chat ..."), the form never shown again. A confirmation or approval
+(`require`) is never taken from the chat: put aside, it is asked in its form again on a later call. Words written in a
+form whose answer must be one of its options or a field's name are taken only when they are one whole, ignoring case
+and surrounding spaces (`Consent.exactly`); anything else is put to the agent (`Consent.wroteInstead`: "The user wrote
+"..." in the form instead of choosing ...: if it's a question, answer it first; then ...") and the question answered
+in the chat from then on, as for a form put aside.
 
 **`FormsRequired`**: what a call that changes something is told when the user can't be asked in a form: an MCP client
 that didn't say it can show forms (over `/mcp` it can't make changes at all; its read-only calls still work), or a chat
