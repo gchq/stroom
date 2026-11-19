@@ -67,21 +67,6 @@ class TestSourceNotes {
               {"event": "4648", "description": "A logon with explicit credentials", "event_detail": "Authenticate",
                "type_id": "Explicit logon", "field": "evt", "value": "4648", "action": "Logon"}]}
             """;
-    // The catalogue an agent recorded from a firewall sample alone (no documentation), as it was given.
-    private static final String GUESSED = """
-            [{"event": "TRAFFIC-ALLOW", "description": "Network traffic allowed", "field": "event_type",
-              "value": "TRAFFIC", "event_detail": "Allow"},
-             {"event": "TRAFFIC-DENY", "description": "Network traffic blocked", "field": "event_type",
-              "value": "TRAFFIC", "event_detail": "Deny"},
-             {"event": "LOGIN-SUCCESS", "description": "Administrator logged in", "field": "action",
-              "value": "LOGIN_SUCCESS", "event_detail": "Authenticate", "success": true},
-             {"event": "LOGIN-FAILED", "description": "Administrator failed to log in", "field": "action",
-              "value": "LOGIN_FAILED", "event_detail": "Authenticate", "success": false},
-             {"event": "CONFIG-CHANGE", "description": "Configuration modified", "field": "action",
-              "value": "CONFIG_CHANGE", "event_detail": "Update"},
-             {"event": "VPN-DOWN", "description": "VPN tunnel disconnected", "field": "action",
-              "value": "VPN_TUNNEL_DOWN", "event_detail": "Unknown"}]
-            """;
 
     @Test
     void theNotesAreKeptInTheDocAndReadBack() {
@@ -105,24 +90,13 @@ class TestSourceNotes {
     }
 
     @Test
-    void aCatalogueNamingNoActionElementOrTwinEventsIsRefused() {
-        final List<String> problems = SourceNotes.catalogueProblems(guessed(), CHECK);
-
-        assertThat(problems).anyMatch(problem -> problem.startsWith("TRAFFIC-ALLOW: 'Allow' is not an EventDetail "
-                                                                    + "action element")
-                                                 && problem.contains("Network/Permit"));
-        assertThat(problems).anyMatch(problem -> problem.startsWith("TRAFFIC-ALLOW and TRAFFIC-DENY are both "
-                                                                    + "event_type=TRAFFIC"));
-        // Authenticate, Update and Unknown are elements.
-        assertThat(problems).hasSize(3);
+    void anActionElementTheSchemaDoesntHaveIsSaidWithTheOnesItDoes() {
         assertThat(CHECK.apply("Network")).contains("'Network' needs its action below it: ")
                 .contains("Network/Permit");
         assertThat(CHECK.apply("Network/Permit")).isNull();
         assertThat(CHECK.apply("Authenticate")).isNull();
         assertThat(CHECK.apply("TypeId")).contains("'TypeId' is not an EventDetail action element");
         assertThat(CHECK.apply("")).isNull();
-        // Without the schema, the events are still checked for twins.
-        assertThat(SourceNotes.catalogueProblems(guessed(), null)).hasSize(1);
     }
 
     @Test
@@ -171,7 +145,8 @@ class TestSourceNotes {
                 List.of(entry("field", "evt", "meaning", "other")), "events", List.of())));
 
         assertThat(list(merged.get("fields")).getFirst().get("meaning")).isEqualTo("Event id");
-        assertThat(list(merged.get("events"))).hasSize(list(notes().get("events")).size());
+        // The notes of the kind era (events, kind fields) are no longer read.
+        assertThat(merged).containsOnlyKeys("fields");
     }
 
     @Test
@@ -254,18 +229,6 @@ class TestSourceNotes {
     }
 
     @Test
-    void aDroppedKindsKeyIsTheConditionsOfItsDropRule() {
-        assertThat(SourceNotes.dropConditions("action=purge")).containsExactly(entry("field", "action", "equals",
-                "purge"));
-        assertThat(SourceNotes.dropConditions("variant=linux: message matches ^usb \\S+: new")).containsExactly(
-                entry("field", "variant", "equals", "linux"),
-                entry("field", "message", "matches", "^usb \\S+: new"));
-        assertThat(SourceNotes.dropConditions("category=SSLVPN: event_id = Message")).containsExactly(
-                entry("field", "category", "equals", "SSLVPN"), entry("field", "event_id", "equals", "Message"));
-        assertThat(SourceNotes.dropConditions("nonsense")).isEmpty();
-    }
-
-    @Test
     void anActionIsReadAgainstTheEnumerationOfItsActionElement() {
         // Seen in the agent eval (cases 60 and 65): "Add member to role" and "MFA" accepted as Actions.
         assertThat(SourceNotes.allowedActions(SCHEMA, "Authorise")).containsExactly("Request", "Modify");
@@ -303,11 +266,6 @@ class TestSourceNotes {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> notes() {
         return (Map<String, Object>) ToolJson.loads(NOTES);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> guessed() {
-        return (List<Map<String, Object>>) ToolJson.loads(GUESSED);
     }
 
     @SuppressWarnings("unchecked")

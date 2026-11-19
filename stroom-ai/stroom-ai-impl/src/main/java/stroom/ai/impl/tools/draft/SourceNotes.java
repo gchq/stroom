@@ -31,7 +31,6 @@ import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -40,25 +39,25 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /// Source notes: what the user's vendor or event reference documentation says about a source, kept so the tools use
 /// it.
 ///
 /// record_source_notes keeps the documents themselves verbatim (Documentation docs `<source> reference - <title>`,
 /// to read and search later) and the notes condensed from them: a field dictionary (each source field's meaning, its
-/// codes, the event-logging element it belongs in) and an event catalogue (each kind of event, how a record shows
-/// it, and what it is in event-logging terms). The notes doc carries them as a block ([#block]) the tools read back
+/// codes, the event-logging element it belongs in); catalogue_event_types keeps the catalogue of event types
+/// beside it (stroom-ai/DESIGN.md, Event type catalogue: each event type, how its records are recognised, and what
+/// it is in event-logging terms). The notes doc carries them as a block ([#block]) the tools read back
 /// ([#readNotes]):
 ///
 /// - draft_translation_mapping builds its draft from them ([#applyToDraft]): fields where the dictionary puts them,
-///   one rule per catalogued event with its action element, TypeId, description, action and outcome;
-/// - build_translation_xslt checks a mapping against the catalogue, so a rule that contradicts it is reported;
+///   one rule per way of recognising each event type ([CatalogueTranslation]), then the catch-all's;
+/// - build_translation_xslt checks a mapping against the catalogue ([#checkMapping]), so a rule that contradicts it
+///   is reported;
 /// - write_documentation lists each source field with the documentation's meaning and codes.
 ///
 /// The notes are maps and lists as JSON reads them: `fields` (each `field`, `meaning`, `type`, `example`,
-/// `event_logging_path`, `values`), `events` (each `event`, `description`, `event_detail`, `type_id`, `field`,
-/// `value`, `action`, `success`), `documents` and `references`.
+/// `event_logging_path`, `values`), the catalogue ([#CATALOGUE_KEYS]), `documents` and `references`.
 public final class SourceNotes {
 
     /// The end of a notes doc's name: `<source> source notes`.
@@ -79,25 +78,10 @@ public final class SourceNotes {
     private static final Set<String> ALLOW_OR_DENY = Set.of("allow", "allowed", "accept", "permit", "deny",
             "denied", "block", "blocked", "drop", "reject", "traffic");
     private static final String UNKNOWN = "Unknown";
-    /// A catalogue event's pattern: the regex (XPath's dialect) its field's value matches, in place of a value. Asked
-    /// for by the user after chat 166: events said in free text (sshd's 'Failed password for', 'Invalid user')
-    /// told apart by the user's and agent's patterns, not by splitter parts nor by inferred phrases.
-    public static final String MATCHES = "matches";
     /// The names of a pattern's capture groups, each a field of its records (the user, an address), read by an
     /// extract entry.
     public static final String NAMES = "names";
-    /// The classifications classify_kinds showed the user that wait for their confirmation.
-    public static final String PROPOSED = "proposed";
-    /// The kinds the user said to leave untranslated (classify_kinds), each as its key: `field=value`, or a split's
-    /// `within: field = value` / `within: field matches pattern`.
-    public static final String DROPPED = "dropped";
-    /// The fields that tell the kinds of event apart, as the user chose them (classify_kinds, survey_feed), or
-    /// [stroom.ai.impl.tools.sample.KindFields#ONE_KIND] alone: the draft makes its rules by them.
-    public static final String KIND_FIELDS = "kind_fields";
-    /// The key (`field=value`) of the kind classify_kinds listed for records it told no kinds apart in, by a field
-    /// every sample record shares: the draft makes that kind's rule the rule for every record.
-    public static final String WHOLE_KIND = "whole_kind";
-    /// The reason a dropped kind's drop rule gives.
+    /// The reason a dropped event type's drop rule gives.
     public static final String DROPPED_REASON = "the user said to leave these untranslated";
     /// The catalogue's event types (the contract's `event_types`).
     public static final String EVENT_TYPES = "event_types";
@@ -107,10 +91,6 @@ public final class SourceNotes {
     public static final List<String> CATALOGUE_KEYS = List.of(EVENT_TYPES, CATCH_ALL, "scope");
     /// In what [#applyToDraft] returns: true when the rules are the catalogue's.
     public static final String CATALOGUED = "catalogued";
-    // A split's key: the kind it is within, the field, and its value or pattern.
-    private static final Pattern SPLIT_KEY = Pattern.compile("^([^:=\\s]+=[^:]*): (\\S+) (matches|=) (.*)$");
-    // How a pattern event's key holds its regex, apart from a value.
-    private static final String PATTERN = "~";
     private static final String EVENT_DETAIL = "EventDetail/";
 
     private SourceNotes() {
@@ -323,39 +303,6 @@ public final class SourceNotes {
                 .findFirst();
     }
 
-    /// What makes an event catalogue unusable for drafting: an action element the schema doesn't have, and events a
-    /// record can't tell apart (the same field and value).
-    ///
-    /// @param events      The catalogue's events.
-    /// @param detailCheck Why an event's `event_detail` can't be its action element ([#detailProblem]), or null
-    ///                    when the schema can't be read (the events are still checked for twins).
-    /// @return The problems, each naming the event; empty when it can be drafted from.
-    public static List<String> catalogueProblems(final List<Map<String, Object>> events,
-                                                 final Function<String, String> detailCheck) {
-        final List<String> problems = new ArrayList<>();
-        final Map<List<String>, String> seen = new LinkedHashMap<>();
-        for (final Map<String, Object> event : events) {
-            final String label = firstTruthy(event.get("event"), event.get("value"), text(event.get(MATCHES)));
-            final String problem = detailCheck == null
-                    ? null
-                    : detailCheck.apply(text(event.get("event_detail")));
-            if (NullSafe.isNonEmptyString(problem)) {
-                problems.add(label + ": " + problem);
-            }
-            if (JsonValues.truthy(event.get("field")) && (hasValue(event.get("value")) || isPattern(event))) {
-                final List<String> key = twinKey(event);
-                if (seen.containsKey(key)) {
-                    problems.add(seen.get(key) + " and " + label + " are both " + key.get(0) + "=" + key.get(1)
-                                 + ": a record can't show which it is. Give each the field and value that tell "
-                                 + "them apart (e.g. action=ALLOW and action=DENY), or record them as one event");
-                } else {
-                    seen.put(key, label);
-                }
-            }
-        }
-        return problems;
-    }
-
     /// The draft mapping rebuilt from the notes where they speak: fields the dictionary places, and, when the notes
     /// hold a catalogue of event types ([#catalogue]), the rules it gives ([CatalogueTranslation]): one per way of
     /// recognising each event type, in the catalogue's order, then the catch-all's. With no catalogue the draft's
@@ -485,18 +432,13 @@ public final class SourceNotes {
                 : null;
     }
 
-    /// Several notes docs read as one: fields by name (the first of each), events in order.
+    /// Several notes docs read as one: fields by name (the first of each), and the build's catalogue (the first
+    /// doc holding one).
     ///
     /// @param notes The notes of each doc.
-    /// @return `fields` and `events`, [#PROPOSED] when classifications wait for the user's confirmation, and
-    /// [#DROPPED] when the user said to leave kinds untranslated.
+    /// @return `fields`, and the catalogue's keys ([#CATALOGUE_KEYS]) when a doc holds one.
     public static Map<String, Object> merged(final List<Map<String, Object>> notes) {
         final Map<String, Map<String, Object>> fields = new LinkedHashMap<>();
-        final List<Map<String, Object>> events = new ArrayList<>();
-        final List<Map<String, Object>> proposed = new ArrayList<>();
-        final Set<String> dropped = new LinkedHashSet<>();
-        List<String> kindFields = List.of();
-        final Set<String> wholeKinds = new LinkedHashSet<>();
         Map<String, Object> catalogue = null;
         for (final Map<String, Object> note : NullSafe.list(notes)) {
             if (catalogue == null && note.get(EVENT_TYPES) instanceof List) {
@@ -508,32 +450,10 @@ public final class SourceNotes {
                     }
                 }
             }
-            if (kindFields.isEmpty()) {
-                kindFields = JsonValues.strings(note.get(KIND_FIELDS));
-            }
-            wholeKinds.addAll(JsonValues.strings(note.get(WHOLE_KIND)));
             JsonValues.maps(note.get("fields")).forEach(field -> fields.putIfAbsent(text(field.get("field")), field));
-            events.addAll(JsonValues.maps(note.get("events")));
-            proposed.addAll(JsonValues.maps(note.get(PROPOSED)));
-            dropped.addAll(JsonValues.strings(note.get(DROPPED)));
         }
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("fields", new ArrayList<>(fields.values()));
-        out.put("events", events);
-        if (!proposed.isEmpty()) {
-            // Classifications shown the user and not yet confirmed (classify_kinds): the draft waits for them.
-            out.put(PROPOSED, proposed);
-        }
-        if (!dropped.isEmpty()) {
-            // Kinds the user said to leave untranslated: the draft gives each a drop rule.
-            out.put(DROPPED, new ArrayList<>(dropped));
-        }
-        if (!kindFields.isEmpty()) {
-            out.put(KIND_FIELDS, kindFields);
-        }
-        if (!wholeKinds.isEmpty()) {
-            out.put(WHOLE_KIND, new ArrayList<>(wholeKinds));
-        }
         if (catalogue != null) {
             out.putAll(catalogue);
         }
@@ -594,104 +514,10 @@ public final class SourceNotes {
         return problems;
     }
 
-    private static List<String> key(final Map<String, Object> event) {
-        return List.of(text(event.get("field")), isPattern(event)
-                ? PATTERN + text(event.get(MATCHES))
-                : ToolText.str(event.get("value")));
-    }
-
-    // What tells an event's records from another's: its field and value (or pattern), and the kind it splits.
-    private static List<String> twinKey(final Map<String, Object> event) {
-        final List<String> key = new ArrayList<>(key(event));
-        key.add(text(event.get("within")));
-        return key;
-    }
-
-    /// @param event A catalogue event.
-    /// @return True if it is told by a pattern its field's value matches, not a value.
-    public static boolean isPattern(final Map<?, ?> event) {
-        return event.get(MATCHES) instanceof final String regex && !regex.isBlank();
-    }
-
-    /// @param key A dropped kind's key (see [#DROPPED]).
-    /// @return The conditions its records meet, as a drop rule's `when`: its field's value (or pattern), after the
-    /// kind a split is within; none when the key can't be read.
-    public static List<Map<String, Object>> dropConditions(final String key) {
-        final Matcher split = SPLIT_KEY.matcher(NullSafe.string(key));
-        final List<Map<String, Object>> when = new ArrayList<>();
-        if (split.matches()) {
-            final int equals = split.group(1).indexOf('=');
-            when.add(entry("field", split.group(1).substring(0, equals), "equals",
-                    split.group(1).substring(equals + 1)));
-            when.add("matches".equals(split.group(3))
-                    ? entry("field", split.group(2), MATCHES, split.group(4))
-                    : entry("field", split.group(2), "equals", split.group(4)));
-            return when;
-        }
-        final int equals = NullSafe.string(key).indexOf('=');
-        if (equals > 0) {
-            when.add(entry("field", key.substring(0, equals), "equals", key.substring(equals + 1)));
-        }
-        return when;
-    }
-
-    /// @param event A catalogue event.
-    /// @return True if it splits a listed kind (classify_kinds' `within`): told by a pattern, or by a value of another
-    /// field than the kind's (event_id=LOGIN within category=SSLVPN).
-    public static boolean isSplit(final Map<?, ?> event) {
-        return event.get("within") instanceof final String within && !within.isBlank();
-    }
-
-    /// @param event A catalogue event told by a value or a pattern.
-    /// @param value A value of its field.
-    /// @return True if the value is the event's: its pattern matches it, or it is the event's value.
-    public static boolean holds(final Map<?, ?> event, final String value) {
-        return isPattern(event)
-                ? matches(event, value)
-                : value != null && value.equals(text(event.get("value")));
-    }
-
-    /// @param event A pattern event.
-    /// @param value A value of its field.
-    /// @return True if the pattern matches it, as the XSLT's matches() does (anywhere in the value, unless anchored).
-    public static boolean matches(final Map<?, ?> event, final String value) {
-        if (value == null || !isPattern(event)) {
-            return false;
-        }
-        try {
-            return Pattern.compile(text(event.get(MATCHES))).matcher(value).find();
-        } catch (final PatternSyntaxException e) {
-            return false;
-        }
-    }
-
-    // The fields pattern events' capture groups read: an extract entry each (once), and the values they take.
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> entry(final Object... keysAndValues) {
-        final Map<String, Object> entry = new LinkedHashMap<>();
-        for (int i = 0; i + 1 < keysAndValues.length; i += 2) {
-            entry.put(String.valueOf(keysAndValues[i]), keysAndValues[i + 1]);
-        }
-        return entry;
-    }
-
     private static Map<String, String> strings(final Map<?, ?> map) {
         final Map<String, String> out = new LinkedHashMap<>();
         map.forEach((key, value) -> out.put(String.valueOf(key), ToolText.str(value)));
         return out;
-    }
-
-    private static String firstTruthy(final Object first, final Object second, final String otherwise) {
-        if (JsonValues.truthy(first)) {
-            return ToolText.str(first);
-        }
-        return JsonValues.truthy(second)
-                ? ToolText.str(second)
-                : otherwise;
-    }
-
-    private static boolean hasValue(final Object value) {
-        return value != null && !"".equals(value);
     }
 
     // A value as text, "" for null.

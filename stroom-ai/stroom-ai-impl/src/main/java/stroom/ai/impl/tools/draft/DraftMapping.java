@@ -882,7 +882,7 @@ public final class DraftMapping {
             homes();
             users();
             correlated();
-            final Kinds kinds = kinds(List.of());
+            final Kinds kinds = kinds();
             final String naming = kinds.namings().isEmpty()
                     ? null
                     : kinds.namings().getFirst();
@@ -2095,28 +2095,9 @@ public final class DraftMapping {
             return kinds.size();
         }
 
-        // The kinds: by the kind fields the user chose (given: classify_kinds and survey_feed put the fields that could
-        // be to them, where none is named like one), else by the fields named like kind fields.
-        private Kinds kinds(final List<String> given) {
-            if (KindFields.oneKind(given)) {
-                return kindsBy(List.of());
-            }
-            // The user's fields as the records spell them; none of them here (a variant without them, a name
-            // mistyped), the kinds are chosen by name as before rather than none.
-            final List<String> present = given.stream()
-                    .flatMap(g -> names.stream().filter(n -> n.equalsIgnoreCase(g) && !taken.contains(n)).limit(1))
-                    .distinct()
-                    .toList();
-            if (!present.isEmpty()) {
-                return kindsBy(present);
-            }
-            if (!given.isEmpty()) {
-                // Said, not chosen another way unsaid (seen in testing: a kind field the records didn't have as such,
-                // and the kinds silently taken from other fields).
-                notes.add("The kind field(s) " + given + " chosen for these records aren't fields of theirs as read "
-                          + "here, so the kinds below are by the fields named like kinds: check the kind field with "
-                          + "the user (survey_feed kind_field=).");
-            }
+        // The draft's own rules (the seed catalogue_event_types offers): by the fields named like ones that tell
+        // records apart.
+        private Kinds kinds() {
             String naming = headerKinds();
             if (naming == null) {
                 // A naming field whose values repeat before one with a value a record: seen in testing, a mail log's
