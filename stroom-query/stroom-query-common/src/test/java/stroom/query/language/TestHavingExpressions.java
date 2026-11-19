@@ -148,6 +148,41 @@ class TestHavingExpressions {
     }
 
     @Test
+    void aNameOnTheRightIsAColumnIfThereIsOne() {
+        final TableSettings tableSettings = table("""
+                from events
+                window EventTime by 1d
+                eval Before = lag(count(), 1)
+                group by UserId
+                having count() > Before and Events >= Most and UserId != admin
+                select UserId, count() as Events, max(Bytes) as Most""");
+
+        // Before is an eval, and Most is a column of the select clause.
+        assertThat(column(tableSettings, "having_1").getExpression())
+                .isEqualTo("count()>lag(count(), 1, 'window:1d|||Z')");
+        assertThat(column(tableSettings, "having_2").getExpression()).isEqualTo("count()>=max(${Bytes})");
+        // There is no column called admin, so it is text.
+        assertThat(tableSettings.getAggregateFilter().toString())
+                .contains("having_1 = true")
+                .contains("having_2 = true")
+                .contains("UserId != admin");
+    }
+
+    @Test
+    void aQuotedNameOnTheRightIsText() {
+        final TableSettings tableSettings = table("""
+                from events
+                group by UserId
+                having UserId = 'Events'
+                select UserId, count() as Events""");
+
+        assertThat(tableSettings.getAggregateFilter().toString()).contains("UserId = Events");
+        assertThat(tableSettings.getColumns())
+                .extracting(Column::getName)
+                .noneMatch(name -> name.startsWith(HavingExpressions.NAME_PREFIX));
+    }
+
+    @Test
     void havingExpressionCanStartWithABracket() {
         final TableSettings tableSettings = table("""
                 from events

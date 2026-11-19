@@ -20,6 +20,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.FunctionGroup;
+import stroom.query.api.token.KeywordGroup;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenGroup;
@@ -34,6 +35,7 @@ import stroom.query.language.functions.ParamFactory;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +75,8 @@ final class HavingExpressions {
     // The name given to each expression, by the text of the expression, so that an expression that
     // is written twice gets one column.
     private final Map<String, String> namesByText = new HashMap<>();
+    // The names that the select clause is written with, which are those of its fields and columns.
+    private final Set<String> selectNames = new HashSet<>();
 
     /// Creates the helper for one query.
     ///
@@ -115,13 +119,32 @@ final class HavingExpressions {
         return !tokenGroup.getChildren().isEmpty();
     }
 
+    /// Finds the names that the `select` clause of a query is written with, so that a name on the
+    /// right of a having condition can be told from text. The having clause comes before `select`,
+    /// so this is done before the clauses are read.
+    ///
+    /// @param tokens The clauses of the query.
+    void findSelectNames(final List<AbstractToken> tokens) {
+        for (final AbstractToken token : tokens) {
+            if (token instanceof final KeywordGroup keywordGroup
+                && TokenType.SELECT.equals(keywordGroup.getTokenType())) {
+                for (final AbstractToken child : keywordGroup.getChildren()) {
+                    if (TokenType.isString(child)) {
+                        selectNames.add(child.getUnescapedText());
+                    }
+                }
+            }
+        }
+    }
+
     /// Makes a condition that compares with an expression, as in `count() > lag(count(), 1) * 2`,
     /// into a test of one column. A having condition can only test a column against a fixed value,
     /// so the whole comparison becomes an expression that is true or false.
     ///
     /// @param tokens The tokens of the condition.
     /// @return A term that tests the new expression for being true, or `null` if the right of the
-    ///         condition is a value and not an expression.
+    ///         condition is a value and not an expression. A name on its own is an expression if it
+    ///         is the name of an `eval` or of a column of the `select` clause, and is text if not.
     ExpressionTerm createComparisonTerm(final List<AbstractToken> tokens) {
         final int conditionIndex = getConditionIndex(tokens);
         if (conditionIndex < 1
@@ -209,8 +232,9 @@ final class HavingExpressions {
 
     // The right of a condition is an expression, and not a value, if it has brackets, if it calls a
     // function other than those that a value can be written with, which are param() and the date
-    // functions such as now(), or if it works something out from a name, as in `Total / 2`.
-    private static boolean isValueExpression(final List<AbstractToken> tokens) {
+    // functions such as now(), if it works something out from a name, as in `Total / 2`, or if it is
+    // the name of a column.
+    private boolean isValueExpression(final List<AbstractToken> tokens) {
         for (final AbstractToken token : tokens) {
             if (token instanceof TokenGroup) {
                 return true;
@@ -220,11 +244,16 @@ final class HavingExpressions {
                 && findDatePoint(token.getUnescapedText()) == null) {
                 return true;
             }
-            if (tokens.size() > 1 && TokenType.STRING.equals(token.getTokenType())) {
+            if (TokenType.STRING.equals(token.getTokenType())
+                && (tokens.size() > 1 || isColumnName(token.getUnescapedText()))) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean isColumnName(final String name) {
+        return expressionMap.containsKey(name) || selectNames.contains(name);
     }
 
     // Gives an expression a name, and keeps it to be parsed when the whole query has been read.

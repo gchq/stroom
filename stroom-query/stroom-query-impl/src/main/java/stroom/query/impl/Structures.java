@@ -407,6 +407,7 @@ class Structures {
                         ```stroomql
                         having count() > lag(count(), 1) * 2
                         ```
+                        A name on the right is a column if there is one of that name, and text if not.
                         A row is kept only if the comparison is true, so a row with nothing to compare
                         with is left out. To keep the first window, give `lag` a value to use, as in
                         `lag(count(), 1, 0)`.

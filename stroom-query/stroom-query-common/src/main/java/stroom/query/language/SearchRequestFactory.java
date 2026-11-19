@@ -1005,6 +1005,8 @@ public class SearchRequestFactory {
                 }
             }
 
+            havingExpressions.findSelectNames(tokens);
+
             List<AbstractToken> remaining = new LinkedList<>(tokens);
             while (!remaining.isEmpty()) {
                 final AbstractToken token = remaining.getFirst();
