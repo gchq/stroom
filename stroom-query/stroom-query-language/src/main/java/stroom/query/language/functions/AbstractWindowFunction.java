@@ -72,6 +72,13 @@ abstract class AbstractWindowFunction extends AbstractFunction {
         } else if (expressionContext != null) {
             window = expressionContext.getWindow();
         }
+        // The windows are held in a last parameter that starts with a prefix, so a value that the
+        // query gives, such as a default, can't start with it.
+        for (final Param ownParam : ownParams) {
+            if (isSpec(ownParam)) {
+                throw reservedValueException();
+            }
+        }
         if (spec != null
             && expressionContext != null
             && expressionContext.getWindow() != null
@@ -100,19 +107,28 @@ abstract class AbstractWindowFunction extends AbstractFunction {
     }
 
     private static String getSpec(final Param[] params) {
-        if (params.length > 0 && params[params.length - 1] instanceof final ValString valString) {
-            final String string = valString.toString();
-            if (string != null && string.startsWith(SPEC_PREFIX)) {
-                return string.substring(SPEC_PREFIX.length());
-            }
+        if (params.length > 0 && isSpec(params[params.length - 1])) {
+            return params[params.length - 1].toString().substring(SPEC_PREFIX.length());
         }
         return null;
+    }
+
+    private static boolean isSpec(final Param param) {
+        return param instanceof final ValString valString
+               && valString.toString() != null
+               && valString.toString().startsWith(SPEC_PREFIX);
+    }
+
+    private ParseException reservedValueException() {
+        return new ParseException("A value given to '" + name + "' can't start with '" + SPEC_PREFIX
+                                  + "', which Stroom uses to hold the windows of the query", 0);
     }
 
     private HoppingWindow parseSpec(final String spec) throws ParseException {
         final String[] parts = spec.split("\\" + SPEC_SEPARATOR, -1);
         if (parts.length != 4) {
-            throw new ParseException("The windows of '" + name + "' can't be read from '" + spec + "'", 0);
+            // This is not the form that Stroom writes, so it is a value that the query gave.
+            throw reservedValueException();
         }
         return new HoppingWindow(null, parts[0], emptyToNull(parts[1]), emptyToNull(parts[2]), emptyToNull(parts[3]));
     }

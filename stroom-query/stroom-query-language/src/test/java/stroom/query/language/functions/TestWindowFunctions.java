@@ -124,7 +124,7 @@ class TestWindowFunctions {
                 .hasMessageContaining("1h is not a multiple of 25m");
         assertThatThrownBy(() -> parse(PLAIN_CONTEXT, "windowStart('window:1h')"))
                 .isInstanceOf(TokenException.class)
-                .hasMessageContaining("can't be read");
+                .hasMessageContaining("can't start with 'window:'");
     }
 
     private static Expression parse(final ExpressionContext expressionContext,

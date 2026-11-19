@@ -216,6 +216,22 @@ class TestSearchRequestFactoryWindow {
     }
 
     @Test
+    void lagDefaultCanNotLookLikeTheHiddenWindowParameter() {
+        final String message = "A value given to 'lag' can't start with 'window:'";
+        assertRefused("""
+                from events
+                window EventTime by 1d
+                group by UserId
+                select UserId, lag(max(UserId), 1, 'window:none') as Before""", message);
+        // The same value is refused when the windows have been added after it.
+        assertRefused("""
+                from events
+                window EventTime by 1d
+                group by UserId
+                select UserId, lag(max(UserId), 1, 'window:none', 'window:1d|||Z') as Before""", message);
+    }
+
+    @Test
     void lagTakesTheNameOfAnAggregate() {
         final TableSettings tableSettings = table("""
                 from events
