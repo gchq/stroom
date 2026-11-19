@@ -1616,13 +1616,16 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
 
     // A catalogued build is saved only once its catalogue's catch-all is confirmed: the user agreed in its form
     // what the records no event type recognises become (seen in a Haiku run: the user declined the catch-all, the
-    // agent drafted without build= and the translation was saved with the catch-all unconfirmed).
+    // agent drafted without build= and the translation was saved with the catch-all unconfirmed). Only a catalogue
+    // the user is taken through by catalogue_event_types (its notes keep the confirmation's state): one read back
+    // from a hand-written translation has no catch-all to put to them (seen in the full e2e run: a production
+    // pipeline's next version and a restyle refused).
     private void refuseUnconfirmedCatchAll(final String build) {
         if (NullSafe.isBlankString(build)) {
             return;
         }
         final Catalogue catalogue = SourceNotes.catalogue(builds.notesInBuild(build));
-        if (catalogue == null || catalogue.catchAll().confirmed()) {
+        if (catalogue == null || catalogue.catchAll().confirmed() || !builds.catalogueConfirmedThroughTool(build)) {
             return;
         }
         throw new ToolRefusal("Nothing saved: build '" + build + "' has a catalogue of event types whose catch-all "

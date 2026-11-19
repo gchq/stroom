@@ -536,6 +536,32 @@ class TranslationBuilds {
         return SourceNotes.merged(found);
     }
 
+    /// Whether a build's catalogue of event types is one catalogue_event_types takes the user through: a source notes
+    /// doc of the build keeps the confirmation's state (`confirming`), which only that tool writes; a catalogue read
+    /// back from a hand-written translation (rebuild_mapping, a promotion carried in) has none.
+    ///
+    /// @param build The build.
+    /// @return True when one of its source notes docs keeps it.
+    boolean catalogueConfirmedThroughTool(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return false;
+        }
+        try {
+            for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+                if (DocumentationDoc.TYPE.equals(doc.type()) && doc.name().endsWith(SourceNotes.NOTES_SUFFIX)
+                    && documentAccess.read(doc.docRef(), DocumentationDoc.class)
+                            .map(read -> SourceNotes.readNotes(BuildRecords.bodyText(read)))
+                            .filter(notes -> notes.containsKey(RecordSourceNotesTool.CONFIRMING))
+                            .isPresent()) {
+                    return true;
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No source notes read from build {}: {}", build, e.getMessage()));
+        }
+        return false;
+    }
+
     /// @param build A build, or null.
     /// @return The build's scope over an aggregated feed's source types, as its survey keeps it
     /// ([SourceTypeScope]); empty for a build without one (or without a build).
