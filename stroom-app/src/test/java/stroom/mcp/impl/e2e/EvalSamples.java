@@ -61,6 +61,15 @@ final class EvalSamples {
             "actionflags", "srcloc", "dstloc", "future_use5", "pkts_sent", "pkts_received", "session_end_reason");
     private static final Map<Integer, String> DAMAGED_AT = Map.of(4, "cut", 120, "garbage", 333, "quote",
             512, "cut");
+    // Case 68's documented codes: an object's operations, each the TypeId's verb and the documentation's word.
+    private static final List<String> CODED_OBJECTS = List.of("Account", "Invoice", "Order", "Payment", "Supplier",
+            "Customer", "Contract", "Quote", "Shipment", "Product", "Price List", "Budget", "Ledger", "Journal",
+            "Asset", "Employee", "Timesheet", "Expense", "Purchase Order", "Receipt", "Report", "Dashboard",
+            "Workflow", "Approval Rule", "Tax Code", "Currency", "Warehouse", "Stock Item", "Project", "Role");
+    private static final List<List<String>> CODED_VERBS = List.of(List.of("Create", "created"),
+            List.of("Delete", "deleted"), List.of("View", "viewed"), List.of("Update", "updated"),
+            List.of("Approve", "approved"), List.of("Reject", "rejected"), List.of("Archive", "archived"),
+            List.of("Restore", "restored"), List.of("Lock", "locked"), List.of("Unlock", "unlocked"));
     private static final LocalDateTime OCT_11 = LocalDateTime.of(2026, 10, 11, 8, 0, 0);
 
     private EvalSamples() {
@@ -98,6 +107,7 @@ final class EvalSamples {
             case "unicode_app" -> unicodeApp(records, seed);
             case "postgres_log" -> postgresLog(records, seed);
             case "cri_container_log" -> criContainerLog(records, seed);
+            case "documented_codes" -> documentedCodes(records, seed, intOr(spec, "codes_sampled", 120));
             default -> throw new IllegalArgumentException("No generator " + kind);
         };
     }
@@ -633,6 +643,45 @@ final class EvalSamples {
                 event.put("file", file);
             }
             out.add(dumps(event, 0));
+        }
+        return lines(out);
+    }
+
+    /// The documented codes of case 68's audit log: every object's every operation, a code each (`EV1000` on, the
+    /// object's ten operations in a row), with its TypeId and the vendor documentation's text.
+    ///
+    /// @return Each code's `[code, TypeId, text]`, in code order.
+    static List<List<String>> documentedCodes() {
+        final List<List<String>> codes = new ArrayList<>();
+        for (int o = 0; o < CODED_OBJECTS.size(); o++) {
+            for (int v = 0; v < CODED_VERBS.size(); v++) {
+                final String object = CODED_OBJECTS.get(o);
+                codes.add(List.of("EV" + (1000 + o * CODED_VERBS.size() + v),
+                        CODED_VERBS.get(v).getFirst() + "-" + object.replace(" ", ""),
+                        object + " " + CODED_VERBS.get(v).get(1)));
+            }
+        }
+        return codes;
+    }
+
+    // Case 68's audit log: CSV with a header, the code of each line one of the documented codes; so many codes in the
+    // sample, each at least once, the rest of the lines any of them.
+    private static String documentedCodes(final int records, final int seed, final int sampled) {
+        final SeededRandom rng = new SeededRandom(seed);
+        final List<List<String>> codes = documentedCodes();
+        final List<List<String>> pool = new ArrayList<>(codes);
+        final List<List<String>> chosen = new ArrayList<>();
+        for (int i = 0; i < sampled; i++) {
+            chosen.add(pool.remove(rng.randint(0, pool.size() - 1)));
+        }
+        final List<String> out = new ArrayList<>(List.of("time,host,code,user,object_id"));
+        for (int n = 0; n < records; n++) {
+            final List<String> code = n < chosen.size()
+                    ? chosen.get(n)
+                    : rng.choice(chosen);
+            out.add(format(OCT_11.plusSeconds(7L * n), "yyyy-MM-dd'T'HH:mm:ss") + "Z,"
+                    + rng.choice(List.of("erp01", "erp02")) + "," + code.getFirst() + ","
+                    + rng.choice(List.of("alice", "bob", "carol", "dave", "erin")) + ",OBJ-" + rng.randint(100, 999));
         }
         return lines(out);
     }

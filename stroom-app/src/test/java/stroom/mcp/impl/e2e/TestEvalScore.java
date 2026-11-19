@@ -515,6 +515,20 @@ class TestEvalScore {
     }
 
     @Test
+    void aCatalogueThatGrewHasAtLeastSoManyEventTypesNotDropped() {
+        final EvalScore grown = new EvalScore("c");
+        grown.scoreCatalogue(expecting(Map.of("catalogue", Map.of("event_types_at_least", 3))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) grown.toMap().get("problems")).isEmpty();
+
+        final EvalScore small = new EvalScore("c");
+        small.scoreCatalogue(expecting(Map.of("catalogue", Map.of("event_types_at_least", 4))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) small.toMap().get("problems"))
+                .containsExactly("the catalogue has 3 event types, expected at least 4");
+    }
+
+    @Test
     void noCatalogueOrNoCheckIsAProblemAndNoneExpectedIsNotScored() {
         final EvalScore none = new EvalScore("c");
         none.scoreCatalogue(expecting(Map.of("catalogue", Map.of("catch_all_confirmed", true))), null, null);

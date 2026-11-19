@@ -181,6 +181,12 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (!promotes(from)) {
             promote(build, DESTINATIONS);
         }
+        // The case's later data, for its own build alone: stored in the promoted feed once the setup is built, as
+        // a stream received after it.
+        final List<Long> later = new ArrayList<>();
+        for (final String sample : EvalCases.later(evalCase)) {
+            later.add(storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), sample))));
+        }
         if (!score.passed()) {
             throw new AssertionError("The setup, case " + from.get("id") + "'s reference, failed: " + score.summary());
         }
@@ -190,7 +196,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         // The forms of the case's own build only.
         formsAnswered.clear();
         return new Setup(feed, build, built, new EvalScore.Before(built.group(), built.pipeline(),
-                built.indexed().index(), snapshot(built)));
+                built.indexed().index(), snapshot(built)), List.copyOf(later));
     }
 
     /// A case run with its reference solution, on its setup's feed and promoted documents where it has one.
@@ -461,9 +467,13 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final List<Long> raws = new ArrayList<>();
         if (setup != null || stored != null) {
             json("start_build", args("build", build, "feeds", List.of(feed)));
-            raws.addAll(setup != null
-                    ? setup.built().raws()
-                    : stored);
+            if (setup == null) {
+                raws.addAll(stored);
+            } else {
+                raws.addAll(setup.later().isEmpty()
+                        ? setup.built().raws()
+                        : setup.later());
+            }
         } else {
             agreed("create_feed", args("build", build, "name", feed, "encoding",
                     reference.getOrDefault("feed_encoding", "UTF-8")));
@@ -495,6 +505,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final boolean joins = setup != null && group != null && group.equalsIgnoreCase(setup.built().group());
         if (sourceTypes != null) {
             recordSourceTypes(build, feed, sourceTypes);
+        } else if (setup != null || stored != null) {
+            // A build on a promoted feed processes only what its survey has read: surveyed, as an agent would.
+            json("survey_feed", args("feed", feed, "build", build));
         }
         if (CATALOGUES) {
             confirmCatalogue(evalCase, score, build, raws);
@@ -606,9 +619,13 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
             promote(build, destinations);
         }
-        final Built built = new Built(List.copyOf(raws), group, pipeline, pipelineName, saved.get("xslt") != null
+        // The group's XSLT, or the build's own for a build with no group.
+        final String xslt = saved.get("xslt") != null
                 ? uuidOf(map(saved, "xslt"))
-                : null, indexed);
+                : group == null && generated.get("saved") != null
+                        ? uuidOf(map(generated, "saved"))
+                        : null;
+        final Built built = new Built(List.copyOf(raws), group, pipeline, pipelineName, xslt, indexed);
         if (sourceTypes != null) {
             final Map<String, Object> registry = promotes(evalCase)
                     ? registryBesideFeed(feed)
@@ -866,6 +883,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             indexName = feed + "-INDEX";
         } else if (joins) {
             indexName = before.name();
+        } else if (group == null) {
+            // A later build of a feed with no source type groups: its new version's index beside the setup's.
+            indexName = before.name() + "-V2";
         } else {
             indexName = FeedIndexes.groupIndexName(before.name(), List.of(setup.built().group()), group);
         }
@@ -1018,7 +1038,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param build  The setup's build, promoted.
     /// @param built  What its reference build made.
     /// @param before Its group's pipeline, XSLT and index as it left them, for the case's score.
-    record Setup(String feed, String build, Built built, EvalScore.Before before) {
+    /// @param later  The case's later data's raw streams ([EvalCases#later]), which the case's build processes in
+    ///               place of the setup's; none if it has none.
+    record Setup(String feed, String build, Built built, EvalScore.Before before, List<Long> later) {
 
     }
 
@@ -1028,7 +1050,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param group        Its source type group, or null for none.
     /// @param pipeline     Its events pipeline's UUID (a working copy, for a promoted group joined).
     /// @param pipelineName The pipeline's name.
-    /// @param xslt         The group's XSLT's UUID, or null for a build with no group.
+    /// @param xslt         The group's XSLT's UUID, or the build's own for a build with no group.
     /// @param indexed      Its index, or null if it reached none.
     record Built(List<Long> raws,
                  String group,

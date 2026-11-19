@@ -1,0 +1,78 @@
+name: Mail security gateway alerts (a JSON array of batches, the event type told by an array's items)
+template: Event Data (JSON)
+capabilities: [repeated_groups, arrays, event_types]
+# Each item of the array a batch of the gateway's alerts (`alerts`, a repeated group: one event an item). What an alert is is
+# told by its `tags`, an array: one of malware, phishing or policy among others (inbound, outbound, high...). A
+# condition on an array field holds when any item does; the event type's conditions are about the alert (item
+# scope), the batch's own fields (gateway) about every alert in it. The traps: tags read as one joined value (no
+# condition matches), the first item only, or one event type for every alert.
+request: >
+  Onboard our mail security gateway's alerts (a JSON array, below): each item is a batch of alerts. Each alert's tags
+  say what it is: malware, phishing or a policy violation (the other tags say its direction and severity). Index
+  one event per alert.
+user_knows: >
+  Each alert is one event. Its tags hold exactly one of malware, phishing or policy, which says what the alert is;
+  the other tags (inbound, outbound, high, low) are its direction and severity. gateway is the batch's gateway, the
+  device. recipient is who the mail was for, sender who sent it, subject the mail's subject. The system is Acme Mail
+  Gateway.
+expected:
+  records: 7
+  event_types: [Alert]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/Alert/Type, EventDetail/Description]
+  values:
+    EventSource/Device/HostName: [mx-gw1, mx-gw2]
+  type_ids:
+    min_distinct: 3
+    same:
+      - [{subject: Invoice overdue}, {subject: Your parcel}]
+  unknown_at_most: 0
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
+sample: |
+  [{"gateway": "mx-gw1", "batch": 101, "alerts": [{"time": "2026-11-19T09:00:00Z", "tags": ["inbound", "malware", "high"], "sender": "billing@evil.example", "recipient": "alice@corp.example", "subject": "Invoice overdue"}, {"time": "2026-11-19T09:00:05Z", "tags": ["inbound", "phishing"], "sender": "it-help@evil.example", "recipient": "bob@corp.example", "subject": "Reset your password"}]},
+   {"gateway": "mx-gw2", "batch": 102, "alerts": [{"time": "2026-11-19T09:01:00Z", "tags": ["outbound", "policy", "low"], "sender": "carol@corp.example", "recipient": "someone@partner.example", "subject": "Customer list"}]},
+   {"gateway": "mx-gw1", "batch": 103, "alerts": [{"time": "2026-11-19T09:02:00Z", "tags": ["malware", "inbound"], "sender": "post@evil.example", "recipient": "dave@corp.example", "subject": "Your parcel"}, {"time": "2026-11-19T09:02:30Z", "tags": ["high", "inbound", "phishing"], "sender": "ceo@evil.example", "recipient": "erin@corp.example", "subject": "Urgent transfer"}, {"time": "2026-11-19T09:03:00Z", "tags": ["policy", "outbound"], "sender": "bob@corp.example", "recipient": "me@home.example", "subject": "Payroll"}]},
+   {"gateway": "mx-gw2", "batch": 104, "alerts": [{"time": "2026-11-19T09:04:00Z", "tags": ["inbound", "low", "phishing"], "sender": "prize@evil.example", "recipient": "alice@corp.example", "subject": "You won"}]}]
+# A condition on an array holding when any item does is the event type catalogue's (phase 1): until the generator
+# writes it so, this case's reference build waits (its records match no rule).
+reference:
+  mapping:
+    input: json
+    json_layout: array
+    for_each: alerts
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Acme Mail Gateway}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: mail-gateway}
+      - {path: EventSource/Device/HostName, field: gateway, scope: record}
+      - {path: EventSource/User/Id, field: recipient}
+    # Each alert's type by an item of its tags: a condition on an array holds when any item does.
+    events:
+      - name: malware
+        when: [{field: tags, equals: malware}]
+        fields:
+          - {path: EventDetail/TypeId, value: Alert-Malware}
+          - {path: EventDetail/Description, value: The gateway found malware in a message}
+          - {path: EventDetail/Alert/Data, data_name: tags, field: tags, repeat: true}
+          - {path: EventDetail/Alert/Type, value: Malware}
+          - {path: EventDetail/Alert/Data, data_name: sender, field: sender}
+          - {path: EventDetail/Alert/Data, data_name: subject, field: subject}
+      - name: phishing
+        when: [{field: tags, equals: phishing}]
+        fields:
+          - {path: EventDetail/TypeId, value: Alert-Phishing}
+          - {path: EventDetail/Description, value: The gateway found a phishing message}
+          - {path: EventDetail/Alert/Data, data_name: tags, field: tags, repeat: true}
+          - {path: EventDetail/Alert/Type, value: Other}
+          - {path: EventDetail/Alert/Data, data_name: sender, field: sender}
+          - {path: EventDetail/Alert/Data, data_name: subject, field: subject}
+      - name: policy
+        when: [{field: tags, equals: policy}]
+        fields:
+          - {path: EventDetail/TypeId, value: Alert-PolicyViolation}
+          - {path: EventDetail/Description, value: A message broke the mail policy}
+          - {path: EventDetail/Alert/Data, data_name: tags, field: tags, repeat: true}
+          - {path: EventDetail/Alert/Type, value: Other}
+          - {path: EventDetail/Alert/Data, data_name: sender, field: sender}
+          - {path: EventDetail/Alert/Data, data_name: subject, field: subject}

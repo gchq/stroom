@@ -109,6 +109,9 @@ class TestEvalCatalogues {
                 .containsEntry("drop", true)
                 .containsEntry("description", "heartbeats are not events");
         assertThat(type("16_json_batches_items", "Filter-QATraffic")).containsEntry("drop", true);
+        assertThat((List<Map<String, Object>>) EvalCatalogues.reference(EvalCases.load(
+                "68_csv_documented_codes_many")).get("event_types")).hasSize(300)
+                .allSatisfy(type -> assertThat(type).containsEntry("basis", "documentation"));
         // The catch-all is not an event type.
         assertThat((List<Map<String, Object>>) EvalCatalogues.reference(EvalCases.load(
                 "19_jsonl_message_layouts")).get("event_types")).extracting(type -> type.get("type_id"))
@@ -183,8 +186,11 @@ class TestEvalCatalogues {
         return typeIds;
     }
 
-    // The case's records as text: its files' text, or its samples.
+    // The case's records as text: its later data, its files' text, or its samples.
     private static List<String> texts(final Map<String, Object> evalCase) {
+        if (!EvalCases.later(evalCase).isEmpty()) {
+            return EvalCases.later(evalCase);
+        }
         final List<EvalCases.SampleFile> files = EvalCases.files(evalCase);
         return files.isEmpty()
                 ? EvalCases.samples(evalCase)

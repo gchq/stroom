@@ -35,7 +35,8 @@ import java.util.Set;
 ///
 /// Where the catalogue differs from what the mapping says, the case's `reference.catalogue` gives it: `event_types`,
 /// each merged into the derived event type of its `type_id` (or added, if none has it), e.g. `basis: documentation`
-/// for a type documented with no record in the sample; and `drops`, the TypeIds of the `drop_when` rules, in order.
+/// for a type documented with no record in the sample; `basis`, every derived event type's (`documentation` for a
+/// case whose every event type the vendor documents); and `drops`, the TypeIds of the `drop_when` rules, in order.
 @SuppressWarnings("unchecked")
 final class EvalCatalogues {
 
@@ -84,6 +85,9 @@ final class EvalCatalogues {
             final Map<String, Object> type = types.computeIfAbsent(typeId, id -> dropped(id,
                     String.valueOf(rule.get("reason"))));
             ((List<Object>) type.get("recognised_by")).add(way(rule.get("when")));
+        }
+        if (overlay.get("basis") != null) {
+            types.values().forEach(type -> type.put("basis", overlay.get("basis")));
         }
         for (final Map<String, Object> entry : list(overlay.get("event_types"))) {
             final String typeId = String.valueOf(entry.get("type_id"));

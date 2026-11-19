@@ -110,11 +110,36 @@ class TestEvalSamples {
 
     @Test
     void theCasesAreAllThere() {
-        assertThat(EvalCases.IDS).hasSize(65).doesNotHaveDuplicates();
+        assertThat(EvalCases.IDS).hasSize(70).doesNotHaveDuplicates();
         assertThat(EvalCases.load("35_xml_fragments_secretserver_messages"))
                 .containsEntry("id", "35_xml_fragments_secretserver_messages")
                 .containsKeys("request", "expected", "reference", "sample");
         assertThatThrownBy(() -> EvalCases.load("99_none")).hasMessageContaining("No evaluation case 99_none");
+    }
+
+    @Test
+    void theDocumentedCodesCaseDocumentsTheGeneratorsCodesAndSamplesSomeOfThem() {
+        final Map<String, Object> evalCase = EvalCases.load("68_csv_documented_codes_many");
+        final List<List<String>> codes = EvalSamples.documentedCodes();
+        final String docs = (String) evalCase.get("source_docs");
+
+        assertThat(codes).hasSize(300);
+        assertThat(docs.lines().filter(line -> line.startsWith("| EV"))).containsExactlyElementsOf(codes.stream()
+                .map(code -> "| " + code.getFirst() + " | " + code.get(2) + " |")
+                .toList());
+        final String text = new String(EvalCases.files(evalCase).getFirst().data(), StandardCharsets.UTF_8);
+        assertThat(text.lines().skip(1).map(line -> line.split(",")[2]).distinct()).hasSize(120);
+        assertThat(text.lines()).hasSize(361);
+    }
+
+    @Test
+    void aLaterSampleIsTheCasesOwnAndItsSamplesAreItsSetups() {
+        final Map<String, Object> evalCase = EvalCases.load("70_jsonl_uncatalogued_records_proposals");
+
+        assertThat(EvalCases.later(evalCase)).singleElement()
+                .satisfies(later -> assertThat(later).contains("\"evt\": \"mfa.verify\""));
+        assertThat(EvalCases.samples(evalCase)).isEqualTo(EvalCases.samples(EvalCases.setup(evalCase)));
+        assertThat(EvalCases.later(EvalCases.load("30_jsonl_two_shapes_idp"))).isEmpty();
     }
 
     @Test

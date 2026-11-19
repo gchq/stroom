@@ -1,0 +1,193 @@
+name: Pega Platform logs, event types told by logger and more (JSON lines, the source type held in a JSON string)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, held_values, event_types]
+# The event type catalogue's motivating test (user testing, 2026-11-19): a log shipper's JSON lines of Pega Platform
+# logs (aggregated/pega-loggers, made by its pega-loggers-generator.py), each record's Pega log a JSON string in
+# `event`, its `log_type` the source type (App, Integration, Security, Alert, Cluster). The group is Integration and
+# Security. One field rarely tells the event types apart: the logger says where a record came from, not what
+# happened. SecurityEventLogger writes four event types, told by eventType; SOAPService writes requests, responses
+# and faults, told only by its message (a fault is a response whose body is a SOAP fault); the REST service, the HTTP
+# client connector, the email listener, authentication and authorisation write one each. The traps: one event type
+# per logger (the logger's class name as TypeId), the logger refused as a field for its long values so every record
+# is one event type, the source type field in a condition, and the other logs' 315 records not passed over.
+request: >
+  Onboard our Pega Platform logs from the JSON lines file on my disk. The shipper wraps each Pega log record: the
+  record itself is a JSON string in the event field, and its log_type says which Pega log it came from (App,
+  Integration, Security, Alert or Cluster). For now we want the Integration and Security logs, as one group called
+  "Pega integration and security". Translate each kind of event the loggers write as its own event type, and index
+  the events.
+user_knows: >
+  log_type, inside the JSON string in the event field, says which Pega log (source type) a record came from. This
+  build's group is called Pega integration and security and holds the Integration and Security logs; App, Alert and
+  Cluster are for later builds, and their records being passed over is expected. logger_name says which Pega class
+  wrote a record, not what happened: SecurityEventLogger writes operator record changes, access group changes,
+  password changes and ruleset unlocks, told apart by eventType; SOAPService writes requests, responses and faults,
+  told apart by its message (Request: or Response:, a fault's body a soapenv:Fault); the REST service, the HTTP
+  client connector (Connect-REST), the email listener, authentication and authorisation write one kind each. The
+  event types are as the agent proposes them; the user accepts them when they are told apart that way. time is when
+  the event happened (epoch milliseconds). userid is the operator. The system is Pega Platform.
+expected:
+  records: 285
+  event_types: [Authenticate, Authorise, Update, Process]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId, EventDetail/Description]
+  # The event type catalogue: Verb-Object TypeIds, never a logger's class name; the vendor's code as Data.
+  type_ids:
+    min_distinct: 9
+    forbidden: [com.pega.pegarules.web.security.SecurityEventLogger,
+                com.pega.pegarules.integration.engine.internal.services.soap.SOAPService,
+                com.pega.pegarules.integration.engine.internal.services.rest.RESTServiceRequestProcessorImpl,
+                com.pega.pegarules.integration.engine.internal.client.http.HTTPClientConnectorRequestProcessor,
+                com.pega.pegarules.integration.engine.internal.services.email.EmailListenerServiceImpl,
+                com.pega.pegarules.session.internal.authentication.service.AuthenticationServiceProviderImpl,
+                com.pega.pegarules.session.internal.authorization.context.AuthorizationContextManagerImpl,
+                SecurityEventLogger, SOAPService]
+    # Each of SecurityEventLogger's event types its own TypeId, and SOAPService's requests not its responses'.
+  unknown_at_most: 0
+  data:
+    - {name: logger_name, at: 'EventDetail/*'}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true,
+              no_condition_on_source_type_field: true}
+  source_types:
+    field: event>log_type
+    group:
+      name: Pega integration and security
+      values: [Integration, Security]
+      others: [App, Alert, Cluster]
+    passed_over: 315
+files:
+  - {name: pega-loggers.log, resource: aggregated/pega-loggers/pega-loggers.log}
+reference:
+  source_types:
+    field: event>log_type
+    system_name: Pega Platform
+    group: Pega integration and security
+    source_types: [Integration, Security]
+  mapping:
+    input: json
+    json_layout: lines
+    json_fields: [event]
+    ignored_fields: [service, fields.collector, fields.env, fields.orig_rt, event.thread_name, event.pegathread]
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: epoch_ms}
+      - {path: EventSource/System/Name, value: Pega Platform}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: event.logger_name}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: event.userid}
+      - {path: EventDetail/Description, field: event.message}
+    events:
+      - name: operator record change
+        when: [{field: event.logger_name, equals: com.pega.pegarules.web.security.SecurityEventLogger},
+               {field: event.eventType, equals: Operator record change}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Operator}
+          - {path: EventDetail/Update/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Update/Data, data_name: eventType, field: event.eventType}
+          - {path: EventDetail/Update/After/User/Id, field: event.target}
+      - name: access group change
+        when: [{field: event.logger_name, equals: com.pega.pegarules.web.security.SecurityEventLogger},
+               {field: event.eventType, equals: Access group change}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-AccessGroup}
+          - {path: EventDetail/Update/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Update/Data, data_name: eventType, field: event.eventType}
+          - {path: EventDetail/Update/After/User/Id, field: event.target}
+      - name: password change
+        when: [{field: event.logger_name, equals: com.pega.pegarules.web.security.SecurityEventLogger},
+               {field: event.eventType, equals: Password change}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Password}
+          - {path: EventDetail/Update/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Update/Data, data_name: eventType, field: event.eventType}
+          - {path: EventDetail/Update/After/User/Id, field: event.target}
+      - name: ruleset unlock
+        when: [{field: event.logger_name, equals: com.pega.pegarules.web.security.SecurityEventLogger},
+               {field: event.eventType, equals: Ruleset unlock}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Ruleset}
+          - {path: EventDetail/Update/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Update/Data, data_name: eventType, field: event.eventType}
+          - {path: EventDetail/Update/After/Object/Type, value: Ruleset}
+          - {path: EventDetail/Update/After/Object/Name, field: event.target}
+      # A SOAP request, response or fault: told by its message, a fault a response whose body is a SOAP fault (its
+      # status Fault, as a response's is not).
+      - name: soap fault
+        when: [{field: event.logger_name, equals: com.pega.pegarules.integration.engine.internal.services.soap.SOAPService},
+               {field: event.message, matches: '^Response: .*<soapenv:Fault>'}]
+        fields:
+          - {path: EventDetail/TypeId, value: Process-SOAPFault}
+          - {path: EventDetail/Process/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Service}
+          - {path: EventDetail/Process/Command, field: event.serviceMethod}
+          - {path: EventDetail/Process/Outcome/Success, value: 'false'}
+          - {path: EventDetail/Process/Data, data_name: serviceName, field: event.serviceName}
+      - name: soap response
+        when: [{field: event.logger_name, equals: com.pega.pegarules.integration.engine.internal.services.soap.SOAPService},
+               {field: event.message, matches: '^Response: '}, {field: event.status, equals: Success}]
+        fields:
+          - {path: EventDetail/TypeId, value: Process-SOAPResponse}
+          - {path: EventDetail/Process/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Process/Data, data_name: status, field: event.status}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Service}
+          - {path: EventDetail/Process/Command, field: event.serviceMethod}
+          - {path: EventDetail/Process/Data, data_name: serviceName, field: event.serviceName}
+      - name: soap request
+        when: [{field: event.logger_name, equals: com.pega.pegarules.integration.engine.internal.services.soap.SOAPService},
+               {field: event.message, matches: '^Request: '}]
+        fields:
+          - {path: EventDetail/TypeId, value: Process-SOAPRequest}
+          - {path: EventDetail/Process/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Service}
+          - {path: EventDetail/Process/Command, field: event.serviceMethod}
+          - {path: EventDetail/Process/Data, data_name: serviceName, field: event.serviceName}
+      - name: rest request
+        when: [{field: event.logger_name, equals: com.pega.pegarules.integration.engine.internal.services.rest.RESTServiceRequestProcessorImpl}]
+        fields:
+          - {path: EventDetail/TypeId, value: Process-RESTRequest}
+          - {path: EventDetail/Process/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Service}
+          - {path: EventDetail/Process/Command, field: event.path}
+          - {path: EventDetail/Process/Data, data_name: httpMethod, field: event.httpMethod}
+          - {path: EventDetail/Process/Data, data_name: statusCode, field: event.statusCode}
+      - name: http client call
+        when: [{field: event.logger_name, equals: com.pega.pegarules.integration.engine.internal.client.http.HTTPClientConnectorRequestProcessor}]
+        fields:
+          - {path: EventDetail/TypeId, value: Process-ConnectREST}
+          - {path: EventDetail/Process/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Service}
+          - {path: EventDetail/Process/Command, field: event.endpoint}
+          - {path: EventDetail/Process/Data, data_name: statusCode, field: event.statusCode}
+      - name: email poll
+        when: [{field: event.logger_name, equals: com.pega.pegarules.integration.engine.internal.services.email.EmailListenerServiceImpl}]
+        fields:
+          - {path: EventDetail/TypeId, value: Process-EmailPoll}
+          - {path: EventDetail/Process/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Service}
+          - {path: EventDetail/Process/Command, field: event.mailbox}
+          - {path: EventDetail/Process/Data, data_name: messageCount, field: event.messageCount}
+      - name: authentication
+        when: [{field: event.logger_name, equals: com.pega.pegarules.session.internal.authentication.service.AuthenticationServiceProviderImpl}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: event.userid}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: event.outcome, map: {success: 'true', failure: 'false'}}
+          - {path: EventDetail/Authenticate/Outcome/Description, field: event.reason}
+          - {path: EventDetail/Authenticate/Data, data_name: authScheme, field: event.authScheme}
+      - name: authorisation
+        when: [{field: event.logger_name, equals: com.pega.pegarules.session.internal.authorization.context.AuthorizationContextManagerImpl}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authorise-Privilege}
+          - {path: EventDetail/Authorise/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Authorise/Action, value: Request}
+          - {path: EventDetail/Authorise/User/Id, field: event.userid}
+          - {path: EventDetail/Authorise/Outcome/Success, field: event.granted}
+          - {path: EventDetail/Authorise/Data, data_name: privilege, field: event.privilege}
+          - {path: EventDetail/Authorise/Data, data_name: accessGroup, field: event.accessGroup}

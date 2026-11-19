@@ -1,0 +1,2751 @@
+name: ERP audit log of some 300 documented codes, 120 of them in the sample (CSV with a header)
+template: Event Data (Text)
+capabilities: [field_normalization, source_docs, event_types]
+# The vendor documents 300 operation codes (30 objects, ten operations each); the sample (made by EvalSamples'
+# documented_codes generator, pinned in generated-sha256.json) holds 120 of them. Each documented code is an event
+# type, its Description the documentation's text: the 180 not in the sample are event types from the documentation
+# all the same, said to be not in the sample, never dropped. Run alone: 300 event types are a lot to propose, check
+# and confirm. The traps: only the sampled codes catalogued; the code itself as TypeId; forms of 300 rows.
+request: >
+  Onboard our ERP system's audit log (a CSV file with a header on my disk). Each line's code is the vendor's
+  operation code: their reference documentation is attached, and lists every code. Catalogue every documented code,
+  including those not in the sample, and index the events.
+user_knows: >
+  The codes are the vendor's: the documentation's table says what each means, object and operation. Every documented
+  code is an event type, whether or not the sample has it. user is who did it, object_id what it was done to. The
+  system is Acme ERP.
+source_docs: |
+  # Acme ERP audit log reference
+
+  Each line is one audited operation. Columns: time (UTC, ISO 8601), host (the ERP server), code (the operation, see
+  Operations), user (the account that did it), object_id (what it was done to).
+
+  ## Operations
+
+  | code | Operation |
+  | --- | --- |
+  | EV1000 | Account created |
+  | EV1001 | Account deleted |
+  | EV1002 | Account viewed |
+  | EV1003 | Account updated |
+  | EV1004 | Account approved |
+  | EV1005 | Account rejected |
+  | EV1006 | Account archived |
+  | EV1007 | Account restored |
+  | EV1008 | Account locked |
+  | EV1009 | Account unlocked |
+  | EV1010 | Invoice created |
+  | EV1011 | Invoice deleted |
+  | EV1012 | Invoice viewed |
+  | EV1013 | Invoice updated |
+  | EV1014 | Invoice approved |
+  | EV1015 | Invoice rejected |
+  | EV1016 | Invoice archived |
+  | EV1017 | Invoice restored |
+  | EV1018 | Invoice locked |
+  | EV1019 | Invoice unlocked |
+  | EV1020 | Order created |
+  | EV1021 | Order deleted |
+  | EV1022 | Order viewed |
+  | EV1023 | Order updated |
+  | EV1024 | Order approved |
+  | EV1025 | Order rejected |
+  | EV1026 | Order archived |
+  | EV1027 | Order restored |
+  | EV1028 | Order locked |
+  | EV1029 | Order unlocked |
+  | EV1030 | Payment created |
+  | EV1031 | Payment deleted |
+  | EV1032 | Payment viewed |
+  | EV1033 | Payment updated |
+  | EV1034 | Payment approved |
+  | EV1035 | Payment rejected |
+  | EV1036 | Payment archived |
+  | EV1037 | Payment restored |
+  | EV1038 | Payment locked |
+  | EV1039 | Payment unlocked |
+  | EV1040 | Supplier created |
+  | EV1041 | Supplier deleted |
+  | EV1042 | Supplier viewed |
+  | EV1043 | Supplier updated |
+  | EV1044 | Supplier approved |
+  | EV1045 | Supplier rejected |
+  | EV1046 | Supplier archived |
+  | EV1047 | Supplier restored |
+  | EV1048 | Supplier locked |
+  | EV1049 | Supplier unlocked |
+  | EV1050 | Customer created |
+  | EV1051 | Customer deleted |
+  | EV1052 | Customer viewed |
+  | EV1053 | Customer updated |
+  | EV1054 | Customer approved |
+  | EV1055 | Customer rejected |
+  | EV1056 | Customer archived |
+  | EV1057 | Customer restored |
+  | EV1058 | Customer locked |
+  | EV1059 | Customer unlocked |
+  | EV1060 | Contract created |
+  | EV1061 | Contract deleted |
+  | EV1062 | Contract viewed |
+  | EV1063 | Contract updated |
+  | EV1064 | Contract approved |
+  | EV1065 | Contract rejected |
+  | EV1066 | Contract archived |
+  | EV1067 | Contract restored |
+  | EV1068 | Contract locked |
+  | EV1069 | Contract unlocked |
+  | EV1070 | Quote created |
+  | EV1071 | Quote deleted |
+  | EV1072 | Quote viewed |
+  | EV1073 | Quote updated |
+  | EV1074 | Quote approved |
+  | EV1075 | Quote rejected |
+  | EV1076 | Quote archived |
+  | EV1077 | Quote restored |
+  | EV1078 | Quote locked |
+  | EV1079 | Quote unlocked |
+  | EV1080 | Shipment created |
+  | EV1081 | Shipment deleted |
+  | EV1082 | Shipment viewed |
+  | EV1083 | Shipment updated |
+  | EV1084 | Shipment approved |
+  | EV1085 | Shipment rejected |
+  | EV1086 | Shipment archived |
+  | EV1087 | Shipment restored |
+  | EV1088 | Shipment locked |
+  | EV1089 | Shipment unlocked |
+  | EV1090 | Product created |
+  | EV1091 | Product deleted |
+  | EV1092 | Product viewed |
+  | EV1093 | Product updated |
+  | EV1094 | Product approved |
+  | EV1095 | Product rejected |
+  | EV1096 | Product archived |
+  | EV1097 | Product restored |
+  | EV1098 | Product locked |
+  | EV1099 | Product unlocked |
+  | EV1100 | Price List created |
+  | EV1101 | Price List deleted |
+  | EV1102 | Price List viewed |
+  | EV1103 | Price List updated |
+  | EV1104 | Price List approved |
+  | EV1105 | Price List rejected |
+  | EV1106 | Price List archived |
+  | EV1107 | Price List restored |
+  | EV1108 | Price List locked |
+  | EV1109 | Price List unlocked |
+  | EV1110 | Budget created |
+  | EV1111 | Budget deleted |
+  | EV1112 | Budget viewed |
+  | EV1113 | Budget updated |
+  | EV1114 | Budget approved |
+  | EV1115 | Budget rejected |
+  | EV1116 | Budget archived |
+  | EV1117 | Budget restored |
+  | EV1118 | Budget locked |
+  | EV1119 | Budget unlocked |
+  | EV1120 | Ledger created |
+  | EV1121 | Ledger deleted |
+  | EV1122 | Ledger viewed |
+  | EV1123 | Ledger updated |
+  | EV1124 | Ledger approved |
+  | EV1125 | Ledger rejected |
+  | EV1126 | Ledger archived |
+  | EV1127 | Ledger restored |
+  | EV1128 | Ledger locked |
+  | EV1129 | Ledger unlocked |
+  | EV1130 | Journal created |
+  | EV1131 | Journal deleted |
+  | EV1132 | Journal viewed |
+  | EV1133 | Journal updated |
+  | EV1134 | Journal approved |
+  | EV1135 | Journal rejected |
+  | EV1136 | Journal archived |
+  | EV1137 | Journal restored |
+  | EV1138 | Journal locked |
+  | EV1139 | Journal unlocked |
+  | EV1140 | Asset created |
+  | EV1141 | Asset deleted |
+  | EV1142 | Asset viewed |
+  | EV1143 | Asset updated |
+  | EV1144 | Asset approved |
+  | EV1145 | Asset rejected |
+  | EV1146 | Asset archived |
+  | EV1147 | Asset restored |
+  | EV1148 | Asset locked |
+  | EV1149 | Asset unlocked |
+  | EV1150 | Employee created |
+  | EV1151 | Employee deleted |
+  | EV1152 | Employee viewed |
+  | EV1153 | Employee updated |
+  | EV1154 | Employee approved |
+  | EV1155 | Employee rejected |
+  | EV1156 | Employee archived |
+  | EV1157 | Employee restored |
+  | EV1158 | Employee locked |
+  | EV1159 | Employee unlocked |
+  | EV1160 | Timesheet created |
+  | EV1161 | Timesheet deleted |
+  | EV1162 | Timesheet viewed |
+  | EV1163 | Timesheet updated |
+  | EV1164 | Timesheet approved |
+  | EV1165 | Timesheet rejected |
+  | EV1166 | Timesheet archived |
+  | EV1167 | Timesheet restored |
+  | EV1168 | Timesheet locked |
+  | EV1169 | Timesheet unlocked |
+  | EV1170 | Expense created |
+  | EV1171 | Expense deleted |
+  | EV1172 | Expense viewed |
+  | EV1173 | Expense updated |
+  | EV1174 | Expense approved |
+  | EV1175 | Expense rejected |
+  | EV1176 | Expense archived |
+  | EV1177 | Expense restored |
+  | EV1178 | Expense locked |
+  | EV1179 | Expense unlocked |
+  | EV1180 | Purchase Order created |
+  | EV1181 | Purchase Order deleted |
+  | EV1182 | Purchase Order viewed |
+  | EV1183 | Purchase Order updated |
+  | EV1184 | Purchase Order approved |
+  | EV1185 | Purchase Order rejected |
+  | EV1186 | Purchase Order archived |
+  | EV1187 | Purchase Order restored |
+  | EV1188 | Purchase Order locked |
+  | EV1189 | Purchase Order unlocked |
+  | EV1190 | Receipt created |
+  | EV1191 | Receipt deleted |
+  | EV1192 | Receipt viewed |
+  | EV1193 | Receipt updated |
+  | EV1194 | Receipt approved |
+  | EV1195 | Receipt rejected |
+  | EV1196 | Receipt archived |
+  | EV1197 | Receipt restored |
+  | EV1198 | Receipt locked |
+  | EV1199 | Receipt unlocked |
+  | EV1200 | Report created |
+  | EV1201 | Report deleted |
+  | EV1202 | Report viewed |
+  | EV1203 | Report updated |
+  | EV1204 | Report approved |
+  | EV1205 | Report rejected |
+  | EV1206 | Report archived |
+  | EV1207 | Report restored |
+  | EV1208 | Report locked |
+  | EV1209 | Report unlocked |
+  | EV1210 | Dashboard created |
+  | EV1211 | Dashboard deleted |
+  | EV1212 | Dashboard viewed |
+  | EV1213 | Dashboard updated |
+  | EV1214 | Dashboard approved |
+  | EV1215 | Dashboard rejected |
+  | EV1216 | Dashboard archived |
+  | EV1217 | Dashboard restored |
+  | EV1218 | Dashboard locked |
+  | EV1219 | Dashboard unlocked |
+  | EV1220 | Workflow created |
+  | EV1221 | Workflow deleted |
+  | EV1222 | Workflow viewed |
+  | EV1223 | Workflow updated |
+  | EV1224 | Workflow approved |
+  | EV1225 | Workflow rejected |
+  | EV1226 | Workflow archived |
+  | EV1227 | Workflow restored |
+  | EV1228 | Workflow locked |
+  | EV1229 | Workflow unlocked |
+  | EV1230 | Approval Rule created |
+  | EV1231 | Approval Rule deleted |
+  | EV1232 | Approval Rule viewed |
+  | EV1233 | Approval Rule updated |
+  | EV1234 | Approval Rule approved |
+  | EV1235 | Approval Rule rejected |
+  | EV1236 | Approval Rule archived |
+  | EV1237 | Approval Rule restored |
+  | EV1238 | Approval Rule locked |
+  | EV1239 | Approval Rule unlocked |
+  | EV1240 | Tax Code created |
+  | EV1241 | Tax Code deleted |
+  | EV1242 | Tax Code viewed |
+  | EV1243 | Tax Code updated |
+  | EV1244 | Tax Code approved |
+  | EV1245 | Tax Code rejected |
+  | EV1246 | Tax Code archived |
+  | EV1247 | Tax Code restored |
+  | EV1248 | Tax Code locked |
+  | EV1249 | Tax Code unlocked |
+  | EV1250 | Currency created |
+  | EV1251 | Currency deleted |
+  | EV1252 | Currency viewed |
+  | EV1253 | Currency updated |
+  | EV1254 | Currency approved |
+  | EV1255 | Currency rejected |
+  | EV1256 | Currency archived |
+  | EV1257 | Currency restored |
+  | EV1258 | Currency locked |
+  | EV1259 | Currency unlocked |
+  | EV1260 | Warehouse created |
+  | EV1261 | Warehouse deleted |
+  | EV1262 | Warehouse viewed |
+  | EV1263 | Warehouse updated |
+  | EV1264 | Warehouse approved |
+  | EV1265 | Warehouse rejected |
+  | EV1266 | Warehouse archived |
+  | EV1267 | Warehouse restored |
+  | EV1268 | Warehouse locked |
+  | EV1269 | Warehouse unlocked |
+  | EV1270 | Stock Item created |
+  | EV1271 | Stock Item deleted |
+  | EV1272 | Stock Item viewed |
+  | EV1273 | Stock Item updated |
+  | EV1274 | Stock Item approved |
+  | EV1275 | Stock Item rejected |
+  | EV1276 | Stock Item archived |
+  | EV1277 | Stock Item restored |
+  | EV1278 | Stock Item locked |
+  | EV1279 | Stock Item unlocked |
+  | EV1280 | Project created |
+  | EV1281 | Project deleted |
+  | EV1282 | Project viewed |
+  | EV1283 | Project updated |
+  | EV1284 | Project approved |
+  | EV1285 | Project rejected |
+  | EV1286 | Project archived |
+  | EV1287 | Project restored |
+  | EV1288 | Project locked |
+  | EV1289 | Project unlocked |
+  | EV1290 | Role created |
+  | EV1291 | Role deleted |
+  | EV1292 | Role viewed |
+  | EV1293 | Role updated |
+  | EV1294 | Role approved |
+  | EV1295 | Role rejected |
+  | EV1296 | Role archived |
+  | EV1297 | Role restored |
+  | EV1298 | Role locked |
+  | EV1299 | Role unlocked |
+expected:
+  records: 360
+  event_types: [Create, Delete, View, Update]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId, EventDetail/Description]
+  type_ids: {min_distinct: 100}
+  unknown_at_most: 0
+  # The 180 documented codes not in the sample: event types from the documentation, not dropped.
+  catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true, documentation_only: 150}
+files:
+  - {name: erp-audit-2026-10-11.csv, generate: {kind: documented_codes, records: 360, seed: 68, codes_sampled: 120}}
+reference:
+  converter: csv_header
+  # Every event type is the documentation's.
+  catalogue: {basis: documentation}
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Acme ERP}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: acme-erp}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: user}
+    events:
+      - name: account created
+        when: [{field: code, equals: EV1000}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Account}
+          - {path: EventDetail/Description, value: Account created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Account}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: account deleted
+        when: [{field: code, equals: EV1001}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Account}
+          - {path: EventDetail/Description, value: Account deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Account}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: account viewed
+        when: [{field: code, equals: EV1002}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Account}
+          - {path: EventDetail/Description, value: Account viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Account}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: account updated
+        when: [{field: code, equals: EV1003}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Account}
+          - {path: EventDetail/Description, value: Account updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: account approved
+        when: [{field: code, equals: EV1004}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Account}
+          - {path: EventDetail/Description, value: Account approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: account rejected
+        when: [{field: code, equals: EV1005}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Account}
+          - {path: EventDetail/Description, value: Account rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: account archived
+        when: [{field: code, equals: EV1006}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Account}
+          - {path: EventDetail/Description, value: Account archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: account restored
+        when: [{field: code, equals: EV1007}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Account}
+          - {path: EventDetail/Description, value: Account restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: account locked
+        when: [{field: code, equals: EV1008}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Account}
+          - {path: EventDetail/Description, value: Account locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: account unlocked
+        when: [{field: code, equals: EV1009}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Account}
+          - {path: EventDetail/Description, value: Account unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice created
+        when: [{field: code, equals: EV1010}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Invoice}
+          - {path: EventDetail/Description, value: Invoice created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Invoice}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: invoice deleted
+        when: [{field: code, equals: EV1011}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Invoice}
+          - {path: EventDetail/Description, value: Invoice deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Invoice}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: invoice viewed
+        when: [{field: code, equals: EV1012}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Invoice}
+          - {path: EventDetail/Description, value: Invoice viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Invoice}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: invoice updated
+        when: [{field: code, equals: EV1013}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Invoice}
+          - {path: EventDetail/Description, value: Invoice updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice approved
+        when: [{field: code, equals: EV1014}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Invoice}
+          - {path: EventDetail/Description, value: Invoice approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice rejected
+        when: [{field: code, equals: EV1015}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Invoice}
+          - {path: EventDetail/Description, value: Invoice rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice archived
+        when: [{field: code, equals: EV1016}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Invoice}
+          - {path: EventDetail/Description, value: Invoice archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice restored
+        when: [{field: code, equals: EV1017}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Invoice}
+          - {path: EventDetail/Description, value: Invoice restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice locked
+        when: [{field: code, equals: EV1018}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Invoice}
+          - {path: EventDetail/Description, value: Invoice locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: invoice unlocked
+        when: [{field: code, equals: EV1019}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Invoice}
+          - {path: EventDetail/Description, value: Invoice unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Invoice}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order created
+        when: [{field: code, equals: EV1020}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Order}
+          - {path: EventDetail/Description, value: Order created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Order}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: order deleted
+        when: [{field: code, equals: EV1021}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Order}
+          - {path: EventDetail/Description, value: Order deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Order}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: order viewed
+        when: [{field: code, equals: EV1022}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Order}
+          - {path: EventDetail/Description, value: Order viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Order}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: order updated
+        when: [{field: code, equals: EV1023}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Order}
+          - {path: EventDetail/Description, value: Order updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order approved
+        when: [{field: code, equals: EV1024}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Order}
+          - {path: EventDetail/Description, value: Order approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order rejected
+        when: [{field: code, equals: EV1025}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Order}
+          - {path: EventDetail/Description, value: Order rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order archived
+        when: [{field: code, equals: EV1026}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Order}
+          - {path: EventDetail/Description, value: Order archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order restored
+        when: [{field: code, equals: EV1027}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Order}
+          - {path: EventDetail/Description, value: Order restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order locked
+        when: [{field: code, equals: EV1028}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Order}
+          - {path: EventDetail/Description, value: Order locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: order unlocked
+        when: [{field: code, equals: EV1029}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Order}
+          - {path: EventDetail/Description, value: Order unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment created
+        when: [{field: code, equals: EV1030}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Payment}
+          - {path: EventDetail/Description, value: Payment created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Payment}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: payment deleted
+        when: [{field: code, equals: EV1031}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Payment}
+          - {path: EventDetail/Description, value: Payment deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Payment}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: payment viewed
+        when: [{field: code, equals: EV1032}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Payment}
+          - {path: EventDetail/Description, value: Payment viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Payment}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: payment updated
+        when: [{field: code, equals: EV1033}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Payment}
+          - {path: EventDetail/Description, value: Payment updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment approved
+        when: [{field: code, equals: EV1034}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Payment}
+          - {path: EventDetail/Description, value: Payment approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment rejected
+        when: [{field: code, equals: EV1035}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Payment}
+          - {path: EventDetail/Description, value: Payment rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment archived
+        when: [{field: code, equals: EV1036}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Payment}
+          - {path: EventDetail/Description, value: Payment archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment restored
+        when: [{field: code, equals: EV1037}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Payment}
+          - {path: EventDetail/Description, value: Payment restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment locked
+        when: [{field: code, equals: EV1038}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Payment}
+          - {path: EventDetail/Description, value: Payment locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: payment unlocked
+        when: [{field: code, equals: EV1039}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Payment}
+          - {path: EventDetail/Description, value: Payment unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Payment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier created
+        when: [{field: code, equals: EV1040}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Supplier}
+          - {path: EventDetail/Description, value: Supplier created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Supplier}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: supplier deleted
+        when: [{field: code, equals: EV1041}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Supplier}
+          - {path: EventDetail/Description, value: Supplier deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Supplier}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: supplier viewed
+        when: [{field: code, equals: EV1042}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Supplier}
+          - {path: EventDetail/Description, value: Supplier viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Supplier}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: supplier updated
+        when: [{field: code, equals: EV1043}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Supplier}
+          - {path: EventDetail/Description, value: Supplier updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier approved
+        when: [{field: code, equals: EV1044}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Supplier}
+          - {path: EventDetail/Description, value: Supplier approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier rejected
+        when: [{field: code, equals: EV1045}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Supplier}
+          - {path: EventDetail/Description, value: Supplier rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier archived
+        when: [{field: code, equals: EV1046}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Supplier}
+          - {path: EventDetail/Description, value: Supplier archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier restored
+        when: [{field: code, equals: EV1047}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Supplier}
+          - {path: EventDetail/Description, value: Supplier restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier locked
+        when: [{field: code, equals: EV1048}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Supplier}
+          - {path: EventDetail/Description, value: Supplier locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: supplier unlocked
+        when: [{field: code, equals: EV1049}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Supplier}
+          - {path: EventDetail/Description, value: Supplier unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Supplier}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer created
+        when: [{field: code, equals: EV1050}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Customer}
+          - {path: EventDetail/Description, value: Customer created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Customer}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: customer deleted
+        when: [{field: code, equals: EV1051}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Customer}
+          - {path: EventDetail/Description, value: Customer deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Customer}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: customer viewed
+        when: [{field: code, equals: EV1052}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Customer}
+          - {path: EventDetail/Description, value: Customer viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Customer}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: customer updated
+        when: [{field: code, equals: EV1053}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Customer}
+          - {path: EventDetail/Description, value: Customer updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer approved
+        when: [{field: code, equals: EV1054}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Customer}
+          - {path: EventDetail/Description, value: Customer approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer rejected
+        when: [{field: code, equals: EV1055}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Customer}
+          - {path: EventDetail/Description, value: Customer rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer archived
+        when: [{field: code, equals: EV1056}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Customer}
+          - {path: EventDetail/Description, value: Customer archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer restored
+        when: [{field: code, equals: EV1057}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Customer}
+          - {path: EventDetail/Description, value: Customer restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer locked
+        when: [{field: code, equals: EV1058}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Customer}
+          - {path: EventDetail/Description, value: Customer locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: customer unlocked
+        when: [{field: code, equals: EV1059}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Customer}
+          - {path: EventDetail/Description, value: Customer unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Customer}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract created
+        when: [{field: code, equals: EV1060}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Contract}
+          - {path: EventDetail/Description, value: Contract created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Contract}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: contract deleted
+        when: [{field: code, equals: EV1061}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Contract}
+          - {path: EventDetail/Description, value: Contract deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Contract}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: contract viewed
+        when: [{field: code, equals: EV1062}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Contract}
+          - {path: EventDetail/Description, value: Contract viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Contract}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: contract updated
+        when: [{field: code, equals: EV1063}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Contract}
+          - {path: EventDetail/Description, value: Contract updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract approved
+        when: [{field: code, equals: EV1064}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Contract}
+          - {path: EventDetail/Description, value: Contract approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract rejected
+        when: [{field: code, equals: EV1065}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Contract}
+          - {path: EventDetail/Description, value: Contract rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract archived
+        when: [{field: code, equals: EV1066}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Contract}
+          - {path: EventDetail/Description, value: Contract archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract restored
+        when: [{field: code, equals: EV1067}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Contract}
+          - {path: EventDetail/Description, value: Contract restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract locked
+        when: [{field: code, equals: EV1068}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Contract}
+          - {path: EventDetail/Description, value: Contract locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: contract unlocked
+        when: [{field: code, equals: EV1069}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Contract}
+          - {path: EventDetail/Description, value: Contract unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Contract}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote created
+        when: [{field: code, equals: EV1070}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Quote}
+          - {path: EventDetail/Description, value: Quote created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Quote}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: quote deleted
+        when: [{field: code, equals: EV1071}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Quote}
+          - {path: EventDetail/Description, value: Quote deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Quote}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: quote viewed
+        when: [{field: code, equals: EV1072}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Quote}
+          - {path: EventDetail/Description, value: Quote viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Quote}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: quote updated
+        when: [{field: code, equals: EV1073}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Quote}
+          - {path: EventDetail/Description, value: Quote updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote approved
+        when: [{field: code, equals: EV1074}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Quote}
+          - {path: EventDetail/Description, value: Quote approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote rejected
+        when: [{field: code, equals: EV1075}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Quote}
+          - {path: EventDetail/Description, value: Quote rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote archived
+        when: [{field: code, equals: EV1076}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Quote}
+          - {path: EventDetail/Description, value: Quote archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote restored
+        when: [{field: code, equals: EV1077}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Quote}
+          - {path: EventDetail/Description, value: Quote restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote locked
+        when: [{field: code, equals: EV1078}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Quote}
+          - {path: EventDetail/Description, value: Quote locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: quote unlocked
+        when: [{field: code, equals: EV1079}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Quote}
+          - {path: EventDetail/Description, value: Quote unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Quote}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment created
+        when: [{field: code, equals: EV1080}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Shipment}
+          - {path: EventDetail/Description, value: Shipment created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Shipment}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: shipment deleted
+        when: [{field: code, equals: EV1081}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Shipment}
+          - {path: EventDetail/Description, value: Shipment deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Shipment}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: shipment viewed
+        when: [{field: code, equals: EV1082}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Shipment}
+          - {path: EventDetail/Description, value: Shipment viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Shipment}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: shipment updated
+        when: [{field: code, equals: EV1083}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Shipment}
+          - {path: EventDetail/Description, value: Shipment updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment approved
+        when: [{field: code, equals: EV1084}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Shipment}
+          - {path: EventDetail/Description, value: Shipment approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment rejected
+        when: [{field: code, equals: EV1085}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Shipment}
+          - {path: EventDetail/Description, value: Shipment rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment archived
+        when: [{field: code, equals: EV1086}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Shipment}
+          - {path: EventDetail/Description, value: Shipment archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment restored
+        when: [{field: code, equals: EV1087}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Shipment}
+          - {path: EventDetail/Description, value: Shipment restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment locked
+        when: [{field: code, equals: EV1088}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Shipment}
+          - {path: EventDetail/Description, value: Shipment locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: shipment unlocked
+        when: [{field: code, equals: EV1089}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Shipment}
+          - {path: EventDetail/Description, value: Shipment unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Shipment}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product created
+        when: [{field: code, equals: EV1090}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Product}
+          - {path: EventDetail/Description, value: Product created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Product}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: product deleted
+        when: [{field: code, equals: EV1091}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Product}
+          - {path: EventDetail/Description, value: Product deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Product}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: product viewed
+        when: [{field: code, equals: EV1092}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Product}
+          - {path: EventDetail/Description, value: Product viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Product}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: product updated
+        when: [{field: code, equals: EV1093}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Product}
+          - {path: EventDetail/Description, value: Product updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product approved
+        when: [{field: code, equals: EV1094}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Product}
+          - {path: EventDetail/Description, value: Product approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product rejected
+        when: [{field: code, equals: EV1095}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Product}
+          - {path: EventDetail/Description, value: Product rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product archived
+        when: [{field: code, equals: EV1096}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Product}
+          - {path: EventDetail/Description, value: Product archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product restored
+        when: [{field: code, equals: EV1097}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Product}
+          - {path: EventDetail/Description, value: Product restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product locked
+        when: [{field: code, equals: EV1098}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Product}
+          - {path: EventDetail/Description, value: Product locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: product unlocked
+        when: [{field: code, equals: EV1099}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Product}
+          - {path: EventDetail/Description, value: Product unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Product}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list created
+        when: [{field: code, equals: EV1100}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-PriceList}
+          - {path: EventDetail/Description, value: Price List created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Price List}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: price list deleted
+        when: [{field: code, equals: EV1101}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-PriceList}
+          - {path: EventDetail/Description, value: Price List deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Price List}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: price list viewed
+        when: [{field: code, equals: EV1102}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-PriceList}
+          - {path: EventDetail/Description, value: Price List viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Price List}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: price list updated
+        when: [{field: code, equals: EV1103}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-PriceList}
+          - {path: EventDetail/Description, value: Price List updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list approved
+        when: [{field: code, equals: EV1104}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-PriceList}
+          - {path: EventDetail/Description, value: Price List approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list rejected
+        when: [{field: code, equals: EV1105}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-PriceList}
+          - {path: EventDetail/Description, value: Price List rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list archived
+        when: [{field: code, equals: EV1106}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-PriceList}
+          - {path: EventDetail/Description, value: Price List archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list restored
+        when: [{field: code, equals: EV1107}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-PriceList}
+          - {path: EventDetail/Description, value: Price List restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list locked
+        when: [{field: code, equals: EV1108}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-PriceList}
+          - {path: EventDetail/Description, value: Price List locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: price list unlocked
+        when: [{field: code, equals: EV1109}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-PriceList}
+          - {path: EventDetail/Description, value: Price List unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Price List}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget created
+        when: [{field: code, equals: EV1110}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Budget}
+          - {path: EventDetail/Description, value: Budget created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Budget}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: budget deleted
+        when: [{field: code, equals: EV1111}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Budget}
+          - {path: EventDetail/Description, value: Budget deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Budget}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: budget viewed
+        when: [{field: code, equals: EV1112}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Budget}
+          - {path: EventDetail/Description, value: Budget viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Budget}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: budget updated
+        when: [{field: code, equals: EV1113}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Budget}
+          - {path: EventDetail/Description, value: Budget updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget approved
+        when: [{field: code, equals: EV1114}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Budget}
+          - {path: EventDetail/Description, value: Budget approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget rejected
+        when: [{field: code, equals: EV1115}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Budget}
+          - {path: EventDetail/Description, value: Budget rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget archived
+        when: [{field: code, equals: EV1116}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Budget}
+          - {path: EventDetail/Description, value: Budget archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget restored
+        when: [{field: code, equals: EV1117}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Budget}
+          - {path: EventDetail/Description, value: Budget restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget locked
+        when: [{field: code, equals: EV1118}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Budget}
+          - {path: EventDetail/Description, value: Budget locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: budget unlocked
+        when: [{field: code, equals: EV1119}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Budget}
+          - {path: EventDetail/Description, value: Budget unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Budget}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger created
+        when: [{field: code, equals: EV1120}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Ledger}
+          - {path: EventDetail/Description, value: Ledger created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Ledger}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: ledger deleted
+        when: [{field: code, equals: EV1121}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Ledger}
+          - {path: EventDetail/Description, value: Ledger deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Ledger}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: ledger viewed
+        when: [{field: code, equals: EV1122}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Ledger}
+          - {path: EventDetail/Description, value: Ledger viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Ledger}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: ledger updated
+        when: [{field: code, equals: EV1123}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Ledger}
+          - {path: EventDetail/Description, value: Ledger updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger approved
+        when: [{field: code, equals: EV1124}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Ledger}
+          - {path: EventDetail/Description, value: Ledger approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger rejected
+        when: [{field: code, equals: EV1125}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Ledger}
+          - {path: EventDetail/Description, value: Ledger rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger archived
+        when: [{field: code, equals: EV1126}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Ledger}
+          - {path: EventDetail/Description, value: Ledger archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger restored
+        when: [{field: code, equals: EV1127}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Ledger}
+          - {path: EventDetail/Description, value: Ledger restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger locked
+        when: [{field: code, equals: EV1128}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Ledger}
+          - {path: EventDetail/Description, value: Ledger locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: ledger unlocked
+        when: [{field: code, equals: EV1129}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Ledger}
+          - {path: EventDetail/Description, value: Ledger unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Ledger}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal created
+        when: [{field: code, equals: EV1130}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Journal}
+          - {path: EventDetail/Description, value: Journal created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Journal}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: journal deleted
+        when: [{field: code, equals: EV1131}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Journal}
+          - {path: EventDetail/Description, value: Journal deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Journal}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: journal viewed
+        when: [{field: code, equals: EV1132}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Journal}
+          - {path: EventDetail/Description, value: Journal viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Journal}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: journal updated
+        when: [{field: code, equals: EV1133}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Journal}
+          - {path: EventDetail/Description, value: Journal updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal approved
+        when: [{field: code, equals: EV1134}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Journal}
+          - {path: EventDetail/Description, value: Journal approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal rejected
+        when: [{field: code, equals: EV1135}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Journal}
+          - {path: EventDetail/Description, value: Journal rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal archived
+        when: [{field: code, equals: EV1136}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Journal}
+          - {path: EventDetail/Description, value: Journal archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal restored
+        when: [{field: code, equals: EV1137}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Journal}
+          - {path: EventDetail/Description, value: Journal restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal locked
+        when: [{field: code, equals: EV1138}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Journal}
+          - {path: EventDetail/Description, value: Journal locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: journal unlocked
+        when: [{field: code, equals: EV1139}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Journal}
+          - {path: EventDetail/Description, value: Journal unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Journal}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset created
+        when: [{field: code, equals: EV1140}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Asset}
+          - {path: EventDetail/Description, value: Asset created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Asset}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: asset deleted
+        when: [{field: code, equals: EV1141}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Asset}
+          - {path: EventDetail/Description, value: Asset deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Asset}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: asset viewed
+        when: [{field: code, equals: EV1142}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Asset}
+          - {path: EventDetail/Description, value: Asset viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Asset}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: asset updated
+        when: [{field: code, equals: EV1143}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Asset}
+          - {path: EventDetail/Description, value: Asset updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset approved
+        when: [{field: code, equals: EV1144}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Asset}
+          - {path: EventDetail/Description, value: Asset approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset rejected
+        when: [{field: code, equals: EV1145}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Asset}
+          - {path: EventDetail/Description, value: Asset rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset archived
+        when: [{field: code, equals: EV1146}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Asset}
+          - {path: EventDetail/Description, value: Asset archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset restored
+        when: [{field: code, equals: EV1147}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Asset}
+          - {path: EventDetail/Description, value: Asset restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset locked
+        when: [{field: code, equals: EV1148}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Asset}
+          - {path: EventDetail/Description, value: Asset locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: asset unlocked
+        when: [{field: code, equals: EV1149}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Asset}
+          - {path: EventDetail/Description, value: Asset unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Asset}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee created
+        when: [{field: code, equals: EV1150}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Employee}
+          - {path: EventDetail/Description, value: Employee created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Employee}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: employee deleted
+        when: [{field: code, equals: EV1151}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Employee}
+          - {path: EventDetail/Description, value: Employee deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Employee}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: employee viewed
+        when: [{field: code, equals: EV1152}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Employee}
+          - {path: EventDetail/Description, value: Employee viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Employee}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: employee updated
+        when: [{field: code, equals: EV1153}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Employee}
+          - {path: EventDetail/Description, value: Employee updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee approved
+        when: [{field: code, equals: EV1154}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Employee}
+          - {path: EventDetail/Description, value: Employee approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee rejected
+        when: [{field: code, equals: EV1155}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Employee}
+          - {path: EventDetail/Description, value: Employee rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee archived
+        when: [{field: code, equals: EV1156}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Employee}
+          - {path: EventDetail/Description, value: Employee archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee restored
+        when: [{field: code, equals: EV1157}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Employee}
+          - {path: EventDetail/Description, value: Employee restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee locked
+        when: [{field: code, equals: EV1158}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Employee}
+          - {path: EventDetail/Description, value: Employee locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: employee unlocked
+        when: [{field: code, equals: EV1159}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Employee}
+          - {path: EventDetail/Description, value: Employee unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Employee}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet created
+        when: [{field: code, equals: EV1160}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Timesheet}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: timesheet deleted
+        when: [{field: code, equals: EV1161}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Timesheet}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: timesheet viewed
+        when: [{field: code, equals: EV1162}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Timesheet}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: timesheet updated
+        when: [{field: code, equals: EV1163}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet approved
+        when: [{field: code, equals: EV1164}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet rejected
+        when: [{field: code, equals: EV1165}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet archived
+        when: [{field: code, equals: EV1166}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet restored
+        when: [{field: code, equals: EV1167}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet locked
+        when: [{field: code, equals: EV1168}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: timesheet unlocked
+        when: [{field: code, equals: EV1169}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Timesheet}
+          - {path: EventDetail/Description, value: Timesheet unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Timesheet}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense created
+        when: [{field: code, equals: EV1170}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Expense}
+          - {path: EventDetail/Description, value: Expense created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Expense}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: expense deleted
+        when: [{field: code, equals: EV1171}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Expense}
+          - {path: EventDetail/Description, value: Expense deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Expense}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: expense viewed
+        when: [{field: code, equals: EV1172}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Expense}
+          - {path: EventDetail/Description, value: Expense viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Expense}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: expense updated
+        when: [{field: code, equals: EV1173}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Expense}
+          - {path: EventDetail/Description, value: Expense updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense approved
+        when: [{field: code, equals: EV1174}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Expense}
+          - {path: EventDetail/Description, value: Expense approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense rejected
+        when: [{field: code, equals: EV1175}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Expense}
+          - {path: EventDetail/Description, value: Expense rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense archived
+        when: [{field: code, equals: EV1176}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Expense}
+          - {path: EventDetail/Description, value: Expense archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense restored
+        when: [{field: code, equals: EV1177}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Expense}
+          - {path: EventDetail/Description, value: Expense restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense locked
+        when: [{field: code, equals: EV1178}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Expense}
+          - {path: EventDetail/Description, value: Expense locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: expense unlocked
+        when: [{field: code, equals: EV1179}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Expense}
+          - {path: EventDetail/Description, value: Expense unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Expense}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order created
+        when: [{field: code, equals: EV1180}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: purchase order deleted
+        when: [{field: code, equals: EV1181}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: purchase order viewed
+        when: [{field: code, equals: EV1182}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Purchase Order}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: purchase order updated
+        when: [{field: code, equals: EV1183}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order approved
+        when: [{field: code, equals: EV1184}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order rejected
+        when: [{field: code, equals: EV1185}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order archived
+        when: [{field: code, equals: EV1186}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order restored
+        when: [{field: code, equals: EV1187}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order locked
+        when: [{field: code, equals: EV1188}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: purchase order unlocked
+        when: [{field: code, equals: EV1189}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-PurchaseOrder}
+          - {path: EventDetail/Description, value: Purchase Order unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Purchase Order}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt created
+        when: [{field: code, equals: EV1190}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Receipt}
+          - {path: EventDetail/Description, value: Receipt created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Receipt}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: receipt deleted
+        when: [{field: code, equals: EV1191}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Receipt}
+          - {path: EventDetail/Description, value: Receipt deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Receipt}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: receipt viewed
+        when: [{field: code, equals: EV1192}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Receipt}
+          - {path: EventDetail/Description, value: Receipt viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Receipt}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: receipt updated
+        when: [{field: code, equals: EV1193}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Receipt}
+          - {path: EventDetail/Description, value: Receipt updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt approved
+        when: [{field: code, equals: EV1194}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Receipt}
+          - {path: EventDetail/Description, value: Receipt approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt rejected
+        when: [{field: code, equals: EV1195}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Receipt}
+          - {path: EventDetail/Description, value: Receipt rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt archived
+        when: [{field: code, equals: EV1196}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Receipt}
+          - {path: EventDetail/Description, value: Receipt archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt restored
+        when: [{field: code, equals: EV1197}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Receipt}
+          - {path: EventDetail/Description, value: Receipt restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt locked
+        when: [{field: code, equals: EV1198}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Receipt}
+          - {path: EventDetail/Description, value: Receipt locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: receipt unlocked
+        when: [{field: code, equals: EV1199}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Receipt}
+          - {path: EventDetail/Description, value: Receipt unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Receipt}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report created
+        when: [{field: code, equals: EV1200}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Report}
+          - {path: EventDetail/Description, value: Report created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Report}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: report deleted
+        when: [{field: code, equals: EV1201}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Report}
+          - {path: EventDetail/Description, value: Report deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Report}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: report viewed
+        when: [{field: code, equals: EV1202}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Report}
+          - {path: EventDetail/Description, value: Report viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Report}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: report updated
+        when: [{field: code, equals: EV1203}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Report}
+          - {path: EventDetail/Description, value: Report updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report approved
+        when: [{field: code, equals: EV1204}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Report}
+          - {path: EventDetail/Description, value: Report approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report rejected
+        when: [{field: code, equals: EV1205}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Report}
+          - {path: EventDetail/Description, value: Report rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report archived
+        when: [{field: code, equals: EV1206}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Report}
+          - {path: EventDetail/Description, value: Report archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report restored
+        when: [{field: code, equals: EV1207}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Report}
+          - {path: EventDetail/Description, value: Report restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report locked
+        when: [{field: code, equals: EV1208}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Report}
+          - {path: EventDetail/Description, value: Report locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: report unlocked
+        when: [{field: code, equals: EV1209}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Report}
+          - {path: EventDetail/Description, value: Report unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Report}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard created
+        when: [{field: code, equals: EV1210}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Dashboard}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: dashboard deleted
+        when: [{field: code, equals: EV1211}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Dashboard}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: dashboard viewed
+        when: [{field: code, equals: EV1212}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Dashboard}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: dashboard updated
+        when: [{field: code, equals: EV1213}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard approved
+        when: [{field: code, equals: EV1214}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard rejected
+        when: [{field: code, equals: EV1215}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard archived
+        when: [{field: code, equals: EV1216}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard restored
+        when: [{field: code, equals: EV1217}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard locked
+        when: [{field: code, equals: EV1218}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: dashboard unlocked
+        when: [{field: code, equals: EV1219}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Dashboard}
+          - {path: EventDetail/Description, value: Dashboard unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Dashboard}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow created
+        when: [{field: code, equals: EV1220}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Workflow}
+          - {path: EventDetail/Description, value: Workflow created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Workflow}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: workflow deleted
+        when: [{field: code, equals: EV1221}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Workflow}
+          - {path: EventDetail/Description, value: Workflow deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Workflow}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: workflow viewed
+        when: [{field: code, equals: EV1222}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Workflow}
+          - {path: EventDetail/Description, value: Workflow viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Workflow}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: workflow updated
+        when: [{field: code, equals: EV1223}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Workflow}
+          - {path: EventDetail/Description, value: Workflow updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow approved
+        when: [{field: code, equals: EV1224}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Workflow}
+          - {path: EventDetail/Description, value: Workflow approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow rejected
+        when: [{field: code, equals: EV1225}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Workflow}
+          - {path: EventDetail/Description, value: Workflow rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow archived
+        when: [{field: code, equals: EV1226}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Workflow}
+          - {path: EventDetail/Description, value: Workflow archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow restored
+        when: [{field: code, equals: EV1227}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Workflow}
+          - {path: EventDetail/Description, value: Workflow restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow locked
+        when: [{field: code, equals: EV1228}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Workflow}
+          - {path: EventDetail/Description, value: Workflow locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: workflow unlocked
+        when: [{field: code, equals: EV1229}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Workflow}
+          - {path: EventDetail/Description, value: Workflow unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Workflow}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule created
+        when: [{field: code, equals: EV1230}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: approval rule deleted
+        when: [{field: code, equals: EV1231}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: approval rule viewed
+        when: [{field: code, equals: EV1232}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Approval Rule}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: approval rule updated
+        when: [{field: code, equals: EV1233}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule approved
+        when: [{field: code, equals: EV1234}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule rejected
+        when: [{field: code, equals: EV1235}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule archived
+        when: [{field: code, equals: EV1236}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule restored
+        when: [{field: code, equals: EV1237}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule locked
+        when: [{field: code, equals: EV1238}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: approval rule unlocked
+        when: [{field: code, equals: EV1239}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-ApprovalRule}
+          - {path: EventDetail/Description, value: Approval Rule unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Approval Rule}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code created
+        when: [{field: code, equals: EV1240}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Tax Code}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: tax code deleted
+        when: [{field: code, equals: EV1241}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Tax Code}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: tax code viewed
+        when: [{field: code, equals: EV1242}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Tax Code}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: tax code updated
+        when: [{field: code, equals: EV1243}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code approved
+        when: [{field: code, equals: EV1244}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code rejected
+        when: [{field: code, equals: EV1245}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code archived
+        when: [{field: code, equals: EV1246}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code restored
+        when: [{field: code, equals: EV1247}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code locked
+        when: [{field: code, equals: EV1248}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: tax code unlocked
+        when: [{field: code, equals: EV1249}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-TaxCode}
+          - {path: EventDetail/Description, value: Tax Code unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Tax Code}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency created
+        when: [{field: code, equals: EV1250}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Currency}
+          - {path: EventDetail/Description, value: Currency created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Currency}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: currency deleted
+        when: [{field: code, equals: EV1251}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Currency}
+          - {path: EventDetail/Description, value: Currency deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Currency}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: currency viewed
+        when: [{field: code, equals: EV1252}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Currency}
+          - {path: EventDetail/Description, value: Currency viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Currency}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: currency updated
+        when: [{field: code, equals: EV1253}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Currency}
+          - {path: EventDetail/Description, value: Currency updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency approved
+        when: [{field: code, equals: EV1254}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Currency}
+          - {path: EventDetail/Description, value: Currency approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency rejected
+        when: [{field: code, equals: EV1255}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Currency}
+          - {path: EventDetail/Description, value: Currency rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency archived
+        when: [{field: code, equals: EV1256}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Currency}
+          - {path: EventDetail/Description, value: Currency archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency restored
+        when: [{field: code, equals: EV1257}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Currency}
+          - {path: EventDetail/Description, value: Currency restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency locked
+        when: [{field: code, equals: EV1258}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Currency}
+          - {path: EventDetail/Description, value: Currency locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: currency unlocked
+        when: [{field: code, equals: EV1259}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Currency}
+          - {path: EventDetail/Description, value: Currency unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Currency}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse created
+        when: [{field: code, equals: EV1260}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Warehouse}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: warehouse deleted
+        when: [{field: code, equals: EV1261}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Warehouse}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: warehouse viewed
+        when: [{field: code, equals: EV1262}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Warehouse}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: warehouse updated
+        when: [{field: code, equals: EV1263}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse approved
+        when: [{field: code, equals: EV1264}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse rejected
+        when: [{field: code, equals: EV1265}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse archived
+        when: [{field: code, equals: EV1266}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse restored
+        when: [{field: code, equals: EV1267}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse locked
+        when: [{field: code, equals: EV1268}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: warehouse unlocked
+        when: [{field: code, equals: EV1269}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Warehouse}
+          - {path: EventDetail/Description, value: Warehouse unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Warehouse}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item created
+        when: [{field: code, equals: EV1270}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-StockItem}
+          - {path: EventDetail/Description, value: Stock Item created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Stock Item}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: stock item deleted
+        when: [{field: code, equals: EV1271}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-StockItem}
+          - {path: EventDetail/Description, value: Stock Item deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Stock Item}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: stock item viewed
+        when: [{field: code, equals: EV1272}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-StockItem}
+          - {path: EventDetail/Description, value: Stock Item viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Stock Item}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: stock item updated
+        when: [{field: code, equals: EV1273}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-StockItem}
+          - {path: EventDetail/Description, value: Stock Item updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item approved
+        when: [{field: code, equals: EV1274}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-StockItem}
+          - {path: EventDetail/Description, value: Stock Item approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item rejected
+        when: [{field: code, equals: EV1275}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-StockItem}
+          - {path: EventDetail/Description, value: Stock Item rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item archived
+        when: [{field: code, equals: EV1276}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-StockItem}
+          - {path: EventDetail/Description, value: Stock Item archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item restored
+        when: [{field: code, equals: EV1277}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-StockItem}
+          - {path: EventDetail/Description, value: Stock Item restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item locked
+        when: [{field: code, equals: EV1278}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-StockItem}
+          - {path: EventDetail/Description, value: Stock Item locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: stock item unlocked
+        when: [{field: code, equals: EV1279}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-StockItem}
+          - {path: EventDetail/Description, value: Stock Item unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Stock Item}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project created
+        when: [{field: code, equals: EV1280}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Project}
+          - {path: EventDetail/Description, value: Project created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Project}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: project deleted
+        when: [{field: code, equals: EV1281}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Project}
+          - {path: EventDetail/Description, value: Project deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Project}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: project viewed
+        when: [{field: code, equals: EV1282}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Project}
+          - {path: EventDetail/Description, value: Project viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Project}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: project updated
+        when: [{field: code, equals: EV1283}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Project}
+          - {path: EventDetail/Description, value: Project updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project approved
+        when: [{field: code, equals: EV1284}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Project}
+          - {path: EventDetail/Description, value: Project approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project rejected
+        when: [{field: code, equals: EV1285}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Project}
+          - {path: EventDetail/Description, value: Project rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project archived
+        when: [{field: code, equals: EV1286}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Project}
+          - {path: EventDetail/Description, value: Project archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project restored
+        when: [{field: code, equals: EV1287}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Project}
+          - {path: EventDetail/Description, value: Project restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project locked
+        when: [{field: code, equals: EV1288}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Project}
+          - {path: EventDetail/Description, value: Project locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: project unlocked
+        when: [{field: code, equals: EV1289}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Project}
+          - {path: EventDetail/Description, value: Project unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Project}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role created
+        when: [{field: code, equals: EV1290}]
+        fields:
+          - {path: EventDetail/TypeId, value: Create-Role}
+          - {path: EventDetail/Description, value: Role created}
+          - {path: EventDetail/Create/Data, data_name: code, field: code}
+          - {path: EventDetail/Create/Object/Type, value: Role}
+          - {path: EventDetail/Create/Object/Id, field: object_id}
+      - name: role deleted
+        when: [{field: code, equals: EV1291}]
+        fields:
+          - {path: EventDetail/TypeId, value: Delete-Role}
+          - {path: EventDetail/Description, value: Role deleted}
+          - {path: EventDetail/Delete/Data, data_name: code, field: code}
+          - {path: EventDetail/Delete/Object/Type, value: Role}
+          - {path: EventDetail/Delete/Object/Id, field: object_id}
+      - name: role viewed
+        when: [{field: code, equals: EV1292}]
+        fields:
+          - {path: EventDetail/TypeId, value: View-Role}
+          - {path: EventDetail/Description, value: Role viewed}
+          - {path: EventDetail/View/Data, data_name: code, field: code}
+          - {path: EventDetail/View/Object/Type, value: Role}
+          - {path: EventDetail/View/Object/Id, field: object_id}
+      - name: role updated
+        when: [{field: code, equals: EV1293}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Role}
+          - {path: EventDetail/Description, value: Role updated}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role approved
+        when: [{field: code, equals: EV1294}]
+        fields:
+          - {path: EventDetail/TypeId, value: Approve-Role}
+          - {path: EventDetail/Description, value: Role approved}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role rejected
+        when: [{field: code, equals: EV1295}]
+        fields:
+          - {path: EventDetail/TypeId, value: Reject-Role}
+          - {path: EventDetail/Description, value: Role rejected}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role archived
+        when: [{field: code, equals: EV1296}]
+        fields:
+          - {path: EventDetail/TypeId, value: Archive-Role}
+          - {path: EventDetail/Description, value: Role archived}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role restored
+        when: [{field: code, equals: EV1297}]
+        fields:
+          - {path: EventDetail/TypeId, value: Restore-Role}
+          - {path: EventDetail/Description, value: Role restored}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role locked
+        when: [{field: code, equals: EV1298}]
+        fields:
+          - {path: EventDetail/TypeId, value: Lock-Role}
+          - {path: EventDetail/Description, value: Role locked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}
+      - name: role unlocked
+        when: [{field: code, equals: EV1299}]
+        fields:
+          - {path: EventDetail/TypeId, value: Unlock-Role}
+          - {path: EventDetail/Description, value: Role unlocked}
+          - {path: EventDetail/Update/Data, data_name: code, field: code}
+          - {path: EventDetail/Update/After/Object/Type, value: Role}
+          - {path: EventDetail/Update/After/Object/Id, field: object_id}

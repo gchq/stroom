@@ -59,7 +59,9 @@ final class EvalCases {
             "55_kv_two_event_times", "56_jsonl_azure_audit_aggregated", "57_jsonl_collector_paths",
             "58_jsonl_pega_wrapper", "59_jsonl_windows_meta_roles", "60_jsonl_azure_audit_new_group",
             "61_jsonl_azure_audit_join_group", "62_esql_top_uploaders_by_domain", "63_esql_daily_uploads_by_domain",
-            "64_esql_unsanctioned_uploads_mb", "65_jsonl_held_loggers_many");
+            "64_esql_unsanctioned_uploads_mb", "65_jsonl_held_loggers_many", "66_jsonl_pega_loggers_event_types",
+            "67_jsonl_flat_and_nested_keys", "68_csv_documented_codes_many", "69_json_array_membership_alerts",
+            "70_jsonl_uncatalogued_records_proposals");
 
     // What a case whose data is in the feed already shows of it: the first stream's first parts, each part's first
     // lines.
@@ -113,6 +115,18 @@ final class EvalCases {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No evaluation case " + number + " to start "
                                                              + evalCase.get("id") + " from")));
+    }
+
+    /// A case's later data (`later_sample`): records that reach the feed after the case it starts from was built
+    /// and promoted ([#setup]), stored in the feed as a stream received then, and processed by the case's own build
+    /// alone, e.g. records of a shape the promoted build doesn't recognise.
+    ///
+    /// @param evalCase The case.
+    /// @return Its later sample texts, none if it has none.
+    static List<String> later(final Map<String, Object> evalCase) {
+        return evalCase.get("later_sample") instanceof final String later && !later.isEmpty()
+                ? List.of(later)
+                : List.of();
     }
 
     /// The case's sample texts (`samples`, else its one `sample`), or for a case whose samples are files on the user's

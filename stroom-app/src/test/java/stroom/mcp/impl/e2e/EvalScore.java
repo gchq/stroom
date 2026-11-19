@@ -350,6 +350,8 @@ final class EvalScore {
     /// - `documentation_only`: each event type named, or at least so many, is from the documentation (`basis`
     ///   `documentation`) with no record in the sample.
     /// - `dropped`: each event type named is dropped.
+    /// - `event_types_at_least`: the catalogue has at least so many event types that aren't dropped (one that grew
+    ///   from a promoted build's, say).
     ///
     /// @param evalCase  The case.
     /// @param catalogue The build's source notes, as their JSON block reads, or null for none.
@@ -414,6 +416,13 @@ final class EvalScore {
                             : " ways") + ", expected two or more");
         }
         scoreDocumentationOnly(expected.get("documentation_only"), types, check);
+        if (expected.get("event_types_at_least") instanceof final Number least) {
+            final long real = types.stream().filter(type -> !Boolean.TRUE.equals(type.get("drop"))).count();
+            catalogueCheck("at least " + least + " event types", real >= least.longValue(), "the catalogue has "
+                                                                                         + real + " event types, "
+                                                                                         + "expected at least "
+                                                                                         + least);
+        }
         for (final String named : strings(expected.get("dropped"))) {
             final Map<String, Object> type = typeNamed(types, named);
             catalogueCheck(named + " dropped", type != null && Boolean.TRUE.equals(type.get("drop")), type == null
