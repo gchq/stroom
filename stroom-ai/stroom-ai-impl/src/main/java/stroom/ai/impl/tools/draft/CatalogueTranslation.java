@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -394,11 +395,13 @@ final class CatalogueTranslation {
                              final List<Map<String, Object>> own,
                              final List<Map<String, Object>> common,
                              final List<Map<String, Object>> fields) {
-        final boolean ownMessage = Stream.concat(common.stream(), fields.stream())
-                .anyMatch(entry -> DESCRIPTION.equals(entry.get(PATH))
-                                   && (JsonValues.truthy(entry.get(FIELD)) || JsonValues.truthy(entry.get("xpath"))
-                                       || JsonValues.truthy(entry.get("any_of"))));
-        if (ownMessage) {
+        final Optional<Map<String, Object>> ownMessage = Stream.concat(fields.stream(), common.stream())
+                .filter(entry -> DESCRIPTION.equals(entry.get(PATH))
+                                 && (JsonValues.truthy(entry.get(FIELD)) || JsonValues.truthy(entry.get("xpath"))
+                                     || JsonValues.truthy(entry.get("any_of"))))
+                .findFirst();
+        if (ownMessage.isPresent()) {
+            messageElseOwnText(type, own, ownMessage.get(), fields);
             return;
         }
         // A field of free text a person wrote about each event (a ticket's comment) is the event's message before
@@ -422,6 +425,27 @@ final class CatalogueTranslation {
             put(fields, message);
         } else if (NullSafe.isNonBlankString(type.description())) {
             put(fields, entry(PATH, DESCRIPTION, VALUE, type.description()));
+        }
+    }
+
+    // The message read from a field that not every record of the way holds (seen in eval case 47: FortiGate's msg,
+    // in common, held by none of the traffic records, which had no Description at all): the type's own text where
+    // none of them holds it, else the message with the type's text as its default.
+    private static void messageElseOwnText(final EventType type,
+                                           final List<Map<String, Object>> own,
+                                           final Map<String, Object> message,
+                                           final List<Map<String, Object>> fields) {
+        if (!(message.get(FIELD) instanceof final String field) || own.isEmpty()
+            || NullSafe.isBlankString(type.description())
+            || own.stream().allMatch(record -> hasText(record.get(field)))) {
+            return;
+        }
+        if (own.stream().noneMatch(record -> hasText(record.get(field)))) {
+            put(fields, entry(PATH, DESCRIPTION, VALUE, type.description()));
+        } else {
+            final Map<String, Object> withDefault = new LinkedHashMap<>(message);
+            withDefault.put("default", type.description());
+            put(fields, withDefault);
         }
     }
 

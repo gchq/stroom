@@ -173,6 +173,42 @@ class TestCatalogueTranslation extends DraftFixtures {
     }
 
     @Test
+    void anEventTypeWhoseRecordsHoldNoMessageIsDescribedByItsOwnText() {
+        // Seen in eval case 47 (FortiGate, 2026-11-20): the message (msg) in common, which only some records hold, so
+        // the traffic records, none of which hold it, had no Description at all.
+        final String mixed = """
+                {"time":"2026-10-01T08:00:00Z","host":"a","op":"login","user":"alice","msg":"alice logged in"}
+                {"time":"2026-10-01T08:01:00Z","host":"a","op":"traffic","user":"alice"}
+                {"time":"2026-10-01T08:02:00Z","host":"a","op":"traffic","user":"bob"}
+                {"time":"2026-10-01T08:03:00Z","host":"a","op":"scan","user":"bob","msg":"port scan"}
+                {"time":"2026-10-01T08:04:00Z","host":"a","op":"scan","user":"carol"}
+                """;
+        final Map<String, Object> logon = type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null,
+                way(eq("op", "login")));
+        logon.put("description", "An account logged on");
+        final Map<String, Object> traffic = type("Permit-Traffic", "Traffic", "Network/Permit", null, null,
+                way(eq("op", "traffic")));
+        traffic.put("description", "A connection was allowed");
+        final Map<String, Object> scan = type("Alert-Scan", "Scan", "Alert", null, null, way(eq("op", "scan")));
+        scan.put("description", "A port scan was seen");
+        final Map<String, Object> draft = draft(mixed, notes(List.of(logon, traffic, scan), true));
+        assertThat(common(draft).get("EventDetail/Description")).containsEntry("field", "msg");
+        final Map<String, Map<String, Object>> rules = new LinkedHashMap<>();
+        JsonValues.maps(mappingOf(draft).get("events")).forEach(rule -> rules.put(String.valueOf(fields(rule)
+                .get("EventDetail/TypeId").get("value")), rule));
+
+        // Every record of the type holds its message: the message, alone, as before.
+        assertThat(fields(rules.get("Authenticate-Logon"))).doesNotContainKey("EventDetail/Description");
+        // None does: the type's own text.
+        assertThat(fields(rules.get("Permit-Traffic")).get("EventDetail/Description")).isEqualTo(map("path",
+                "EventDetail/Description", "value", "A connection was allowed"));
+        // Some do: the message, else the type's own text.
+        assertThat(fields(rules.get("Alert-Scan")).get("EventDetail/Description"))
+                .containsEntry("field", "msg")
+                .containsEntry("default", "A port scan was seen");
+    }
+
+    @Test
     void aSoleEventTypeTakesEveryRecordAndHasNoCatchAllAfterIt() {
         final Map<String, Object> draft = draft(CODES, notes(List.of(
                 type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null)), true));
