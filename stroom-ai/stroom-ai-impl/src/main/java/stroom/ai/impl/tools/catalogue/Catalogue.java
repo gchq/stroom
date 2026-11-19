@@ -107,9 +107,16 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
         return new Catalogue(confirmed, catchAll, scope);
     }
 
-    /// @return It with its catch-all confirmed by the user.
+    /// @return It with its catch-all confirmed by the user (its reason and own translation kept).
     public Catalogue withCatchAllConfirmedByUser() {
-        return new Catalogue(eventTypes, CatchAll.CONFIRMED, scope);
+        return new Catalogue(eventTypes, new CatchAll(EventType.CONFIRMED, catchAll.allowUnknown(),
+                catchAll.translation()), scope);
+    }
+
+    /// @param given The catch-all.
+    /// @return It with that catch-all.
+    public Catalogue withCatchAll(final CatchAll given) {
+        return new Catalogue(eventTypes, given, scope);
     }
 
     /// @param types The event types.
@@ -125,13 +132,22 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
     /// The catch-all's agreement: records no event type recognises are translated as Unknown, their fields kept as
     /// Data. Not an event type.
     ///
-    /// @param status `proposed` or `confirmed`.
-    public record CatchAll(String status) {
+    /// @param status       `proposed` or `confirmed`.
+    /// @param allowUnknown `allow_unknown`: the user's reason for the uncatalogued records' Unknown, or null.
+    /// @param translation  `translation`: what the catch-all writes instead of Unknown, when a hand-written last
+    ///                     rule taking every remaining record wrote a real event (read back by rebuild_mapping);
+    ///                     null for Unknown.
+    public record CatchAll(String status, String allowUnknown, Translation translation) {
 
         /// The catch-all not yet confirmed.
         public static final CatchAll PROPOSED = new CatchAll(EventType.PROPOSED);
         /// The catch-all confirmed by the user.
         public static final CatchAll CONFIRMED = new CatchAll(EventType.CONFIRMED);
+
+        /// @param status `proposed` or `confirmed`.
+        public CatchAll(final String status) {
+            this(status, null, null);
+        }
 
         /// Reads one from JSON-like values, laxly, every error collected.
         ///
@@ -145,8 +161,11 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
                 return null;
             }
             final String status = fields.literal("status", EventType.PROPOSED, EventType.STATUSES);
+            final String allowUnknown = fields.optionalString("allow_unknown");
+            final Translation translation = fields.optionalModel("translation",
+                    (value, at) -> Translation.read(reader, value, at));
             return fields.ok()
-                    ? new CatchAll(status)
+                    ? new CatchAll(status, allowUnknown, translation)
                     : null;
         }
 
@@ -155,11 +174,59 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
             return EventType.CONFIRMED.equals(status);
         }
 
-        /// @return It as JSON.
+        /// @return It as JSON: its status, and its reason and own translation when it has them.
         public Map<String, Object> toJson() {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("status", status);
+            if (allowUnknown != null) {
+                out.put("allow_unknown", allowUnknown);
+            }
+            if (translation != null) {
+                out.put("translation", translation.toJson());
+            }
             return out;
+        }
+
+
+        // --------------------------------------------------------------------------------
+
+
+        /// What a catch-all writes instead of Unknown: a hand-written last rule's real event.
+        ///
+        /// @param typeId      `type_id`: its fixed TypeId.
+        /// @param eventDetail `event_detail`: its action element (`Authenticate`).
+        /// @param action      Its fixed Action, or null.
+        /// @param description Its fixed Description, or null.
+        public record Translation(String typeId, String eventDetail, String action, String description) {
+
+            /// Reads one from JSON-like values, laxly, every error collected.
+            ///
+            /// @param reader The reader, collecting the errors.
+            /// @param input  The value given.
+            /// @param loc    Where it is.
+            /// @return It, or null (with the errors noted) if it doesn't read.
+            public static Translation read(final ModelReader reader, final Object input, final List<Object> loc) {
+                final ModelReader.Fields fields = reader.fields(input, loc, "Translation");
+                if (fields == null) {
+                    return null;
+                }
+                final Translation translation = new Translation(fields.optionalString("type_id"),
+                        fields.optionalString("event_detail"), fields.optionalString("action"),
+                        fields.optionalString("description"));
+                return fields.ok()
+                        ? translation
+                        : null;
+            }
+
+            /// @return It as JSON.
+            public Map<String, Object> toJson() {
+                final Map<String, Object> out = new LinkedHashMap<>();
+                out.put("type_id", typeId);
+                out.put("event_detail", eventDetail);
+                out.put("action", action);
+                out.put("description", description);
+                return out;
+            }
         }
     }
 

@@ -111,6 +111,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     private final EventVersions eventVersions;
     // An aggregated feed's source type groups; none in tests that make the tool themselves.
     private Provider<SourceTypeGroups> groupsProvider;
+    // The build's catalogue of event types; none in tests that make the tool themselves.
+    private Provider<CatalogueNotes> catalogueNotesProvider;
 
     @Inject
     CreatePipelineTool(final PipelineWrites writes,
@@ -140,6 +142,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     @Inject
     void setGroups(final Provider<SourceTypeGroups> groups) {
         this.groupsProvider = groups;
+    }
+
+    /// Where the build's catalogue of event types is kept (set by injection; none in tests that make the tool
+    /// themselves): a next version of a promoted pipeline starts from the promoted catalogue.
+    ///
+    /// @param catalogueNotes The build's catalogue.
+    @Inject
+    void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
+        this.catalogueNotesProvider = catalogueNotes;
     }
 
     @Override
@@ -494,6 +505,11 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         }
         if (previous != null) {
             result.put("version_of", previous.getName());
+            if (catalogueNotesProvider != null && guard.buildOf(previous.asDocRef()).isEmpty()) {
+                // A next version of a promoted pipeline starts from the promoted catalogue of event types.
+                catalogueNotesProvider.get().carryInto(build, previous.asDocRef())
+                        .ifPresent(said -> result.put("source_notes", said));
+            }
         }
         if (!left.isEmpty()) {
             result.put("set_in_" + previous.getName() + "_not_here", left);

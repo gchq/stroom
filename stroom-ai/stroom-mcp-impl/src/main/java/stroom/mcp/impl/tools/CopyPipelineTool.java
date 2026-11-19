@@ -91,6 +91,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private Provider<SourceTypeGroups> groupsProvider;
     // The build's test indexes; none in tests that make the tool themselves.
     private Provider<BuildTestIndexes> testIndexesProvider;
+    // The build's catalogue of event types; none in tests that make the tool themselves.
+    private Provider<CatalogueNotes> catalogueNotesProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -133,6 +135,15 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     @Inject
     void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
         this.testIndexesProvider = testIndexes;
+    }
+
+    /// Where the build's catalogue of event types is kept (set by injection; none in tests that make the tool
+    /// themselves): a new version of a promoted pipeline starts from the promoted catalogue.
+    ///
+    /// @param catalogueNotes The build's catalogue.
+    @Inject
+    void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
+        this.catalogueNotesProvider = catalogueNotes;
     }
 
     @Override
@@ -367,6 +378,11 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                     .map(BuildTestIndexes.TestIndex::said)
                     .toList()) + " Make no test index of your own: this one is the build's, and is tidied up at "
                                + "promotion.");
+        }
+        if (promoted && catalogueNotesProvider != null) {
+            // A next version starts from the promoted catalogue of event types: its source notes carried in.
+            catalogueNotesProvider.get().carryInto(build, new DocRef(PipelineDoc.TYPE, sourceUuid,
+                    source.getName())).ifPresent(notes::add);
         }
         if (!notes.isEmpty()) {
             result.put("note", String.join("; ", notes));
