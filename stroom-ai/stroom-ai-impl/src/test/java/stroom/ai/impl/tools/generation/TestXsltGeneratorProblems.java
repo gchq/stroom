@@ -114,6 +114,23 @@ class TestXsltGeneratorProblems extends XsltRuns {
     }
 
     @Test
+    void aCatchAllAfterARuleTakingEveryRecordIsAProblemSayingToLeaveItOut() {
+        // A sole event type (recognised by every record) takes every record: the catch-all after it would catch
+        // nothing, so the translation leaves it out; one written there is named, saying so.
+        final Map<String, Object> json = baseJson();
+        final Map<String, Object> catchAll = new LinkedHashMap<>(otherRule());
+        catchAll.put("catch_all", true);
+        json.put("events", List.of(rule("every", List.of(), LOGON), catchAll));
+
+        assertThat(generate(TranslationMapping.fromJson(json)).problems())
+                .anyMatch(problem -> problem.contains("'every' has no conditions, so it takes every record")
+                                     && problem.contains("leave the catch-all rule out"));
+        json.put("events", List.of(rule("every", List.of(), LOGON)));
+        assertThat(generate(TranslationMapping.fromJson(json)).problems())
+                .noneMatch(problem -> problem.contains("no conditions"));
+    }
+
+    @Test
     void aRuleAnEarlierRuleAlwaysTakesIsAProblem() {
         // Seen: a draft's user_logon (action Login or Login Failed) kept above the agent's own user_login, which
         // never wrote an event; the documentation said of it "none in the sample".

@@ -2321,7 +2321,13 @@ public final class XsltGenerator {
                 .filter(rule -> rule.when().isEmpty())
                 .map(EventRule::name)
                 .toList();
-        if (!catchAll.isEmpty()) {
+        if (catchAll.size() == 1 && rules.size() >= 2 && rules.get(rules.size() - 2).when().isEmpty()
+            && rules.getLast().catchAll()) {
+            // A sole event type, recognised by every record: the catch-all after it would catch nothing.
+            note(problems, "Rule " + ToolText.repr(catchAll.getFirst()) + " has no conditions, so it takes every "
+                           + "record and the catch-all rule " + ToolText.repr(rules.getLast().name())
+                           + " after it catches nothing: leave the catch-all rule out");
+        } else if (!catchAll.isEmpty()) {
             note(problems, "Rules " + ToolText.list(catchAll) + " have no conditions, so the rules after them "
                            + "never run; put the rule without conditions last");
         }
