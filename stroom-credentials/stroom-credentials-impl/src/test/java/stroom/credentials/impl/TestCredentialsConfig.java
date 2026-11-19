@@ -24,6 +24,7 @@ import stroom.util.config.ConfigValidator.Result;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.UserType;
+import stroom.util.time.StroomDuration;
 import stroom.util.validation.ValidationModule;
 
 import com.google.inject.Guice;
@@ -46,6 +47,28 @@ class TestCredentialsConfig {
         assertThat(config.getKeyStoreFiles()).isEmpty();
         assertThat(config.getKeyStoreFilesOwnerSubjectId()).isEqualTo(User.ADMINISTRATORS_GROUP_SUBJECT_ID);
         assertThat(config.getKeyStoreFilesOwnerType()).isEqualTo(UserType.GROUP);
+        assertThat(config.isRefuseExpiredCredentials()).isFalse();
+        assertThat(config.getExpiryWarningPeriod()).isEqualTo(StroomDuration.ofDays(14));
+    }
+
+    @Test
+    void testReadExpirySettings() {
+        final CredentialsConfig config = JsonUtil.readValue("""
+                {
+                  "refuseExpiredCredentials": true,
+                  "expiryWarningPeriod": "P30D"
+                }""", CredentialsConfig.class);
+
+        assertThat(config.isRefuseExpiredCredentials()).isTrue();
+        assertThat(config.getExpiryWarningPeriod()).isEqualTo(StroomDuration.ofDays(30));
+    }
+
+    @Test
+    void testExpirySettingsDefaultWhenNotSet() {
+        final CredentialsConfig config = JsonUtil.readValue("{}", CredentialsConfig.class);
+
+        assertThat(config.isRefuseExpiredCredentials()).isFalse();
+        assertThat(config.getExpiryWarningPeriod()).isEqualTo(CredentialsConfig.DEFAULT_EXPIRY_WARNING_PERIOD);
     }
 
     @Test
@@ -105,6 +128,8 @@ class TestCredentialsConfig {
                         "/etc/stroom/certs/one.p12",
                         "my secret pass phrase")),
                 null,
+                null,
+                null,
                 null);
 
         assertThat(config.toString())
@@ -125,6 +150,8 @@ class TestCredentialsConfig {
                 List.of(
                         new KeyStoreFileCredentialConfig("keystore 1", null, "/etc/stroom/certs/one.p12", null),
                         new KeyStoreFileCredentialConfig(" ", null, null, null)),
+                null,
+                null,
                 null,
                 null);
 
@@ -147,6 +174,8 @@ class TestCredentialsConfig {
                 null,
                 null,
                 List.of(new KeyStoreFileCredentialConfig("keystore 1", null, "/etc/stroom/certs/one.p12", null)),
+                null,
+                null,
                 null,
                 null);
 

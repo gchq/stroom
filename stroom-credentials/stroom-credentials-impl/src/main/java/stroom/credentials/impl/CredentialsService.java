@@ -84,6 +84,7 @@ public class CredentialsService implements StoredSecrets {
     private final PathCreator pathCreator;
     private final Provider<CredentialsConfig> credentialsConfigProvider;
     private final KeyStoreFilePathChecker keyStoreFilePathChecker;
+    private final CredentialExpiryChecker credentialExpiryChecker;
 
     @SuppressWarnings("unused")
     @Inject
@@ -93,7 +94,8 @@ public class CredentialsService implements StoredSecrets {
                               final Provider<ResourceStore> resourceStoreProvider,
                               final PathCreator pathCreator,
                               final Provider<CredentialsConfig> credentialsConfigProvider,
-                              final KeyStoreFilePathChecker keyStoreFilePathChecker) {
+                              final KeyStoreFilePathChecker keyStoreFilePathChecker,
+                              final CredentialExpiryChecker credentialExpiryChecker) {
         this.credentialsDao = credentialsDao;
         this.securityContext = securityContext;
         this.permissionServiceProvider = permissionServiceProvider;
@@ -101,6 +103,7 @@ public class CredentialsService implements StoredSecrets {
         this.pathCreator = pathCreator;
         this.credentialsConfigProvider = credentialsConfigProvider;
         this.keyStoreFilePathChecker = keyStoreFilePathChecker;
+        this.credentialExpiryChecker = credentialExpiryChecker;
     }
 
     /// Provides a decoration function that will add security permissions to supplied credentials.
@@ -480,6 +483,8 @@ public class CredentialsService implements StoredSecrets {
 
         final DocRef docRef = storedSecret.credential().asDocRef();
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
+            // Every use of a secret, including getKeyStore(), comes through here
+            credentialExpiryChecker.check(storedSecret.credential());
             return storedSecret;
         } else {
             throw new PermissionException(securityContext.getUserRef(),

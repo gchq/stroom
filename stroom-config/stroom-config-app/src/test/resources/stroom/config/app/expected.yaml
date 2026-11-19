@@ -266,10 +266,12 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    expiryWarningPeriod: "P14D"
     keyStoreCachePath: "${stroom.home}/keystores"
     keyStoreFiles: []
     keyStoreFilesOwnerSubjectId: "Administrators"
     keyStoreFilesOwnerType: "GROUP"
+    refuseExpiredCredentials: false
   crossModule:
     db:
       connection:

@@ -97,7 +97,8 @@ class TestCredentialsService {
                 () -> resourceStore,
                 pathCreator,
                 credentialsConfigProvider,
-                new KeyStoreFilePathChecker(pathCreator, credentialsConfigProvider));
+                new KeyStoreFilePathChecker(pathCreator, credentialsConfigProvider),
+                new CredentialExpiryChecker(credentialsConfigProvider));
         // Lenient as getKeyStore() is used internally so doesn't check the app permission
         lenient().when(securityContext.hasAppPermission(AppPermission.CREDENTIALS)).thenReturn(true);
     }
@@ -699,6 +700,41 @@ class TestCredentialsService {
         verify(credentialsDao).updateSecret(any());
     }
 
+    @Test
+    void testGetExpiredCredentialIsRefusedWhenConfigured() {
+        credentialsConfig = new CredentialsConfig(null, null, null, null, null, null, true, null);
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        when(credentialsDao.getStoredSecretByName("a credential")).thenReturn(createExpiredStoredSecret());
+
+        assertThatThrownBy(() -> credentialsService.get("a credential"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("expired");
+    }
+
+    @Test
+    void testGetKeyStoreOfExpiredCredentialIsRefusedWhenConfigured() {
+        credentialsConfig = new CredentialsConfig(null, null, null, null, null, null, true, null);
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        when(credentialsDao.getStoredSecretByName("a credential")).thenReturn(createExpiredStoredSecret());
+
+        assertThatThrownBy(() -> credentialsService.getKeyStore("a credential"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("expired");
+    }
+
+    @Test
+    void testGetExpiredCredentialIsAllowedByDefault() {
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        final StoredSecret expired = createExpiredStoredSecret();
+        when(credentialsDao.getStoredSecretByName("a credential")).thenReturn(expired);
+
+        assertThat(credentialsService.get("a credential"))
+                .isSameAs(expired);
+    }
+
     /// The file is used where it is, so a key store replaced on disk (e.g. by cert-manager) is
     /// picked up without changing the credential.
     @Test
@@ -745,7 +781,8 @@ class TestCredentialsService {
     /// Creates a key store in an allowed dir and allows that dir in the config.
     private Path createAllowedKeyStoreFile(final Path tempDir, final String password) throws Exception {
         final Path allowedDir = Files.createDirectories(tempDir.resolve("certs"));
-        credentialsConfig = new CredentialsConfig(null, null, List.of(allowedDir.toString()), null, null, null);
+        credentialsConfig = new CredentialsConfig(
+                null, null, List.of(allowedDir.toString()), null, null, null, null, null);
         // Lenient as not every test gets as far as checking the allowed dirs
         lenient().when(pathCreator.toAppPath(allowedDir.toString())).thenReturn(allowedDir);
         lenient().when(credentialsDao.findCredentials(any(), any()))
@@ -820,6 +857,12 @@ class TestCredentialsService {
     private StoredSecret createStoredSecret() {
         return new StoredSecret(createStoredCredential(),
                 new UsernamePasswordSecret("user", "old password"),
+                null);
+    }
+
+    private StoredSecret createExpiredStoredSecret() {
+        return new StoredSecret(createCredential("a credential", CredentialType.USERNAME_PASSWORD, 1_000L),
+                new UsernamePasswordSecret("user", "password"),
                 null);
     }
 
