@@ -2892,7 +2892,9 @@ tells a source's event types apart; a combination does.
 writes, what each means, and how a record of each is recognised. The agent proposes the event types; the tools give
 it the evidence and check every proposal mechanically against every sampled record; the user confirms them. Product
 knowledge is the model's; exact checking is the tools'. No phrase inference (dropped 2026-11-09 as fragile); no
-field-specific heuristics. Not in production, so nothing is migrated: kind fields, `within`, pattern kinds,
+field-specific heuristics; **no source-specific application code**: what a product writes is the agent's
+knowledge, held as data in the source notes, and the tools stay generic (format-level knowledge, JSON, XML, CEF, syslog,
+CSV, stays), every phase reviewed against this. Not in production, so nothing is migrated: kind fields, `within`, pattern kinds,
 `whole_kind` and the per-format catch-all inference go.
 
 #### Words
@@ -2949,8 +2951,9 @@ Windows `EventID`, a FortiGate `logid`, Pega's `logger_name`), except the source
 named after the field (`<Data Name="EventID" Value="4624"/>`), so searching by the vendor's code still works.
 
 **TypeId default.** When a proposal gives none: the event detail element as the verb, and as the object the type's
-`affected_as`, else the last segment of its first `equals` value with common suffixes dropped (`Impl`, `Service`,
-`Processor`), else its title's first noun; e.g. `Process-SOAPService`. The user sees and may change it in the
+`affected_as`, else the last segment of its first `equals` value as it is, else its title's first noun; e.g.
+`Process-SOAPService`. No tidying of names in code (no suffix lists): the agent's proposal or the user's amendment
+tidies it. The user sees and may change it in the
 confirmation table.
 
 **Order.** The tool keeps the catalogue's ways of recognising types ordered more specific first (more conditions
