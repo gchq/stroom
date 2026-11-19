@@ -98,7 +98,7 @@ shadowJar {
     archiveFileName = fatJarName
 }
 
-def proxyDockerBuildDir = "${projectDir}/docker/build"
+def proxyDockerBuildDir = "${rootDir}/docker/stroom-proxy/build"
 clean {
     delete proxyDockerBuildDir
 }

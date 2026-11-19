@@ -67,21 +67,26 @@ do_docker_builds() {
     "${BLUE}gchq/stroom:${DOCKER_IMAGE_TAG}${NC} for commit" \
     "${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
+  # Shared docker context root and dockerfile for stroom and proxy
+  # '--target' defines build stage to build
+ 
   docker build \
+    --target stroom_final_stage \
     --tag gchq/stroom:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
     --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
-    ./stroom-app/docker
+    ./docker
 
   echo -e "${GREEN}Building stroom-proxy docker image" \
     "${BLUE}gchq/stroom-proxy:${DOCKER_IMAGE_TAG}${NC} for commit" \
     "${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
   docker build \
+    --target stroom_proxy_final_stage \
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
     --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
-    ./stroom-proxy/stroom-proxy-app/docker
+    ./docker
 }
 
 main() {
@@ -102,14 +107,10 @@ main() {
   if [ "$mode" = "skipGradle" ]; then
     echo -e "${GREEN}Skipping gradle build${NC}"
   else
-    do_gradle_build
+    do_gradle_build || exit 1
   fi
 
-  if [ $? -ne 0 ]; then
-    exit 1
-  fi
-
-  do_docker_builds
+  do_docker_builds || exit 1
 
   echo -e "${GREEN}Done${NC}"
 }

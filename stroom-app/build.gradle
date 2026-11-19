@@ -43,7 +43,7 @@ def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v3.4.0'
 def releaseBuildDir = "${projectDir}/build/release"
 def stroomZipDistContentPacksDir = "${releaseBuildDir}/content_packs"
-def stroomDockerBuildDir = "${projectDir}/docker/build"
+def stroomDockerBuildDir = "${rootDir}/docker/stroom/build"
 def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 
 apply plugin: 'application'

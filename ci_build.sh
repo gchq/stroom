@@ -48,9 +48,9 @@
 set -eo pipefail
 
 STROOM_DOCKER_REPO="gchq/stroom"
+STROOM_DOCKER_BUILD_TARGET="stroom_final_stage"
 STROOM_PROXY_DOCKER_REPO="gchq/stroom-proxy"
-STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
-STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-proxy/stroom-proxy-app/docker/."
+STROOM_PROXY_DOCKER_BUILD_TARGET="stroom_proxy_final_stage"
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -246,8 +246,8 @@ gather_release_artefacts() {
   local -r release_config_dir="${BUILD_DIR}/stroom-app/build/release/config"
   local -r proxy_release_config_dir="${BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/release/config"
 
-  local -r docker_build_dir="${BUILD_DIR}/stroom-app/docker/build"
-  local -r proxy_docker_build_dir="${BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build"
+  local -r docker_build_dir="${BUILD_DIR}/docker/stroom/build"
+  local -r proxy_docker_build_dir="${BUILD_DIR}/docker/stroom-proxy/build"
 
   echo "Copying release artefacts to ${RELEASE_ARTEFACTS_DIR}"
 
@@ -350,7 +350,7 @@ format_manifest_file() {
   mv "${temp_file}" "${RELEASE_MANIFEST}"
 }
 
-# args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
+# args: dockerRepo buildTarget tag1VersionPart tag2VersionPart ... tagNVersionPart
 releaseToDockerHub() {
   # echo "releaseToDockerHub called with args [$@]"
 
@@ -359,7 +359,7 @@ releaseToDockerHub() {
     exit 1
   fi
   dockerRepo="$1"
-  contextRoot="$2"
+  buildTarget="$2"
   # shift the the args so we can loop round the open ended list of tags,
   # $1 is now the first tag
   shift 2
@@ -380,15 +380,16 @@ releaseToDockerHub() {
 
   echo "::group::Docker build (${dockerRepo})"
   echo -e "Building a ${GREEN}${dockerRepo}${NC} docker image"
-  echo -e "Tags:        [${GREEN}${allTagArgs[*]}${NC}]"
-  echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
-  echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
+  echo -e "Repo:              [${GREEN}${dockerRepo}${NC}]"
+  echo -e "Target:            [${GREEN}${buildTarget}${NC}]"
+  echo -e "Tags:              [${GREEN}${allTagArgs[*]}${NC}]"
   # If we have a BUILD_TAG (git tag) then use that, else use the floating tag
   docker build \
     "${allTagArgs[@]}" \
+    --target "${buildTarget}" \
     --build-arg GIT_COMMIT="${BUILD_COMMIT}" \
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
-    "${contextRoot}"
+    "./docker"
   echo "::endgroup::"
 
   # Vulns with no-fix available, so just log them so we can investigate
@@ -704,13 +705,13 @@ if [ "$doDockerBuild" = true ]; then
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
-    "${STROOM_DOCKER_CONTEXT_ROOT}" \
+    "${STROOM_DOCKER_BUILD_TARGET}" \
     "${allDockerTags[@]}"
 
   # build and release stroom-proxy image to dockerhub
   releaseToDockerHub \
     "${STROOM_PROXY_DOCKER_REPO}" \
-    "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
+    "${STROOM_PROXY_DOCKER_BUILD_TARGET}" \
     "${allDockerTags[@]}"
 fi
 
