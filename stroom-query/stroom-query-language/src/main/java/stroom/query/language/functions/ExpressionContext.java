@@ -94,12 +94,13 @@ public class ExpressionContext {
         }
         final ExpressionContext that = (ExpressionContext) o;
         return maxStringLength == that.maxStringLength &&
-                Objects.equals(dateTimeSettings, that.dateTimeSettings);
+                Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
+                Objects.equals(window, that.window);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxStringLength, dateTimeSettings);
+        return Objects.hash(maxStringLength, dateTimeSettings, window);
     }
 
     @Override
@@ -107,6 +108,7 @@ public class ExpressionContext {
         return "ExpressionContext{" +
                 "maxStringLength=" + maxStringLength +
                 ", dateTimeSettings=" + dateTimeSettings +
+                ", window=" + window +
                 '}';
     }
 

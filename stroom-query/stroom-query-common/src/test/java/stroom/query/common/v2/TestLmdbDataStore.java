@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestLmdbDataStore extends AbstractDataStoreTest {
 
@@ -195,6 +196,30 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .first()
                 .satisfies(message -> assertThat(message.getMessage())
                         .contains("Rows with no time in the window field 'EventTime' are left out"));
+    }
+
+    // A table need not come from StroomQL, which is where the limits on a window are first applied.
+    @Test
+    void windowThatStroomQlWouldRefuseIsRefusedByTheStore() {
+        assertThatThrownBy(() -> create(windowTable("1d", "1m")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Each event would be in 1440 windows, and the most allowed is 100");
+
+        final TableSettings notGrouped = TableSettings.builder()
+                .window(new HoppingWindow("EventTime", "1h", "30m", null, "Z"))
+                .addColumns(Column.builder().id("Events").name("Events").expression("count()").build())
+                .build();
+        assertThatThrownBy(() -> create(notGrouped))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must have a column that is grouped by windowKey()");
+
+        final TableSettings noTimeField = windowTable("1d", null)
+                .copy()
+                .window(new HoppingWindow(null, "1d", null, null, "Z"))
+                .build();
+        assertThatThrownBy(() -> create(noTimeField))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("has no time field");
     }
 
     // A table of events per user per window, as `window EventTime by <size> advance <advance>` with

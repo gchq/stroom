@@ -214,7 +214,6 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             return valueList.stream()
                     .map(annotationValues -> {
                         final StoredValues copy = storedValues.copy();
-                        copy.setWindowKey(storedValues.getWindowKey());
                         for (final Mutator mutator : mutators) {
                             mutator.mutate(copy, annotationValues);
                         }

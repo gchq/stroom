@@ -139,6 +139,24 @@ class TestSearchRequestFactoryWindow {
     }
 
     @Test
+    void windowFunctionInAnEvalBeforeTheWindowClause() {
+        final TableSettings tableSettings = table("""
+                from events
+                eval Day = windowStart()
+                window EventTime by 1d
+                select Day, count() as Events""");
+
+        assertThat(column(tableSettings, "Day").getExpression()).isEqualTo("windowStart('window:1d|||Z')");
+    }
+
+    @Test
+    void onlyOneWindowClauseIsAllowed() {
+        assertThatThrownBy(() -> table(
+                "from events window EventTime by 1d window EventTime by 1h select count() as Events"))
+                .isInstanceOf(TokenException.class);
+    }
+
+    @Test
     void windowFunctionNeedsAWindowClause() {
         assertThatThrownBy(() -> table("from events select windowStart() as Starts"))
                 .isInstanceOf(TokenException.class)

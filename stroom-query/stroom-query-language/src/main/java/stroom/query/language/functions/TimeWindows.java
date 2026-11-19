@@ -66,6 +66,10 @@ import java.util.function.LongConsumer;
 /// than the end that [#getWindowEnd(long)] gives for its window.
 public final class TimeWindows {
 
+    /// The most windows that one time may be in. Every row is copied once for each window it is in,
+    /// so this limits how much a hopping window multiplies the rows of a query.
+    public static final int MAX_WINDOWS_PER_TIME = 100;
+
     private static final long MILLIS_PER_SECOND = 1_000L;
     private static final long MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
     private static final long MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
@@ -334,7 +338,10 @@ public final class TimeWindows {
     /// @param consumer Receives the key of each window.
     public void forEachWindow(final long timeMs, final LongConsumer consumer) {
         final long latest = switch (alignment) {
-            case FIXED -> floorToSlide(timeMs + getStandardOffsetMillis(timeMs)) - getStandardOffsetMillis(timeMs);
+            case FIXED -> {
+                final long standardOffsetMillis = getStandardOffsetMillis(timeMs);
+                yield floorToSlide(timeMs + standardOffsetMillis) - standardOffsetMillis;
+            }
             case LOCAL_DAY -> floorToSlide(toLocalMillis(timeMs));
             case MONTH -> floorToSlideMonth(timeMs);
         };

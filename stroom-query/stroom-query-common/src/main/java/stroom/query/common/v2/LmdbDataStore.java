@@ -53,6 +53,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
@@ -92,6 +93,7 @@ public class LmdbDataStore implements DataStore {
     private static final long COMMIT_FREQUENCY_MS = 10000;
     private static final long WAIT_WARN_FREQUENCY_MS = 30_000;
     private static final int MAX_LIST_SIZE = 10_000;
+    private static final String WINDOW_KEY_FUNCTION = "windowKey(";
 
     private final LmdbEnv env;
     // The env is built with MDB_NOTLS and maxReaders(1), so only one read txn may exist at a
@@ -180,7 +182,7 @@ public class LmdbDataStore implements DataStore {
                         .orElse(SourceType.DASHBOARD_UI);
 
         if (tableSettings.getWindow() instanceof final HoppingWindow hoppingWindow) {
-            timeWindows = TimeWindows.create(hoppingWindow);
+            timeWindows = createTimeWindows(hoppingWindow, tableSettings);
             windowTimeField = hoppingWindow.getTimeField();
             windowTimeFieldIndex = fieldIndex.create(windowTimeField);
         } else {
@@ -275,11 +277,37 @@ public class LmdbDataStore implements DataStore {
         if (valueFilter.test(values)) {
             // Now add the rows if we aren't filtering.
             if (timeWindows == null) {
-                addInternal(values, 0);
+                addInternal(values, 0, currentDbStateFactory.createCurrentDbState(values));
             } else {
                 addToWindows(values);
             }
         }
+    }
+
+    // StroomQL only gives a table windows that fit these rules, but a table can also come from a
+    // request that was not parsed from StroomQL, so they are checked again here.
+    private static TimeWindows createTimeWindows(final HoppingWindow window, final TableSettings tableSettings) {
+        if (NullSafe.isBlankString(window.getTimeField())) {
+            throw new IllegalArgumentException("The window of a table has no time field");
+        }
+        final TimeWindows timeWindows = TimeWindows.create(window);
+        if (timeWindows.getWindowsPerTime() > TimeWindows.MAX_WINDOWS_PER_TIME) {
+            throw new IllegalArgumentException("Each event would be in " + timeWindows.getWindowsPerTime()
+                                               + " windows, and the most allowed is "
+                                               + TimeWindows.MAX_WINDOWS_PER_TIME);
+        }
+        // Every row is copied into each of its windows, so unless rows are grouped by window the
+        // copies would be counted together.
+        final boolean groupedByWindow = NullSafe.list(tableSettings.getColumns())
+                .stream()
+                .anyMatch(column -> column.getGroup() != null
+                                    && column.getExpression() != null
+                                    && column.getExpression().startsWith(WINDOW_KEY_FUNCTION));
+        if (!groupedByWindow) {
+            throw new IllegalArgumentException("A table with a window must have a column that is grouped by "
+                                               + WINDOW_KEY_FUNCTION + ")");
+        }
+        return timeWindows;
     }
 
     // Adds a row once for each time window it is in, so that it is grouped into each of them.
@@ -298,18 +326,19 @@ public class LmdbDataStore implements DataStore {
             }
             return;
         }
-        timeWindows.forEachWindow(timeMs, windowKey -> addInternal(values, windowKey));
+        final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
+        timeWindows.forEachWindow(timeMs, windowKey -> addInternal(values, windowKey, currentDbState));
     }
 
+    // The current DB state is a reference to the current event, so we can keep track of what we have
+    // stored data for.
     private void addInternal(final Val[] values,
-                             final long windowKey) {
+                             final long windowKey,
+                             final CurrentDbState currentDbState) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
         LOGGER.trace("add() called for {} values", values.length);
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
-
-        // Get a reference to the current event so we can keep track of what we have stored data for.
-        final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
 
         ByteBuffer parentRowKey = null;
         final LmdbKV[] rows = new LmdbKV[groupIndicesByDepth.length];

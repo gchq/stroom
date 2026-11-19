@@ -92,10 +92,8 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 2);
     }
 
-    /**
-     * A year window gives the same detections as grouping by the year that each event is in, which is what
-     * {@link #testHavingCount()} does.
-     */
+    // A year window gives the same detections as grouping by the year that each event is in, which is
+    // what testHavingCount() does.
     @Test
     void testWindowCount() {
         final String query = """

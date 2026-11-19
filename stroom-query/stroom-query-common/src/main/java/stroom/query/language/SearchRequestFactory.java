@@ -89,7 +89,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SearchRequestFactory {
@@ -103,7 +102,6 @@ public class SearchRequestFactory {
     private static final String WINDOW_START_FUNCTION = "windowStart()";
     private static final String WINDOW_EXAMPLE = "as in 'window EventTime by 1d advance 1h offset 6h'";
     // The most windows one event may be in. A query that would put an event in more is refused.
-    private static final int MAX_WINDOW_COPIES_PER_EVENT = 100;
     public static final String VIS_COMPONENT_ID = "vis";
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
@@ -214,6 +212,9 @@ public class SearchRequestFactory {
         private final List<AbstractToken> additionalFields = new ArrayList<>();
         private boolean inHaving;
         private boolean hasWindow;
+        // The windows of the query's window clause, which are parsed before any other clause so that
+        // a window function can be written in a clause that comes before it.
+        private HoppingWindow window;
 
         // True if this builder parses a bracketed query inside another query.
         private final boolean bracketed;
@@ -950,6 +951,17 @@ public class SearchRequestFactory {
             final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
             TableSettings visTableSettings = null;
 
+            // An eval clause can come before the window clause and use a window function, so the
+            // windows are needed before the clauses are worked through in order.
+            for (final AbstractToken token : tokens) {
+                if (window == null
+                    && token instanceof final KeywordGroup keywordGroup
+                    && TokenType.WINDOW.equals(keywordGroup.getTokenType())) {
+                    window = parseWindow(keywordGroup);
+                    expressionContext = expressionContext.copy().window(window).build();
+                }
+            }
+
             List<AbstractToken> remaining = new LinkedList<>(tokens);
             while (!remaining.isEmpty()) {
                 final AbstractToken token = remaining.getFirst();
@@ -1152,7 +1164,7 @@ public class SearchRequestFactory {
             return resultRequests;
         }
 
-        // Parses a window clause, as in `window EventTime by 1d advance 1h offset 6h`.
+        // Adds the windows of a window clause to the table, once the clauses before it are known.
         private void processWindow(final KeywordGroup keywordGroup,
                                    final TableSettings.Builder builder,
                                    final Query.Builder queryBuilder) {
@@ -1160,6 +1172,16 @@ public class SearchRequestFactory {
                 throw new TokenException(keywordGroup, "A window clause can't be used in a query that has a "
                                                        + "join with a time window, as in 'within 10m after'");
             }
+            checkWindowFieldIsDate(keywordGroup.getChildren().getFirst(), window.getTimeField(), queryBuilder);
+
+            // Make sure the time field is fetched.
+            fieldIndex.create(window.getTimeField());
+            builder.window(window);
+            hasWindow = true;
+        }
+
+        // Parses a window clause, as in `window EventTime by 1d advance 1h offset 6h`.
+        private HoppingWindow parseWindow(final KeywordGroup keywordGroup) {
             final List<AbstractToken> children = new ArrayList<>(keywordGroup.getChildren());
 
             // Get the time field.
@@ -1225,19 +1247,12 @@ public class SearchRequestFactory {
             } catch (final IllegalArgumentException e) {
                 throw new TokenException(keywordGroup, e.getMessage());
             }
-            if (timeWindows.getWindowsPerTime() > MAX_WINDOW_COPIES_PER_EVENT) {
+            if (timeWindows.getWindowsPerTime() > TimeWindows.MAX_WINDOWS_PER_TIME) {
                 throw new TokenException(keywordGroup, "Each event would be in "
                         + timeWindows.getWindowsPerTime() + " windows, and the most allowed is "
-                        + MAX_WINDOW_COPIES_PER_EVENT + ". Use a larger advance or a smaller window");
+                        + TimeWindows.MAX_WINDOWS_PER_TIME + ". Use a larger advance or a smaller window");
             }
-            checkWindowFieldIsDate(fieldToken, field, queryBuilder);
-
-            // Make sure the time field is fetched, and let the window functions of later clauses find
-            // the windows.
-            fieldIndex.create(field);
-            expressionContext = expressionContext.copy().window(window).build();
-            builder.window(window);
-            hasWindow = true;
+            return window;
         }
 
         private String removeWindowDuration(final List<AbstractToken> children,
@@ -1265,8 +1280,10 @@ public class SearchRequestFactory {
             if (dataSource == null || joinClauses.hasBracketedFrom()) {
                 return;
             }
+            // The filter matches any field with the name in it, so every match is asked for to be
+            // sure that the field itself is among them.
             final FindFieldCriteria criteria = new FindFieldCriteria(
-                    PageRequest.createDefault(),
+                    PageRequest.unlimited(),
                     FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSource,
                     field,
@@ -1853,15 +1870,5 @@ public class SearchRequestFactory {
             set.removeAll(tokenTypes);
             return set;
         }
-    }
-
-    private static int getTokenIndex(final List<AbstractToken> tokens, final Predicate<AbstractToken> predicate) {
-        for (int i = 0; i < tokens.size(); i++) {
-            final AbstractToken token = tokens.get(i);
-            if (predicate.test(token)) {
-                return i;
-            }
-        }
-        return -1;
     }
 }
