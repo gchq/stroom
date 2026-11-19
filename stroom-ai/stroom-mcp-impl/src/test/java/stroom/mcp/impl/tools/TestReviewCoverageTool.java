@@ -325,6 +325,55 @@ class TestReviewCoverageTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void recordsTheCatchAllCaughtAreGroupedByShapeAndProposedForTheCatalogue() {
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
+                List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of()),
+                        new CoverageReads.ErrorStream(12, 5L, 1_790_000_200_000L, Map.of())), null));
+        // Two views (one a stream) and an export, caught by the catch-all; a rule's own Unknown kept apart.
+        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 11, "uncatalogued", Map.of("action", "view",
+                        "resource", "Payroll"), true),
+                new CoverageReads.Logged(5, 1_790_000_200_000L, 31, "uncatalogued", Map.of("action", "view",
+                        "resource", "Firewall"), true),
+                new CoverageReads.Logged(5, 1_790_000_200_000L, 32, "uncatalogued", Map.of("action", "export"),
+                        true),
+                new CoverageReads.Logged(5, 1_790_000_200_000L, 33, "status", Map.of("action", "status"))), 2))
+                .when(reads).logged(any(), any());
+        loggingXslt();
+        Mockito.when(guard.buildOf(any())).thenReturn(Optional.of("acme-v1"));
+        Mockito.when(guard.tags(any())).thenReturn(Set.of(WriteGuard.MANAGED));
+
+        final Map<String, Object> result = tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request(
+                "ev", null, 500, List.of(), false, null, List.of()));
+
+        final Map<String, Object> uncatalogued = (Map<String, Object>) result.get("uncatalogued");
+        final List<Map<String, Object>> shapes = (List<Map<String, Object>>) uncatalogued.get("shapes");
+        assertThat(shapes).extracting(shape -> shape.get("logged_by")).containsExactly(List.of("uncatalogued"),
+                List.of("uncatalogued"));
+        assertThat(shapes.getFirst().get("values")).isEqualTo(List.of(Map.of("action", "view", "resource",
+                "Payroll"), Map.of("action", "view", "resource", "Firewall")));
+        assertThat(shapes.getFirst().get("raw_streams")).isEqualTo(List.of(4L, 5L));
+        assertThat((List<?>) shapes.getFirst().get("examples")).hasSize(2);
+        assertThat(shapes.get(1).get("values")).isEqualTo(List.of(Map.of("action", "export")));
+        assertThat((String) uncatalogued.get("note")).contains("uncatalogued records", "event type");
+
+        // next: the catalogue, its event types for these records proposed with op: add, then confirmed.
+        final Map<String, Object> next = (Map<String, Object>) result.get("next");
+        assertThat(next).containsEntry("step", "catalogue");
+        final Map<String, Object> call = (Map<String, Object>) next.get("call");
+        assertThat(call).containsEntry("tool", "catalogue_event_types");
+        assertThat((Map<String, Object>) call.get("arguments")).containsEntry("build", "acme-v1")
+                .containsEntry("stream_ids", List.of(4L, 5L));
+        assertThat((String) next.get("do")).contains("op: add", "uncatalogued.shapes", "confirm: true")
+                .doesNotContain("kind");
+        assertThat((List<?>) next.get("then")).isNotEmpty();
+        assertThat((String) result.get("tell_user")).contains("2 shape(s) of uncatalogued records the catch-all "
+                                                              + "took")
+                .doesNotContain("classify_kinds");
+    }
+
+    @Test
     void countsCutShortByStroomsLimitOfLogLinesAreSaid() {
         Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
                 List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));

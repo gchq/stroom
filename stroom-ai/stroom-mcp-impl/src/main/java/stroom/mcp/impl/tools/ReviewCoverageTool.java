@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.catalogue.CaughtShapes;
 import stroom.ai.impl.tools.cef.CefDraft;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.cef.CefPlan;
@@ -117,6 +118,13 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
     /// The most records stepped for the Events a follow-on pipeline is checked against.
     static final int FOLLOW_ON_RECORDS = 200;
     static final String CANCELLED = "Reading was stopped: the call was cancelled.";
+    // The tool the uncatalogued records' event types are proposed with (catalogue_event_types).
+    static final String CATALOGUE_EVENT_TYPES = "catalogue_event_types";
+    // How a group the catch-all caught is found (found_as).
+    private static final String CAUGHT_BY = "caught by catch-all rule";
+    // The most logged values and examples a shape of uncatalogued records shows.
+    private static final int MOST_SHAPE_VALUES = 5;
+    private static final int MOST_SHAPE_EXAMPLES = 3;
     private static final DateTimeFormatter ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
 
@@ -457,6 +465,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         }
         tellUser(result, groups, affected, affectedList, keptUnknown, more, continued,
                 errors.size(), pipeline);
+        uncatalogued(result, groups, affectedList, pipeline);
         judged.ifPresent(told -> sourceTypesSaid(result, told));
         if (groupsProvider != null && kept.isPresent() && mapping != null && mapping.module() != null
             && mapping.module().isGroup()) {
@@ -608,7 +617,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 .sum();
         // A kept-Unknown or caught kind is logged once a stream, so its records aren't counted: said apart.
         final long caught = groups.stream()
-                .filter(g -> String.valueOf(g.get("found_as")).startsWith("caught by"))
+                .filter(ReviewCoverageTool::caught)
                 .count();
         final long kept = groups.stream().filter(g -> g.containsKey("streams")).count() - caught;
         result.put("tell_user", "Found untranslated events" + soFar + ": " + total + " record(s) of "
@@ -617,8 +626,9 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 : ", and " + kept + " kind(s) kept as Unknown (logged once a stream, so not counted)")
                                 + (caught == 0
                 ? ""
-                : ", and " + caught + " kind(s) a catch-all rule took (check each against the kinds classified: "
-                  + "one no one classified is the user's to classify, with classify_kinds)")
+                : ", and " + CaughtShapes.of(caughtValues(groups)).size() + " shape(s) of uncatalogued records the "
+                  + "catch-all took (" + caught + " group(s) of logged values; proposed as event types for the user "
+                  + "to confirm: uncatalogued)")
                                 + ", in " + affectedIds.size() + " raw stream(s). " + needed(groups.size() - kept,
                 kept));
         if (groups.size() == kept) {
@@ -662,6 +672,108 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 + "kinds are documented to the field; change = what was found and added (one version row when the "
                 + "build is promoted)",
                 reprocess));
+    }
+
+    // The records the catch-all caught in processing, grouped by shape and proposed for the catalogue (DESIGN.md,
+    // Event type catalogue, After the first build): `uncatalogued` with each shape's logged values and examples,
+    // and `next` names catalogue_event_types, the agent proposing an event type per shape (op: add), checked
+    // against the sample and these records, then confirmed by the user and applied in a new version.
+    private void uncatalogued(final Map<String, Object> result,
+                              final List<Map<String, Object>> groups,
+                              final List<Long> affectedIds,
+                              final DocRef pipeline) {
+        final List<Map<String, Object>> caught = groups.stream().filter(ReviewCoverageTool::caught).toList();
+        if (caught.isEmpty()) {
+            return;
+        }
+        final List<Map<String, Object>> shapes = new ArrayList<>();
+        for (final CaughtShapes.Shape shape : CaughtShapes.of(caughtValues(caught))) {
+            final Set<String> rules = new LinkedHashSet<>();
+            final List<Object> values = new ArrayList<>();
+            final Set<Long> rawStreams = new TreeSet<>();
+            final List<Map<String, Object>> examples = new ArrayList<>();
+            for (final int member : shape.members()) {
+                final Map<String, Object> group = caught.get(member);
+                rules.add(caughtRule(group));
+                if (values.size() < MOST_SHAPE_VALUES) {
+                    values.add(group.get("kind"));
+                }
+                JsonValues.listOrEmpty(group.get("raw_streams")).forEach(id -> rawStreams.add(((Number) id)
+                        .longValue()));
+                JsonValues.maps(group.get("examples")).stream()
+                        .limit(1)
+                        .filter(example -> examples.size() < MOST_SHAPE_EXAMPLES)
+                        .forEach(examples::add);
+            }
+            final Map<String, Object> said = new LinkedHashMap<>();
+            said.put("signature", shape.signature());
+            said.put("logged_by", List.copyOf(rules));
+            said.put("values", values);
+            said.put("raw_streams", List.copyOf(rawStreams));
+            said.put("examples", examples);
+            shapes.add(said);
+        }
+        final Map<String, Object> uncatalogued = new LinkedHashMap<>();
+        uncatalogued.put("shapes", shapes);
+        uncatalogued.put("note", "Records no event type of the catalogue recognises (uncatalogued records), which "
+                                 + "the catch-all translated as Unknown. Each shape (its logged values, the fields the "
+                                 + "rules test) is likely an event type of its own the sample didn't have.");
+        result.put("uncatalogued", uncatalogued);
+
+        final String build = guard.buildOf(pipeline).orElse(null);
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("build", NullSafe.nonBlankStringElse(build, "<the build of the new version>"));
+        arguments.put("stream_ids", affectedIds.subList(0, Math.min(EXACT_LIMIT, affectedIds.size())));
+        final Map<String, Object> next = new LinkedHashMap<>();
+        next.put("step", "catalogue");
+        next.put("do", (build == null
+                ? "The pipeline is in production: copy_pipeline into a build first (a new version), then "
+                : "")
+                       + "propose an event type for each shape of uncatalogued records (uncatalogued.shapes): "
+                       + CATALOGUE_EVENT_TYPES + " with proposals=[{op: add, type_id, title, event_detail, action, "
+                       + "recognised_by: [{when: [...]}] told by the shape's own fields and values, ...}], "
+                       + "stream_ids the build's sample streams and these raw streams, so each is checked against "
+                       + "the sample and the records caught; then confirm: true, for the user to confirm them. "
+                       + "draft_translation_mapping and build_translation_xslt then apply them in a new version of "
+                       + "the translation.");
+        final Map<String, Object> call = new LinkedHashMap<>();
+        call.put("tool", CATALOGUE_EVENT_TYPES);
+        call.put("arguments", arguments);
+        next.put("call", call);
+        next.put("then", result.get("next") instanceof final List<?> steps
+                ? steps
+                : List.of());
+        result.put("next", next);
+    }
+
+    // The values each caught group's records logged (none for a group whose XSLT logged none).
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, String>> caughtValues(final List<Map<String, Object>> groups) {
+        final List<Map<String, String>> values = new ArrayList<>();
+        for (final Map<String, Object> group : groups) {
+            if (!caught(group)) {
+                continue;
+            }
+            final Map<String, String> logged = new LinkedHashMap<>();
+            if (group.get("kind") instanceof final Map<?, ?> kind && !kind.containsKey("values")) {
+                ((Map<String, Object>) kind).forEach((name, value) -> logged.put(name, String.valueOf(value)));
+            }
+            values.add(logged);
+        }
+        return values;
+    }
+
+    private static boolean caught(final Map<String, Object> group) {
+        return String.valueOf(group.get("found_as")).startsWith(CAUGHT_BY);
+    }
+
+    // The catch-all rule that caught a group's records.
+    private static String caughtRule(final Map<String, Object> group) {
+        final String said = String.valueOf(group.get("found_as"));
+        final int quote = said.indexOf('\'');
+        return quote < 0
+                ? said
+                : said.substring(quote + 1, said.lastIndexOf('\''));
     }
 
     // What the mapping needs: a rule for each kind not kept as Unknown; those kept, as the user agreed, need none.
@@ -947,7 +1059,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         group.put("found_as", entry.rule() == null
                 ? "no rule matched"
                 : entry.caught()
-                        ? "caught by catch-all rule '" + entry.rule() + "'"
+                        ? CAUGHT_BY + " '" + entry.rule() + "'"
                         : "kept as Unknown by rule '" + entry.rule() + "'");
         group.put("kind", entry.values().isEmpty()
                 ? Map.of("values", "not logged (an XSLT saved before they were): see the examples")
