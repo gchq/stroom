@@ -734,35 +734,25 @@ class TestSurveyFeedTool {
     }
 
     @Test
-    void aKindFieldNamedLikeNoneIsPutToTheUserAndKeptForTheSurvey() {
-        // Seen in testing: a CSV mail log's kind in msg_act, a name the survey didn't know, its kind columns chosen
-        // afresh in each part, and the survey never covered. The user says which field; the survey keeps it.
+    void aFieldThatMayTellTheRecordsApartIsAHintForCoverageNeverAskedOfTheUser() {
+        // Kind fields are a hint only (stroom-ai/DESIGN.md, Event type catalogue): catalogue_event_types tells event
+        // types apart by conditions on any fields. A CSV mail log's msg_act, a name the survey didn't know, was put
+        // to the user in a form ("Which field tells the kinds of event apart?"), or blocked the survey without forms.
         sampleFeedInABuild();
         stream(7, "ACME-VPN", 0, msgActCsv(), false);
 
-        // Without forms: nothing surveyed, the agent asks the user in the chat.
-        final Map<String, Object> asking = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
-                                                     + "\"build\": \"acme-v1\"}"));
-        assertThat(asking).containsEntry("status", "needs_kind_field").doesNotContainKey("streams_read");
-        assertThat((List<Map<String, Object>>) asking.get("candidates")).extracting(candidate -> candidate.get("field"))
-                .contains("msg_act", "direction").doesNotContain("timestamp", "sender", "subject");
+        // Without forms: surveyed, nothing to ask.
+        final Map<String, Object> plain = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                    + "\"build\": \"acme-v1\"}"));
+        assertThat(plain).doesNotContainKey("status").containsKey("streams_read");
+        assertThat((Map<String, Object>) plain.get(SurveyDoc.KIND_FIELDS)).containsEntry("by", "tool");
 
-        // In a form: the user picks it, and every record is signed by it.
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer",
-                "msg_act (allow, quarantine, reject)"));
-        final Map<String, Object> chosen = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
-                                                     + "\"build\": \"acme-v1\"}", user.context()));
-        assertThat(user.shown()).singleElement().asString().contains("msg_act (allow, quarantine, reject)");
-        assertThat(chosen.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
-        assertThat(String.valueOf(chosen.get("shapes"))).contains("row:msg_act=allow", "row:msg_act=reject")
-                .doesNotContain("direction=");
-
-        // Kept: the next call asks nothing.
-        final BuildToolCalls.FormUser again = BuildToolCalls.user(Map.of("answer", "unused"));
+        // With forms: no form either.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
         final Map<String, Object> next = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
-                                                   + "\"build\": \"acme-v1\"}", again.context()));
-        assertThat(again.shown()).isEmpty();
-        assertThat(next.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
+                                                   + "\"build\": \"acme-v1\"}", user.context()));
+        assertThat(user.shown()).isEmpty();
+        assertThat(next).containsKey("streams_read");
     }
 
     @Test
@@ -1286,7 +1276,7 @@ class TestSurveyFeedTool {
                                                        + "\"event>logger_name\"}", user.context()));
 
         assertThat(user.shown()).noneSatisfy(message -> assertThat(message).contains("tier"));
-        assertThat(surveyed).doesNotContainEntry("status", "needs_kind_field").containsKey("streams_read");
+        assertThat(surveyed).containsKey("streams_read");
         final Map<String, Object> kinds = (Map<String, Object>) surveyed.get(SurveyDoc.KIND_FIELDS);
         assertThat(kinds).containsEntry("fields", List.of()).containsEntry("by", SurveyDoc.WITHIN_SOURCE_TYPES)
                 .containsEntry("within", "event>logger_name");
@@ -1299,7 +1289,6 @@ class TestSurveyFeedTool {
         // Kept: the next call asks nothing either, and the shapes aren't all signed as one kind.
         final Map<String, Object> again = json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": "
                                                     + "\"acme-v1\"}", user.context()));
-        assertThat(again).doesNotContainEntry("status", "needs_kind_field");
         assertThat(user.shown()).noneSatisfy(message -> assertThat(message).contains("tier"));
     }
 

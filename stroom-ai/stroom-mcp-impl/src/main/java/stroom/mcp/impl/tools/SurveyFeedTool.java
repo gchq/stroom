@@ -163,8 +163,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // The answers in the go-ahead form, each said whole, that keep on surveying.
     private static final List<String> KEEP_SURVEYING_ANSWERS = List.of(KEEP_SURVEYING, "no", "keep going",
             "carry on surveying", "survey more");
-    // The question of the form that asks which field tells the kinds of event apart.
-    private static final String KIND_FIELD_QUESTION = "Which field tells the kinds of event apart?";
     // The question of the form that asks which field says each record's source.
     static final String SOURCE_FIELD_QUESTION = "Which field says which source a record came from?";
     // The answers in that form, each said whole, that say the feed is one source.
@@ -351,16 +349,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                             + "said, in the chat, when asked whether to read the "
                                                             + "parts read in part deeper ('stop', a number of "
                                                             + "records more, or 'to the end').")
-                        .addStringProperty(KIND_FIELD_ARG, "The field that tells the records' kinds of event apart, "
-                                                           + "as the user said (e.g. 'msg_act'; two as 'a, b'), or "
-                                                           + "'" + KindFields.ONE_KIND_ANSWER + "'. Only what the "
-                                                           + "user said: when the tool isn't sure which field it is, "
-                                                           + "it asks them (or, with no forms, says to ask in the "
-                                                           + "chat). Kept for the build's survey; a different one "
-                                                           + "starts the survey afresh. An aggregated feed (a source "
-                                                           + "type field) is asked none. A hint for the survey's "
-                                                           + "coverage only: the event types are catalogued, within "
-                                                           + "the build's source types, by catalogue_event_types.")
+                        .addStringProperty(KIND_FIELD_ARG, "A field whose values tell the records apart (e.g. "
+                                                           + "'msg_act'; two as 'a, b'), a hint for the survey's "
+                                                           + "coverage only (event types are catalogued by "
+                                                           + "catalogue_event_types); a different one starts the "
+                                                           + "survey afresh.")
                         .addStringProperty(ACCEPT_ARG, "Only when the user wants to go ahead with the build's survey "
                                                        + "as it is, before it is covered: 'true' (they confirm in a "
                                                        + "form), or, when the client shows no forms, what they said "
@@ -743,22 +736,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             } else if (choice.get().certain() && choice.get().fields().isEmpty()) {
                 // No field to tell kinds apart in this head: chosen again from a later call's, not fixed by one.
                 kinds = null;
-            } else if (choice.get().certain()) {
-                kinds = kindsKept(choice.get().fields(), "tool");
             } else {
-                final Optional<String> answer = consent.answer(call, context, NAME, kindIntro(feed, choice.get()),
-                        KIND_FIELD_QUESTION, choice.get().options());
-                if (answer.isEmpty()) {
-                    return needsKindField(feed, choice.get());
-                }
-                final List<String> said = KindFields.fromAnswer(answer.get(), choice.get());
-                if (said.isEmpty()) {
-                    throw consent.wroteInstead(context, NAME, KIND_FIELD_QUESTION, answer.get(), "ask them in "
-                                               + "the chat which field tells the kinds of event apart (or whether "
-                                               + "the records are all one kind), and call " + NAME + " again with "
-                                               + KIND_FIELD_ARG + " as they say.");
-                }
-                kinds = kindsKept(said, "user");
+                // A hint for the survey's own coverage, never asked of the user: the event types are told apart by
+                // catalogue_event_types, by conditions on any of the records' fields (stroom-ai/DESIGN.md, Event
+                // type catalogue).
+                kinds = kindsKept(choice.get().fields(), "tool");
             }
         }
         if (kinds != null && !SurveyDoc.withinSourceTypes(kinds)) {
@@ -1434,31 +1416,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             LOGGER.debug(() -> LogUtil.message("No kind fields from stream {}: {}", first.getId(), e.getMessage()));
             return List.of();
         }
-    }
-
-    // The form's message: which fields could tell the kinds apart, in plain text.
-    private static String kindIntro(final String feed, final KindFields.Choice choice) {
-        return (choice.candidates().stream().anyMatch(KindFields.Candidate::named)
-                ? "The fields of feed '" + feed + "' named like a kind of event (type, action...) have values in only "
-                  + "some of its records. These could tell its kinds apart:\n"
-                : "No field of feed '" + feed + "' is named like a kind of event (type, action...), but these could "
-                  + "tell its kinds apart:\n") + choice.said();
-    }
-
-    // With no forms: the agent asks the user which field, in the chat.
-    private static Map<String, Object> needsKindField(final String feed, final KindFields.Choice choice) {
-        final Map<String, Object> result = new LinkedHashMap<>();
-        result.put("feed", feed);
-        result.put("status", "needs_kind_field");
-        result.put("candidates", choice.candidates().stream().map(candidate -> entry("field", candidate.field(),
-                "values", candidate.values().subList(0, Math.min(10, candidate.values().size())), "records",
-                candidate.records())).toList());
-        result.put("hint", "Nothing was surveyed yet. No field named like a kind of event has a value in most "
-                           + "records, but these could tell the kinds apart. Ask the user in the chat which one "
-                           + "does (show them the candidates "
-                           + "and their values), or whether the records are all one kind, then call " + NAME
-                           + " again with " + KIND_FIELD_ARG + " as they said. Don't choose for them.");
-        return result;
     }
 
     // The streams the survey state says were read only in part, less those whose parts the user settled (read to
