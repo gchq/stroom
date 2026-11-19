@@ -3287,7 +3287,7 @@ reads them; output JSON):
    (165c3bcac8); line formats' catch-alls flagged (8d83bc5ce7); a draft before any catalogue flags its last rule
    catch_all (lane H).
 5. **Build-time checks and the lifecycle**: confirmed event types kept by the records rules take, dropped types kept
-   dropped, `for_each` said not checked (590cff70c0); the confirmed-changed review stable between calls (lane H);
+   dropped, `for_each` said not checked (590cff70c0); a source type group's save given no name kept for `build/<group>`, so an answer to one review is remembered and the next doesn't loop (lane H);
    review_coverage's caught records grouped by shape and proposed (c2fb8d6142); the promoted notes carried into a next
    version, `CatalogueDiff` (d341b1a1ca); hand edits read back, a hand-written catch-all with its own translation
    (30d2bdb690).
@@ -3311,7 +3311,10 @@ reads them; output JSON):
 * The vendor's code as Data sits under the action element, named after the field's last segment.
 * A draft before any catalogue keeps its own rules, the last flagged `catch_all`; with a catalogue still to confirm
   it refuses.
-* Records are read as the build's latest mapping reads them; `reading` reads a source with no mapping yet.
+* Records are read as the given `reading`, else the build's latest mapping, else a reading an earlier call gave,
+  else the draft's own; `reading` takes a mapping's reading keys only, `for_each` among them (each item a record).
+* `rebuild_mapping` reads back hand edits of a generated translation; a wholly hand-written XSLT is not read.
+* A draft before any catalogue keeps its rule for the rest named `other` (TypeId `Other`), flagged `catch_all`.
 
 #### Decided (user, 2026-11-19)
 

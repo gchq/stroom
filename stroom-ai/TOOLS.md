@@ -3543,7 +3543,7 @@ sample streams, else (a build on an existing feed) the streams its survey read; 
 build's saved Data Splitter (`read_with`). They are read as the build's latest mapping reads them (the draft last sent,
 else the mapping kept with the XSLT: its input, held fields, nil values and extractions), and as processing will read
 them: strings cut at the JSONParser's `stringTruncateLength` (10,000 by default), and read whole too, so a condition
-that depends on the cut is found. A source with no mapping yet is read as the draft reads it, or as `reading` says
+that depends on the cut is found. The reading, in order: the `reading` given; else the build's latest mapping; else a `reading` an earlier call gave (kept in the notes' confirming block, so confirm calls read the same records); else the draft's own. A source with no mapping yet is read as the draft reads it, or as `reading` says
 (`input`, `json_fields`, `xml_fields`, `extract`, `pairs`). Conditions are evaluated by the one evaluator the
 generated XSLT agrees with (`LocalCheck`; parity suites `TestConditionParity`, `TestE2eConditionParityProcessed`).
 
@@ -3640,7 +3640,9 @@ notes carried in by `copy_pipeline` or `create_pipeline version_of=`, `Catalogue
 says in words the event types added, changed and removed since (`CatalogueDiff`).
 
 * **Arguments**: `build` (required); `source` (the notes' source, else the build's name); `stream_ids`; `splitter`;
-  `reading` (`input`, `json_fields`, `xml_fields`, `extract`, `pairs`: how a source with no mapping yet is read);
+  `reading` (a mapping's reading keys only: `input`, `root`, `record`, `xml_namespace`, `json_layout`,
+  `json_fields`, `xml_fields`, `pairs`, `extract`, `nil_values`, `for_each` (each item a record); any other key, or a
+  reading that doesn't parse, refused: how a source with no mapping yet is read);
   `proposals` (`[{op: add | change | remove, type_id, ...}]`); `confirm`; `catch_all` (`{allow_unknown}`, with
   confirm); `reviewed` (with confirm, for a client without forms).
 * **Returns**: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`, `confirmed`);
