@@ -30,6 +30,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tab.client.TabData;
 
 import com.google.gwt.dom.client.Style;
@@ -75,6 +76,20 @@ public final class LinkTabPanelStories {
                     play.expect(play.getByRole("tab", "Data")).toHaveFocus();
                     play.tab();
                     play.expect(panel).toHaveFocus();
+                })
+                // A tab of fields: its panel isn't a tab stop, so Tab goes from the tab straight to its
+                // first field. (The panel is set and filled before it is in the page, where none of its
+                // fields show, and it once stayed a tab stop: nothing changed inside it once it showed)
+                .story("FieldsTabNotAStop", context -> panel(context, sampleTabs(), null, null, false,
+                        sampleTabs().get(0)))
+                .withPlay(play -> {
+                    final Query panel = play.getByRole("tabpanel", "Data");
+                    play.waitFor(() -> play.expect(play.getByLabelText("Name")).toBeVisible());
+                    play.expect(panel).not().toHaveAttribute("tabindex");
+                    play.tab();
+                    play.expect(play.getByRole("tab", "Data")).toHaveFocus();
+                    play.tab();
+                    play.expect(play.getByLabelText("Name")).toHaveFocus();
                 })
                 // With a global toolbar (Save / Save As) between the tab bar and content
                 .story("WithToolbar", context -> panel(context, sampleTabs(), null,
@@ -154,6 +169,19 @@ public final class LinkTabPanelStories {
                                 final String extraToolbarTab,
                                 final List<SvgImage> toolbar,
                                 final boolean narrow) {
+        return panel(context, labels, extraToolbarTab, toolbar, narrow, null);
+    }
+
+    /// As [#panel(StoryContext, List, String, List, boolean)], with one tab holding a field.
+    ///
+    /// @param fieldsTab The label of the tab whose content is a text field named Name, or null for
+    ///                  none.
+    private static Widget panel(final StoryContext context,
+                                final List<String> labels,
+                                final String extraToolbarTab,
+                                final List<SvgImage> toolbar,
+                                final boolean narrow,
+                                final String fieldsTab) {
         final ScreenHarness harness = TabWidgets.menuHarness(context);
         final EventBus eventBus = harness.getEventBus();
         final Map<TabData, Supplier<Controller>> contents = new HashMap<>();
@@ -161,7 +189,9 @@ public final class LinkTabPanelStories {
         for (final String label : labels) {
             final TabData tab = new StoryTab(label, label, null, null, false);
             tabs.add(tab);
-            final Widget pane = TabWidgets.pane(text(label, extraToolbarTab != null), PANE_PADDING, PANE_FONT_SIZE);
+            final Widget pane = label.equals(fieldsTab)
+                    ? fieldPane()
+                    : TabWidgets.pane(text(label, extraToolbarTab != null), PANE_PADDING, PANE_FONT_SIZE);
             if (label.equals(extraToolbarTab)) {
                 contents.put(tab, () -> new ToolbarContent(eventBus, pane));
             } else {
@@ -184,6 +214,16 @@ public final class LinkTabPanelStories {
         frame.add(panel.asWidget());
         harness.add(frame);
         return harness.asWidget();
+    }
+
+    // A tab's content that is a text field, named Name
+    private static Widget fieldPane() {
+        final FlowPanel pane = new FlowPanel();
+        pane.getElement().getStyle().setProperty("padding", PANE_PADDING);
+        final TextBox name = new TextBox();
+        name.setAriaLabel("Name");
+        pane.add(name);
+        return pane;
     }
 
     // A document's toolbar's buttons, Save and optionally Save As; pressing them does nothing

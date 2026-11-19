@@ -19,14 +19,23 @@
    hint (or button) to change it, named BEM style (block, block__element, block--modifier).
 */
 .setting-block {
+    position: relative;
     border-radius: 6px;
     padding: 5px;
+    /* Room for the ⋮, at the top right */
     padding-right: 20px;
 
 	transition: background-color .3s;
 	-webkit-transition: background-color .3s;
 	-moz-transition: background-color .3s;
 	-o-transition: background-color .3s;
+}
+
+/* In a dialog (Change Status, Change Assigned To) the highlight reaches out by its padding, so the
+   setting's label and value line up with the dialog's title and sit as far under it and above the
+   buttons as a form's fields do */
+.dialog__content .setting-block {
+    margin: -5px;
 }
 
 .setting-block:hover {
@@ -43,8 +52,11 @@
     -webkit-transition: opacity .3s;
     -moz-transition: opacity .3s;
     -o-transition: opacity .3s;
-    flex-grow: 1;
-    flex-direction: row-reverse;
+    /* At the top right, in the padding kept for it, rather than on a row of its own above the
+       setting, which left space over the setting's label even while the ⋮ was hidden */
+    position: absolute;
+    top: 5px;
+    right: 2px;
 }
 
 /* The ⋮ itself, laid out as its drawing alone, so it is no taller than the drawing */
@@ -88,4 +100,13 @@
 
 .setting-block:has(> .setting-block__icon:focus-visible) {
     background-color: var(--border-color);
+}
+
+/* In forced colours (e.g. Windows high contrast) the read-only value's grey was replaced by the text
+   colour, so it looked like its label, as if it could be changed. There it is GrayText, as other
+   dimmed values are (theme-root.css) */
+@media (forced-colors: active) {
+    .setting-block.setting-block--read-only .setting-block__setting {
+        color: GrayText;
+    }
 }

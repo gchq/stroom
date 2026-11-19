@@ -81,7 +81,7 @@ public final class SourceProgressBarStories {
         final SourceProgressBar bar = sourceProgressBar(Progress.boundedRange(CLICKABLE_UPPER_BOUND, 100.0, 200.0));
         final Label display = new Label("Click the bar…");
         display.getElement().getStyle().setProperty("marginTop", "8px");
-        display.getElement().getStyle().setProperty("fontSize", "12px");
+        display.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         final Spy onClick = context.fn(ON_CLICK);
         // Stroom's click handler is given the clicked position in the progress's units (here
         // 0-500), not a percentage, so it is turned back into one

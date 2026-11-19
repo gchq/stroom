@@ -37,7 +37,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 /// The data grid's spinner: a number that a row's value lets be changed, shown as the ValueSpinner
 /// widget is (its markup and value-spinner.css, with the `value-spinner--cell` modifier for the grid).
 /// Its field is a WAI-ARIA spin button whose keys work while it has the focus, and its arrows step
-/// it while pressed with the mouse (a finger's tap steps once). A typed value is committed on Enter or
+/// it while pressed with the mouse (a finger's tap steps once), the press putting the focus in the
+/// field so that a grid that polls keeps the stepped value while held. A typed value is committed on Enter or
 /// when the field loses the focus, and an arrow's or a key's at once. A typed value that isn't a whole
 /// number within the bounds is rejected, as the ValueSpinner widget rejects one: the value before it is
 /// put back, the field is marked invalid and described by why (its title showing it to the mouse), and
@@ -204,6 +205,12 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             ensureSpinner();
             final HasSpinnerConstraints constraints = constraintsOf(value);
             final InputElement input = getInputElement(parent);
+            // The press puts the focus in the field, as the arrow takes none: the field is then
+            // being edited, so a grid that polls doesn't draw it again while the arrow is held (which
+            // put the value before the press back), and the keys work on from there
+            event.preventDefault();
+            focusedKey = context.getKey();
+            input.focus();
             final long start = Long.parseLong(constrainValue(constraints, input.getValue()));
             clearRejection(parent, input, context.getKey());
             spinner.start(constraints, UP.equals(step.getAttribute(STEP_ATTRIBUTE)), start, input);
@@ -300,8 +307,9 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             spinner.stop();
 
             if (spinner.hasChanged()) {
-                // The input has changed so finish editing.
-                finishEditing(parent, value, context.getKey(), valueUpdater, true);
+                // The input has changed so finish editing, the field keeping the focus the press
+                // gave it, as a key's step does
+                finishEditing(parent, value, context.getKey(), valueUpdater, false);
             }
         }
     }

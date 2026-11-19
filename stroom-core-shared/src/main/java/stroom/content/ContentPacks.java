@@ -27,7 +27,7 @@ public class ContentPacks {
             new GitRepo("stroom-visualisations-dev",
                     "https://github.com/gchq/stroom-visualisations-dev.git",
                     "8.0",
-                    "94bc68b3f0968e9f4a58740e2ff34519b97bbb00");
+                    "ead3fc019fa3882681e194bea34955f75708c1df");
 
     public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack("core-xml-schemas");
 

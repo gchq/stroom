@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -145,6 +146,30 @@ public final class QueryResultsTableStories {
                     play.expect(xsltLink).toHaveTextContent("https://example.org/help/");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Format left open (the screenshot and the dialog measurement show it): the Count
+                // column's, a number with its decimal places
+                .story("FormatOpen", context -> QueryEditorStories.renderEditor(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button", "Execute Query"));
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Count"));
+                    play.click(DashboardPlays.menuItem(screen, "Format"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Format 'Count'");
+                    play.waitFor(() -> play.expect(dialog.getByRole("spinbutton", "Decimal Places"))
+                            .toBeInTheDocument());
+                })
+                // Column Width left open (the screenshot and the dialog measurement show it)
+                .story("ColumnWidthOpen", context -> QueryEditorStories.renderEditor(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button", "Execute Query"));
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Count"));
+                    play.click(DashboardPlays.menuItem(screen, "Resize Column"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Column Width");
+                    play.waitFor(() -> play.expect(dialog.getByRole("spinbutton", "Width (pixels)")).toHaveFocus());
+                })
                 // A dashboard column's Expression opens the expression editor, with an Ace editor
                 // and the query help
                 .story("DashboardExpressionEditor", DashboardSupport.story(DASHBOARD,
@@ -176,6 +201,23 @@ public final class QueryResultsTableStories {
                     play.expect(link).toHaveAttribute("aria-label", "example.com/docs/page");
                     play.expect(link).toHaveTextContent("https://example.com/docs/page?q=1");
                     DashboardPlays.expectNoProblems(play);
+                })
+                // Choose Dictionary left open, from a dashboard column filter's Include Dictionaries
+                // (the screenshot and the dialog measurement show it)
+                .story("ChooseDictionaryOpen", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> routes.addAll(TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree()).build())))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(DashboardPlays.menuItem(screen, "Filter"));
+                    final Play filter = DashboardPlays.dialog(screen, "Filter 'Name'");
+                    play.click(filter.getByText("Include Exclude", StroomDom.LINK_TAB_LABEL));
+                    play.click(filter.findAllByRole("button", "Add Dictionary").nth(0));
+                    final Play chooser = DashboardPlays.dialog(screen, "Choose Dictionary");
+                    chooser.findByText("System");
                 });
     }
 }

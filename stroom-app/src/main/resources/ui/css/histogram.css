@@ -76,6 +76,9 @@
     width: 100%;
     height: 48px;
     cursor: pointer; /* indicates click-to-seek */
+    /* The size the canvas draws its "no events" message at (Histogram reads it), so that it
+       follows the text size preference */
+    font-size: var(--font-size-9);
     /* Subtle gradient fade at the bottom to blend into adjacent UI. */
     -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
     mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
@@ -91,7 +94,7 @@
     color: var(--blue-500);
     border: 1px solid var(--blue-500);
     border-radius: 3px;
-    font-size: 10px;
+    font-size: var(--font-size-7);
     font-weight: 500;
     padding: 1px 5px;
     white-space: nowrap;

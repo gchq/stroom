@@ -18,15 +18,15 @@
 
 /* A text field, wide enough for a URL */
 .http-client-config-editor__text {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }
 
 /* A number, e.g. Max Connections */
 .http-client-config-editor__number {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* Set HTTP TLS Config, as wide as the numbers above it */
 .http-client-config-editor__button {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }

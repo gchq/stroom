@@ -9,58 +9,45 @@
              xmlns:fv="urn:import:stroom.floormap.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      The layer appearance dialog's content (floor-map-layer-style.css): the graphic a layer draws (a
-      shape, an icon or an image), its colour and a preview. The table only lays the labels beside
-      their controls, so it is presentation to assistive technology
+      The layer appearance dialog's content (floor-map-layer-style.css): a form, as every dialog's is, of
+      the graphic a layer draws (a shape, an icon or an image), its colour and a preview. Each group
+      names its control: the radio groups (Graphic, Icon) keep their role and are named by the label
     -->
-    <g:HTMLPanel>
-        <table class="floor-map-layer-style" role="presentation">
-            <tbody>
-                <tr>
-                    <td ui:field="graphicLabel">Graphic</td>
-                    <td><form:RadioGroup ui:field="modeGroup"/></td>
-                </tr>
-                <tr ui:field="shapeRow">
-                    <td ui:field="shapeLabel">Shape</td>
-                    <td><i:SelectionBox ui:field="shapeBox"/></td>
-                </tr>
-                <tr ui:field="iconRow">
-                    <td ui:field="iconLabel">Icon</td>
-                    <td><fv:FloorMapIconPicker ui:field="iconPicker" addStyleNames="floor-map-layer-style__icon-picker"/></td>
-                </tr>
-                <tr ui:field="imageRow">
-                    <td ui:field="imageLabel">Image</td>
-                    <td>
-                        <g:FlowPanel addStyleNames="floor-map-layer-style__image">
-                            <g:SimplePanel ui:field="assetPickerPanel" addStyleNames="floor-map-layer-style__asset-picker">
-                                <dd:DropDownBox ui:field="assetBox"/>
-                            </g:SimplePanel>
-                            <b:Button ui:field="uploadButton"
-                                      text="Upload"
-                                      title="Upload a new image into this document's assets"
-                                      ariaLabel="Upload a new image into this document's assets"/>
-                        </g:FlowPanel>
-                    </td>
-                </tr>
-                <tr>
-                    <td ui:field="colourLabel">Colour</td>
-                    <td><colour:ColourBox ui:field="colourBox"/></td>
-                </tr>
-                <tr>
-                    <td>Preview</td>
-                    <td>
-                        <g:FlowPanel addStyleNames="floor-map-layer-style__preview-row">
-                            <g:SimplePanel addStyleNames="floor-map-layer-style__preview">
-                                <tx:Html ui:field="preview"/>
-                            </g:SimplePanel>
-                            <!-- Uploaded assets are only served once the document is saved, so an
-                                 image picked here can fail to render until then -->
-                            <tx:Label addStyleNames="floor-map-layer-style__hint"
-                                     text="Drawn at a fixed size on the map. Newly uploaded images appear after the document is saved."/>
-                        </g:FlowPanel>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </g:HTMLPanel>
+    <g:FlowPanel styleName="form floor-map-layer-style">
+        <form:FormGroup identity="floorMapLayerGraphic" label="Graphic"
+                        helpText="What the layer draws for each fact: a shape, one of the built-in icons, or an image.">
+            <form:RadioGroup ui:field="modeGroup"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="shapeGroup" identity="floorMapLayerShape" label="Shape">
+            <i:SelectionBox ui:field="shapeBox" addStyleNames="floor-map-layer-style__control"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="iconGroup" identity="floorMapLayerIcon" label="Icon">
+            <fv:FloorMapIconPicker ui:field="iconPicker" addStyleNames="floor-map-layer-style__wide"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="imageGroup" identity="floorMapLayerImage" label="Image">
+            <g:FlowPanel addStyleNames="floor-map-layer-style__image floor-map-layer-style__wide">
+                <g:SimplePanel addStyleNames="floor-map-layer-style__asset-picker">
+                    <dd:DropDownBox ui:field="assetBox"/>
+                </g:SimplePanel>
+                <b:Button ui:field="uploadButton"
+                          text="Upload"
+                          title="Upload a new image into this document's assets"
+                          ariaLabel="Upload a new image into this document's assets"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="floorMapLayerColour" label="Colour">
+            <colour:ColourBox ui:field="colourBox"/>
+        </form:FormGroup>
+        <form:FormGroup identity="floorMapLayerPreview" label="Preview">
+            <g:FlowPanel addStyleNames="floor-map-layer-style__preview-row floor-map-layer-style__wide">
+                <g:SimplePanel addStyleNames="floor-map-layer-style__preview">
+                    <tx:Html ui:field="preview"/>
+                </g:SimplePanel>
+                <!-- Uploaded assets are only served once the document is saved, so an
+                     image picked here can fail to render until then -->
+                <tx:Label addStyleNames="floor-map-layer-style__hint"
+                          text="Drawn at a fixed size on the map. Newly uploaded images appear after the document is saved."/>
+            </g:FlowPanel>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder>

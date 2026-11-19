@@ -16,13 +16,16 @@
 
 /* A document's user permissions (DocumentUserPermissionsList). */
 
-/* In a dialog, the table (with its toolbar) is framed as a control, and inset to line up with the
-   controls above it (which have form-padding), as the permissions tab's details are */
+/* In a dialog, the table (with its toolbar) is framed and filled as a control-box is (form-controls.css),
+   its header on the box's colour, and inset to line up with the controls above it (which have
+   form-padding), as the permissions tab's details are. On a page it isn't framed, so it can't be a
+   control-box itself. */
 .dialog__content .document-user-permissions__table {
     width: auto;
     margin: 0 var(--control__gap--horizontal);
     border: 1px solid var(--control__border-color);
     border-radius: .25rem;
-    background-color: var(--content-box__background-color);
+    background-color: var(--control__background-color);
+    --data-grid__head-background-color: var(--control__background-color);
     overflow: hidden;
 }

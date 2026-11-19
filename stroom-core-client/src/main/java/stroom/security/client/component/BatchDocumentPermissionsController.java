@@ -137,6 +137,8 @@ public class BatchDocumentPermissionsController extends ContentTabController {
         }
 
         combinedExpression = builder.build();
+        documentList.setExpressionFiltered(
+                filterExpression != null && NullSafe.hasItems(filterExpression.getChildren()));
         documentList.setExpression(combinedExpression);
         documentList.refresh();
     }

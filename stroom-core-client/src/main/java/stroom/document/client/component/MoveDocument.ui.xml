@@ -8,8 +8,8 @@
         <form:FormGroup identity="moveDocumentSelectParentGroup"
                         label="Select the parent folder"
                         helpText="The folder that the document(s) will be moved into."
-                        addStyleNames="dock-max overflow-hidden">
-            <g:SimplePanel styleName="dock-max overflow-hidden">
+                        addStyleNames="dock-max overflow-hidden focus-ring-room">
+            <g:SimplePanel styleName="dock-max overflow-hidden focus-ring-room">
                 <ex:DocumentPicker ui:field="folders"/>
             </g:SimplePanel>
         </form:FormGroup>

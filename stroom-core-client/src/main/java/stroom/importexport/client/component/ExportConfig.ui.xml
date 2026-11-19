@@ -8,9 +8,9 @@
              xmlns:ex="urn:import:stroom.explorer.client.component">
     <g:FlowPanel styleName="max form overflow-hidden">
         <form:FormGroup identity="exportConfigSelect" label="Items To Export"
-                        helpText="Tick the documents and folders to include in the export. Type in the filter box to find items by name." addStyleNames="max overflow-hidden"
+                        helpText="Tick the documents and folders to include in the export. Type in the filter box to find items by name." addStyleNames="max overflow-hidden focus-ring-room"
                         screenReaderText="Tick items to export; use the filter to find them.">
-            <g:FlowPanel styleName="dock-container-vertical dock-max quick-filter-layout overflow-hidden">
+            <g:FlowPanel styleName="dock-container-vertical dock-max quick-filter-layout overflow-hidden focus-ring-room">
                 <g:FlowPanel styleName="dock-min dock-container-horizontal">
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
                     <b:Toolbar name="Export options" addStyleNames="dock-min">

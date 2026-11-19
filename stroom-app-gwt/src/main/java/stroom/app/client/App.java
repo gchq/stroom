@@ -20,6 +20,7 @@ import stroom.app.client.gin.AppGinjectorUser;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.component.client.Page;
+import stroom.widget.util.client.TextScaleMeter;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -37,6 +38,8 @@ public class App implements EntryPoint {
      * This is the entry point method.
      */
     public void onModuleLoad() {
+        // Widths given at the medium text size follow the text as drawn, from the first screen
+        TextScaleMeter.install();
 
         final String path = Window.Location.getPath();
         GWT.log("path: " + path + ", queryString: " + Window.Location.getQueryString());

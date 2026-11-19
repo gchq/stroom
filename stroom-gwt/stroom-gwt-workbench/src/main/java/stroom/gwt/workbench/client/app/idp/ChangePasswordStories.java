@@ -197,7 +197,7 @@ public final class ChangePasswordStories {
 
         // The result of the change
         final Label result = new Label("onChanged: (awaiting change)");
-        result.getElement().setAttribute("style", "font-size: 12px; opacity: 0.8");
+        result.getElement().setAttribute("style", "font-size: var(--font-size-11); opacity: 0.8");
         final FlowPanel column = new FlowPanel();
         column.getElement().setAttribute("style",
                 "width: 380px; display: flex; flex-direction: column; gap: 8px; padding: 48px 16px 0");

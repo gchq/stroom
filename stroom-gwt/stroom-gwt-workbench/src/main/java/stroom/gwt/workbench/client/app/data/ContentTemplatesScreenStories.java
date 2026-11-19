@@ -228,6 +228,17 @@ public final class ContentTemplatesScreenStories {
                     play.expect(row(play, "My template")).not().toHaveClass(StroomDom.SELECTED_ROW);
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Add New Template left open (the screenshot and the dialog measurement show it)
+                .story("AddNewTemplateOpen", ContentTemplatesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Undescribed"));
+                    play.waitFor(() -> play.expect(row(play, "Undescribed")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByTitle("Add Template Below"));
+                    final Play dialog = screen.within(screen.findByText("Add New Template", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByLabelText("Template Name")).toBeVisible());
+                })
                 // Deleting a template selects the template now in its place (UI-GUIDE.md, "What a
                 // list selects"). It once looked the deleted template up after the templates were
                 // renumbered, found nothing and threw

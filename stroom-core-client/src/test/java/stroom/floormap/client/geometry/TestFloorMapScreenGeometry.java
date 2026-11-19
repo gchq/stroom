@@ -265,4 +265,41 @@ class TestFloorMapScreenGeometry {
         assertThat(g.hitTestRect(List.of(fact), new double[]{40, -5, 55, 5}))
                 .containsExactly("f");
     }
+
+    // An area's occupant badge: in its top-left corner, or its centre when it won't fit there
+
+    private static final double[][] ROOM = {{0, 0}, {200, 0}, {200, 200}, {0, 200}};
+    private static final double[] ROOM_CENTRE = {100, 100};
+
+    @Test
+    void areaBadgeGoesInsideTheTopLeftCorner() {
+        // Y is up in map space, so the top-left corner is (0, 200); the badge is 14 px right of
+        // it and 14 px down
+        final double[] place = FloorMapScreenGeometry.areaBadgePlacement(ROOM, ROOM_CENTRE, 1, 14);
+        assertThat(place).containsExactly(0, 200, 14, 14);
+    }
+
+    @Test
+    void areaBadgePicksTheTopLeftMostVertexOfAnyShape() {
+        // A room leaning left: its top-left corner is the vertex furthest up and to the left
+        final double[][] leaning = {{0, 0}, {200, 0}, {150, 200}, {-50, 200}};
+        final double[] place = FloorMapScreenGeometry.areaBadgePlacement(leaning, ROOM_CENTRE, 1, 14);
+        assertThat(place).containsExactly(-50, 200, 14, 14);
+    }
+
+    @Test
+    void areaBadgeStaysAtTheCentreOfASmallArea() {
+        // 200 map units at 0.25 px per unit is 50 px across, less than four insets (56 px)
+        final double[] place = FloorMapScreenGeometry.areaBadgePlacement(ROOM, ROOM_CENTRE, 0.25, 14);
+        assertThat(place).containsExactly(100, 100, 0, 0);
+    }
+
+    @Test
+    void areaBadgeStaysAtTheCentreWithoutAPolygon() {
+        assertThat(FloorMapScreenGeometry.areaBadgePlacement(null, ROOM_CENTRE, 1, 14))
+                .containsExactly(100, 100, 0, 0);
+        assertThat(FloorMapScreenGeometry.areaBadgePlacement(
+                new double[][]{{0, 0}, {200, 200}}, ROOM_CENTRE, 1, 14))
+                .containsExactly(100, 100, 0, 0);
+    }
 }

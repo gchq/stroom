@@ -73,7 +73,7 @@ public final class FileChooserStories {
                     // FileChooser has no accept filter or button label, so the button says
                     // "Choose File" and any file can be chosen.
                     final FileChooser fileChooser = new FileChooser();
-                    final InlineLabel selected = StoryPanels.note("Selected: —", "#dce4e5", "12px");
+                    final InlineLabel selected = StoryPanels.note("Selected: —", "#dce4e5", "var(--font-size-11)");
                     final Spy onFile = context.fn(ON_FILE);
                     fileChooser.setOnChange(() -> {
                         final String name = fileChooser.getFilename();

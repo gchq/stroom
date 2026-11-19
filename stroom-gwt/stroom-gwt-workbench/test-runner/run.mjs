@@ -45,6 +45,9 @@ import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } f
 import { REAL_INPUT_CHECKS, unknownCheckIds } from './lib/real-input/index.mjs';
 import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
+import { collectTextFit, writeTextFit } from './lib/text-fit.mjs';
+import { collectTextSizes, fontSize, fontSizeScript, writeTextSizes } from './lib/text-sizes.mjs';
+import { textSpacingScript } from './lib/text-spacing.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_URL = process.env.WORKBENCH_URL ?? 'http://localhost:6008';
@@ -104,6 +107,12 @@ const SEEDED_RANDOM_SCRIPT = `(() => {
 // The class census (--class-census): class name -> the ids of the stories that set it
 const CLASS_CENSUS = new Map();
 
+// The text sizes (--text-sizes): story id -> the texts it shows and their sizes
+const TEXT_SIZES = new Map();
+
+// The text that doesn't fit (--text-fit): story id -> its problems
+const TEXT_FIT = new Map();
+
 // The signal that cancelled the run (e.g. Ctrl-C, or Gradle stopping it), or null
 let cancelledBy = null;
 
@@ -135,6 +144,24 @@ Options:
   --theme <dark|light>     The theme to show the stories in (default: the workbench's, dark)
   --forced-colours         Show the stories as with a high contrast theme (e.g. Windows'), the
                            browser emulating forced colours (CSS's forced-colors: active)
+  --colour-scheme <light|dark>
+                           The colour scheme the browser asks for (CSS's prefers-color-scheme;
+                           default: light). With --forced-colours it chooses the high contrast
+                           palette: dark text on light, or light text on dark
+  --font-size <small|medium|large>
+                           Show the stories at this Stroom text size preference (the page's
+                           stroom-font-size-* class; default: the workbench's, medium)
+  --text-spacing           Show the stories with the text spacing a user may set (WCAG 1.4.12):
+                           line height 1.5, letter spacing 0.12em, word spacing 0.16em and 2em
+                           after paragraphs, overriding the page's own
+  --text-sizes <file>      Write every text each story that passes shows (in any frame), with its
+                           computed font size and line height, to the file as JSON. Compare two
+                           runs at different --font-size with text-size-diff.mjs, to find the text
+                           that doesn't follow the preference
+  --text-fit <file>        Write the text each story that passes shows (in any frame) that doesn't
+                           fit: cut off by a box that hides its overflow, shortened with an
+                           ellipsis, or drawn over another text. Compare two runs at different
+                           --font-size with text-fit-diff.mjs, to find what no longer fits
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            and make Math.random the same sequence every run, so that times and
                            random layouts are the same every run (for comparing screenshots).
@@ -178,6 +205,14 @@ function fixedTime(text) {
   return time;
 }
 
+// The colour scheme the browser asks for: light unless given
+function colourScheme(text) {
+  if (text === undefined || text === 'light' || text === 'dark') {
+    return text ?? 'light';
+  }
+  throw new Error(`--colour-scheme must be light or dark, not '${text}'`);
+}
+
 // The theme to show the stories in, or undefined for the workbench's default
 function theme(text) {
   if (text === undefined || text === 'dark' || text === 'light') {
@@ -207,6 +242,11 @@ function parseOptions() {
       'fixed-time': { type: 'string' },
       theme: { type: 'string' },
       'forced-colours': { type: 'boolean', default: false },
+      'colour-scheme': { type: 'string' },
+      'font-size': { type: 'string' },
+      'text-spacing': { type: 'boolean', default: false },
+      'text-sizes': { type: 'string' },
+      'text-fit': { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
@@ -245,6 +285,11 @@ function parseOptions() {
     fixedTime: fixedTime(values['fixed-time']),
     theme: theme(values.theme),
     forcedColours: values['forced-colours'],
+    colourScheme: colourScheme(values['colour-scheme']),
+    fontSize: fontSize(values['font-size']),
+    textSpacing: values['text-spacing'],
+    textSizes: values['text-sizes'] ? path.resolve(values['text-sizes']) : null,
+    textFit: values['text-fit'] ? path.resolve(values['text-fit']) : null,
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
@@ -366,10 +411,17 @@ async function runStoryOnce(browser, story, options, attempt) {
     context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
       forcedColors: options.forcedColours ? 'active' : 'none',
+      colorScheme: options.colourScheme,
     });
     await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
     if (options.classCensus) {
       await context.addInitScript(CLASS_CENSUS_SCRIPT);
+    }
+    if (options.fontSize) {
+      await context.addInitScript(fontSizeScript(options.fontSize));
+    }
+    if (options.textSpacing) {
+      await context.addInitScript(textSpacingScript());
     }
     if (options.fixedTime) {
       await context.clock.setFixedTime(options.fixedTime);
@@ -410,6 +462,13 @@ async function runStoryOnce(browser, story, options, attempt) {
     // Before the checks below, which don't add to what the story shows
     if (options.classCensus && !unresponsive && !seen.crashed) {
       addToCensus(CLASS_CENSUS, story.id, await collectClasses(page));
+    }
+    // What the story shows when it has finished, before the checks below change it
+    if (options.textSizes && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      TEXT_SIZES.set(story.id, await collectTextSizes(page));
+    }
+    if (options.textFit && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      TEXT_FIT.set(story.id, await collectTextFit(page));
     }
     if (options.realInput && REAL_INPUT_CHECKS[story.id] && result.status === 'PASS'
         && !unresponsive && !seen.crashed) {
@@ -956,6 +1015,16 @@ async function main() {
     if (options.classCensus) {
       await writeCensus(options.classCensus, CLASS_CENSUS);
       console.log(`Class census: ${CLASS_CENSUS.size} class names, in ${options.classCensus}`);
+    }
+    if (options.textSizes) {
+      await writeTextSizes(options.textSizes, options.fontSize, TEXT_SIZES);
+      console.log(`Text sizes: ${TEXT_SIZES.size} stories, in ${options.textSizes}`);
+    }
+    if (options.textFit) {
+      // Named for its text size, and its text spacing if set, as text-fit-diff.mjs reports them
+      const shown = options.textSpacing ? `${options.fontSize ?? 'page'} with text spacing` : options.fontSize;
+      await writeTextFit(options.textFit, shown, TEXT_FIT);
+      console.log(`Text fit: ${TEXT_FIT.size} stories, in ${options.textFit}`);
     }
     if (runError) {
       console.error(cancelledBy ? `\n${runError}` : `\nThe test run failed: ${runError}`);

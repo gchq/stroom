@@ -16,12 +16,8 @@
 
 /* The keyboard shortcuts preferences (KeyBindingPreferences). */
 
-/* The list of keyboard shortcuts fills what the tab has left below the filter, framed as a control */
+/* The list of keyboard shortcuts (a control-box) fills what the tab has left below the filter */
 .key-binding-preferences__list {
     min-height: 0;
     margin-top: var(--control__gap--vertical);
-    border: 1px solid var(--control__border-color);
-    border-radius: .25rem;
-    background-color: var(--content-box__background-color);
-    overflow: hidden;
 }

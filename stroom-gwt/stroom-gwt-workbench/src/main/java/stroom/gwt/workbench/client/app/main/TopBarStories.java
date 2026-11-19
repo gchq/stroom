@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.gwt.workbench.client.a11y.FocusRingClipping;
+import stroom.gwt.workbench.client.a11y.FocusRings;
 import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -78,9 +79,7 @@ public final class TopBarStories {
                         }
                     });
                     for (final Query control : controls) {
-                        play.expect(control.describe() + " focus ring",
-                                        control.computedStyle("box-shadow"))
-                                .not().toBe("none");
+                        play.expect(FocusRings.drawn(control)).not().toBe(FocusRings.NONE);
                     }
                     // All four at once, so that one failure shows every ring that is cut off
                     play.expect("the top bar's focus rings cut off", () -> cuts(controls))
@@ -131,7 +130,8 @@ public final class TopBarStories {
     }
 
     // Copies the rules of Stroom's style sheets that draw these controls' keyboard focus (those of
-    // toolbar buttons and of .focus-without-border buttons that use :focus-visible), each :focus-visible
+    // toolbar buttons, of .focus-without-border buttons that use :focus-visible, and base.css's outline
+    // for whatever has the keyboard focus in forced colours), each :focus-visible
     // and :focus turned into a class (.pseudo-focus-visible), into a style element of their own with
     // the id given, keeping any @media rule they are in (e.g. forced colours) and following @imports
     private static native void addPseudoStateRules(String id) /*-{
@@ -146,7 +146,9 @@ public final class TopBarStories {
                 var rule = rules[i];
                 if (rule.selectorText !== undefined) {
                     var selector = rule.selectorText;
-                    if ((selector.indexOf('toolbar-button') >= 0 || selector.indexOf('focus-without-border') >= 0)
+                    // ...and base.css's outline for whatever has the keyboard focus in forced colours
+                    if ((selector.indexOf('toolbar-button') >= 0 || selector.indexOf('focus-without-border') >= 0
+                         || selector === ':focus-visible')
                         && selector.indexOf(':focus-visible') >= 0) {
                         text += selector.replace(pseudo, '.pseudo-$1') + ' {' + rule.style.cssText + '}\n';
                     }

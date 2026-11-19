@@ -71,3 +71,12 @@
 .welcome-tab__body a {
     text-decoration: underline;
 }
+
+/* In forced colours (e.g. Windows high contrast) the transparent spacing borders were drawn, as thick
+   bars between the build details. There they are the page's colour */
+@media (forced-colors: active) {
+    .welcome-tab__build-info th,
+    .welcome-tab__build-info td {
+        border-color: Canvas;
+    }
+}

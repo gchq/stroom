@@ -264,6 +264,20 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(dialog.getByText("New")).toBeInTheDocument());
                     DocEditors.expectNoUnhandledRequests(play);
                 })
+                // New Constraint left open (the screenshot and the dialog measurement show it)
+                .story("NewConstraintOpen", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = editAuth(play);
+                    // Selecting a constraint enables the list's buttons (see EditConstraints)
+                    play.click(dialog.findByText("host"));
+                    final Query add = dialog.getByRole("button", "New Constraint");
+                    play.waitFor(() -> play.expect(add).not().toHaveAttribute("aria-disabled"));
+                    play.click(add);
+                    final Play constraint = play.within(screen.findByText("New Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(constraint.getByLabelText("Name")).toHaveValue("New"));
+                })
                 // A constraint edited (keeping its name, which makes it the same constraint) and
                 // edited again without selecting it again opens as it now is. Before, the
                 // selection kept the constraint as it was, so the second Edit opened the old value

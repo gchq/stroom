@@ -20,11 +20,13 @@
 
 import assert from 'node:assert/strict';
 
-// The focus colour, as a computed colour
+// The focus colour, as a computed colour: in forced colours (e.g. Windows high contrast) the
+// system's Highlight, which tab-bar.css draws the ring in there
 function focusColour(page) {
   return page.evaluate(() => {
     const probe = document.createElement('div');
-    probe.style.color = 'var(--tab__focus-color)';
+    probe.style.forcedColorAdjust = 'none';
+    probe.style.color = matchMedia('(forced-colors: active)').matches ? 'Highlight' : 'var(--tab__focus-color)';
     document.body.append(probe);
     const colour = getComputedStyle(probe).color;
     probe.remove();

@@ -54,15 +54,12 @@ public class CondenseSettingsForm extends Component {
         condenseAge.setOnChange(value -> onCondenseAge());
         condenseTimeUnit.addValueChangeHandler(this::onCondenseTimeUnit);
 
-        condenseAge.setValue(1);
-
         condenseTimeUnit.addItem(TimeUnit.DAYS);
         condenseTimeUnit.addItem(TimeUnit.WEEKS);
         condenseTimeUnit.addItem(TimeUnit.MONTHS);
         condenseTimeUnit.addItem(TimeUnit.YEARS);
-        condenseTimeUnit.setValue(TimeUnit.YEARS);
 
-        setCondenseEnabled(this.condenseEnabled.getValue());
+        setCondense(null);
     }
 
     public DurationSetting getCondense() {
@@ -76,18 +73,15 @@ public class CondenseSettingsForm extends Component {
                 .build();
     }
 
+    /// @param condense The settings to show, or null for a new store's defaults, e.g. when a store
+    ///                 changes from a type without condense settings.
     public void setCondense(final DurationSetting condense) {
-        this.condenseEnabled.setValue(false);
-        this.condenseAge.setValue(1);
-        this.condenseTimeUnit.setValue(TimeUnit.YEARS);
-        if (condense != null) {
-            this.condenseEnabled.setValue(condense.isEnabled());
-            if (condense.getDuration() != null) {
-                this.condenseAge.setValue(condense.getDuration().getTime());
-                this.condenseTimeUnit.setValue(condense.getDuration().getTimeUnit());
-            }
-        }
-        setCondenseEnabled(this.condenseEnabled.getValue());
+        // The model fills in what's missing with a new store's defaults (1 day)
+        final DurationSetting setting = new DurationSetting.Builder(condense).build();
+        this.condenseEnabled.setValue(setting.isEnabled());
+        this.condenseAge.setValue(setting.getDuration().getTime());
+        this.condenseTimeUnit.setValue(setting.getDuration().getTimeUnit());
+        setCondenseEnabled(setting.isEnabled());
     }
 
     private void setCondenseEnabled(final boolean enabled) {

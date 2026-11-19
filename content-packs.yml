@@ -114,7 +114,7 @@
       name: "stroom-visualisations-dev",
       uri : "https://github.com/gchq/stroom-visualisations-dev.git",
       branch: "8.0",
-      commit: "94bc68b3f0968e9f4a58740e2ff34519b97bbb00"
+      commit: "ead3fc019fa3882681e194bea34955f75708c1df"
     }
   } ]
 }

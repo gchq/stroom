@@ -46,7 +46,8 @@
    --data-grid__body-offset, --data-grid__v-track-top, --data-grid__v-thumb-length,
    --data-grid__h-thumb-length, --data-grid__v-thumb-position, --data-grid__h-thumb-position,
    --data-grid__handle-left, --data-grid__resize-line-left, --data-grid__move-ghost-left,
-   --data-grid__move-ghost-width, --data-grid__move-line-left, and a spanning cell's
+   --data-grid__move-ghost-width, --data-grid__move-line-left, --data-grid__empty-top,
+   --data-grid__empty-height, and a spanning cell's
    --data-grid__span. The rules that use them select through the grid's own parts (child
    combinators), so a grid inside another's cell isn't laid out by the outer grid's.
 
@@ -391,14 +392,33 @@
     content-visibility: visible;
 }
 
+/* What the grid says with no rows (DataGrid.renderEmptyMessage). Outside the scroller, which may hold
+   only rows, so laid over it where the first row would be: below the header, whose height it is
+   given as --data-grid__empty-top (DataGrid.snapHeaderHeight), and the rows' area keeps its room,
+   given as --data-grid__empty-height (DataGrid.onEmptyMessageResize). Clicks pass through to the
+   grid. */
 .data-grid__empty {
     display: none;
+    position: absolute;
+    top: var(--data-grid__empty-top, 0);
+    right: 0;
+    left: 0;
+    overflow: hidden;
+    pointer-events: none;
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
-    color: var(--text-color--disabled);
+    color: var(--text-color--muted);
 }
 
-.data-grid--empty > .data-grid__scroller > .data-grid__content > .data-grid__empty {
+.data-grid--empty > .data-grid__empty {
     display: block;
+}
+
+.data-grid--no-header > .data-grid__empty {
+    top: 0;
+}
+
+.data-grid--empty > .data-grid__scroller > .data-grid__content {
+    min-height: var(--data-grid__empty-height, 0);
 }
 
 /* setEmptyText: as MyDataGrid's empty text, a label with .form-padding */
@@ -671,6 +691,15 @@
     outline-offset: -3px;
 }
 
+/* A grid with no rows has its scrolling box as its tab stop (DataGridKeyboard.updateTabStops), so it
+   can still be scrolled: with the keyboard focus it has a row's focus look, inside it, round the
+   whole box (it had none, so the focus was lost to sight) */
+.data-grid > .data-grid__scroller:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus-ring__color);
+    outline: 1px solid var(--focus-border);
+    outline-offset: -3px;
+}
+
 /* A selected row with the focus (on it or a cell) takes the selected-and-focused colour, which the
    focus border stands out from by 3:1 in both themes (the plain selected colour is too near it in
    the dark theme) */
@@ -718,20 +747,53 @@
         color: HighlightText;
     }
 
+    /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .data-grid .data-grid__row:focus-visible,
     .data-grid .data-grid__cell:focus-visible,
-    .data-grid .data-grid__header-cell:focus-visible {
-        outline: 2px solid CanvasText;
-        outline-offset: -2px;
+    .data-grid .data-grid__header-cell:focus-visible,
+    .data-grid > .data-grid__scroller:focus-visible {
+        outline: 2px solid CanvasText !important;
+        outline-offset: -2px !important;
     }
 
     .data-grid .data-grid__row[aria-selected="true"]:focus-visible,
     .data-grid .data-grid__row[aria-selected="true"] .data-grid__cell:focus-visible {
-        outline-color: HighlightText;
+        outline-color: HighlightText !important;
     }
 
     .data-grid .data-grid__row:not([aria-selected="true"]) .data-grid__cell--disabled {
         color: GrayText;
+    }
+
+    /* Mouse over a row that isn't selected: its hovered fill is replaced, so a Highlight line round
+       it, as the pipeline and expression trees' (the keyboard focus's outline wins over it) */
+    .data-grid .data-grid__row:not([aria-selected="true"]):hover {
+        outline: 1px solid Highlight;
+        outline-offset: -1px;
+    }
+
+    /* A scroll thumb: its transparent 4px border (the gap round the visible bar) was drawn in the
+       text colour, making a heavy outlined pill over the cells. There it keeps its own colours: the
+       gap clear, the bar the text colour, Highlight while hovered or dragged */
+    .data-grid__thumb {
+        forced-color-adjust: none;
+        border-color: transparent;
+        background-color: CanvasText;
+    }
+
+    .data-grid__thumb:hover,
+    .data-grid__thumb.data-grid__thumb--active {
+        background-color: Highlight;
+    }
+
+    /* Column resize and move: the handle, lines and ghost are backgrounds, which vanished while
+       dragging. There they are Highlight, the ghost faint as it is in the normal theme */
+    .data-grid__resize-handle,
+    .data-grid__resize-line,
+    .data-grid__move-line,
+    .data-grid__move-ghost {
+        forced-color-adjust: none;
+        background-color: Highlight;
     }
 }
 

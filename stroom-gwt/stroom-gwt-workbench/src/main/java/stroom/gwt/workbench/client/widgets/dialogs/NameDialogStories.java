@@ -117,7 +117,7 @@ public final class NameDialogStories {
         })::removeHandler);
 
         final InlineLabel result = new InlineLabel("Result: —");
-        result.getElement().getStyle().setProperty("fontSize", "12px");
+        result.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         final Button button = DialogWidgets.button("Open popup", DialogWidgets.PRIMARY, event -> {
             final NameDialogController dialog = new NameDialogController(popups.getEventBus(),
                     new NameDialog());

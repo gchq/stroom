@@ -257,6 +257,38 @@ public final class ColumnModel<C> {
         return changed;
     }
 
+    /// Draw every column at a new text scale ([TextScale]), as the text grows or shrinks (e.g. the
+    /// text size preference changing, or its font loading): fixed and fill widths, and minimum
+    /// widths, hold the same medium width as before. A percent column is a share of the grid, so
+    /// it keeps its width. Columns that fitted `outerWidth` still fit it, the fill columns giving
+    /// back what the others gain or taking up what they lose.
+    ///
+    /// @param from       The scale the columns were drawn at.
+    /// @param to         The scale to draw them at.
+    /// @param outerWidth The grid's visible width in pixels, or `0` if it isn't known.
+    public void rescale(final double from, final double to, final int outerWidth) {
+        final boolean fitted = outerWidth > 0 && getTotalWidth() <= outerWidth;
+        for (final Entry<C> entry : entries) {
+            entry.sizing = entry.sizing.rescaled(from, to);
+            if (entry.sizing.getType() != ColumnWidthType.PERCENT) {
+                entry.width = Math.max(1, TextScale.rescale(entry.width, from, to));
+            }
+        }
+        widthVersion++;
+        if (fitted) {
+            final int amount = getTotalWidth() - outerWidth;
+            if (amount > 0) {
+                final int[] widths = getWidths();
+                ColumnWidthResolver.unfill(getSizings(), widths, amount);
+                for (int i = 0; i < widths.length; i++) {
+                    entries.get(i).width = widths[i];
+                }
+            } else {
+                fill(outerWidth);
+            }
+        }
+    }
+
     /// @return Whether the starting widths have been worked out.
     public boolean isResolved() {
         return initialOuterWidth > 0;
@@ -471,7 +503,7 @@ public final class ColumnModel<C> {
     private static final class Entry<C> {
 
         private final C column;
-        private final ColumnSizing sizing;
+        private ColumnSizing sizing;
         private int width;
 
         private Entry(final C column, final ColumnSizing sizing, final int width) {

@@ -21,6 +21,7 @@ import stroom.ai.shared.AiChat;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.HasFiltered;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -36,7 +37,7 @@ import java.util.function.Consumer;
 
 /// The chats found: a striped list of a page of them, the one with the focus chosen. Enter, or a
 /// double click, opens one, and Up on the first goes back to the filter.
-public class AiChatHistoryResultList extends Component {
+public class AiChatHistoryResultList extends Component implements HasFiltered {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -106,6 +107,12 @@ public class AiChatHistoryResultList extends Component {
     /// @param onOpen Given a chat to open (Enter, or a double click, on it).
     public void setOnOpen(final Consumer<AiChat> onOpen) {
         this.onOpen = onOpen;
+    }
+
+    /// @param filtered Whether a filter is set, so that with nothing found it says "No matches".
+    @Override
+    public void setFiltered(final boolean filtered) {
+        resultList.setFiltered(filtered);
     }
 
     /// @param onUpFromFirst Run when Up is pressed on the first chat.

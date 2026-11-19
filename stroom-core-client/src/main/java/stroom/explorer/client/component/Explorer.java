@@ -21,6 +21,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
+import stroom.widget.layout.client.SplitPane;
 import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.quickfilter.client.QuickFilterContextHandler;
 import stroom.widget.spinner.client.SmallBusySpinner;
@@ -75,6 +76,8 @@ public class Explorer extends Component {
     @UiField
     ExplorerTree explorerTree;
     @UiField
+    SplitPane treeAndActivity;
+    @UiField
     SimplePanel activityOuter;
     @UiField
     Button activityButton;
@@ -110,6 +113,8 @@ public class Explorer extends Component {
         });
         nameFilter.setOnChange(text -> onFilterChange.accept(text));
         activityButton.setOnClick(() -> onActivity.run());
+        // Until there is an activity to show
+        treeAndActivity.setPaneHidden(activityOuter, true);
 
         buttons.put(ExplorerAction.NEW, add);
         buttons.put(ExplorerAction.DELETE, delete);
@@ -202,11 +207,12 @@ public class Explorer extends Component {
         nameFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
-    /// Shows the current activity below the explorer, or hides it (when activities aren't used).
+    /// Shows the current activity below the explorer, with the splitter that resizes it, or hides
+    /// both (when activities aren't used).
     ///
     /// @param summary The activity's summary, or null to hide it.
     public void setActivitySummary(final SafeHtml summary) {
-        activityOuter.setVisible(summary != null);
+        treeAndActivity.setPaneHidden(activityOuter, summary == null);
         if (summary != null) {
             activityButton.setContent(summary);
         }

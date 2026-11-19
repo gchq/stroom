@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -132,9 +133,9 @@ public final class PlanBEditorStories {
                     // The key schema's TimeZoneBox
                     play.expect(play.getByText("Time Zone", "label")).toBeInTheDocument();
                     // A selection box in a form group is as wide as a text field, not the screen (its
-                    // width was once lost, so they stretched across it)
+                    // width was once lost, so they stretched across it); 200px at medium, scaled with the text
                     play.expect(play.getByRole("combobox", "Temporal Resolution").closest(".selection-box"))
-                            .toHaveStyle("width", "200px");
+                            .toHaveStyle("width", DataGridStories.drawn(200) + "px");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The Time Zone control shows the offset when Use is Offset (TimeZoneBox)
@@ -189,6 +190,14 @@ public final class PlanBEditorStories {
                     play.expect(play.getByText("Data Retention", GROUP_LABEL)).toBeInTheDocument();
                     play.expect(play.queryByText("Key Schema", GROUP_LABEL)).toBeNull();
                     play.expect(play.queryByText("Value Schema", GROUP_LABEL)).toBeNull();
+                    // The granularities read as words, not the enum's names (were "HOUR", "DAY", "WEEK")
+                    final Query granularity = selection(play, "Publishing", "Bucket Granularity");
+                    play.expect(granularity).toHaveValue("Day");
+                    play.click(granularity);
+                    play.expect(play.screen().findByText("Hour", ".selection-popup *")).toBeInTheDocument();
+                    play.click(play.screen().findByText("Week", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(selection(play, "Publishing", "Bucket Granularity"))
+                            .toHaveValue("Week"));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Changing the type shows that type's groups, and keeps the settings every type has:
@@ -239,6 +248,19 @@ public final class PlanBEditorStories {
                         play.click(play.screen().findByText(type, ".selection-popup *"));
                         play.waitFor(() -> play.expect(retentionEnabled(play)).toBeChecked());
                     }
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // A state store has no condense settings, so changing it to a type that has them
+                // shows a new store's default, 1 day (before, the form's own 1 year, which was saved)
+                .story("ChangingTypeGivesCondenseItsDefault", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toBeInTheDocument());
+                    play.click(stateType(play));
+                    play.click(play.screen().findByText("Temporal State", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(selection(play, "Condense Data", "Condense Age"))
+                            .toHaveValue("Days"));
+                    final Play condense = play.within(play.getByText("Condense Data", GROUP_LABEL).closest(GROUP));
+                    play.expect(condense.getByRole("spinbutton")).toHaveValue("1");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Editing a setting makes the document dirty, so Save is enabled

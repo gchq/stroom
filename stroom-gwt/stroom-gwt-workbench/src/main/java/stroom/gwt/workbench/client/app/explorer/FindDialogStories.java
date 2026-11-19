@@ -96,6 +96,11 @@ public final class FindDialogStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(RequestMatcher.post(FIND_PATH)
                             .withJsonBodyContaining("{\"filter\": {\"nameFilter\": \"Events\"}}")
                             .toSpyMatcher());
+                    // A filter that finds nothing says so, as "No matches" rather than "No items"
+                    play.clear(filter);
+                    play.type(filter, "zzz");
+                    play.waitFor(3000, () -> play.expect(screen.getByText("No matches")).toBeVisible());
+                    play.expect(screen.queryByText("Events Pipeline")).toBeNull();
                     ContentStorySupport.expectNoProblems(play);
                 });
     }

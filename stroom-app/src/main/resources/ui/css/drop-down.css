@@ -37,7 +37,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 200px;
+    width: calc(200px * var(--text-scale));
     cursor: pointer;
 }
 
@@ -104,4 +104,40 @@
     margin-top: .25rem;
     font-size: 80%;
     color: var(--feedback);
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the colours that are all that show a field's
+   state, so a rejected value (a red border), a read-only value (greyed) and a disabled picker looked like any
+   other. There each state has a border of its own: a rejected value a thicker, dashed one (its message
+   says why), read only a dotted one; disabled, its value, icon and border in GrayText, as a disabled text box's are */
+@media (forced-colors: active) {
+    .drop-down[aria-invalid="true"] {
+        border-width: 2px !important;
+        border-style: dashed !important;
+    }
+
+    .drop-down--read-only:not([aria-invalid="true"]) {
+        border-style: dotted;
+    }
+
+    .drop-down[aria-disabled="true"]:not(.drop-down--read-only) {
+        border-color: GrayText;
+        color: GrayText;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(.drop-down, .drop-down *) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(.drop-down[aria-disabled="true"]:not(.drop-down--read-only),
+            .drop-down[aria-disabled="true"]:not(.drop-down--read-only) *) {
+        color: GrayText !important;
+    }
 }

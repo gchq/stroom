@@ -353,7 +353,7 @@ final class ColumnInteractions {
         final int column = handleColumn;
         final int width = AutoFit.width(measureContent(column), model().getSizing(column).getMinWidth());
         if (width != model().getWidth(column)) {
-            grid.resizeColumn(column, width);
+            grid.resizeColumnDrawn(column, width);
         }
         placeHandle(column);
     }

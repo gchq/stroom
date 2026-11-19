@@ -72,3 +72,20 @@
 	top: 1px;
 	box-shadow: none;
 }
+
+/* Forced colours (e.g. Windows high contrast) drop the blue fill and the shadow, leaving a bare
+   glyph with no button round it, or none at all where the glyph was white. There it is a round
+   button in the system's colours, with a border; its icon takes the button's text colour
+   (icon-colours.css) */
+@media (forced-colors: active) {
+	.fab-button__face {
+		border: 2px solid ButtonText;
+		background: ButtonFace;
+		color: ButtonText;
+	}
+
+	/* Its icons are drawn white (e.g. stepping.svg's fill:#fff, inline, so important) */
+	.fab-button__face svg * {
+		fill: currentColor !important;
+	}
+}

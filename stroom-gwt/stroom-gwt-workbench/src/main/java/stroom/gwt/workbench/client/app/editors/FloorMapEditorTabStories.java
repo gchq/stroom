@@ -229,6 +229,20 @@ public final class FloorMapEditorTabStories {
                     play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Add Object")).toBeNull());
                     play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled();
                 })
+                // Add Object left open (the screenshot and the dialog measurement show it)
+                .story("AddObjectOpen", FloorMapEditorTabStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query canvas = play.querySelector(CANVAS);
+                    play.waitFor(() -> play.expect(canvas).toHaveAttribute("role", "group"));
+                    play.run("focus the canvas", () -> canvas.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    expectMenuWithFocus(play, screen);
+                    play.click(screen.getByRole("menuitem", "Add Object Here"));
+                    final Play dialog = screen.within(screen.findByText("Add Object", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByRole("textbox", "Type");
+                })
                 // Shift+F10 and the context menu key, the standard keys for a context menu, open the
                 // focused canvas's menu, as Enter and Space do. The menu is named for what it acts
                 // on and takes the focus, and the browser's own contextmenu event for the key
@@ -287,6 +301,18 @@ public final class FloorMapEditorTabStories {
                             .toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     DocEditors.expectNoProblems(play);
+                })
+                // Set Scale left open, a form as every dialog's is: the measured length, then the real
+                // length's distance and unit, named by its label (the screenshot shows it)
+                .story("SetScaleOpen", FloorMapEditorTabStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = measureLine(play, screen);
+                    final Query distance = dialog.getByRole("textbox", "Distance");
+                    play.waitFor(() -> play.expect(distance).toHaveFocus());
+                    play.expect(dialog.getByRole("combobox", "Unit of the distance you typed")).toBeInTheDocument();
+                    play.expect(dialog.getByRole("group", "Real Length")).toBeInTheDocument();
+                    play.expect(dialog.getByText("Measured Length")).toBeInTheDocument();
                 })
                 // Set Scale with no distance: OK says what is wanted, and the dialog stays open
                 .story("SetScaleInvalid", FloorMapEditorTabStories::render)
@@ -356,6 +382,13 @@ public final class FloorMapEditorTabStories {
                     play.waitFor(() -> play.expect(screen.queryByText(APPEARANCE)).toBeNull());
                     play.expect(play.getByRole("button", DESK_SWATCH)).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
+                })
+                // Appearance left open (the screenshot and the dialog measurement show it)
+                .story("AppearanceOpen", context -> render(context, fixtures(DOC_WITH_LAYER)))
+                .withPlay(play -> {
+                    play.click(play.findByRole("button", DESK_SWATCH));
+                    final Play dialog = appearance(play.screen());
+                    play.waitFor(() -> play.expect(dialog.getByRole("combobox", "Shape")).toHaveValue("CIRCLE"));
                 })
                 // A layer's grip moves it with the arrow keys, keeping the focus on the moved layer's
                 // grip and saying where it went

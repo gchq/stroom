@@ -55,6 +55,7 @@ public class IFrameController extends Controller {
         final String title = frame.getPageTitle();
         if (title != null && !title.trim().isEmpty() && !Objects.equals(lastTitle, title)) {
             lastTitle = title;
+            nameFrame();
             onTitleChange.run();
         }
         return updateTitle && customTitle == null;
@@ -66,6 +67,7 @@ public class IFrameController extends Controller {
     public void setUrl(final String url) {
         lastTitle = url;
         frame.setUrl(url);
+        nameFrame();
     }
 
     /// Gives the page a label of its own, which the page's title then doesn't change.
@@ -73,6 +75,7 @@ public class IFrameController extends Controller {
     /// @param customTitle The label, or null to follow the page's title.
     public void setCustomTitle(final String customTitle) {
         this.customTitle = customTitle;
+        nameFrame();
     }
 
     /// @return The label for what shows the page: its own label, else its title, else its address.
@@ -80,6 +83,12 @@ public class IFrameController extends Controller {
         return customTitle != null
                 ? customTitle
                 : lastTitle;
+    }
+
+    // Names the frame as its label (the dialog's caption), for screen readers, which announce a frame
+    // by its title
+    private void nameFrame() {
+        frame.setAccessibleName(getLabel());
     }
 
     /// @param onTitleChange What to run when the page shown changes its title.

@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.monitoring;
 
 import stroom.config.global.client.component.GlobalPropertyTabController;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -126,11 +127,15 @@ public final class PropertiesScreenStories {
                     play.findByText("stroom.node");
                     play.findByText(HOME_NAME);
                     // stroom.node disagrees across the cluster: "[Multiple values]" in the theme's red text
-                    // colour (--text-color--red: red-300 in the dark theme, red-700 in the light)
+                    // colour (--text-color--red: red-300 in the dark theme, red-700 in the light). In
+                    // forced colours (e.g. Windows high contrast) status colours follow the system's, the
+                    // text saying what the red does
                     final Query multiple = play.findByText("[Multiple values]");
-                    play.expect(multiple).toHaveStyle("color", StroomThemeDecorator.isDark()
-                            ? "rgb(229, 115, 115)"
-                            : "rgb(211, 47, 47)");
+                    if (!ForcedColours.active()) {
+                        play.expect(multiple).toHaveStyle("color", StroomThemeDecorator.isDark()
+                                ? "rgb(229, 115, 115)"
+                                : "rgb(211, 47, 47)");
+                    }
                     // Double-click stroom.path.home's row: the edit dialog
                     // GWT's grid handles the events of its cells, so the row's name is pressed rather
                     // than the row (a <tr> with no role)
@@ -171,6 +176,30 @@ public final class PropertiesScreenStories {
                                             + "{\"hasOverride\": true, \"value\": \"/data/stroom\"}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Application Property left open (the screenshot and the dialog measurement show it)
+                .story("ApplicationPropertyOpen", context -> render(context, fixtures(false)))
+                .withPlay(play -> {
+                    play.click(play.findByText(HOME_NAME));
+                    play.dblClick(play.getByText(HOME_NAME));
+                    final Play dialog = propertyDialog(play);
+                    dialog.findByLabelText("Set Database value");
+                })
+                // Cluster values left open, over the Application Property dialog (the screenshot and the
+                // dialog measurement show it)
+                .story("ClusterValuesOpen", context -> render(context, fixtures(false)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText(HOME_NAME));
+                    play.dblClick(play.getByText(HOME_NAME));
+                    final Play dialog = propertyDialog(play);
+                    final Query info = dialog.findByTitle(
+                            "Show Cluster Values (all nodes have the same effective value)");
+                    play.waitFor(() -> play.expect(info).toBeVisible());
+                    play.click(info);
+                    final Play cluster = screen.within(screen.findByText("Cluster values - " + HOME_NAME)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(cluster.getByText("2")).toBeInTheDocument());
                 })
                 // Saving a property fetches the properties again as new rows (and again as node2's
                 // values are merged in): the property's row stays selected, with its new value, and

@@ -93,7 +93,7 @@
 /* Speed badge — clickable button showing current playback speed (e.g. "×1");
    clicking it opens the playback-speed menu */
 .floor-map-timeline__speed-badge {
-    font-size: 10px;
+    font-size: var(--font-size-7);
     font-weight: 600;
     /* This is 10px text, so it owes 4.5:1 (WCAG 1.4.3) — not the 3:1 the icon buttons
        either side of it owe. Take the colour from the primary *text* token, whose
@@ -165,7 +165,7 @@
 }
 
 .floor-map-timeline__date-label {
-    font-size: 10px;
+    font-size: var(--font-size-7);
     color: var(--text-color--low-emphasis);
     white-space: nowrap;
     user-select: none;
@@ -251,7 +251,7 @@
     transform: translateX(-50%);
     background-color: var(--page__background-color);
     color: var(--floormap-accent__color);
-    font-size: 10px; /* matches start/end date labels */
+    font-size: var(--font-size-7); /* matches start/end date labels */
     font-weight: 500;
     white-space: nowrap;
     padding: 3px 7px;
@@ -299,7 +299,7 @@
     position: absolute;
     bottom: 4px; /* sit in the date-labels row at the foot of the container */
     color: var(--floormap-out-of-range__color);
-    font-size: 30px;
+    font-size: calc(var(--font-size-24) * 1.1); /* 30px at Medium */
     font-weight: 700;
     line-height: 1;
     cursor: help;
@@ -402,4 +402,20 @@
     display: flex;
     align-items: center;
     gap: 3px;
+}
+
+/* In forced colours (e.g. Windows high contrast) the played part and the handle, backgrounds, vanished
+   (forced colours replace backgrounds), leaving an empty track. There the played part is filled in
+   the text colour, and the handle is the text colour edged in the page's, its own colours kept */
+@media (forced-colors: active) {
+    .floor-map-timeline__progress {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+
+    .floor-map-timeline__handle {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+        border-color: Canvas;
+    }
 }

@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -79,6 +80,10 @@ public final class SelectionListStateStories {
                         }
                     });
 
+                    if (ForcedColours.active()) {
+                        playForcedColours(play);
+                        return;
+                    }
                     expectBackground(play, RowState.NORMAL, null);
                     expectBackground(play, RowState.HOVER, "--row__background-color--hovered");
                     // A press chooses the row and gives it the focus, which a click doesn't show
@@ -142,6 +147,24 @@ public final class SelectionListStateStories {
     private static Value<Element> row(final Play play, final RowState state) {
         final Value<Element> option = play.getByRole("option", state.label).element();
         return Value.of(state.label + " row", option::get);
+    }
+
+    // In forced colours (e.g. Windows high contrast) the theme's colours give way to the system's
+    // (data-grid.css): a chosen row is filled with Highlight, and the keyboard focus is an outline,
+    // not a box shadow
+    private static void playForcedColours(final Play play) {
+        for (final RowState state : RowState.values()) {
+            final Value<Element> row = row(play, state);
+            if (state.selected) {
+                play.expect(Value.of(state.label + " row is Highlight",
+                                () -> background(row.get()).equals(ForcedColours.colour("Highlight"))))
+                        .toBe(true);
+            }
+            if (state.pseudoClasses.contains("focus-visible")) {
+                play.expect(Value.of(state.label + " row's outline", () -> ForcedColours.hasOutline(row.get())))
+                        .toBe(true);
+            }
+        }
     }
 
     private static void expectBackground(final Play play, final RowState state, final String variable) {

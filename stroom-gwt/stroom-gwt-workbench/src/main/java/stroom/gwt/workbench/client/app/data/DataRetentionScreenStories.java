@@ -287,6 +287,15 @@ public final class DataRetentionScreenStories {
                     play.expect(play.queryByTitle("Clear Filter")).toBeNull();
                     expectNoProblems(play);
                 })
+                // Query Filter left open (the screenshot and the dialog measurement show it)
+                .story("QueryFilterOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openImpactSummary(play);
+                    play.click(play.getByTitle(SET_FILTER));
+                    final Play filter = dialog(screen, "Query Filter");
+                    play.waitFor(() -> play.expect(filter.getByRole("tree", "Expression")).toBeVisible());
+                })
                 // A rule added above the second rule is selected, and its row is the one shown
                 // selected. Before, the first row was selected instead
                 .story("AddRuleSelectsIt", context -> render(context, FIXTURES))
@@ -305,6 +314,16 @@ public final class DataRetentionScreenStories {
                     play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
                     play.expect(row(play, "Keep 30 days")).not().toHaveClass(StroomDom.SELECTED_ROW);
                     expectNoProblems(play);
+                })
+                // Add New Rule left open (the screenshot and the dialog measurement show it)
+                .story("AddNewRuleOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Keep 5 years"));
+                    play.waitFor(() -> play.expect(row(play, "Keep 5 years")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByTitle("Add Rule Above"));
+                    final Play dialog = dialog(screen, "Add New Rule");
+                    play.waitFor(() -> play.expect(dialog.querySelector("#dataRetentionRuleRuleName")).toBeVisible());
                 })
                 // Deleting a rule selects the rule now in its place (UI-GUIDE.md, "What a list
                 // selects"). It once looked the deleted rule up after the rules were renumbered,

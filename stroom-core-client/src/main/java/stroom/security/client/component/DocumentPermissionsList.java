@@ -27,6 +27,7 @@ import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.HasFiltered;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -44,7 +45,7 @@ import com.google.gwt.view.client.Range;
 /// A user's permissions on documents, a row each (the document, its permission, the permission it
 /// inherits and its path), one of which can be selected, which Edit (or a double click) edits;
 /// with Filter and Batch Edit, whose enabled state its owner sets.
-public class DocumentPermissionsList extends Component {
+public class DocumentPermissionsList extends Component implements HasFiltered {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -66,6 +67,9 @@ public class DocumentPermissionsList extends Component {
     };
     private Runnable onBatchEdit = () -> {
     };
+    // What narrows the documents, either of which makes an empty list say "No matches"
+    private boolean quickFiltered;
+    private boolean expressionFiltered;
 
     /// Makes an empty list, with no document column until
     /// [#addColumns(DocRefCell.Builder)].
@@ -171,6 +175,25 @@ public class DocumentPermissionsList extends Component {
     /// @param onBatchEdit Run when Batch Edit is pressed.
     public void setOnBatchEdit(final Runnable onBatchEdit) {
         this.onBatchEdit = onBatchEdit;
+    }
+
+    /// Says whether the quick filter above the list is set, so that with no documents it says "No
+    /// matches".
+    ///
+    /// @param filtered Whether the quick filter is set.
+    @Override
+    public void setFiltered(final boolean filtered) {
+        quickFiltered = filtered;
+        dataGrid.setFiltered(quickFiltered || expressionFiltered);
+    }
+
+    /// Says whether the Filter dialog's expression narrows the documents, so that with none it says
+    /// "No matches".
+    ///
+    /// @param filtered Whether the expression has any conditions.
+    public void setExpressionFiltered(final boolean filtered) {
+        expressionFiltered = filtered;
+        dataGrid.setFiltered(quickFiltered || expressionFiltered);
     }
 
 

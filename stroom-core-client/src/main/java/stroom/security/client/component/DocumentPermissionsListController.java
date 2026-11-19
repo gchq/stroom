@@ -145,6 +145,12 @@ public class DocumentPermissionsListController extends Controller {
         view.resetRange();
     }
 
+    /// @param filtered Whether the Filter dialog's expression narrows the documents, so that with
+    ///                 none the list says "No matches".
+    public void setExpressionFiltered(final boolean filtered) {
+        view.setExpressionFiltered(filtered);
+    }
+
     /// @param enabled Whether Batch Edit can be pressed.
     public void setBatchEditEnabled(final boolean enabled) {
         view.setBatchEditEnabled(enabled);

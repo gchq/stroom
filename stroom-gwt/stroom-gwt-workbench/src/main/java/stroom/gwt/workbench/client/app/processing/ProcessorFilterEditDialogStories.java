@@ -293,6 +293,17 @@ public final class ProcessorFilterEditDialogStories {
                             .not().toHaveAttribute("aria-disabled");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // New Feed Dependency left open (the screenshot and the dialog measurement show it)
+                .story("NewFeedDependencyOpen", context -> render(context, VALID, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Add Filter", StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")));
+                    final Play deps = dialog(screen, "Set Feed Dependencies");
+                    play.click(deps.getByTitle("New Feed Dependency"));
+                    final Play editor = dialog(screen, "New Feed Dependency");
+                    play.waitFor(() -> play.expect(editor.getByText("Type", "label")).toBeVisible());
+                })
                 // Editing a feed dependency twice without selecting it again edits it as last edited.
                 // The selection kept the dependency as first read, so the second Edit showed its old
                 // stream type

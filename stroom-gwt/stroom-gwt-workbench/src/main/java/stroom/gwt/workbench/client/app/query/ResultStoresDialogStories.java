@@ -139,6 +139,18 @@ public final class ResultStoresDialogStories {
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Change Result Store Settings left open (the screenshot and the dialog measurement show it)
+                .story("ChangeResultStoreSettingsOpen", context -> render(context, STORES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByText("admin"));
+                    final Query settings = screen.getByTitle("Edit Result Store Settings");
+                    play.waitFor(() -> play.expect(settings).not().toHaveAttribute("aria-disabled"));
+                    play.click(settings);
+                    final Play dialog = screen.within(screen.findByText("Change Result Store Settings")
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByLabelText("Store Time To Live")).toBeInTheDocument());
+                })
                 // With more than 100 stores the pager pages the merged list client side
                 // (ResultPage.createPageLimitedList): page 1 shows the first 100
                 .story("Paged", context -> render(context, manyStores()))

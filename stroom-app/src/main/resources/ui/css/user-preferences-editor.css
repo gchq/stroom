@@ -16,7 +16,9 @@
 
 /* The user's preferences, in tabs, then the buttons for the defaults */
 
-/* Set As Default and Revert To Default, each the same width */
+/* Set As Default and Revert To Default, each the same width, sharing the row when larger text makes them
+   wider than the dialog */
 .user-preferences-editor__buttons button {
-    width: 250px;
+    width: calc(250px * var(--text-scale));
+    flex-shrink: 1;
 }

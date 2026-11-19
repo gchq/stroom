@@ -15,16 +15,17 @@
   -->
 
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- The documents changed, each with a tick box to save it (save-changed-documents.css) -->
+<!-- The documents changed, each with a tick box to save it: a message above the list, in a box as
+     every grid in a dialog is -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:t="urn:import:stroom.widget.text.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <g:FlowPanel addStyleNames="max dock-container-vertical">
-        <g:HTMLPanel styleName="message-container">
-            <div>The following documents have changed. Please select the ones you want to save:</div>
-        </g:HTMLPanel>
-        <g:FlowPanel addStyleNames="save-changed-documents__list dock-max">
+    <g:FlowPanel styleName="max form">
+        <t:Label styleName="dock-min"
+                 text="The following documents have changed. Please select the ones you want to save:"/>
+        <g:SimplePanel styleName="dock-max control-box">
             <dg:DataGrid ui:field="dataGrid" tableName="Document References" hasContextMenu="false"/>
-        </g:FlowPanel>
+        </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

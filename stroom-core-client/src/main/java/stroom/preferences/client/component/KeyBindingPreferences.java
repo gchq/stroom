@@ -75,6 +75,8 @@ public class KeyBindingPreferences extends Component {
     /// Makes the tab, with no rows.
     public KeyBindingPreferences() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        quickFilter.addFilteredGrid(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         addColumns();
         buttons.put(KeyBindingAction.ADD, addButton);

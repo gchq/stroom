@@ -50,6 +50,8 @@ file. Kept elsewhere, on purpose:
 
 ### A view's Meta Filter only applies to analytic rules
 
+**Left** (19 November 2026): views are to be looked at as a whole later.
+
 **Re-checked** (6 November 2026, against the code): still open: the TODO is at `ViewSearchProvider.java:190`; `ViewDoc.getFilter()` is read only by the analytic executors (`TableBuilderAnalyticExecutor`, `AnalyticRuleProcessors`).
 
 **Reported.** `ViewSearchProvider` has `// TODO : ADD SOMETHING FOR VIEWDOC FILTER`, so ordinary
@@ -58,6 +60,8 @@ searches of a view ignore its Meta Filter; only analytic rule processing applies
 * `stroom-view/stroom-view-impl/src/main/java/stroom/view/impl/ViewSearchProvider.java`
 
 ### Some Ask Stroom AI settings ignore the user's own values
+
+**Left** (19 November 2026): a big change to Ask Stroom AI is coming, so it isn't touched now.
 
 **Re-checked** (6 November 2026, against the code): still open: `AskStroomAIService` takes debug detail, the history cap, the chat system prompt and the download timeout from `defaultConfigProvider.get()`; only the model, table analysis and the history summary prompt come from the user's config.
 
@@ -71,6 +75,8 @@ have no effect unless an administrator saves them as the default.
 ## Wrong values and failures
 
 ### Solr clients can't be made: SolrJ needs a Jetty client the app doesn't have
+
+**Left** (19 November 2026): Solr support may be removed.
 
 **Re-checked** (6 November 2026, against the code): still open as far as the build shows: SolrJ 9.10.1, Jetty 12 forced app-wide (now by `jetty-bom` 12.1.14, `gradle/libs.versions.toml`), and `SolrClientFactory` builds `Http2SolrClient`. That it fails needs a run against Solr.
 
@@ -102,6 +108,8 @@ let the opener say which it is (e.g. a caption or an `isNew` argument to `show`)
 
 ### Analytic notification limit resets on restart
 
+**Tracked** in GitHub issue #6057 (19 November 2026), for discussion.
+
 **Re-checked** (6 November 2026, against the code): still open: `NotificationStateService` keeps its state in an in-memory map.
 
 **Reported.** The notification count is held in memory on each node (`NotificationStateService`),
@@ -110,6 +118,8 @@ so it resets when Stroom restarts. With Resume Notifications After blank, sendin
 * `stroom-analytics/stroom-analytics-impl/src/main/java/stroom/analytics/impl/NotificationStateService.java`
 
 ### Credential expiry isn't enforced
+
+**Tracked** in GitHub issue #6058 (19 November 2026). The expiry is mainly for information (e.g. a certificate's), but could also be enforced, generically, when a credential is retrieved.
 
 **Re-checked** (6 November 2026, against the code): expiry: still open (nothing on the server reads `getExpiryTimeMs()` outside the credentials DAO and service, `stroom-credentials/stroom-credentials-impl/.../CredentialsService.java`). Uploading the key store again on every save: **fixed**, saving an existing credential keeps its secret (`CredentialsService` lines 220-245), and changing it is Replace Secret.
 
@@ -142,6 +152,21 @@ that into Month, so the choice can never be kept (`IndexSettings`).
 
 ### Other values that disagree
 
+**Fixed** (19 November 2026), the last three:
+
+* Batch Edit Schedules' Run As User picker now asks for `FindUserContext.RUN_AS`, as the single
+  schedule editor does. Test: `TestBatchExecutionScheduleEditorController` (failed before).
+* Plan B condense's fallback wasn't only cosmetic: changing a store from a type without condense
+  settings (e.g. State) to one with them (e.g. Temporal State) gives the form null, so it showed and
+  saved 1 year where a new store has 1 day. `CondenseSettingsForm` now takes the model's default
+  (`DurationSetting`). Play: `App/Editors/PlanBEditor` `ChangingTypeGivesCondenseItsDefault`
+  (failed before).
+* `SessionDb.condense()`: nested sessions can occur, as `insert` stores what it is given. The merged
+  session now ends at whichever end is later, and each session is compared with the merged one
+  rather than the last read, so [0, 10] and [2, 5] give [0, 10], not [0, 5], and [7, 8] after them
+  joins too. Tests: `TestSessionDb` `testCondenseKeepsTheEndOfASessionWithOneNestedInIt` and
+  `testCondenseMergesASessionInsideTheMergedOne` (both failed before).
+
 **Re-checked** (6 November 2026, against the code): still open: the batch schedule's Run As User picker (`BatchExecutionScheduleEditorController` never sets `FindUserContext.RUN_AS`, as `ScheduledProcessEditorController.java:102` does; which users are wrongly listed needs a run); Plan B condense's 1-year fallback (the widget, `CondenseSettingsForm.java:63,82`); `SessionDb.condense()` taking the later session's end (`SessionDb.java:522-527`; whether nested sessions occur needs data). **Fixed:** date boxes now always write `Z` or an offset in the user's time zone (`DateTimeModel.formatIso`), the data upload's Effective Date included. Send Empty Reports and Reprocess's Max Create Time are not bugs, as recorded. `WordListPresenter` is gone (`EffectiveWordsList`).
 
 **Checked** (28 October 2026, wave 23): Send Empty Reports isn't a bug (`ReportDoc` always fills in settings, with the model's default, true, so the tab's `false` fallback never applies); Process Data's Max Create Time set to now when Reprocess changes is deliberate (its help says so). **Fixed:** every folder has Permissions (`FolderTabs`; `App/Editors/FolderEditor` `ViewDataOnly`), on master too.
@@ -168,6 +193,30 @@ that into Month, so the choice can never be kept (`IndexSettings`).
   than each `subsequentComparator`, so e.g. words with the same source come in no set order.
   **Fixed (22 October 2026):** the editor is now the component model pilot's copy, whose
   `EffectiveWordsList` breaks ties as intended, and `WordListPresenter` is deleted.
+
+### setupSampleData never exits
+
+**Fixed** (18 November 2026). `setupSampleData` finished ("Stroom Task Manager stopped
+successfully") but its JVM stayed up for hours. A thread dump showed one thread that wasn't a
+daemon, `pool-4-thread-1`, in `ExecutorService.close()` from `FsStreamStore.validateVolumePath`'s
+delayed delete of its test file: the delete ran on the executor and closed it, and `close()` waits
+for the executor to end, so it waited for itself for ever. That leaked a thread per volume validated
+in a running Stroom too. Fixed on master by `9a8fc3bf77` ("Fix FsStreamStore clean up", merged in
+18 November 2026): the test file is deleted at once, a failed delete is retried on one executor
+shared by the store, and a shutdown task (and `SetupSampleData`, through `FsStreamStoreCleanUp`)
+shuts it down. This branch's own fix (`deleteLater`, `TestFsStreamStore`) was dropped in the merge.
+
+### A table value loses what follows a link with a query string
+
+**Fixed** (18 November 2026, found while adding a play for a cell holding two links): in a query or
+dashboard table, a value such as `[Open](data?id=1001&partNo=1){data} [Source](...)` showed the
+first link, then the rest of the value from some way along it (e.g. `03&partNo=...`): the second
+link, or any text after the first, was lost or mangled. `TableRow.getParts` skipped past a link by
+the length of `LinkValue.toString()`, which URL encodes the text and address, so is longer wherever
+they have `?`, `=`, `&`, a space and so on (as every data link has). It now skips by the link's
+length as written (`LinkValue.lengthAt`). JUnit can't show it (`LinkValue` encodes only in the
+browser, `GWT.isClient()`), so `TestLinkValue` tests `lengthAt` and `TestTableRow` the parts; the
+play `App/Editors/QueryEditor` `TwoLinksInACell` failed on it before the fix.
 
 ### The Pathways editor can't create a pathway or add a constraint
 
@@ -206,6 +255,31 @@ basic use:
   (`onReadOnlyChange`)
 
 ### Workbench stories that fail
+
+**Full runs, 11 November 2026** (after the master merge; normal dark theme, and forced colours in
+both palettes): 1,903 stories. The normal run's 6 failures are gone: the three `CredentialsScreen`
+replace-secret plays expected the old request (fixed), and the leak failures (`QueryEditor`
+`Default`, `Hyperlinks`, `QueryResultVis` `PauseButtonReportsUp`) passed at 4 workers. 11 passed
+on a retry: 8 heavy editors' leak checks and `Force3D` `Hover`, `Keyboard` and `ViewKeys` (timed
+out). Open from these runs:
+
+* `Widgets/Layout/SplitPane` `Keyboard` and `Widgets/Data Grid/DataGridKeyboard`
+  `SingleSelection`: their screenshots are the same bytes in the normal and both forced-colours
+  runs, so forced colours didn't reach what was captured. Fixed 11 November 2026: their real input
+  checks emulated forced colours for a check and then set them back to none, even in a
+  forced-colours run; they now put back what the run had (`lib/real-input/forced-colours.mjs`),
+  and the screenshots differ.
+* `Widgets/Date Time/ScheduleBox` `QuickSettingsAreGroupedButtons`: its Change Schedule dialog is
+  sometimes 1px higher in the screenshot (about one run in three, with the same stylesheets),
+  likely from when the dialog is centred; it flags as a screenshot change though nothing changed.
+* `Widgets/Tree/ExplorerTree` `Keys` and `Widgets/EntityCheckTree` `TriState` end blank or nearly
+  blank in every run.
+* `App/Main/PropertiesScreen` `Properties` ended with a row selected in the normal run and none in
+  both forced runs; `App/Editors/DashboardEditor` `TableColumnValuesFilterUnavailable` ended with
+  alpha and beta ticked in the forced dark run only. Possibly flaky.
+* The normal run's stories reported console 404s for stylesheets (`solr-index-field-list.css`,
+  `pipeline-property.css`, `create-user.css`, `code-editor.css`, ...) while their screenshots were
+  taken; the forced runs, from the same copy, didn't.
 
 **Re-checked** (6 November 2026, against the code): still open in the code: a static REST resource keeps its last callback (`RestFactoryImpl.java:257-272`; the static `RESOURCE` is now in `AskStroomAiClient.java:50`); `AppShell` `OpensDocument`'s play doesn't wait for the focus to settle. Fixed since: `CredentialsScreen` `KeyStore`, the 48 stories (all fixed; the "13 open" is stale), the reopen timeouts (`89141b51de`, which also removed `closeOnCleanUp`), the AI chat's leaks, the leak check running last, `VisAccessibilityStories`, the stories failing on master, the Groovy `+` (now `build.gradle:973`), `AppShell` `Embedded` and `ValueSpinnerColumn`'s polled time. The accessibility baseline now holds one entry. The flaky stories named (`HyperlinksByKeyboard`, `TableFilterDrivesQuery`, `CrossNavigation`, `DeleteAfterFailedLookupStillProceeds`, `FieldsReadOnly`, `Force3D` `ViewKeys`, `Tree` `Keyboard`, `LineChart` `PageKeys`, `AddToAnnotation`) have no fix; whether they still fail needs a full run.
 
@@ -450,6 +524,8 @@ with the `+`).
 
 ### A visualisation's selection offers only Name and Value to selection handlers
 
+**Tracked** in GitHub issue #6059 (19 November 2026), for discussion.
+
 **Re-checked** (6 November 2026, against the code): still open (`VisSelectionModel.java:44-46`, now in `stroom-core-client/.../query/client/result/vis/`).
 
 **Confirmed.** A visualisation can send any keys in its selection (`stroom.select`), and Stroom
@@ -464,6 +540,8 @@ its inputs are) and offer those.
 * `stroom-core-client/src/main/java/stroom/query/client/VisComponentSelection.java`
 
 ### GeoMap's map tiles are blocked in an asset-based visualisation
+
+**Tracked** in GitHub issue #6060 (19 November 2026).
 
 **Re-checked** (6 November 2026, against the code): still open in the code: `DocumentAssetServlet.java:212-219` still has `img-src 'self' data:`, with no setting for other origins; a blank map needs a running Stroom to see.
 
@@ -1050,9 +1128,67 @@ run, two Pipeline Editor stories in wave 37's), alongside a burst of stories tha
 second attempt. Both came right at 4 workers. To do: the runner could wait for the stylesheets (e.g.
 `document.styleSheets` all loaded, or a known rule applied) before its first screenshot.
 
+**Top Bar Keyboard's screenshot without its tooltip** (16 November 2026, the #3695 final run at
+Medium with the leak check, 4 workers): the story passed, but its screenshot showed the Show Main
+Menu button neither focused nor with its tooltip. It had both at Large, Small and with spacing, and
+on a rerun of the story at Medium with the leak check. A timing flake in the screenshot, not a
+fault; worth a look if it comes back.
+
+**Schedule Box's dialog 1px higher** (17 November 2026, the empty grid message review fixes' full
+run at Medium with the leak check, 4 workers): Quick Settings Are Grouped Buttons' screenshot had
+the whole Change Schedule dialog, the same size, 1px higher than in the run before. Nothing in the
+change touches it (it has no grid), and a rerun of the Schedule Box stories matched the earlier run
+exactly. A centring flake in the screenshot, within the ±1px a CSS change may move things.
+
+**Report Editor leaks on a first attempt** (17 November 2026, both empty grid message full runs):
+Settings Editable failed the leak check on both attempts (35 DOM nodes and 5 listeners kept per
+close), and Settings, Notifications Reveal Does Not Dirty and Execution Scheduled Only failed it on a
+first attempt (33 to 284 nodes). Each passed on a rerun of the Report Editor stories with the leak
+check. Worth a look if one keeps failing: the leak check at 4 workers may be measuring before the
+closed editor's parts are collected. Again in the dialog padding full run (17 November 2026, 3
+workers): Report Editor's Notifications Editable and three Analytic Rule stories on both attempts;
+all passed on reruns (three Analytic Rule stories only on a second attempt, at 2 workers). Again in
+the tab panel full run (18 November 2026, 3 workers): Analytic Rule's Edit Notification Twice and
+Delete Schedule Selects Next on both attempts (71 and 142 nodes). Rerun alone at 2 workers, a
+different Analytic Rule story failed on both attempts and four on a first, with the tab panel fix
+and without it alike (Settings Read Only, then New Schedule Seeds The Default Node).
+
+**Fixed** (18 November 2026): not the leak check's timing, a closed editor kept by a shared REST
+service. Under load, a close's DOM node count went up and down by one whole query editor (about
+2,990 nodes, 439 listeners) from one close to the next, never growing; the leak check's slope read
+a step as growth. A heap snapshot in the high state traced the kept editor's detached elements (its
+Ace editor's layers among them) to `QueryResource_DirectRestServiceImpl` (a static
+`GWT.create(QueryResource.class)`), whose callback field held the last call's `MethodCallbackImpl`,
+then `RestFactoryImpl`'s task executor, `QueryResultTableController`, `QueryEditorController`: the
+editor that made the resource's last call. RestyGWT's `REST.withCallback(callback).call(service)`
+sets the callback on the shared service and never takes it off, so every static resource kept its
+last caller (and all it reached) until its next call; under load, whether the reopened editor had
+made its call before the measure decided it. In the app it kept a closed editor, dashboard or
+dialog until the resource's next call. `RestFactoryImpl.call` takes it off once the request is made
+(`TestRestFactoryImpl`). Also, the probe's close now drops the focus check's hook
+(`window.__workbenchContentFocus`), which held the just-closed screen while it was measured.
+After: six Analytic Rule stories run at once, two runs each, measured the same at every close
+(about 3,295 nodes, where it had been 6,300 to 9,300), and the Analytic Rule and Report editors'
+38 stories passed at 3 workers, none on a retry. The whole suite then passed, 2,000 stories, with
+one retry (Spinner Inline's timing) and no leak failure; the only screenshot changes were the force
+vises' moving layouts.
+
+**Stories whose screen the leak check never saw** (17 November 2026, fixed): the Visualisation
+Assets stories added their frame before `afterStartUp`, so the leak probe counted nothing the opening
+showed and skipped them; Begin Stepping made its chooser before it. A story leaving a dialog open
+made the probe count the dialog, then fail to open the screen again. Both now make their frame or
+chooser in `afterStartUp`, so every opening shows it and the leak check runs. Other stories may do
+the same: the runner's `-v` says which aren't checked and why.
+
 ### Sample data installs the old visualisations, with no assets
 
-**Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.4`), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
+**Confirmed fixed** (18 November 2026, run against a database made with `./local.yml.sh`,
+`setupDevEnv` (`stroom_a11y2`) and `./gradlew setupSampleData`): the log has "Importing visualisations
+stroom-visualisations-v8.0-beta.6"; the database has the zip's 27 visualisations (same names as the
+old pack) plus the sample source's two test ones, none twice, and `visualisation_assets` has 81 rows
+across all 27. The splitter beside a visualisation in the running app is still to be checked.
+
+**Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.5` (12 November 2026)), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
 
 **Fixed** (3 November 2026), not yet run against a database: `SetupSampleData` now leaves the
 Content Store's `stroom-visualisations` entry out (`ContentStoreTestSetup.installSampleDataPacks`
@@ -1242,9 +1378,9 @@ to delete them by hand.~~
   October 2026 it differed in every full run (waves 40 to 47) and alone too, always with the
   Show Main Menu tooltip shown; its baseline was retaken with the tooltip when master's explorer
   Reload button was merged in (the toolbar changed anyway).
-* Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
+* ~~Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
   (found 25 October 2026 in wave 4's audit; older; harmless, as `ExecutionScheduleManager` acts
-  only on `true`). Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditorController`).
+  only on `true`).~~ Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditorController`).
 * ~~Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
@@ -1403,11 +1539,12 @@ to delete them by hand.~~
 * ~~Unused CSS met in wave 12 (27 October 2026): `.pipelineStructureViewImpl-buttons`
   (`components.css`; nothing has the class since the pipeline's Structure tab converted). Delete it
   once removals are allowed.~~ **Deleted** (checked 30 October 2026: it is named nowhere).
-* Classes wave 12 left un-BEM'd (found 27 October 2026, in its audit): the annotation editor's
+* ~~Classes wave 12 left un-BEM'd (found 27 October 2026, in its audit): the annotation editor's
   `annotationContainer`, `annotationHistory*`, `annotationButtons`, `annotationTextBox` and the rest
   (`stroom-annotation.css`; only the button width moved, to `annotation-editor.css`), and the traces
   list's `traces-toolbar` (`pathways.css`, set in `TracesListTabController`). Rename them with their
-  rules to `annotation-editor__…` and `traces-list-tab__toolbar` in one pass each. **The annotation
+  rules to `annotation-editor__…` and `traces-list-tab__toolbar` in one pass each.~~ **Done**
+  (closed 19 November 2026). **The annotation
   editor's done** (wave 28, 29 October 2026: `annotation-editor`, `annotation-setting`,
   `annotation-history` and `duration-label`, a sheet each); `traces-toolbar` is
   `traces-list-tab__toolbar` (`traces-list-tab.css`) since UI audit wave 8 (29 October 2026).
@@ -1490,8 +1627,10 @@ to delete them by hand.~~
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
   defaults to Dialog while the config default is Dock.
 * Solr's ZooKeeper Path is a single value shown in a multi-line text area.
-* Plan B's Bucket Granularity list shows the enum names in capitals (HOUR, DAY, WEEK), as
-  `BucketGranularity` has no display names.
+* ~~Plan B's Bucket Granularity list shows the enum names in capitals (HOUR, DAY, WEEK), as
+  `BucketGranularity` has no display names.~~ **Fixed** (19 November 2026): it has display names
+  (Hour, Day, Week); stored documents keep the enum names. Play: `App/Editors/PlanBEditor` `Trace`
+  (failed before).
 * The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
   (`$\{BaseField.score\}`), not UiBinder's `{{`, so it may show the backslashes
   (`ElasticIndexSettings.ui.xml`).

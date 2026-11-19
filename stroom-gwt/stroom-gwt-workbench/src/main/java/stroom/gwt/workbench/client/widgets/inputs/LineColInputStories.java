@@ -67,7 +67,7 @@ public final class LineColInputStories {
                     final LineColInput input = lineColInput(context, 42, 10);
                     final Label result = new Label("—");
                     result.getElement().getStyle().setProperty("marginTop", "8px");
-                    result.getElement().getStyle().setProperty("fontSize", "12px");
+                    result.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
                     onCommit(input, location -> result.setText(location == null
                             ? "L:None C:None"
                             : "L:" + location.getLineNo() + " C:" + location.getColNo()));

@@ -7,11 +7,11 @@
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:svg="urn:import:stroom.svg.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
-    <g:HTMLPanel styleName="common-alert">
+    <g:HTMLPanel styleName="common-alert focus-ring-room max">
         <div class="common-alert__icon">
             <svg:Icon ui:field="icon"/>
         </div>
-        <g:FlowPanel styleName="common-alert__message-area">
+        <g:FlowPanel styleName="common-alert__message-area focus-ring-room">
             <tx:Html ui:field="message" styleName="common-alert__message"/>
             <b:LinkButton ui:field="showHideDetail" addStyleNames="common-alert__show-hide" visible="false"><span
                     class="common-alert__show-hide-arrow" aria-hidden="true"></span>Show Detail</b:LinkButton>

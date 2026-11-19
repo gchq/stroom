@@ -35,6 +35,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -313,6 +314,13 @@ public final class QueryEditorStories {
                     "[](data?id=1002&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "second",
                     "[https://example.com/docs/](https://example.com/docs/){browser}", "third")));
 
+    // TwoLinksInACell: a row whose Name holds two links, and one with one
+    private static final RestFixtures TWO_LINK_FIXTURES = fixtures(RestFixtures.builder(),
+            RestReply.json(linkTable(
+                    "[Open](data?id=1001&partNo=1&recordNo=5&viewType=source&displayType=tab){data} "
+                    + "[Source](data?id=1003&partNo=1&recordNo=2&viewType=source&displayType=tab){data}", "first",
+                    "[Next](data?id=1002&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "second")));
+
     // Visualisation: a vis result as well as the table, and the visualisation document
     private static final String VIS_SETTINGS =
             "{\"json\": \"{}\", \"visualisation\": {\"type\": \"Visualisation\", \"uuid\": \"vis-1\", "
@@ -425,6 +433,15 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Time Range")).toBeNull());
                     play.expect(screen.getByRole("button", "Time range: Today")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
+                })
+                // Time Range left open (the screenshot and the dialog measurement show it)
+                .story("TimeRangeOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByRole("button", "Time range: All time"));
+                    final Play dialog = screen.within(screen.findByRole("dialog", "Time Range"));
+                    play.waitFor(() -> play.expect(dialog.getByRole("textbox", "After Time (inclusive)"))
+                            .toHaveFocus());
                 })
                 // The query help: the root rows load, expanding one loads its children and
                 // selecting a row shows its documentation and enables Insert into Query. The
@@ -605,7 +622,8 @@ public final class QueryEditorStories {
                     play.keyboard("{Enter}");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(header(play, "Count").closest(StroomDom.GRID_HEADER_CELL).width())
-                            .toSatisfy("180 pixels wide", w -> Math.abs((Double) w - 180) <= 1));
+                            .toSatisfy("180 pixels wide (at medium)",
+                                    w -> Math.abs((Double) w - DataGridStories.drawn(180)) <= 1));
                     play.click(play.getByRole("button", "Execute Query"));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"width\": 180}, {}, {}]}}");
@@ -796,6 +814,17 @@ public final class QueryEditorStories {
                     play.click(list.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"conditionalFormattingRules\": [{}]}}");
                     DocumentEditors.expectNoProblems(play);
+                })
+                // The conditional formatting rules' Settings left open (the screenshot and the dialog
+                // measurement show it)
+                .story("ConditionalFormattingSettingsOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Count");
+                    play.click(screen.findByText("Edit Conditional Formatting for Table", StroomDom.MENU_ITEM_TEXT));
+                    final Play list = dialog(screen, "Settings");
+                    play.waitFor(() -> play.expect(list.getByRole("button", "New Formatting Rule"))
+                            .toBeInTheDocument());
                 })
                 // A '[text](href){type}' value is shown as a link
                 .story("Hyperlinks", context -> render(context, HYPERLINK_FIXTURES))
@@ -1016,6 +1045,18 @@ public final class QueryEditorStories {
                                     + "\"userRef\": null}}").toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Change Assigned To left open (the screenshot and the dialog measurement show it)
+                .story("ChangeAssignedToOpen", context -> render(context, ANNOTATION_FIXTURES, null, false,
+                        QueryEditorStories::annotationSpies))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    execute(play);
+                    play.click(play.findByText("beta"));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("Change Assignee", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Change Assigned To");
+                    play.waitFor(() -> play.expect(dialog.getByText("Assign Yourself")).toBeInTheDocument());
+                })
                 // Add to Annotation: choose an existing annotation, link the row's event to it and
                 // open it
                 .story("AddToAnnotation", context -> render(context, ANNOTATION_FIXTURES, null, false, true,
@@ -1111,6 +1152,32 @@ public final class QueryEditorStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1002:4"));
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // A cell holding two links: its first has the focus from the cell, Tab goes to the
+                // second and Shift+Tab back, and the arrows still move by cell. The keyboard reached
+                // only the first
+                .story("TwoLinksInACell", context -> render(context, TWO_LINK_FIXTURES, null, false,
+                        QueryEditorStories::hyperlinks))
+                .withPlay(play -> {
+                    execute(play);
+                    final Query open = play.findByRole("link", "Open");
+                    final Query source = play.getByRole("link", "Source");
+                    play.click(play.getByText("first"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(open).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(source).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
+                            .toHaveBeenCalledWith("STROOM_TAB SOURCE 1003:1"));
+                    play.keyboard("{Shift>}{Tab}{/Shift}");
+                    play.waitFor(() -> play.expect(open).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(source).toHaveFocus());
+                    // Down goes to the same cell in the next row, its link
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.getByRole("link", "Next")).toHaveFocus());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // When the query's data source is Annotations, changing an annotation runs a new

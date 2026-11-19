@@ -27,7 +27,7 @@
    that it can (it was lost when SelectionBox.css became this, so a box in a form group, a column
    flexbox, stretched across the screen) */
 .selection-box {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* The value as it is drawn (the text box, which holds it as text, sits over it, unseen unless the box
@@ -49,13 +49,13 @@
     background-color: var(--control__background-color);
 }
 
-/* The text box: the named control, and what is typed in a box that can be typed in. It has no border
-   of its own, not even the focus border a text field gets (text-field.css), which would make the box
-   2px taller while it has the keyboard's focus: the box draws its own */
+/* The text box: the named control, and what is typed in a box that can be typed in. Its border is
+   clear, focused or not (the box draws its own, and a focus border, text-field.css, would change it),
+   but there, so the box is as high as a text field, a quick filter or a drop-down beside it */
 .selection-box__input,
 .selection-box__input:focus-visible {
     position: relative;
-    border-width: 0 !important;
+    border: 1px solid transparent !important;
 }
 
 /* A box that can't be typed in opens its list when clicked, so the whole box shows it can be */
@@ -69,8 +69,20 @@
     opacity: 0;
 }
 
+/* In a box that can be typed in, the value still draws the field (its border and background), as the
+   text box has no border of its own: only its picture is hidden, and the text box over it is clear.
+   (It was hidden whole, so a List Input that can be typed in had no border, and in forced colours an
+   empty one couldn't be seen at all) */
 .selection-box:not(.selection-box--select-only) .selection-box__value {
-    opacity: 0;
+    color: transparent;
+}
+
+.selection-box:not(.selection-box--select-only) .selection-box__value > * {
+    visibility: hidden;
+}
+
+.selection-box:not(.selection-box--select-only) .selection-box__input {
+    background-color: transparent;
 }
 
 /* Disabled: the filled field with no border that every disabled control has, drawn by the value (the
@@ -101,6 +113,14 @@
     box-shadow: var(--focus-shadow--invalid);
 }
 
+/* In forced colours (e.g. Windows high contrast) no box shadow is drawn, so the value shows the
+   keyboard focus as an outline, as everything else does there (base.css) */
+@media (forced-colors: active) {
+    .selection-box--select-only:has(.selection-box__input:focus-visible) .selection-box__value {
+        outline: 2px solid Highlight;
+    }
+}
+
 /* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (its field too, as the
    cell is also icon-box--fluid; a box's field is otherwise at least 200px, icon-box.css) */
 .selection-box.selection-box--cell {
@@ -111,7 +131,7 @@
 
 /* In a Git repo's settings, beside the credentials' button */
 .git-repo-settings__credentials .selection-box {
-    width: 280px;
+    width: calc(280px * var(--text-scale));
 }
 
 /* In a conditional formatting rule's style, a colour swatch filling the box */
@@ -126,4 +146,40 @@
     background: none !important;
     padding: 3px 5px;
     min-width: auto;
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the colours that are all that show a field's
+   state, so a rejected value (a red border), a read-only value (greyed) and a disabled box looked like any
+   other. There each state has a border of its own: a rejected value a thicker, dashed one (its message
+   says why), read only a dotted one; disabled, its value and border in GrayText, as a disabled text box's are */
+@media (forced-colors: active) {
+    .selection-box--read-only .selection-box__value {
+        border-style: dotted;
+    }
+
+    .selection-box.selection-box--disabled,
+    .selection-box--disabled .selection-box__value {
+        border-color: GrayText;
+        color: GrayText;
+    }
+
+    .selection-box:has(.selection-box__input[aria-invalid="true"]) .selection-box__value {
+        border-width: 2px;
+        border-style: dashed;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(.selection-box, .selection-box *) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(.selection-box--disabled, .selection-box--disabled *) {
+        color: GrayText !important;
+    }
 }

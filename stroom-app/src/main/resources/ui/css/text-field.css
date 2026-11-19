@@ -132,7 +132,7 @@ textarea:where(:not(.text-field))[aria-invalid="true"] {
    sheet comes in app.css: a layout helper (max, which comes before this sheet), a screen's own rule
    or a modifier below */
 :where(.text-field) {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* Its look, at an element and a class's weight for a text box (a text area's is a class's) */
@@ -204,12 +204,12 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
 
 /* A narrow field, e.g. for a short number */
 .text-field.text-field--narrow {
-    width: 80px;
+    width: calc(80px * var(--text-scale));
 }
 
 /* A wide field, e.g. for a name, path or URI */
 .text-field.text-field--wide {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }
 
 /* A text area: several lines, scrolling when there are more, at a fixed height a screen can change
@@ -228,4 +228,36 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
 .text-field--multiline[readonly]::-webkit-scrollbar,
 .text-field--multiline[readonly]::-webkit-scrollbar-corner {
     background: transparent;
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the colours that are all that show a field's
+   state, so a rejected value (a red border), a read-only value (greyed) and a disabled one looked like any
+   other. There each state has a border of its own: a rejected value a thicker, dashed one (its message
+   says why), read only a dotted one; disabled is the system's GrayText already */
+@media (forced-colors: active) {
+    :is(input, textarea)[aria-invalid="true"] {
+        border-width: 2px !important;
+        border-style: dashed !important;
+    }
+
+    :is(input, textarea)[readonly]:not([aria-invalid="true"]) {
+        border-style: dotted !important;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(input, textarea) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+        -webkit-text-fill-color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(input, textarea):disabled {
+        color: GrayText !important;
+        -webkit-text-fill-color: GrayText !important;
+    }
 }

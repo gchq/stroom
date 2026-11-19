@@ -54,14 +54,21 @@ public final class FloorMapScreenGeometry {
 
     /// The screen size, in pixels, of the square box a point glyph occupies —
     /// an event entity or an imageless, vertex-less fact, drawn at a fixed screen
-    /// size whatever the zoom.
+    /// size whatever the zoom. 24 px: small enough that neighbours on a zoomed-out
+    /// plan stay apart, and the smallest target WCAG allows (2.5.8, 24 by 24). A
+    /// cluster is drawn bigger ([#CLUSTER_GLYPH_SIZE_PX]).
     ///
     /// Lives here, rather than only in the renderer, because it is not just a
     /// drawing detail: clustering merges entities whose glyphs would overlap, so
     /// the merge distance is a function of this. Two independent constants that
     /// had to agree by hand is exactly how the merge distance ended up smaller
     /// than the glyph it was meant to keep clear.
-    public static final int POINT_GLYPH_SIZE_PX = 60;
+    public static final int POINT_GLYPH_SIZE_PX = 24;
+
+    /// The screen size, in pixels, of the smallest cluster's glyph (a pair): a
+    /// step bigger than a lone entity's, so a merged set reads as several things
+    /// at a glance. Bigger clusters grow from this (`FloorMapCluster#sizeFactor`).
+    public static final int CLUSTER_GLYPH_SIZE_PX = 32;
 
     /// The map-space width an image fact is rendered at before its placement
     /// matrix scales it — so an image's size on the map is this times the
@@ -344,6 +351,44 @@ public final class FloorMapScreenGeometry {
     /// @return `{screenX, screenY}`
     public double[] mapToScreen(final double mapX, final double mapY) {
         return new double[]{mapToScreenX(mapX), mapToScreenY(mapY)};
+    }
+
+    /// Where an area's occupant badge goes: just inside the area's top-left corner, its vertex
+    /// furthest up and to the left on screen, so the badge reads as the room's and doesn't sit
+    /// under the glyphs of the people it counts (who tend to gather near a room's middle). An area
+    /// too small on screen for a badge in its corner keeps it at its centre, as do fewer than three
+    /// vertices.
+    ///
+    /// @param mapVertices the area's vertices in map space (Y up), or `null`
+    /// @param centre      the area's centre in map space, the fallback
+    /// @param scale       pixels per map unit
+    /// @param insetPx     how far the badge's centre is in from the corner, right and down, in
+    ///                    screen pixels (its radius and a gap)
+    /// @return `{mapX, mapY, offsetXPx, offsetYPx}`: the map-space anchor and the badge's offset
+    ///         from it in screen pixels (positive right and down)
+    public static double[] areaBadgePlacement(final double[][] mapVertices,
+                                              final double[] centre,
+                                              final double scale,
+                                              final double insetPx) {
+        final double[] atCentre = {centre[0], centre[1], 0, 0};
+        if (mapVertices == null || mapVertices.length < 3) {
+            return atCentre;
+        }
+        final double[] bounds = {Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
+        double[] corner = mapVertices[0];
+        for (final double[] vertex : mapVertices) {
+            expandMap(bounds, vertex[0], vertex[1]);
+            // Up is +y in map space, left is -x: the top-left-most vertex scores highest
+            if (vertex[1] - vertex[0] > corner[1] - corner[0]) {
+                corner = vertex;
+            }
+        }
+        // Room for the badge in the corner with as much again beside it, across and down
+        final double needPx = insetPx * 4;
+        if ((bounds[2] - bounds[0]) * scale < needPx || (bounds[3] - bounds[1]) * scale < needPx) {
+            return atCentre;
+        }
+        return new double[]{corner[0], corner[1], insetPx, insetPx};
     }
 
     /// Projects a point with an explicit viewport, for callers holding scale and pan directly

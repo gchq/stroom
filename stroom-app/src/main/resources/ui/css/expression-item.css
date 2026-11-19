@@ -176,6 +176,13 @@
 		forced-color-adjust: none;
 	}
 
+	/* So its text is in the system's colour too, not the theme's (light grey on a light background
+	   in the dark theme). At no weight, so that the disabled, selected and read-only colours above
+	   still apply */
+	:where(.expression-item__label) {
+		color: CanvasText;
+	}
+
 	/* An editor's row: its fields' own colours (not the selected row's, against which the fields
 	   would be unreadable), and a Highlight outline while selected */
 	.expression-item__row:not(.expression-item__label) {
@@ -190,6 +197,12 @@
 	.expression-item[aria-selected]:hover:not(.expression-item--target):not(.expression-item--refused):not(.expression-item--detached) .expression-item__label {
 		outline: 1px solid Highlight;
 		outline-offset: -1px;
+	}
+
+	/* The item's label and rows show its focus, not the item: so not the outline base.css gives
+	   whatever has the keyboard focus there (important, to win over it) */
+	.expression-item:focus-visible {
+		outline: none !important;
 	}
 
 	.expression-item:focus-visible .expression-item__label {
