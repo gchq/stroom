@@ -65,6 +65,7 @@ RUN set -eu; \
       curl \
       git \
       graphviz \
+      procps-ng \
       rsync \
       shadow-utils \
       fontconfig \

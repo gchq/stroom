@@ -159,6 +159,7 @@ start_services() {
     || true
 
   popd > /dev/null
+  echo -e "${GREEN}Completed async service start${NC}"
 }
 
 # Start the services in the background, so that pulling their images and
