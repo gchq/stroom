@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
@@ -62,7 +63,9 @@ final class EvalScore {
     // Process-SOAPRequest); or any TypeId at all.
     private static final String VERB_OBJECT = "verb_object";
     private static final String ANY = "any";
-    private static final Pattern VERB_OBJECT_ID = Pattern.compile("[A-Z][A-Za-z]*-[A-Z][A-Za-z0-9]*");
+    // The catalogue's own: a verb and one or more parts of its object (seen in eval case 69: Raise-Malware-Alert,
+    // which the catalogue takes, scored not Verb-Object).
+    private static final Pattern VERB_OBJECT_ID = TypeIds.VERB_OBJECT;
     // What a build case is scored on when it doesn't say: TypeIds of this pattern, and whether every event (but
     // the catch-all's Unknown ones) must have a Description.
     private static final String DEFAULT_TYPE_ID_PATTERN = VERB_OBJECT;

@@ -423,6 +423,23 @@ class TestEvalScore {
     }
 
     @Test
+    void aTypeIdOfMoreThanTwoPartsIsVerbObjectAsTheCatalogueHasIt() {
+        // Seen in eval case 69 (2026-11-20): Raise-Malware-Alert, which the catalogue takes, scored not Verb-Object.
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", 2, "type_ids", Map.of("pattern", "verb_object"))),
+                List.of(typed("Raise-Malware-Alert", ""), typed("Update-User2-Password", "")), List.of(true, true),
+                null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+
+        final EvalScore trailing = new EvalScore("c");
+        trailing.scoreEvents(expecting(Map.of("records", 1, "type_ids", Map.of("pattern", "verb_object"))),
+                List.of(typed("Raise-Malware-", "")), List.of(true), null);
+        assertThat((List<String>) trailing.toMap().get("problems")).containsExactly(
+                "TypeIds [Raise-Malware-] are not Verb-Object");
+    }
+
+    @Test
     void aTypeIdOfAnyFormMayBeAllowedAndUnknownEventsAreLeftOutOfTheForm() {
         final EvalScore score = new EvalScore("c");
         score.scoreEvents(expecting(Map.of("records", 2, "type_ids", Map.of("pattern", "any"))),
