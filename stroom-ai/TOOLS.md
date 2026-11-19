@@ -3599,9 +3599,10 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   nearest names); the **regex guard**, a regex over its time budget (timed in Saxon's engine, as processing runs it),
   and a regex or `contains` over values past 10,000 characters where `starts_with` or `contains` recognises the same
   records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting;
-  an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value one
-  or two records hold, on a field held by at least 20 records whose distinct values are at least 80% of them (a message
-  holding an object's id), refused with `starts_with` or `matches` with a named group suggested (2026-11-20).
+  an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value that
+  differs from 3 or more of the field's values only in a part that varies (a message holding an object's id; masked
+  as the survey's shapes are), refused with `starts_with` or `matches` with a named group suggested; a code (`Login`,
+  `4624`) never (2026-11-20).
 * `order`: the catalogue's.
 
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
@@ -5182,7 +5183,8 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   a mapping that doesn't validate (each error with where it is and the value given, a whole example mapping when
   its shape is wrong: `MappingProblems`); `max_records` out of range; a `splitter` that isn't a spec; saving with
   `build` but no `name`; keeping a rule Unknown with no sample records to show (see below); a catalogued build's
-  save while its catch-all is unconfirmed (declined, say: ask the user in the chat, then catalogue_event_types); and
+  save while its catch-all is unconfirmed (declined, say: ask the user in the chat, then catalogue_event_types; a
+  catalogue read back from a hand-written translation isn't held to it); and
   every save refusal of save_xslt. `changes={}` is the mapping as it stands (the session's draft, or the saved
   mapping); a source type group's first save with no `name` changes the build's draft. With `group`: no source type registry in the build; `source_types` not the registry's, or
   none and no scope; a name whose mode is the common module's; a new group saved with no form and no
