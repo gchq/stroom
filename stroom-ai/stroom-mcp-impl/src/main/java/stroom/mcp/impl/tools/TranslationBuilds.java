@@ -71,8 +71,9 @@ class TranslationBuilds {
     static final String DOMAIN_CHOSEN = "domain split chosen";
     /// What the user chose for values that stand for none, by value (see [PlaceholderChoices]).
     static final String PLACEHOLDERS_CHOSEN = "placeholders chosen";
-    /// What the user agreed to of the kinds they confirmed that the XSLT translates otherwise (see [ConfirmedKinds]).
-    static final String CONFIRMED_CHANGED = "confirmed kinds changed";
+    /// What the user agreed to of the event types they confirmed that the XSLT translates otherwise (see
+    /// [ConfirmedEventTypes]).
+    static final String CONFIRMED_CHANGED = "confirmed event types changed";
     /// What changes_applied_to says when changes went onto the session's draft.
     static final String ON_THE_DRAFT = "the draft draft_translation_mapping made";
     /// What a review's hint says of the changes given with the call reviewed: the mapping holds them already, so
@@ -411,7 +412,7 @@ class TranslationBuilds {
     /// @param total   How many sample records were checked.
     /// @return The markdown.
     static String unknownMarkdown(final List<EventRule> kept, final Map<String, Map<String, Object>> sampled,
-                                  final Object total, final List<ConfirmedKinds.Lost> lost) {
+                                  final Object total, final List<ConfirmedEventTypes.Lost> lost) {
         final List<String> lines = new ArrayList<>(List.of("**Records to translate as Unknown events**", "",
                 "An Unknown event says what happened isn't known: it has no Authenticate, Create or other action.",
                 ""));
@@ -437,10 +438,10 @@ class TranslationBuilds {
             }
             // What the user confirmed of them, so a rule isn't agreed to as Unknown by its reason alone (seen in the
             // chat 163 review: logoffs the user had confirmed went to Unknown as "kinds not seen before").
-            final List<String> confirmed = ConfirmedKinds.takenBy(lost, rule.name());
+            final List<String> confirmed = ConfirmedEventTypes.takenBy(lost, rule.name());
             if (!confirmed.isEmpty()) {
-                lines.add("- Among them, kinds you confirmed:");
-                confirmed.forEach(kind -> lines.add("  - " + kind));
+                lines.add("- Among them, event types you confirmed:");
+                confirmed.forEach(type -> lines.add("  - " + type));
             }
             if (NullSafe.isNonEmptyString(rule.allowUnknown())) {
                 lines.add("- Reason given: " + rule.allowUnknown());

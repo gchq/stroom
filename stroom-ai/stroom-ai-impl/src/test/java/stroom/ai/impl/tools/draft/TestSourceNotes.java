@@ -16,6 +16,11 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.Way;
+import stroom.ai.impl.tools.generation.Condition;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
@@ -26,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -169,35 +175,55 @@ class TestSourceNotes {
     }
 
     @Test
-    void aMappingThatContradictsTheCatalogueIsReported() {
-        final List<Map<String, Object>> events = new ArrayList<>();
-        for (final Map<String, Object> event : list(notes().get("events"))) {
-            events.add(sampleRule(String.valueOf(event.get("value")), List.of(entry("field", "evt", "equals",
-                            event.get("value"))), entry("path", "EventDetail/TypeId", "value", event.get("type_id")),
-                    entry("path", "EventDetail/Authenticate/Action", "value", event.get("action"))));
-        }
-        events.add(other());
-        final Map<String, Object> mapping = mapping(new ArrayList<>(), events);
-        assertThat(SourceNotes.checkMapping(mapping, notes())).isEmpty();
+    void aMappingThatContradictsTheCatalogueIsReportedByTheRecordsItsRulesTake() {
+        final List<Object> records = List.of(Map.of("evt", "4624"), Map.of("evt", "4625"), Map.of("evt", "4625"),
+                Map.of("evt", "4634"));
+        final Catalogue catalogue = new Catalogue(List.of(
+                documented("Authenticate-Logon", "4624"),
+                documented("Authenticate-FailedLogon", "4625"),
+                documented("Authenticate-Logoff", "4634")), null, null);
+        // A rule told otherwise (a pattern, not the value) taking the logons and failures, writing their TypeIds by
+        // a map: agrees.
+        final TranslationMapping agreeing = TranslationMapping.fromJson(Map.of("input", "json",
+                "events", List.of(
+                        Map.of("name", "logons", "when", List.of(Map.of("field", "evt", "matches", "^462[45]$")),
+                                "fields", List.of(Map.of("path", "EventDetail/Authenticate/Action", "value",
+                                        "Logon"))),
+                        Map.of("name", "logoff", "when", List.of(Map.of("field", "evt", "equals", "4634")),
+                                "fields", List.of(Map.of("path", "EventDetail/TypeId", "value",
+                                                "Authenticate-Logoff"),
+                                        Map.of("path", "EventDetail/Authenticate/Action", "value", "Logoff"))))));
+        assertThat(SourceNotes.checkMapping(agreeing, catalogue, records)).isEmpty();
 
-        for (final Map<String, Object> rule : list(mapping.get("events"))) {
-            if ("4625".equals(rule.get("name"))) {
-                rule.put("fields", List.of(entry("path", "EventDetail/TypeId", "value", "Logon"),
-                        entry("path", "EventDetail/Unknown/Data", "data_name", "evt", "field", "evt")));
-            }
-        }
-        final List<String> problems = SourceNotes.checkMapping(mapping, notes());
-        assertThat(problems).anySatisfy(p -> assertThat(p).contains("4625 (evt=4625): the documentation says "
-                                                                    + "Authenticate; rule '4625' writes Unknown"));
-        assertThat(problems).anySatisfy(p -> assertThat(p).contains("TypeId is 'Logon failed'; rule '4625' writes "
-                                                                    + "'Logon'"));
+        // The failures written as Unknown with another TypeId, the logoffs taken by no rule.
+        final TranslationMapping contradicting = TranslationMapping.fromJson(Map.of("input", "json",
+                "events", List.of(
+                        Map.of("name", "logon", "when", List.of(Map.of("field", "evt", "equals", "4624")),
+                                "fields", List.of(Map.of("path", "EventDetail/Authenticate/Action", "value",
+                                        "Logon"))),
+                        Map.of("name", "failed", "when", List.of(Map.of("field", "evt", "equals", "4625")),
+                                "allow_unknown", "failures",
+                                "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Logon"),
+                                        Map.of("path", "EventDetail/Unknown/Data", "data_name", "evt", "field",
+                                                "evt"))))));
+        final List<String> problems = SourceNotes.checkMapping(contradicting, catalogue, records);
+        assertThat(problems).containsExactly(
+                "Authenticate-FailedLogon: the catalogue says Authenticate; rule 'failed' writes Unknown (2 sample "
+                + "records)",
+                "Authenticate-FailedLogon: the catalogue's TypeId is 'Authenticate-FailedLogon'; rule 'failed' "
+                + "writes 'Logon'",
+                "Authenticate-Logoff: no rule takes its 1 sample records");
 
-        mapping.put("events", list(mapping.get("events")).stream()
-                .filter(rule -> !"4634".equals(rule.get("name")) && rule.get("when") instanceof final List<?> when
-                                                                    && !when.isEmpty())
-                .toList());
-        assertThat(SourceNotes.checkMapping(mapping, notes())).anySatisfy(p -> assertThat(p).contains(
-                "4634 (evt=4634): no rule takes it"));
+        // Confirmed event types are the confirmed-changed form's, not these warnings; nothing without records.
+        assertThat(SourceNotes.checkMapping(contradicting, catalogue.confirmedByUser(Set.of(
+                "Authenticate-FailedLogon", "Authenticate-Logoff")), records)).isEmpty();
+        assertThat(SourceNotes.checkMapping(contradicting, catalogue, List.of())).isEmpty();
+    }
+
+    private static EventType documented(final String typeId, final String code) {
+        return new EventType(typeId, null, null, "Authenticate", null, null, null, null, null, List.of(new Way(
+                List.of(Condition.fromJson(Map.of("field", "evt", "equals", code))), List.of())), false,
+                EventType.DOCUMENTATION, "high", null, EventType.PROPOSED);
     }
 
     @Test
@@ -264,12 +290,6 @@ class TestSourceNotes {
     private static Map<String, Object> other() {
         return entry("name", "other", "fields", new ArrayList<>(List.of(entry("path", "EventDetail/TypeId", "field",
                 "evt"))));
-    }
-
-    private static Map<String, Object> sampleRule(final String name,
-                                                  final List<Map<String, Object>> when,
-                                                  final Map<?, ?>... fields) {
-        return entry("name", name, "when", when, "fields", new ArrayList<>(List.of(fields)));
     }
 
     private static Map<String, Object> entry(final Object... keysAndValues) {

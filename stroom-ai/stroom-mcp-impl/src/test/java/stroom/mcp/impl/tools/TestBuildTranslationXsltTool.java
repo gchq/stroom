@@ -20,6 +20,7 @@ import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.draft.DraftMapping;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -481,7 +482,7 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
-    void aKindTheUserConfirmedThatTheMappingTranslatesOtherwiseIsPutToThemBeforeSaving() {
+    void anEventTypeTheUserConfirmedThatTheMappingTranslatesOtherwiseIsPutToThemBeforeSaving() {
         // From the chat 163 review: logoffs the user confirmed went to Unknown, unsaid.
         confirmedStatusAsLogoff();
         final Map<String, Object> kept = keptAsUnknown();
@@ -490,11 +491,12 @@ class TestBuildTranslationXsltTool {
         final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE));
         assertThat(shown.get("status")).isEqualTo("needs_review");
-        assertThat((String) shown.get("show_user")).startsWith("**Kinds you confirmed that this mapping translates "
-                                                               + "otherwise**")
-                .contains("| status check (action=status) | Authenticate, Action Logoff | 2 | Unknown | status |");
+        assertThat((String) shown.get("show_user")).startsWith("**Event types you confirmed that this mapping "
+                                                               + "translates otherwise**")
+                .contains("| Authenticate-Logoff (status check) | action = status | Authenticate, Action Logoff, "
+                          + "TypeId Authenticate-Logoff | 2 | Unknown | status |");
         world.forms = true;
-        world.answers.put("This mapping translates kinds you confirmed otherwise", "Keep the mapping's change");
+        world.answers.put("This mapping translates event types you confirmed otherwise", "Keep the mapping's change");
         world.answers.put("Translate these records", "yes");
 
         // Kept: the Unknown review comes next, saying what the user confirmed of its records.
@@ -503,15 +505,16 @@ class TestBuildTranslationXsltTool {
         assertThat(unknown.get("status")).isEqualTo("needs_review");
         // Seen in chat 181: told "the same arguments plus reviewed=", the agent resent the changes already applied.
         assertThat(String.valueOf(unknown.get("hint"))).contains("but no changes= (the mapping holds them already");
-        assertThat((String) unknown.get("show_user")).contains("- Among them, kinds you confirmed:\n"
-                                                               + "  - status check (2 records), confirmed as "
-                                                               + "Authenticate, Action Logoff\n");
+        assertThat((String) unknown.get("show_user")).contains("- Among them, event types you confirmed:\n"
+                                                               + "  - Authenticate-Logoff (status check) (2 records), "
+                                                               + "confirmed as Authenticate, Action Logoff, TypeId "
+                                                               + "Authenticate-Logoff\n");
 
         // Agreed to once, the change isn't asked about again on the way to saving, nor saved again.
         final Map<String, Object> done = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE, "reviewed", unknown.get("review_id")));
         assertThat(done).as(String.valueOf(done)).containsKey("saved");
-        assertThat(ToolJson.dumps(done.get("warnings"))).doesNotContain("confirmed kind");
+        assertThat(ToolJson.dumps(done.get("warnings"))).doesNotContain("confirmed event type");
         final String uuid = String.valueOf(map(done.get("saved")).get("uuid"));
         world.asked.clear();
         assertThat(world.call(tool, Map.of("mapping", kept, "uuid", uuid, "build", "acme-v1", "sample", SAMPLE)))
@@ -520,15 +523,9 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
-    void withoutFormsAConfirmedKindTranslatedOtherwiseIsLeftAsAWarningForTheAgent() {
+    void withoutFormsAConfirmedEventTypeTranslatedOtherwiseIsLeftAsAWarningForTheAgent() {
         // The logins confirmed as Action Other; the mapping's logon rule writes Logon (as in the chat 163 review).
-        final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
-        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
-                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
-                      + "\"events\": [{\"event\": \"new session\", \"description\": \"A session began\", "
-                      + "\"event_detail\": \"Authenticate\", \"field\": \"action\", \"value\": \"login\", "
-                      + "\"action\": \"Other\", \"basis\": \"user_confirmed\"}]}\n-->\n")
-                .build());
+        confirmedNotes(confirmedType("Authenticate-Logon", "new session", "A session began", "login", "Other"));
         final String logins = SAMPLE.replace(",status,,,,", ",login,carol,ok,s3,");
         final Map<String, Object> shown = world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build",
                 "acme-v1", "name", "N", "sample", logins));
@@ -539,8 +536,9 @@ class TestBuildTranslationXsltTool {
 
         assertThat(saved).containsKey("saved");
         assertThat(JsonValues.strings(saved.get("warnings"))).anySatisfy(warning -> assertThat(warning)
-                .startsWith("confirmed kind new session (action=login, 4 sample records): the user confirmed "
-                            + "Authenticate, Action Other, but rule 'logon' makes it Authenticate, Action Logon."));
+                .startsWith("confirmed event type Authenticate-Logon (new session) (recognised by action = login, 4 "
+                            + "sample records): the user confirmed Authenticate, Action Other, TypeId "
+                            + "Authenticate-Logon, but rule 'logon' makes it Authenticate, Action Logon."));
     }
 
     @Test
@@ -550,17 +548,19 @@ class TestBuildTranslationXsltTool {
         final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE));
         world.forms = true;
-        world.answers.put("This mapping translates kinds you confirmed otherwise", "Follow what I confirmed");
+        world.answers.put("This mapping translates event types you confirmed otherwise", "Follow what I confirmed");
 
         final Map<String, Object> followed = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
                 "N", "sample", SAMPLE, "reviewed", shown.get("review_id")));
 
         assertThat(followed).containsEntry("ok", false).doesNotContainKey("user_says");
         assertThat(followed.get("saved")).isNull();
-        assertThat(JsonValues.strings(followed.get("confirmed"))).containsExactly("status check (action=status): "
-                                                                                  + "confirmed as Authenticate, "
-                                                                                  + "Action Logoff; now Unknown in "
-                                                                                  + "rule 'status'");
+        assertThat(JsonValues.strings(followed.get("confirmed"))).containsExactly("Authenticate-Logoff (status "
+                                                                                  + "check) (recognised by action = "
+                                                                                  + "status): confirmed as "
+                                                                                  + "Authenticate, Action Logoff, "
+                                                                                  + "TypeId Authenticate-Logoff; now "
+                                                                                  + "Unknown in rule 'status'");
         assertThat((String) followed.get("hint")).startsWith("Nothing saved. The user wants what they confirmed "
                                                              + "followed");
     }
@@ -576,7 +576,7 @@ class TestBuildTranslationXsltTool {
                 "sample", SAMPLE));
         world.forms = true;
         final String words = "Status checks are a later build's: leave them out of this one";
-        world.answers.put("This mapping translates kinds you confirmed otherwise", words);
+        world.answers.put("This mapping translates event types you confirmed otherwise", words);
         final Map<String, Object> again = Map.of("mapping", kept, "build", "acme-v1", "name", "N", "sample", SAMPLE,
                 "reviewed", shown.get("review_id"));
 
@@ -602,7 +602,7 @@ class TestBuildTranslationXsltTool {
         for (final Map<String, Object> call : List.of(again, Map.<String, Object>of("mapping", kept, "build",
                 "acme-v1", "name", "N", "sample", SAMPLE))) {
             final Map<String, Object> refused = world.call(tool, call);
-            assertThat((String) refused.get("error")).contains("not asked again", "status check",
+            assertThat((String) refused.get("error")).contains("not asked again", "Authenticate-Logoff",
                     "Their answer: \"Follow what I confirmed\"", "Act on it");
         }
         assertThat(world.asked).hasSize(asked);
@@ -615,8 +615,9 @@ class TestBuildTranslationXsltTool {
         final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE));
         world.forms = true;
-        world.answers.put("This mapping translates kinds you confirmed otherwise", "follow what I confirmed: status "
-                                                                                  + "checks are logoffs");
+        world.answers.put("This mapping translates event types you confirmed otherwise", "follow what I confirmed: "
+                                                                                         + "status checks are "
+                                                                                         + "logoffs");
 
         final Map<String, Object> followed = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
                 "N", "sample", SAMPLE, "reviewed", shown.get("review_id")));
@@ -1504,13 +1505,38 @@ class TestBuildTranslationXsltTool {
     // A mapping whose save is confirmed: logons, status lines kept as Unknown, the rest.
     // The build's source notes: the status lines confirmed by the user as logoffs.
     private void confirmedStatusAsLogoff() {
+        confirmedNotes(confirmedType("Authenticate-Logoff", "status check", "A user logged off", "status", "Logoff"));
+    }
+
+    // The build's source notes holding a catalogue of the event types, confirmed with its catch-all.
+    private void confirmedNotes(final Map<String, Object> type) {
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of(type));
+        block.put("catch_all", Map.of("status", "confirmed"));
         final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
         world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
-                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
-                      + "\"events\": [{\"event\": \"status check\", \"description\": \"A user logged off\", "
-                      + "\"event_detail\": \"Authenticate\", \"field\": \"action\", \"value\": \"status\", "
-                      + "\"action\": \"Logoff\", \"basis\": \"user_confirmed\"}]}\n-->\n")
+                .data("# Acme source notes\n\n" + SourceNotes.block(block) + "\n")
                 .build());
+    }
+
+    private static Map<String, Object> confirmedType(final String typeId,
+                                                     final String title,
+                                                     final String description,
+                                                     final String action,
+                                                     final String confirmedAction) {
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", title);
+        type.put("description", description);
+        type.put("event_detail", "Authenticate");
+        type.put("action", confirmedAction);
+        type.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action", "equals", action)))));
+        type.put("basis", "user_confirmed");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        return type;
     }
 
     private static Map<String, Object> keptAsUnknown() {

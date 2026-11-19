@@ -19,6 +19,9 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueKept;
+import stroom.ai.impl.tools.generation.EventRule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
@@ -32,10 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -539,112 +540,58 @@ public final class SourceNotes {
         return out;
     }
 
-    /// Where a mapping contradicts the catalogue: a catalogued event's records meet a rule writing another action
-    /// element or TypeId than the documentation gives.
+    /// Where a mapping contradicts the catalogue, compared by the records rules take, not by condition text
+    /// ([CatalogueKept]): an event type's sampled records taken by no rule, or by a rule writing another action
+    /// element or TypeId than the catalogue gives. Of the event types not yet confirmed (documentation's, the
+    /// agent's): what a mapping does with confirmed ones is put to the user apart (the confirmed-changed form).
     ///
-    /// @param mapping The mapping, as JSON maps and lists.
-    /// @param notes   The notes ([#merged]).
-    /// @return The contradictions.
-    public static List<String> checkMapping(final Map<String, Object> mapping, final Map<String, Object> notes) {
+    /// @param mapping   The mapping.
+    /// @param catalogue The build's catalogue, or null.
+    /// @param records   The sample's records, as [LocalCheck#sampleRecords] reads them for the mapping.
+    /// @return The contradictions, each naming the event type and the rule; empty without a catalogue or records.
+    public static List<String> checkMapping(final TranslationMapping mapping,
+                                            final Catalogue catalogue,
+                                            final List<Object> records) {
+        if (catalogue == null || records.isEmpty()) {
+            return List.of();
+        }
+        final Catalogue proposed = catalogue.withEventTypes(catalogue.eventTypes().stream()
+                .filter(type -> !type.confirmed() && !type.drop())
+                .toList());
         final List<String> problems = new ArrayList<>();
-        final Map<Object, Map<String, Object>> common = new LinkedHashMap<>();
-        JsonValues.maps(mapping.get("common")).forEach(entry -> common.put(entry.get("path"), entry));
-        for (final Map<String, Object> event : JsonValues.maps(notes.get("events"))) {
-            if (!JsonValues.truthy(event.get("field")) || (!hasValue(event.get("value")) && !isPattern(event))) {
-                continue;
-            }
-            final String value = isPattern(event)
-                    ? text(event.get(MATCHES))
-                    : ToolText.str(event.get("value"));
-            final String label = firstTruthy(event.get("event"), value, value) + " (" + ToolText.str(event.get("field"))
-                                 + (isPattern(event)
-                    ? " matching "
-                    : "=") + value + ")";
-            final Map<String, Object> rule = isPattern(event) || isSplit(event)
-                    ? patternRule(JsonValues.maps(mapping.get("events")), ToolText.str(event.get("field")), value,
-                            isPattern(event)
-                                    ? MATCHES
-                                    : "equals")
-                    : ruleFor(JsonValues.maps(mapping.get("events")), ToolText.str(event.get("field")), value);
-            if (rule == null) {
-                problems.add(label + ": no rule takes it");
-                continue;
-            }
-            final Set<String> details = new TreeSet<>();
-            for (final Map<String, Object> field : JsonValues.maps(rule.get("fields"))) {
-                final String path = text(field.get("path"));
-                if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2) {
-                    details.add(path.split("/")[1]);
+        for (final CatalogueKept.Taken taken : CatalogueKept.taken(mapping, proposed, records, null)) {
+            final String label = taken.typeId() + (NullSafe.isNonBlankString(taken.type().title())
+                    ? " (" + taken.type().title() + ")"
+                    : "");
+            final String want = CatalogueKept.detailOf(taken.type());
+            taken.byRule().forEach((name, count) -> {
+                if (CatalogueKept.NO_RULE.equals(name)) {
+                    problems.add(label + ": no rule takes its " + count + " sample records");
+                    return;
                 }
-            }
-            final String want = ToolText.strip(text(event.get("event_detail")).strip(), "/").split("/")[0];
-            if (!want.isEmpty() && !UNKNOWN.equals(want) && !details.contains(want)) {
-                problems.add(label + ": the documentation says " + want + "; rule '" + text(rule.get("name"))
-                             + "' writes " + (details.isEmpty()
-                        ? "no action element"
-                        : String.join(", ", details)));
-            }
-            if (JsonValues.truthy(event.get("type_id"))) {
-                final Map<String, Object> typeId = JsonValues.maps(rule.get("fields")).stream()
-                        .filter(field -> "EventDetail/TypeId".equals(field.get("path")))
-                        .findFirst()
-                        .orElse(common.get("EventDetail/TypeId"));
-                if (typeId != null && typeId.get("value") != null
-                    && !ToolText.str(typeId.get("value")).equals(ToolText.str(event.get("type_id")))) {
-                    problems.add(label + ": the documentation's TypeId is '" + ToolText.str(event.get("type_id"))
-                                 + "'; rule '" + text(rule.get("name")) + "' writes '"
-                                 + ToolText.str(typeId.get("value")) + "'");
+                if (name.startsWith(CatalogueKept.DROP)) {
+                    problems.add(label + ": its " + count + " sample records are dropped (" + name.substring(
+                            CatalogueKept.DROP.length()) + ")");
+                    return;
                 }
-            }
+                final EventRule rule = CatalogueKept.rule(mapping, name);
+                if (rule == null) {
+                    return;
+                }
+                final CatalogueKept.Written written = CatalogueKept.written(mapping, rule);
+                if (!UNKNOWN.equals(want) && !written.details().contains(want)) {
+                    problems.add(label + ": the catalogue says " + want + "; rule '" + name + "' writes "
+                                 + (written.details().isEmpty()
+                            ? "no action element"
+                            : String.join(", ", written.details())) + " (" + count + " sample records)");
+                }
+                if (written.typeId() != null && !written.typeId().equals(taken.typeId())) {
+                    problems.add(label + ": the catalogue's TypeId is '" + taken.typeId() + "'; rule '" + name
+                                 + "' writes '" + written.typeId() + "'");
+                }
+            });
         }
         return problems;
-    }
-
-    // The first rule a record holding only field=value would meet (equals and one_of tests; a rule testing anything
-    // else is passed over, as it cannot be judged from the catalogue).
-    private static Map<String, Object> ruleFor(final List<Map<String, Object>> rules,
-                                               final String field,
-                                               final String value) {
-        for (final Map<String, Object> rule : rules) {
-            final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
-            if (when.isEmpty()) {
-                return rule;
-            }
-            boolean ok = true;
-            for (final Map<String, Object> condition : when) {
-                // A not condition can't be judged from a kind's value alone.
-                if (!Objects.equals(condition.get("field"), field) || Boolean.TRUE.equals(condition.get("not"))) {
-                    ok = false;
-                    break;
-                }
-                if (condition.get("equals") != null && !ToolText.str(condition.get("equals")).equals(value)) {
-                    ok = false;
-                } else if (condition.get("one_of") != null && (!(condition.get("one_of") instanceof final List<?> one)
-                                                               || one.stream().map(ToolText::str)
-                                                                       .noneMatch(value::equals))) {
-                    ok = false;
-                } else if (condition.get("equals") == null && condition.get("one_of") == null) {
-                    ok = false;
-                }
-            }
-            if (ok) {
-                return rule;
-            }
-        }
-        return null;
-    }
-
-    // The rule a split event's records go to: the first testing its field with the same pattern (or value).
-    private static Map<String, Object> patternRule(final List<Map<String, Object>> rules,
-                                                   final String field,
-                                                   final String regex,
-                                                   final String test) {
-        return rules.stream()
-                .filter(rule -> JsonValues.maps(rule.get("when")).stream()
-                        .anyMatch(condition -> field.equals(condition.get("field"))
-                                               && regex.equals(text(condition.get(test)))))
-                .findFirst()
-                .orElse(null);
     }
 
     private static List<String> key(final Map<String, Object> event) {

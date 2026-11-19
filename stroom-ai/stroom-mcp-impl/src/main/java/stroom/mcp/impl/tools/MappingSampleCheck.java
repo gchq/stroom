@@ -18,7 +18,9 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DropRule;
 import stroom.ai.impl.tools.generation.EventRule;
@@ -58,9 +60,12 @@ final class MappingSampleCheck {
     /// The key the stand-ins for none found are kept under ([Placeholders.Found]), for the tool to ask the user
     /// about; taken out before the check is returned.
     static final String PLACEHOLDERS = "placeholders";
-    /// The key the confirmed kinds the mapping translates otherwise go under (taken out by the caller: they are
-    /// [ConfirmedKinds.Lost], not JSON).
+    /// The key the confirmed event types the mapping translates otherwise go under (taken out by the caller: they
+    /// are [ConfirmedEventTypes.Lost], not JSON).
     static final String CONFIRMED_LOST = "confirmed_lost";
+    /// The key the contradictions of the event types not yet confirmed go under ([SourceNotes#checkMapping]),
+    /// taken out by the caller.
+    static final String CATALOGUE_CONTRADICTIONS = "catalogue_contradictions";
 
     private MappingSampleCheck() {
         // Static only.
@@ -84,43 +89,24 @@ final class MappingSampleCheck {
                                      final EventSchema schema,
                                      final boolean inferred,
                                      final Clock clock) {
-        return check(mapping, samples, splitter, schema, inferred, clock, List.of());
+        return check(mapping, samples, splitter, schema, inferred, clock, null, null);
     }
 
-    /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock)], with the kinds the user
-    /// confirmed checked too: those the mapping translates otherwise go under [#CONFIRMED_LOST].
+    /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock)], with the build's catalogue
+    /// checked too: the confirmed event types the mapping translates otherwise go under [#CONFIRMED_LOST], dropped
+    /// ones a rule still translates are warned of, the event types not yet confirmed that a rule contradicts go under
+    /// [#CATALOGUE_CONTRADICTIONS], and what couldn't be checked is said under `not_checked`.
     ///
-    /// @param mapping  The mapping.
-    /// @param samples  The sample's texts.
-    /// @param splitter The Data Splitter spec that reads text, or null.
-    /// @param schema   The event-logging schema.
-    /// @param inferred True if the spec was inferred from the sample rather than given.
-    /// @param clock    The clock the check's time is read against.
-    /// @param events   The catalogue events of the build's source notes (only those the user confirmed are
-    ///                 checked).
-    /// @return As the other, with [#CONFIRMED_LOST].
-    static Map<String, Object> check(final TranslationMapping mapping,
-                                     final List<String> samples,
-                                     final SplitterSpec splitter,
-                                     final EventSchema schema,
-                                     final boolean inferred,
-                                     final Clock clock,
-                                     final List<Map<String, Object>> events) {
-        return check(mapping, samples, splitter, schema, inferred, clock, events, List.of());
-    }
-
-    /// As the others, with the kinds the user said to leave untranslated checked too: any a rule still translates
-    /// is warned of.
-    ///
-    /// @param mapping  The mapping.
-    /// @param samples  The sample's texts.
-    /// @param splitter The Data Splitter spec that reads text, or null.
-    /// @param schema   The event-logging schema.
-    /// @param inferred True if the spec was inferred from the sample rather than given.
-    /// @param clock    The clock the check's time is read against.
-    /// @param events   The catalogue events of the build's source notes.
-    /// @param dropped  The dropped kinds' keys ([stroom.ai.impl.tools.draft.SourceNotes#DROPPED]).
-    /// @return As the others.
+    /// @param mapping   The mapping.
+    /// @param samples   The sample's texts.
+    /// @param splitter  The Data Splitter spec that reads text, or null.
+    /// @param schema    The event-logging schema.
+    /// @param inferred  True if the spec was inferred from the sample rather than given.
+    /// @param clock     The clock the check's time is read against.
+    /// @param catalogue The build's catalogue of event types, or null when it has none.
+    /// @param scope     The build's (or its group's) source type scope, or null for none: records of source types
+    ///                  outside it are not compared ([ConfirmedEventTypes#lost]).
+    /// @return As the other, with [#CONFIRMED_LOST] and [#CATALOGUE_CONTRADICTIONS].
     @SuppressWarnings("checkstyle:ParameterNumber")
     static Map<String, Object> check(final TranslationMapping mapping,
                                      final List<String> samples,
@@ -128,33 +114,7 @@ final class MappingSampleCheck {
                                      final EventSchema schema,
                                      final boolean inferred,
                                      final Clock clock,
-                                     final List<Map<String, Object>> events,
-                                     final List<String> dropped) {
-        return check(mapping, samples, splitter, schema, inferred, clock, events, dropped, null);
-    }
-
-    /// As the others, the confirmed kinds compared only within the build's source type scope.
-    ///
-    /// @param mapping  The mapping.
-    /// @param samples  The sample's texts.
-    /// @param splitter The Data Splitter spec that reads text, or null.
-    /// @param schema   The event-logging schema.
-    /// @param inferred True if the spec was inferred from the sample rather than given.
-    /// @param clock    The clock the check's time is read against.
-    /// @param events   The catalogue events of the build's source notes.
-    /// @param dropped  The dropped kinds' keys ([stroom.ai.impl.tools.draft.SourceNotes#DROPPED]).
-    /// @param scope    The build's (or its group's) source type scope, or null for none: kinds confirmed for
-    ///                 source types outside it, and records of those, are not compared ([ConfirmedKinds#lost]).
-    /// @return As the others.
-    @SuppressWarnings("checkstyle:ParameterNumber")
-    static Map<String, Object> check(final TranslationMapping mapping,
-                                     final List<String> samples,
-                                     final SplitterSpec splitter,
-                                     final EventSchema schema,
-                                     final boolean inferred,
-                                     final Clock clock,
-                                     final List<Map<String, Object>> events,
-                                     final List<String> dropped,
+                                     final Catalogue catalogue,
                                      final SourceTypeScope scope) {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
         final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
@@ -199,13 +159,22 @@ final class MappingSampleCheck {
             missing.forEach(p -> warnings.add(p + " (the sample was read with an inferred Data Splitter: give "
                                               + "splitter if the build's converter names its fields otherwise)"));
         }
-        // Kinds the user said to drop that a rule still translates.
-        warnings.addAll(ConfirmedKinds.undropped(mapping, found.records(), dropped));
+        // Event types the user said to drop that a rule still translates.
+        warnings.addAll(ConfirmedEventTypes.undropped(mapping, found.records(), catalogue));
         check.put("problems", problems);
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
         check.put(PLACEHOLDERS, placeholders);
-        check.put(CONFIRMED_LOST, ConfirmedKinds.lost(mapping, found.records(), events, scope, schema));
+        check.put(CONFIRMED_LOST, ConfirmedEventTypes.lost(mapping, found.records(), catalogue, scope, schema));
+        check.put(CATALOGUE_CONTRADICTIONS, SourceNotes.checkMapping(mapping, catalogue, found.records()));
+        final List<String> notChecked = ConfirmedEventTypes.notChecked(mapping, found.records(), catalogue);
+        if (!notChecked.isEmpty()) {
+            final List<Object> said = new ArrayList<>(check.get("not_checked") instanceof final List<?> earlier
+                    ? earlier
+                    : List.of());
+            said.addAll(notChecked);
+            check.put("not_checked", said);
+        }
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }

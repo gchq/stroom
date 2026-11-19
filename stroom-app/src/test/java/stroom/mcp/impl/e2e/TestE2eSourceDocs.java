@@ -171,7 +171,7 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", draft.get("mapping"),
                 "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
         assertThat(saved.get("source_notes_check")).as("checked against the catalogue: %s", saved)
-                .isEqualTo("the mapping agrees with the event catalogue");
+                .isEqualTo("the mapping agrees with the catalogue of event types");
         final String pipeline = (String) createPipeline(build, feed + "-Events",
                 templateUuid("translation", "Event Data (Text)")).get("uuid");
         final Map<String, Object> stepped = stepSample(pipeline, List.of(raw));

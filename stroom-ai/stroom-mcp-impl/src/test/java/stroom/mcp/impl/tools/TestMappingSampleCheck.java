@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -52,6 +53,47 @@ class TestMappingSampleCheck {
     private static final String SAMPLE = IntStream.range(0, 400)
             .mapToObj(i -> ToolJson.dumps(line(i, "")))
             .collect(Collectors.joining("\n"));
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theCatalogueIsCheckedByTheRecordsTheRulesTake() {
+        // Logons confirmed, logoffs confirmed but taken by the rule for the rest (Unknown), status checks from the
+        // documentation (not confirmed) written as Unknown, USB devices dropped by the user yet translated.
+        final String sample = "{\"time\": \"2026-10-01T00:00:00.000Z\", \"action\": \"login\"}\n"
+                              + "{\"time\": \"2026-10-01T00:00:01.000Z\", \"action\": \"logout\"}\n"
+                              + "{\"time\": \"2026-10-01T00:00:02.000Z\", \"action\": \"usb\"}\n";
+        final Map<String, Object> json = JsonUtil.readValue("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"}],
+                 "events": [{"name": "logon", "when": [{"field": "action", "equals": "login"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Authenticate-Logon"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                            {"name": "rest", "allow_unknown": "the rest",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Unknown"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "action",
+                                         "field": "action"}]}]}""", Map.class);
+        final Catalogue catalogue = Catalogue.fromJson(JsonUtil.readValue("""
+                {"event_types": [
+                  {"type_id": "Authenticate-Logon", "event_detail": "Authenticate", "action": "Logon",
+                   "recognised_by": [{"when": [{"field": "action", "equals": "login"}]}], "status": "confirmed"},
+                  {"type_id": "Authenticate-Logoff", "event_detail": "Authenticate", "action": "Logoff",
+                   "recognised_by": [{"when": [{"field": "action", "equals": "logout"}]}], "status": "confirmed"},
+                  {"type_id": "Alert-Usb", "event_detail": "Alert", "drop": true,
+                   "recognised_by": [{"when": [{"field": "action", "equals": "usb"}]}], "status": "confirmed"}],
+                 "catch_all": {"status": "confirmed"}}""", Map.class));
+
+        final Map<String, Object> checked = MappingSampleCheck.check(TranslationMapping.fromJson(json),
+                List.of(sample), null, TranslationWorld.SCHEMA, false, Clock.systemUTC(), catalogue, null);
+
+        assertThat((List<ConfirmedEventTypes.Lost>) checked.get(MappingSampleCheck.CONFIRMED_LOST))
+                .singleElement().satisfies(one -> {
+                    assertThat(one.typeId()).isEqualTo("Authenticate-Logoff");
+                    assertThat(one.writes()).isEqualTo("Unknown");
+                });
+        assertThat(strings(checked.get("warnings"))).anySatisfy(warning -> assertThat(warning)
+                .startsWith("dropped event type Alert-Usb: 1 sample records are translated by rule 'rest'"));
+        assertThat((List<String>) checked.get(MappingSampleCheck.CATALOGUE_CONTRADICTIONS)).isEmpty();
+    }
 
     @Test
     void eachEvaluationCasesReferenceMappingPassesTheChecksOffline() {
