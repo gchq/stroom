@@ -397,7 +397,8 @@ public final class LocalCheck {
                                                             + "here (give splitter, from build_data_splitter)");
             }
             final List<Object> records = new ArrayList<>();
-            SplitterDryRun.dryRun(splitter, text).records().forEach(r -> records.add(new LinkedHashMap<>(r)));
+            // Every record, as the draft reads them: a rule's Data a few records hold is in the sample.
+            SplitterDryRun.dryRunEvery(splitter, text).records().forEach(r -> records.add(new LinkedHashMap<>(r)));
             return new SampleRecords(records, null);
         }
         if ("json".equals(mapping.input())) {

@@ -326,7 +326,10 @@ public final class DraftMapping {
                         spec = SplitterDryRun.inferSpec(text).spec();
                     }
                     if (spec != null) {
-                        SplitterDryRun.dryRun(spec, text).records().forEach(r -> records.add(new LinkedHashMap<>(r)));
+                        // Every record, not those spread over a long sample: a field only a few hold is still
+                        // a rule's Data.
+                        SplitterDryRun.dryRunEvery(spec, text).records()
+                                .forEach(r -> records.add(new LinkedHashMap<>(r)));
                     }
                     repeated.addAll(repeatedKeys(text));
                 }

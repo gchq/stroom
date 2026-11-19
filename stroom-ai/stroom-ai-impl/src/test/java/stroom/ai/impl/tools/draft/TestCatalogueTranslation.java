@@ -282,6 +282,26 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(generate(mappingOf(draft)).problems()).isEmpty();
     }
 
+    @Test
+    void aFieldOnlyARecordOrTwoOfAnEventTypeHoldIsWrittenAsItsDataHoweverLongTheSample() {
+        // As in the planted features e2e, with a catalogue: Data from the event type's own records, every one of
+        // them, not only those a dry run spreads over a long sample.
+        final Map<String, Object> deliver = type("Send-Deliver", "Mail delivered", "Send", null, null,
+                way(eq("action", "deliver")));
+        deliver.put("actor", "sender");
+        final Map<String, Object> reject = type("Receive-Reject", "Mail rejected", "Receive", null, null,
+                way(eq("action", "reject")));
+        reject.put("actor", "sender");
+
+        final Map<String, Object> draft = draft(rareFieldsSample(), notes(List.of(deliver, reject), true));
+
+        final Map<String, Map<String, Object>> rules = rules(draft);
+        assertThat(dataNames(rules.get("send_deliver"))).contains(RARE_DELIVER_FIELD)
+                .doesNotContain(RARE_REJECT_FIELD);
+        assertThat(dataNames(rules.get("receive_reject"))).contains(RARE_REJECT_FIELD)
+                .doesNotContain(RARE_DELIVER_FIELD);
+    }
+
     private static Map<String, Object> draft(final String sample, final Map<String, Object> notes) {
         return DraftMapping.draft(List.of(sample), "Acme", "Acme", "Test", notes, CHECK, (SplitterSpec) null);
     }

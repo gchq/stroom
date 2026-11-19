@@ -1476,6 +1476,20 @@ public final class SplitterDryRun {
         return dryRun(spec, sample, MAX_RECORDS);
     }
 
+    /// What the generated splitter makes of every record of a sample, however many: for what is drafted or checked
+    /// from the sample's fields, where a field only a few records hold counts. Seen in the planted features e2e: a
+    /// sample of 9,000 lines read at 2,000 spread over it passed by the three records near its head holding a byte
+    /// count, so the draft wrote no rule reading it and processing logged it as read by no rule. The sample itself is
+    /// already bounded (ai.sampling.maxCharsPerStream), and JSON and XML samples are read whole the same way.
+    ///
+    /// @param spec   The spec.
+    /// @param sample The sample.
+    /// @return The records, the lines that match nothing, the field names seen, and the heading.
+    /// @throws PatternTimeoutException if the spec's patterns take too long to match.
+    public static DryRun dryRunEvery(final SplitterSpec spec, final String sample) {
+        return dryRun(spec, sample, Integer.MAX_VALUE);
+    }
+
     /// What the generated splitter makes of a sample. A longer sample is read at lines spread over it: seen in an
     /// eval case (a day's CEF file), the first 200 lines held only two kinds of event, and a mapping's field from a
     /// later kind was refused as in none of the sample's records.

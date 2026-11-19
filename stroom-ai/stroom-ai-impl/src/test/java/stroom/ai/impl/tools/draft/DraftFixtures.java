@@ -38,6 +38,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// fixtures.
 class DraftFixtures {
 
+    /// A field only one deliver record of [#rareFieldsSample()] holds.
+    static final String RARE_DELIVER_FIELD = "inbound_size";
+    /// A field only one reject record of [#rareFieldsSample()] holds.
+    static final String RARE_REJECT_FIELD = "folder";
+    // Records in rareFieldsSample: a dry run reads 2,000 spread over them, about one in four.
+    private static final int RARE_SAMPLE_RECORDS = 8_000;
     /// The event-logging 4.1.0 schema.
     static final EventSchema SCHEMA = EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);
     /// The event-logging 3.5.2 schema.
@@ -168,6 +174,15 @@ class DraftFixtures {
         return out;
     }
 
+    /// @param rule A rule.
+    /// @return The names of the Data its fields write.
+    static List<String> dataNames(final Map<String, Object> rule) {
+        return JsonValues.maps(rule.get("fields")).stream()
+                .filter(field -> field.get("data_name") != null)
+                .map(field -> String.valueOf(field.get("data_name")))
+                .toList();
+    }
+
     /// @param draft A draft.
     /// @return Its notes.
     @SuppressWarnings("unchecked")
@@ -179,5 +194,34 @@ class DraftFixtures {
     /// @return A mutable list of them.
     static List<String> list(final String... texts) {
         return new ArrayList<>(List.of(texts));
+    }
+
+    /// A mail log's key=value lines, more of them than a dry run reads (2,000): deliver and
+    /// reject in turn, with [#RARE_DELIVER_FIELD] in one deliver record and [#RARE_REJECT_FIELD] in one reject record,
+    /// both near the head, between the records a dry run spreads over the lines. Seen in the planted features e2e:
+    /// a field only three records near a stream's head held was missed by the draft, and no rule read it.
+    ///
+    /// @return The sample's text.
+    static String rareFieldsSample() {
+        final StringBuilder sb = new StringBuilder();
+        for (int n = 0; n < RARE_SAMPLE_RECORDS; n++) {
+            final boolean deliver = n % 2 == 0;
+            sb.append(String.format("2026-10-01T08:%02d:%02dZ gw01 id=\"q%06d\" action=%s sender=user%d@example.com",
+                    (n / 60) % 60, n % 60, n, deliver
+                            ? "deliver"
+                            : "reject", n % 5));
+            sb.append(" size=").append(1_000 + n);
+            if (!deliver) {
+                sb.append(" reason=\"spam score ").append(5 + n % 5).append('"');
+            }
+            if (n == 2) {
+                sb.append(' ').append(RARE_DELIVER_FIELD).append('=').append(502);
+            }
+            if (n == 3) {
+                sb.append(' ').append(RARE_REJECT_FIELD).append("=\"Q1\"");
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

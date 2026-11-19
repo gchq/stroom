@@ -95,6 +95,20 @@ class TestDraftMapping extends DraftFixtures {
             2026-10-01T08:12:00Z,dc01,9999,carol,10.0.0.3,0x0
             """;
 
+    @Test
+    void aFieldOnlyARecordOrTwoHoldIsWrittenByTheRuleTakingThemHoweverLongTheSample() {
+        // Seen in the planted features e2e: a draft from a sample longer than a dry run reads (its records spread
+        // over the lines) wrote no rule reading a field only records near the head held, so processing logged it
+        // as read by no rule.
+        final Map<String, Object> draft = draft(List.of(rareFieldsSample()), "Mail gateway", "Mail Gateway", "Test");
+
+        assertThat(JsonValues.strings(draft.get("fields_seen"))).contains(RARE_DELIVER_FIELD, RARE_REJECT_FIELD);
+        final Map<String, Map<String, Object>> rules = rules(draft);
+        assertThat(rules).containsKeys("deliver", "reject");
+        assertThat(dataNames(rules.get("deliver"))).contains(RARE_DELIVER_FIELD).doesNotContain(RARE_REJECT_FIELD);
+        assertThat(dataNames(rules.get("reject"))).contains(RARE_REJECT_FIELD).doesNotContain(RARE_DELIVER_FIELD);
+    }
+
     /// @param samples The samples.
     /// @param source  The source's name.
     /// @return Their draft, with no system name or environment given.
@@ -1380,13 +1394,6 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(dataNames(rules.get("authenticate_logon"))).doesNotContain("printer", "pages")
                 .contains("action");
         assertThat(dataNames(rules.get("print_document"))).doesNotContain("session").contains("printer", "pages");
-    }
-
-    private static List<String> dataNames(final Map<String, Object> rule) {
-        return JsonValues.maps(rule.get("fields")).stream()
-                .filter(field -> field.get("data_name") != null)
-                .map(field -> String.valueOf(field.get("data_name")))
-                .toList();
     }
 
     // The draft's common entries and its rules' fields.
