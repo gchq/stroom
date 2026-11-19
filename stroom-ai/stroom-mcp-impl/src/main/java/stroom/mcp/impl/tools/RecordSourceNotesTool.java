@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.catalogue.EventMeaning;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -541,47 +542,28 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (schema == null || !JsonValues.truthy(event.get("affected_as"))) {
             return Optional.empty();
         }
-        try {
-            event.put("affected_as", SourceNotes.affectedPath(schema, text(event.getOrDefault("event_detail",
-                    "Unknown")), text(event.get("affected_as"))));
-            return Optional.empty();
-        } catch (final IllegalArgumentException e) {
-            return Optional.of("event " + text(event.get("event")) + ": " + e.getMessage());
+        final EventMeaning.Affected affected = EventMeaning.affected(schema, "event " + text(event.get("event")),
+                text(event.getOrDefault("event_detail", "Unknown")), text(event.get("affected_as")));
+        if (affected.path() != null) {
+            event.put("affected_as", affected.path());
         }
+        return Optional.ofNullable(affected.problem());
     }
 
-    // An event's Action and outcome checked against its action element: the parts it has no element for (seen in chat
-    // 163: Alert given an outcome and an Action, which the user confirmed, and the draft then failed on). None when
-    // the schema is unreadable.
+    // An event's Action and outcome checked against its action element ([EventMeaning#parts]). None when the schema
+    // is unreadable.
     private static List<String> partsChecked(final EventSchema schema, final Map<String, Object> event) {
         if (schema == null || !JsonValues.truthy(event.get("event_detail"))) {
             return List.of();
         }
-        final String detail = "EventDetail/" + text(event.get("event_detail"));
-        final List<String> problems = new ArrayList<>();
-        if (event.get("success") != null && !schema.hasPath(detail + "/Outcome")) {
-            problems.add("event " + text(event.get("event")) + ": " + detail + " has no Outcome, so leave success "
-                         + "out");
+        final EventMeaning.Parts parts = EventMeaning.parts(schema, "event " + text(event.get("event")),
+                text(event.get("event_detail")), event.get("success"), JsonValues.truthy(event.get("action"))
+                        ? text(event.get("action"))
+                        : null);
+        if (parts.action() != null) {
+            event.put("action", parts.action());
         }
-        if (JsonValues.truthy(event.get("action")) && !schema.hasPath(detail + "/Action")) {
-            problems.add("event " + text(event.get("event")) + ": " + detail + " has no Action, so leave action "
-                         + "out");
-        } else if (JsonValues.truthy(event.get("action"))) {
-            // Seen in the agent eval (cases 60 and 65): "Add member to role" confirmed as an Authorise Action, which
-            // takes only Request or Modify; the draft wrote Modify and the build then refused it as not confirmed.
-            final String elementName = text(event.get("event_detail"));
-            final Optional<String> allowed = SourceNotes.allowedAction(schema, elementName,
-                    text(event.get("action")));
-            if (allowed.isPresent()) {
-                event.put("action", allowed.get());
-            } else {
-                problems.add("event " + text(event.get("event")) + ": " + detail + "/Action takes only "
-                             + String.join(", ", SourceNotes.allowedActions(schema, elementName)) + ", not '"
-                             + text(event.get("action")) + "': give the one nearest the kind (its own name stays "
-                             + "in type_id and description)");
-            }
-        }
-        return problems;
+        return parts.problems();
     }
 
     // The event-logging schema of the build's version (else the newest held), or null when unreadable.
