@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 /// A sample's records with the fields the draft reads inside their held values (the keys of a JSON string, the
-/// elements of XML text, the pairs its extractions take from text), for classify_kinds to choose a kind field among
+/// elements of XML text, the pairs its extractions take from text), for catalogue_event_types to give as evidence among
 /// them as well as among the records' own: asked for by the user (seen in testing, 2026-11-18: an aggregated feed
 /// whose source type was read inside the JSON string `event`, and only its outer fields, both times, put to the user
 /// as the kinds of event). Named as the draft names them (`event.logger_name`), so a kind field chosen inside a held

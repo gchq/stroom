@@ -60,8 +60,8 @@ public final class ToolOutputs {
     /// The statuses of results whose content the user must be shown, exactly as it is: a review (e.g. an index
     /// template in `dev_tools`, records in `show_user`, a layout in `layout`), or a confirmation or approval (its
     /// `summary` and `details`), before the agent calls the tool again with the result's id; or content to show
-    /// with no id to send back (`needs_showing`, e.g. classify_kinds' `table`; seen: a table of ten proposals saved
-    /// to the workspace, and retyped by the agent, shortened and restyled).
+    /// with no id to send back (`needs_showing`, e.g. catalogue_event_types' `table`; seen: a table of ten proposals
+    /// saved to the workspace, and retyped by the agent, shortened and restyled).
     static final Set<String> SHOWN_TO_USER_STATUSES = Set.of("needs_review", "needs_confirmation", "needs_approval",
             "needs_showing");
     /// The fields of such a result that are for the agent, not to be shown to the user, in the order looked for.

@@ -15,8 +15,8 @@ Terms:
   are tried in turn, joined by ` | `, one naming its format: `event>logger_name | event>xml:@logger` (`@` an XML
   attribute, `#root` the root element's name). A held value of plain text is never read: its records are the
   `(no value)` source type, offered as a row of its own. Never a field naming kinds of event (an event type, action,
-  operation): those are told apart within a source type by `classify_kinds` and the rules, not split into source
-  types. Where only two fields together tell the source, a **combination**: their readings joined by ` + `
+  operation): those are event types, told apart within a source type by `catalogue_event_types` and the rules, not
+  split into source types. Where only two fields together tell the source, a **combination**: their readings joined by ` + `
   (`system + event>logger_name`), its value a key of the parts' values (`Teams ‖ System`). The survey offers a pair
   only where the record shapes justify it (each part's values split the other's into records of shapes of their
   own), with its evidence; offer it as it is, never add a part yourself. Three or more parts only as the user names
@@ -38,7 +38,7 @@ Terms:
   source type, tried in order (the first match wins), each with its status: `translated`, `parked` (for a later
   build), `dropped` (never, on the user's word) or `new` (met after the registry was made).
 * **Scope**: the source types a build covers, which are its one source type group. The survey, samples,
-  `classify_kinds`, the draft and the sample checks read only the scope's records; the rest are counted by source type
+  `catalogue_event_types`, the draft and the sample checks read only the scope's records; the rest are counted by source type
   and nothing more.
 * **Source type group**: the source types one translation handles: one mapping, one XSLT, one pipeline. A build makes
   at most one.

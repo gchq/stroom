@@ -17,7 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
-import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -43,14 +42,6 @@ class TestRecordSourceNotesTool {
     private static final String FIELDS = "[{\"field\": \"evt\", \"meaning\": \"Event id\"}, {\"field\": \"usr\", "
                                          + "\"meaning\": \"Account name\", \"event_logging_path\": "
                                          + "\"EventSource/User/Id\"}]";
-    private static final String EVENTS = "[{\"event\": \"4624\", \"description\": \"An account logged on\", "
-                                         + "\"event_detail\": \"Authenticate\", \"type_id\": \"Logon\", "
-                                         + "\"field\": \"evt\", \"value\": \"4624\", \"action\": \"Logon\", "
-                                         + "\"success\": true}, {\"event\": \"4625\", \"description\": \"An "
-                                         + "account failed to log on\", \"event_detail\": \"Authenticate\", "
-                                         + "\"type_id\": \"Logon failed\", \"field\": \"evt\", \"value\": "
-                                         + "\"4625\"}]";
-
     private final BuildWorld world = new BuildWorld();
     private final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
@@ -95,7 +86,7 @@ class TestRecordSourceNotesTool {
     void theDocumentationAndTheNotesFromItAreKeptInTheBuild() {
         final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", "
                                                     + "\"summary\": \"The directory audit log.\", \"fields\": "
-                                                    + FIELDS + ", \"events\": " + EVENTS + ", \"references\": "
+                                                    + FIELDS + ", \"references\": "
                                                     + "[\"https://acme.example/audit\"], \"documents\": "
                                                     + "[{\"title\": \"audit log reference\", \"text\": \"| 4625 | "
                                                     + "An account failed to log on |\\n\", \"source\": "
@@ -110,13 +101,14 @@ class TestRecordSourceNotesTool {
                                                                                  + "audit.md\n\n| 4625 | An account "
                                                                                  + "failed to log on |\n");
         assertThat(noted).containsEntry("type", "Documentation").containsEntry("name", "Acme directory source notes")
-                .containsEntry("fields", 2).containsEntry("events", 2).containsKey("next");
-        assertThat(noted.get("hint")).isEqualTo("draft_translation_mapping with build= drafts from these notes.");
+                .containsEntry("fields", 2).containsKey("next");
+        assertThat(noted.get("hint")).isEqualTo("draft_translation_mapping with build= drafts from these notes. The "
+                                                + "event types the documentation describes go through "
+                                                + "catalogue_event_types (basis documentation): checked against the "
+                                                + "records and confirmed by the user.");
         final String text = world.body(String.valueOf(noted.get("uuid")));
         assertThat(text).startsWith("# Acme directory source notes\n\nThe directory audit log.\n\n## Field dictionary")
                 .contains("| usr | Account name |  |  | EventSource/User/Id | documentation |")
-                .contains("| 4625 | `evt=4625` | An account failed to log on | Authenticate | Logon failed | "
-                          + "documentation |")
                 .contains("## Sources\n\n- https://acme.example/audit\n- `Acme directory reference - audit log "
                           + "reference` (kept in Stroom)");
         final Map<String, Object> notes = SourceNotes.readNotes(text);
@@ -124,9 +116,8 @@ class TestRecordSourceNotesTool {
         // Each note as the tools write it: its defaults left out.
         assertThat(notes.get("fields")).isEqualTo(List.of(Map.of("field", "evt", "meaning", "Event id"),
                 Map.of("field", "usr", "meaning", "Account name", "event_logging_path", "EventSource/User/Id")));
-        assertThat(((List<?>) notes.get("events")).getFirst()).isEqualTo(Map.of("event", "4624", "description",
-                "An account logged on", "event_detail", "Authenticate", "type_id", "Logon", "field", "evt", "value",
-                "4624", "action", "Logon", "success", true));
+        // No catalogue until catalogue_event_types makes one.
+        assertThat(SourceNotes.catalogue(notes)).isNull();
         assertThat(notes.get("documents")).isEqualTo(List.of("Acme directory reference - audit log reference"));
         assertThat(notes.get("references")).isEqualTo(List.of("https://acme.example/audit"));
     }
@@ -136,7 +127,7 @@ class TestRecordSourceNotesTool {
         // Seen in e2e: a long manual sent a part at a time; the second call made the notes doc again, which the
         // build refused (one doc per name).
         json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", \"summary\": \"Summary.\", \"fields\": "
-                  + FIELDS + ", \"events\": " + EVENTS + ", \"documents\": [{\"title\": \"part 1\", \"text\": "
+                  + FIELDS + ", \"documents\": [{\"title\": \"part 1\", \"text\": "
                   + "\"The manual.\"}]}"));
         final String first = world.created.toString();
 
@@ -158,62 +149,23 @@ class TestRecordSourceNotesTool {
                 .containsExactly("evt", "usr");
         assertThat((List<?>) notes.get("fields")).anyMatch(field -> "The account".equals(((Map<?, ?>) field)
                 .get("meaning")));
-        assertThat(((List<?>) notes.get("events")).stream()
-                .map(event -> String.valueOf(((Map<?, ?>) event).get("event"))))
-                .containsExactly("4624", "4625");
         assertThat(notes.get("documents")).isEqualTo(List.of("Acme directory reference - part 1",
                 "Acme directory reference - part 2"));
-        assertThat(again).containsEntry("fields", 2).containsEntry("events", 2);
+        assertThat(again).containsEntry("fields", 2);
     }
 
     @Test
-    void anEventWithAWrongActionElementIsLeftOutAndTheRestRecorded() {
-        final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"A "
-                                        + "firewall.\", \"events\": [{\"event\": \"TRAFFIC-ALLOW\", "
-                                        + "\"description\": \"allowed\", \"field\": \"event_type\", \"value\": "
-                                        + "\"TRAFFIC\", \"event_detail\": \"Allow\"}, {\"event\": "
-                                        + "\"TRAFFIC-DENY\", \"description\": \"blocked\", \"field\": "
-                                        + "\"event_type\", \"value\": \"TRAFFIC\", \"event_detail\": "
-                                        + "\"Network/Deny\"}]}");
-
-        // Seen in testing (chat 144): 10,500 characters of notes refused whole for three such events, then sent whole
-        // again. The rest is kept; the wrong one comes back to be sent again, corrected.
-        assertThat(refused.isError()).isFalse();
-        assertThat(refused.text()).contains("\"events\":1", "TRAFFIC-ALLOW: 'Allow' is not an EventDetail action "
-                                                              + "element", "were left out");
-        assertThat(world.created).isNotEmpty();
-    }
-
-    @Test
-    void withoutTheSchemaTheCatalogueIsStillCheckedForTwins() {
-        Mockito.when(heldSchemas.eventVersions()).thenThrow(new ToolRefusal(HeldSchemas.NO_EVENT_LOGGING));
-
+    void eventTypesGoThroughTheCatalogueNotTheNotes() {
+        // stroom-ai/DESIGN.md, Event type catalogue: documented event types are proposed through
+        // catalogue_event_types (basis documentation), checked against the records; the notes keep fields and
+        // documents only.
         final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"s\", "
-                                        + "\"events\": [{\"event\": \"A\", \"description\": \"a\", \"field\": "
-                                        + "\"f\", \"value\": \"1\", \"event_detail\": \"Allow\"}, {\"event\": "
-                                        + "\"B\", \"description\": \"b\", \"field\": \"f\", \"value\": \"1\"}]}");
+                                        + "\"events\": [{\"event\": \"A\", \"description\": \"a\"}]}");
 
-        assertThat(refused.text()).isEqualTo("Nothing recorded; the event catalogue can't be drafted from as it "
-                                             + "is: A and B are both f=1: a record can't show which it is. Give "
-                                             + "each the field and value that tell them apart (e.g. action=ALLOW "
-                                             + "and action=DENY), or record them as one event. Correct the events "
-                                             + "and call again.");
-    }
-
-    @Test
-    void theCatalogueIsCheckedAgainstTheVersionChosenForTheBuild() {
-        // As the translation tools read it: the build's chosen event-logging version, not the newest held.
-        world.guard().buildFolder("fw");
-        world.records().rememberEventLoggingVersion("fw", "3.5.2", EventVersions.GIVEN);
-        Mockito.when(heldSchemas.eventSchema("3.5.2")).thenReturn(schema());
-
-        final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"s\", "
-                                        + "\"events\": [{\"event\": \"A\", \"description\": \"a\", "
-                                        + "\"event_detail\": \"Allow\"}]}");
-
-        assertThat(refused.text()).contains("A: 'Allow' is not an EventDetail action element");
-        Mockito.verify(heldSchemas, Mockito.atLeastOnce()).eventSchema("3.5.2");
-        Mockito.verify(heldSchemas, Mockito.never()).eventSchema("4.1.0");
+        assertThat(refused.text()).startsWith("Nothing recorded: record_source_notes keeps fields and documents "
+                                              + "only.").contains("catalogue_event_types build=fw", "basis: "
+                                                                                                   + "documentation");
+        assertThat(world.created).isEmpty();
     }
 
     @Test
@@ -234,59 +186,24 @@ class TestRecordSourceNotesTool {
     }
 
     @Test
-    void eventsThatCantBecomeRulesAreSaidSo() {
-        final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme\", \"summary\": "
-                                                    + "\"s\", \"events\": [{\"event\": \"login\", \"description\": "
-                                                    + "\"A login\", \"event_detail\": \"Authenticate\"}]}"));
-
-        assertThat(noted.get("hint")).isEqualTo("draft_translation_mapping with build= drafts from these notes; "
-                                                + "events without a field and value (1) cannot become rules: give "
-                                                + "them where the documentation says how a record shows the event.");
-    }
-
-    @Test
     void theAgentsOwnKnowledgeIsKeptAsSuchAndItsLeastSureNotesPutToTheUserFirst() {
         // Asked for by the user (work package E7): what the agent knows of a source, said as such, beside the user's
         // documentation; the notes it is least sure of reviewed first.
         final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", "
-                                                    + "\"summary\": \"The directory audit log.\", \"events\": ["
-                                                    + "{\"event\": \"4624\", \"description\": "
-                                                    + "\"An account logged on\", \"event_detail\": "
-                                                    + "\"Authenticate\", \"basis\": \"agent_knowledge\", "
-                                                    + "\"confidence\": \"high\"}, "
-                                                    + "{\"event\": \"4662\", \"description\": "
-                                                    + "\"An operation on an object\", "
+                                                    + "\"summary\": \"The directory audit log.\", \"fields\": ["
+                                                    + "{\"field\": \"evt\", \"meaning\": \"Event id\", "
+                                                    + "\"basis\": \"agent_knowledge\", \"confidence\": \"high\"}, "
+                                                    + "{\"field\": \"obj\", \"meaning\": \"An object\", "
                                                     + "\"basis\": \"agent_knowledge\", \"confidence\": \"low\"}, "
-                                                    + "{\"event\": \"4625\", \"description\": \"A logon failed\"}]}"));
-        assertThat(noted.get("to_review")).isEqualTo(List.of("4662"));
+                                                    + "{\"field\": \"usr\", \"meaning\": \"Account\"}]}"));
+        assertThat(noted.get("to_review")).isEqualTo(List.of("obj"));
         final String text = world.body(String.valueOf(noted.get("uuid")));
-        assertThat(text).contains("| 4624 |  | An account logged on | Authenticate |  | agent knowledge (high) |")
-                .contains("| 4662 |  | An operation on an object |  |  | agent knowledge (low) |")
-                .contains("| 4625 |  | A logon failed |  |  | documentation |");
+        assertThat(text).contains("| evt | Event id |  |  |  | agent knowledge (high) |")
+                .contains("| obj | An object |  |  |  | agent knowledge (low) |")
+                .contains("| usr | Account |  |  |  | documentation |");
         // The documentation's notes carry no basis: it is the default.
-        assertThat(((List<?>) SourceNotes.readNotes(text).get("events")).get(2))
-                .isEqualTo(Map.of("event", "4625", "description", "A logon failed"));
-    }
-
-    @Test
-    void whatAKindActsOnIsCheckedAgainstItsActionElement() {
-        final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", "
-                                                    + "\"summary\": \"s\", \"events\": [{\"event\": \"4726\", "
-                                                    + "\"description\": \"An account was deleted\", "
-                                                    + "\"event_detail\": \"Delete\", \"field\": \"evt\", "
-                                                    + "\"value\": \"4726\", \"actor\": \"subject\", "
-                                                    + "\"affected\": \"target\", \"affected_as\": \"User\"}, "
-                                                    + "{\"event\": \"4727\", \"description\": \"A group was "
-                                                    + "made\", \"event_detail\": \"Delete\", \"field\": "
-                                                    + "\"evt\", \"value\": \"4727\", \"affected\": \"target\", "
-                                                    + "\"affected_as\": \"Mailbox\"}]}"));
-        // The object written out to the leaf its value goes in; one the action element doesn't hold left out.
-        final Map<?, ?> deleted = (Map<?, ?>) ((List<?>) SourceNotes.readNotes(world.body(String.valueOf(
-                noted.get("uuid")))).get("events")).getFirst();
-        assertThat(deleted.get("affected_as")).isEqualTo("User/Id");
-        assertThat(deleted.get("actor")).isEqualTo("subject");
-        assertThat(String.valueOf(noted.get("event_problems"))).contains("event 4727: affected_as 'Mailbox' isn't "
-                                                                         + "under Delete");
+        assertThat(((List<?>) SourceNotes.readNotes(text).get("fields")).get(2))
+                .isEqualTo(Map.of("field", "usr", "meaning", "Account"));
     }
 
     @Test

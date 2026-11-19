@@ -29,9 +29,8 @@ import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSession;
-import stroom.ai.impl.tools.catalogue.EventMeaning;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.SourceNotes;
-import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.shared.AiToolCategory;
@@ -50,15 +49,16 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /// `record_source_notes` - keeps the user's vendor or event reference documentation in Stroom, and the notes condensed
 /// from it, as Documentation docs in the build: each document verbatim (`<source> reference - <title>`), and `<source>
-/// source notes` with the field dictionary and event catalogue, carried as a block the tools read back ([SourceNotes]).
-/// Called again for the same source, the notes doc is updated: what earlier calls recorded stays unless given again.
+/// source notes` with the field dictionary and the catalogue of event types, carried as a block the tools read back
+/// ([SourceNotes]). It keeps fields and documents only: the event types, documented ones among them (basis
+/// documentation), are proposed and confirmed through `catalogue_event_types`, which keeps the catalogue in the same
+/// notes doc ([#recordCatalogue]). Called again for the same source, the notes doc is updated: what earlier calls
+/// recorded stays unless given again.
 class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RecordSourceNotesTool.class);
@@ -68,48 +68,29 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     static final String SOURCE_ARG = "source";
     static final String SUMMARY_ARG = "summary";
     static final String FIELDS_ARG = "fields";
-    static final String EVENTS_ARG = "events";
     static final String REFERENCES_ARG = "references";
     static final String DOCUMENTS_ARG = "documents";
+    // The argument event types were once given in: they go through catalogue_event_types now.
+    private static final String EVENTS = "events";
 
     // A note's keys, in the order the notes keep them; the first required key names the note.
     private static final List<String> FIELD_KEYS = List.of("field", "meaning", "type", "example",
             "event_logging_path", "values", "basis", "confidence");
     private static final List<String> FIELD_REQUIRED = List.of("field", "meaning");
-    /// A pattern event's listed kind (a catch-all, `variant=syslog`) whose records its pattern tells apart.
-    static final String WITHIN = "within";
-    private static final List<String> EVENT_KEYS = List.of("event", "description", "event_detail", "type_id", "field",
-            "value", "action", "success", "actor", "affected", "affected_as", "basis", "confidence",
-            SourceNotes.MATCHES, SourceNotes.NAMES, WITHIN);
-    private static final List<String> EVENT_REQUIRED = List.of("event", "description");
-    private static final Pattern GROUP_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static final int MAX_NAME = 200;
     // Where a note came from: the user's documentation (the default), or the agent's own knowledge of the source.
     private static final String DOCUMENTATION = "documentation";
     /// A note from the agent's own knowledge of the source, not the user's documentation.
     static final String AGENT_KNOWLEDGE = "agent_knowledge";
-    /// A note the agent proposed and the user confirmed (classify_kinds).
+    /// A catalogue entry the agent proposed and the user confirmed in a form.
     static final String USER_CONFIRMED = "user_confirmed";
-    // The notes block's kinds still to classify (classify_kinds), as field=value.
-    static final String PENDING = "pending";
-    // The notes block's fields of the sample's records (classify_kinds), for checking the fields its proposals name.
-    static final String RECORD_FIELDS = "record_fields";
-    // The notes block's proposals classify_kinds keeps between showing them in the chat and asking the user.
-    static final String PROPOSED = "proposed";
-    // The block keys classify_kinds keeps, carried from one write of the notes to the next.
-    // The notes block's kinds the user rejected in classify_kinds, left out of its later rounds.
-    static final String REJECTED = "rejected";
-    // The notes block's kinds the user said to leave untranslated in classify_kinds: settled, left out of its rounds.
-    static final String DROPPED = "dropped";
-    /// The set of proposals last shown the user (classify_kinds): when, then its kinds.
-    static final String SHOWN = "shown";
-    /// The kinds of a set the user amended or declined in classify_kinds, until the agent sends them again as the
-    /// user's (from_user): not proposed again, nor listed, meanwhile.
-    static final String AMENDED = "amended";
-    private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED, ClassifyKindsTool.SAMPLES,
-            REJECTED, DROPPED, SHOWN, AMENDED, SourceNotes.KIND_FIELDS, SourceNotes.WHOLE_KIND);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
-
+    /// The notes block's key for the catalogue's confirmation in progress (`catalogue_event_types`): the set last
+    /// shown the user and when, and a set the user amended, until the agent sends the amendments.
+    static final String CONFIRMING = "confirming";
+    // The block keys the catalogue_event_types tool keeps, carried from one write of the notes to the next.
+    private static final List<String> CATALOGUE_KEYS = List.of(SourceNotes.EVENT_TYPES, SourceNotes.CATCH_ALL,
+            "scope", CONFIRMING);
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
     private final DocumentWrites documentWrites;
@@ -163,16 +144,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                              + "Keep the user's vendor or event reference documentation in Stroom, and the notes "
                              + "condensed from it, as Documentation docs in the build: each document verbatim "
                              + "('<source> reference - <title>'), and '<source> source notes' with the field "
-                             + "dictionary and event catalogue. The notes are read back by the tools: "
-                             + "draft_translation_mapping (build=) drafts from them (fields where the dictionary "
-                             + "puts them, a rule per catalogued event that gives the field and value showing it), "
-                             + "build_translation_xslt (build=) checks a mapping against the catalogue, and "
+                             + "dictionary. The notes are read back by the tools: draft_translation_mapping "
+                             + "(build=) drafts from them (fields where the dictionary puts them), and "
                              + "write_documentation lists the source fields with their meanings. Promotion puts them "
-                             + "beside the feed.\n\n"
+                             + "beside the feed. The event types the documentation describes are proposed through "
+                             + CatalogueEventTypesTool.NAME + " (basis documentation), which keeps the catalogue "
+                             + "in the same notes.\n\n"
                              + "For documentation the user gave (pasted, attached, or already in Stroom), and for "
-                             + "what you know of a source yourself (a vendor's published event ids and fields), each "
-                             + "such note marked basis=agent_knowledge with a confidence. Never notes guessed from "
-                             + "the sample's values: the draft would follow them over the sample "
+                             + "what you know of a source yourself (a vendor's published fields), each such note "
+                             + "marked basis=agent_knowledge with a confidence. Never notes guessed from the "
+                             + "sample's values: the draft would follow them over the sample "
                              + "(draft_translation_mapping reads those itself). The result's to_review lists your "
                              + "notes of low confidence: put those to the user first.")
                 .parameters(ObjectSchema.builder()
@@ -182,8 +163,6 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                                         + "lines.")
                         .addProperty(FIELDS_ARG, list("Field dictionary condensed from the documentation.",
                                 fieldNote()))
-                        .addProperty(EVENTS_ARG, list("Event catalogue condensed from the documentation.",
-                                eventNote()))
                         .addProperty(REFERENCES_ARG, stringArraySchema("Titles or links of the documents used."))
                         .addProperty(DOCUMENTS_ARG, list("The user's documents themselves, kept verbatim in Stroom "
                                                          + "as Documentation docs '<source> reference - <title>', "
@@ -206,42 +185,23 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     private Map<String, Object> record(final ToolCall call, final ToolCallContext context) {
         final String build = required(call, BUILD_ARG);
         final String source = required(call, SOURCE_ARG);
+        if (argsMap(call).get(EVENTS) != null) {
+            // The event types go through the catalogue, checked against every sampled record and confirmed by the
+            // user; recorded here, they were never checked.
+            throw new ToolRefusal("Nothing recorded: record_source_notes keeps fields and documents only. Propose "
+                                  + "the event types the documentation describes through "
+                                  + CatalogueEventTypesTool.NAME + " build=" + build + " proposals=[{op: add, "
+                                  + "type_id, title, description, event_detail, recognised_by, basis: "
+                                  + "documentation}], which checks them against the records; send the fields and "
+                                  + "documents here without events.");
+        }
         final String givenSummary = NullSafe.string(rawArg(call, SUMMARY_ARG));
         final List<Map<String, Object>> givenFields = notes(call, FIELDS_ARG, FIELD_KEYS, FIELD_REQUIRED);
-        final List<Map<String, Object>> allEvents = notes(call, EVENTS_ARG, EVENT_KEYS, EVENT_REQUIRED);
-        // An event whose action element the schema doesn't have is left out, to be sent again corrected; the rest is
-        // recorded (seen: 10,500 characters of notes refused whole for three such events, then sent whole again).
-        final Function<String, String> detailCheck = detailCheck(context, build);
-        final List<Map<String, Object>> givenEvents = new ArrayList<>();
-        final List<String> eventProblems = new ArrayList<>();
-        final EventSchema affectedSchema = schemaOrNull(context, build);
-        for (final Map<String, Object> event : allEvents) {
-            final List<String> problems = new ArrayList<>(SourceNotes.catalogueProblems(List.of(event),
-                    detailCheck));
-            if (problems.isEmpty()) {
-                affectedChecked(affectedSchema, event).ifPresent(problems::add);
-            }
-            if (problems.isEmpty()) {
-                givenEvents.add(event);
-            } else {
-                eventProblems.addAll(problems);
-            }
-        }
-        if (!givenEvents.isEmpty()) {
-            // Two events a record can't tell apart are the catalogue's as a whole: nothing recorded (each event's
-            // action element already checked).
-            final List<String> problems = SourceNotes.catalogueProblems(givenEvents, null);
-            if (!problems.isEmpty()) {
-                throw new ToolRefusal("Nothing recorded; the event catalogue can't be drafted from as it is: "
-                                      + String.join("; ", problems) + ". Correct the events and call again.");
-            }
-        }
         final List<Map<String, Object>> pathProblems = unknownPaths(context, build, givenFields);
         final List<Map<String, Object>> documents = documents(call);
         // Called again for the same source (a long manual sent a part at a time), the build's docs are updated, not
         // made twice: the build refuses a second doc of one name.
-        final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
-        guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
+        final Map<String, WriteGuard.BuildDoc> contents = contents(build);
         final List<Map<String, Object>> keptDocs = keep(context.session(), contents, build, source, documents);
 
         final String notesName = notesName(contents, source);
@@ -249,33 +209,24 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final String summary = NullSafe.isBlankString(givenSummary)
                 ? text(earlier.get("summary"))
                 : givenSummary;
-        // What earlier calls recorded stays, unless this one gives the same field or event again.
+        // What earlier calls recorded stays, unless this one gives the same field again.
         final List<Map<String, Object>> fields = merged(earlier.get("fields"), givenFields, FIELD_KEYS,
                 FIELD_REQUIRED);
-        final List<Map<String, Object>> events = merged(earlier.get("events"), givenEvents, EVENT_KEYS,
-                EVENT_REQUIRED);
         final Set<String> references = new LinkedHashSet<>(JsonValues.strings(earlier.get("references")));
         references.addAll(stringListArg(call, REFERENCES_ARG));
         final Set<String> keptNames = new LinkedHashSet<>(JsonValues.strings(earlier.get("documents")));
         keptDocs.forEach(doc -> keptNames.add(text(doc.get("name"))));
 
         final DocumentationDoc notesDoc = written(context.session(), contents, build, notesName,
-                notesText(source, summary, fields, events, List.copyOf(references), List.copyOf(keptNames),
-                        JsonValues.strings(earlier.get(PENDING)), earlier.containsKey(PENDING),
-                        carried(earlier, Map.of())));
-        final long usable = events.stream()
-                .filter(event -> JsonValues.truthy(event.get("field"))
-                                 && (JsonValues.truthy(event.get("value")) || SourceNotes.isPattern(event)))
-                .count();
+                notesText(source, summary, fields, List.copyOf(references), List.copyOf(keptNames),
+                        catalogueKept(earlier, Map.of())));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", DocumentationDoc.TYPE);
         result.put("uuid", notesDoc.getUuid());
         result.put("name", notesDoc.getName());
         result.put("fields", fields.size());
-        result.put("events", events.size());
         result.put("documents_kept", keptDocs);
-        final List<String> review = new ArrayList<>(toReview(fields, "field"));
-        review.addAll(toReview(events, "event"));
+        final List<String> review = toReview(fields, "field");
         if (!review.isEmpty()) {
             // The agent's own notes it is least sure of: for the user to confirm or correct first.
             result.put("to_review", review);
@@ -283,22 +234,14 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (!pathProblems.isEmpty()) {
             result.put("path_problems", pathProblems);
         }
-        if (!eventProblems.isEmpty()) {
-            result.put("event_problems", eventProblems);
-        }
-        result.put("hint", (eventProblems.isEmpty()
-                ? ""
-                : eventProblems.size() + " event(s) were left out (event_problems says why): call again with just "
-                  + "those events, corrected (build, source and summary as before); the rest is kept. ")
-                           + (pathProblems.isEmpty()
+        result.put("hint", (pathProblems.isEmpty()
                 ? ""
                 : pathProblems.size() + " event_logging_path(s) aren't in the event-logging schema and were left "
                   + "out (path_problems says what is allowed where each stops): call again with just those fields "
                   + "and corrected paths; the rest is kept. ")
-                           + "draft_translation_mapping with build= drafts from these notes" + (usable < events.size()
-                ? "; events without a field and value (" + (events.size() - usable) + ") cannot become rules: give "
-                  + "them where the documentation says how a record shows the event"
-                : "") + ".");
+                           + "draft_translation_mapping with build= drafts from these notes. The event types the "
+                           + "documentation describes go through " + CatalogueEventTypesTool.NAME + " (basis "
+                           + "documentation): checked against the records and confirmed by the user.");
         return plan.withNext(context, build, result);
     }
 
@@ -349,155 +292,60 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return SourceNotes.withoutUnknownPaths(schema, fields);
     }
 
-    // Why an event_detail can't be an action element, from the event-logging schema of the version chosen for the
-    // build (else the newest held); null when the schema is unreadable (the events are still checked for twins).
-    private Function<String, String> detailCheck(final ToolCallContext context, final String build) {
-        try {
-            final EventSchema schema = eventVersions.eventSchema(context, build,
-                    eventVersions.chosenOrLatest(context, build));
-            return detail -> SourceNotes.detailProblem(schema, detail);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message(
-                    "No event-logging schema to check the catalogue against: {}",
-                    e.getMessage()),
-                    e);
-            return null;
-        }
-    }
-
-    /// Records catalogue events classify_kinds settled (each basis user_confirmed) into the build's source notes, with
-    /// the kinds still to classify; earlier notes stay, an event given again replaced.
+    /// Records the build's catalogue of event types ([Catalogue]) in its source notes, as `catalogue_event_types`
+    /// keeps it: the JSON block's `event_types`, `catch_all` and `scope` (replaced whole), and the confirmation in
+    /// progress; the field dictionary, documents and references stay as earlier calls recorded them.
     ///
-    /// @param context The call's context.
-    /// @param build   The build.
-    /// @param source  The source's name (its notes doc is `<source> source notes`).
-    /// @param events  The events, each checked by [#checkedEvents].
-    /// @param pending The kinds still to classify, as field=value (none when every kind is settled).
-    /// @param kept    Block keys classify_kinds keeps (record_fields, proposed), each replacing the earlier one; a
-    ///                key given as an empty list removes it; the others are carried over.
+    /// @param context    The call's context.
+    /// @param build      The build.
+    /// @param source     The source's name (its notes doc is `<source> source notes`; the build's one notes doc
+    ///                   when it has one already).
+    /// @param catalogue  The catalogue.
+    /// @param confirming The confirmation in progress ([#CONFIRMING]), or null for none.
     /// @return The notes doc's `uuid` and `name`.
-    Map<String, Object> recordClassified(final ToolCallContext context,
-                                         final String build,
-                                         final String source,
-                                         final List<Map<String, Object>> events,
-                                         final List<String> pending,
-                                         final Map<String, Object> kept) {
-        final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
-        guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
+    Map<String, Object> recordCatalogue(final ToolCallContext context,
+                                        final String build,
+                                        final String source,
+                                        final Catalogue catalogue,
+                                        final Map<String, Object> confirming) {
+        final Map<String, WriteGuard.BuildDoc> contents = contents(build);
         final String notesName = notesName(contents, source);
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
         final List<Map<String, Object>> fields = merged(earlier.get("fields"), List.of(), FIELD_KEYS,
                 FIELD_REQUIRED);
-        final List<Map<String, Object>> merged = merged(earlier.get("events"), events, EVENT_KEYS, EVENT_REQUIRED,
-                RecordSourceNotesTool::kindOf);
         final String summary = NullSafe.nonBlankStringElse(text(earlier.get("summary")),
-                "The kinds of event the agent classified and the user confirmed.");
+                "The source's event types, as the agent proposed them and the user confirmed them.");
+        final Map<String, Object> kept = new LinkedHashMap<>(catalogue.toJson());
+        kept.put(CONFIRMING, NullSafe.map(confirming));
         final DocumentationDoc doc = written(context.session(), contents, build, notesName, notesText(source,
-                summary, fields, merged, JsonValues.strings(earlier.get("references")),
-                JsonValues.strings(earlier.get("documents")), pending, true, carried(earlier, kept)));
+                summary, fields, JsonValues.strings(earlier.get("references")),
+                JsonValues.strings(earlier.get("documents")), catalogueKept(earlier, kept)));
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("uuid", doc.getUuid());
         out.put("name", doc.getName());
         return out;
     }
 
-    // The classify_kinds keys of the earlier notes, with those given in their place; an empty list removes one.
-    private static Map<String, Object> carried(final Map<String, Object> earlier, final Map<String, Object> given) {
+    // The catalogue's keys of the earlier notes, with those given in their place; an empty value removes one.
+    private static Map<String, Object> catalogueKept(final Map<String, Object> earlier,
+                                                     final Map<String, Object> given) {
         final Map<String, Object> out = new LinkedHashMap<>();
-        for (final String key : CLASSIFY_KEYS) {
+        for (final String key : CATALOGUE_KEYS) {
             final Object value = given.containsKey(key)
                     ? given.get(key)
                     : earlier.get(key);
-            if (value instanceof final List<?> list && !list.isEmpty()) {
+            if (SourceNotes.EVENT_TYPES.equals(key) && value instanceof List<?>
+                || value instanceof final Map<?, ?> map && !map.isEmpty()) {
                 out.put(key, value);
             }
         }
         return out;
     }
 
-    /// Catalogue events as recorded: normalised, basis checked, and each checked against the schema's action
-    /// elements and the others (two a record can't tell apart).
-    ///
-    /// @param context The call's context.
-    /// @param build   The build.
-    /// @param given   The events.
-    /// @param name    The argument they were given in, for the problems.
-    /// @return The events.
-    /// @throws ToolRefusal naming every problem.
-    List<Map<String, Object>> checkedEvents(final ToolCallContext context,
-                                            final String build,
-                                            final List<Map<?, ?>> given,
-                                            final String name) {
-        final List<Map<String, Object>> events = new ArrayList<>();
-        for (int i = 0; i < given.size(); i++) {
-            for (final String key : EVENT_REQUIRED) {
-                if (given.get(i).get(key) == null) {
-                    throw new ToolRefusal(name + "[" + i + "]." + key + " is required");
-                }
-            }
-            final Map<String, Object> event = normalised(given.get(i), EVENT_KEYS, EVENT_REQUIRED);
-            basisChecked(event, name + "[" + i + "]");
-            events.add(event);
-        }
-        final List<String> problems = new ArrayList<>();
-        for (int i = 0; i < events.size(); i++) {
-            patternChecked(events.get(i), name + "[" + i + "]").ifPresent(problems::add);
-        }
-        if (!problems.isEmpty()) {
-            throw new ToolRefusal("Nothing recorded: " + String.join("; ", problems) + ". Correct them and call "
-                                  + "again.");
-        }
-        problems.addAll(SourceNotes.catalogueProblems(events, detailCheck(context, build)));
-        if (problems.isEmpty()) {
-            final EventSchema schema = schemaOrNull(context, build);
-            events.forEach(event -> affectedChecked(schema, event).ifPresent(problems::add));
-            events.forEach(event -> problems.addAll(partsChecked(schema, event)));
-        }
-        if (problems.isEmpty()) {
-            problems.addAll(SourceNotes.catalogueProblems(events, null));
-        }
-        if (!problems.isEmpty()) {
-            throw new ToolRefusal("Nothing recorded: " + String.join("; ", problems) + ". Correct them and call "
-                                  + "again.");
-        }
-        return events;
-    }
-
-    // A pattern event checked: its field, its pattern instead of a value, the pattern one the generated XSLT runs, and
-    // a name for each capture group; what is wrong, if anything.
-    private static Optional<String> patternChecked(final Map<String, Object> event, final String where) {
-        if (!SourceNotes.isPattern(event)) {
-            return event.containsKey(SourceNotes.NAMES)
-                    ? Optional.of(where + ": names are for a pattern's capture groups (with matches)")
-                    : Optional.empty();
-        }
-        if (text(event.get("field")).isBlank()) {
-            return Optional.of(where + ": a pattern is matched against a field: give field (e.g. message)");
-        }
-        if (!text(event.get("value")).isBlank()) {
-            return Optional.of(where + ": give value or matches, not both");
-        }
-        final String regex = text(event.get(SourceNotes.MATCHES));
-        final Optional<String> problem = XPathRegex.problem(regex);
-        if (problem.isPresent()) {
-            return Optional.of(where + ": matches " + regex + ": " + problem.get());
-        }
-        final List<String> names = JsonValues.strings(event.get(SourceNotes.NAMES));
-        final int groups;
-        try {
-            groups = XPathRegex.groups(regex);
-        } catch (final XPathRegex.XPathRegexException e) {
-            return Optional.of(where + ": matches " + regex + " does not compile: " + e.getMessage());
-        }
-        if (groups != names.size()) {
-            return Optional.of(where + ": matches has " + groups + " capture group(s) and names " + names.size()
-                               + ": name each group (the field it reads, e.g. user), and make any other group "
-                               + "(?:...)");
-        }
-        return names.stream()
-                .filter(group -> !GROUP_NAME.matcher(group).matches())
-                .findFirst()
-                .map(group -> where + ": the name '" + group + "' is letters, digits and _");
+    private Map<String, WriteGuard.BuildDoc> contents(final String build) {
+        final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
+        guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
+        return contents;
     }
 
     /// @param context The call's context.
@@ -535,39 +383,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                 .orElse(named);
     }
 
-    // An event's affected_as checked against its action element, and written out to the leaf the affected field's
-    // value goes in (User becomes User/Id); why it can't be, if not. Left as given when the schema is unreadable.
-    private static Optional<String> affectedChecked(final EventSchema schema,
-                                                              final Map<String, Object> event) {
-        if (schema == null || !JsonValues.truthy(event.get("affected_as"))) {
-            return Optional.empty();
-        }
-        final EventMeaning.Affected affected = EventMeaning.affected(schema, "event " + text(event.get("event")),
-                text(event.getOrDefault("event_detail", "Unknown")), text(event.get("affected_as")));
-        if (affected.path() != null) {
-            event.put("affected_as", affected.path());
-        }
-        return Optional.ofNullable(affected.problem());
-    }
-
-    // An event's Action and outcome checked against its action element ([EventMeaning#parts]). None when the schema
-    // is unreadable.
-    private static List<String> partsChecked(final EventSchema schema, final Map<String, Object> event) {
-        if (schema == null || !JsonValues.truthy(event.get("event_detail"))) {
-            return List.of();
-        }
-        final EventMeaning.Parts parts = EventMeaning.parts(schema, "event " + text(event.get("event")),
-                text(event.get("event_detail")), event.get("success"), JsonValues.truthy(event.get("action"))
-                        ? text(event.get("action"))
-                        : null);
-        if (parts.action() != null) {
-            event.put("action", parts.action());
-        }
-        return parts.problems();
-    }
-
-    // The event-logging schema of the build's version (else the newest held), or null when unreadable.
-    private EventSchema schemaOrNull(final ToolCallContext context, final String build) {
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return The event-logging schema of the build's version (else the newest held), or null when unreadable.
+    EventSchema schemaOrNull(final ToolCallContext context, final String build) {
         try {
             return eventVersions.eventSchema(context, build, eventVersions.chosenOrLatest(context, build));
         } catch (final RuntimeException e) {
@@ -614,46 +433,23 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return NullSafe.map(notes);
     }
 
-    /// The text of a source notes document: a markdown field dictionary, event catalogue and sources, then the
-    /// notes as a block the tools read back.
+    /// The text of a source notes document: a markdown field dictionary, the catalogue's "Event types" table (the
+    /// catch-all's row last) and sources, then the notes as a block the tools read back.
     ///
     /// @param source     The log source the notes are of.
     /// @param summary    What the source is.
     /// @param fields     The field dictionary's rows.
-    /// @param events     The event catalogue's rows.
     /// @param references Where the notes came from, e.g. vendor documentation.
     /// @param keptNames  The names of the source documents kept in the build.
+    /// @param catalogue  The catalogue's keys ([SourceNotes#CATALOGUE_KEYS]) and the confirmation in progress; none
+    ///                   before the source is catalogued.
     /// @return The document's text.
     static String notesText(final String source,
                             final String summary,
                             final List<Map<String, Object>> fields,
-                            final List<Map<String, Object>> events,
-                            final List<String> references,
-                            final List<String> keptNames) {
-        return notesText(source, summary, fields, events, references, keptNames, List.of(), false, Map.of());
-    }
-
-    /// As [#notesText(String, String, List, List, List, List)], with the kinds still to classify.
-    ///
-    /// @param source     The log source the notes are of.
-    /// @param summary    What the source is.
-    /// @param fields     The field dictionary's rows.
-    /// @param events     The event catalogue's rows.
-    /// @param references Where the notes came from, e.g. vendor documentation.
-    /// @param keptNames  The names of the source documents kept in the build.
-    /// @param pending    The kinds still to classify (classify_kinds), as field=value.
-    /// @param classified Whether classify_kinds has looked at the kinds (pending then says what is left).
-    /// @param kept       Block keys classify_kinds keeps (record_fields, proposed).
-    /// @return The document's text.
-    static String notesText(final String source,
-                            final String summary,
-                            final List<Map<String, Object>> fields,
-                            final List<Map<String, Object>> events,
                             final List<String> references,
                             final List<String> keptNames,
-                            final List<String> pending,
-                            final boolean classified,
-                            final Map<String, Object> kept) {
+                            final Map<String, Object> catalogue) {
         final List<String> lines = new ArrayList<>(List.of("# " + source + " source notes", "", summary.strip(), ""));
         if (!fields.isEmpty()) {
             lines.addAll(List.of("## Field dictionary", "", "| Field | Meaning | Type | Example | Event-logging path "
@@ -665,19 +461,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                               + basisText(field) + " |"));
             lines.add("");
         }
-        if (!events.isEmpty()) {
-            lines.addAll(List.of("## Event catalogue", "", "| Event | Told by | Description | EventDetail | TypeId | "
-                                                       + "Basis |", "| --- | --- | --- | --- | --- | --- |"));
-            events.forEach(event -> lines.add("| " + text(event.get("event")) + " | " + toldBy(event) + " | "
-                                              + text(event.get("description")) + " | "
-                                              + text(event.get("event_detail")) + " | "
-                                              + text(event.get("type_id")) + " | " + basisText(event) + " |"));
-            lines.add("");
-        }
-        if (!pending.isEmpty()) {
-            lines.addAll(List.of("## Kinds still to classify", ""));
-            pending.forEach(kind -> lines.add("- " + kind));
-            lines.add("");
+        final Catalogue read = SourceNotes.catalogue(catalogue);
+        if (read != null) {
+            lines.addAll(CatalogueTables.notesTable(read));
         }
         if (!references.isEmpty() || !keptNames.isEmpty()) {
             lines.addAll(List.of("## Sources", ""));
@@ -689,12 +475,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (!summary.isBlank()) {
             block.put("summary", summary.strip());
         }
-        if (classified) {
-            block.put(PENDING, List.copyOf(pending));
-        }
-        kept.forEach(block::put);
+        block.putAll(catalogue);
         block.put("fields", fields);
-        block.put("events", events);
         block.put("documents", keptNames);
         if (!references.isEmpty()) {
             block.put("references", references);
@@ -736,16 +518,6 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // Which kind of record a classified event is: what tells its records (with the kind a pattern is within), else
-    // its name. Seen in testing: two kinds confirmed with the same event name, the later replaced the earlier, whose
-    // records were then put to the user again.
-    private static String kindOf(final Map<String, Object> event) {
-        final String told = toldBy(event);
-        return told.isEmpty()
-                ? "event:" + text(event.get("event"))
-                : told + " within " + text(event.get(WITHIN));
-    }
-
     // The notes given for an argument: each a JSON object, with its required keys.
     private static List<Map<String, Object>> notes(final ToolCall call,
                                                    final String name,
@@ -764,16 +536,6 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             notes.add(note);
         }
         return notes;
-    }
-
-    // What tells an event's records: its field's value, or the pattern its field matches.
-    private static String toldBy(final Map<String, Object> event) {
-        if (text(event.get("field")).isBlank()) {
-            return "";
-        }
-        return "`" + (SourceNotes.isPattern(event)
-                ? text(event.get("field")) + " matches " + text(event.get(SourceNotes.MATCHES))
-                : text(event.get("field")) + "=" + text(event.get("value"))).replace("|", "\\|") + "`";
     }
 
     // A note's basis and confidence: documentation unless said, a confidence only (and always) for the agent's own
@@ -930,38 +692,6 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                      + "'success'}.")
                         .build())
                 .required("field", "meaning")
-                .build();
-    }
-
-    private static ObjectSchema eventNote() {
-        return withBasis(ObjectSchema.builder())
-                .addStringProperty("event", "Source event id or action, e.g. '4624' or 'CODE_TO_TOKEN'.")
-                .addStringProperty("description", "What the event is.")
-                .addStringProperty("event_detail", "The EventDetail action element, e.g. Authenticate, Update, "
-                                                   + "Alert; for a network event, Network and its action: "
-                                                   + "Network/Permit (a connection allowed), Network/Deny, "
-                                                   + "Network/Connect, Network/Close.")
-                .addStringProperty("type_id", "The event's TypeId.")
-                .addStringProperty("field", "The field whose value shows this event in a record, e.g. 'evt'; with "
-                                            + "value, the draft makes a rule for it and build_translation_xslt "
-                                            + "checks the mapping against it.")
-                .addStringProperty("value", "That field's value for this event, e.g. '4625'.")
-                .addStringProperty(SourceNotes.MATCHES, "In place of value, for an event said in free text: a regex "
-                                                        + "(XPath's: no lookaround) the field's value matches, e.g. "
-                                                        + "'^Failed password for (?:invalid user )?(\\S+) from "
-                                                        + "(\\S+)'.")
-                .addProperty(SourceNotes.NAMES, stringArraySchema("With matches: a name for each capture group, the "
-                                                                  + "field it reads, e.g. ['user', 'src_ip']."))
-                .addStringProperty("action", "The action element's Action, when it has one, e.g. Logon or Logoff.")
-                .addStringProperty("actor", "The field naming the user or account who acted (EventSource/User for "
-                                            + "this event); left out when the records name none.")
-                .addStringProperty("affected", "The field naming the user or object acted on; left out when there "
-                                               + "is none.")
-                .addStringProperty("affected_as", "What the affected field names, as the action element's object: "
-                                                  + "User, File, Document, Group... (or its leaf, User/Name).")
-                .addBooleanProperty("success", "The event's outcome, when the documentation says it, e.g. false for "
-                                               + "a failed logon.")
-                .required("event", "description")
                 .build();
     }
 

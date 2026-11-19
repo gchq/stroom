@@ -105,10 +105,12 @@ public class BuildPlan {
     private static final String COVERED = "covered";
     // The step an aggregated feed's source types are profiled and scoped by.
     private static final String SOURCE_TYPES = "source_types";
-    // The step the build's samples (or the feed it works from) are surveyed by, before the kinds are classified:
+    // The step the build's samples (or the feed it works from) are surveyed by, before the source is catalogued:
     // the survey alone finds an aggregated feed's source type field. Seen (evals 58 and 59): the agent went straight
-    // to classify_kinds on its own uploads, and an aggregated feed was never recognised.
+    // on with its own uploads, and an aggregated feed was never recognised.
     static final String SURVEYED = "surveyed";
+    /// The step the source's event types are catalogued by (catalogue_event_types), before the translation.
+    static final String CATALOGUE = "catalogue";
     // The kind of build that only assesses a feed: its plan ends once its source type registry is written.
     private static final String ASSESSMENT = "assessment";
     // The steps an assessment takes.
@@ -131,10 +133,13 @@ public class BuildPlan {
                                   + "parked for later builds (an assessment: the registry written)",
                     "record_source_types build=... feed=... (then again with reviewed=<its review_id> and "
                     + "group=<a name you suggest>)"),
-            List.of("classify", "Each kind of event the user's documentation doesn't cover classified: you propose "
-                                + "each from its records and what you know of the source, the user confirms them in "
-                                + "one form (into the source notes the draft follows)",
-                    "classify_kinds build=... (without proposals, then with them)"),
+            List.of(CATALOGUE, "The source's event types catalogued: you propose each event type and how its "
+                               + "records are recognised, from the evidence and what you know of the source; each "
+                               + "proposal is checked against every sampled record; the user confirms them a set at "
+                               + "a time, then the catch-all for uncatalogued records (into the source notes the "
+                               + "draft follows)",
+                    CatalogueEventTypesTool.NAME + " build=... (without proposals, then with them, then "
+                    + "confirm=true)"),
             List.of("translation", "Translation XSLT from a mapping: draft it from the sample, decide the action "
                                    + "elements, generate and save it with the mapping (stroom://guide/mapping)",
                     "draft_translation_mapping, build_translation_xslt build=... name=... (uuid=... to replace)"),
@@ -844,9 +849,9 @@ public class BuildPlan {
         // A copied pipeline's XSLT is there already, with its mapping or written by hand.
         // Asked for by the user (work package E8): before the draft; not needed once the build has a translation
         // (saved from a mapping, written by hand, or a copied pipeline's).
-        // Done once surveyed, or once a survey for the build was refused for nothing readable (classify_kinds then
-        // goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
-        // pipeline's), as the classify step isn't.
+        // Done once surveyed, or once a survey for the build was refused for nothing readable (catalogue_event_types
+        // then goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
+        // pipeline's), as the catalogue step isn't.
         done.put(SURVEYED, surveyed || !facts.unreadableSurveys(build).isEmpty()
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
@@ -854,7 +859,7 @@ public class BuildPlan {
                         : Boolean.FALSE);
         done.put(SOURCE_TYPES, sourceTypesDone(build, surveyState, of(byType, DocumentationDoc.TYPE), sources,
                 assessment));
-        done.put("classify", facts.classified(docs)
+        done.put(CATALOGUE, facts.catalogued(docs)
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
                         ? null
@@ -1184,8 +1189,9 @@ public class BuildPlan {
                     + "review_id> and group=<a name you suggest>; they choose in a form which source types go in "
                     + "this build's one source type group (one pipeline) and keep or change its name, the rest "
                     + "parked for later builds, and the registry is written");
-            case "classify" -> call("classify_kinds", args("build", build, "stream_ids", raw),
-                    "lists the kinds to classify; call again with a proposal for each, which the user confirms");
+            case CATALOGUE -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
+                    "lists the evidence; propose the event types (proposals=), each checked against the records, "
+                    + "then confirm=true puts them to the user a set at a time");
             // A build with a scope over an aggregated feed's source types drafts through it: the build says which.
             case "translation" -> call("draft_translation_mapping", args.scope() == null
                             ? args("stream_ids", raw)
@@ -1580,7 +1586,7 @@ public class BuildPlan {
 
     private static List<Map<String, Object>> steps(final Map<String, Boolean> done, final Set<String> skipped) {
         // Not needed when their state is null: a converter for a format that needs none, a template for Lucene.
-        final Set<String> notNeeded = Set.of("converter", SURVEYED, SOURCE_TYPES, "classify", "index_template",
+        final Set<String> notNeeded = Set.of("converter", SURVEYED, SOURCE_TYPES, CATALOGUE, "index_template",
                 "covered");
         final List<Map<String, Object>> steps = new ArrayList<>();
         for (final Map<String, Object> item : checklist()) {
@@ -1680,7 +1686,7 @@ public class BuildPlan {
                                        final boolean cefBuild) {
         // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
         final Set<String> skipped = new HashSet<>(kinds.discovery()
-                ? Set.of(SURVEYED, "classify", "translation", "pipeline", "stepped", "processed", "unmapped",
+                ? Set.of(SURVEYED, CATALOGUE, "translation", "pipeline", "stepped", "processed", "unmapped",
                         "validated", "documented")
                 : Set.of());
         if (!kinds.reference()) {
@@ -1941,6 +1947,7 @@ public class BuildPlan {
         map.put("profile_sample", "start");
         map.put("build_data_splitter", "converter");
         map.put("survey_feed", SURVEYED);
+        map.put(CatalogueEventTypesTool.NAME, CATALOGUE);
         map.put("save_text_converter", "converter");
         map.put("draft_translation_mapping", "translation");
         map.put("build_translation_xslt", "translation");

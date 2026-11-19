@@ -119,7 +119,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
     static final int FOLLOW_ON_RECORDS = 200;
     static final String CANCELLED = "Reading was stopped: the call was cancelled.";
     // The tool the uncatalogued records' event types are proposed with (catalogue_event_types).
-    static final String CATALOGUE_EVENT_TYPES = "catalogue_event_types";
+    static final String CATALOGUE_EVENT_TYPES = CatalogueEventTypesTool.NAME;
     // How a group the catch-all caught is found (found_as).
     private static final String CAUGHT_BY = "caught by catch-all rule";
     // The most logged values and examples a shape of uncatalogued records shows.

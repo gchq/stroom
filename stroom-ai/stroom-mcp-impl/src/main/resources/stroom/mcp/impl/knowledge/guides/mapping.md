@@ -6,20 +6,10 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 
 ## Rules
 
-- Before drafting, once the samples are surveyed (`survey_feed`, the plan's `surveyed` step, which `classify_kinds`
-  waits for: only the survey recognises an aggregated feed), `classify_kinds` (the plan's `classify` step): it lists the kinds of event the user's
-  documentation doesn't cover; propose each from its records and what you know of the source, with a short `title`
-  and the `product` it comes from, saying how sure you are; show the table it gives back in your reply, as it is (in Stroom AI's chat, the
-  chat shows it itself: don't repeat it), then call it
-  with `confirm: true`: the user accepts the set shown (up to ten of one confidence, high first) or amends it,
-  then you show the next set it gives back and confirm again; a source of many kinds goes in rounds of 18. When no field
-  is named like a kind of event, it may first ask the user which field tells the kinds apart (without forms
-  `needs_kind_field`: ask them in the chat, show the candidates, and pass what they say as `kind_field`); never
-  choose it yourself. For each, who acted (`actor`) and what it was done to (`affected`, and
-  `affected_as`: User, File, Document, Group...). The draft then follows them, a rule a kind. Send the user's
-  amendments and corrections back as proposals with `from_user: true` (only ever what the user said, never your own
-  proposals unconfirmed); ask about any they reject. Show only the table each call gives back: the others come after
-  the form.
+- Before drafting, once the samples are surveyed (`survey_feed`, the plan's `surveyed` step: only the survey recognises
+  an aggregated feed), catalogue the source's event types with `catalogue_event_types` (the plan's `catalogue` step;
+  see Event type catalogue below). The draft then follows the catalogue: a rule a way of recognising each event type,
+  then the catch-all.
 - Never write a translation XSLT by hand, and never send the field inventory as the mapping: draft it, edit what the
   draft gets wrong, and give `build_translation_xslt` the edited mapping with the draft's `schema_version`, the sample
   (and the Data Splitter's spec as `splitter`), so fields no record has and times their format doesn't fit are caught
@@ -52,6 +42,48 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 - Only `stroom:` functions that exist may be used (`format-date`, `lookup`, `meta`, `dictionary`, `log`,
   `json-to-xml`, ...; there is no `stroom:json-parse`): `check_xslt` refuses unknown ones, elements the schema has no
   place for, and expressions that would select nothing for want of a namespace (stroom://guide/xslt).
+
+
+## Event type catalogue
+
+The output of cataloguing is a catalogue of **event types**: what types of event the source writes, what each means,
+and how a **record** of each is **recognised**. You propose them from the evidence and what you know of the product;
+the tool checks every proposal against every sampled record of the build's source types; the user confirms them.
+
+- **Evidence** (call without proposals): `fields` that tell records apart (their values and counts; hosts, nodes,
+  severities and times left out), record `shapes` (fields present together, with counts), `examples` (rare records
+  always among them), and the `seed`: the draft's own rules as event types (`basis: draft`). The seed is for you to
+  correct, not to take: add only what you keep. A logger, a file path or a program says where a record came from,
+  not what happened: one logger often writes several event types, told apart by another field or its message.
+- **An event type**: `type_id` Verb-Object (`Update-Password`; the vendor's code is written as Data, so keep it out
+  of the TypeId), `title`, `description` (fixed text, no record values: the record's own message is used where it
+  has one), `event_detail` (`Authenticate`, `Update`, `Network/Permit`...), `action`, `success`, `actor` and
+  `affected` (fields), `affected_as` (User, File, Document, Group...), `basis` (`agent_knowledge`, `documentation`,
+  or `draft` for the seed's), `confidence` (high, medium, low).
+- **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
+  when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
+  `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no
+  lookaround, at most 500 characters; prefer `starts_with` or `contains` over long values), `present`; `not: true` for
+  the test not to hold (a missing field makes it hold). `names` names a `matches` regex's capture groups, fields the
+  translation may read. Fields as the draft names them (`event.logger_name` inside a held JSON string; a key holding a
+  dot in brackets, `['log.level']`). Never the build's source type field: told by the records' other fields or
+  shape. Only the source's one event type (or a line format's) may have no conditions: every record.
+- **Proposals**: `[{op: add | change | remove, type_id, ...}]`, by TypeId, never the whole catalogue; `change` gives
+  only the keys that change. Each call checks the whole catalogue: counts per event type and per way, `overlaps` (a
+  record two event types recognise: refused until one is tightened, by the `telling_fields` named),
+  `uncatalogued` records by shape (the catch-all translates them as Unknown: propose types for those that are events
+  of their own), `several` (a type whose records split by a field: split it, or say why it is one with
+  `one_type_because`; blocking for the seed's), `problems` (a proposal bringing one is refused, nothing recorded),
+  `not_checked` (conditions the check can't evaluate: said, not refused). An event type from the documentation with
+  no sampled record is kept and said to be not in the sample. The full listing is saved to the workspace (`listing`).
+- **Confirmation** (`confirm: true`, again after each answer): the high-confidence event types in one set, then the
+  medium and the low in sets of up to ten, then the catch-all for the uncatalogued records (give
+  `catch_all: {allow_unknown: why}`). Each set's table is shown first (in Stroom AI's chat, by the chat itself; else
+  show it in your reply as it is), then a short form: "Accept all N event types, or type your amendments". The
+  confirmation is only ever the form's: amendments the user types (in the form or the chat) you propose as changes
+  (`op: change`, or add and remove), and the set is put to them again; `drop: true` only where the user said to drop
+  one. A client without forms gets `needs_review` and a `review_id`: show the table, and once the user agrees, call
+  with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed.
 
 ## The mapping
 

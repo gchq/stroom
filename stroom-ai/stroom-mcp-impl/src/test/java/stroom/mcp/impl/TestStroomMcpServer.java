@@ -771,6 +771,22 @@ class TestStroomMcpServer {
         }
     }
 
+    @Test
+    void theGuidesNameCatalogueEventTypesWhereClassifyKindsWas() {
+        // stroom-ai/DESIGN.md, Event type catalogue: classify_kinds is replaced by catalogue_event_types, renamed in
+        // every guide and hint; its conditions, evidence, checks and confirmation are in the mapping guide, so the
+        // tool's description stays short.
+        assertThat(StroomMcpServer.INSTRUCTIONS).doesNotContain("classify_kinds", "kind_field");
+        for (final String guide : BundledKnowledge.GUIDES) {
+            assertThat(new BundledKnowledge().guide(guide)).hasValueSatisfying(text ->
+                    assertThat(text).as(guide).doesNotContain("classify_kinds", "kind_field", "from_user"));
+        }
+        assertThat(String.join(" ", new BundledKnowledge().guide("mapping").orElseThrow().split("\\s+")))
+                .contains("## Event type catalogue", "catalogue_event_types", "Accept all N event types, or type "
+                                                                              + "your amendments", "not_checked",
+                        "one_type_because", "reviewed=<review_id>");
+    }
+
     private static TextResourceContents text(final ReadResourceResult result) {
         return (TextResourceContents) result.contents().getFirst();
     }

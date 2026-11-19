@@ -250,10 +250,11 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(replyText(CATALOGUE, args("build", build, "stream_ids", raw, "proposals", List.of(
                 eventType("Logon", "Authenticate", "high", when("action", "equals", "login"))))))
                 .contains("Logon", "Verb-Object");
-        // Given none: the event detail element as the verb, the first equals value as the object, as it is.
+        // Given none: the event detail element as the verb, the first equals value as the object, its first letter a
+        // capital (Verb-Object: TypeIds.VERB_OBJECT).
         final Map<String, Object> defaulted = proposed(build, raw, List.of(
                 eventType(null, "Authenticate", "high", when("action", "equals", "login"))));
-        assertThat(countsOf(defaulted)).containsKey("Authenticate-login");
+        assertThat(countsOf(defaulted)).containsKey("Authenticate-Login");
         proposed(build, raw, List.of(eventType("Authenticate-Logoff", "Authenticate", "high",
                 when("action", "equals", "logout"))));
         assertThat(replyText(CATALOGUE, args("build", build, "stream_ids", raw, "proposals", List.of(

@@ -54,8 +54,8 @@ final class FakeBuildFacts implements BuildFacts {
     List<Long> events = List.of();
     List<Long> eventsLeftOut = List.of();
     Map<String, List<Long>> unmapped = new LinkedHashMap<>();
-    // Whether classify_kinds has settled every kind (settled unless a test says not).
-    boolean classified = true;
+    // Whether the source is catalogued (catalogued unless a test says not).
+    boolean catalogued = true;
     Map<String, Object> survey;
     // The build whose own registry holds the scope it chose, or null.
     String scopeRecordedBy;
@@ -101,8 +101,8 @@ final class FakeBuildFacts implements BuildFacts {
     }
 
     @Override
-    public boolean classified(final List<Map<String, Object>> docs) {
-        return classified;
+    public boolean catalogued(final List<Map<String, Object>> docs) {
+        return catalogued;
     }
 
     @Override

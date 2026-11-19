@@ -57,7 +57,7 @@ Without such a tool, ask in your answer: one numbered question per decision, eac
 way, where a result gives the options, their order or labels, or says to recommend none, keep to it. Ask only what
 you can't decide from the result, the standing instructions or what the user has said, and not what a form from this
 server will ask; then carry on with their answers. An answer stays answered: the tools keep it with the build (the
-draft its System Name and Environment, classify_kinds its classifications), so leave out what the user answered rather
+draft its System Name and Environment, catalogue_event_types its event types), so leave out what the user answered rather
 than restating it, never send otherwise, and don't search the conversation for it (seen: Prod sent after Test). Ask each stage's decisions when that stage starts, not before: the indexing
 backend, cluster, index template (or the index to follow) and field naming are stage 2's, asked by its own tools
 (get_field_conventions) once `next` reaches stage 2; during stage 1 ask only what the translation needs (seen: the

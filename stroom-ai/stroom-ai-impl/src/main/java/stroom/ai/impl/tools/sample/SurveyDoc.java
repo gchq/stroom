@@ -64,7 +64,7 @@ public final class SurveyDoc {
     /// `fields` empty and `within` the source type field ([#kindsWithinSourceTypes(String)]).
     public static final String KIND_FIELDS = "kind_fields";
     /// The `by` of [#KIND_FIELDS] that says the kinds of event are told apart within each source type, not across
-    /// the feed: classify_kinds chooses the kind field over the build's scope's records.
+    /// the feed: catalogue_event_types catalogues the event types over the build's scope's records.
     public static final String WITHIN_SOURCE_TYPES = "source_types";
     /// The state's key for the streams read only in part that couldn't be read further in a call, which the user
     /// chose to stop at: settled, as a part read deeper and stopped is.
@@ -80,8 +80,8 @@ public final class SurveyDoc {
     public static final String SCOPE_READ = "scope_read";
 
     // What the survey says of kinds told apart within source types.
-    private static final String WITHIN_SAID = "The kinds of event are told apart within each source type, not "
-                                              + "across the feed: classify_kinds chooses the kind field over the "
+    private static final String WITHIN_SAID = "The event types are told apart within each source type, not "
+                                              + "across the feed: catalogue_event_types catalogues them over the "
                                               + "build's own source types' records.";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")

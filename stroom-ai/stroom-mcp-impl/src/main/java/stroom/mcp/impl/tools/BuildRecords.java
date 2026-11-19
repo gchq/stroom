@@ -110,8 +110,8 @@ public class BuildRecords {
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
     /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
-    /// The record's key for the feeds whose survey for the build read nothing, each with why (classify_kinds then
-    /// goes on without the survey, saying so).
+    /// The record's key for the feeds whose survey for the build read nothing, each with why
+    /// (catalogue_event_types then goes on without the survey, saying so).
     public static final String UNREADABLE_SURVEYS = "unreadable_surveys";
     // The EventSource/System/Name and Environment the user gave for the build's translation.
     private static final String SYSTEM = "system";
@@ -419,8 +419,8 @@ public class BuildRecords {
     }
 
     /// Records that the build's survey of a feed was refused because nothing in its streams could be read, so
-    /// classify_kinds, which otherwise waits for the survey, can go on (saying why there was none), whichever node or
-    /// session calls it, and after a restart.
+    /// catalogue_event_types, which otherwise waits for the survey, can go on (saying why there was none), whichever
+    /// node or session calls it, and after a restart.
     ///
     /// @param build A build's name, or null (nothing is recorded).
     /// @param feed  The feed surveyed.

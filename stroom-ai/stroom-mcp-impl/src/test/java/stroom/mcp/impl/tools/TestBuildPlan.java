@@ -72,7 +72,7 @@ class TestBuildPlan {
         // The samples surveyed before their kinds are classified: the survey alone finds an aggregated feed.
         assertThat(steps.indexOf("converter")).isLessThan(steps.indexOf("surveyed"));
         assertThat(steps.indexOf("surveyed")).isLessThan(steps.indexOf("source_types"));
-        assertThat(steps.indexOf("source_types")).isLessThan(steps.indexOf("classify"));
+        assertThat(steps.indexOf("source_types")).isLessThan(steps.indexOf("catalogue"));
     }
 
     @Test
@@ -387,31 +387,36 @@ class TestBuildPlan {
     }
 
     @Test
-    void eachKindIsClassifiedBeforeTheDraftUnlessTheTranslationIsWritten() {
-        // Asked for by the user (work package E8): the agent classifies the kinds and the user confirms them before
-        // the translation is drafted.
-        facts.classified = false;
+    void theSourceIsCataloguedBeforeTheDraftUnlessTheTranslationIsWritten() {
+        // The agent proposes the source's event types and the user confirms them (catalogue_event_types) before the
+        // translation is drafted (stroom-ai/DESIGN.md, Event type catalogue: the step is named catalogue).
+        facts.catalogued = false;
         final Map<String, Object> status = plan.status("b", new DocRef("Feed", "f", "ACME"));
-        assertThat(states(status).get("classify")).isEqualTo("to do");
+        assertThat(states(status).get("catalogue")).isEqualTo("to do");
         final List<Object> steps = BuildPlan.checklist().stream().map(step -> step.get("step")).toList();
-        assertThat(steps.indexOf("classify")).isGreaterThan(steps.indexOf("converter"))
+        assertThat(steps.indexOf("catalogue")).isGreaterThan(steps.indexOf("converter"))
                 .isLessThan(steps.indexOf("translation"));
 
-        facts.classified = true;
-        assertThat(states(plan.status("b", new DocRef("Feed", "f", "ACME"))).get("classify")).isEqualTo("done");
+        final BuildPlan.NextCall call = BuildPlan.nextCall(BuildPlan.CATALOGUE, BuildPlan.CallArgs.of("b",
+                List.of("ACME"), List.of(7L), List.of(), null, null));
+        assertThat(call.call()).isEqualTo(Map.of("tool", "catalogue_event_types", "arguments", Map.of("build", "b",
+                "stream_ids", List.of(7L))));
+
+        facts.catalogued = true;
+        assertThat(states(plan.status("b", new DocRef("Feed", "f", "ACME"))).get("catalogue")).isEqualTo("done");
 
         // A build whose translation is written already has no need of it.
-        facts.classified = false;
+        facts.catalogued = false;
         facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"), FakeBuildFacts.doc("XSLT", "x", "ACME-T"));
         facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
-        assertThat(states(plan.status("b", null)).get("classify")).isEqualTo("not needed");
+        assertThat(states(plan.status("b", null)).get("catalogue")).isEqualTo("not needed");
     }
 
     @Test
-    void theSamplesAreSurveyedBeforeTheirKindsAreClassified() {
+    void theSamplesAreSurveyedBeforeTheSourceIsCatalogued() {
         // Seen (evals 58 and 59): the agent classified its own uploads straight away, and the aggregated feed they
         // came from, which only the survey recognises, was never found.
-        facts.classified = false;
+        facts.catalogued = false;
         facts.ownRaw = List.of(7L);
         facts.docs = new ArrayList<>(List.of(FakeBuildFacts.doc("Feed", "f", "ACME")));
         assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("to do");
@@ -420,7 +425,7 @@ class TestBuildPlan {
         assertThat(call.call()).isEqualTo(Map.of("tool", "survey_feed", "arguments", Map.of("feed", "ACME",
                 "build", "b", "stream_ids", List.of(7L))));
 
-        // Surveyed, or the survey refused for nothing readable (classify_kinds then goes on, saying so): done.
+        // Surveyed, or the survey refused for nothing readable (catalogue_event_types then goes on, saying so): done.
         facts.docs.add(FakeBuildFacts.doc("Documentation", "s", "ACME" + StroomBuildFacts.SURVEY));
         assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("done");
         facts.docs.removeLast();

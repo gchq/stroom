@@ -358,8 +358,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                            + "it asks them (or, with no forms, says to ask in the "
                                                            + "chat). Kept for the build's survey; a different one "
                                                            + "starts the survey afresh. An aggregated feed (a source "
-                                                           + "type field) is asked none: its kinds are told apart "
-                                                           + "within source types, in classify_kinds.")
+                                                           + "type field) is asked none. A hint for the survey's "
+                                                           + "coverage only: the event types are catalogued, within "
+                                                           + "the build's source types, by catalogue_event_types.")
                         .addStringProperty(ACCEPT_ARG, "Only when the user wants to go ahead with the build's survey "
                                                        + "as it is, before it is covered: 'true' (they confirm in a "
                                                        + "form), or, when the client shows no forms, what they said "
@@ -728,7 +729,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         } else if (sources.field() != null && !"user".equals(keptKinds.get("by"))) {
             // An aggregated feed: no kind field is chosen over every source type's records together, nor asked for
             // (seen in testing, 2026-11-18: 65 source types, and only the times they shared put to the user). The
-            // kinds are told apart within each source type, by classify_kinds over the build's scope.
+            // event types are told apart within each source type, by catalogue_event_types over the build's scope.
             kinds = SurveyDoc.kindsWithinSourceTypes(sources.field());
         } else if (!keptKinds.isEmpty() && !SurveyDoc.withinSourceTypes(keptKinds)) {
             kinds = keptKinds;
@@ -795,7 +796,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             final String why = whyNothingReadable(reading);
             // Kept in the build's record (not this node's memory: a restart, or another node, still sees it), so
-            // classify_kinds can go on without the survey, saying why it had none.
+            // catalogue_event_types can go on without the survey, saying why it had none.
             buildRecords.get().rememberUnreadableSurvey(request.build(), feed, why);
             throw new ToolRefusal("Nothing readable in the sampled streams of '" + feed + "': " + why);
         }

@@ -169,13 +169,13 @@ whole (an unclosed quote) is not the part's: it goes on to the next part, or `ca
 `catch_all`, a record no part's match fits is kept as `unparsed`. Syslog messages some key=value and some not are
 read the same way, by a body of two parts (`message_format`). Fix a part rather than writing the XSLT by hand.
 
-A part is a line format, not a kind of event. Where a word of each record names its event (`SSLVPN LOGIN`, an event
+A part is a line format, not an event type. Where a word of each record names its event (`SSLVPN LOGIN`, an event
 id), read it into a field of the format's part. Never make a part for each wording of a message (`sshd_invalid_user`,
-`sshd_failed_password`...): one part for the program's lines, its message whole. The events in it are told apart by
-patterns in `classify_kinds`: a proposal per event with `field` (the message), `matches` (a regex in XPath's dialect,
-e.g. `^Failed password for (?:invalid user )?(\S+) from (\S+)`), `names` for its capture groups (the user, the
-address: fields the rule reads) and `within` (the listed kind it splits, `variant=syslog`; `*` when no kinds are told
-apart). The user confirms them; what they leave of the kind stays to classify.
+`sshd_failed_password`...): one part for the program's lines, its message whole. The event types in it are told apart
+by conditions in `catalogue_event_types` (mapping guide, Event type catalogue): `starts_with`, `contains`, or
+`matches` on the message (a regex in XPath's dialect, e.g. `^Failed password for (?:invalid user )?(\S+) from
+(\S+)`, with `names` for its capture groups: the user, the address, fields the rule reads), with the variant's
+condition beside it. The user confirms them; records none recognises are uncatalogued, translated as Unknown.
 
 Lines holding only a time of day (`22:14:03.123 INFO ...`) are timestamped text too, read by their own part. A
 header line holding a date for the lines after it (`=== Log opened 2026-10-11 ===`) is a `date header`, read by a

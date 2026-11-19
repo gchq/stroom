@@ -57,7 +57,7 @@ class TestBuildPlanSourceTypes {
         final List<Object> steps = JsonValues.listOrEmpty(result.get("steps")).stream()
                 .map(step -> JsonValues.map(step).get("step"))
                 .toList();
-        assertThat(steps.indexOf("source_types")).isLessThan(steps.indexOf("classify"))
+        assertThat(steps.indexOf("source_types")).isLessThan(steps.indexOf("catalogue"))
                 .isGreaterThan(steps.indexOf("converter"));
     }
 

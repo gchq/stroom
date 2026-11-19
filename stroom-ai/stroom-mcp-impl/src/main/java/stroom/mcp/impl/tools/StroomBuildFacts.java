@@ -23,6 +23,8 @@ import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
@@ -489,16 +491,17 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
-    public boolean classified(final List<Map<String, Object>> docs) {
+    public boolean catalogued(final List<Map<String, Object>> docs) {
         for (final Map<String, Object> doc : docs) {
             if (DocumentationDoc.TYPE.equals(doc.get("type"))
                 && String.valueOf(doc.get("name")).endsWith(SourceNotes.NOTES_SUFFIX)) {
                 final Optional<Map<String, Object>> notes = documentAccess.read(new DocRef(DocumentationDoc.TYPE,
                                 String.valueOf(doc.get("uuid"))), DocumentationDoc.class)
                         .map(read -> SourceNotes.readNotes(BuildRecords.bodyText(read)));
-                if (notes.isPresent() && notes.get().get(RecordSourceNotesTool.PENDING) instanceof final List<?> left
-                    && left.isEmpty()) {
-                    return true;
+                final Catalogue catalogue = notes.map(SourceNotes::catalogue).orElse(null);
+                if (catalogue != null) {
+                    return catalogue.catchAll().confirmed()
+                           && catalogue.eventTypes().stream().allMatch(EventType::confirmed);
                 }
             }
         }

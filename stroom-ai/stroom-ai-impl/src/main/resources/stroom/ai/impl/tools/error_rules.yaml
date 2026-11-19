@@ -95,7 +95,7 @@ rules:
   # The generated translation's own line for a kind a catch-all rule took (XsltGenerator.CAUGHT, once a stream a kind):
   # seen in the e2e suite, triaged as "info from an inherited element", which it isn't.
   - {message: 'Caught by rule ', class: benign,
-     reason: "A kind of record a catch-all rule took (a rule with no conditions, or fewer than one before it), logged once a stream a kind so review_coverage finds every kind in the whole feed: it is translated as that rule says. Check each against the kinds classified: one no one classified is the user's to classify (classify_kinds)"}
+     reason: "A kind of record a catch-all rule took (a rule with no conditions, or fewer than one before it), logged once a stream a kind so review_coverage finds every kind in the whole feed: it is translated as that rule says. Check each against the catalogue: uncatalogued records of an event type of their own are proposed through catalogue_event_types and confirmed by the user"}
   # An aggregated feed's source type group (its pipeline's XSLT, generated before 2026-11-15): the records of other
   # source types passed over and counted, once a document (XsltGenerator.PASSED_OVER), as the user chose. Group XSLTs
   # generated since log nothing of them; the rule stays for those generated before.

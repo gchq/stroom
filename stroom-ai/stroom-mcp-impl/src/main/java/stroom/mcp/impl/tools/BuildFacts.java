@@ -42,8 +42,9 @@ interface BuildFacts {
     Map<String, String> unreadableSurveys(String build);
 
     /// @param docs A build's documents.
-    /// @return Whether classify_kinds has settled every kind of event: its source notes say none is still to classify.
-    boolean classified(List<Map<String, Object>> docs);
+    /// @return Whether the source is catalogued: its source notes hold a catalogue of event types whose every event
+    /// type and catch-all the user confirmed (catalogue_event_types).
+    boolean catalogued(List<Map<String, Object>> docs);
 
     /// @param build A build's name.
     /// @param docs  Its documents.

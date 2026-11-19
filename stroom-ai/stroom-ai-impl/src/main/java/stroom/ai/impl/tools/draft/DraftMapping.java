@@ -2115,7 +2115,7 @@ public final class DraftMapping {
                 // and the kinds silently taken from other fields).
                 notes.add("The kind field(s) " + given + " chosen for these records aren't fields of theirs as read "
                           + "here, so the kinds below are by the fields named like kinds: check the kind field with "
-                          + "the user (classify_kinds kind_field=).");
+                          + "the user (survey_feed kind_field=).");
             }
             String naming = headerKinds();
             if (naming == null) {

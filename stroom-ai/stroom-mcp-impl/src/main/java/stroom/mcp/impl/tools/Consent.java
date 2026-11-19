@@ -459,7 +459,7 @@ public class Consent {
     ///
     /// @param call    The call asking.
     /// @param context The call's context.
-    /// @param action  The tool asking, e.g. `classify_kinds`.
+    /// @param action  The tool asking, e.g. `catalogue_event_types`.
     /// @param intro   What the form is about, its message.
     /// @param items   The yes/no items by key, in the order shown.
     /// @param text    The free-text field's title.
@@ -656,7 +656,7 @@ public class Consent {
     ///
     /// @param call      The call asking.
     /// @param context   The call's context.
-    /// @param action    The tool asking, e.g. `classify_kinds`.
+    /// @param action    The tool asking, e.g. `catalogue_event_types`.
     /// @param intro     What the form is about, its message.
     /// @param question  The question, its field's title.
     /// @param suggested The answer suggested.
