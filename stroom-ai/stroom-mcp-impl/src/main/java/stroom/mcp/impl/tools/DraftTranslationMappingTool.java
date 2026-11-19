@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.MappingCompaction;
@@ -140,16 +141,17 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                              + "A starting translation mapping drafted from the sample, to edit rather than write "
                              + "from nothing: the input kind and layout from the profile, the obvious event-logging "
                              + "homes for fields by name (time with its pattern, host, client and server addresses "
-                             + "and ports, user, event type, message), one rule per kind of event the naming field "
-                             + "shows (Authenticate for logon and logoff kinds, Unknown with Data for the rest, to "
-                             + "replace with the right action element: build_translation_xslt refuses a rule with "
-                             + "conditions that keeps Unknown, unless it sets allow_unknown), every other field "
-                             + "carried as Data, a text of key/value pairs (Key: value, Key: [value], key=value) "
-                             + "read as one extract entry a key, its keys then fields like any other (the kind of "
-                             + "event among them), and notes on what is left to decide. For text formats the Data "
-                             + "Splitter spec comes with it. Then build_translation_xslt with the edited mapping, "
-                             + "the sample and the splitter. The user chooses the event-logging version it writes "
-                             + "(a form, or needs_guidance), from those this Stroom holds.")
+                             + "and ports, user, message), and, with a build whose event types are catalogued "
+                             + "(catalogue_event_types), one rule per event type and way it is recognised, in the "
+                             + "catalogue's order (its TypeId, action element, the vendor's code and the fields its "
+                             + "records hold as Data), then the catch-all for uncatalogued records. Drafted before "
+                             + "cataloguing, the rules are the draft's own guesses, to catalogue before building. A "
+                             + "text of key/value pairs (Key: value, Key: [value], key=value) is read as one extract "
+                             + "entry a key, its keys then fields like any other, with notes on what is left to "
+                             + "decide. For text formats the Data Splitter spec comes with it. Then "
+                             + "build_translation_xslt with the edited mapping, the sample and the splitter. The user "
+                             + "chooses the event-logging version it writes (a form, or needs_guidance), from those "
+                             + "this Stroom holds.")
                 .parameters(ObjectSchema.builder()
                         .addProperty(SAMPLES_ARG, stringArraySchema("Only for samples that are not files (pasted "
                                                                     + "text): their text, by name or as a list, to "
@@ -178,8 +180,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                           + "draft then uses its field names. "
                                                                           + "Inferred from the sample when left "
                                                                           + "out."))
-                        .addStringProperty(BUILD_ARG, "The build holding the source notes (record_source_notes): "
-                                                      + "the draft then follows the user's documentation.")
+                        .addStringProperty(BUILD_ARG, "The build holding the source notes: the draft then "
+                                                      + "follows the user's documentation and the catalogue of "
+                                                      + "event types.")
                         .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the translation writes, "
                                                                + "if the user has chosen one of those this Stroom "
                                                                + "holds. Left out, the user "
@@ -268,9 +271,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 : builds.notesInBuild(build);
         awaitingConfirmation(sourceNotes);
         final SystemGiven system = system(call, build);
-        // The spec given, else the build's saved Data Splitter, as classify_kinds and the sample check read the
-        // records (seen in chat 169: the draft inferred a splitter of its own, and the agent drafted again with the
-        // saved one's spec).
+        // The spec given, else the build's saved Data Splitter, as catalogue_event_types and the sample check read
+        // the records (seen in chat 169: the draft inferred a splitter of its own, and the agent drafted again with
+        // the saved one's spec).
         SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(ToolArgs.raw(call, SPLITTER_ARG));
         String readWith = null;
         if (splitter == null && build != null) {
@@ -331,7 +334,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             SentMappings.remember(context, SentMappings.DRAFT, mapping);
         }
         result.put("hint", settled.map(text -> text + " ").orElse("")
-                           + "Decide what the notes ask (the action element per kind of event, System Name and "
+                           + "Decide what the notes ask (the action element per event type, System Name and "
                            + "Environment, the time zone), then build_translation_xslt(build=, name= to save it, "
                            + "changes= only the rules and entries you change, schema_version=this schema_version, "
                            + "stream_ids=the sample streams (or sample=the texts), splitter=this splitter): the "
@@ -437,17 +440,28 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 SystemNames.single(system.systemName()), system.environment(), sourceNotes, detailCheck, splitter));
     }
 
-    // Classifications shown to the user and not yet confirmed: the draft would leave them out, so it waits for them
+    // A catalogue of event types still to confirm: the translation follows the catalogue, so the draft waits for it
     // (seen in chat 169: the agent drafted with eight kinds still to confirm, then searched its own history for 20
-    // calls to find why the plan said classify).
-    private static void awaitingConfirmation(final Map<String, Object> sourceNotes) {
-        if (sourceNotes == null) {
+    // calls to find why the plan said classify). A build with no catalogue yet is drafted from the draft's own
+    // guesses, to be catalogued before building.
+    static void awaitingConfirmation(final Map<String, Object> sourceNotes) {
+        final Catalogue catalogue = SourceNotes.catalogue(sourceNotes);
+        if (catalogue == null) {
             return;
         }
-        final int waiting = JsonValues.maps(sourceNotes.get(RecordSourceNotesTool.PROPOSED)).size();
-        if (waiting > 0) {
-            throw new ToolRefusal(waiting + " classification(s) shown to the user are still to confirm: call "
-                                  + "classify_kinds build=... confirm=true (a short form asks the user), then draft.");
+        final long waiting = catalogue.eventTypes().stream().filter(type -> !type.confirmed()).count();
+        final boolean catchAll = !catalogue.catchAll().confirmed();
+        if (waiting > 0 || catchAll) {
+            final List<String> said = new ArrayList<>();
+            if (waiting > 0) {
+                said.add(waiting + " event type(s)");
+            }
+            if (catchAll) {
+                said.add("the catch-all for uncatalogued records");
+            }
+            throw new ToolRefusal("The catalogue's " + String.join(" and ", said) + " are still to confirm: call "
+                                  + "catalogue_event_types build=... confirm=true (a short form asks the "
+                                  + "user), then draft.");
         }
     }
 
@@ -613,8 +627,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 // refused build.
                 check.put("unfilled", "Some rules' action elements need parts the draft couldn't fill (problems "
                                       + "says which): fill each before build_translation_xslt. The user or object "
-                                      + "a kind acts on goes in its catalogue entry's affected and affected_as "
-                                      + "(classify_kinds), or straight into the rule's fields.");
+                                      + "an event type acts on goes in its affected and affected_as "
+                                      + "(catalogue_event_types), or straight into the rule's fields.");
             }
             final List<String> warnings = MappingCompaction.grouped(checked.warnings());
             check.put("warnings", warnings.subList(0, Math.min(6, warnings.size())));

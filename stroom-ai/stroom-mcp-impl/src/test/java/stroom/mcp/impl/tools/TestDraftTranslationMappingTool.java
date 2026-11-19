@@ -372,21 +372,58 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
-    void classificationsStillToConfirmAreConfirmedBeforeTheDraft() {
+    void aCatalogueStillToConfirmIsConfirmedBeforeTheDraft() {
         // Seen in chat 169: the agent drafted with eight kinds still to confirm, then searched its own history.
-        final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
-        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
-                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
-                      + "\"events\": [], \"proposed\": [{\"kind\": \"action=login\", \"event\": \"login\", "
-                      + "\"description\": \"A user logged in\", \"field\": \"action\", \"value\": \"login\"}]}\n"
-                      + "-->\n")
-                .build());
+        notes("proposed", "proposed");
 
         final Map<String, Object> refused = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
                 "build", "acme-v1"));
 
-        assertThat((String) refused.get("error")).startsWith("1 classification(s) shown to the user are still to "
-                                                             + "confirm").contains("confirm=true");
+        assertThat((String) refused.get("error")).startsWith("The catalogue's 1 event type(s) and the catch-all "
+                                                             + "for uncatalogued records are still to confirm")
+                .contains("catalogue_event_types build=... confirm=true");
+    }
+
+    @Test
+    void aConfirmedCatalogueIsTheDraftsRules() {
+        notes("confirmed", "confirmed");
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error");
+        final List<?> rules = (List<?>) ((Map<?, ?>) draft.get("mapping")).get("events");
+        assertThat(ToolJson.dumps(rules)).contains("Authenticate-Logon").contains("\"catch_all\": true");
+    }
+
+    @Test
+    void aBuildWithNoCatalogueYetIsDraftedFromTheDraftsOwnRules() {
+        world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes");
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error");
+        assertThat(ToolJson.dumps(draft.get("notes"))).contains("No catalogue of event types yet");
+    }
+
+    // The build's source notes: a catalogue of a logon (confirmed) and a logoff (of the status given), told by
+    // action, and its catch-all (of the status given).
+    private void notes(final String logoff, final String catchAll) {
+        final String types = type("Authenticate-Logon", "Logon", "login", "confirmed") + ", "
+                             + type("Authenticate-Logoff", "Logoff", "logout", logoff);
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"event_types\": [" + types + "], \"catch_all\": {\"status\": \"" + catchAll
+                      + "\"}}\n-->\n")
+                .build());
+    }
+
+    private static String type(final String typeId, final String action, final String value, final String status) {
+        return "{\"type_id\": \"" + typeId + "\", \"title\": \"" + action + "\", \"event_detail\": "
+               + "\"Authenticate\", \"action\": \"" + action + "\", \"recognised_by\": [{\"when\": "
+               + "[{\"field\": \"action\", \"equals\": \"" + value + "\"}]}], \"status\": \"" + status + "\"}";
     }
 
     @Test
