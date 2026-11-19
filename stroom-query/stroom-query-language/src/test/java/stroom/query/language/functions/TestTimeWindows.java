@@ -84,6 +84,33 @@ class TestTimeWindows {
     }
 
     @Test
+    void latestEndedWindowIsTheOneBeforeTheWindowOfATime() {
+        final TimeWindows windows = windows("1h", null, null, UTC);
+
+        assertThat(ended(windows, "2026-03-10T10:25:00Z")).isEqualTo("2026-03-10T09:00:00Z");
+        // A window that starts at the time has not ended, and nor has one that ends a moment later.
+        assertThat(ended(windows, "2026-03-10T10:00:00Z")).isEqualTo("2026-03-10T09:00:00Z");
+        assertThat(ended(windows, "2026-03-10T09:59:59.999Z")).isEqualTo("2026-03-10T08:00:00Z");
+    }
+
+    @Test
+    void latestEndedHoppingWindowIsBeforeEveryWindowOfATime() {
+        final TimeWindows windows = windows("1h", "15m", null, UTC);
+
+        // The windows from 09:30 to 10:15 cover 10:25, so the latest to have ended is from 09:15.
+        assertThat(ended(windows, "2026-03-10T10:25:00Z")).isEqualTo("2026-03-10T09:15:00Z");
+    }
+
+    @Test
+    void latestEndedCalendarWindow() {
+        assertThat(ended(windows("1M", null, null, UTC), "2026-03-10T10:25:00Z"))
+                .isEqualTo("2026-02-01T00:00:00Z");
+        // The day before the clocks go forward in London is a whole local day.
+        assertThat(ended(windows("1d", null, null, LONDON), "2026-03-29T12:00:00Z"))
+                .isEqualTo("2026-03-28T00:00:00Z");
+    }
+
+    @Test
     void hoppingWindowCountsWhatADesignExampleExpects() {
         // Events at 10:10, 10:40 and 11:20 with hour windows every 30 minutes: 10:00 holds two,
         // 10:30 holds two, 11:00 holds one.
@@ -576,6 +603,10 @@ class TestTimeWindows {
 
     private static String shifted(final TimeWindows windows, final String time, final int count) {
         return format(windows.getWindowStart(windows.shift(key(windows, time), count)));
+    }
+
+    private static String ended(final TimeWindows windows, final String time) {
+        return format(windows.getWindowStart(windows.getLatestEndedWindow(Instant.parse(time).toEpochMilli())));
     }
 
     private static String format(final long timeMs) {

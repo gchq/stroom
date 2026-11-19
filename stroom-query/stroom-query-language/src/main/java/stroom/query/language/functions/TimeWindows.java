@@ -368,7 +368,25 @@ public final class TimeWindows {
     /// @param timeMs   The time, in epoch milliseconds.
     /// @param consumer Receives the key of each window.
     public void forEachWindow(final long timeMs, final LongConsumer consumer) {
-        final long latest = switch (alignment) {
+        final long latest = getLatestWindow(timeMs);
+        for (int i = windowsPerTime - 1; i >= 0; i--) {
+            consumer.accept(latest - i * slide);
+        }
+    }
+
+    /// Gets the key of the latest window that has ended by a time, which is the window before the
+    /// earliest of the windows that cover the time. No time in it or in any earlier window is after
+    /// the time, so once events have arrived up to the time those windows are closed.
+    ///
+    /// @param timeMs The time, in epoch milliseconds.
+    /// @return The key of the latest window that ends at or before the time.
+    public long getLatestEndedWindow(final long timeMs) {
+        return getLatestWindow(timeMs) - windowsPerTime * slide;
+    }
+
+    // The key of the latest of the windows that cover a time.
+    private long getLatestWindow(final long timeMs) {
+        return switch (alignment) {
             case FIXED -> {
                 final long standardOffsetMillis = getStandardOffsetMillis(timeMs);
                 yield floorToSlide(timeMs + standardOffsetMillis) - standardOffsetMillis;
@@ -376,9 +394,6 @@ public final class TimeWindows {
             case LOCAL_DAY -> floorToSlide(toLocalMillis(timeMs));
             case MONTH -> floorToSlideMonth(timeMs);
         };
-        for (int i = windowsPerTime - 1; i >= 0; i--) {
-            consumer.accept(latest - i * slide);
-        }
     }
 
     /// Gets the key of the window that is a number of window sizes after, or before, another window.

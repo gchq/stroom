@@ -758,12 +758,16 @@ public class TableBuilderAnalyticExecutor {
             }
         }
 
+        // A row of a rule with a window clause is judged only when its window is closed, so that it
+        // is judged once, on all of its events.
+        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
+        to = Instant.ofEpochMilli(lmdbDataStore.getClosedWindowTime(to.toEpochMilli()));
+
         if (to.isAfter(from)) {
             // Create a time filter.
             final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
 
             SearchRequest searchRequest = dataStore.searchRequest();
-            final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             final QueryKey queryKey = new QueryKey(analytic.analyticRuleDoc().getUuid() +
                                                    " - " +
                                                    analytic.analyticRuleDoc().getName());
@@ -899,7 +903,10 @@ public class TableBuilderAnalyticExecutor {
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                             }
-                        } else {
+                        } else if (!Boolean.FALSE.equals(column.isVisible())) {
+                            // A hidden column is one the query needs but the select clause does not
+                            // name, such as the key of a time window, so it is not a value of the
+                            // detection.
                             values.add(new DetectionValue(fieldName, fieldValue));
                         }
                     }

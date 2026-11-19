@@ -205,13 +205,21 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                     final String columnName = column.getName();
                                     final Val val = item.getValue(i);
                                     if (val != null) {
+                                        boolean detectionValue = !Boolean.FALSE.equals(column.isVisible());
                                         if (IndexConstants.STREAM_ID.equals(columnName)) {
                                             streamId = DetectionConsumerProxy.getSafeLong(val);
+                                            detectionValue = true;
                                         } else if (IndexConstants.EVENT_ID.equals(columnName)) {
                                             eventId = DetectionConsumerProxy.getSafeLong(val);
+                                            detectionValue = true;
                                         }
-                                        final String fieldValStr = fieldFormatter.format(column, val);
-                                        values.add(new DetectionValue(columnName, fieldValStr));
+                                        // Any other hidden column is one the query needs but the
+                                        // select clause does not name, such as the key of a time
+                                        // window, so it is not a value of the detection.
+                                        if (detectionValue) {
+                                            final String fieldValStr = fieldFormatter.format(column, val);
+                                            values.add(new DetectionValue(columnName, fieldValStr));
+                                        }
                                     }
                                 }
 

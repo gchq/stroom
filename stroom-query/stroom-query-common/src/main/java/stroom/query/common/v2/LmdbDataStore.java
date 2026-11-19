@@ -413,6 +413,27 @@ public class LmdbDataStore implements DataStore {
         return timeWindows;
     }
 
+    /// Gets the latest row time that a rule may judge, once events have arrived up to a time. A rule
+    /// judges a row of a table with time windows only when the row's window is closed, which is when
+    /// the window has ended and so have the later windows that the row reads with `lead`. A window
+    /// that is still filling would be judged on part of its events. The time of such a row is the
+    /// start of its window.
+    ///
+    /// @param timeMs The time that events have arrived up to, in epoch milliseconds.
+    /// @return The start of the latest closed window, or the time given if the table has no windows.
+    public long getClosedWindowTime(final long timeMs) {
+        if (timeWindows == null) {
+            return timeMs;
+        }
+        // A lead is held as a shift to an earlier window, which is the window that reads the row.
+        int furthestLead = 0;
+        for (final int windowShift : windowShifts) {
+            furthestLead = Math.min(furthestLead, windowShift);
+        }
+        final long latestEnded = timeWindows.getLatestEndedWindow(timeMs);
+        return timeWindows.getWindowStart(timeWindows.shift(latestEnded, furthestLead));
+    }
+
     // Adds a row once for each time window it is in, so that it is grouped into each of them.
     private void addToWindows(final Val[] values) {
         final Val time = windowTimeFieldIndex < values.length

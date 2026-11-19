@@ -303,6 +303,38 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Test
+    void closedWindowTimeIsTheStartOfTheLatestWindowToHaveEnded() {
+        final LmdbDataStore dataStore = (LmdbDataStore) create(windowTable("1h", null));
+
+        assertThat(Instant.ofEpochMilli(dataStore.getClosedWindowTime(
+                Instant.parse("2026-03-10T10:25:00Z").toEpochMilli())))
+                .isEqualTo(Instant.parse("2026-03-10T09:00:00Z"));
+    }
+
+    @Test
+    void closedWindowTimeWaitsForTheWindowThatLeadReads() {
+        // The table reads the window after a row's own, so a row is closed when that one has ended.
+        final LmdbDataStore dataStore = (LmdbDataStore) create(lagTable("1h", null));
+
+        assertThat(Instant.ofEpochMilli(dataStore.getClosedWindowTime(
+                Instant.parse("2026-03-10T10:25:00Z").toEpochMilli())))
+                .isEqualTo(Instant.parse("2026-03-10T08:00:00Z"));
+    }
+
+    @Test
+    void closedWindowTimeOfATableWithNoWindowsIsTheTimeGiven() {
+        final LmdbDataStore dataStore = (LmdbDataStore) create(TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("UserId")
+                        .name("UserId")
+                        .expression("${UserId}")
+                        .build())
+                .build());
+
+        assertThat(dataStore.getClosedWindowTime(1_234L)).isEqualTo(1_234L);
+    }
+
+    @Test
     void tooManyCopiesOfEachRowIsRefused() {
         // Each row is in 60 windows, and is copied again to each for lag and for lead.
         assertThatThrownBy(() -> create(lagTable("1h", "1m")))
