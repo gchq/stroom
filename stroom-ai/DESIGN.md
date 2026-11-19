@@ -3172,6 +3172,27 @@ reads them; output JSON):
 * Results: `status` (`listed`, `checked`, `needs_confirmation`, `needs_review`, `confirmed`), `check`,
   `evidence`, `next`.
 
+**Clarified 2026-11-19** (from lane C's tests):
+
+* The seed is evidence only (`evidence.seed`, `basis: draft`): the agent adds what it keeps with `op: add`; nothing
+  enters the catalogue by itself.
+* Every result carries `catalogue`: the catalogue so far, compact (`type_id`, `title`, `status` each, the catch-all's
+  `status`); the full catalogue is the source notes' JSON block.
+* Confirming: `status: needs_confirmation` (or `next.call` is `catalogue_event_types` with `confirm: true`) while a
+  set waits; `status: confirmed` once every event type and the catch-all are. `catch_all` may be given on any
+  confirm call; it is used when the catch-all's turn comes.
+* The confirmation form is a confirmation (the user agreeing to event types): accepted only in its form, never from
+  the chat (decided 2026-11-18). Amendments are the user's words, taken from the form's text or the chat; the agent
+  proposes them (`op: change`), and the set is put to the user again. A form put aside by a message is answered as
+  forms are (reply first).
+* Forms: "Accept all N event types, or type your amendments"; the catch-all's names "uncatalogued records". The
+  table in the chat: `| Event type | Recognised by | Records | Translated as |`, conditions in words.
+* The build plan's step is named `catalogue` (was `classify`).
+* review_coverage proposes uncatalogued records' event types by naming `catalogue_event_types` in its `next`, with
+  the records' shapes.
+* Documentation event types are proposed through `catalogue_event_types` (`basis: documentation`); record_source_notes
+  keeps fields and documents only.
+
 **Code homes**: model and check in `stroom-ai-impl` `stroom.ai.impl.tools.catalogue`; the evaluator in
 `tools/draft/LocalCheck` (and its helpers); the tool in `stroom-mcp-impl` `tools/CatalogueEventTypesTool`.
 
