@@ -991,10 +991,10 @@ public final class XsltGenerator {
         } else if (isJsonField(c)) {
             // A JSON field's values one by one, so an array's items are compared each (any item; not: none), each
             // with text and no nil value, as the field's own values are.
-            src = XPathText.itemsText(ref(c.field(), c.xpath(), "condition", c.scope())) + "[normalize-space(.)]"
-                  + nil();
+            src = decoded(c, XPathText.itemsText(ref(c.field(), c.xpath(), "condition", c.scope()))
+                             + "[normalize-space(.)]" + nil());
         } else {
-            src = ref(c.field(), c.xpath(), "condition", c.scope());
+            src = decoded(c, ref(c.field(), c.xpath(), "condition", c.scope()));
         }
         final String test = valueTest(c, src, raw);
         if (test != null) {
@@ -1013,6 +1013,17 @@ public final class XsltGenerator {
         return Boolean.TRUE.equals(c.present())
                 ? has
                 : XPathText.notText(has);
+    }
+
+    // A condition's values as the mapping decodes the field (its unescape transform: a Data Splitter keeps a CSV's
+    // doubled quote and key=value's escaped quote as written), so conditions compare decoded values.
+    private String decoded(final Condition c, final String src) {
+        final String unescape = c.xpath() == null && !ITEM_SCOPE.equals(c.scope())
+                ? MappingFacts.unescapeOf(m, c.field())
+                : null;
+        return unescape == null
+                ? src
+                : src + "/" + XPathText.transformExpression(unescape, ".");
     }
 
     // Whether a condition's field is a key of JSON (the JSON input's, or JSON a field holds), whose value may be an

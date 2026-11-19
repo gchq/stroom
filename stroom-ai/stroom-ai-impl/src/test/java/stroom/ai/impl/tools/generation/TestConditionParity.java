@@ -44,6 +44,7 @@ class TestConditionParity extends XsltRuns {
 
     private static final String PARITY = "urn:parity";
     private static final String NONE = "zzz-none";
+    private static final String DECODED = "decoded";
 
     @TestFactory
     Stream<DynamicTest> everyConditionHoldsForTheRecordsTheXsltTakes() {
@@ -98,6 +99,19 @@ class TestConditionParity extends XsltRuns {
         // An array in held JSON, item by item too.
         assertThat(verdicts(held, equalsTo("held.tags", "t2"))).element(7).isEqualTo(true);
         assertThat(verdicts(held, equalsTo("held.tags", "t1t2"))).element(7).isEqualTo(false);
+
+        final Case csv = byName.get("csv, doubled quotes decoded");
+        // A field the mapping reads decoded is compared decoded: CSV's doubled quote as one.
+        assertThat(verdicts(csv, equalsTo("a", "say \"hi\""))).containsExactly(true, false, false, false);
+        assertThat(verdicts(csv, equalsTo("a", "say \"\"hi\"\""))).containsExactly(false, false, false, false);
+        assertThat(verdicts(csv, equalsTo("a", "\"\""))).containsExactly(false, false, false, true);
+        // Its other field, read as written, keeps the doubled quote.
+        assertThat(verdicts(byName.get("csv, doubled quotes"), equalsTo("a", "say \"\"hi\"\""))).element(0)
+                .isEqualTo(true);
+        final Case kv = byName.get("key=value, escaped quotes decoded");
+        assertThat(verdicts(kv, equalsTo("msg", "say \"hi\""))).containsExactly(true, false, false);
+        assertThat(verdicts(kv, Map.of("field", "msg", "matches", "^C:\\\\temp \\\\n$"))).containsExactly(false,
+                true, false);
 
         final Case xml = byName.get("xml input, namespaced");
         // XML by local name in the record's namespace, entities and CDATA decoded, repeated elements any.
@@ -198,8 +212,12 @@ class TestConditionParity extends XsltRuns {
         return out;
     }
 
+    @SuppressWarnings("unchecked")
     private static TranslationMapping mapping(final Case c, final List<Map<String, Object>> conditions) {
         final Map<String, Object> json = new LinkedHashMap<>(c.mapping());
+        // Fields the mapping reads decoded (its unescape transform): conditions on them compare decoded values.
+        final Map<String, String> decoded = (Map<String, String>) json.getOrDefault(DECODED, Map.of());
+        json.remove(DECODED);
         json.put("unmatched", "skip");
         json.put("log_unmapped_fields", false);
         json.put("common", List.of(
@@ -208,8 +226,10 @@ class TestConditionParity extends XsltRuns {
                 Map.of("path", "EventSource/System/Environment", "value", "Test"),
                 Map.of("path", "EventSource/Generator", "value", "Parity"),
                 Map.of("path", "EventSource/Device/HostName", "value", "host")));
-        final List<Map<String, Object>> fields = List.of(Map.of("path", "EventDetail/TypeId", "value", "T"),
-                Map.of("path", "EventDetail/Unknown/Data", "data_name", "x", "value", "x"));
+        final List<Map<String, Object>> fields = new ArrayList<>(List.of(Map.of("path", "EventDetail/TypeId", "value",
+                "T"), Map.of("path", "EventDetail/Unknown/Data", "data_name", "x", "value", "x")));
+        decoded.forEach((field, transform) -> fields.add(Map.of("path", "EventDetail/Unknown/Data", "data_name",
+                field, "field", field, "transform", transform)));
         json.put("events", List.of(
                 Map.of("name", "all", "when", conditions, "allow_unknown", "a test", "fields", fields),
                 Map.of("name", "rest", "allow_unknown", "a test", "fields", fields)));
@@ -351,6 +371,19 @@ class TestConditionParity extends XsltRuns {
                 "msg=\"say \\\"hi\\\"\" user=bob\nmsg=plain user=\"two words\"\n",
                 null, SplitterSpec.fromMap(Map.of("kind", "key_value", "quote", "\"")), 0, 2, List.of("msg", "user"),
                 List.of("say \"hi\"", "say \\\"hi\\\"", "plain", "bob", "two words")));
+
+        // The same, read decoded by the mapping (its unescape transform), as the draft reads them.
+        out.add(new Case("csv, doubled quotes decoded", Map.of("input", "data_splitter", DECODED,
+                Map.of("a", "unescape_quotes")),
+                "a,b\n\"say \"\"hi\"\"\",x\nplain,\"with, comma\"\n,\"\"\n\"\"\"\"\"\",y\n",
+                null, SplitterSpec.fromMap(Map.of("kind", "delimited", "delimiter", ",", "header", true,
+                "quote", "\"")), 0, 4, List.of("a", "b"),
+                List.of("say \"hi\"", "say \"\"hi\"\"", "plain", "\"", "\"\"", "x")));
+        out.add(new Case("key=value, escaped quotes decoded", Map.of("input", "data_splitter", DECODED,
+                Map.of("msg", "unescape_backslashes")),
+                "msg=\"say \\\"hi\\\"\" user=bob\nmsg=\"C:\\\\temp \\n\" user=x\nmsg=plain user=\"two words\"\n",
+                null, SplitterSpec.fromMap(Map.of("kind", "key_value", "quote", "\"")), 0, 3, List.of("msg", "user"),
+                List.of("say \"hi\"", "say \\\"hi\\\"", "C:\\temp \\n", "C:\\\\temp \\n", "plain", "bob")));
         return out;
     }
 

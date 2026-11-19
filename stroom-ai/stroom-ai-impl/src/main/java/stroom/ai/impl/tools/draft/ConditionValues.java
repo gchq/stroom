@@ -52,6 +52,8 @@ import java.util.regex.Pattern;
 ///   none.
 /// * A record's NUL is no value's: Stroom's XML writer drops it. A condition's text loses the characters XML 1.0
 ///   can't hold, as its XPath literal does ([XPathText#literal(String)]).
+/// * A field the mapping reads with an unescape transform ([MappingFacts#unescapeOf]) is compared decoded, as the
+///   generated XPath decodes it.
 /// * Regular expressions run in XPath's own dialect, by Saxon's engine ([XPathRegex#finds(String, String)]).
 final class ConditionValues {
 
@@ -62,6 +64,8 @@ final class ConditionValues {
     // What json-to-xml() writes for a character XML can't hold.
     private static final String REPLACEMENT = "�";
     // The JSON held in a string that the XSLT's helper reads again (a JSON string whose text is an object or array).
+    // A quote or backslash escaped with a backslash (the unescape_backslashes transform).
+    private static final Pattern ESCAPED = Pattern.compile("\\\\([\"\\\\])");
     private static final Pattern JSON_TEXT = Pattern.compile("^[ \\t\\n\\r]*[\\[{]");
 
     private ConditionValues() {
@@ -74,7 +78,11 @@ final class ConditionValues {
     /// @return Whether the condition holds over them; null when its regex can't be run (it doesn't compile as
     /// XPath's, or overflows the stack as it would in processing).
     static Boolean holds(final TranslationMapping mapping, final Condition c, final List<String> values) {
-        final List<String> counted = values.stream().filter(value -> counts(mapping, value)).toList();
+        final String unescape = MappingFacts.unescapeOf(mapping, c.field());
+        final List<String> counted = values.stream()
+                .filter(value -> counts(mapping, value))
+                .map(value -> unescaped(unescape, value))
+                .toList();
         if (c.present() != null) {
             return !counted.isEmpty() == c.present();
         }
@@ -140,6 +148,17 @@ final class ConditionValues {
             }
         }
         return out.toString();
+    }
+
+    // A value as the field's unescape transform decodes it, as XPathText.transformExpression writes it.
+    private static String unescaped(final String unescape, final String value) {
+        if ("unescape_quotes".equals(unescape)) {
+            return value.replace("\"\"", "\"");
+        }
+        if ("unescape_backslashes".equals(unescape)) {
+            return ESCAPED.matcher(value).replaceAll("$1");
+        }
+        return value;
     }
 
     // Whether a value counts: it has text, and isn't a nil value.

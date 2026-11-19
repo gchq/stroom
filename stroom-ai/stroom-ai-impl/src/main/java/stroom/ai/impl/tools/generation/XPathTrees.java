@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /// What a parsed XPath expression reads, for reading an XSLT back (the parser is [XPathTreeParser], the nodes
 /// [XPathNode]).
@@ -40,9 +41,13 @@ public final class XPathTrees {
     public static final Pattern STRING_SLOT = Pattern.compile("QXL(\\d+)QX");
 
     private static final Pattern WHITE_SPACE = Pattern.compile("\\s+");
-    // XPathText.ITEMS_STEP without its slash, brackets and white space.
-    private static final String ITEMS = WHITE_SPACE.matcher(XPathText.ITEMS_STEP).replaceAll("")
-            .replaceAll("^/\\(|\\)$", "");
+    // The steps the generator adds to a condition's field, without slash, brackets and white space: the items step
+    // (XPathText.ITEMS_STEP) and the unescape transforms of the context item.
+    private static final List<String> CONDITION_STEPS = Stream.concat(
+                    Stream.of(XPathText.ITEMS_STEP.replaceAll("^/\\(|\\)$", "")),
+                    MappingFacts.UNESCAPES.stream().map(unescape -> XPathText.transformExpression(unescape, ".")))
+            .map(step -> WHITE_SPACE.matcher(step).replaceAll(""))
+            .toList();
 
     private XPathTrees() {
         // Static only.
@@ -74,9 +79,10 @@ public final class XPathTrees {
                && "=".equals(node.get(0).symbol()) && isDotCheck(node.get(0).get(0));
     }
 
-    // Whether a step, its predicates and brackets taken off, is the generator's items step (white space aside).
-    private static boolean isItemsStep(final XPathNode step) {
-        return WHITE_SPACE.matcher(step.text()).replaceAll("").equals(ITEMS);
+    // Whether a step, its predicates and brackets taken off, is one the generator adds to a condition's field: the
+    // items step, or an unescape transform of the context item (white space aside).
+    private static boolean isConditionStep(final XPathNode step) {
+        return CONDITION_STEPS.contains(WHITE_SPACE.matcher(step.text()).replaceAll(""));
     }
 
     /// @param node A parsed expression.
@@ -100,8 +106,9 @@ public final class XPathTrees {
         if ("(".equals(node.symbol()) && children.size() == 1) {
             return children.getFirst();
         }
-        if ("/".equals(node.symbol()) && children.size() == 2 && isItemsStep(children.get(1))) {
-            // A JSON field's values one by one (XPathText.ITEMS_STEP): the field, for the reader.
+        if ("/".equals(node.symbol()) && children.size() == 2 && isConditionStep(children.get(1))) {
+            // A condition's field read one value at a time (XPathText.ITEMS_STEP) or decoded (an unescape
+            // transform): the field, for the reader.
             return children.getFirst();
         }
         final String text = text(node, children);

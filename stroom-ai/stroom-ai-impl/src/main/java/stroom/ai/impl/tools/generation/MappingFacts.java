@@ -364,6 +364,26 @@ public final class MappingFacts {
                 .orElse(null);
     }
 
+    /// The transforms that decode a value a Data Splitter keeps as written (a CSV's doubled quote, key=value's
+    /// backslash-escaped quote).
+    public static final List<String> UNESCAPES = List.of("unescape_quotes", "unescape_backslashes");
+
+    /// @param mapping   The mapping.
+    /// @param fieldName A field's name.
+    /// @return The transform decoding the field's values ([#UNESCAPES]) the first of the mapping's entries reading
+    /// the field gives it, or null: a condition on the field compares its values so decoded.
+    public static String unescapeOf(final TranslationMapping mapping, final String fieldName) {
+        if (fieldName == null) {
+            return null;
+        }
+        return mapping.allEntries().stream()
+                .filter(entry -> fieldName.equals(entry.field()) && entry.transform() != null
+                                 && UNESCAPES.contains(entry.transform()))
+                .map(FieldMapping::transform)
+                .findFirst()
+                .orElse(null);
+    }
+
     /// @param xmlFields The mapping's xml_fields.
     /// @param fieldName A field's name.
     /// @return The longest of the xml_fields the field is a path into (the field, then `/`), or null.
