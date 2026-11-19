@@ -24,7 +24,6 @@ import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -384,7 +383,6 @@ class TestCatalogueCheck {
     }
 
     @Test
-    @Disabled("waits for lane E: a JSON array field compares item by item (contract, settled with the core)")
     void aConditionOnAnArrayFieldHoldsWhenAnyItemDoes() {
         final List<String> lines = List.of("{\"category\": [\"authentication\", \"iam\"]}",
                 "{\"category\": [\"network\"]}");

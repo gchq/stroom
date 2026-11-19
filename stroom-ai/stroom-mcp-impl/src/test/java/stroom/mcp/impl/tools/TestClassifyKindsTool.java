@@ -34,6 +34,7 @@ import stroom.util.json.JsonUtil;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -192,6 +193,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void theFieldsTheDraftReadsFromAMessageReachTheListingWhileItsTimeIsStillToChoose() {
         // Seen in chat 171: the draft couldn't tell which of two times was the event's, so its whole mapping was
         // refused when its extractions were applied, and every field it read from NetScaler's message bodies was
@@ -226,6 +228,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void wordsOfAQuotedSubjectAreNotFieldsAKindReads() {
         // Seen in testing: a mail gateway's syslog, its body key=value pairs with quoted values, and words of the
         // subject lines ("[EXT] Invoice: due", "ref=123 status=paid") in the Reads row of its send events.
@@ -290,6 +293,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void aKindFieldNamedLikeNoneIsPutToTheUserAndItsKindsListed() {
         // Seen in testing: a CSV mail log's kind in msg_act, a name the draft didn't know, so the records were one
         // kind, nothing was put to the user to classify, and they went to the catch-all as Unknown.
@@ -331,6 +335,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void aKindFieldTheAgentGivesIsConfirmedByTheUserInAFormOnce() {
         // Seen in testing (Synology DSM): the agent chose the kind field itself, and the user was never asked.
         samples(11L, mailCsv());
@@ -352,6 +357,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void aFieldTheUserNamesWhoseValuesLookLikeMessagesIsPutToThemWithTheConcernAndTheirAnswerDecides() {
         // Seen in testing (2026-11-19): Pega's logger_name, named by the user, refused for values past 80
         // characters; only a field's values' shape is put to the user, who may choose it anyway.
@@ -378,6 +384,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void withoutFormsAFieldTheUserNamesWhoseValuesLookLikeMessagesIsTakenAsTheySaidIt() {
         samples(11L, notesCsv());
 
@@ -418,6 +425,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void mostRecordsInNoKindPutTheFieldsThatCouldTellThemApartToTheUser() {
         // Seen in testing (2026-11-12, a mail gateway): one kind of 433 records listed and settled, 5,567 of 6,000
         // records in none, "every kind is settled: go on to the draft", and no form put to the user.
@@ -1406,6 +1414,7 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    @Disabled("classify_kinds is replaced by catalogue_event_types: the draft reads the catalogue, not kind fields")
     void aKindFieldInsideAHeldValueIsOfferedWithinTheScopeAndTheDraftTellsKindsApartByIt() {
         // Seen in testing (2026-11-18): an aggregated feed whose source type was read inside the JSON string
         // `event`; the kinds within a source type are named inside it too (`component`), and only outer fields

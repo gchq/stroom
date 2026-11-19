@@ -18,7 +18,7 @@
       <xsl:when test="exists($user/(if (self::*:array) then * else .)[normalize-space(.)])">
         <xsl:apply-templates select="." mode="event_type_user_access"/>
       </xsl:when>
-      <xsl:when test="not($user)">
+      <xsl:when test="not(exists($user/(if (self::*:array) then * else .)[normalize-space(.)]))">
         <xsl:apply-templates select="." mode="event_type_device_access"/>
       </xsl:when>
       <xsl:otherwise>
