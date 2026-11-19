@@ -407,6 +407,56 @@ class TestXsltReader extends XsltRuns {
         assertThat(XsltReader.read(noRecords).notes()).containsExactly("no record template: nothing to read");
     }
 
+    @Test
+    void startsWithContainsAndNotAreWrittenAsXPathAndReadBack() {
+        final TranslationMapping m = mapping(with("events", List.of(
+                rule("request", List.of(Map.of("field", "action", "starts_with", "log"),
+                        Map.of("field", "user", "contains", "'ne", "not", true)), LOGON),
+                rule("not_keepalive", List.of(Map.of("field", "action", "one_of", List.of("keepalive", "x"),
+                        "not", true)), LOGON),
+                otherRule())));
+        final String code = codeOf(m);
+        assertThat(code).contains("exists($action[starts-with(., 'log')]) and not(exists($user[contains(., "
+                                  + "'''ne')]))")
+                .contains("not($action = ('keepalive', 'x'))")
+                .contains("records where action starts with 'log' and user doesn't contain '''ne'")
+                .contains("records where action isn't any of keepalive, x");
+
+        final RebuiltMapping rebuilt = XsltReader.rebuild(code, null, null);
+
+        assertThat(rebuilt.problems()).as("%s", rebuilt.summary()).isEmpty();
+        assertThat(rebuilt.raw()).as("%s", rebuilt.summary()).isEmpty();
+        assertThat(rebuilt.mapping().events().stream().map(rule -> rule.when().stream()
+                .map(c -> c.toJson(DumpMode.COMPACT)).toList()).toList()).containsExactly(
+                List.of(Map.of("field", "action", "starts_with", "log"),
+                        Map.of("field", "user", "contains", "'ne", "not", true)),
+                List.of(Map.of("field", "action", "one_of", List.of("keepalive", "x"), "not", true)),
+                List.of());
+        assertThat(events(codeOf(rebuilt.mapping()), RECORDS)).isEqualTo(events(code, RECORDS));
+        // The login (user o'neil) is no request, so not_keepalive takes it; the keepalive goes to the rest.
+        assertThat(children(transform(code, RECORDS), "Event")).extracting(event -> text(event,
+                "EventDetail/TypeId")).containsExactly("Logon", "keepalive");
+    }
+
+    @Test
+    void aNegatedEqualsAndMatchesAreReadBackAsNot() {
+        final TranslationMapping m = mapping(with("events", List.of(
+                rule("not_login", List.of(Map.of("field", "action", "equals", "login", "not", true),
+                        Map.of("field", "host", "matches", "^ws", "not", true)), LOGON),
+                rule("empty_host", List.of(Map.of("field", "host", "present", false)), LOGON),
+                otherRule())));
+        final String code = codeOf(m);
+
+        final RebuiltMapping rebuilt = XsltReader.rebuild(code, null, null);
+
+        assertThat(rebuilt.mapping().events().stream().map(rule -> rule.when().stream()
+                .map(c -> c.toJson(DumpMode.COMPACT)).toList()).toList()).containsExactly(
+                List.of(Map.of("field", "action", "equals", "login", "not", true),
+                        Map.of("field", "host", "matches", "^ws", "not", true)),
+                List.of(Map.of("field", "host", "present", false)),
+                List.of());
+    }
+
     // --- helpers ----------------------------------------------------------------------------------------------------
 
     private static String codeOf(final TranslationMapping m) {

@@ -990,6 +990,22 @@ public final class XsltGenerator {
         } else {
             src = ref(c.field(), c.xpath(), "condition", c.scope());
         }
+        final String test = valueTest(c, src, raw);
+        if (test != null) {
+            return c.not()
+                    ? XPathText.notText(test)
+                    : test;
+        }
+        final String has = raw
+                ? "exists(" + src + "[normalize-space(.)])"
+                : has(c.field(), c.xpath(), "condition", c.scope());
+        return Boolean.TRUE.equals(c.present())
+                ? has
+                : XPathText.notText(has);
+    }
+
+    // A condition's test of the input's value (all but present), before any not; null for present.
+    private String valueTest(final Condition c, final String src, final boolean raw) {
         if (c.equalTo() != null) {
             return XPathText.equalsText(src, c.equalTo());
         }
@@ -999,18 +1015,19 @@ public final class XsltGenerator {
         if (c.matches() != null) {
             return XPathText.matchesText(src, c.matches());
         }
+        if (c.startsWith() != null) {
+            return XPathText.startsWithText(src, c.startsWith());
+        }
+        if (c.contains() != null) {
+            return XPathText.containsText(src, c.contains());
+        }
         if (c.inDictionary() != null) {
             if (raw) {
                 return src + " in dictionary " + XPathText.literal(c.inDictionary());
             }
             return XPathText.inDictionaryText(src, dictVariable(c.inDictionary(), "set"));
         }
-        final String test = raw
-                ? "exists(" + src + "[normalize-space(.)])"
-                : has(c.field(), c.xpath(), "condition", c.scope());
-        return Boolean.TRUE.equals(c.present())
-                ? test
-                : "not(" + test + ")";
+        return null;
     }
 
     // --- values ---

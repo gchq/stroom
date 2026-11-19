@@ -241,7 +241,8 @@ final class EventTrees {
         }
         final Set<String> held = new HashSet<>();
         for (final Condition condition : rule.when()) {
-            if (isSet(condition.field()) && !Boolean.FALSE.equals(condition.present())) {
+            // A not condition holds without the field too.
+            if (isSet(condition.field()) && !Boolean.FALSE.equals(condition.present()) && !condition.not()) {
                 held.add(condition.field());
             }
         }
@@ -838,6 +839,10 @@ final class EventTrees {
             || !Objects.equals(test.scope(), given.scope())) {
             return false;
         }
+        if (test.not() || given.not()) {
+            // Only the same test follows: anything wider would need the values the field can take.
+            return test.equals(given);
+        }
         final Set<String> allowed = values(test);
         final Set<String> held = values(given);
         if (allowed != null && held != null) {
@@ -861,23 +866,7 @@ final class EventTrees {
     }
 
     private static String said(final Condition condition) {
-        final String input = isSet(condition.field())
-                ? condition.field()
-                : condition.xpath();
-        if (condition.equalTo() != null) {
-            return input + " = " + condition.equalTo();
-        }
-        if (condition.oneOf() != null) {
-            return input + " in " + String.join(", ", condition.oneOf());
-        }
-        if (condition.matches() != null) {
-            return input + " matches " + condition.matches();
-        }
-        return condition.present() != null
-                ? input + (condition.present()
-                        ? " present"
-                        : " empty")
-                : input + " in dictionary " + condition.inDictionary();
+        return MappingFacts.conditionWords(condition);
     }
 
     /// Each function prefix an xpath calls is bound, by the generator or a shared XSLT in functions, and each

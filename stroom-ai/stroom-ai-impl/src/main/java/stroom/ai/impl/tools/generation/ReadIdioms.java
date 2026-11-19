@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolText;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -39,6 +40,8 @@ final class ReadIdioms {
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
     private static final Pattern NOT_WORD = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> PLAIN_SOURCES = Set.of("field", "any_of");
+    // The tests of a value against a text, by shape, with the condition key each is read as.
+    private static final Map<String, String> TEXT_TESTS = textTests();
     /// What the rebuild puts in place of a group's item ([MappingRebuild]), followed by its depth: read as a field
     /// whose first name it is, so a read of the item reads as a read of the record would.
     static final String ITEM_SENTINEL = "mcp_item_";
@@ -556,6 +559,14 @@ final class ReadIdioms {
         return text;
     }
 
+    private static Map<String, String> textTests() {
+        final Map<String, String> out = new LinkedHashMap<>();
+        out.put("matches", "matches");
+        out.put("starts with", "starts_with");
+        out.put("contains", "contains");
+        return Collections.unmodifiableMap(out);
+    }
+
     // --- conditions -----------------------------------------------------------------------------------------------
 
     /// @param test A rule's test.
@@ -575,9 +586,10 @@ final class ReadIdioms {
             final XPathNode body = negated != null
                     ? XPathTrees.unbracketed(negated)
                     : part;
-            Map<String, Object> found = null;
-            if (negated == null) {
-                found = comparison(body);
+            Map<String, Object> found = comparison(body);
+            if (found != null && negated != null) {
+                // not(test): the test must not hold.
+                found.put("not", true);
             }
             if (found == null || found.isEmpty()) {
                 final XPathNode called = call(body, "exists", "normalize-space");
@@ -611,9 +623,11 @@ final class ReadIdioms {
             return entry("field", fieldOf(match.expr(1)), "in_dictionary",
                     dictionaries.get(match.expr(2).valueText()).getFirst());
         }
-        match = unify("matches", node);
-        if (match != null && XsltReader.truthy(fieldOf(match.expr(1)))) {
-            return entry("field", fieldOf(match.expr(1)), "matches", match.string(1));
+        for (final Map.Entry<String, String> test : TEXT_TESTS.entrySet()) {
+            match = unify(test.getKey(), node);
+            if (match != null && XsltReader.truthy(fieldOf(match.expr(1)))) {
+                return entry("field", fieldOf(match.expr(1)), test.getValue(), match.string(1));
+            }
         }
         // equalsText and oneOfText differ only by the brackets around the values: told apart as written.
         final XPathNode written = XPathTrees.unbracketed(node);

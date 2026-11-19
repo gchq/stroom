@@ -128,6 +128,12 @@ class TestKeptMapping {
                 .isEqualTo("`c` matches `^x`");
         assertThat(KeptMapping.conditionText(Map.of("field", "d", "in_dictionary", "Admins")))
                 .isEqualTo("`d` in dictionary `Admins`");
+        assertThat(KeptMapping.conditionText(Map.of("field", "m", "starts_with", "Request:")))
+                .isEqualTo("`m` starts with `Request:`");
+        assertThat(KeptMapping.conditionText(Map.of("field", "m", "contains", "fault", "not", true)))
+                .isEqualTo("`m` doesn't contain `fault`");
+        assertThat(KeptMapping.conditionText(Map.of("field", "t", "equals", "Logon", "not", true)))
+                .isEqualTo("`t` isn't Logon");
         assertThat(KeptMapping.eventKinds(Map.of("events", List.of(Map.of("name", "noise", "drop", true)))))
                 .containsExactly("noise: left untranslated (any other record)");
     }

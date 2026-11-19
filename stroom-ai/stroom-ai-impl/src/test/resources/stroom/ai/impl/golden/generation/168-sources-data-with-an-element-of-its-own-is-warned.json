@@ -354,6 +354,9 @@
       "matches": null,
       "present": null,
       "in_dictionary": "VIP users",
+      "starts_with": null,
+      "contains": null,
+      "not": false,
       "scope": null
      }
     ],

@@ -2307,12 +2307,14 @@ public final class DraftMapping {
                 final String text = value == null
                         ? null
                         : ToolText.str(value);
+                final boolean not = Boolean.TRUE.equals(c.get("not"));
                 if (c.get("equals") != null) {
-                    return ToolText.str(c.get("equals")).equals(text);
+                    return not != ToolText.str(c.get("equals")).equals(text);
                 }
                 if (c.get("one_of") instanceof final List<?> values) {
-                    return values.stream().map(ToolText::str).toList().contains(text);
+                    return not != values.stream().map(ToolText::str).toList().contains(text);
                 }
+                // Any other test (none the draft writes) is taken as holding.
                 return true;
             })).toList();
         }

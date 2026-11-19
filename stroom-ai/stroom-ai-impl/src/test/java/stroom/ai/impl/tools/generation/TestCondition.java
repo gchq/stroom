@@ -1,0 +1,107 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.generation;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/// A condition's tests: starts_with, contains and not beside the others, read from JSON and written back.
+class TestCondition {
+
+    @Test
+    void startsWithAndContainsAreTestsOfTheirOwn() {
+        final Condition starts = Condition.fromJson(Map.of("field", "message", "starts_with", "Request:"));
+        final Condition holds = Condition.fromJson(Map.of("field", "message", "contains", "fault"));
+
+        assertThat(starts.startsWith()).isEqualTo("Request:");
+        assertThat(starts.not()).isFalse();
+        assertThat(holds.contains()).isEqualTo("fault");
+        assertThat(starts.toJson(DumpMode.COMPACT)).containsExactlyEntriesOf(json("field", "message",
+                "starts_with", "Request:"));
+        assertThat(holds.toJson(DumpMode.COMPACT)).containsExactlyEntriesOf(json("field", "message",
+                "contains", "fault"));
+    }
+
+    @Test
+    void notIsWrittenOnlyWhenSet() {
+        final Condition not = Condition.fromJson(Map.of("field", "eventType", "equals", "Logon", "not", true));
+        final Condition given = Condition.fromJson(Map.of("field", "eventType", "equals", "Logon", "not", false));
+
+        assertThat(not.not()).isTrue();
+        assertThat(not.toJson(DumpMode.COMPACT)).containsExactlyEntriesOf(json("field", "eventType", "equals",
+                "Logon", "not", true));
+        assertThat(given.toJson(DumpMode.COMPACT)).doesNotContainKey("not");
+        // Read laxly, as the other booleans are.
+        assertThat(Condition.fromJson(Map.of("field", "a", "contains", "x", "not", "yes")).not()).isTrue();
+    }
+
+    @Test
+    void theNewTestsAreAsExclusiveAsTheOthers() {
+        assertThatThrownBy(() -> Condition.fromJson(Map.of("field", "m", "starts_with", "a", "contains", "b")))
+                .isInstanceOf(MappingValidationException.class)
+                .hasMessageContaining("exactly one of equals, one_of, matches, starts_with, contains, present or "
+                                      + "in_dictionary");
+        assertThatThrownBy(() -> Condition.fromJson(Map.of("field", "m", "equals", "a", "starts_with", "b")))
+                .isInstanceOf(MappingValidationException.class);
+        assertThatThrownBy(() -> Condition.fromJson(Map.of("field", "m", "not", true)))
+                .isInstanceOf(MappingValidationException.class);
+    }
+
+    @Test
+    void notWithPresentIsRefusedSayingPresentFalse() {
+        assertThatThrownBy(() -> Condition.fromJson(Map.of("field", "m", "present", true, "not", true)))
+                .isInstanceOf(MappingValidationException.class)
+                .hasMessageContaining("present: false");
+        // not: false beside present is no negation, so nothing to refuse.
+        assertThat(Condition.fromJson(Map.of("field", "m", "present", true, "not", false)).present()).isTrue();
+    }
+
+    @Test
+    void aTestsValueGivenWithItsInputIsSpreadOut() {
+        final Condition spread = Condition.fromJson(Map.of("starts_with", Map.of("value", "Request:", "field",
+                "message")));
+        final Condition held = Condition.fromJson(Map.of("contains", Map.of("contains", "x", "xpath", "a/b")));
+
+        assertThat(spread.field()).isEqualTo("message");
+        assertThat(spread.startsWith()).isEqualTo("Request:");
+        assertThat(held.xpath()).isEqualTo("a/b");
+        assertThat(held.contains()).isEqualTo("x");
+    }
+
+    @Test
+    void aStartsWithOrContainsOfEmptyTextIsKeptAsGiven() {
+        // Empty text: every value starts with it and holds it, as XPath's starts-with() and contains() say.
+        assertThat(Condition.fromJson(Map.of("field", "m", "starts_with", "")).startsWith()).isEmpty();
+        assertThat(Condition.fromJson(Map.of("field", "m", "contains", "")).contains()).isEmpty();
+        assertThat(List.of(Condition.fromJson(Map.of("field", "m", "contains", "")).toJson(DumpMode.COMPACT)
+                .get("contains"))).containsExactly("");
+    }
+
+    private static Map<String, Object> json(final Object... keysAndValues) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < keysAndValues.length; i += 2) {
+            out.put((String) keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return out;
+    }
+}

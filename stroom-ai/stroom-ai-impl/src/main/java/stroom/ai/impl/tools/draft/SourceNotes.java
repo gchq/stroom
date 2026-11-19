@@ -708,7 +708,8 @@ public final class SourceNotes {
             }
             boolean ok = true;
             for (final Map<String, Object> condition : when) {
-                if (!Objects.equals(condition.get("field"), field)) {
+                // A not condition can't be judged from a kind's value alone.
+                if (!Objects.equals(condition.get("field"), field) || Boolean.TRUE.equals(condition.get("not"))) {
                     ok = false;
                     break;
                 }
@@ -932,7 +933,7 @@ public final class SourceNotes {
 
     private static boolean covers(final Map<String, Object> rule, final List<String> key) {
         for (final Map<String, Object> condition : JsonValues.maps(rule.get("when"))) {
-            if (!key.get(0).equals(condition.get("field"))) {
+            if (!key.get(0).equals(condition.get("field")) || Boolean.TRUE.equals(condition.get("not"))) {
                 continue;
             }
             if (key.get(1).startsWith(PATTERN)) {

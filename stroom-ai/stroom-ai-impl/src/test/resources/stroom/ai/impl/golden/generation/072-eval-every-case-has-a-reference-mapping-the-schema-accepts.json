@@ -315,6 +315,9 @@
       "matches": null,
       "present": null,
       "in_dictionary": null,
+      "starts_with": null,
+      "contains": null,
+      "not": false,
       "scope": null
      }
     ],
@@ -393,6 +396,9 @@
       "matches": null,
       "present": null,
       "in_dictionary": null,
+      "starts_with": null,
+      "contains": null,
+      "not": false,
       "scope": null
      }
     ],

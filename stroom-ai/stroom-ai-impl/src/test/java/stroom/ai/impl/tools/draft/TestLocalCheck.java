@@ -57,6 +57,34 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void startsWithContainsAndNotTellARecordsRule() {
+        final TranslationMapping m = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"},
+                            {"path": "EventSource/System/Name", "value": "App"},
+                            {"path": "EventSource/System/Environment", "value": "Prod"},
+                            {"path": "EventSource/Generator", "value": "App"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "request", "when": [{"field": "message", "starts_with": "Request:"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Request"}]},
+                            {"name": "fault", "when": [{"field": "message", "contains": "Fault"},
+                                                       {"field": "level", "equals": "INFO", "not": true}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Fault"}]},
+                            {"name": "rest", "fields": [{"path": "EventDetail/TypeId", "value": "Rest"}]}]}"""));
+        final String sample = String.join("\n",
+                "{\"message\": \"Request: get\", \"level\": \"INFO\"}",
+                "{\"message\": \"a Fault here\", \"level\": \"ERROR\"}",
+                "{\"message\": \"a Fault here\", \"level\": \"INFO\"}",
+                "{\"message\": \"a Fault, no level\"}",
+                "{\"message\": \"request: lower case\"}");
+
+        final List<Object> records = records(m, sample, null);
+
+        assertThat(records.stream().map(r -> LocalCheck.ruleOf(m, r, null)).toList())
+                .containsExactly("request", "fault", "rest", "fault", "rest");
+    }
+
+    @Test
     void everyFieldNothingReadsIsListedWithHowManyThereAre() {
         // Seen: a list cut at 12 ("...") on a 184-column CSV cost about 20 calls working out the rest.
         final StringBuilder record = new StringBuilder("{\"ts\": \"2026-10-01T10:00:00Z\"");

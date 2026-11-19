@@ -97,6 +97,23 @@ class TestXsltGeneratorProblems extends XsltRuns {
     }
 
     @Test
+    void aNotConditionNeverMakesALaterRuleUnreachableByItsValues() {
+        // action isn't Login, then action = Login: the second takes what the first leaves.
+        final Map<String, Object> json = baseJson();
+        json.put("events", List.of(
+                rule("not_login", List.of(Map.of("field", "action", "equals", "Login", "not", true)), LOGON),
+                rule("login", List.of(equalsCondition("action", "Login")), LOGON),
+                rule("again", List.of(Map.of("field", "action", "equals", "Login", "not", true),
+                        Map.of("field", "result", "present", true)), LOGON),
+                otherRule()));
+
+        assertThat(generate(TranslationMapping.fromJson(json)).problems())
+                .noneMatch(problem -> problem.startsWith("[login] can never match"))
+                .contains("[again] can never match: not_login, before it, takes every record it would (action isn't "
+                          + "Login, result present). Remove one of them, or put the narrower rule first.");
+    }
+
+    @Test
     void aRuleAnEarlierRuleAlwaysTakesIsAProblem() {
         // Seen: a draft's user_logon (action Login or Login Failed) kept above the agent's own user_login, which
         // never wrote an event; the documentation said of it "none in the sample".

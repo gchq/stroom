@@ -220,7 +220,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, present or in_dictionary",
+    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, starts_with, contains, present or in_dictionary",
     "input": {
      "field": "x"
     }
@@ -1643,7 +1643,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, present or in_dictionary",
+    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, starts_with, contains, present or in_dictionary",
     "input": {
      "matches": {
       "nothing": "x"
@@ -4243,22 +4243,26 @@
      "when": [
       {
        "field": "a",
-       "equals": "x"
+       "equals": "x",
+       "not": false
       },
       {
        "xpath": "p",
-       "matches": "x"
+       "matches": "x",
+       "not": false
       },
       {
        "field": "f",
        "one_of": [
         "a",
         "b"
-       ]
+       ],
+       "not": false
       },
       {
        "field": "f",
        "in_dictionary": "D",
+       "not": false,
        "scope": "record"
       }
      ],
@@ -4319,6 +4323,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       },
       {
@@ -4329,6 +4336,9 @@
        "matches": "x",
        "present": null,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       },
       {
@@ -4342,6 +4352,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       },
       {
@@ -4352,6 +4365,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": "D",
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": "record"
       }
      ],
@@ -6802,7 +6818,8 @@
   },
   "without_none": {
    "xpath": "/Event/EventData/Data",
-   "matches": "Event: \\[User\\]"
+   "matches": "Event: \\[User\\]",
+   "not": false
   },
   "all": {
    "field": null,
@@ -6812,6 +6829,9 @@
    "matches": "Event: \\[User\\]",
    "present": null,
    "in_dictionary": null,
+   "starts_with": null,
+   "contains": null,
+   "not": false,
    "scope": null
   }
  },
@@ -6829,7 +6849,8 @@
   },
   "without_none": {
    "field": "action",
-   "equals": "LOGIN"
+   "equals": "LOGIN",
+   "not": false
   },
   "all": {
    "field": "action",
@@ -6839,6 +6860,9 @@
    "matches": null,
    "present": null,
    "in_dictionary": null,
+   "starts_with": null,
+   "contains": null,
+   "not": false,
    "scope": null
   }
  },
@@ -6865,7 +6889,8 @@
    "one_of": [
     "a",
     "b"
-   ]
+   ],
+   "not": false
   },
   "all": {
    "field": "f",
@@ -6878,6 +6903,9 @@
    "matches": null,
    "present": null,
    "in_dictionary": null,
+   "starts_with": null,
+   "contains": null,
+   "not": false,
    "scope": null
   }
  },

@@ -225,25 +225,41 @@ public final class ReferenceGenerator {
 
     private static String test(final ReferenceMapping mapping, final Condition condition, final List<String> problems) {
         final String source = orSelector(mapping, condition.xpath(), condition.field());
-        if (condition.equalTo() != null) {
-            return source + " = " + XPathText.literal(condition.equalTo());
-        }
-        if (condition.oneOf() != null) {
-            return source + " = (" + String.join(", ", condition.oneOf().stream().map(XPathText::literal).toList())
-                   + ")";
-        }
-        if (condition.matches() != null) {
-            return "exists(" + source + "[matches(., " + XPathText.literal(condition.matches()) + ")])";
+        final String test = valueTest(source, condition);
+        if (test != null) {
+            return condition.not()
+                    ? XPathText.notText(test)
+                    : test;
         }
         if (condition.present() != null) {
-            final String test = "exists(" + source + "[normalize-space(.)])";
+            final String has = "exists(" + source + "[normalize-space(.)])";
             return condition.present()
-                    ? test
-                    : "not(" + test + ")";
+                    ? has
+                    : XPathText.notText(has);
         }
-        problems.add("drop_when: a reference mapping's conditions take equals, one_of, matches or present, not "
-                     + "in_dictionary");
+        problems.add("drop_when: a reference mapping's conditions take equals, one_of, matches, starts_with, "
+                     + "contains or present, not in_dictionary");
         return "false()";
+    }
+
+    // A condition's test of the value (before any not); null for present and in_dictionary.
+    private static String valueTest(final String source, final Condition condition) {
+        if (condition.equalTo() != null) {
+            return XPathText.equalsText(source, condition.equalTo());
+        }
+        if (condition.oneOf() != null) {
+            return XPathText.oneOfText(source, condition.oneOf());
+        }
+        if (condition.matches() != null) {
+            return XPathText.matchesText(source, condition.matches());
+        }
+        if (condition.startsWith() != null) {
+            return XPathText.startsWithText(source, condition.startsWith());
+        }
+        if (condition.contains() != null) {
+            return XPathText.containsText(source, condition.contains());
+        }
+        return null;
     }
 
     private static List<String> sorted(final Set<String> names) {

@@ -81,6 +81,8 @@ public final class ReadShapes {
         out.put("keyed, flags", shape(XPathText.keyedText(text(1), text(2), text(3))));
         out.put("equals", shape(XPathText.equalsText(expr(1), text(1))));
         out.put("matches", shape(XPathText.matchesText(expr(1), text(1))));
+        out.put("starts with", shape(XPathText.startsWithText(expr(1), text(1))));
+        out.put("contains", shape(XPathText.containsText(expr(1), text(1))));
         out.put("in dictionary", shape(XPathText.inDictionaryText(expr(1), expr(2))));
         out.put("time", shape(XPathText.timeExpression(text(1), null, expr(1) + "[1]")));
         out.put("time, zone", shape(XPathText.timeExpression(text(1), text(2), expr(1) + "[1]")));

@@ -349,24 +349,44 @@ public final class MappingFacts {
     }
 
     /// @param condition A condition.
-    /// @return It as a reader says it: `action = accept`, `type in traffic, event`.
+    /// @return It as a reader says it: `action = accept`, `type in traffic, event`, `message starts with
+    /// 'Request:'`, `eventType isn't Logon` (with not).
     public static String conditionWords(final Condition condition) {
         final String source = (condition.field() != null
                 ? condition.field()
                 : condition.xpath()) + ("record".equals(condition.scope())
                 ? " (of the record)"
                 : "");
+        final boolean not = condition.not();
         if (condition.equalTo() != null) {
-            return source + " = " + condition.equalTo();
+            return source + (not
+                    ? " isn't "
+                    : " = ") + condition.equalTo();
         }
         if (condition.oneOf() != null) {
-            return source + " in " + String.join(", ", condition.oneOf());
+            return source + (not
+                    ? " isn't any of "
+                    : " in ") + String.join(", ", condition.oneOf());
         }
         if (condition.matches() != null) {
-            return source + " matches " + condition.matches();
+            return source + (not
+                    ? " doesn't match "
+                    : " matches ") + condition.matches();
+        }
+        if (condition.startsWith() != null) {
+            return source + (not
+                    ? " doesn't start with "
+                    : " starts with ") + XPathText.literal(condition.startsWith());
+        }
+        if (condition.contains() != null) {
+            return source + (not
+                    ? " doesn't contain "
+                    : " contains ") + XPathText.literal(condition.contains());
         }
         if (condition.inDictionary() != null) {
-            return source + " in the dictionary " + condition.inDictionary();
+            return source + (not
+                    ? " not in the dictionary "
+                    : " in the dictionary ") + condition.inDictionary();
         }
         return source + " " + (Boolean.TRUE.equals(condition.present())
                 ? "present"

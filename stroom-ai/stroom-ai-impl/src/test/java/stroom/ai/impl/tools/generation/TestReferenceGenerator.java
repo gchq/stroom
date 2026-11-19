@@ -172,6 +172,25 @@ class TestReferenceGenerator extends XsltRuns {
                  "drop_when": [{"when": [{"field": "status", "in_dictionary": "Disabled"}], "reason": "r"}]}""")));
         assertThat(ref.ok()).isFalse();
         assertThat(ref.problems()).containsExactly("drop_when: a reference mapping's conditions take equals, one_of, "
-                                                   + "matches or present, not in_dictionary");
+                                                   + "matches, starts_with, contains or present, not in_dictionary");
+    }
+
+    @Test
+    void aReferenceXsltLeavesRecordsOutByStartsWithContainsAndNot() {
+        final ReferenceGenerator.Generated ref = ReferenceGenerator.generate(ReferenceMapping.fromJson(json("""
+                {"input": "data_splitter", "maps": [{"name": "USERS", "key": "user", "values": [{"field": "name"}]}],
+                 "drop_when": [{"when": [{"field": "status", "starts_with": "dis"},
+                                         {"field": "name", "contains": "test", "not": true}],
+                                "reason": "disabled accounts but test ones"}]}""")));
+        assertThat(ref.ok()).as("%s", ref.problems()).isTrue();
+        final XmlElement out = transform(ref.xslt(), "<records xmlns=\"records:2\">"
+                                                     + record("a", "A", "disabled") + record("b", "B", "active")
+                                                     + record("c", "C test", "disabled") + "</records>");
+        assertThat(out.iterElements(REF, "key").stream().map(XmlElement::text)).containsExactly("b", "c");
+    }
+
+    private static String record(final String user, final String name, final String status) {
+        return "<record><data name=\"user\" value=\"" + user + "\"/><data name=\"name\" value=\"" + name
+               + "\"/><data name=\"status\" value=\"" + status + "\"/></record>";
     }
 }

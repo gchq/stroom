@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /// A test on the record (or, with `for_each`, the item): give field or xpath and one of equals, one_of, matches,
-/// present or in_dictionary.
+/// starts_with, contains, present or in_dictionary; `not` for the test not to hold.
 ///
 /// @param field        An input field, or a name from extract.
 /// @param xpath        Or an XPath expression.
@@ -34,6 +34,11 @@ import java.util.stream.Stream;
 /// @param present      True: the field has a non-empty value; false: it does not.
 /// @param inDictionary `in_dictionary`: the value is one of the lines of the Dictionary doc of this name (a list,
 ///                     one entry per line).
+/// @param startsWith   `starts_with`: text the value starts with (exact, case-sensitive, as XPath's
+///                     `starts-with()`).
+/// @param contains     Text the value holds (exact, case-sensitive, as XPath's `contains()`).
+/// @param not          True: the test must not hold (a field that is missing makes it hold, as XPath's
+///                     `not(f = 'x')`); never with present, which says it with `present: false`.
 /// @param scope        With for_each: `record` to test the record rather than the item.
 public record Condition(String field,
                         String xpath,
@@ -42,12 +47,16 @@ public record Condition(String field,
                         String matches,
                         Boolean present,
                         String inDictionary,
+                        String startsWith,
+                        String contains,
+                        boolean not,
                         String scope) {
 
     /// The scopes a field may have with `for_each`.
     public static final List<String> SCOPES = List.of("record", "item");
 
-    private static final List<String> TESTS = List.of("equals", "one_of", "matches", "in_dictionary");
+    private static final List<String> TESTS = List.of("equals", "one_of", "matches", "in_dictionary", "starts_with",
+            "contains");
 
     /// @param json A condition as JSON-like values.
     /// @return It validated, with the model's own checks.
@@ -72,6 +81,7 @@ public record Condition(String field,
         final Condition condition = new Condition(fields.optionalString("field"), fields.optionalString("xpath"),
                 fields.optionalString("equals"), fields.optionalStrings("one_of"), fields.optionalString("matches"),
                 fields.optionalBool("present"), fields.optionalString("in_dictionary"),
+                fields.optionalString("starts_with"), fields.optionalString("contains"), fields.bool("not", false),
                 fields.optionalLiteral("scope", SCOPES));
         if (!fields.ok()) {
             return null;
@@ -88,10 +98,15 @@ public record Condition(String field,
             return null;
         }
         final long tests = Stream.of(condition.equalTo, condition.oneOf, condition.matches, condition.present,
-                condition.inDictionary).filter(test -> test != null).count();
+                condition.inDictionary, condition.startsWith, condition.contains).filter(test -> test != null).count();
         if (tests != 1) {
-            reader.valueError(loc, "A condition needs exactly one of equals, one_of, matches, present or "
-                                   + "in_dictionary", input);
+            reader.valueError(loc, "A condition needs exactly one of equals, one_of, matches, starts_with, contains, "
+                                   + "present or in_dictionary", input);
+            return null;
+        }
+        if (condition.not && condition.present != null) {
+            reader.valueError(loc, "A condition's not can't go with present: present: false says a field has no "
+                                   + "value", input);
             return null;
         }
         return condition;
@@ -138,6 +153,9 @@ public record Condition(String field,
                 .put("matches", matches, null)
                 .put("present", present, null)
                 .put("in_dictionary", inDictionary, null)
+                .put("starts_with", startsWith, null)
+                .put("contains", contains, null)
+                .put("not", not, false)
                 .put("scope", scope, null)
                 .build();
     }

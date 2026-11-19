@@ -280,7 +280,7 @@ final class VariantDrafts {
                                      final Drafted drafted,
                                      final List<Drafted> drafts) {
         final List<Map<String, Object>> told = JsonValues.maps(rule.get(WHEN)).stream()
-                .filter(condition -> condition.get("field") != null
+                .filter(condition -> condition.get("field") != null && !Boolean.TRUE.equals(condition.get("not"))
                                      && (condition.get("equals") != null || condition.get(SourceNotes.MATCHES) != null))
                 .toList();
         if (told.isEmpty()) {

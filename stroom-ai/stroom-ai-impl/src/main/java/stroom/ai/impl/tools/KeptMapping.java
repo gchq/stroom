@@ -335,19 +335,38 @@ public final class KeptMapping {
                               + ("record".equals(condition.get("scope"))
                 ? " (of the record)"
                 : "");
+        final boolean not = Boolean.TRUE.equals(condition.get("not"));
         if (condition.get("equals") != null) {
-            return source + " = " + stringOf(condition.get("equals"));
+            return source + (not
+                    ? " isn't "
+                    : " = ") + stringOf(condition.get("equals"));
         }
         if (condition.get("one_of") != null) {
-            return source + " in " + String.join(", ", JsonValues.listOrEmpty(condition.get("one_of")).stream()
+            return source + (not
+                    ? " isn't any of "
+                    : " in ") + String.join(", ", JsonValues.listOrEmpty(condition.get("one_of")).stream()
                     .map(KeptMapping::stringOf)
                     .toList());
         }
         if (condition.get("matches") != null) {
-            return source + " matches `" + stringOf(condition.get("matches")) + "`";
+            return source + (not
+                    ? " doesn't match `"
+                    : " matches `") + stringOf(condition.get("matches")) + "`";
+        }
+        if (condition.get("starts_with") != null) {
+            return source + (not
+                    ? " doesn't start with `"
+                    : " starts with `") + stringOf(condition.get("starts_with")) + "`";
+        }
+        if (condition.get("contains") != null) {
+            return source + (not
+                    ? " doesn't contain `"
+                    : " contains `") + stringOf(condition.get("contains")) + "`";
         }
         if (condition.get("in_dictionary") != null) {
-            return source + " in dictionary `" + stringOf(condition.get("in_dictionary")) + "`";
+            return source + (not
+                    ? " not in dictionary `"
+                    : " in dictionary `") + stringOf(condition.get("in_dictionary")) + "`";
         }
         return source + " " + (Boolean.TRUE.equals(condition.get("present"))
                 ? "present"

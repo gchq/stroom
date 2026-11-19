@@ -527,6 +527,14 @@ public final class LocalCheck {
         if (c.present() != null) {
             return (value != null && !ToolText.strip(value).isEmpty()) == c.present();
         }
+        final Boolean test = valueTest(c, value);
+        return test == null
+                ? null
+                : c.not() != test;
+    }
+
+    // Whether a condition's test of the value (all but present) holds, before any not; null when it can't be told.
+    private static Boolean valueTest(final Condition c, final String value) {
         if (value == null) {
             return false;
         }
@@ -535,6 +543,12 @@ public final class LocalCheck {
         }
         if (c.oneOf() != null) {
             return c.oneOf().contains(value);
+        }
+        if (c.startsWith() != null) {
+            return value.startsWith(c.startsWith());
+        }
+        if (c.contains() != null) {
+            return value.contains(c.contains());
         }
         final Pattern pattern = compiled(c.matches(), 0);
         return pattern == null

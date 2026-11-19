@@ -338,6 +338,18 @@
    "description": "The value is one of the lines of the Dictionary doc of this name (a list, one entry per line).",
    "model": null
   },
+  "starts_with": {
+   "description": "Text the value starts with (exact, case-sensitive).",
+   "model": null
+  },
+  "contains": {
+   "description": "Text the value holds (exact, case-sensitive).",
+   "model": null
+  },
+  "not": {
+   "description": "True: the test must not hold; a missing field makes it hold. Not with present (present: false says it).",
+   "model": null
+  },
   "scope": {
    "description": "With for_each: 'record' to test the record rather than the item.",
    "model": null

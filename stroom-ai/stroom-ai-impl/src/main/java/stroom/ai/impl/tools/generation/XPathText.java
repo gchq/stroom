@@ -232,6 +232,26 @@ public final class XPathText {
         return "exists(" + source + "[matches(., " + literal(regex) + ")])";
     }
 
+    /// @param source The input.
+    /// @param text   The text.
+    /// @return The test that one of the input's values starts with the text.
+    public static String startsWithText(final String source, final String text) {
+        return "exists(" + source + "[starts-with(., " + literal(text) + ")])";
+    }
+
+    /// @param source The input.
+    /// @param text   The text.
+    /// @return The test that one of the input's values holds the text.
+    public static String containsText(final String source, final String text) {
+        return "exists(" + source + "[contains(., " + literal(text) + ")])";
+    }
+
+    /// @param test A test.
+    /// @return The test that it doesn't hold.
+    public static String notText(final String test) {
+        return "not(" + test + ")";
+    }
+
     /// @param source   The input.
     /// @param variable The stylesheet variable holding a dictionary's lines.
     /// @return The test that the input is one of them.

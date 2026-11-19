@@ -83,6 +83,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       }
      ],
@@ -1135,6 +1138,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       },
       {
@@ -1145,6 +1151,9 @@
        "matches": null,
        "present": true,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       }
      ],
@@ -1160,6 +1169,9 @@
        "matches": "^t.*",
        "present": null,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       }
      ],
@@ -1175,6 +1187,9 @@
        "matches": null,
        "present": false,
        "in_dictionary": null,
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       }
      ],
@@ -1285,6 +1300,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": "Disabled",
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       },
       {
@@ -1295,6 +1313,9 @@
        "matches": null,
        "present": null,
        "in_dictionary": "X",
+       "starts_with": null,
+       "contains": null,
+       "not": false,
        "scope": null
       }
      ],
@@ -1306,8 +1327,8 @@
    "2.0.1": {
     "ok": false,
     "problems": [
-     "drop_when: a reference mapping's conditions take equals, one_of, matches or present, not in_dictionary",
-     "drop_when: a reference mapping's conditions take equals, one_of, matches or present, not in_dictionary"
+     "drop_when: a reference mapping's conditions take equals, one_of, matches, starts_with, contains or present, not in_dictionary",
+     "drop_when: a reference mapping's conditions take equals, one_of, matches, starts_with, contains or present, not in_dictionary"
     ],
     "xslt": null,
     "maps": [
@@ -2070,7 +2091,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, present or in_dictionary",
+    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, starts_with, contains, present or in_dictionary",
     "input": {
      "field": "a"
     }
