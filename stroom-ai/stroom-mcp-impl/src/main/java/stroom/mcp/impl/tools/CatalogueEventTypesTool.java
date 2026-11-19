@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /// `catalogue_event_types` (replacing classify_kinds; stroom-ai/DESIGN.md, Event type catalogue): the source's
@@ -1121,10 +1122,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     }
 
     // How the records are read for the check, as the build will read them: the reading given (over the draft's own),
-    // else the build's latest mapping's (the one last sent for its translation, else its draft this session, else the
-    // one kept with its XSLT), else the one an earlier call gave; empty for the draft's own. Seen in the reference
-    // eval: fields an extraction, pairs or held JSON gave were refused as "no record has the field", the records read
-    // only as a fresh draft reads them.
+    // else the one an earlier call gave, else the build's latest mapping's (the one last sent for its translation,
+    // else its draft this session, else the one kept with its XSLT) ([#keptElseLatest]); empty for the draft's own.
+    // Seen in the reference eval: fields an extraction, pairs or held JSON gave were refused as "no record has the
+    // field", the records read only as a fresh draft reads them.
     private Optional<Map<String, Object>> readingOf(final Calling calling, final Map<String, Object> draftMapping) {
         final Object given = argsMap(calling.call()).get(READING_ARG);
         if (given != null) {
@@ -1149,26 +1150,43 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             }
             return Optional.of(reading);
         }
-        final Optional<Map<String, Object>> latest = builds.latestMapping(calling.context(), calling.build());
-        if (latest.isPresent()) {
-            final Map<String, Object> reading = readingKeys(latest.get());
-            try {
-                parsedReading(reading);
-                return Optional.of(reading);
-            } catch (final IllegalArgumentException e) {
-                LOGGER.debug(() -> LogUtil.message("The latest mapping of {} can't be read, so the draft's reading is "
-                                                   + "used: {}", calling.build(), e.getMessage()));
-            }
-        }
-        // The reading an earlier call gave, before the build had a mapping.
-        final Map<String, Object> kept = JsonValues.map(confirming(calling.notesNow()).get(READING));
+        return keptElseLatest(calling.build(), JsonValues.map(confirming(calling.notesNow()).get(READING)),
+                () -> builds.latestMapping(calling.context(), calling.build()));
+    }
+
+    /// How the build's catalogue reads its records when a call gives no reading: the reading an earlier call gave
+    /// (kept in the source notes' confirmation), else the build's latest mapping's reading keys; empty for the
+    /// draft's own. The reading given wins: it is the one the catalogue was told to read by, where a draft made
+    /// before it may still read whole records (seen in eval case 69: the catalogue told to read each item of a
+    /// batch, the calls after it read whole batches as an earlier draft did). One lookup, for catalogue_event_types
+    /// and the draft that follows the catalogue ([TranslationBuilds#catalogueForEach]).
+    ///
+    /// @param build  The build, for the log.
+    /// @param kept   The reading an earlier call gave, or null.
+    /// @param latest The build's latest mapping ([TranslationBuilds#latestMapping]), asked for only when no reading
+    ///               was kept.
+    /// @return The reading; empty when neither can be read.
+    static Optional<Map<String, Object>> keptElseLatest(final String build,
+                                                        final Map<String, Object> kept,
+                                                        final Supplier<Optional<Map<String, Object>>> latest) {
         if (kept != null) {
             try {
                 parsedReading(kept);
                 return Optional.of(kept);
             } catch (final IllegalArgumentException e) {
-                LOGGER.debug(() -> LogUtil.message("The reading kept for {} can't be read: {}", calling.build(),
+                LOGGER.debug(() -> LogUtil.message("The reading kept for {} can't be read: {}", build,
                         e.getMessage()));
+            }
+        }
+        final Optional<Map<String, Object>> mapping = latest.get();
+        if (mapping.isPresent()) {
+            final Map<String, Object> reading = readingKeys(mapping.get());
+            try {
+                parsedReading(reading);
+                return Optional.of(reading);
+            } catch (final IllegalArgumentException e) {
+                LOGGER.debug(() -> LogUtil.message("The latest mapping of {} can't be read, so the draft's reading is "
+                                                   + "used: {}", build, e.getMessage()));
             }
         }
         return Optional.empty();

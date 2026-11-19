@@ -250,6 +250,32 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void theReadingAnEarlierCallGaveWinsOverTheBuildsLatestMapping() {
+        // Seen in eval case 69: the catalogue told to read each item of a batch (reading for_each), a draft made
+        // before it reading whole batches; the calls after it read as the draft did, and the reading given was lost.
+        final List<Map<String, Object>> proposals = List.of(numbered());
+        assertThat(call(Map.of("build", BUILD, "stream_ids", List.of(7), "proposals", proposals, "reading",
+                Map.of("extract", List.of(recordNumber()))), plain())).containsEntry("recorded", true);
+        Mockito.when(builds.latestMapping(Mockito.any(), Mockito.eq(BUILD))).thenReturn(Optional.of(Map.of(
+                "input", "data_splitter", "events", List.of())));
+
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)), plain());
+
+        assertThat(listed).containsKey("check");
+        assertThat(JsonUtil.writeValueAsString(listed.get("check"), false)).doesNotContain("no record has the field");
+    }
+
+    @Test
+    void theBuildsLatestMappingIsReadOnlyWhenNoCallGaveAReading() {
+        // No reading given by any call: the latest mapping's, over the draft's own.
+        Mockito.when(builds.latestMapping(Mockito.any(), Mockito.eq(BUILD))).thenReturn(Optional.of(Map.of(
+                "input", "data_splitter", "extract", List.of(recordNumber()), "events", List.of())));
+
+        assertThat(JsonUtil.writeValueAsString(propose(List.of(numbered())), false))
+                .doesNotContain("no record has the field");
+    }
+
+    @Test
     void aReadingIsOnlyHowRecordsAreRead() {
         assertThat(text(Map.of("build", BUILD, "stream_ids", List.of(7), "reading", Map.of("events", List.of(),
                 "json_fields", List.of("msg"))), plain()))
