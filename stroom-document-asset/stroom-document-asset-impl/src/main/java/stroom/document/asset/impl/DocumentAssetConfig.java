@@ -22,12 +22,15 @@ import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.validation.AllMatchPattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -67,6 +70,13 @@ public class DocumentAssetConfig extends AbstractConfig {
     /** Mode to use for editor if nothing else matches */
     private static final String DEFAULT_ACE_EDITOR_MODE = "TEXT";
 
+    /**
+     * What an allowed image origin must look like: a single Content Security Policy source expression.
+     * Whitespace, ';' and ',' would let an entry add sources or whole directives to the policy, and quotes
+     * would let it add keywords such as 'unsafe-inline', so all of them are refused.
+     */
+    static final String ALLOWED_IMAGE_ORIGIN_PATTERN = "^[^\\s;,'\"]+$";
+
     /** Where assets will be cached */
     private final String assetCacheDir;
 
@@ -87,6 +97,9 @@ public class DocumentAssetConfig extends AbstractConfig {
 
     /** Default ACE editor mode */
     private final String defaultAceEditorMode;
+
+    /** Origins, besides Stroom's own, that a visualisation may load images from */
+    private final List<String> allowedImageOrigins;
 
     /*
      * Initialise mimetype map.
@@ -132,6 +145,7 @@ public class DocumentAssetConfig extends AbstractConfig {
         this.aceEditorModes.putAll(DEFAULT_EDITOR_MODES);
         this.defaultAceEditorMode = DEFAULT_ACE_EDITOR_MODE;
         this.maxUploadSize = DEFAULT_MAX_UPLOAD_SIZE;
+        this.allowedImageOrigins = List.of();
     }
 
     @SuppressWarnings("unused")
@@ -142,9 +156,15 @@ public class DocumentAssetConfig extends AbstractConfig {
                                @JsonProperty("clearAssetCacheOnStartup") final Boolean clearAssetCacheOnStartup,
                                @JsonProperty("aceEditorModes") final Map<String, String> aceEditorModes,
                                @JsonProperty("defaultAceEditorMode") final String defaultAceEditorMode,
-                               @JsonProperty("maxUploadSize") final ByteSize maxUploadSize) {
+                               @JsonProperty("maxUploadSize") final ByteSize maxUploadSize,
+                               @JsonProperty("allowedImageOrigins") final List<String> allowedImageOrigins) {
 
         this.maxUploadSize = Objects.requireNonNullElse(maxUploadSize, DEFAULT_MAX_UPLOAD_SIZE);
+        // A blank YAML list item reads as null, which List.copyOf would reject.
+        this.allowedImageOrigins = NullSafe.list(allowedImageOrigins)
+                .stream()
+                .filter(Objects::nonNull)
+                .toList();
 
         if (mimetypes == null || mimetypes.isEmpty()) {
             LOGGER.info("No mimetypes supplied in the configuration file; using default values");
@@ -242,6 +262,23 @@ public class DocumentAssetConfig extends AbstractConfig {
     @JsonProperty("defaultAceEditorMode")
     public String getDefaultAceEditorMode() {
         return defaultAceEditorMode;
+    }
+
+    /// The origins, besides Stroom's own, that an asset-based visualisation may load images from,
+    /// e.g. the tile server of a GeoMap.
+    ///
+    /// @return The origins as Content Security Policy source expressions. Never null; empty by default.
+    @JsonPropertyDescription("Origins, besides Stroom's own, that an asset-based visualisation may load "
+                             + "images from. Each entry is a Content Security Policy source expression "
+                             + "that is added to the 'img-src' directive, e.g. 'https://*.tile.osm.org' "
+                             + "to show map tiles from GeoMap's default tile server, or "
+                             + "'https://maps.example.com'. Empty by default, so only Stroom's own images "
+                             + "and data: URLs load. An entry containing whitespace, quotes, ';' or ',' is "
+                             + "invalid and is left out of the policy.")
+    @AllMatchPattern(pattern = ALLOWED_IMAGE_ORIGIN_PATTERN)
+    @JsonProperty("allowedImageOrigins")
+    public List<String> getAllowedImageOrigins() {
+        return allowedImageOrigins;
     }
 
 }
