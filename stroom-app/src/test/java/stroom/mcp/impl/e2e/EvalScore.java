@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -44,10 +45,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /// A case's score, and the scoring of a case's Events against what the case expects: the record count, the event types,
-/// the paths every event has, values some event holds, values and types none may hold, and Data where it belongs; and
-/// for an aggregated feed's case, its build's source types ([#scoreSourceTypes]); for a case that starts from another
-/// case's promoted build, what it changed of that build ([#scoreLaterBuild]); and the forms the user was asked
-/// ([#scoreForms]).
+/// the paths every event has, values some event holds, values and types none may hold, Data where it belongs, the
+/// TypeIds, the Descriptions and how many Unknown events; and for an aggregated feed's case, its build's source types
+/// ([#scoreSourceTypes]); for a case that starts from another case's promoted build, what it changed of that build
+/// ([#scoreLaterBuild]); the forms the user was asked ([#scoreForms]); and the build's event type catalogue
+/// ([#scoreCatalogue]).
 @SuppressWarnings("unchecked")
 final class EvalScore {
 
@@ -56,6 +58,18 @@ final class EvalScore {
     // source_types.index.fields_added: scored only as the group's index recorded, fields being added when needed.
     private static final String WHEN_NEEDED = "when_needed";
     private static final Pattern DAY = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+    // type_ids.pattern: Verb-Object, as the event type catalogue's TypeIds are (Authenticate-Logon,
+    // Process-SOAPRequest); or any TypeId at all.
+    private static final String VERB_OBJECT = "verb_object";
+    private static final String ANY = "any";
+    private static final Pattern VERB_OBJECT_ID = Pattern.compile("[A-Z][A-Za-z]*-[A-Z][A-Za-z0-9]*");
+    // What a build case is scored on when it doesn't say: TypeIds of this pattern, and whether every event (but
+    // the catch-all's Unknown ones) must have a Description.
+    private static final String DEFAULT_TYPE_ID_PATTERN = ANY;
+    private static final boolean DEFAULT_DESCRIPTION_EVERY_EVENT = false;
+    private static final String UNKNOWN = "Unknown";
+    private static final String CONFIRMED = "confirmed";
+    private static final String DOCUMENTATION = "documentation";
 
     private final String caseId;
     private final List<String> problems = new ArrayList<>();
@@ -70,8 +84,11 @@ final class EvalScore {
     private Set<String> eventTypes = Set.of();
     private List<String> missingTypes = List.of();
     private List<String> missingPaths = List.of();
+    private Set<String> typeIds = Set.of();
     // The source type checks, each with whether it passed: none for a case that isn't an aggregated feed's.
     private final List<Map<String, Object>> sourceTypeChecks = new ArrayList<>();
+    // The event type catalogue's checks, each with whether it passed: none for a case that expects none.
+    private final List<Map<String, Object>> catalogueChecks = new ArrayList<>();
 
     /// @param caseId The case.
     EvalScore(final String caseId) {
@@ -178,9 +195,309 @@ final class EvalScore {
                         : "") + " under " + data.get("at"));
             }
         }
+        final boolean typeIdsHeld = scoreTypeIds(expected, read);
+        final boolean described = scoreDescriptions(expected, read);
+        final boolean fewUnknown = scoreUnknown(expected, read);
         stage1 = counted == records1 && !validity.isEmpty() && validEvents == validity.size()
                  && missingTypes.isEmpty() && missingPaths.isEmpty() && !valuesMissing && !heldWrongly
-                 && forbidden.isEmpty() && !misplaced && textsAbsent.isEmpty() && textsWrong.isEmpty();
+                 && forbidden.isEmpty() && !misplaced && textsAbsent.isEmpty() && textsWrong.isEmpty()
+                 && typeIdsHeld && described && fewUnknown;
+    }
+
+    // expected.type_ids: the events' TypeIds (the catch-all's Unknown events left out of the pattern and the count)
+    // are of the `pattern` (`verb_object` or `any`), at least `min_distinct` distinct; none is one of `forbidden`;
+    // and each of `same`'s groups, records told by their Data ([#matches]), share one TypeId. Whether they are.
+    private boolean scoreTypeIds(final Map<String, Object> expected, final List<Element> read) {
+        final Map<String, Object> spec = maps(expected.get("type_ids"));
+        final Set<String> all = new TreeSet<>();
+        final Set<String> catalogued = new TreeSet<>();
+        for (final Element event : read) {
+            all.add(typeId(event));
+            if (!eventTypes(event).contains(UNKNOWN)) {
+                catalogued.add(typeId(event));
+            }
+        }
+        typeIds = all;
+        boolean held = true;
+        final String pattern = String.valueOf(spec.getOrDefault("pattern", DEFAULT_TYPE_ID_PATTERN));
+        if (VERB_OBJECT.equals(pattern)) {
+            final List<String> notVerbObject = catalogued.stream()
+                    .filter(typeId -> !VERB_OBJECT_ID.matcher(typeId).matches())
+                    .toList();
+            if (!notVerbObject.isEmpty()) {
+                held = false;
+                problems.add("TypeIds " + notVerbObject + " are not Verb-Object");
+            }
+        } else if (!ANY.equals(pattern)) {
+            throw new IllegalArgumentException("type_ids.pattern " + pattern + " is neither " + VERB_OBJECT
+                                               + " nor " + ANY);
+        }
+        if (spec.get("min_distinct") instanceof final Number least && catalogued.size() < least.intValue()) {
+            held = false;
+            problems.add(catalogued.size() + " distinct TypeIds " + catalogued + ", expected at least " + least);
+        }
+        final Set<String> wrong = new TreeSet<>(strings(spec.get("forbidden")));
+        wrong.retainAll(all);
+        if (!wrong.isEmpty()) {
+            held = false;
+            problems.add("events have TypeId " + wrong + ", which none should");
+        }
+        for (final Object group : (List<Object>) spec.getOrDefault("same", List.of())) {
+            held = sameTypeId((List<Map<String, Object>>) group, read) && held;
+        }
+        return held;
+    }
+
+    // The records each selector of a group matches all have one TypeId, and each selector matches some record.
+    private boolean sameTypeId(final List<Map<String, Object>> group, final List<Element> read) {
+        boolean held = true;
+        final Set<String> shared = new TreeSet<>();
+        final List<String> each = new ArrayList<>();
+        for (final Map<String, Object> selector : group) {
+            final Set<String> ids = new TreeSet<>();
+            read.stream().filter(event -> matches(event, selector)).forEach(event -> ids.add(typeId(event)));
+            if (ids.isEmpty()) {
+                held = false;
+                problems.add("no event matches " + selector + ", which must share its TypeId");
+            }
+            shared.addAll(ids);
+            each.add(selector + " " + ids);
+        }
+        if (shared.size() > 1) {
+            held = false;
+            problems.add("records that must share one TypeId have " + shared + ": " + String.join(", ", each));
+        }
+        return held;
+    }
+
+    // Whether an event holds, for each of the selector's fields, a Data element named after the field (the last
+    // segment of either name, any case, its punctuation left out: `event.eventType` is `eventType`) with the value:
+    // the vendor's code, as every event type's rule writes it.
+    private static boolean matches(final Element event, final Map<String, Object> selector) {
+        final NodeList data = event.getElementsByTagNameNS(EVT, "Data");
+        for (final Map.Entry<String, Object> entry : selector.entrySet()) {
+            boolean found = false;
+            for (int i = 0; i < data.getLength() && !found; i++) {
+                final Element element = (Element) data.item(i);
+                found = fieldName(element.getAttribute("Name")).equals(fieldName(entry.getKey()))
+                        && String.valueOf(entry.getValue()).equals(element.getAttribute("Value"));
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // A field's name, compared: its last segment (after a ., /, > or @), lower case, letters and digits only.
+    private static String fieldName(final String name) {
+        final String[] segments = name.split("[./>@]");
+        final String last = segments.length == 0
+                ? name
+                : segments[segments.length - 1];
+        return last.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
+    // expected.description_every_event: every event but the catch-all's Unknown ones has an EventDetail/Description.
+    private boolean scoreDescriptions(final Map<String, Object> expected, final List<Element> read) {
+        final boolean every = expected.get("description_every_event") instanceof final Boolean given
+                ? given
+                : DEFAULT_DESCRIPTION_EVERY_EVENT;
+        if (!every) {
+            return true;
+        }
+        final List<Element> catalogued = read.stream()
+                .filter(event -> !eventTypes(event).contains(UNKNOWN))
+                .toList();
+        final List<Element> bare = catalogued.stream()
+                .filter(event -> pathValues(List.of(event), "EventDetail/Description").stream()
+                        .allMatch(String::isEmpty))
+                .toList();
+        if (bare.isEmpty()) {
+            return true;
+        }
+        final Set<String> ids = new TreeSet<>();
+        bare.forEach(event -> ids.add(typeId(event)));
+        problems.add(bare.size() + " of " + catalogued.size() + " events have no EventDetail/Description: TypeIds "
+                     + ids);
+        return false;
+    }
+
+    // expected.unknown_at_most: no more of the events read are Unknown (the catch-all's) than that.
+    private boolean scoreUnknown(final Map<String, Object> expected, final List<Element> read) {
+        if (!(expected.get("unknown_at_most") instanceof final Number most)) {
+            return true;
+        }
+        final long unknown = read.stream().filter(event -> eventTypes(event).contains(UNKNOWN)).count();
+        if (unknown <= most.longValue()) {
+            return true;
+        }
+        problems.add(unknown + " Unknown events, at most " + most + " expected");
+        return false;
+    }
+
+    /// Scores a build's event type catalogue against the case's `expected.catalogue`, from the catalogue its source
+    /// notes hold (their JSON block: `event_types`, `catch_all`, `scope`) and the catalogue's last check (as
+    /// `catalogue_event_types` returns it: `counts`, `overlaps`...). Each check given is made, and a failed one is a
+    /// problem; an event type is named by its TypeId, any case, or alternatives the source fits equally (`a|b`):
+    ///
+    /// - `catch_all_confirmed`: the catch-all's status is `confirmed`.
+    /// - `no_overlaps`: the check found no record two event types recognise.
+    /// - `description_every`: every event type has a description.
+    /// - `no_condition_on_source_type_field`: no way of recognising an event type tests the scope's source type
+    ///   field (`event>log_type` is `event.log_type` too).
+    /// - `recognised_two_ways`: each event type named is recognised two or more ways.
+    /// - `documentation_only`: each event type named, or at least so many, is from the documentation (`basis`
+    ///   `documentation`) with no record in the sample.
+    /// - `dropped`: each event type named is dropped.
+    ///
+    /// @param evalCase  The case.
+    /// @param catalogue The build's source notes, as their JSON block reads, or null for none.
+    /// @param check     The catalogue's check, or null if none was made.
+    void scoreCatalogue(final Map<String, Object> evalCase,
+                        final Map<String, Object> catalogue,
+                        final Map<String, Object> check) {
+        final Map<String, Object> expected = maps(maps(evalCase.get("expected")).get("catalogue"));
+        if (expected.isEmpty()) {
+            return;
+        }
+        if (catalogue == null || !(catalogue.get("event_types") instanceof List<?>)) {
+            catalogueCheck("catalogue", false, "the build's source notes hold no event type catalogue");
+            return;
+        }
+        final List<Map<String, Object>> types = (List<Map<String, Object>>) catalogue.get("event_types");
+        if (Boolean.TRUE.equals(expected.get("catch_all_confirmed"))) {
+            final Object status = maps(catalogue.get("catch_all")).get("status");
+            catalogueCheck("catch-all confirmed", CONFIRMED.equals(status), "the catch-all is " + status
+                                                                            + ", not confirmed");
+        }
+        if (Boolean.TRUE.equals(expected.get("no_overlaps"))) {
+            if (check == null) {
+                catalogueCheck("no overlaps", false, "no catalogue check to score the overlaps on");
+            } else {
+                final List<String> overlaps = ((List<Map<String, Object>>) check.getOrDefault("overlaps",
+                        List.of())).stream()
+                        .map(overlap -> "record " + overlap.get("record") + " " + overlap.get("type_ids"))
+                        .toList();
+                catalogueCheck("no overlaps", overlaps.isEmpty(), "event types overlap: " + String.join(", ",
+                        overlaps));
+            }
+        }
+        if (Boolean.TRUE.equals(expected.get("description_every"))) {
+            final List<String> bare = types.stream()
+                    .filter(type -> String.valueOf(Objects.requireNonNullElse(type.get("description"), ""))
+                            .isBlank())
+                    .map(EvalScore::typeIdOf)
+                    .toList();
+            catalogueCheck("description on every event type", bare.isEmpty(), "event types with no description: "
+                                                                               + bare);
+        }
+        if (Boolean.TRUE.equals(expected.get("no_condition_on_source_type_field"))) {
+            final Object field = maps(catalogue.get("scope")).get("source_type_field");
+            final List<String> testing = field == null
+                    ? List.of()
+                    : types.stream().filter(type -> tests(type, String.valueOf(field))).map(EvalScore::typeIdOf)
+                            .toList();
+            catalogueCheck("no condition on the source type field", testing.isEmpty(), "event types recognised by "
+                                                                                        + "the source type field "
+                                                                                        + field + ": " + testing);
+        }
+        for (final String named : strings(expected.get("recognised_two_ways"))) {
+            final Map<String, Object> type = typeNamed(types, named);
+            final int ways = type == null
+                    ? 0
+                    : ((List<?>) type.getOrDefault("recognised_by", List.of())).size();
+            catalogueCheck(named + " recognised two ways", type != null && ways >= 2, type == null
+                    ? "no event type " + named + " in the catalogue"
+                    : typeIdOf(type) + " is recognised " + ways + (ways == 1
+                            ? " way"
+                            : " ways") + ", expected two or more");
+        }
+        scoreDocumentationOnly(expected.get("documentation_only"), types, check);
+        for (final String named : strings(expected.get("dropped"))) {
+            final Map<String, Object> type = typeNamed(types, named);
+            catalogueCheck(named + " dropped", type != null && Boolean.TRUE.equals(type.get("drop")), type == null
+                    ? "no event type " + named + " in the catalogue"
+                    : typeIdOf(type) + " is not dropped");
+        }
+    }
+
+    // documentation_only: the event types named (or at least so many) from the documentation, with no record in the
+    // sample (none counted by the check).
+    private void scoreDocumentationOnly(final Object expected,
+                                        final List<Map<String, Object>> types,
+                                        final Map<String, Object> check) {
+        if (expected == null) {
+            return;
+        }
+        final Map<String, Object> counts = check == null
+                ? Map.of()
+                : maps(check.get("counts"));
+        final List<Map<String, Object>> documented = types.stream()
+                .filter(type -> DOCUMENTATION.equals(type.get("basis")))
+                .filter(type -> !(maps(counts.get(typeIdOf(type))).get("records") instanceof final Number records)
+                                || records.intValue() == 0)
+                .toList();
+        if (expected instanceof final Number least) {
+            catalogueCheck("at least " + least + " from documentation only", documented.size() >= least.intValue(),
+                    documented.size() + " event type(s) from documentation only, with no record in the sample, "
+                    + "expected at least " + least);
+            return;
+        }
+        for (final String named : strings(expected)) {
+            final Map<String, Object> type = typeNamed(types, named);
+            catalogueCheck(named + " from documentation only", type != null && documented.contains(type),
+                    type == null
+                            ? "no event type " + named + " in the catalogue"
+                            : typeIdOf(type) + " is not from documentation only (basis " + type.get("basis")
+                              + ", " + maps(counts.get(typeIdOf(type))).get("records") + " record(s))");
+        }
+    }
+
+    // Whether any way of recognising the event type tests the field (a held field's > read as the . of a nested
+    // one's, a meta: prefix left out).
+    private static boolean tests(final Map<String, Object> type, final String field) {
+        final String wanted = spelling(field);
+        for (final Map<String, Object> way : (List<Map<String, Object>>) type.getOrDefault("recognised_by",
+                List.of())) {
+            for (final Map<String, Object> condition : (List<Map<String, Object>>) way.getOrDefault("when",
+                    List.of())) {
+                if (condition.get("field") != null && wanted.equals(spelling(String.valueOf(condition.get(
+                        "field"))))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static String spelling(final String field) {
+        return field.replaceFirst("^meta:", "").replace('>', '.').replace('/', '.');
+    }
+
+    // The event type the name gives (its TypeId, any case, or one of its alternatives a|b), or null.
+    private static Map<String, Object> typeNamed(final List<Map<String, Object>> types, final String named) {
+        final List<String> alternatives = List.of(named.split("\\|"));
+        return types.stream()
+                .filter(type -> alternatives.stream().anyMatch(name -> name.equalsIgnoreCase(typeIdOf(type))))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static String typeIdOf(final Map<String, Object> type) {
+        return String.valueOf(type.get("type_id"));
+    }
+
+    // A catalogue check: kept, and a problem if it failed.
+    private void catalogueCheck(final String check, final boolean passed, final String problem) {
+        final Map<String, Object> made = new LinkedHashMap<>();
+        made.put("check", check);
+        made.put("passed", passed);
+        if (!passed) {
+            made.put("problem", problem);
+            problems.add(problem);
+        }
+        catalogueChecks.add(made);
     }
 
     /// Scores an aggregated feed's build against the case's `expected.source_types`, from the build's end state: its
@@ -725,6 +1042,7 @@ final class EvalScore {
         map.put("events", events);
         map.put("valid_events", validEvents);
         map.put("event_types", List.copyOf(eventTypes));
+        map.put("type_ids", List.copyOf(typeIds));
         map.put("missing_types", missingTypes);
         map.put("missing_paths", missingPaths);
         map.put("problems", List.copyOf(problems));
@@ -733,6 +1051,9 @@ final class EvalScore {
         }
         if (!questionChecks.isEmpty()) {
             map.put("question_checks", List.copyOf(questionChecks));
+        }
+        if (!catalogueChecks.isEmpty()) {
+            map.put("catalogue_checks", List.copyOf(catalogueChecks));
         }
         map.put("notes", List.copyOf(notes));
         return map;
@@ -775,6 +1096,11 @@ final class EvalScore {
             }
         }
         return types;
+    }
+
+    // The event's EventDetail/TypeId, or "" if it has none.
+    private static String typeId(final Element event) {
+        return pathValues(List.of(event), "EventDetail/TypeId").stream().findFirst().orElse("");
     }
 
     // has_path: the event has the path, or one of its alternatives (a|b), with a value or children; * is any one

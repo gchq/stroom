@@ -18,9 +18,11 @@ package stroom.mcp.impl.e2e;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -368,6 +370,223 @@ class TestEvalScore {
         assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
                 "no event holds [say \"hi\"] anywhere",
                 "events hold [say \\\"hi\\\"], which none should");
+    }
+
+    @Test
+    void typeIdsAreScoredVerbObjectDistinctForbiddenAndShared() {
+        final List<String> events = List.of(
+                typed("Authenticate-Logon", "<Data Name=\"eventType\" Value=\"user.session.start\"/>"),
+                typed("Authenticate-Logon", "<Data Name=\"type\" Value=\"login\"/>"),
+                typed("Authenticate-Logoff", "<Data Name=\"type\" Value=\"logout\"/>"),
+                unknown("x"));
+        final Map<String, Object> expected = Map.of("records", 4, "type_ids", Map.of("pattern", "verb_object",
+                "min_distinct", 2, "forbidden", List.of("login"),
+                "same", List.of(List.of(Map.of("eventType", "user.session.start"), Map.of("type", "login")))),
+                "unknown_at_most", 1);
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), events, List.of(true, true, true, true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat(score.stage1()).isTrue();
+        assertThat(score.toMap()).containsEntry("type_ids", List.of("Authenticate-Logoff", "Authenticate-Logon",
+                "Unknown-X"));
+    }
+
+    @Test
+    void whatIsWrongWithTheTypeIdsIsSaid() {
+        final List<String> events = List.of(
+                typed("user.session.start", "<Data Name=\"event.eventType\" Value=\"user.session.start\"/>"),
+                typed("login", "<Data Name=\"type\" Value=\"login\"/>"),
+                unknown("a"),
+                unknown("b"));
+        final Map<String, Object> expected = Map.of("records", 4, "type_ids", Map.of("pattern", "verb_object",
+                "min_distinct", 3, "forbidden", List.of("login"),
+                "same", List.of(List.of(Map.of("eventType", "user.session.start"), Map.of("type", "login")),
+                        List.of(Map.of("type", "logout")))),
+                "unknown_at_most", 1);
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), events, List.of(true, true, true, true), null);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "TypeIds [login, user.session.start] are not Verb-Object",
+                "2 distinct TypeIds [login, user.session.start], expected at least 3",
+                "events have TypeId [login], which none should",
+                "records that must share one TypeId have [login, user.session.start]: {eventType=user.session.start}"
+                + " [user.session.start], {type=login} [login]",
+                "no event matches {type=logout}, which must share its TypeId",
+                "2 Unknown events, at most 1 expected");
+    }
+
+    @Test
+    void aTypeIdOfAnyFormMayBeAllowedAndUnknownEventsAreLeftOutOfTheForm() {
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", 2, "type_ids", Map.of("pattern", "any"))),
+                List.of(typed("login", ""), unknown("x")), List.of(true, true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+
+        final EvalScore verbObject = new EvalScore("c");
+        verbObject.scoreEvents(expecting(Map.of("records", 1, "type_ids", Map.of("pattern", "verb_object"))),
+                List.of(unknown("lower case")), List.of(true), null);
+        assertThat((List<String>) verbObject.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void aDescriptionOnEveryEventIsScoredLeavingOutUnknownEvents() {
+        final String described = event("", "<TypeId>Authenticate-Logon</TypeId><Description>Signed in</Description>"
+                                            + "<Authenticate><Action>Logon</Action></Authenticate>");
+        final String bare = event("", "<TypeId>Authenticate-Logoff</TypeId><Description> </Description>"
+                                      + "<Authenticate><Action>Logoff</Action></Authenticate>");
+        final Map<String, Object> expected = Map.of("records", 2, "description_every_event", true);
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreEvents(expecting(expected), List.of(described, unknown("x")), List.of(true, true), null);
+        assertThat((List<String>) passing.toMap().get("problems")).isEmpty();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreEvents(expecting(expected), List.of(described, bare), List.of(true, true), null);
+        assertThat(failing.stage1()).isFalse();
+        assertThat((List<String>) failing.toMap().get("problems"))
+                .containsExactly("1 of 2 events have no EventDetail/Description: TypeIds [Authenticate-Logoff]");
+    }
+
+    @Test
+    void theCatalogueIsScoredFromTheSourceNotesAndTheCheck() {
+        final Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("catch_all_confirmed", true);
+        expected.put("no_overlaps", true);
+        expected.put("description_every", true);
+        expected.put("no_condition_on_source_type_field", true);
+        expected.put("recognised_two_ways", List.of("Authenticate-Logon"));
+        expected.put("documentation_only", List.of("Unlock-Account|Update-Account"));
+        expected.put("dropped", List.of("process-heartbeat"));
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreCatalogue(expecting(Map.of("catalogue", expected)), catalogue(), check(List.of()));
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) score.toMap().get("catalogue_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("catch-all confirmed", "no overlaps", "description on every event type",
+                        "no condition on the source type field", "Authenticate-Logon recognised two ways",
+                        "Unlock-Account|Update-Account from documentation only", "process-heartbeat dropped");
+
+        final EvalScore counted = new EvalScore("c");
+        counted.scoreCatalogue(expecting(Map.of("catalogue", Map.of("documentation_only", 1))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) counted.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void whatIsWrongWithTheCatalogueIsSaid() {
+        final Map<String, Object> notes = catalogue();
+        notes.put("catch_all", Map.of("status", "proposed"));
+        final List<Map<String, Object>> types = (List<Map<String, Object>>) notes.get("event_types");
+        types.getFirst().put("description", "");
+        ((List<Map<String, Object>>) types.get(1).get("recognised_by")).add(Map.of("when", List.of(
+                Map.of("field", "event.log_type", "equals", "Integration"))));
+        final Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("catch_all_confirmed", true);
+        expected.put("no_overlaps", true);
+        expected.put("description_every", true);
+        expected.put("no_condition_on_source_type_field", true);
+        expected.put("recognised_two_ways", List.of("Unlock-Account", "Process-Missing"));
+        expected.put("documentation_only", 2);
+        expected.put("dropped", List.of("Authenticate-Logon"));
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreCatalogue(expecting(Map.of("catalogue", expected)), notes, check(List.of(Map.of("record", 3,
+                "type_ids", List.of("Authenticate-Logon", "Authenticate-Logoff")))));
+
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the catch-all is proposed, not confirmed",
+                "event types overlap: record 3 [Authenticate-Logon, Authenticate-Logoff]",
+                "event types with no description: [Authenticate-Logon]",
+                "event types recognised by the source type field event>log_type: [Authenticate-Logoff]",
+                "Unlock-Account is recognised 1 way, expected two or more",
+                "no event type Process-Missing in the catalogue",
+                "1 event type(s) from documentation only, with no record in the sample, expected at least 2",
+                "Authenticate-Logon is not dropped");
+    }
+
+    @Test
+    void noCatalogueOrNoCheckIsAProblemAndNoneExpectedIsNotScored() {
+        final EvalScore none = new EvalScore("c");
+        none.scoreCatalogue(expecting(Map.of("catalogue", Map.of("catch_all_confirmed", true))), null, null);
+        assertThat((List<String>) none.toMap().get("problems"))
+                .containsExactly("the build's source notes hold no event type catalogue");
+
+        final EvalScore unchecked = new EvalScore("c");
+        unchecked.scoreCatalogue(expecting(Map.of("catalogue", Map.of("no_overlaps", true))), catalogue(), null);
+        assertThat((List<String>) unchecked.toMap().get("problems"))
+                .containsExactly("no catalogue check to score the overlaps on");
+
+        final EvalScore plain = new EvalScore("c");
+        plain.scoreCatalogue(expecting(Map.of("records", 1)), null, null);
+        assertThat(plain.toMap()).doesNotContainKey("catalogue_checks");
+        assertThat((List<String>) plain.toMap().get("problems")).isEmpty();
+    }
+
+    // A catalogue as the source notes' JSON block holds it: a logon recognised two ways, a logoff, an unlock from the
+    // documentation with no record in the sample, a dropped heartbeat.
+    private static Map<String, Object> catalogue() {
+        final List<Map<String, Object>> types = new ArrayList<>();
+        types.add(eventType("Authenticate-Logon", "documented", List.of(
+                Map.of("field", "eventType", "equals", "user.session.start"),
+                Map.of("field", "type", "equals", "login")), "user_confirmed", false));
+        types.add(eventType("Authenticate-Logoff", "documented", List.of(
+                Map.of("field", "type", "one_of", List.of("logout", "timeout"))), "user_confirmed", false));
+        types.add(eventType("Unlock-Account", "documented", List.of(
+                Map.of("field", "type", "equals", "unlock")), "documentation", false));
+        types.add(eventType("Process-Heartbeat", "documented", List.of(
+                Map.of("field", "type", "equals", "heartbeat")), "user_confirmed", true));
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("event_types", types);
+        notes.put("catch_all", Map.of("status", "confirmed"));
+        notes.put("scope", Map.of("source_type_field", "event>log_type", "source_types", List.of("Integration")));
+        return notes;
+    }
+
+    // An event type recognised one way for each condition given.
+    private static Map<String, Object> eventType(final String typeId,
+                                                 final String description,
+                                                 final List<Map<String, Object>> ways,
+                                                 final String basis,
+                                                 final boolean drop) {
+        final List<Map<String, Object>> recognisedBy = new ArrayList<>();
+        ways.forEach(condition -> recognisedBy.add(Map.of("when", List.of(condition), "names", List.of())));
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", typeId);
+        type.put("description", description);
+        type.put("recognised_by", recognisedBy);
+        type.put("drop", drop);
+        type.put("basis", basis);
+        type.put("status", "confirmed");
+        return type;
+    }
+
+    // The catalogue's check: every type's records counted (none for the documented unlock), and the overlaps given.
+    private static Map<String, Object> check(final List<Map<String, Object>> overlaps) {
+        return Map.of("counts", Map.of("Authenticate-Logon", Map.of("records", 2, "by_way", List.of(1, 1)),
+                        "Authenticate-Logoff", Map.of("records", 1, "by_way", List.of(1)),
+                        "Process-Heartbeat", Map.of("records", 3, "by_way", List.of(3))),
+                "overlaps", overlaps, "uncatalogued", Map.of("records", 0, "shapes", List.of()));
+    }
+
+    // An event of a TypeId, its Data under Authenticate.
+    private static String typed(final String typeId, final String data) {
+        return event("", "<TypeId>" + typeId + "</TypeId><Authenticate><Action>Logon</Action>" + data
+                         + "</Authenticate>");
+    }
+
+    // A record no event type recognised, translated as Unknown.
+    private static String unknown(final String typeId) {
+        return event("", "<TypeId>Unknown-" + typeId.toUpperCase(Locale.ROOT).charAt(0)
+                         + typeId.substring(1) + "</TypeId><Unknown><Data Name=\"x\" Value=\"y\"/></Unknown>");
     }
 
     // A later build's registry: the web server group's row naming its pipeline, the mail row the Messaging group's.
