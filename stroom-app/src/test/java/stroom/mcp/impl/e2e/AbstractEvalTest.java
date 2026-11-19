@@ -119,7 +119,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final int CATALOGUE_SETS = 40;
     // The keys of a mapping that say how its records are read, which catalogue_event_types takes as its reading.
     private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace",
-            "json_layout", "json_fields", "xml_fields", "pairs", "extract", "nil_values");
+            "json_layout", "json_fields", "xml_fields", "pairs", "extract", "nil_values", "for_each");
 
     // The streams a question's events are in.
     private static final int QUESTION_STREAMS = 10;
