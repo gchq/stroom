@@ -68,6 +68,10 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
     // The source type field form's message says so.
     private static final String SOURCE_FORM = "aggregates several sources";
     private static final String TYPED = "What's the difference between the app and source fields?";
+    // The catalogue form's message says so ("Accept all N event types, or type your amendments").
+    private static final String CATALOGUE_FORM = "event types";
+    private static final String CATALOGUE = "catalogue_event_types";
+    private static final String AMENDMENT = "The logouts are session timeouts, not logoffs";
 
     @Inject
     private AskStroomAIService askStroomAIService;
@@ -85,8 +89,11 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
     private FakeModelServer model;
     private UserRef user;
     private McpTestClient client;
-    // The source type field forms the user was shown.
+    // The forms the user was shown of the kind they type a message instead of answering.
     private int sourceFormsShown;
+    // The kind of form (part of its message) the user types a message instead of answering, and that message.
+    private String typedInsteadOf = SOURCE_FORM;
+    private String typedMessage = TYPED;
     // The form the user typed a message instead of answering, or 0 before they have.
     private int typedAfterId;
 
@@ -154,6 +161,77 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
                         .contains("source_type_field"));
     }
 
+    // The catalogue form ("Accept all N event types, or type your amendments") is a choice the user may amend in the
+    // chat, but the event types are confirmed only through the form (stroom-ai/DESIGN.md, Consent; the catalogue's
+    // Confirmation). The user types an amendment instead of answering it: the re-made call tells the agent to reply
+    // first; the agent sends the amendment as a change; nothing is confirmed from the chat, and the form is not
+    // shown again until the agent asks.
+    @Test
+    void aMessageTypedInsteadOfAnsweringTheCatalogueFormIsAnAmendmentNeverAnAcceptance() {
+        typedInsteadOf = CATALOGUE_FORM;
+        typedMessage = AMENDMENT;
+        final String build = logonsCatalogued();
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        final String confirm = JsonUtil.writeValueAsString(Map.of("build", build, "confirm", true), false);
+        final String amended = JsonUtil.writeValueAsString(Map.of("build", build, "proposals", List.of(Map.of(
+                "op", "change", "type_id", "Authenticate-Logoff", "title", "Session timeout", "description",
+                "A session timed out"))), false);
+        model.callTool(CATALOGUE, confirm)
+                .callTool(CATALOGUE, confirm)
+                .callTool(CATALOGUE, amended)
+                .answer("Changed: the logouts are session timeouts. Confirm the event types in the form.");
+
+        ask(chat, modelRef, "Confirm the event types.");
+
+        assertThat(sourceFormsShown).as("the catalogue form was shown once").isEqualTo(1);
+        final Map<String, Object> after = model.agentRequests().stream()
+                .filter(request -> JsonUtil.writeValueAsString(request.get("messages"), false).contains(AMENDMENT))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("The model was never given the user's message: "
+                                                      + model.agentRequests()));
+        final List<Map<String, Object>> messages = messages(after);
+        final String result = String.valueOf(messages.get(lastIndexOf(messages, "tool")).get("content"));
+        assertThat(result).as("what the re-made catalogue_event_types call tells the agent")
+                .containsIgnoringCase("sent a message instead")
+                .doesNotContain("closed or ran out")
+                .doesNotContain("\"status\":\"confirmed\"");
+        // The amendment applied as a change; nothing confirmed from the chat.
+        final String listed = JsonUtil.writeValueAsString(client.json(CATALOGUE, Map.of("build", build)), false);
+        assertThat(listed).contains("Session timeout", "\"status\":\"proposed\"")
+                .doesNotContain("\"status\":\"confirmed\"");
+    }
+
+    // A build of logons and logoffs, surveyed, its two event types proposed (high confidence) through the real
+    // tools, for the chat to confirm. Returns the build's name.
+    private String logonsCatalogued() {
+        final StringBuilder sample = new StringBuilder();
+        for (int i = 0; i < 12; i++) {
+            sample.append("time=2026-11-06T09:%02d:00Z action=%s user=user%d\n".formatted(i, i % 2 == 0
+                    ? "login"
+                    : "logout", i % 3));
+        }
+        final Map<String, Object> started = client.json("start_onboarding", Map.of("source_name", "Logons",
+                "samples", List.of(sample.toString())));
+        final String build = (String) started.get("build");
+        client.json("create_feed", Map.of("build", build, "name", "CHAT-LOGONS"));
+        client.json("upload_sample", Map.of("feed", "CHAT-LOGONS", "sample", sample.toString()));
+        client.json("survey_feed", Map.of("feed", "CHAT-LOGONS", "build", build));
+        client.json(CATALOGUE, Map.of("build", build));
+        client.json(CATALOGUE, Map.of("build", build, "proposals", List.of(
+                logged("Authenticate-Logon", "login", "Logon"),
+                logged("Authenticate-Logoff", "logout", "Logoff"))));
+        return build;
+    }
+
+    // An event type of the logons, recognised by its action.
+    private static Map<String, Object> logged(final String typeId, final String value, final String action) {
+        return Map.of("op", "add", "type_id", typeId, "title", typeId, "description", "E2E: " + typeId,
+                "event_detail", "Authenticate", "action", action, "actor", "user", "confidence", "high",
+                "basis", "agent_knowledge", "recognised_by", List.of(Map.of("when", List.of(Map.of("field",
+                        "action", "equals", value)), "names", List.of())));
+    }
+
     // The build, its feed, and a sample of an application's log, JSON lines naming the component that wrote
     // each record, uploaded to it, made through the real tools. Returns the build's name.
     private String sampleInABuild() {
@@ -204,20 +282,20 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
         throw new AssertionError("The question was not answered: " + aiService.getMessages(chat.getId()));
     }
 
-    // The first source type field form: the user types a message in the chat instead. Any other form, or that
-    // form shown again: answered.
+    // The first form of the kind the user types instead of answering: the user types a message in the chat
+    // instead. Any other form, or that form shown again: answered.
     private void respond(final AiChat chat,
                          final DocRef modelRef,
                          final AiChatMessage message,
                          final ElicitationRecord form) {
-        final boolean sourceForm = String.valueOf(form.message()).contains(SOURCE_FORM);
+        final boolean sourceForm = String.valueOf(form.message()).contains(typedInsteadOf);
         if (sourceForm) {
             sourceFormsShown++;
         }
         if (sourceForm && typedAfterId == 0) {
             typedAfterId = message.getId();
             asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
-                    AskStroomAiConfig.builder().modelRef(modelRef).build(), null, TYPED, AiAgentMode.AGENT,
+                    AskStroomAiConfig.builder().modelRef(modelRef).build(), null, typedMessage, AiAgentMode.AGENT,
                     null)));
             return;
         }

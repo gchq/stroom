@@ -154,6 +154,69 @@ class TestE2eMixedLines extends AbstractE2eTest {
         assertThat(times.getLast()).isEqualTo("2026-10-12T00:14:59.833Z");
     }
 
+    // ### One event type written in two line formats: one way of recognising it a format, each placed in the
+    // variant whose records it recognises (evaluated, not guessed), and processing agrees with the check's counts.
+    @Test
+    void oneEventTypeWrittenInTwoLineFormatsIsPlacedInEachByEvaluation() {
+        final String build = "mixed-types";
+        final String feed = "MIXED-TYPES";
+        createFeed(build, feed);
+        final StringBuilder sample = new StringBuilder();
+        for (int i = 0; i < 18; i++) {
+            final String action = i % 3 == 2
+                    ? "logout"
+                    : "login";
+            sample.append(i % 2 == 0
+                    ? "time=2026-11-06T09:%02d:00Z action=%s user=user%d\n".formatted(i, action, i % 4)
+                    : "Nov  6 09:%02d:30 web%d sshd[%d]: %s for user%d from 10.0.0.%d\n".formatted(i, i % 3,
+                            100 + i, action, i % 4, i));
+        }
+        final List<Long> raw = List.of(upload(feed, sample.toString()));
+        surveyed(build, feed, raw);
+        final Map<String, Object> splitter = Map.of("kind", "alternatives", "parts", List.of(
+                Map.of("kind", "syslog", "variant", "syslog"),
+                Map.of("kind", "key_value", "delimiter", " ", "variant", "key_value")));
+        final Map<String, Object> ds = json("build_data_splitter", args("stream_ids", raw, "save_as", feed,
+                "build", build, "spec", splitter));
+        assertThat(ds.get("saved")).as("saved: %s", ds.get("not_saved")).isNotNull();
+
+        final Map<String, Object> checked = proposed(build, raw, List.of(
+                withKeys(eventType("Authenticate-Logon", "Authenticate", "high", when("action", "equals", "login"),
+                        when("message", "starts_with", "login for")), "action", "Logon"),
+                withKeys(eventType("Authenticate-Logoff", "Authenticate", "high", when("action", "equals",
+                        "logout"), when("message", "starts_with", "logout for")), "action", "Logoff")));
+        final Map<String, Object> logons = map(map(checkOf(checked), "counts"), "Authenticate-Logon");
+        assertThat(number(logons.get("records"))).isEqualTo(12);
+        assertThat((List<Integer>) logons.get("by_way")).containsExactly(6, 6);
+        confirmedCatalogue(build);
+
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", raw, "build", build,
+                "source_name", "Mixed", "system_name", "Mixed", "environment", "Test", "splitter", ds.get("spec")));
+        dump("draft_translation_mapping two formats", draft);
+        final List<String> logonRules = list(map(draft, "mapping"), "events").stream()
+                .map(AbstractE2eTest::jsonOf)
+                .filter(rule -> rule.contains("Authenticate-Logon"))
+                .toList();
+        assertThat(logonRules).as("a rule a way of recognising it, each in its own variant").hasSize(2)
+                .anySatisfy(rule -> assertThat(rule).contains("\"equals\":\"key_value\"", "\"action\"")
+                        .doesNotContain("starts_with"))
+                .anySatisfy(rule -> assertThat(rule).contains("\"equals\":\"syslog\"", "\"starts_with\"")
+                        .doesNotContain("\"action\",\"equals\""));
+
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", decide(map(draft,
+                        "mapping")), "schema_version", draft.get("schema_version"), "stream_ids", raw, "splitter",
+                ds.get("spec"), "build", build, "name", feed + "-Events"));
+        assertThat(saved).as("saved: %s", saved.get("problems")).containsEntry("ok", true);
+        final String pipeline = (String) json("create_pipeline", args("build", build, "name", feed + "-Events",
+                "template_uuid", templateUuid("translation", "Event Data (Text)"))).get("uuid");
+        final Map<String, Object> gate = process(pipeline, raw);
+        assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
+        final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());
+        final String events = storedText(eventsId);
+        assertThat(events.split("<TypeId>Authenticate-Logon</TypeId>", -1)).hasSize(13);
+        assertThat(events.split("<TypeId>Authenticate-Logoff</TypeId>", -1)).hasSize(7);
+    }
+
     private static String timeOf(final String events) {
         final Matcher time = TIME_CREATED.matcher(events);
         return time.find()

@@ -324,6 +324,57 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         assertThat(denied).as("the blocked one Network/Deny").contains("<Deny>").doesNotContain("<Unknown");
     }
 
+    // ### Event types from the documentation, in the catalogue: one with no sampled record said to be not in the
+    // sample (kept, not dropped); each Event's Description the documentation's text for its type (the records have
+    // no message of their own).
+    @Test
+    void documentedEventTypesAreCataloguedAndTheirDescriptionsComeFromTheDocumentation() {
+        final String build = "e2e-srcdocs-types";
+        final String feed = "E2E-SRCDOCS-TYPES";
+        createFeed(build, feed);
+        final long raw = upload(feed, SAMPLE);
+        surveyed(build, feed, List.of(raw));
+        agreed("record_source_notes", args("build", build, "source", "Acme directory", "summary",
+                "The directory audit log.", "fields", FIELDS, "documents", List.of(Map.of("title",
+                        "audit log reference", "text", REFERENCE + "| 4767 | An account was unlocked |\n"))));
+        saveTextConverter(build, feed, CSV_SPLITTER);
+        final Map<String, Object> checked = proposed(build, List.of(raw), List.of(
+                documented("Authenticate-Logon", "Authenticate", "4624", "An account logged on", "Logon"),
+                documented("Authenticate-FailedLogon", "Authenticate", "4625", "An account failed to log on",
+                        "Logon"),
+                documented("Authenticate-Logoff", "Authenticate", "4634", "An account logged off", "Logoff"),
+                documented("Unlock-Account", "Update", "4767", "An account was unlocked", null)));
+        assertThat(countsOf(checked)).containsEntry("Authenticate-Logon", 1L).containsEntry("Unlock-Account", 0L);
+        assertThat(jsonOf(checked)).as("the documented event type with no sampled record")
+                .contains("Unlock-Account", "not in the sample");
+        confirmedCatalogue(build);
+        assertThat(eventTypesOf(build)).containsKey("Unlock-Account");
+
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "source_name", "Acme directory", "system_name", "Acme directory", "environment", "Eval",
+                "build", build, "schema_version", VERSION));
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", draft.get("mapping"),
+                "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
+        assertThat(saved.get("ok")).as("saved: %s", saved.get("problems")).isEqualTo(true);
+        final String pipeline = (String) createPipeline(build, feed + "-Events",
+                templateUuid("translation", "Event Data (Text)")).get("uuid");
+        assertThat(stepSample(pipeline, List.of(raw)).get("verdict")).isEqualTo("clean");
+        assertThat(translationOutput(pipeline, raw, 0)).contains("<TypeId>Authenticate-Logon</TypeId>",
+                "<Description>An account logged on</Description>");
+        assertThat(translationOutput(pipeline, raw, 1)).contains(
+                "<Description>An account failed to log on</Description>");
+    }
+
+    // An event type as the documentation describes it, recognised by its event id.
+    private static Map<String, Object> documented(final String typeId,
+                                                  final String eventDetail,
+                                                  final String evt,
+                                                  final String description,
+                                                  final String action) {
+        return withKeys(eventType(typeId, eventDetail, "high", when("evt", "equals", evt)), "description",
+                description, "basis", "documentation", "action", action, "actor", "usr");
+    }
+
     // A vendor manual far larger than a model's context: a section per event id.
     private static String manual(final int events) {
         final List<String> parts = new ArrayList<>();
