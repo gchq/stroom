@@ -135,7 +135,7 @@ class IndexingFilter extends AbstractXMLFilter {
             // Create a key to create shards with.
             if (metaHolder == null
                 || metaHolder.getMeta() == null
-                || !TimePartitionFactory.isTimePartitioned(index)) {
+                || !index.getPartitionBy().isTimeBased()) {
                 // The index is not partitioned by time, or there is no stream (many tests don't use
                 // streams), so just create a basic key.
                 final Partition partition = AllPartition.INSTANCE;
@@ -221,7 +221,7 @@ class IndexingFilter extends AbstractXMLFilter {
             try {
                 Partition partition = defaultPartition;
                 // Only choose a partition by event time if the index is partitioned by time.
-                if (currentEventTime != null && TimePartitionFactory.isTimePartitioned(index)) {
+                if (currentEventTime != null && index.getPartitionBy().isTimeBased()) {
                     final Entry<Long, TimePartition> entry = timePartitionTreeMap.floorEntry(currentEventTime);
                     if (entry != null &&
                         entry.getValue().getPartitionFromTime() <= currentEventTime &&

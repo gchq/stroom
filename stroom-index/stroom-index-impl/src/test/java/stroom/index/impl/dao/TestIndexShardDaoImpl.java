@@ -23,16 +23,21 @@ import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.IndexDbModule;
 import stroom.index.shared.AllPartition;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
+import stroom.index.shared.Partition;
+import stroom.index.shared.TimePartition;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.io.ByteSizeUnit;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.Range;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -229,5 +234,105 @@ class TestIndexShardDaoImpl {
             });
             assertThat(count.get()).isEqualTo(2);
         }
+    }
+
+    @Test
+    void testFind_partitionTimeRange_bothBounds() {
+        // Mid to late March finds March's month shard, the year shard and the unpartitioned one
+        final String indexUuid = createMixedShards();
+
+        assertThat(findPartitions(indexUuid, new Range<>(ms("2024-03-15"), ms("2024-03-31"))))
+                .containsExactlyInAnyOrder("all", "2024", "2024-03");
+    }
+
+    @Test
+    void testFind_partitionTimeRange_fromOnly() {
+        final String indexUuid = createMixedShards();
+
+        assertThat(findPartitions(indexUuid, new Range<>(ms("2024-04-15"), null)))
+                .containsExactlyInAnyOrder("all", "2024", "2024-05");
+    }
+
+    @Test
+    void testFind_partitionTimeRange_toOnly() {
+        final String indexUuid = createMixedShards();
+
+        assertThat(findPartitions(indexUuid, new Range<>(null, ms("2024-02-15"))))
+                .containsExactlyInAnyOrder("all", "2024", "2024-01");
+    }
+
+    @Test
+    void testFind_partitionTimeRange_partitionEndIsExclusive() {
+        // January's partition ends at the start of February, so a range from then leaves it out
+        final String indexUuid = createMixedShards();
+
+        assertThat(findPartitions(indexUuid, new Range<>(ms("2024-02-01"), ms("2024-02-15"))))
+                .containsExactlyInAnyOrder("all", "2024");
+    }
+
+    @Test
+    void testFind_noPartitionTimeRange() {
+        final String indexUuid = createMixedShards();
+
+        assertThat(findPartitions(indexUuid, null))
+                .containsExactlyInAnyOrder("all", "2024", "2024-01", "2024-03", "2024-05");
+    }
+
+    // Creates the shards of an index whose partitioning has changed: one written with No partition
+    // (no partition times), one for the year 2024 and month shards for January, March and May 2024.
+    private String createMixedShards() {
+        final String indexUuid = UUID.randomUUID().toString();
+        final String nodeName = TestData.createNodeName();
+        final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
+        final IndexVolume indexVolume = createVolume(
+                nodeName, tempDir.resolve("my_vol1").toString(), indexVolumeGroup);
+        createShard(indexUuid, AllPartition.INSTANCE, indexVolume, nodeName);
+        createShard(indexUuid,
+                new TimePartition(PartitionBy.YEAR, 1, ms("2024-01-01"), ms("2025-01-01"), "2024"),
+                indexVolume,
+                nodeName);
+        createMonthShard(indexUuid, "2024-01", "2024-02", indexVolume, nodeName);
+        createMonthShard(indexUuid, "2024-03", "2024-04", indexVolume, nodeName);
+        createMonthShard(indexUuid, "2024-05", "2024-06", indexVolume, nodeName);
+        return indexUuid;
+    }
+
+    private void createMonthShard(final String indexUuid,
+                                  final String month,
+                                  final String nextMonth,
+                                  final IndexVolume indexVolume,
+                                  final String nodeName) {
+        final TimePartition partition = new TimePartition(
+                PartitionBy.MONTH, 1, ms(month + "-01"), ms(nextMonth + "-01"), month);
+        createShard(indexUuid, partition, indexVolume, nodeName);
+    }
+
+    private List<String> findPartitions(final String indexUuid, final Range<Long> partitionTimeRange) {
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria
+                .builder()
+                .partitionTimeRange(partitionTimeRange)
+                .build();
+        criteria.getIndexUuidSet().add(indexUuid);
+        return indexShardDao.find(criteria)
+                .getValues()
+                .stream()
+                .map(IndexShard::getPartition)
+                .toList();
+    }
+
+    private static long ms(final String date) {
+        return Instant.parse(date + "T00:00:00Z").toEpochMilli();
+    }
+
+    private void createShard(final String indexUuid,
+                             final Partition partition,
+                             final IndexVolume indexVolume,
+                             final String nodeName) {
+        final IndexShardKey indexShardKey = IndexShardKey
+                .builder()
+                .indexUuid(indexUuid)
+                .partition(partition)
+                .build();
+        indexShardDao.create(indexShardKey, indexVolume, nodeName, "1.0-test");
     }
 }
