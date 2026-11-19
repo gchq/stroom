@@ -28,9 +28,8 @@ ARG APP_JAR_FILENAME="stroom-proxy-app-all.jar"
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
 FROM redhat/ubi10-minimal:10.2-1794227009@sha256:f0c7b9ae9914fcf183e7c36fc46864903c2d2caf3af327421913ae54b3d29e94 AS common-base-stage
 
-# bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
+# bash, jq and openssl are required for Kubernetes lifecycle scripts, which interact with the API.
 # curl is required for the docker healthcheck
-
 RUN \
     set -eu; \
     echo "http_proxy: ${http_proxy:-}"; \
@@ -40,9 +39,9 @@ RUN \
         ca-certificates \
         curl \
         glibc-langpack-en \
-        jq; \
-    microdnf clean all; \
-    locale -a
+        jq \
+        openssl; \
+    microdnf clean all
 
 # Re-define the JAVA_HOME for our custom JRE
 ENV JAVA_HOME=/opt/java/runtime
