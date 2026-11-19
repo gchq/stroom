@@ -179,12 +179,18 @@ class IndexShardDaoImpl implements IndexShardDao {
                         Selection.convert(criteria.getIndexShardStatusSet(),
                                 IndexShard.IndexShardStatus::getPrimitiveValue)),
                 JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition()),
-                Optional.ofNullable(criteria.getPartitionTimeRange())
-                        .map(Range::getFrom)
-                        .map(INDEX_SHARD.PARTITION_FROM_MS::greaterOrEqual),
+                // A shard is found if its partition overlaps the time range. Shards keep the partitioning
+                // they were written with, which may be coarser than the index's current setting, and a
+                // shard written while its index had No partition has no partition times, as it may hold
+                // documents from any time.
                 Optional.ofNullable(criteria.getPartitionTimeRange())
                         .map(Range::getTo)
-                        .map(INDEX_SHARD.PARTITION_TO_MS::lessOrEqual)
+                        .map(to -> INDEX_SHARD.PARTITION_FROM_MS.isNull()
+                                .or(INDEX_SHARD.PARTITION_FROM_MS.lessOrEqual(to))),
+                Optional.ofNullable(criteria.getPartitionTimeRange())
+                        .map(Range::getFrom)
+                        .map(from -> INDEX_SHARD.PARTITION_TO_MS.isNull()
+                                .or(INDEX_SHARD.PARTITION_TO_MS.greaterThan(from)))
         );
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);

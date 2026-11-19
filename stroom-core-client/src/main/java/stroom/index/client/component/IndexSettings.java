@@ -67,6 +67,7 @@ public class IndexSettings extends Component {
     public IndexSettings() {
         initWidget(BINDER.createAndBindUi(this));
 
+        partitionBy.addItem(PartitionBy.NONE);
         partitionBy.addItem(PartitionBy.YEAR);
         partitionBy.addItem(PartitionBy.MONTH);
         partitionBy.addItem(PartitionBy.WEEK);

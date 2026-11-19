@@ -18,12 +18,11 @@ package stroom.search.impl;
 
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexStore;
-import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.TimePartition;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Query;
 import stroom.query.api.TimeFilter;
 import stroom.query.api.TimeRange;
@@ -44,7 +43,6 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
 
     private final IndexStore indexStore;
     private final IndexShardDao indexShardDao;
-    private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
 
     @Inject
     public NodeSearchTaskCreator(final IndexStore indexStore,
@@ -112,24 +110,29 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
         if (indexDoc == null) {
             throw new SearchException("Index not found");
         }
+        return partitionTimeRange(query.getTimeRange(), task.getDateTimeSettings());
+    }
 
-        final TimeRange timeRange = query.getTimeRange();
-        Long partitionFrom = null;
-        Long partitionTo = null;
-
+    /// Gets the time range a shard's partition must overlap for the shard to be searched. It is the
+    /// query's own time range, not rounded to the index's partitions, as shards keep the partitioning
+    /// they were written with, which may differ from the index's current setting.
+    ///
+    /// @param timeRange        The query's time range, may be null.
+    /// @param dateTimeSettings The settings to read the time range's expressions with.
+    /// @return The range, with a null from or to where the query's time range has no bound.
+    static Range<Long> partitionTimeRange(final TimeRange timeRange,
+                                          final DateTimeSettings dateTimeSettings) {
+        Long from = null;
+        Long to = null;
         if (timeRange != null) {
-            final TimeFilter timeFilter = DateExpressionParser
-                    .getTimeFilter(timeRange, task.getDateTimeSettings());
-
+            final TimeFilter timeFilter = DateExpressionParser.getTimeFilter(timeRange, dateTimeSettings);
             if (timeRange.getFrom() != null && !timeRange.getFrom().isBlank()) {
-                final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getFrom());
-                partitionFrom = timePartition.getPartitionFromTime();
+                from = timeFilter.getFrom();
             }
             if (timeRange.getTo() != null && !timeRange.getTo().isBlank()) {
-                final TimePartition timePartition = timePartitionFactory.create(indexDoc, timeFilter.getTo());
-                partitionTo = timePartition.getPartitionToTime();
+                to = timeFilter.getTo();
             }
         }
-        return new Range<>(partitionFrom, partitionTo);
+        return new Range<>(from, to);
     }
 }

@@ -384,6 +384,98 @@ class TestProcessorProfileCache {
         assertThat(result).isEqualTo(ZERO);
     }
 
+    @Test
+    void testGetProfile_overnightPeriod_afterMidnight() {
+        // Period 22:00 - 06:00 starting on Wednesday. Test at 02:00 Thursday — should match.
+        final Instant thursday02 = ZonedDateTime.of(
+                2025, 6, 19, 2, 0, 0, 0, ZoneOffset.UTC).toInstant();
+        setupProfile(PROFILE_NAME, GROUP_NAME, createOvernightPeriod(Day.WEDNESDAY));
+        setupNodeGroup(GROUP_NAME, true, Set.of(NODE_NAME));
+
+        final ProfileResult result = processorProfileCache.getProfile(
+                NODE_NAME, PROFILE_NAME, thursday02);
+
+        assertThat(result.maxNodeThreads()).isEqualTo(50);
+        assertThat(result.maxClusterThreads()).isEqualTo(25);
+    }
+
+    @Test
+    void testGetProfile_overnightPeriod_afterMidnight_atEndTime() {
+        // Period 22:00 - 06:00 starting on Wednesday. The end time is inclusive.
+        final Instant thursday06 = ZonedDateTime.of(
+                2025, 6, 19, 6, 0, 0, 0, ZoneOffset.UTC).toInstant();
+        setupProfile(PROFILE_NAME, GROUP_NAME, createOvernightPeriod(Day.WEDNESDAY));
+        setupNodeGroup(GROUP_NAME, true, Set.of(NODE_NAME));
+
+        final ProfileResult result = processorProfileCache.getProfile(
+                NODE_NAME, PROFILE_NAME, thursday06);
+
+        assertThat(result.maxNodeThreads()).isEqualTo(50);
+        assertThat(result.maxClusterThreads()).isEqualTo(25);
+    }
+
+    @Test
+    void testGetProfile_overnightPeriod_afterMidnight_afterWindow() {
+        // Period 22:00 - 06:00 starting on Wednesday. Test at 06:00:01 Thursday — should NOT match.
+        final Instant thursdayAfter06 = ZonedDateTime.of(
+                2025, 6, 19, 6, 0, 1, 0, ZoneOffset.UTC).toInstant();
+        setupProfile(PROFILE_NAME, GROUP_NAME, createOvernightPeriod(Day.WEDNESDAY));
+        setupNodeGroup(GROUP_NAME, true, Set.of(NODE_NAME));
+
+        final ProfileResult result = processorProfileCache.getProfile(
+                NODE_NAME, PROFILE_NAME, thursdayAfter06);
+
+        assertThat(result).isEqualTo(ZERO);
+    }
+
+    @Test
+    void testGetProfile_overnightPeriod_afterMidnight_startDayNotIncluded() {
+        // Period 22:00 - 06:00 starting on Thursday. At 02:00 Thursday the period has not started yet, and
+        // there is no Wednesday period to carry over — should NOT match.
+        final Instant thursday02 = ZonedDateTime.of(
+                2025, 6, 19, 2, 0, 0, 0, ZoneOffset.UTC).toInstant();
+        setupProfile(PROFILE_NAME, GROUP_NAME, createOvernightPeriod(Day.THURSDAY));
+        setupNodeGroup(GROUP_NAME, true, Set.of(NODE_NAME));
+
+        final ProfileResult result = processorProfileCache.getProfile(
+                NODE_NAME, PROFILE_NAME, thursday02);
+
+        assertThat(result).isEqualTo(ZERO);
+    }
+
+    @Test
+    void testGetProfile_overnightPeriod_afterMidnight_acrossWeekBoundary() {
+        // Period 22:00 - 06:00 starting on Sunday. Test at 02:00 Monday — should match.
+        final Instant monday02 = ZonedDateTime.of(
+                2025, 6, 23, 2, 0, 0, 0, ZoneOffset.UTC).toInstant();
+        setupProfile(PROFILE_NAME, GROUP_NAME, createOvernightPeriod(Day.SUNDAY));
+        setupNodeGroup(GROUP_NAME, true, Set.of(NODE_NAME));
+
+        final ProfileResult result = processorProfileCache.getProfile(
+                NODE_NAME, PROFILE_NAME, monday02);
+
+        assertThat(result.maxNodeThreads()).isEqualTo(50);
+        assertThat(result.maxClusterThreads()).isEqualTo(25);
+    }
+
+    @Test
+    void testGetProfile_daytimePeriod_doesNotCarryOverToNextDay() {
+        // Period 09:00 - 18:00 on Tuesday only. Test at 14:30 Wednesday — should NOT match.
+        final ProfilePeriod tuesdayOnly = ProfilePeriod.builder()
+                .uuid("period-1")
+                .days(Days.create(Set.of(Day.TUESDAY)))
+                .startTime(new Time(9, 0, 0))
+                .endTime(new Time(18, 0, 0))
+                .build();
+        setupProfile(PROFILE_NAME, GROUP_NAME, tuesdayOnly);
+        setupNodeGroup(GROUP_NAME, true, Set.of(NODE_NAME));
+
+        final ProfileResult result = processorProfileCache.getProfile(
+                NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
+
+        assertThat(result).isEqualTo(ZERO);
+    }
+
     // ---- Multiple periods (first match wins) ----
 
     @Test
@@ -670,10 +762,23 @@ class TestProcessorProfileCache {
 
     // ---- Helpers ----
 
-    /**
-     * Creates a ProfilePeriod that covers all days 00:00:00 - 23:59:59
-     * with the specified thread limits.
-     */
+    // Creates a ProfilePeriod that starts at 22:00:00 on the given day and ends at 06:00:00 the next
+    // morning, limited to 50 node threads and 25 cluster threads.
+    private ProfilePeriod createOvernightPeriod(final Day startDay) {
+        return ProfilePeriod.builder()
+                .uuid("period-1")
+                .days(Days.create(Set.of(startDay)))
+                .startTime(new Time(22, 0, 0))
+                .endTime(new Time(6, 0, 0))
+                .limitNodeThreads(true)
+                .maxNodeThreads(50)
+                .limitClusterThreads(true)
+                .maxClusterThreads(25)
+                .build();
+    }
+
+    // Creates a ProfilePeriod that covers all days 00:00:00 - 23:59:59
+    // with the specified thread limits.
     private ProfilePeriod createAllDayPeriod(final int maxNodeThreads,
                                              final int maxClusterThreads) {
         return ProfilePeriod.builder()

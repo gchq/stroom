@@ -231,6 +231,8 @@ public class LuceneIndexDoc extends AbstractDoc {
     }
 
     public enum PartitionBy implements HasDisplayValue {
+        // The index is not partitioned by time, so all documents go into a single partition.
+        NONE("No partition"),
         DAY("Day"),
         WEEK("Week"),
         MONTH("Month"),
@@ -245,6 +247,14 @@ public class LuceneIndexDoc extends AbstractDoc {
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+
+        /// Tests whether this setting splits an index's documents into partitions by time.
+        ///
+        /// @return True for a period of time, false for [#NONE], where all of an index's documents
+        /// belong to one partition.
+        public boolean isTimeBased() {
+            return this != NONE;
         }
     }
 

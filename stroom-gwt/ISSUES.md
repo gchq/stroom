@@ -96,10 +96,7 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 ### The replay dialog says Edit Schedule
 
-**Fixed upstream, not yet in master** (19 November 2026): PR #6055 (issue #6050, on 7.14, open)
-adds a `ReplayScheduleFactory` and changes `ScheduledProcessingPresenter`. This branch has no
-presenter there (the caption is chosen in `ScheduledProcessEditorController.show`), so when 7.14
-comes into master the fix needs porting to the controllers rather than taking as it is.
+**Fixed** (#6050, 19 November 2026, 7.14 merge): a replay is sent with no UUID (`ReplayScheduleFactory`, the server gives it one), so the dialog says Create Schedule.
 
 **Confirmed** (10 November 2026, 7.14 merge). Replaying an execution (an analytic's, report's or
 data generator's Execution tab, Replay Selected Execution) opens the schedule dialog captioned
@@ -134,9 +131,7 @@ the credentials are saved, including edits that don't change it.
 
 ### Overnight processing periods never match after midnight
 
-**Fixed upstream, not yet in master** (19 November 2026): PR #6054 (issue #6051, on 7.14, open)
-changes `ProcessorProfileCache` and adds tests to `TestProcessorProfileCache`. Server side only, so
-it should come into master without trouble.
+**Fixed** (#6051, 19 November 2026, 7.14 merge): `ProcessorProfileCache` matches the part after midnight.
 
 **Re-checked** (6 November 2026, against the code): still open: `ProcessorProfileCache.java:155-161` (in `stroom-processor/stroom-processor-impl`) takes the start from the current day and moves only the end on a day.
 
@@ -146,11 +141,7 @@ day, so the part after midnight never matches.
 
 ### Index "No partition" is saved as Month
 
-**Fixed upstream, not yet in master** (19 November 2026): PR #6056 (issue #6052, on 7.14, open)
-fixes the server (`LuceneIndexDoc`, `TimePartitionFactory`, the indexing filters, the search task
-creator) and the 7.14 client's `IndexSettingsViewImpl`. This branch's client is `IndexSettings`,
-which no longer offers No partition, so when 7.14 comes into master it needs deciding whether the
-client offers it again.
+**Fixed** (#6052, 19 November 2026, 7.14 merge): `PartitionBy.NONE` is offered as No partition and kept by the server; story `App/Index/IndexEditor` `NoPartitionSaved`.
 
 **Re-checked** (6 November 2026, against the code): the client no longer offers No partition (`IndexSettings.java:70-73`); the server still turns none into Month (`LuceneIndexDoc.java:127`).
 

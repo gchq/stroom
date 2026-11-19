@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestTimePartition {
 
@@ -69,13 +70,26 @@ class TestTimePartition {
         assertThat(getPartition(PartitionBy.WEEK, 1, millis)).isEqualTo("2016-12-26");
     }
 
+    @Test
+    void testCreate_noneIsRejected() {
+        final LuceneIndexDoc index = createIndex(PartitionBy.NONE, 1);
+
+        assertThatThrownBy(() -> new TimePartitionFactory().create(index, 0L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("NONE");
+    }
+
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
-        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+        final LuceneIndexDoc index = createIndex(partitionBy, partitionSize);
+        return new TimePartitionFactory().create(index, millis).getLabel();
+    }
+
+    private LuceneIndexDoc createIndex(final PartitionBy partitionBy, final int partitionSize) {
+        return LuceneIndexDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .shardsPerPartition(5)
                 .partitionBy(partitionBy)
                 .partitionSize(partitionSize)
                 .build();
-        return new TimePartitionFactory().create(index, millis).getLabel();
     }
 }
