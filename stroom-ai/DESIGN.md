@@ -2936,6 +2936,9 @@ covers it. `names` gives a `matches` condition's capture groups names, fields th
 build). The build's source type field is never in a condition: the group's module already passes other source types
 over, and a condition on it would break when a source type joins another group.
 
+**A sole event type.** An event type may be recognised by every record (no condition) only when it is the only
+event type of its source type, or of its line format; the catch-all is still confirmed, and catches nothing.
+
 **Uncatalogued records.** The catalogue is confirmed with its catch-all: records no event type recognises are
 translated as Unknown, their fields kept as Data; the catch-all is not an event type. It is marked `catch_all: true`
 for the generator (not inferred). What it catches in processing is logged (`Caught by`, read by review_coverage) and
@@ -3060,7 +3063,9 @@ are confirmed.
 * **Carried into the next version.** A build of a feed's next version starts from the promoted catalogue (its source
   notes move with it); the review shows what changed: event types added, changed, removed.
 * **Hand edits reconciled.** A hand-edited XSLT's rules are read back (`rebuild_mapping`) into the catalogue, so the
-  catalogue stays the source of truth; an edit the catalogue can't express is named, as `... not read` is now.
+  catalogue stays the source of truth; an edit the catalogue can't express is named, as `... not read` is now. A
+  hand-written last rule taking every remaining record and writing a real event (not Unknown) is read back as the
+  catch-all with its own translation, and the review names it.
 
 #### Surface
 
@@ -3085,6 +3090,27 @@ are confirmed.
 
 #### Phases (commit per phase)
 
+0. **Test plan** (from a review of the eval cases and e2e suites, 2026-11-19): each later phase starts from tests that
+   fail on the current code.
+   * The free reference eval run (`TestE2eEvalReference`, all cases, no model cost) never catalogued: each case gains
+     a reference catalogue, confirmed through `catalogue_event_types` before its build, so every case checks the
+     engine on its format. The references are rewritten to the design: Verb-Object TypeIds with the vendor's code as
+     Data; `not` where 34, 35 and 36 relied on rule order or an unconditional type; 57 told by its records' shape,
+     never by the source type field; sole event types recognised by every record. `eval_cases.json` and the golden
+     generation files are regenerated from them.
+   * `EvalScore` gains `type_ids` (Verb-Object, a least number distinct, records that must share one, forbidden
+     ones), `unknown_at_most`, and `catalogue` checks read from the source notes (catch-all confirmed, no overlaps,
+     Description on every event, no condition on the source type field, types recognised two ways, types from
+     documentation only, drops). The TypeId `forbidden_values` of 56, 59, 60 and 61 move to `forbidden_texts`.
+   * A parity suite (as `TestSourceTypeReadingParity`): each operator over nested, flat dotted, held once and twice,
+     XML in JSON, namespaced, escaped, CDATA, doubled-quote, array, unparseable and NUL values.
+   * E2e: TestE2eClassifyKinds, TestE2eHeldKindFields and TestE2ePegaLoggerKinds rewritten; new suites for
+     processing parity (the real string cut), the lifecycle, and 300 event types; TestE2eMixedLines, TestE2eSourceDocs
+     and TestAskStroomAiMessageInsteadOfForm extended; the three classify helpers merged into one that confirms the
+     seed.
+   * The eval harness's simulated user decides the catalogue form from a case's `user_knows` line (amendments,
+     drops), so drops and amendments are the user's.
+
 1. Model: the event type (identity, meaning, recognition, provenance), Condition `not`, `starts_with`, `contains`,
    the `catch_all` flag; one evaluator with parity tests (fields and values above, incl. the key-spelling question);
    pure, unit-tested.
@@ -3100,8 +3126,11 @@ are confirmed.
    SecurityEventLogger as four event types told by eventType, SOAPService as request, response and fault told by
    its message, the rest one each; the `classifiedAsDrafted` helper), TOOLS.md, DESIGN.md and the guides, in these
    words.
-7. Eval cases rescored (case 65's kind form check; catalogue checks: no overlaps, a confirmed catch-all, Verb-Object
-   TypeIds) and run on Haiku (cases 17, 19, 32, 35, 36, 47, 56, 60, 61, 65 at least); defects fixed.
+7. Eval cases rescored as phase 0 sets out; new cases: Pega loggers (the motivating test, from
+   `aggregated/pega-loggers`), flat and nested dotted keys, some 300 documented codes of which about 120 are in the
+   sample (run alone), array membership, uncatalogued records becoming proposals; 20 extended with a code only in the
+   documentation, 30 with records that must share one TypeId. Run on Haiku: 17, 19, 30, 32, 35, 36, 41, 47, 56, 58,
+   60, 61, 65 and the new cases; defects fixed.
 
 #### Decided (user, 2026-11-19)
 
@@ -3110,7 +3139,9 @@ recognised by). Overlaps between event types in the sample refused, catalogue or
 confirmed catch-all always (not an event type); Description from the record's message, else the vendor documentation, else the agent's fixed text; conditions an AND with NOT, `starts_with` and `contains`, no OR
 across fields; a regex guard; Verb-Object TypeId for every source, the vendor's code as Data (every tested field but
 the source type field); nothing migrated; the tool renamed; the draft's rules offered as a seed; the lifecycle after
-the first build in scope; eval cases rescored and run on Haiku.
+the first build in scope; eval cases rescored and run on Haiku. A sole event type may be recognised by every
+record; types told apart only by the source type field are told by their records' shape instead; a hand-written
+catch-all writing a real event is read back as the catch-all; the eval user decides the catalogue form.
 
 ### Generation (built)
 
