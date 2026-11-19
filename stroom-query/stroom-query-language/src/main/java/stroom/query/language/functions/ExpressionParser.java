@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 public class ExpressionParser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExpressionParser.class);
+    // A function of the old window clause, which is refused with what to write instead.
+    private static final String REMOVED_PERIOD_FUNCTION = "period";
 
     // We deliberately exclude brackets as they are treated as an unnamed function.
     private static final TokenType[] BODMAS = new TokenType[]{
@@ -203,6 +205,10 @@ public class ExpressionParser {
         // Create the function.
         final Function function = FunctionFactory.create(expressionContext, functionName);
         if (function == null) {
+            if (REMOVED_PERIOD_FUNCTION.equalsIgnoreCase(functionName)) {
+                throw new TokenException(token, "The 'period' function has been removed. Use lag() for the "
+                                                + "value of an earlier window, as in 'lag(count(), 1)'");
+            }
             throw new TokenException(token, "Unknown function '" + functionName + "'");
         }
 

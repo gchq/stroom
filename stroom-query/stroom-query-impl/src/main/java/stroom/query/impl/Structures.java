@@ -324,6 +324,19 @@ class Structures {
                         1970, which is not the same as `1w`. A year can advance by months and a week by days,
                         but months and years can't advance by weeks, days or less.
 
+                        Use `lag` and `lead` to compare a window with another one, e.g.
+                        ```stroomql
+                        from Events
+                        window EventTime by 1d
+                        eval Change = count() - lag(count(), 1)
+                        group by UserId
+                        select windowStart() as Day, UserId, count() as Events, Change
+                        ```
+                        `lag(count(), 1)` is the count of the window one size before for the same user, and
+                        `lead(count(), 1)` the one after. A third value, as in `lag(max(Bytes), 1, 0)`, is
+                        given when the other window has no value. A user with no events in a window still
+                        gets a row for it if a window either side reads it.
+
                         Rows with no time in the window's field are left out.
                         """,
                 "window ${1:time_field} by ${2:size}\n$0");

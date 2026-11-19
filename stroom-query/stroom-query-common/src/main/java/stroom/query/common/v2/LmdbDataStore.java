@@ -134,6 +134,8 @@ public class LmdbDataStore implements DataStore {
     // The time windows of the table's window clause and where its time field is in a row, or null
     // and -1 if it has none.
     private final TimeWindows timeWindows;
+    // How far each row is copied for the functions that read other windows, such as lag.
+    private final int[] windowShifts;
     private final int windowTimeFieldIndex;
     private final String windowTimeField;
     private final AtomicBoolean reportedRowWithNoWindowTime = new AtomicBoolean();
@@ -200,6 +202,8 @@ public class LmdbDataStore implements DataStore {
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
+        windowShifts = valueReferenceIndex.getWindowShifts();
+        checkWindowUse();
         compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         final int maxStringFieldLength = tableSettings.overrideMaxStringFieldLength() &&
@@ -277,9 +281,24 @@ public class LmdbDataStore implements DataStore {
         if (valueFilter.test(values)) {
             // Now add the rows if we aren't filtering.
             if (timeWindows == null) {
-                addInternal(values, 0, currentDbStateFactory.createCurrentDbState(values));
+                addInternal(values, 0, 0, currentDbStateFactory.createCurrentDbState(values));
             } else {
                 addToWindows(values);
+            }
+        }
+    }
+
+    private void checkWindowUse() {
+        if (timeWindows == null) {
+            if (valueReferenceIndex.usesWindows()) {
+                throw new IllegalArgumentException("Window functions such as windowStart() and lag() can "
+                                                   + "only be used in a query that has a window clause");
+            }
+        } else {
+            final long copies = TimeWindows.getCopiesPerTime(timeWindows.getWindowsPerTime(), windowShifts.length);
+            if (copies > TimeWindows.MAX_WINDOWS_PER_TIME) {
+                throw new IllegalArgumentException(TimeWindows.tooManyCopiesMessage(
+                        timeWindows.getWindowsPerTime(), windowShifts.length));
             }
         }
     }
@@ -291,11 +310,6 @@ public class LmdbDataStore implements DataStore {
             throw new IllegalArgumentException("The window of a table has no time field");
         }
         final TimeWindows timeWindows = TimeWindows.create(window);
-        if (timeWindows.getWindowsPerTime() > TimeWindows.MAX_WINDOWS_PER_TIME) {
-            throw new IllegalArgumentException("Each event would be in " + timeWindows.getWindowsPerTime()
-                                               + " windows, and the most allowed is "
-                                               + TimeWindows.MAX_WINDOWS_PER_TIME);
-        }
         // Every row is copied into each of its windows, so unless rows are grouped by window the
         // copies would be counted together.
         final boolean groupedByWindow = NullSafe.list(tableSettings.getColumns())
@@ -327,24 +341,40 @@ public class LmdbDataStore implements DataStore {
             return;
         }
         final CurrentDbState currentDbState = currentDbStateFactory.createCurrentDbState(values);
-        timeWindows.forEachWindow(timeMs, windowKey -> addInternal(values, windowKey, currentDbState));
+        timeWindows.forEachWindow(timeMs, windowKey -> {
+            addInternal(values, windowKey, 0, currentDbState);
+            // Copy the row to each window that reads this one.
+            for (final int windowShift : windowShifts) {
+                addInternal(values, timeWindows.shift(windowKey, windowShift), windowShift, currentDbState);
+            }
+        });
     }
 
     // The current DB state is a reference to the current event, so we can keep track of what we have
     // stored data for.
     private void addInternal(final Val[] values,
                              final long windowKey,
+                             final int windowShift,
                              final CurrentDbState currentDbState) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
         LOGGER.trace("add() called for {} values", values.length);
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
+        // A row copied from another window adds to the grouped rows of the window that reads it, but
+        // is not one of that window's own rows, so it is left out of the depth below the groups that
+        // holds each row.
+        final int depths = windowShift == 0
+                ? groupIndicesByDepth.length
+                : Math.min(groupIndicesByDepth.length, compiledDepths.getMaxGroupDepth() + 1);
+
         ByteBuffer parentRowKey = null;
-        final LmdbKV[] rows = new LmdbKV[groupIndicesByDepth.length];
-        for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
+        final LmdbKV[] rows = new LmdbKV[depths];
+        for (int depth = 0; depth < depths; depth++) {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
             storedValues.setWindowKey(windowKey);
+            storedValues.setWindowShift(windowShift);
+            final boolean[] groupIndices = groupIndicesByDepth[depth];
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
             for (int columnIndex = 0; columnIndex < compiledColumnArray.length; columnIndex++) {
@@ -354,7 +384,13 @@ public class LmdbDataStore implements DataStore {
                 // If we need a value at this level then set the raw values.
                 if (valueIndices[columnIndex] ||
                     columnIndex == keyFactoryConfig.getTimeColumnIndex()) {
-                    generator.set(values, storedValues);
+                    // A row copied from another window is grouped like any other, but is not counted
+                    // by the aggregates of the window it is copied to.
+                    if (windowShift == 0 || groupIndices[columnIndex] || !compiledColumn.hasAggregate()) {
+                        generator.set(values, storedValues);
+                    } else {
+                        generator.setShifted(values, storedValues);
+                    }
                 }
             }
 

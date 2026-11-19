@@ -23,6 +23,7 @@ import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /// A function that works with the time windows of a query's `window` clause.
@@ -71,6 +72,13 @@ abstract class AbstractWindowFunction extends AbstractFunction {
         } else if (expressionContext != null) {
             window = expressionContext.getWindow();
         }
+        if (spec != null
+            && expressionContext != null
+            && expressionContext.getWindow() != null
+            && !sameWindows(window, expressionContext.getWindow())) {
+            throw new ParseException("'" + name + "' uses the windows of the query's window clause, and "
+                                     + "can't be given others", 0);
+        }
         if (window == null) {
             throw new ParseException("'" + name + "' can only be used in a query that has a window clause, "
                                      + "as in 'window EventTime by 1d'", 0);
@@ -109,6 +117,13 @@ abstract class AbstractWindowFunction extends AbstractFunction {
         return new HoppingWindow(null, parts[0], emptyToNull(parts[1]), emptyToNull(parts[2]), emptyToNull(parts[3]));
     }
 
+    private static boolean sameWindows(final HoppingWindow a, final HoppingWindow b) {
+        return Objects.equals(a.getWindowSize(), b.getWindowSize())
+               && Objects.equals(a.getAdvanceSize(), b.getAdvanceSize())
+               && Objects.equals(a.getOffset(), b.getOffset())
+               && Objects.equals(a.getTimeZone(), b.getTimeZone());
+    }
+
     private static String emptyToNull(final String string) {
         return string.isEmpty()
                 ? null
@@ -140,6 +155,7 @@ abstract class AbstractWindowFunction extends AbstractFunction {
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         windowKeyReference = valueReferenceIndex.addValue(name);
+        valueReferenceIndex.setUsesWindows();
         super.addValueReferences(valueReferenceIndex);
     }
 
@@ -183,6 +199,12 @@ abstract class AbstractWindowFunction extends AbstractFunction {
         @Override
         public void set(final Val[] values, final StoredValues storedValues) {
             windowKeyReference.set(storedValues, ValLong.create(storedValues.getWindowKey()));
+        }
+
+        // A row copied from another window is grouped into this one, so has this window's key.
+        @Override
+        public void setShifted(final Val[] values, final StoredValues storedValues) {
+            set(values, storedValues);
         }
 
         @Override

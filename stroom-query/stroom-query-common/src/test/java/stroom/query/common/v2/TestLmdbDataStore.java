@@ -198,6 +198,90 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         .contains("Rows with no time in the window field 'EventTime' are left out"));
     }
 
+    @Test
+    void lagAndLeadGiveTheCountOfTheWindowsEitherSide() {
+        final TableSettings tableSettings = lagTable("1d", null);
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T09:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T10:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-11T09:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-13T09:00:00Z", "user1");
+        // Another user's events are not counted in the windows of the first.
+        addEvent(dataStore, "2026-03-11T09:00:00Z", "user2");
+        addEvent(dataStore, "2026-03-12T09:00:00Z", "user2");
+
+        // The columns are the user, the start of the window, its count, the count of the window
+        // before and the count of the window after. The 12th has a row for user1 though they did
+        // nothing that day, as the days either side read it.
+        assertThat(windowRows(dataStore, tableSettings, 5)).contains(
+                List.of("user1", "2026-03-10T00:00:00.000Z", "2", "0", "1"),
+                List.of("user1", "2026-03-11T00:00:00.000Z", "1", "2", "0"),
+                List.of("user1", "2026-03-12T00:00:00.000Z", "0", "1", "1"),
+                List.of("user1", "2026-03-13T00:00:00.000Z", "1", "0", "0"),
+                List.of("user2", "2026-03-11T00:00:00.000Z", "1", "0", "1"),
+                List.of("user2", "2026-03-12T00:00:00.000Z", "1", "1", "0"));
+    }
+
+    @Test
+    void lagOfAHoppingWindowReadsTheWindowOneSizeBefore() {
+        final TableSettings tableSettings = lagTable("1h", "30m");
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T10:10:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T10:40:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T11:20:00Z", "user1");
+
+        // The hour from 11:00 holds one event, and the hour before it, from 10:00, holds two. The
+        // window that starts half an hour before is not the one that is read.
+        assertThat(windowRows(dataStore, tableSettings, 5)).contains(
+                List.of("user1", "2026-03-10T10:30:00.000Z", "2", "1", "0"),
+                List.of("user1", "2026-03-10T11:00:00.000Z", "1", "2", "0"),
+                List.of("user1", "2026-03-10T11:30:00.000Z", "0", "2", "0"));
+    }
+
+    @Test
+    void rowsCopiedFromAnotherWindowAreNotAmongTheRowsOfTheWindow() {
+        // Showing detail keeps every row below its group.
+        final TableSettings tableSettings = lagTable("1d", null).copy().showDetail(true).build();
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T09:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-10T10:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-11T09:00:00Z", "user1");
+
+        // Three events give three rows below the groups, and not one more for each copy.
+        final long detailRows = windowRowDepths(dataStore, tableSettings)
+                .stream()
+                .filter(depth -> depth > 0)
+                .count();
+        assertThat(detailRows).isEqualTo(3);
+    }
+
+    @Test
+    void tooManyCopiesOfEachRowIsRefused() {
+        // Each row is in 60 windows, and is copied again to each for lag and for lead.
+        assertThatThrownBy(() -> create(lagTable("1h", "1m")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Each event would be copied 180 times")
+                .hasMessageContaining("the most allowed is 100");
+    }
+
+    @Test
+    void windowFunctionInATableWithNoWindowIsRefused() {
+        final TableSettings tableSettings = TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("Starts")
+                        .name("Starts")
+                        .expression("windowStart('window:1h|||Z')")
+                        .build())
+                .build();
+
+        assertThatThrownBy(() -> create(tableSettings))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("can only be used in a query that has a window clause");
+    }
+
     // A table need not come from StroomQL, which is where the limits on a window are first applied.
     @Test
     void windowThatStroomQlWouldRefuseIsRefusedByTheStore() {
@@ -263,12 +347,96 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .build();
     }
 
+    // A table of the events of each user in each window, with the events of the windows before and
+    // after, as `select UserId, windowStart(), count(), lag(count(), 1), lead(count(), 1)` is parsed
+    // into.
+    private TableSettings lagTable(final String size, final String advance) {
+        final HoppingWindow window = new HoppingWindow("EventTime", size, advance, null, "Z");
+        final String windows = "'window:" + size + "|" + (advance == null
+                ? ""
+                : advance) + "||Z'";
+        return TableSettings.builder()
+                .window(window)
+                .addColumns(Column.builder()
+                        .id("UserId")
+                        .name("UserId")
+                        .expression(ParamUtil.create("UserId"))
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Starts")
+                        .name("Starts")
+                        .expression("windowStart(" + windows + ")")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Events")
+                        .name("Events")
+                        .expression("count()")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Before")
+                        .name("Before")
+                        .expression("lag(count(), 1, " + windows + ")")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("After")
+                        .name("After")
+                        .expression("lead(count(), 1, " + windows + ")")
+                        .build())
+                .addColumns(Column.builder()
+                        .id("__window__")
+                        .name("__window__")
+                        .expression("windowKey(" + windows + ")")
+                        .group(0)
+                        .visible(false)
+                        .special(true)
+                        .build())
+                .build();
+    }
+
+    // The depth of every row of a table with all of its groups open.
+    private List<Integer> windowRowDepths(final DataStore dataStore, final TableSettings tableSettings) {
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        final ResultRequest closed = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 100))
+                .build();
+        final Set<String> openGroups = ((TableResult) new TableResultCreator().create(dataStore, closed))
+                .getRows()
+                .stream()
+                .map(Row::getGroupKey)
+                .collect(Collectors.toSet());
+        final ResultRequest open = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 100))
+                .openGroups(openGroups)
+                .build();
+        return ((TableResult) new TableResultCreator().create(dataStore, open))
+                .getRows()
+                .stream()
+                .map(Row::getDepth)
+                .toList();
+    }
+
     // The store asks for the window's time field first, so it is the first value of a row.
     private void addEvent(final DataStore dataStore, final String time, final String userId) {
         dataStore.accept(Val.of(ValDate.create(Instant.parse(time).toEpochMilli()), ValString.create(userId)));
     }
 
     private List<List<String>> windowRows(final DataStore dataStore, final TableSettings tableSettings) {
+        return windowRows(dataStore, tableSettings, 4);
+    }
+
+    private List<List<String>> windowRows(final DataStore dataStore,
+                                          final TableSettings tableSettings,
+                                          final int columns) {
         try {
             dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
@@ -284,7 +452,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         return tableResult
                 .getRows()
                 .stream()
-                .map(row -> row.getValues().subList(0, 4))
+                .map(row -> row.getValues().subList(0, columns))
                 .toList();
     }
 

@@ -323,6 +323,33 @@ public final class TimeWindows {
                 : duration.getTime();
     }
 
+    /// Gets how many times a row is added to a result store, which is once for each window it is in
+    /// and once more for each of those for every other window that a function such as `lag` reads.
+    ///
+    /// @param windowsPerTime How many windows each time is in.
+    /// @param windowShifts   How many other windows the functions of the query read.
+    /// @return The number of copies of each row.
+    public static long getCopiesPerTime(final int windowsPerTime, final int windowShifts) {
+        return (long) windowsPerTime * (windowShifts + 1);
+    }
+
+    /// Says why a query makes too many copies of each row, in words fit to show its author.
+    ///
+    /// @param windowsPerTime How many windows each time is in.
+    /// @param windowShifts   How many other windows the functions of the query read.
+    /// @return The message.
+    public static String tooManyCopiesMessage(final int windowsPerTime, final int windowShifts) {
+        final long copies = getCopiesPerTime(windowsPerTime, windowShifts);
+        if (windowShifts == 0) {
+            return "Each event would be in " + windowsPerTime + " windows, and the most allowed is "
+                   + MAX_WINDOWS_PER_TIME + ". Use a larger advance or a smaller window";
+        }
+        return "Each event would be copied " + copies + " times, as it is in " + windowsPerTime
+               + " windows and lag() and lead() read " + windowShifts + " other windows, and the most "
+               + "allowed is " + MAX_WINDOWS_PER_TIME + ". Use a larger advance, a smaller window or fewer "
+               + "different lag() and lead() distances";
+    }
+
     /// Gets how many windows each time is in, which is one for tumbling windows and `size / slide` for
     /// hopping windows.
     ///

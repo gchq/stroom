@@ -157,6 +157,44 @@ class TestSearchRequestFactoryWindow {
     }
 
     @Test
+    void lagAndLeadCarryTheWindowsOfTheirQuery() {
+        final TableSettings tableSettings = table("""
+                from events
+                window EventTime by 1d
+                eval Before = lag(count(), 1)
+                group by UserId
+                select UserId, count() as Events, Before, lead(count(), 2, 0) as After""");
+
+        assertThat(column(tableSettings, "Before").getExpression())
+                .isEqualTo("lag(count(), 1, 'window:1d|||Z')");
+        assertThat(column(tableSettings, "After").getExpression())
+                .isEqualTo("lead(count(), 2, 0, 'window:1d|||Z')");
+    }
+
+    @Test
+    void tooManyCopiesOfEachEventIsRefused() {
+        // Each event is in 60 windows, which is allowed.
+        assertThat(table("from events window EventTime by 1h advance 1m select count() as Events").getWindow())
+                .isNotNull();
+        // With lag each event is added to every one of them twice.
+        assertRefused("from events window EventTime by 1h advance 1m "
+                      + "eval Change = count() - lag(count(), 1) select Change",
+                "Each event would be copied 120 times");
+    }
+
+    @Test
+    void periodIsRefusedWithWhatToWriteInstead() {
+        assertRefused("from events window EventTime by 1d select period(1, count()) as Before",
+                "The 'period' function has been removed");
+    }
+
+    @Test
+    void lagNeedsAWindowClause() {
+        assertRefused("from events select lag(count(), 1) as Before",
+                "'lag' can only be used in a query that has a window clause");
+    }
+
+    @Test
     void windowFunctionNeedsAWindowClause() {
         assertThatThrownBy(() -> table("from events select windowStart() as Starts"))
                 .isInstanceOf(TokenException.class)

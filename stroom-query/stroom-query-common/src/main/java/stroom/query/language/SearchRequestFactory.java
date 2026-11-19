@@ -52,6 +52,7 @@ import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenGroup;
 import stroom.query.api.token.TokenType;
+import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.language.functions.Expression;
@@ -1137,6 +1138,9 @@ public class SearchRequestFactory {
             final TableSettings tableSettings = tableSettingsBuilder
                     .extractValues(true)
                     .build();
+            if (hasWindow) {
+                checkWindowCopies(tokens.getFirst(), tableSettings);
+            }
 
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId(TABLE_COMPONENT_ID)
@@ -1178,6 +1182,25 @@ public class SearchRequestFactory {
             fieldIndex.create(window.getTimeField());
             builder.window(window);
             hasWindow = true;
+        }
+
+        // Refuses a query whose lag() and lead() functions would have each row added to its result
+        // store too many times.
+        private void checkWindowCopies(final AbstractToken token, final TableSettings tableSettings) {
+            final int windowShifts;
+            try {
+                windowShifts = CompiledColumns
+                        .create(expressionContext, tableSettings.getColumns(), new HashMap<>())
+                        .getValueReferenceIndex()
+                        .getWindowShifts()
+                        .length;
+            } catch (final RuntimeException e) {
+                throw new TokenException(token, e.getMessage());
+            }
+            final int windowsPerTime = TimeWindows.create(window).getWindowsPerTime();
+            if (TimeWindows.getCopiesPerTime(windowsPerTime, windowShifts) > TimeWindows.MAX_WINDOWS_PER_TIME) {
+                throw new TokenException(token, TimeWindows.tooManyCopiesMessage(windowsPerTime, windowShifts));
+            }
         }
 
         // Parses a window clause, as in `window EventTime by 1d advance 1h offset 6h`.
@@ -1248,9 +1271,8 @@ public class SearchRequestFactory {
                 throw new TokenException(keywordGroup, e.getMessage());
             }
             if (timeWindows.getWindowsPerTime() > TimeWindows.MAX_WINDOWS_PER_TIME) {
-                throw new TokenException(keywordGroup, "Each event would be in "
-                        + timeWindows.getWindowsPerTime() + " windows, and the most allowed is "
-                        + TimeWindows.MAX_WINDOWS_PER_TIME + ". Use a larger advance or a smaller window");
+                throw new TokenException(keywordGroup,
+                        TimeWindows.tooManyCopiesMessage(timeWindows.getWindowsPerTime(), 0));
             }
             return window;
         }
