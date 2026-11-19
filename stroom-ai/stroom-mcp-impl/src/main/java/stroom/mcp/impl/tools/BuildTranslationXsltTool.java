@@ -566,13 +566,23 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                          + MappingProblems.ESCAPING);
                 }
             }
+            // A source type group's XSLT is named after the group.
+            final String named = NullSafe.isNonBlankString(request.name())
+                    ? request.name()
+                    : request.group();
             final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), keptFrom(request),
-                    request.build(), request.name());
+                    request.build(), named);
             b.basedOn = base.basedOn();
-            final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes,
-                    base.earlier());
-            given = applied.merged();
-            b.applied = applied.done();
+            if (changes instanceof final Map<?, ?> none && none.isEmpty()) {
+                // Nothing to change: the mapping as it stands (a draft too large for a client outside Stroom to
+                // take whole is built so, as drafted).
+                given = base.mapping();
+            } else {
+                final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes,
+                        base.earlier());
+                given = applied.merged();
+                b.applied = applied.done();
+            }
         } else if (given == null) {
             if (request.target().isEmpty()) {
                 throw new ToolRefusal("Give mapping (draft_translation_mapping drafts one), changes to fix the one "

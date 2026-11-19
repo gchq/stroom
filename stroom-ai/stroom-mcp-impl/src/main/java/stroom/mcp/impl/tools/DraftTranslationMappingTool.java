@@ -346,6 +346,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
                            + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
                            + "the time formats, and how changes= merges.");
+        // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
+        DraftOutline.outlineIfLarge(context.caller(), result, context.workspace(), build,
+                DraftOutline.WHOLE_RESULT_CHARS);
         return result;
     }
 

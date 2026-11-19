@@ -41,6 +41,8 @@ final class DataPlacements {
     private static final int MAX_ELEMENTS = 80;
     private static final String DATA = "Data";
     private static final String EVENT_DETAIL = "EventDetail/";
+    private static final String ACTION = "action";
+    private static final String ACTION_ELEMENTS = "action_elements";
 
     private DataPlacements() {
         // Static only.
@@ -72,6 +74,30 @@ final class DataPlacements {
         return out;
     }
 
+    /// [#of]'s placement with each action element's elements listed once (`action_elements`, by action element)
+    /// rather than in every rule: for a client taking only so much of a result (seen: 13 rules of one action
+    /// element, 36,000 characters of the draft's result).
+    ///
+    /// @param placement A placement [#of] gave.
+    /// @return `event_source`, `action_elements` (by action element) and `rules` (`rule`, `data`, `action`).
+    static Map<String, Object> compact(final Map<String, Object> placement) {
+        final Map<String, Object> elements = new LinkedHashMap<>();
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        for (final Map<String, Object> rule : JsonValues.maps(placement.get("rules"))) {
+            final Map<String, Object> kept = new LinkedHashMap<>(rule);
+            final Object own = kept.remove(ACTION_ELEMENTS);
+            if (kept.get(ACTION) != null && own != null) {
+                elements.putIfAbsent(String.valueOf(kept.get(ACTION)), own);
+            }
+            rules.add(kept);
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("event_source", placement.get("event_source"));
+        out.put(ACTION_ELEMENTS, elements);
+        out.put("rules", rules);
+        return out;
+    }
+
     private static Map<String, Object> rule(final String name,
                                             final List<String> data,
                                             final String action,
@@ -80,8 +106,8 @@ final class DataPlacements {
         out.put("rule", name);
         out.put("data", data);
         if (action != null) {
-            out.put("action", action);
-            out.put("action_elements", elements(schema, EVENT_DETAIL + action));
+            out.put(ACTION, action);
+            out.put(ACTION_ELEMENTS, elements(schema, EVENT_DETAIL + action));
         }
         return out;
     }

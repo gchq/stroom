@@ -130,13 +130,19 @@ class TestE2ePegaEventTypes extends AbstractE2eTest {
         final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", raw, "build", BUILD,
                 "source_name", "Pega Platform", "system_name", "Pega", "environment", "Test"));
         dump("draft_translation_mapping", draft);
-        final String rules = JsonUtil.writeValueAsString(map(draft, "mapping").get("events"), false);
+        // Too large for a client outside Stroom to take whole (this test's client is one): outlined, and saved to
+        // the workspace, read from there as the agent would.
+        assertThat(draft).doesNotContainKey("mapping");
+        assertThat(jsonOf(draft.get("mapping_outline"))).contains(EXPECTED.keySet().toArray(String[]::new))
+                .contains("logger_name <- event.logger_name");
+        final Map<String, Object> drafted = draftedMapping(draft);
+        final String rules = JsonUtil.writeValueAsString(drafted.get("events"), false);
         assertThat(rules).contains(EXPECTED.keySet().toArray(String[]::new));
 
-        // ### The group saved from the draft, its pipeline stepped clean and processed.
+        // ### The group saved from the draft the server keeps, sending only what changes (the time chosen); its
+        // pipeline stepped clean and processed.
         final Map<String, Object> saved = agreed("build_translation_xslt", args("build", BUILD, "feeds",
-                List.of(FEED), "schema_version", VERSION, "stream_ids", raw, "mapping",
-                timeChosen(map(draft, "mapping"))));
+                List.of(FEED), "schema_version", VERSION, "stream_ids", raw, "changes", timeChosenChanges(drafted)));
         dump("build_translation_xslt", saved);
         assertThat(saved).as("the group saved: %s", saved.get("problems")).containsEntry("ok", true);
         final String pipeline = uuidOf(agreed("create_pipeline", args("build", BUILD, "group", GROUP,

@@ -109,7 +109,8 @@ class TranslationBuilds {
     }
 
     /// The mapping changes= apply to: the one last sent for the XSLT, else the one kept with it (uuid, or the
-    /// build's XSLT of that name), else the draft draft_translation_mapping made for the build this session. Seen
+    /// build's XSLT of that name, a source type group's named after the group), else the draft
+    /// draft_translation_mapping made for the build this session (with or without a name). Seen
     /// in testing: a first save from a 50 KB draft had to send it whole, which the agent couldn't write out in one
     /// call.
     ///
@@ -130,9 +131,13 @@ class TranslationBuilds {
             return new Base(sent.get(), null, earlierMapping(context, uuid, build, name));
         }
         String found = uuid;
-        if (found == null && NullSafe.isNonBlankString(build) && NullSafe.isNonBlankString(name)) {
-            found = xsltNamed(build, name).orElse(null);
+        if (found == null && NullSafe.isNonBlankString(build)) {
+            found = NullSafe.isNonBlankString(name)
+                    ? xsltNamed(build, name).orElse(null)
+                    : null;
             if (found == null) {
+                // Also for a source type group's first save naming only its feeds (seen in TestE2ePegaEventTypes,
+                // a draft too large for a client outside Stroom: changes= alone was refused).
                 final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT + build)
                         .or(() -> SentMappings.sent(context, SentMappings.DRAFT));
                 if (draft.isPresent()) {
