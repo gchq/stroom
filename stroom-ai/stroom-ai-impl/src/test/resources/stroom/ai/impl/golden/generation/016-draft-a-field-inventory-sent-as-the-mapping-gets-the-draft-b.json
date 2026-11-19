@@ -731,7 +731,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "login",
@@ -899,7 +900,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "other",
@@ -1017,7 +1019,8 @@
     "drop": false,
     "allow_unknown": "kept unknown for the test",
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    }
   ],
   "unmatched": "warn",

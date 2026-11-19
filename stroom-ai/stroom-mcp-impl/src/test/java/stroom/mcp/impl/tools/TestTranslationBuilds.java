@@ -33,7 +33,7 @@ class TestTranslationBuilds {
     @Test
     void theCatchAllRuleIsNamedForTheRecordsItTakesWithWhatTheyHold() {
         final EventRule other = new EventRule("SEGOther", List.of(), List.of(), false, "no action in these lines",
-                false, List.of());
+                false, List.of(), false);
         final Map<String, Map<String, Object>> sampled = Map.of("SEGOther", Map.of("records", 1651, "sample",
                 "module: dkim, spf, tls ...; level: info; e.g. msg: \"connection closed\""));
 
@@ -45,7 +45,8 @@ class TestTranslationBuilds {
 
     @Test
     void aRuleWhoseRecordsHoldNothingToShowGivesItsCountAlone() {
-        final EventRule other = new EventRule("rest", List.of(), List.of(), false, "unknown", false, List.of());
+        final EventRule other = new EventRule("rest", List.of(), List.of(), false, "unknown", false, List.of(),
+                false);
 
         final Map<String, Object> details = TranslationBuilds.unknownFormDetails(List.of(other),
                 Map.of("rest", Map.of("records", 3, "sample", "")), "?");

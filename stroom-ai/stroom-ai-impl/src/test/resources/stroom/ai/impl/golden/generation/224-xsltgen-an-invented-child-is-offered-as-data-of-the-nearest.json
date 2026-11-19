@@ -290,7 +290,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    }
   ],
   "unmatched": "skip",

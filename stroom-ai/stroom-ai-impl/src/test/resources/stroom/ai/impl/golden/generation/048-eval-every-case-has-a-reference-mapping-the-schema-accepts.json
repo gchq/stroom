@@ -703,7 +703,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "session end",
@@ -805,7 +806,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "tunnel",
@@ -922,7 +924,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "other",
@@ -950,7 +953,8 @@
     "drop": false,
     "allow_unknown": "free text with no recognised layout, kept with its text as the request asks",
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    }
   ],
   "unmatched": "warn",

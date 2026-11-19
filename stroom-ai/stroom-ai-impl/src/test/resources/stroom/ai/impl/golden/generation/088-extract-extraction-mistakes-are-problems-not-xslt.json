@@ -392,7 +392,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "logoff",
@@ -452,7 +453,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "unparsed",
@@ -475,7 +477,8 @@
     "drop": true,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    }
   ],
   "unmatched": "skip",

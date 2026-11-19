@@ -457,6 +457,24 @@ class TestXsltReader extends XsltRuns {
                 List.of());
     }
 
+    @Test
+    void theRuleLoggingWhatItCatchesIsReadBackAsTheCatchAll() {
+        final Map<String, Object> rest = otherRule();
+        rest.put("catch_all", true);
+        final String flagged = codeOf(mapping(with("events", List.of(rule("logon",
+                List.of(equalsCondition("action", "login")), LOGON), rest))));
+        // A mapping marking none: its last rule without conditions logs what it catches, so it is read as marked.
+        final String inferred = codeOf(mapping());
+
+        for (final String code : List.of(flagged, inferred)) {
+            final RebuiltMapping rebuilt = XsltReader.rebuild(code, null, null);
+            assertThat(rebuilt.mapping().events()).extracting(EventRule::catchAll).containsExactly(false, true);
+            assertThat(codeOf(rebuilt.mapping())).contains("Caught by rule ''other''");
+            assertThat(events(codeOf(rebuilt.mapping()), RECORDS)).isEqualTo(events(code, RECORDS));
+        }
+        assertThat(flagged).isEqualTo(inferred);
+    }
+
     // --- helpers ----------------------------------------------------------------------------------------------------
 
     private static String codeOf(final TranslationMapping m) {

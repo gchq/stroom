@@ -1124,6 +1124,31 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void aMappingMarkingItsCatchAllLogsOnlyThatRulesRecords() {
+        // The flag, not inference: cef_other, fewer conditions than sql's, would be inferred a catch-all.
+        final TranslationMapping m = TranslationMapping.fromJson(json("""
+                {"input": "json", "common": [
+                  {"path": "EventTime/TimeCreated", "field": "time"},
+                  {"path": "EventSource/System/Name", "value": "Acme"},
+                  {"path": "EventSource/System/Environment", "value": "Prod"},
+                  {"path": "EventSource/Generator", "value": "Acme"},
+                  {"path": "EventSource/Device/HostName", "field": "host"},
+                  {"path": "EventDetail/TypeId", "field": "name"}],
+                 "events": [
+                  {"name": "sql", "when": [{"field": "variant", "equals": "cef"}, {"field": "name", "equals": "SQL"}],
+                   "fields": [{"path": "EventDetail/Alert/Type", "value": "IDS"}]},
+                  {"name": "cef_other", "when": [{"field": "variant", "equals": "cef"}],
+                   "fields": [{"path": "EventDetail/Alert/Type", "value": "IDS"}]},
+                  {"name": "uncatalogued", "catch_all": true, "allow_unknown": "uncatalogued records",
+                   "fields": [{"path": "EventDetail/Unknown/Data", "data_name": "name", "field": "name"}]}]}"""));
+        final XsltGenerator.Generated result = XsltGenerator.generate(m, SCHEMA_352, "3.5.2");
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        assertThat(result.xslt()).contains("Caught by rule ''uncatalogued'': record ")
+                .doesNotContain("Caught by rule ''cef_other''", "Caught by rule ''sql''");
+    }
+
+    @Test
     void theExampleMappingGenerates() {
         // The shape of a mapping, whole, shown in a reply that refuses one, generates.
         final TranslationMapping example = TranslationMapping.fromJson(json("""

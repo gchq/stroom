@@ -39,13 +39,16 @@ import java.util.Set;
 ///                     the action elements the records' values suggest.
 /// @param data         Input fields carried as Data of this rule's action element, each named after its field;
 ///                     always empty once validated, as each becomes a Data entry of fields.
+/// @param catchAll     `catch_all`: the rule for uncatalogued records, the records no other rule takes: last, without
+///                     conditions, and what it takes logged (`Caught by`).
 public record EventRule(String name,
                         List<Condition> when,
                         List<FieldMapping> fields,
                         boolean drop,
                         String allowUnknown,
                         boolean keepUnknown,
-                        List<String> data) {
+                        List<String> data,
+                        boolean catchAll) {
 
     /// Fills in empty lists for null ones.
     public EventRule {
@@ -63,7 +66,7 @@ public record EventRule(String name,
                                final List<Condition> when,
                                final boolean drop,
                                final List<FieldMapping> fields) {
-        return new EventRule(name, when, fields, drop, null, false, List.of());
+        return new EventRule(name, when, fields, drop, null, false, List.of(), false);
     }
 
     /// @param json A rule as JSON-like values.
@@ -99,11 +102,17 @@ public record EventRule(String name,
                         : fields.optionalString("allow_unknown");
         final boolean keepUnknown = fields.bool("keep_unknown", false);
         final List<String> data = fields.strings("data");
+        final boolean catchAll = fields.bool("catch_all", false);
         if (!fields.ok()) {
             return null;
         }
+        if (catchAll && (!when.isEmpty() || drop)) {
+            fields.valueError("[" + name + "] catch_all is the rule for the records no other rule takes: it has no "
+                              + "conditions (when) and translates them (no drop)");
+            return null;
+        }
         if (data.isEmpty()) {
-            return new EventRule(name, when, entries, drop, allowUnknown, keepUnknown, List.of());
+            return new EventRule(name, when, entries, drop, allowUnknown, keepUnknown, List.of(), catchAll);
         }
         // Expanded here, so every reader of the mapping (generator, checks, documentation) sees ordinary Data
         // entries.
@@ -140,13 +149,13 @@ public record EventRule(String name,
                 expanded.add(entry);
             }
         }
-        return new EventRule(name, when, expanded, drop, allowUnknown, keepUnknown, List.of());
+        return new EventRule(name, when, expanded, drop, allowUnknown, keepUnknown, List.of(), catchAll);
     }
 
     /// @param fields The rule's fields.
     /// @return This rule with those fields.
     public EventRule withFields(final List<FieldMapping> fields) {
-        return new EventRule(name, when, fields, drop, allowUnknown, keepUnknown, data);
+        return new EventRule(name, when, fields, drop, allowUnknown, keepUnknown, data, catchAll);
     }
 
     /// @param mode How to write it.
@@ -160,6 +169,7 @@ public record EventRule(String name,
                 .put("allow_unknown", allowUnknown, null)
                 .put("keep_unknown", keepUnknown, false)
                 .put("data", data, List.of())
+                .put("catch_all", catchAll, false)
                 .build();
     }
 }

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.ToolText;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -163,7 +165,26 @@ public record TranslationMapping(String input,
         if (!fields.ok()) {
             return null;
         }
+        final String catchAllProblem = catchAllProblem(mapping.events);
+        if (catchAllProblem != null) {
+            fields.valueError(catchAllProblem);
+            return null;
+        }
         return mapping.withPairsAsExtract().withDataNamesInStyle();
+    }
+
+    // The catch-all rule (catch_all) is one at most, and last: it takes what every rule before it leaves.
+    private static String catchAllProblem(final List<EventRule> events) {
+        final List<String> catchAll = events.stream().filter(EventRule::catchAll).map(EventRule::name).toList();
+        if (catchAll.size() > 1) {
+            return "Rules " + ToolText.list(catchAll) + " are each marked catch_all: one rule at most takes the "
+                   + "records no other rule does";
+        }
+        if (catchAll.size() == 1 && !events.getLast().catchAll()) {
+            return "Rule " + ToolText.repr(catchAll.getFirst()) + " is marked catch_all but isn't last: the rule for "
+                   + "the records no other rule takes goes last";
+        }
+        return null;
     }
 
     // Each key an extract entry, as the draft writes them: the generator, the checks and the kept mapping see

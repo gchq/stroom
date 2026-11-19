@@ -1453,7 +1453,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "user-admin",
@@ -1583,7 +1584,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "secret-view",
@@ -1717,7 +1719,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "secret-create",
@@ -1826,7 +1829,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "secret-update",
@@ -1957,7 +1961,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "secret-delete",
@@ -2066,7 +2071,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "secret-alert",
@@ -2183,7 +2189,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "secret-launch",
@@ -2328,7 +2335,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "folder-create",
@@ -2455,7 +2463,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "folder-update",
@@ -2569,7 +2578,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "permission",
@@ -2683,7 +2693,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "session",
@@ -2819,7 +2830,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "system-config",
@@ -2946,7 +2958,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "system-job",
@@ -3060,7 +3073,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "other",
@@ -3124,7 +3138,8 @@
     "drop": false,
     "allow_unknown": "Records whose Event category is none of User/Secret/Folder/Permission/Session/System, or whose action matches no rule above. None are expected in this sample; kept as Unknown with category/action/item id so nothing is silently dropped.",
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    }
   ],
   "unmatched": "warn",

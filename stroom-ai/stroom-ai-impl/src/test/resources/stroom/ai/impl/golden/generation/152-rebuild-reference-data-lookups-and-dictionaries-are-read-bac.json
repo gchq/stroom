@@ -364,7 +364,8 @@
     "drop": false,
     "allow_unknown": "a VIP list match has no action of its own",
     "keep_unknown": true,
-    "data": []
+    "data": [],
+    "catch_all": false
    },
    {
     "name": "other",
@@ -410,7 +411,8 @@
     "drop": false,
     "allow_unknown": null,
     "keep_unknown": false,
-    "data": []
+    "data": [],
+    "catch_all": false
    }
   ],
   "unmatched": "skip",

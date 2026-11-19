@@ -3107,6 +3107,9 @@ public final class XsltGenerator {
         // reads.
         final List<String> tests = new ArrayList<>();
         final List<Boolean> drops = new ArrayList<>();
+        // A mapping marking its catch-all (catch_all) says which it is; one marking none (hand-written, or saved
+        // before the flag) has it inferred.
+        final boolean flagged = m.events().stream().anyMatch(EventRule::catchAll);
         for (final Rooted rooted : trees) {
             final EventRule rule = rooted.rule();
             // Each condition is a comparison or a call, which bind tighter than and: no brackets needed.
@@ -3140,7 +3143,7 @@ public final class XsltGenerator {
                 summary.add(entry);
             } else {
                 writeRule(rule, rooted.root(), holder, isConditional, logged, isConditional
-                                                                              && catchAll(rule, earlier));
+                                                                              && catchAll(rule, earlier, flagged));
                 final Set<String> fields = new TreeSet<>();
                 final List<FieldMapping> entries = new ArrayList<>(m.common());
                 entries.addAll(rule.fields());
@@ -3167,10 +3170,14 @@ public final class XsltGenerator {
         }
     }
 
-    // Whether a rule is a catch-all: it takes what the rules before it leave, being the one with no conditions after
-    // rules with them, or one whose conditions are fewer than an earlier rule's, all of them that rule's (variant=cef,
-    // after variant=cef and cef_name=APPFW_SQL).
-    private static boolean catchAll(final EventRule rule, final List<List<Condition>> earlier) {
+    // Whether a rule is a catch-all: the rule marked catch_all, when the mapping marks one; else inferred, as it takes
+    // what the rules before it leave, being the one with no conditions after rules with them, or one whose conditions
+    // are fewer than an earlier rule's, all of them that rule's (variant=cef, after variant=cef and
+    // cef_name=APPFW_SQL).
+    private static boolean catchAll(final EventRule rule, final List<List<Condition>> earlier, final boolean flagged) {
+        if (flagged) {
+            return rule.catchAll();
+        }
         if (earlier.isEmpty()) {
             return false;
         }
@@ -3240,7 +3247,11 @@ public final class XsltGenerator {
             // Error streams, not by sampling its Events: once a stream for each kind, the rule and the values the
             // rules test (asked for by the user: a line a record filled the Error stream), the first record's line
             // as it was, not the records run together on one line, so no line is longer than a record's.
-            logKind(holder, rule, KEPT_UNKNOWN, tested);
+            // The rule marked catch_all logs what it catches as a catch-all, Unknown on purpose or not: uncatalogued
+            // records, which review_coverage reads by their Caught by lines.
+            logKind(holder, rule, rule.catchAll() && catchAll
+                    ? CAUGHT
+                    : KEPT_UNKNOWN, tested);
         } else if (catchAll) {
             // A catch-all rule's records logged as a kept-Unknown rule's are (asked for by the user: seen in chat 163,
             // two kinds of event no one had seen went through a catch-all into Alerts, and nothing said so), so

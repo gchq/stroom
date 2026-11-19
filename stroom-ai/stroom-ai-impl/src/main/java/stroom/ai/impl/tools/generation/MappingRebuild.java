@@ -178,6 +178,10 @@ final class MappingRebuild {
             spec.put("drop", true);
             return List.of();
         }
+        if (rule.caught() && !XsltReader.truthy(rule.test())) {
+            // The rule for the records no other rule takes, logging them (Caught by): read back as marked.
+            spec.put("catch_all", true);
+        }
         if (old != null) {
             if (XsltReader.truthy(old.rule().allowUnknown())) {
                 spec.put("allow_unknown", old.rule().allowUnknown());

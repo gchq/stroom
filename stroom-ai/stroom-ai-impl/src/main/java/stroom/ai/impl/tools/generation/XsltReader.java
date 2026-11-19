@@ -62,6 +62,10 @@ public final class XsltReader {
             Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
     // The name the template logging a record's kind had in XSLTs saved before it was named mcp_log_kind.
     private static final String EARLIER_LOG_KIND_TEMPLATE = "mcp_kept_unknown";
+    // The start of the literal a catch-all rule's log line is (XsltGenerator.CAUGHT up to the rule's name, written as
+    // XPathText.literal writes it, without its closing quote).
+    private static final String CAUGHT_LITERAL = "'" + XsltGenerator.CAUGHT.substring(0,
+            XsltGenerator.CAUGHT.indexOf('{')).replace("'", "''");
     private static final Pattern DROPPED = Pattern.compile("^\\s*(.+?): left untranslated on purpose\\s*$",
             Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern UNKNOWN = Pattern.compile(
@@ -392,6 +396,7 @@ public final class XsltReader {
             }
             own = scope;
         }
+        rule.setCaught(branch.childElements().stream().anyMatch(XsltReader::logsCaught));
         if (event == null) {
             rule.notes().add("no Event written");
             return rule;
@@ -668,6 +673,13 @@ public final class XsltReader {
         return child.is(XSL, "call-template") && (XsltGenerator.UNREAD_TEMPLATE.equals(name)
                                                   || XsltGenerator.LOG_KIND_TEMPLATE.equals(name)
                                                   || EARLIER_LOG_KIND_TEMPLATE.equals(name));
+    }
+
+    // The generator's log of a record a catch-all rule takes: its line starts with XsltGenerator.CAUGHT.
+    private static boolean logsCaught(final XmlElement child) {
+        return unreadCheck(child) && child.childElements(XSL, "with-param").stream()
+                .anyMatch(with -> "line".equals(with.get("name"))
+                                  && Objects.requireNonNullElse(with.get("select"), "").contains(CAUGHT_LITERAL));
     }
 
     private static void readCall(final XmlElement child,

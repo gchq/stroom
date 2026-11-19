@@ -30,6 +30,7 @@ public final class RuleReading {
     private final List<LeafReading> leaves = new ArrayList<>();
     private final boolean drop;
     private String unknown;
+    private boolean caught;
     private final List<String> notes = new ArrayList<>();
     private final List<String> lost = new ArrayList<>();
     private final List<String> guards = new ArrayList<>();
@@ -75,6 +76,11 @@ public final class RuleReading {
     /// @return Why it writes EventDetail/Unknown on purpose (allow_unknown), or null.
     public String unknown() {
         return unknown;
+    }
+
+    /// @return Whether it logs the records it takes as a catch-all rule does (`Caught by`).
+    public boolean caught() {
+        return caught;
     }
 
     /// @return What wasn't read.
@@ -123,6 +129,11 @@ public final class RuleReading {
     /// @param unknown Why it writes EventDetail/Unknown on purpose.
     void setUnknown(final String unknown) {
         this.unknown = unknown;
+    }
+
+    /// @param caught Whether it logs the records it takes as a catch-all rule does.
+    void setCaught(final boolean caught) {
+        this.caught = caught;
     }
 
     /// @return It as a map, keys in the order the reader fixtures pin: key, name, test, leaves, drop, unknown, notes,
