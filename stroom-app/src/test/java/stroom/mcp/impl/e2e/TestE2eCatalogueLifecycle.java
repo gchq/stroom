@@ -184,17 +184,39 @@ class TestE2eCatalogueLifecycle extends AbstractE2eTest {
         createFeed(build, feed);
         final long raw = upload(feed, CSV_SAMPLE);
         surveyed(build, feed, List.of(raw));
-        saveTextConverter(build, feed, CSV_SPLITTER);
-        // The failed logons by their own rule; every record left a logon, written as one (not Unknown).
-        final String detail = CSV_XSLT.substring(CSV_XSLT.indexOf("<EventDetail>"),
-                CSV_XSLT.indexOf("</EventDetail>") + "</EventDetail>".length());
-        final String failed = detail.replace("<TypeId>Logon</TypeId>", "<TypeId>Authenticate-FailedLogon</TypeId>")
-                .replace("User logon", "Failed logon");
-        final String rest = detail.replace("<TypeId>Logon</TypeId>", "<TypeId>Authenticate-Logon</TypeId>");
-        final String hand = CSV_XSLT.replace(detail, "<xsl:choose><xsl:when test=\"data[@name='result']/@value = "
-                                                     + "'fail'\">" + failed + "</xsl:when><xsl:otherwise>" + rest
-                                                     + "</xsl:otherwise></xsl:choose>");
-        final String uuid = saveXslt(build, feed + "-Events", hand);
+        final String converter = saveTextConverter(build, feed, CSV_SPLITTER);
+        // The failed logons catalogued, the rest left to the catch-all, and the XSLT generated from the catalogue.
+        proposed(build, List.of(raw), List.of(withKeys(eventType("Authenticate-FailedLogon", "Authenticate", "high",
+                when("result", "equals", "fail")), "action", "Logon", "actor", "user", "success", "false")));
+        confirmedCatalogue(build);
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "build", build, "source_name", "CatLife", "system_name", "CatLife", "environment", "Test"));
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping",
+                timeChosen(map(draft, "mapping")), "stream_ids", List.of(raw), "build", build, "name",
+                feed + "-Events", "schema_version", VERSION));
+        assertThat(saved.get("ok")).as("XSLT saved: %s", saved.get("problems")).isEqualTo(true);
+        final String uuid = uuidOf(map(saved, "saved"));
+        createPipeline(build, feed + "-Events", templateUuid("translation", "Event Data (Text)"),
+                docProperty("dsParser", "textConverter", converter, "TextConverter"),
+                docProperty("translationFilter", "xslt", uuid, "XSLT"));
+        // Edited by hand in Stroom: the catch-all's rule, taking every record left, writes a logon (not Unknown).
+        // A whole hand-written XSLT (its own record template, a choose inside the Event) is not what rebuild_mapping
+        // reads: it reads hand edits of the generated translation back into its mapping and catalogue.
+        final String code = readXslt(uuid).getData();
+        final int rest = code.indexOf("Rule 'uncatalogued'");
+        assertThat(rest).as("the catch-all's rule in the generated XSLT:%n%s", code).isPositive();
+        final String head = code.substring(0, rest);
+        final String tail = code.substring(rest);
+        final int from = tail.indexOf("<Unknown>");
+        final int to = tail.indexOf("</Unknown>") + "</Unknown>".length();
+        assertThat(from).as("the catch-all writes Unknown:%n%s", tail).isPositive();
+        final String logon = tail.substring(0, from).replaceFirst("<TypeId>Unknown</TypeId>",
+                "<TypeId>Authenticate-Logon</TypeId>")
+                             + "<Authenticate><Action>Logon</Action><User><Id><xsl:value-of "
+                             + "select=\"data[@name='user']/@value\"/></Id></User></Authenticate>"
+                             + tail.substring(to);
+        assertThat(logon).as("its TypeId written as a logon's:%n%s", tail).contains("Authenticate-Logon");
+        editXslt(uuid, doc -> doc.copy().data(head + logon).build());
 
         final Map<String, Object> rebuilt = agreed("rebuild_mapping", args("uuid", uuid, "stream_ids",
                 List.of(raw), "change", "The hand-written translation read into the catalogue"));
