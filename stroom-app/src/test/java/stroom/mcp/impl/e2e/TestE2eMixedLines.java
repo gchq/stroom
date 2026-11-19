@@ -182,9 +182,11 @@ class TestE2eMixedLines extends AbstractE2eTest {
 
         final Map<String, Object> checked = proposed(build, raw, List.of(
                 withKeys(eventType("Authenticate-Logon", "Authenticate", "high", when("action", "equals", "login"),
-                        when("message", "starts_with", "login for")), "action", "Logon"),
+                        when("message", "starts_with", "login for")), "action", "Logon", "affected", "host",
+                        "affected_as", "Device"),
                 withKeys(eventType("Authenticate-Logoff", "Authenticate", "high", when("action", "equals",
-                        "logout"), when("message", "starts_with", "logout for")), "action", "Logoff")));
+                        "logout"), when("message", "starts_with", "logout for")), "action", "Logoff", "affected",
+                        "host", "affected_as", "Device")));
         final Map<String, Object> logons = map(map(checkOf(checked), "counts"), "Authenticate-Logon");
         assertThat(number(logons.get("records"))).isEqualTo(12);
         assertThat((List<Integer>) logons.get("by_way")).containsExactly(6, 6);
@@ -209,6 +211,7 @@ class TestE2eMixedLines extends AbstractE2eTest {
         assertThat(saved).as("saved: %s", saved.get("problems")).containsEntry("ok", true);
         final String pipeline = (String) json("create_pipeline", args("build", build, "name", feed + "-Events",
                 "template_uuid", templateUuid("translation", "Event Data (Text)"))).get("uuid");
+        assertThat(stepSample(pipeline, raw).get("verdict")).as("stepped clean before processing").isEqualTo("clean");
         final Map<String, Object> gate = process(pipeline, raw);
         assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
         final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());

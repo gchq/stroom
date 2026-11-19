@@ -55,8 +55,8 @@ public final class CatalogueSeed {
     /// order: its rule's conditions the one way it is recognised, its action element, Action, outcome and who acted
     /// as the rule writes them, its TypeId the rule's own fixed Verb-Object one or the default ([TypeIds]), made
     /// unique. The rule for the rest of the records (no conditions) is the catch-all's, not an event type; but a
-    /// draft of that one rule alone, writing an event (not Unknown), seeds a sole event type, recognised by every
-    /// record (stroom-ai/DESIGN.md, A sole event type).
+    /// draft of that one rule alone seeds a sole event type, recognised by every record (stroom-ai/DESIGN.md, A sole
+    /// event type), for the agent to give the action element where the draft couldn't.
     public static List<EventType> fromDraft(final Map<String, Object> draft) {
         final Map<?, ?> mapping = draft.get("mapping") instanceof final Map<?, ?> map
                 ? map
@@ -66,12 +66,10 @@ public final class CatalogueSeed {
         final List<Map<String, Object>> rules = JsonValues.maps(mapping.get("events"));
         if (rules.size() == 1 && JsonValues.maps(rules.getFirst().get("when")).isEmpty()) {
             final EventType sole = eventType(rules.getFirst(), List.of());
-            if (sole.eventDetail() != null) {
-                final String typeId = fixedTypeId(rules.getFirst());
-                out.add(sole.withTypeId(typeId != null
-                        ? typeId
-                        : TypeIds.defaultTypeId(sole)));
-            }
+            final String typeId = fixedTypeId(rules.getFirst());
+            out.add(sole.withTypeId(typeId != null
+                    ? typeId
+                    : TypeIds.defaultTypeId(sole)));
             return out;
         }
         for (final Map<String, Object> rule : rules) {

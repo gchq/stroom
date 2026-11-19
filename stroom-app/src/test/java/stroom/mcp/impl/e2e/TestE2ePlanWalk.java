@@ -73,7 +73,7 @@ class TestE2ePlanWalk extends AbstractE2eTest {
             2026-09-28T10:05:00,bob,ws02,10.0.0.2,fail
             2026-09-28T10:07:30,carol,ws03,10.0.0.3,ok
             """;
-    private static final List<String> STAGE_1 = List.of("feed", "samples", "converter", "classify", "translation",
+    private static final List<String> STAGE_1 = List.of("feed", "samples", "converter", "catalogue", "translation",
             "pipeline",
             "stepped", "processed", "validated", "documented");
     private static final List<String> LUCENE = concat(STAGE_1, List.of("index", "indexing_pipeline", "indexed",
@@ -84,7 +84,7 @@ class TestE2ePlanWalk extends AbstractE2eTest {
             Map.entry("feed", "create_feed"),
             Map.entry("samples", "upload_sample"),
             Map.entry("converter", "build_data_splitter"),
-            Map.entry("classify", "classify_kinds"),
+            Map.entry("catalogue", "catalogue_event_types"),
             Map.entry("translation", "draft_translation_mapping"),
             Map.entry("pipeline", "find_pipeline_templates"),
             Map.entry("stepped", "step_sample"),
@@ -154,7 +154,7 @@ class TestE2ePlanWalk extends AbstractE2eTest {
             case "feed" -> feedStep(call);
             case "samples" -> samplesStep(call);
             case "converter" -> run("build_data_splitter", fill(call, "save_as", FEED + "-CSV"));
-            case "classify", "catalogue" -> cataloguedAsSeeded(build, (List<?>) map(call, "arguments").get(
+            case "catalogue" -> cataloguedAsSeeded(build, (List<?>) map(call, "arguments").get(
                     "stream_ids"));
             case "translation" -> translationStep(call);
             case "pipeline" -> pipelineStep(call);

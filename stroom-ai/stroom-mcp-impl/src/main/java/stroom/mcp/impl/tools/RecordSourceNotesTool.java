@@ -185,7 +185,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     private Map<String, Object> record(final ToolCall call, final ToolCallContext context) {
         final String build = required(call, BUILD_ARG);
         final String source = required(call, SOURCE_ARG);
-        if (argsMap(call).get(EVENTS) != null) {
+        if (!objects(call, EVENTS).isEmpty()) {
             // The event types go through the catalogue, checked against every sampled record and confirmed by the
             // user; recorded here, they were never checked.
             throw new ToolRefusal("Nothing recorded: record_source_notes keeps fields and documents only. Propose "

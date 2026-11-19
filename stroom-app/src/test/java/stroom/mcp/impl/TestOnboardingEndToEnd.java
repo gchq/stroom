@@ -348,9 +348,9 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
                 .containsEntry("stream_ids", List.of(rawStreamId));
         final Map<String, Object> surveyed = client.json("survey_feed", map(surveyCall, "arguments"));
         dump("survey_feed", surveyed);
-        assertNextStep(surveyed, "classify");
+        assertNextStep(surveyed, "catalogue");
 
-        // The kinds of event classified with the user before the draft, as the plan asks: here, none to classify.
+        // The source catalogued with the user before the draft, as the plan asks: here, one event type.
         final Map<String, Object> classified = classify(map(map(surveyed, "next"), "call"));
         assertNextStep(classified, "translation");
 
@@ -395,12 +395,24 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
 
     // The plan's catalogue step as an agent takes it: the call it names lists the evidence. The sample's records are
     // all one event type (every record a logon, told by nothing in it): a sole event type recognised by every
-    // record, the seed taken as it is and confirmed with its catch-all (which catches nothing), and the draft next.
+    // record, the seed (which the draft couldn't give an action element) given the logon's, as the agent knows it,
+    // and confirmed with its catch-all (which catches nothing), and the draft next.
     private Map<String, Object> classify(final Map<String, Object> call) {
         assertThat(call).containsEntry("tool", CatalogueSteps.CATALOGUE);
         assertThat(map(call, "arguments")).containsEntry("build", BUILD).containsKey("stream_ids");
         final List<?> streams = (List<?>) map(call, "arguments").get("stream_ids");
-        final Map<String, Object> catalogued = CatalogueSteps.cataloguedAsSeeded(client, BUILD, streams);
+        final Map<String, Object> listed = client.json(CatalogueSteps.CATALOGUE, Map.of("build", BUILD,
+                "stream_ids", streams));
+        final List<Map<String, Object>> seed = (List<Map<String, Object>>) map(listed, "evidence").get("seed");
+        assertThat(seed).as("the seed: one event type, recognised by every record").singleElement()
+                .satisfies(type -> assertThat((List<?>) type.get("recognised_by")).isEmpty());
+        final Map<String, Object> logon = new LinkedHashMap<>(seed.getFirst());
+        logon.putAll(Map.of("op", "add", "type_id", "Authenticate-Logon", "title", "User logon", "event_detail",
+                "Authenticate", "action", "Logon", "actor", "user", "basis", "agent_knowledge", "confidence",
+                "high"));
+        client.json(CatalogueSteps.CATALOGUE, Map.of("build", BUILD, "stream_ids", streams, "proposals",
+                List.of(logon)));
+        final Map<String, Object> catalogued = CatalogueSteps.confirmedCatalogue(client, BUILD);
         dump("catalogue_event_types", catalogued);
         final Map<String, Object> check = map(catalogued, "check");
         assertThat((Map<String, Object>) check.get("counts")).as("one event type, recognised by every record")
@@ -475,7 +487,7 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         changed.put("events", List.of(Map.of(
                 "name", "logon",
                 "fields", List.of(
-                        Map.of("path", "EventDetail/TypeId", "value", "Logon"),
+                        Map.of("path", "EventDetail/TypeId", "value", "Authenticate-Logon"),
                         Map.of("path", "EventDetail/Description", "value", description),
                         Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
                         Map.of("path", "EventDetail/Authenticate/User/Id", "field", "user"),

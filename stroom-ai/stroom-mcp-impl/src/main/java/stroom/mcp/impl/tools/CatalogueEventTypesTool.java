@@ -44,6 +44,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -930,6 +931,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         if (streams.isEmpty()) {
             streams = plan.rawSampleStreams(calling.build(), MAX_SAMPLE_STREAMS);
+        }
+        if (streams.isEmpty()) {
+            // A build on an existing feed, with no samples of its own: the streams its survey read.
+            final Set<Long> surveyed = new LinkedHashSet<>();
+            builds.surveyStatesInBuild(calling.build()).forEach(state -> surveyed.addAll(SurveyDoc.streams(state)));
+            streams = surveyed.stream().limit(MAX_SAMPLE_STREAMS).toList();
         }
         if (streams.isEmpty()) {
             throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");

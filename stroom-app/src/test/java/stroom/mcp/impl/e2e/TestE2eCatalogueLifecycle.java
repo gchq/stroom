@@ -24,6 +24,7 @@ import org.w3c.dom.Element;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -94,6 +95,8 @@ class TestE2eCatalogueLifecycle extends AbstractE2eTest {
                 timeChosen(map(redrafted, "mapping")), "uuid", first.xslt(), "stream_ids", checkedOn, "build",
                 first.build(), "change", "View events, found once the feed was processed"));
         assertThat(rebuilt.get("ok")).as("%s", rebuilt.get("problems")).isEqualTo(true);
+        // The new code stepped clean before its streams are processed again (reprocess_streams asks it).
+        assertThat(stepSample(first.pipeline(), checkedOn).get("verdict")).isEqualTo("clean");
         final Map<String, Object> redo = agreed("reprocess_streams", args("pipeline_uuid", first.pipeline(),
                 "stream_ids", List.of(later)));
         processAll();
@@ -165,7 +168,7 @@ class TestE2eCatalogueLifecycle extends AbstractE2eTest {
                                + "</xsl:if><xsl:next-iteration><xsl:with-param name=\"seen\" "
                                + "select=\"($seen, @value)\"/></xsl:next-iteration></xsl:iterate>";
         editXslt(built.xslt(), doc -> doc.copy().data(edited.replaceFirst("</Authenticate>",
-                iterate + "</Authenticate>")).build());
+                Matcher.quoteReplacement(iterate + "</Authenticate>"))).build());
         final Map<String, Map<String, Object>> before = eventTypesOf(built.build());
         final Map<String, Object> unread = client.json("rebuild_mapping", args("uuid", built.xslt(),
                 "stream_ids", List.of(built.raw())));

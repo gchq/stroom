@@ -79,13 +79,12 @@ class TestE2eSourceDocs extends AbstractE2eTest {
             Map.of("field", "res", "meaning", "Status", "values", Map.of("0x0", "success", "0xC000006A",
                     "failed: bad password")),
             Map.of("field", "evt", "meaning", "Event id: what happened"));
-    private static final List<Map<String, Object>> EVENTS = List.of(
-            Map.of("event", "4624", "description", "An account logged on", "event_detail", "Authenticate",
-                    "type_id", "Logon", "field", "evt", "value", "4624", "action", "Logon", "success", true),
-            Map.of("event", "4625", "description", "An account failed to log on", "event_detail", "Authenticate",
-                    "type_id", "Logon failed", "field", "evt", "value", "4625", "action", "Logon", "success", false),
-            Map.of("event", "4634", "description", "An account logged off", "event_detail", "Authenticate",
-                    "type_id", "Logoff", "field", "evt", "value", "4634", "action", "Logoff"));
+    // The documentation's event types, as the agent proposes them through catalogue_event_types.
+    private static final List<Map<String, Object>> EVENT_TYPES = List.of(
+            documented("Authenticate-Logon", "Authenticate", "4624", "An account logged on", "Logon"),
+            withKeys(documented("Authenticate-FailedLogon", "Authenticate", "4625", "An account failed to log on",
+                    "Logon"), "success", false),
+            documented("Authenticate-Logoff", "Authenticate", "4634", "An account logged off", "Logoff"));
     private static final int REPLY_BUDGET = 64_000;
     // Characters the agent sends per record_source_notes call for a long document.
     private static final int PART = 400_000;
@@ -105,15 +104,16 @@ class TestE2eSourceDocs extends AbstractE2eTest {
             2026-10-01T09:10:00+10:00,FW1,ADMIN,192.0.2.5,50000,192.0.2.1,443,HTTPS,LOGIN_SUCCESS,0,admin,Logged in
             2026-10-01T09:11:00+10:00,FW1,ADMIN,192.0.2.5,50000,192.0.2.1,443,HTTPS,LOGIN_FAILED,0,root,Bad password
             """;
+    // Event types guessed from the sample, two with action elements the schema doesn't have.
     private static final List<Map<String, Object>> GUESSED = List.of(
-            Map.of("event", "TRAFFIC-ALLOW", "description", "Network traffic allowed", "field", "event_type",
-                    "value", "TRAFFIC", "event_detail", "Allow"),
-            Map.of("event", "TRAFFIC-DENY", "description", "Network traffic blocked", "field", "event_type",
-                    "value", "TRAFFIC", "event_detail", "Deny"),
-            Map.of("event", "LOGIN-SUCCESS", "description", "Administrator logged in", "field", "action",
-                    "value", "LOGIN_SUCCESS", "event_detail", "Authenticate", "success", true),
-            Map.of("event", "LOGIN-FAILED", "description", "Administrator failed to log in", "field", "action",
-                    "value", "LOGIN_FAILED", "event_detail", "Authenticate", "success", false));
+            withKeys(eventType("Permit-Traffic", "Allow", "medium", when("action", "equals", "ALLOW")),
+                    "title", "Network traffic allowed"),
+            withKeys(eventType("Deny-Traffic", "Deny", "medium", when("action", "equals", "DENY")),
+                    "title", "Network traffic blocked"),
+            withKeys(eventType("Authenticate-AdminLogon", "Authenticate", "medium", when("action", "equals",
+                    "LOGIN_SUCCESS")), "action", "Logon", "success", true, "actor", "username"),
+            withKeys(eventType("Authenticate-AdminFailedLogon", "Authenticate", "medium", when("action", "equals",
+                    "LOGIN_FAILED")), "action", "Logon", "success", false, "actor", "username"));
     // Every record as an empty Unknown, as the agent's XSLT wrote the TRAFFIC records.
     private static final String UNKNOWN_XSLT = """
             <?xml version="1.1" encoding="UTF-8"?>
@@ -153,8 +153,9 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         // ### 1. documentation kept in Stroom, and the notes from it used
         createFeed(build, feed);
         final long raw = upload(feed, SAMPLE);
+        surveyed(build, feed, List.of(raw));
         final Map<String, Object> noted = agreed("record_source_notes", args("build", build, "source",
-                "Acme directory", "summary", "The directory audit log.", "fields", FIELDS, "events", EVENTS,
+                "Acme directory", "summary", "The directory audit log.", "fields", FIELDS,
                 "documents", List.of(Map.of("title", "audit log reference", "text", REFERENCE))));
         final List<Map<String, Object>> kept = list(noted, "documents_kept");
         assertThat(kept).as("the reference kept verbatim in Stroom").hasSize(1);
@@ -162,16 +163,18 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         assertThat(documentation((String) kept.getFirst().get("uuid"))).as("its tables as the vendor wrote them")
                 .contains("| 4625 | An account failed to log on |");
 
+        // The documentation's event types catalogued (basis documentation) and confirmed by the user.
+        saveTextConverter(build, feed, CSV_SPLITTER);
+        proposed(build, List.of(raw), EVENT_TYPES);
+        confirmedCatalogue(build);
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
                 "source_name", "Acme directory", "system_name", "Acme directory", "environment", "Eval",
                 "build", build, "schema_version", VERSION));
         assertThat(strings(draft, "notes").getFirst()).as("drafted from the notes")
                 .startsWith("Drafted from the source documentation");
-        saveTextConverter(build, feed, CSV_SPLITTER);
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", draft.get("mapping"),
                 "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
-        assertThat(saved.get("source_notes_check")).as("checked against the catalogue: %s", saved)
-                .isEqualTo("the mapping agrees with the catalogue of event types");
+        assertThat(saved.get("ok")).as("saved: %s", saved.get("problems")).isEqualTo(true);
         final String pipeline = (String) createPipeline(build, feed + "-Events",
                 templateUuid("translation", "Event Data (Text)")).get("uuid");
         final Map<String, Object> stepped = stepSample(pipeline, List.of(raw));
@@ -180,24 +183,23 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         assertThat(translationOutput(pipeline, raw, 1)).as("the failed logon (evt=4625, record 2) comes out as the "
                                                  + "documentation says: TypeId 'Logon failed', a Logon that did not "
                                                  + "succeed")
-                .contains("<TypeId>Logon failed</TypeId>", "<Success>false</Success>", "<Action>Logon</Action>");
+                .contains("<TypeId>Authenticate-FailedLogon</TypeId>", "<Success>false</Success>",
+                        "<Action>Logon</Action>");
 
-        // ### a mapping that contradicts the documentation is reported
+        // ### a mapping that translates a confirmed event type otherwise is put to the user (ConfirmedEventTypes)
         final Map<String, Object> wrong = copy((Map<String, Object>) draft.get("mapping"));
         for (final Map<String, Object> rule : E2eFixtures.rules(wrong)) {
-            if ("4625".equals(rule.get("name"))) {
+            if (jsonOf(rule).contains("Authenticate-FailedLogon")) {
                 final List<Map<String, Object>> fields = new ArrayList<>(E2eFixtures.entries(rule).stream()
-                        .filter(field -> !"EventDetail/TypeId".equals(field.get("path")))
+                        .filter(field -> !"EventDetail/Authenticate/Action".equals(field.get("path")))
                         .toList());
-                fields.add(Map.of("path", "EventDetail/TypeId", "value", "Logon"));
+                fields.add(Map.of("path", "EventDetail/Authenticate/Action", "value", "Logoff"));
                 rule.put("fields", fields);
             }
         }
-        // The check runs where the agent saves (build=): this mapping is saved apart, linked to nothing.
-        final Map<String, Object> checked = agreed("build_translation_xslt", args("mapping", wrong, "stream_ids",
-                List.of(raw), "build", build, "name", feed + "-Events-contradicting", "schema_version", VERSION));
-        assertThat(strings(checked, "warnings")).as("reported")
-                .anyMatch(warning -> warning.contains("TypeId is 'Logon failed'"));
+        final Map<String, Object> checked = json("build_translation_xslt", args("mapping", wrong, "stream_ids",
+                List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
+        assertThat(jsonOf(checked)).as("reported: %s", checked).contains("Authenticate-FailedLogon");
 
         // ### documented with the source fields, promoted beside the feed
         final Map<String, Object> written = agreed("write_documentation", args("build", build, "pipeline_uuid",
@@ -281,23 +283,21 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         // ### 3. a catalogue guessed from the sample, and a hand-written XSLT writing Unknown
         createFeed(build, feed);
         final long raw = upload(feed, FIREWALL);
-        // What's valid is recorded; the events to correct come back (since 2eb9d2cb97: seen in testing, the whole
-        // catalogue resent for a few events).
-        final Map<String, Object> recorded = json("record_source_notes", args("build", build, "source", "Firewall",
-                "summary", "A firewall.", "fields", List.of(), "events", GUESSED));
-        assertThat(String.valueOf(recorded.get("event_problems")))
-                .as("the guessed events are sent back to correct, naming Network/Permit")
-                .contains("TRAFFIC-ALLOW: 'Allow' is not an EventDetail action element", "Network/Permit",
-                        "TRAFFIC-DENY");
-        final List<Map<String, Object>> fixed = new ArrayList<>();
-        fixed.add(with(GUESSED.get(0), Map.of("field", "action", "value", "ALLOW", "event_detail",
-                "Network/Permit")));
-        fixed.add(with(GUESSED.get(1), Map.of("field", "action", "value", "DENY", "event_detail", "Network/Deny")));
-        fixed.addAll(GUESSED.subList(2, GUESSED.size()));
-        agreed("record_source_notes", args("build", build, "source", "Firewall", "summary", "A firewall.",
-                "fields", List.of(), "events", fixed));
-
+        surveyed(build, feed, List.of(raw));
         saveTextConverter(build, feed, CSV_SPLITTER);
+        // The guessed event types refused, naming the action elements the schema has; nothing recorded until
+        // corrected.
+        final String refused = jsonOf(proposed(build, List.of(raw), GUESSED));
+        assertThat(refused).as("the guessed event types are sent back to correct, naming Network")
+                .contains("Nothing recorded", "'Allow' is not an EventDetail action element", "Network",
+                        "Deny-Traffic");
+        final List<Map<String, Object>> fixed = new ArrayList<>();
+        fixed.add(withKeys(GUESSED.get(0), "event_detail", "Network/Permit"));
+        fixed.add(withKeys(GUESSED.get(1), "event_detail", "Network/Deny"));
+        fixed.addAll(GUESSED.subList(2, GUESSED.size()));
+        proposed(build, List.of(raw), fixed);
+        confirmedCatalogue(build);
+
         final String hand = saveXslt(build, feed + "-Events", UNKNOWN_XSLT.replace("VERSION", VERSION));
         final String pipeline = (String) createPipeline(build, feed + "-Events",
                 templateUuid("translation", "Event Data (Text)")).get("uuid");
@@ -343,7 +343,8 @@ class TestE2eSourceDocs extends AbstractE2eTest {
                 documented("Authenticate-FailedLogon", "Authenticate", "4625", "An account failed to log on",
                         "Logon"),
                 documented("Authenticate-Logoff", "Authenticate", "4634", "An account logged off", "Logoff"),
-                documented("Unlock-Account", "Update", "4767", "An account was unlocked", null)));
+                withKeys(documented("Unlock-Account", "Update", "4767", "An account was unlocked", null),
+                        "affected", "usr", "affected_as", "After/User")));
         assertThat(countsOf(checked)).containsEntry("Authenticate-Logon", 1L).containsEntry("Unlock-Account", 0L);
         assertThat(jsonOf(checked)).as("the documented event type with no sampled record")
                 .contains("Unlock-Account", "not in the sample");
@@ -390,11 +391,5 @@ class TestE2eSourceDocs extends AbstractE2eTest {
 
     private static Map<String, Object> copy(final Map<String, Object> mapping) {
         return JsonUtil.readValue(jsonOf(mapping), Map.class);
-    }
-
-    private static Map<String, Object> with(final Map<String, Object> entry, final Map<String, Object> changes) {
-        final Map<String, Object> changed = new LinkedHashMap<>(entry);
-        changed.putAll(changes);
-        return changed;
     }
 }

@@ -200,8 +200,8 @@ class TestE2ePegaEventTypes extends AbstractE2eTest {
     private static Map<String, Object> securityChange(final String typeId, final Map<String, Object> told) {
         return withKeys(logged(typeId, "Update", SECURITY, told), "affected", "event.target", "affected_as",
                 "Unlock-Ruleset".equals(typeId)
-                        ? "Object"
-                        : "User");
+                        ? "After/Object"
+                        : "After/User");
     }
 
     // An event type a logger writes: recognised by the logger and any more conditions, the Pega operator acting.

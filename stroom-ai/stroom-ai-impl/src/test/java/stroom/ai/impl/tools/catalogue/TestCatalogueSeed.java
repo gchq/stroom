@@ -95,11 +95,16 @@ class TestCatalogueSeed {
             assertThat(type.basis()).isEqualTo(EventType.DRAFT);
             assertThat(TypeIds.problem(type.typeId())).isNull();
         });
-        // A draft whose one rule writes Unknown seeds nothing: its records are uncatalogued.
+        // A draft whose one rule writes Unknown seeds a sole event type too, its action element for the agent to
+        // give.
         final Map<String, Object> unknown = new LinkedHashMap<>();
         unknown.put("mapping", Map.of("events", List.of(Map.of("name", "other", "fields", List.of(
                 Map.of("path", "EventDetail/Unknown/Data", "data_name", "x", "field", "x"))))));
-        assertThat(CatalogueSeed.fromDraft(unknown)).isEmpty();
+        assertThat(CatalogueSeed.fromDraft(unknown)).singleElement().satisfies(type -> {
+            assertThat(type.recognisedBy()).isEmpty();
+            assertThat(type.eventDetail()).isNull();
+            assertThat(TypeIds.problem(type.typeId())).isNull();
+        });
     }
 
     private static Map<String, Object> rule(final String name,

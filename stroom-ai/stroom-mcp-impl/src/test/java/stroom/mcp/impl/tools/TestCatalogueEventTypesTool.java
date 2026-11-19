@@ -406,6 +406,15 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void whatAnEventTypeActsOnIsWrittenOutToTheLeafItsValueGoesIn() {
+        // As record_source_notes wrote it for its events: Document becomes Document/Id, as the translation writes it.
+        propose(List.of(withKeys(type("Delete-Records", "Delete", "low", "purge"), "affected", "object",
+                "affected_as", "Document")));
+
+        assertThat(SourceNotes.catalogue(notes()).eventType("Delete-Records").affectedAs()).isEqualTo("Document/Id");
+    }
+
+    @Test
     void anEventTypeNotInTheSampleIsKeptAndSaidToBe() {
         final Map<String, Object> checked = propose(List.of(type("Authenticate-Logon", "Authenticate", "high",
                 "login"), withKeys(type("Unlock-Account", "Update", "high", "unlock"), "basis", "documentation")));
