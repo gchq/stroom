@@ -385,6 +385,19 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aCatchAllAloneStillToConfirmIsSaidAsOne() {
+        // Seen in eval case 66 (2026-11-20): "The catalogue's the catch-all for uncatalogued records are still to
+        // confirm".
+        notes("confirmed", "proposed");
+
+        final Map<String, Object> refused = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat((String) refused.get("error")).startsWith("The catalogue's catch-all for uncatalogued records is "
+                                                             + "still to confirm: call catalogue_event_types");
+    }
+
+    @Test
     void aConfirmedCatalogueIsTheDraftsRules() {
         notes("confirmed", "confirmed");
 

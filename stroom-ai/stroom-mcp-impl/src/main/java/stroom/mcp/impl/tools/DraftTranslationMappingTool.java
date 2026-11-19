@@ -452,14 +452,17 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final long waiting = catalogue.eventTypes().stream().filter(type -> !type.confirmed()).count();
         final boolean catchAll = !catalogue.catchAll().confirmed();
         if (waiting > 0 || catchAll) {
-            final List<String> said = new ArrayList<>();
-            if (waiting > 0) {
-                said.add(waiting + " event type(s)");
+            // The catch-all alone is one thing to confirm (seen in eval case 66: "The catalogue's the catch-all ...
+            // are still to confirm").
+            final String said;
+            if (waiting == 0) {
+                said = "catch-all for uncatalogued records is";
+            } else if (catchAll) {
+                said = waiting + " event type(s) and the catch-all for uncatalogued records are";
+            } else {
+                said = waiting + " event type(s) are";
             }
-            if (catchAll) {
-                said.add("the catch-all for uncatalogued records");
-            }
-            throw new ToolRefusal("The catalogue's " + String.join(" and ", said) + " are still to confirm: call "
+            throw new ToolRefusal("The catalogue's " + said + " still to confirm: call "
                                   + "catalogue_event_types build=... confirm=true (a short form asks the "
                                   + "user), then draft.");
         }
