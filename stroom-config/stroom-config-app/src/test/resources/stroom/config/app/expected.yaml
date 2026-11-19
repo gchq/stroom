@@ -720,6 +720,7 @@ appConfig:
       replacedCommitRetention: "PT30M"
       shardLeaseDuration: "PT1M"
       shardLeaseRenewInterval: "PT20S"
+      shardLeaseTakeoverGrace: "PT5M"
       slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:

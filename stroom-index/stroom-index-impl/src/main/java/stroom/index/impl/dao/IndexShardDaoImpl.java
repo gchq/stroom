@@ -413,14 +413,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 : DB_TIME_MS.plus(pruneCommitsDelayMs);
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
-                // A shard that has been deleted or marked corrupt while open keeps that status.
-                .set(INDEX_SHARD.STATUS, DSL
-                        .when(INDEX_SHARD.STATUS.in(
-                                        IndexShardStatus.OPENING.getPrimitiveValue(),
-                                        IndexShardStatus.OPEN.getPrimitiveValue(),
-                                        IndexShardStatus.CLOSING.getPrimitiveValue()),
-                                IndexShardStatus.CLOSED.getPrimitiveValue())
-                        .otherwise(INDEX_SHARD.STATUS))
+                .set(INDEX_SHARD.STATUS, closedIfOpen())
                 .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                 .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
                 .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, pruneCommitsAfterMs)
@@ -428,6 +421,21 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
                 .execute()) > 0;
+    }
+
+    private static Condition isOpen() {
+        return INDEX_SHARD.STATUS.in(
+                IndexShardStatus.OPENING.getPrimitiveValue(),
+                IndexShardStatus.OPEN.getPrimitiveValue(),
+                IndexShardStatus.CLOSING.getPrimitiveValue());
+    }
+
+    // The status of a shard whose writer has gone. A shard that has been deleted or marked corrupt while
+    // open keeps that status.
+    private static Field<Byte> closedIfOpen() {
+        return DSL
+                .when(isOpen(), IndexShardStatus.CLOSED.getPrimitiveValue())
+                .otherwise(INDEX_SHARD.STATUS);
     }
 
     // The flag is only ever set here. It stays set until the streams have been marked for recovery.
@@ -448,11 +456,46 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
+    public int releaseLapsedLeases(final long graceMs, final long replacedCommitRetentionMs) {
+        // A lease that has not expired is never taken, whatever the grace period is set to.
+        final Condition lapsed = INDEX_SHARD.LEASE_INSTANCE_ID.isNotNull()
+                .and(INDEX_SHARD.LEASE_EXPIRY_MS.lt(DB_TIME_MS.minus(Math.max(0, graceMs))));
+        return JooqUtil.contextResult(indexDbConnProvider, context -> {
+            // There is rarely anything to take, and the update would lock every leased shard it looked at
+            // while their holders are trying to renew them, so look first without locking.
+            final boolean anyLapsed = context.fetchExists(context
+                    .selectOne()
+                    .from(INDEX_SHARD)
+                    .where(lapsed));
+            if (!anyLapsed) {
+                return 0;
+            }
+            return context
+                    .update(INDEX_SHARD)
+                    // A deleted or corrupt shard is never opened again, so nothing would clear the flag.
+                    // Set before the status, as MySQL gives later assignments the new values of columns.
+                    .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, DSL
+                            .when(isOpen(), DSL.inline((byte) 1))
+                            .otherwise(INDEX_SHARD.RECOVER_PENDING_STREAMS))
+                    .set(INDEX_SHARD.STATUS, closedIfOpen())
+                    .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
+                    .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                    // The old writer may have been keeping commits it had replaced.
+                    .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, DSL.coalesce(
+                            INDEX_SHARD.PRUNE_COMMITS_AFTER_MS,
+                            DB_TIME_MS.plus(replacedCommitRetentionMs)))
+                    .where(lapsed)
+                    .execute();
+        });
+    }
+
+    @Override
     public void setNeedsPendingStreamRecovery(final long id) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, (byte) 1)
                 .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.LEASE_INSTANCE_ID.isNull())
                 .execute());
     }
 
@@ -536,9 +579,12 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public void resetAfterRestart(final Long id, final String instanceId) {
+    public void resetAfterRestart(final Long id, final String nodeName, final String instanceId) {
+        // A lease held under another node's name belongs to a node that has taken the shard on since.
         reset(id,
-                INDEX_SHARD.LEASE_INSTANCE_ID.isNull().or(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId)),
+                INDEX_SHARD.LEASE_INSTANCE_ID.isNull()
+                        .or(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId)
+                                .and(INDEX_SHARD.NODE_NAME.eq(nodeName))),
                 true);
     }
 
@@ -551,10 +597,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, recoverPendingStreams(recoverPendingStreams))
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(leaseCondition)
-                .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
-                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue()))
-                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()))
-                )
+                .and(isOpen())
                 .execute());
     }
 

@@ -36,6 +36,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     private static final StroomDuration DEFAULT_REPLACED_COMMIT_RETENTION = StroomDuration.ofMinutes(30);
     private static final StroomDuration DEFAULT_SHARD_LEASE_DURATION = StroomDuration.ofMinutes(1);
     private static final StroomDuration DEFAULT_SHARD_LEASE_RENEW_INTERVAL = StroomDuration.ofSeconds(20);
+    private static final StroomDuration DEFAULT_SHARD_LEASE_TAKEOVER_GRACE = StroomDuration.ofMinutes(5);
 
     private final CacheConfig activeShardCache;
     private final CacheConfig indexShardWriterCache;
@@ -45,6 +46,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     private final StroomDuration replacedCommitRetention;
     private final StroomDuration shardLeaseDuration;
     private final StroomDuration shardLeaseRenewInterval;
+    private final StroomDuration shardLeaseTakeoverGrace;
 
     public IndexWriterConfig() {
         activeShardCache = CacheConfig.builder()
@@ -63,6 +65,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
         replacedCommitRetention = DEFAULT_REPLACED_COMMIT_RETENTION;
         shardLeaseDuration = DEFAULT_SHARD_LEASE_DURATION;
         shardLeaseRenewInterval = DEFAULT_SHARD_LEASE_RENEW_INTERVAL;
+        shardLeaseTakeoverGrace = DEFAULT_SHARD_LEASE_TAKEOVER_GRACE;
     }
 
     @SuppressWarnings("unused")
@@ -74,7 +77,8 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty("slowIndexWriteWarningThreshold") final StroomDuration slowIndexWriteWarningThreshold,
             @JsonProperty("replacedCommitRetention") final StroomDuration replacedCommitRetention,
             @JsonProperty("shardLeaseDuration") final StroomDuration shardLeaseDuration,
-            @JsonProperty("shardLeaseRenewInterval") final StroomDuration shardLeaseRenewInterval) {
+            @JsonProperty("shardLeaseRenewInterval") final StroomDuration shardLeaseRenewInterval,
+            @JsonProperty("shardLeaseTakeoverGrace") final StroomDuration shardLeaseTakeoverGrace) {
         this.activeShardCache = activeShardCache;
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardWriterCacheConfig = indexShardWriterCacheConfig;
@@ -88,6 +92,9 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
         this.shardLeaseRenewInterval = Objects.requireNonNullElse(
                 shardLeaseRenewInterval,
                 DEFAULT_SHARD_LEASE_RENEW_INTERVAL);
+        this.shardLeaseTakeoverGrace = Objects.requireNonNullElse(
+                shardLeaseTakeoverGrace,
+                DEFAULT_SHARD_LEASE_TAKEOVER_GRACE);
     }
 
     public CacheConfig getActiveShardCache() {
@@ -151,6 +158,18 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
         return shardLeaseRenewInterval;
     }
 
+    /// Gets how long after a lease on an index shard has expired before the shard is taken from its holder.
+    ///
+    /// @return The grace period.
+    @JsonPropertyDescription("How long after the lease on an index shard on a shared index volume has expired " +
+            "before the shard is taken from the node that held it, so that other nodes can write to it. A node " +
+            "that cannot renew its leases stops writing well before they expire. This period is the margin " +
+            "for a node that was frozen at the moment of a commit and wakes later, so it should be much " +
+            "longer than any pause a node could suffer. Until it has passed, new documents go to other shards.")
+    public StroomDuration getShardLeaseTakeoverGrace() {
+        return shardLeaseTakeoverGrace;
+    }
+
     @Override
     public String toString() {
         return "IndexWriterConfig{" +
@@ -161,6 +180,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
                 ", replacedCommitRetention=" + replacedCommitRetention +
                 ", shardLeaseDuration=" + shardLeaseDuration +
                 ", shardLeaseRenewInterval=" + shardLeaseRenewInterval +
+                ", shardLeaseTakeoverGrace=" + shardLeaseTakeoverGrace +
                 '}';
     }
 }

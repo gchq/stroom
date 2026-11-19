@@ -161,8 +161,16 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
+    public int releaseLapsedLeases(final long graceMs, final long replacedCommitRetentionMs) {
+        // Leases here have no expiry time.
+        return 0;
+    }
+
+    @Override
     public synchronized void setNeedsPendingStreamRecovery(final long id) {
-        needRecovery.add(id);
+        if (!leases.containsKey(id)) {
+            needRecovery.add(id);
+        }
     }
 
     @Override
@@ -246,8 +254,11 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
-    public synchronized void resetAfterRestart(final Long id, final String instanceId) {
-        if (!instanceId.equals(leases.get(id))) {
+    public synchronized void resetAfterRestart(final Long id, final String nodeName, final String instanceId) {
+        final String holder = leases.get(id);
+        final IndexShard indexShard = map.get(id);
+        final boolean heldUnderThisNodesName = indexShard != null && nodeName.equals(indexShard.getNodeName());
+        if (holder == null || (!instanceId.equals(holder) && heldUnderThisNodesName)) {
             leases.remove(id);
             setStatus(id, IndexShardStatus.CLOSED);
             needRecovery.add(id);

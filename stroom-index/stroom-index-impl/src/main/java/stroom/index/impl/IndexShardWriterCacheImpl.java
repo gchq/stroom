@@ -268,8 +268,11 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                             "Closing " + indexShardId);
 
                     // Set the status of the shard to closing so it won't be used again immediately when removed
-                    // from the map.
-                    indexShardDao.setStatus(indexShardId, IndexShardStatus.CLOSING);
+                    // from the map. Not if the shard's lease has been lost, as the shard may by now have
+                    // been taken from this node and be another node's to set the status of.
+                    if (!leasedShards.contains(indexShardId) || indexShardLeases.isHeld(indexShardId)) {
+                        indexShardDao.setStatus(indexShardId, IndexShardStatus.CLOSING);
+                    }
 
                     // Close the shard.
                     indexShardWriter.close();
@@ -603,7 +606,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
             // Clears any lease an earlier process on this node held on the shard.
-            indexShardDao.resetAfterRestart(indexShard.getId(), indexShardLeases.getInstanceId());
+            indexShardDao.resetAfterRestart(
+                    indexShard.getId(),
+                    nodeInfo.getThisNodeName(),
+                    indexShardLeases.getInstanceId());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

@@ -332,7 +332,7 @@ class TestIndexShardDaoImpl {
         indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN);
         assertThat(indexShardDao.isLeased(indexShard.getId())).isTrue();
 
-        indexShardDao.resetAfterRestart(indexShard.getId(), PROCESS_B);
+        indexShardDao.resetAfterRestart(indexShard.getId(), "node1", PROCESS_B);
 
         assertThat(indexShardDao.isLeased(indexShard.getId())).isFalse();
         assertThat(indexShardDao.findLeasedShardIds(PROCESS_A)).isEmpty();
@@ -345,7 +345,7 @@ class TestIndexShardDaoImpl {
         indexShardDao.claimLease(indexShard.getId(), "node1", PROCESS_B, LEASE_MS);
         indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN);
 
-        indexShardDao.resetAfterRestart(indexShard.getId(), PROCESS_B);
+        indexShardDao.resetAfterRestart(indexShard.getId(), "node1", PROCESS_B);
 
         assertThat(indexShardDao.findLeasedShardIds(PROCESS_B)).containsExactly(indexShard.getId());
         assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getStatus())
@@ -391,15 +391,96 @@ class TestIndexShardDaoImpl {
     }
 
     @Test
+    void testResetAfterRestart_leavesAShardThatAnotherNodeHasTakenOn() {
+        // The shard was this node's when it listed the shards to reset. Since then it has been taken
+        // from this node's dead process and leased by another node.
+        final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_A, LEASE_MS);
+        indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN);
+
+        indexShardDao.resetAfterRestart(indexShard.getId(), "node1", PROCESS_B);
+
+        assertThat(indexShardDao.findLeasedShardIds(PROCESS_A)).containsExactly(indexShard.getId());
+        assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getStatus())
+                .isEqualTo(IndexShardStatus.OPEN);
+        assertThat(indexShardDao.needsPendingStreamRecovery(indexShard.getId())).isFalse();
+    }
+
+    @Test
     void testResetAfterRestart_marksTheShardAsNotClosedCleanly() {
         final IndexShard indexShard = createClosedShard(VolumeType.LOCAL, "node1");
         // A closed shard is opened in two steps.
         assertThat(indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPENING)).isTrue();
         assertThat(indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN)).isTrue();
 
-        indexShardDao.resetAfterRestart(indexShard.getId(), PROCESS_B);
+        indexShardDao.resetAfterRestart(indexShard.getId(), "node1", PROCESS_B);
 
         assertThat(indexShardDao.needsPendingStreamRecovery(indexShard.getId())).isTrue();
+    }
+
+    @Test
+    void testReleaseLapsedLeases() {
+        final IndexShard lapsed = createClosedShard(VolumeType.SHARED, "node1");
+        final IndexShard lapsedAndDeleted = createClosedShard(VolumeType.SHARED, "node1");
+        final IndexShard live = createClosedShard(VolumeType.SHARED, "node1");
+        final IndexShard unleased = createClosedShard(VolumeType.SHARED, "node1");
+        // Leases that ran out an hour ago, and one with a minute still to run.
+        indexShardDao.claimLease(lapsed.getId(), "node1", PROCESS_A, -3_600_000);
+        indexShardDao.setStatus(lapsed.getId(), IndexShardStatus.OPEN);
+        indexShardDao.claimLease(lapsedAndDeleted.getId(), "node1", PROCESS_A, -3_600_000);
+        indexShardDao.logicalDelete(lapsedAndDeleted.getId());
+        indexShardDao.claimLease(live.getId(), "node1", PROCESS_B, LEASE_MS);
+
+        // Not yet out of the grace period.
+        assertThat(indexShardDao.releaseLapsedLeases(7_200_000, 1_000)).isZero();
+        assertThat(indexShardDao.isLeased(lapsed.getId())).isTrue();
+
+        assertThat(indexShardDao.releaseLapsedLeases(300_000, 1_000)).isEqualTo(2);
+
+        // Closed, free for any node, and marked so that its uncommitted streams are recovered.
+        final IndexShard taken = indexShardDao.fetch(lapsed.getId()).orElseThrow();
+        assertThat(taken.getStatus()).isEqualTo(IndexShardStatus.CLOSED);
+        assertThat(indexShardDao.isLeased(lapsed.getId())).isFalse();
+        assertThat(indexShardDao.needsPendingStreamRecovery(lapsed.getId())).isTrue();
+        assertThat(indexShardDao.claimLease(lapsed.getId(), "node2", PROCESS_B, LEASE_MS)).isTrue();
+
+        // A deleted shard stays deleted, and can now have its files removed. It is never opened again,
+        // so it is not marked.
+        assertThat(indexShardDao.fetch(lapsedAndDeleted.getId()).orElseThrow().getStatus())
+                .isEqualTo(IndexShardStatus.DELETED);
+        assertThat(indexShardDao.isLeased(lapsedAndDeleted.getId())).isFalse();
+        assertThat(indexShardDao.needsPendingStreamRecovery(lapsedAndDeleted.getId())).isFalse();
+
+        // A lease that is being renewed, and a shard with none, are untouched.
+        assertThat(indexShardDao.findLeasedShardIds(PROCESS_B)).contains(live.getId());
+        assertThat(indexShardDao.needsPendingStreamRecovery(live.getId())).isFalse();
+        assertThat(indexShardDao.needsPendingStreamRecovery(unleased.getId())).isFalse();
+
+        // The old holder can no longer renew or give up what it has lost.
+        assertThat(indexShardDao.findLeasedShardIds(PROCESS_A)).isEmpty();
+        assertThat(indexShardDao.releaseLease(lapsed.getId(), PROCESS_A, null, true)).isFalse();
+    }
+
+    @Test
+    void testReleaseLapsedLeases_negativeGraceNeverTakesALiveLease() {
+        final IndexShard live = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(live.getId(), "node1", PROCESS_B, LEASE_MS);
+
+        // Two hours of negative grace would otherwise reach leases with up to two hours left to run.
+        assertThat(indexShardDao.releaseLapsedLeases(-7_200_000, 1_000)).isZero();
+
+        assertThat(indexShardDao.findLeasedShardIds(PROCESS_B)).containsExactly(live.getId());
+    }
+
+    @Test
+    void testSetNeedsPendingStreamRecovery_notOnceAnotherProcessHasTheShard() {
+        final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_B, LEASE_MS);
+
+        // Said by the old holder as it finally closes its writer, after the shard was taken from it.
+        indexShardDao.setNeedsPendingStreamRecovery(indexShard.getId());
+
+        assertThat(indexShardDao.needsPendingStreamRecovery(indexShard.getId())).isFalse();
     }
 
     @Test

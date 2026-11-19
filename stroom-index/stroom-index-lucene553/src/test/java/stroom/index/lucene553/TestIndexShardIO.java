@@ -38,11 +38,17 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 
+import org.apache.lucene553.document.Document;
+import org.apache.lucene553.document.Field.Store;
+import org.apache.lucene553.document.StringField;
 import org.apache.lucene553.index.DirectoryReader;
+import org.apache.lucene553.index.IndexWriter;
+import org.apache.lucene553.index.IndexWriterConfig;
 import org.apache.lucene553.search.IndexSearcher;
 import org.apache.lucene553.search.SearcherManager;
 import org.apache.lucene553.store.Directory;
 import org.apache.lucene553.store.NIOFSDirectory;
+import org.apache.lucene553.store.NoLockFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -170,6 +176,43 @@ class TestIndexShardIO extends StroomUnitTest {
         nextWriter.addDocument(buildDocument(5));
         nextWriter.close();
         assertThat(countCommittedDocuments(indexShard)).isEqualTo(2);
+    }
+
+    @Test
+    void testLeaseLost_shardWrittenToByAnotherNodeMeanwhile_itsFilesAreLeftAlone() throws IOException {
+        final AtomicBoolean leaseHeld = new AtomicBoolean(true);
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.setLeaseCheck(leaseHeld::get);
+        writer.addDocument(buildDocument(1));
+        writer.flush();
+        writer.addDocument(buildDocument(2));
+
+        // This node stops renewing its lease for so long that the shard is taken from it and written to by
+        // another node. That node is played by a writer that does not see this one's lock, as a writer in
+        // another process would not.
+        leaseHeld.set(false);
+        final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
+        try (final Directory directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
+                final IndexWriter otherNode = new IndexWriter(directory, new IndexWriterConfig(null))) {
+            for (int i = 0; i < 3; i++) {
+                final Document document = new Document();
+                document.add(new StringField("Other", "node", Store.NO));
+                otherNode.addDocument(document);
+            }
+            otherNode.commit();
+        }
+
+        // This node comes back and closes its writer, which must not touch the files in the shard as
+        // it no longer knows which of them are in use.
+        writer.close();
+
+        // The document committed here and the three committed by the other node.
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(4);
+        final IndexShardWriter nextWriter = createWriter(indexShard);
+        nextWriter.addDocument(buildDocument(5));
+        nextWriter.close();
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(5);
     }
 
     @Test

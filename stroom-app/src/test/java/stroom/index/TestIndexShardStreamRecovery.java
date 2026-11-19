@@ -34,6 +34,7 @@ import stroom.index.impl.PendingStreamTracker;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.LuceneIndexDoc;
@@ -65,6 +66,8 @@ class TestIndexShardStreamRecovery extends AbstractCoreIntegrationTest {
     private static final long STREAM_1 = 1_000_001L;
     private static final long STREAM_2 = 1_000_002L;
     private static final long STREAM_3 = 1_000_003L;
+    private static final String OTHER_NODE = "otherNode";
+    private static final String OTHER_PROCESS = "other-process";
 
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
@@ -258,6 +261,82 @@ class TestIndexShardStreamRecovery extends AbstractCoreIntegrationTest {
         assertThat(pendingStreamDao.find(STREAM_2, TASK)).isEmpty();
         closeAllWriters();
         assertThat(countDocuments(indexShardKey)).isEqualTo(5);
+    }
+
+    @Test
+    void testTakeover_nodeDiedPartWayThroughAStream_streamEndsUpIndexedOnce() {
+        final IndexShardKey indexShardKey = createIndexOnSharedVolumes("RECOVERY_TAKEOVER");
+        final PendingStreamTracker tracker1 = indexShardPendingStreams.begin(STREAM_1, TASK);
+        addDocuments(indexShardKey, STREAM_1, tracker1, 5);
+        assertThat(tracker1.end()).isTrue();
+        // Part of a second stream reaches the disk as well.
+        final PendingStreamTracker tracker2 = indexShardPendingStreams.begin(STREAM_2, TASK);
+        addDocuments(indexShardKey, STREAM_2, tracker2, 4);
+        final long shardId = shardIds(STREAM_2).iterator().next();
+        closeAllWriters();
+        assertThat(countDocuments(indexShardKey)).isEqualTo(9);
+
+        // The shard as a node that died part way through the second stream would have left it: leased to
+        // a process that is gone, with a lease that ran out an hour ago, and the stream still being written.
+        assertThat(indexShardDao.claimLease(shardId, OTHER_NODE, OTHER_PROCESS, -3_600_000L)).isTrue();
+        assertThat(states(STREAM_2)).containsOnly(PendingStreamState.WRITING);
+
+        recovery.exec();
+
+        // The shard has been taken from the dead node and is free, and the stream is marked.
+        final IndexShard taken = indexShardDao.fetch(shardId).orElseThrow();
+        assertThat(taken.getStatus()).isEqualTo(IndexShardStatus.CLOSED);
+        assertThat(indexShardDao.isLeased(shardId)).isFalse();
+        assertThat(indexShardDao.needsPendingStreamRecovery(shardId)).isFalse();
+        assertThat(states(STREAM_2)).containsOnly(PendingStreamState.ABANDONED, PendingStreamState.RETRY_PENDING);
+
+        // The stream's task is started again on this node. What the dead node wrote is removed first.
+        final PendingStreamTracker retry = indexShardPendingStreams.begin(STREAM_2, TASK);
+        addDocuments(indexShardKey, STREAM_2, retry, 6);
+        assertThat(retry.end()).isTrue();
+        closeAllWriters();
+
+        // Five of the first stream and six of the second, with none of the four from the first attempt.
+        assertThat(countDocuments(indexShardKey)).isEqualTo(11);
+        assertThat(pendingStreamDao.find(STREAM_2, TASK)).isEmpty();
+        // This node carried on writing to the same shard.
+        assertThat(indexShardDao.fetch(shardId).orElseThrow().getNodeName()).isNotEqualTo(OTHER_NODE);
+    }
+
+    @Test
+    void testTakeover_oldHolderThatComesBackDoesNotCommit() {
+        final IndexShardKey indexShardKey = createIndexOnSharedVolumes("RECOVERY_TAKEN_FROM_US");
+        final PendingStreamTracker tracker1 = indexShardPendingStreams.begin(STREAM_1, TASK);
+        addDocuments(indexShardKey, STREAM_1, tracker1, 5);
+        assertThat(tracker1.end()).isTrue();
+        indexShardWriterCache.flushAll();
+        final PendingStreamTracker tracker2 = indexShardPendingStreams.begin(STREAM_2, TASK);
+        addDocuments(indexShardKey, STREAM_2, tracker2, 4);
+        assertThat(tracker2.end()).isTrue();
+        final long shardId = shardIds(STREAM_2).iterator().next();
+
+        // This node stops renewing for so long that its lease runs out and the grace period passes, and
+        // the shard is taken from it.
+        indexShardDao.renewLeases(indexShardLeases.getInstanceId(), -3_600_000L);
+        assertThat(indexShardDao.releaseLapsedLeases(300_000L, 1_000L)).isEqualTo(1);
+        assertThat(indexShardDao.isLeased(shardId)).isFalse();
+
+        // It comes back, finds its lease gone and closes its writer without committing.
+        indexShardLeases.renew();
+        closeAllWriters();
+
+        // It did not mark the shard as closing on its way out, as the shard is no longer its own.
+        assertThat(indexShardDao.fetch(shardId).orElseThrow().getStatus()).isEqualTo(IndexShardStatus.CLOSED);
+        assertThat(indexShardDao.fetch(shardId).orElseThrow().getDocumentCount()).isEqualTo(5);
+
+        // The stream it never committed is recovered, and the shard can be written to again.
+        recovery.exec();
+        assertThat(pendingStreamDao.find(STREAM_2, TASK)).isEmpty();
+        final PendingStreamTracker retry = indexShardPendingStreams.begin(STREAM_2, TASK);
+        addDocuments(indexShardKey, STREAM_2, retry, 4);
+        assertThat(retry.end()).isTrue();
+        closeAllWriters();
+        assertThat(countDocuments(indexShardKey)).isEqualTo(9);
     }
 
     @Test

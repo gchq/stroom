@@ -92,7 +92,14 @@ class TestIndexShardPendingStreamRecovery {
         }).when(clusterLockService).tryLock(anyString(), any());
 
         return new IndexShardPendingStreamRecovery(
-                dao, indexShardDao, writerCache, responsibility, taskRecovery, clusterLockService, securityContext);
+                dao,
+                indexShardDao,
+                writerCache,
+                responsibility,
+                taskRecovery,
+                clusterLockService,
+                securityContext,
+                IndexWriterConfig::new);
     }
 
     @Test
@@ -207,6 +214,27 @@ class TestIndexShardPendingStreamRecovery {
         recovery.removeMarkedDocuments();
 
         Mockito.verifyNoInteractions(writerCache);
+    }
+
+    @Test
+    void testReleaseLapsedLeases_usesTheConfiguredGraceAndRetention() {
+        recovery.releaseLapsedLeases();
+
+        // Five minutes of grace, and replaced commits kept for half an hour.
+        Mockito.verify(indexShardDao).releaseLapsedLeases(300_000, 1_800_000);
+    }
+
+    @Test
+    void testExec_takesLapsedShardsBeforeRecoveringClosedOnes() {
+        Mockito.when(indexShardDao.findClosedShardsNeedingPendingStreamRecovery(anyInt())).thenReturn(List.of());
+        Mockito.when(dao.findShardIdsWithRowsToDelete()).thenReturn(List.of());
+
+        recovery.exec();
+
+        // So that a shard taken in this run has its streams recovered in the same run.
+        final InOrder inOrder = Mockito.inOrder(indexShardDao);
+        inOrder.verify(indexShardDao).releaseLapsedLeases(anyLong(), anyLong());
+        inOrder.verify(indexShardDao).findClosedShardsNeedingPendingStreamRecovery(anyInt());
     }
 
     @Test

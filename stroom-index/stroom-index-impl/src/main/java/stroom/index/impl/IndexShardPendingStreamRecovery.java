@@ -28,6 +28,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
@@ -65,6 +66,7 @@ public class IndexShardPendingStreamRecovery {
     private final Optional<ProcessorTaskRecovery> processorTaskRecovery;
     private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
+    private final Provider<IndexWriterConfig> indexWriterConfigProvider;
     // Stops documents being removed by two threads of this node at once.
     private final ReentrantLock removing = new ReentrantLock();
 
@@ -75,7 +77,8 @@ public class IndexShardPendingStreamRecovery {
                                     final IndexShardResponsibility indexShardResponsibility,
                                     final Optional<ProcessorTaskRecovery> processorTaskRecovery,
                                     final ClusterLockService clusterLockService,
-                                    final SecurityContext securityContext) {
+                                    final SecurityContext securityContext,
+                                    final Provider<IndexWriterConfig> indexWriterConfigProvider) {
         this.pendingStreamDao = pendingStreamDao;
         this.indexShardDao = indexShardDao;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -83,11 +86,13 @@ public class IndexShardPendingStreamRecovery {
         this.processorTaskRecovery = processorTaskRecovery;
         this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
+        this.indexWriterConfigProvider = indexWriterConfigProvider;
     }
 
     /// Runs every part of recovery once. The entry point of the job.
     public void exec() {
         securityContext.asProcessingUser(() -> {
+            run("releaseLapsedLeases", this::releaseLapsedLeases);
             run("recoverClosedShards", this::recoverClosedShards);
             run("removeMarkedDocuments", this::removeMarkedDocuments);
             run("recoverStreams", () -> clusterLockService.tryLock(LOCK_NAME, () -> {
@@ -103,6 +108,22 @@ public class IndexShardPendingStreamRecovery {
             LOGGER.logDurationIfDebugEnabled(runnable, name);
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Error in index shard pending stream recovery (" + name + "): " + e.getMessage(), e);
+        }
+    }
+
+    /// Takes shards on shared volumes from nodes that stopped renewing their leases long enough ago, e.g.
+    /// because they died. The shards are left closed, for any node to write to, and marked so that
+    /// [#recoverClosedShards()] recovers the streams their old holders had not committed.
+    void releaseLapsedLeases() {
+        final IndexWriterConfig config = indexWriterConfigProvider.get();
+        final int count = indexShardDao.releaseLapsedLeases(
+                config.getShardLeaseTakeoverGrace().toMillis(),
+                config.getReplacedCommitRetention().toMillis());
+        if (count > 0) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Took {} index shard(s) from nodes whose leases on them expired more than {} ago. The " +
+                    "streams those nodes had not committed will be removed from the index and indexed again.",
+                    count, config.getShardLeaseTakeoverGrace()));
         }
     }
 
