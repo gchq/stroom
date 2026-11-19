@@ -22,10 +22,12 @@ import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestTimePartition {
 
@@ -69,13 +71,47 @@ class TestTimePartition {
         assertThat(getPartition(PartitionBy.WEEK, 1, millis)).isEqualTo("2016-12-26");
     }
 
+    @Test
+    void testIsTimePartitioned() {
+        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.YEAR, 1))).isTrue();
+        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.MONTH, 1))).isTrue();
+        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.WEEK, 1))).isTrue();
+        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.DAY, 1))).isTrue();
+    }
+
+    @Test
+    void testIsTimePartitioned_none() {
+        assertThat(TimePartitionFactory.isTimePartitioned(createIndex(PartitionBy.NONE, 1))).isFalse();
+    }
+
+    @Test
+    void testIsTimePartitioned_nullPartitionBy() {
+        final LuceneIndexDoc index = Mockito.mock(LuceneIndexDoc.class);
+        Mockito.when(index.getPartitionBy()).thenReturn(null);
+
+        assertThat(TimePartitionFactory.isTimePartitioned(index)).isFalse();
+    }
+
+    @Test
+    void testCreate_noneIsRejected() {
+        final LuceneIndexDoc index = createIndex(PartitionBy.NONE, 1);
+
+        assertThatThrownBy(() -> new TimePartitionFactory().create(index, 0L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("NONE");
+    }
+
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
-        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+        final LuceneIndexDoc index = createIndex(partitionBy, partitionSize);
+        return new TimePartitionFactory().create(index, millis).getLabel();
+    }
+
+    private LuceneIndexDoc createIndex(final PartitionBy partitionBy, final int partitionSize) {
+        return LuceneIndexDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .shardsPerPartition(5)
                 .partitionBy(partitionBy)
                 .partitionSize(partitionSize)
                 .build();
-        return new TimePartitionFactory().create(index, millis).getLabel();
     }
 }

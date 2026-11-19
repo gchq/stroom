@@ -40,6 +40,16 @@ public class TimePartitionFactory {
     private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
     private static final TemporalField DAY_OF_WEEK = WeekFields.of(Locale.UK).dayOfWeek();
 
+    /// Tests whether an index splits its documents into partitions by time.
+    ///
+    /// @param index The index to test.
+    /// @return True if the index is partitioned by a period of time, false if all of its documents belong to a
+    /// single partition, i.e. it has no partition setting or is set to [PartitionBy#NONE].
+    public static boolean isTimePartitioned(final LuceneIndexDoc index) {
+        final PartitionBy partitionBy = index.getPartitionBy();
+        return partitionBy != null && !PartitionBy.NONE.equals(partitionBy);
+    }
+
     public TimePartition create(final LuceneIndexDoc index, final long timeMs) {
         final PartitionBy partitionBy = index.getPartitionBy();
         final int partitionSize = index.getPartitionSize() == null

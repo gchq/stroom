@@ -66,7 +66,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     public IndexSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        partitionBy.setNonSelectString("No partition");
+        partitionBy.addItem(PartitionBy.NONE);
         partitionBy.addItem(PartitionBy.YEAR);
         partitionBy.addItem(PartitionBy.MONTH);
         partitionBy.addItem(PartitionBy.WEEK);
