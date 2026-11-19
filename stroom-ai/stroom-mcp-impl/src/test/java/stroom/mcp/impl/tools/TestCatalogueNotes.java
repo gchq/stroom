@@ -21,8 +21,8 @@ import stroom.ai.impl.tools.catalogue.CatalogueDiff;
 import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.docref.DocRef;
-import stroom.documentation.shared.DocumentationDoc;
 import stroom.docstore.api.DocFinder;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 
