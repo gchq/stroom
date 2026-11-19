@@ -675,7 +675,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // Judged with the fields inside held values as the draft reads them (a JSON string's keys), so a kind field
         // inside one can be chosen and is one the draft's rules read.
         final List<Map<String, Object>> judged = HeldKindRecords.of(samples, source, splitter, raw.records());
-        final KindsChosen chosen = kindFields(call, context, build, notesNow, judged,
+        final KindsChosen chosen = kindFields(call, context, build, notesNow, judged, fieldsOf(raw.records()),
                 mayAsk && KindFields.structured(String.valueOf(raw.info().get("format"))), userChose);
         if (chosen.asking() != null) {
             return new Sampled(samples, readWith, List.of(), List.of(), null, chosen.asking(), List.of(), scopeSaid);
@@ -725,6 +725,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                    final String build,
                                    final Map<String, Object> notesNow,
                                    final List<Map<String, Object>> records,
+                                   final Set<String> drafted,
                                    final boolean mayAsk,
                                    final List<String> userChose) {
         final KindFields.Choice choice = KindFields.choose(withoutSourceType(build, records));
@@ -741,22 +742,26 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // followed): only where the records, as the build's splitter reads them, have them and their values tell
         // kinds apart (seen in testing: a kind field the survey chose that the splitter's records didn't have as
         // such, and 5,567 of 6,000 records in no kind).
-        final List<String> usable = usableKindFields(kept, records, choice);
+        final List<String> usable = usableKindFields(kept, records, choice, true);
         if (!usable.isEmpty()) {
             return new KindsChosen(usable, null, false);
         }
         final Optional<List<String>> surveyed = builds.surveyKindFields(build)
-                .map(fields -> usableKindFields(fields, records, choice))
+                .map(fields -> usableKindFields(fields, records, choice, false))
                 .filter(fields -> !fields.isEmpty());
         if (surveyed.isPresent()) {
             return new KindsChosen(surveyed.get(), null, false);
         }
+        if (choice.certain() && choice.fields().stream().anyMatch(field -> !drafted.contains(field))) {
+            // Named like a kind field inside a held value (`event.logger_name`), which the draft reads by no name of
+            // its own: kept with the kinds, so the draft makes its rules by them (seen in testing, 2026-11-19: Pega's
+            // logger chosen, and the draft's records one kind).
+            return new KindsChosen(choice.fields(), null, true);
+        }
         if (choice.certain() || !mayAsk) {
             return new KindsChosen(List.of(), null, false);
         }
-        final Optional<String> answer = consent.answer(call, context, NAME, "No field of the sample is named like a "
-                                                                            + "kind of event (type, action...), but "
-                                                                            + "these could tell its kinds apart:\n"
+        final Optional<String> answer = consent.answer(call, context, NAME, kindFieldIntro(choice) + "\n"
                                                                             + choice.said(),
                 KIND_FIELD_QUESTION, choice.options());
         if (answer.isEmpty()) {
@@ -766,8 +771,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     "field", candidate.field(),
                     "values", candidate.values().subList(0, Math.min(10, candidate.values().size())),
                     "records", candidate.records())).toList());
-            result.put(HINT, "No field is named like a kind of event, but these could tell the kinds apart. Ask the "
-                             + "user in the chat which one does (show them the candidates and their values), or "
+            result.put(HINT, "No field named like a kind of event has a value in most records, but these could "
+                             + "tell the kinds apart. Ask the user in the chat which one does (show them the "
+                             + "candidates and their values), or "
                              + "whether the records are all one kind, then call " + NAME + " again with "
                              + KIND_FIELD_ARG + " as they said. Don't choose for them.");
             return new KindsChosen(List.of(), result, false);
@@ -777,6 +783,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             throw consent.wroteInstead(context, NAME, KIND_FIELD_QUESTION, answer.get(), KIND_FIELD_THEN);
         }
         return new KindsChosen(said, null, true);
+    }
+
+    // Every field the records have, as the draft reads them.
+    private static Set<String> fieldsOf(final List<Map<String, Object>> records) {
+        final Set<String> out = new LinkedHashSet<>();
+        records.stream().filter(Objects::nonNull).forEach(record -> out.addAll(record.keySet()));
+        return out;
     }
 
     // The records as their kind field is chosen among them within the build's scope: without the scope's source
@@ -903,16 +916,22 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                   + "have " + new TreeSet<>(choice.recordFields()) + "." + candidatesSaid(choice)
                                   + " Ask the user which one they meant.");
         }
+        // Hard reasons refuse (no such field, no value, a value a record); its values' shape alone (whole
+        // messages, addresses or times, too many values) is put to the user with the field, who decides (seen in
+        // testing, 2026-11-19: Pega's logger_name, Java class names past 80 characters, refused as whole messages
+        // though the user named it).
+        final List<String> concerns = new ArrayList<>();
         if (!KindFields.oneKind(spelt)) {
             for (final String field : spelt) {
-                final Optional<String> why = KindFields.whyNot(field, records);
-                if (why.isPresent()) {
+                final Optional<KindFields.Concern> concern = KindFields.concern(field, records);
+                if (concern.isPresent() && !concern.get().shape()) {
                     throw new ToolRefusal(KIND_FIELD_ARG + " '" + field + "' can't tell the kinds of event apart: "
-                                          + why.get() + "." + candidatesSaid(choice) + " Ask the user which field "
-                                          + "does, or whether the records are all one kind of event; if a word "
-                                          + "inside a field names the event, read it into a field of its own "
-                                          + "(build_data_splitter) and list again.");
+                                          + concern.get().said() + "." + candidatesSaid(choice) + " Ask the user "
+                                          + "which field does, or whether the records are all one kind of event; "
+                                          + "if a word inside a field names the event, read it into a field of "
+                                          + "its own (build_data_splitter) and list again.");
                 }
+                concern.ifPresent(found -> concerns.add(found.asked(field)));
             }
         }
         if (spelt.equals(kept) || consent.takesChatAnswer(context, NAME, KIND_FIELD_QUESTION)) {
@@ -930,9 +949,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final String proposed = KindFields.oneKind(spelt)
                 ? KindFields.ONE_KIND_ANSWER
                 : String.join(", ", spelt);
-        final Optional<String> answer = consent.answer(call, context, NAME, "The kinds of event are to be told apart "
-                                                                            + "by " + proposed + ".",
-                KIND_FIELD_QUESTION, put.options());
+        final String intro = "The kinds of event are to be told apart by " + proposed + "." + (concerns.isEmpty()
+                ? ""
+                : "\n" + String.join("\n", concerns));
+        final Optional<String> answer = consent.answer(call, context, NAME, intro, KIND_FIELD_QUESTION,
+                put.options());
         if (answer.isEmpty()) {
             return new KindsChosen(spelt, null, true);
         }
@@ -943,20 +964,35 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return new KindsChosen(said, null, true);
     }
 
-    // The kind fields kept that the records have and whose values tell kinds apart; empty when any doesn't.
+    // The kind fields kept that the records have and whose values tell kinds apart; empty when any doesn't. The
+    // user's own (kept in the source notes) only for a hard reason: they may have chosen one whose values' shape was
+    // put to them.
     private static List<String> usableKindFields(final List<String> fields,
                                                  final List<Map<String, Object>> records,
-                                                 final KindFields.Choice choice) {
+                                                 final KindFields.Choice choice,
+                                                 final boolean users) {
         if (fields.isEmpty() || KindFields.oneKind(fields)) {
             return fields;
         }
         final List<String> spelt = KindFields.asRecordsSpellThem(fields, choice.recordFields());
         if (spelt.size() != fields.size()
-            || spelt.stream().anyMatch(field -> KindFields.whyNot(field, records).isPresent())) {
+            || spelt.stream().anyMatch(field -> KindFields.concern(field, records)
+                .filter(concern -> !users || !concern.shape())
+                .isPresent())) {
             LOGGER.debug("Kind fields {} not used: not the records' or not kinds", fields);
             return List.of();
         }
         return spelt;
+    }
+
+    // What the kind field form says of its candidates: none named like a kind field, or those that are on only some
+    // of the records.
+    private static String kindFieldIntro(final KindFields.Choice choice) {
+        return choice.candidates().stream().anyMatch(KindFields.Candidate::named)
+                ? "The fields named like a kind of event (type, action...) have values in only some of the "
+                  + "records. These could tell its kinds apart:"
+                : "No field of the sample is named like a kind of event (type, action...), but these could tell "
+                  + "its kinds apart:";
     }
 
     // The fields that could tell the kinds apart, said for a refusal; empty when there are none.

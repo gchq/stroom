@@ -3062,7 +3062,11 @@ once for the survey (`KindFields`), from the first stream's head, and kept in th
 (`fields`, `by`: `user` or `tool`); every part is then signed by them, rather than by the columns each part's names or
 values suggest (seen in testing: a CSV mail log's `msg_act`, chosen afresh in each part, 16 kinds from 3, never
 covered). A field named like a kind field (`type`, `action`, `event_id`...) whose values aren't one a record, nor
-addresses or times, is chosen without asking. Where none is, but fields with a few short values that repeat could
+addresses or times, and which has a value in most records, is chosen without asking; one on fewer records is a
+candidate with the rest. A qualified name (three or more identifiers joined by `.`, `::`, `/` or `$`, such as a Java
+logger's class) is a code at any length up to 200 characters, its last part shown in the form's label. Fields naming
+where a record was handled (hosts and nodes, levels and severities, a shipper's `collector` or `agent`) are never
+offered, though the user may name one. Where no field is chosen, but fields with a few short values that repeat could
 be, they are put to the user in a short form (each as `field (value, value...)`, or "All one kind of event", or a
 field they name); without forms the call reads nothing and returns `status: needs_kind_field` with the candidates,
 and the agent asks in the chat and calls again with `kind_field`. A `kind_field` other than the one kept starts the
@@ -3527,7 +3531,11 @@ them in the notes block as `pending`. The kinds are told apart by the kind field
 and `KindFields` finds candidates, the user is asked which (as survey_feed asks; without forms `status:
 needs_kind_field`), and the answer is kept in the notes as `kind_fields`, which the draft follows
 (`SourceNotes.KIND_FIELDS`; `TranslationBuilds.notesInBuild` adds the survey's when the notes have none). The draft
-itself never takes a field by its values alone. The candidates are judged over the build's scope's records with
+itself never takes a field by its values alone. A field named like a kind field inside a held value, chosen without
+asking, is kept in the notes too, so the draft reads it. A `kind_field` is refused only for a hard reason (the records
+lack it, it holds no value, each record has a value of its own); one whose values only look wrong (whole messages,
+addresses or times, too many values) is put to the user in the confirm form with the concern and an example, and
+their answer decides (`KindFields.Concern`); without forms it is taken as their chat answer. The candidates are judged over the build's scope's records with
 the fields inside their held values as the draft reads them (`HeldKindRecords`: a JSON string's keys as
 `event.logger_name`, XML text's elements as `event/Header/Op`, the pairs the draft extracts), so a kind field inside
 a held value can be chosen and the draft's rules read it; one given as a source type reading writes it

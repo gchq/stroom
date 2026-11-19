@@ -73,6 +73,10 @@ class TestClassifyKindsTool {
                                             + "{\"field\": \"action\", \"value\": \"purge\", \"description\": "
                                             + "\"Records purged\", \"event_detail\": \"Delete\", \"confidence\": "
                                             + "\"low\"}]";
+    // Notes of a mail gateway: sentences, each repeating.
+    private static final List<String> NOTES = List.of(
+            "The message was delivered to the mailbox of the recipient as sent",
+            "The message was held for review by the content filter of the gateway");
 
     private final BuildWorld world = new BuildWorld();
     private final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
@@ -348,6 +352,72 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void aFieldTheUserNamesWhoseValuesLookLikeMessagesIsPutToThemWithTheConcernAndTheirAnswerDecides() {
+        // Seen in testing (2026-11-19): Pega's logger_name, named by the user, refused for values past 80
+        // characters; only a field's values' shape is put to the user, who may choose it anyway.
+        samples(11L, notesCsv());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "note"));
+
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], "
+                                                + "\"kind_field\": \"note\"}", user.context());
+
+        assertThat(user.shown()).singleElement().asString()
+                .contains("The kinds of event are to be told apart by note.")
+                .contains("note: its values look long (e.g. The message was")
+                .contains("Tell the kinds apart by it anyway?");
+        assertThat(list(listed.get("to_classify"))).as("%s", listed).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrderElementsOf(NOTES);
+
+        // Another answer in the same form chooses another field.
+        final BuildToolCalls.FormUser other = BuildToolCalls.user(Map.of("answer",
+                "msg_act (allow, quarantine, reject)"));
+        final Map<String, Object> instead = call("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], "
+                                                 + "\"kind_field\": \"event_note\"}", other.context());
+        assertThat(list(instead.get("to_classify"))).as("%s", instead).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("allow", "quarantine", "reject");
+    }
+
+    @Test
+    void withoutFormsAFieldTheUserNamesWhoseValuesLookLikeMessagesIsTakenAsTheySaidIt() {
+        samples(11L, notesCsv());
+
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], "
+                                                + "\"kind_field\": \"note\"}", BuildToolCalls.context());
+
+        assertThat(list(listed.get("to_classify"))).as("%s", listed).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrderElementsOf(NOTES);
+    }
+
+    @Test
+    void aFieldWithNoValueIsStillRefusedThoughTheUserNamesIt() {
+        samples(11L, notesCsv());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "empty"));
+
+        final String refused = tool.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, "{\"build\": \"acme\", "
+                                                                                     + "\"source\": \"SEG\", "
+                                                                                     + "\"stream_ids\": [11], "
+                                                                                     + "\"kind_field\": \"empty\"}"),
+                user.context()).text();
+
+        assertThat(refused).contains("kind_field 'empty' can't tell the kinds of event apart: 'empty' holds no "
+                                     + "value in the records");
+        assertThat(user.shown()).isEmpty();
+        assertThat(text("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], "
+                        + "\"kind_field\": \"serial\"}")).contains("each record has a value of its own in 'serial'");
+    }
+
+    // A mail log with a note of a few sentences, each repeating, a field with no value and one a record.
+    private static String notesCsv() {
+        final StringBuilder csv = new StringBuilder("timestamp,sender,msg_act,note,event_note,empty,serial\n");
+        for (int i = 0; i < 30; i++) {
+            final String note = NOTES.get(i % NOTES.size());
+            csv.append("2026-11-11T08:%02d:04Z,u%d@example.com,%s,%s,%s,-,s%d\n".formatted(i, i,
+                    List.of("allow", "quarantine", "reject").get(i % 3), note, note, i));
+        }
+        return csv.toString();
+    }
+
+    @Test
     void mostRecordsInNoKindPutTheFieldsThatCouldTellThemApartToTheUser() {
         // Seen in testing (2026-11-12, a mail gateway): one kind of 433 records listed and settled, 5,567 of 6,000
         // records in none, "every kind is settled: go on to the draft", and no form put to the user.
@@ -364,13 +434,18 @@ class TestClassifyKindsTool {
                                                 + "\"stream_ids\": [12]}", BuildToolCalls.context());
         assertThat(asking).containsEntry("status", "needs_kind_field");
         assertThat(String.valueOf(asking.get("candidates"))).contains("field=disposition");
-        assertThat(String.valueOf(asking.get("hint"))).startsWith("27 of the 30 records are in no kind");
+        // `type`, named like a kind field, on 3 of the 30 records: not the choice, but a candidate with the rest
+        // (2026-11-19), so the user is asked before the draft rather than after it.
+        assertThat(String.valueOf(asking.get("hint"))).startsWith("No field named like a kind of event has a value "
+                                                                  + "in most records");
 
         // With forms: the user chooses, and the kinds are listed by their choice at once.
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "disposition"));
         final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"SEG\", "
                                                 + "\"stream_ids\": [12]}", user.context());
-        assertThat(user.shown()).singleElement().asString().contains("27 of the 30 sample records are in no kind");
+        assertThat(user.shown()).singleElement().asString().contains("The fields named like a kind of event "
+                                                                     + "(type, action...) have values in only some "
+                                                                     + "of the records.");
         assertThat(list(listed.get("to_classify"))).as("%s", listed).extracting(kind -> kind.get("value"))
                 .containsExactlyInAnyOrder("SEGTrap", "SEGDeliver", "SEGQuarantine");
     }
