@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -248,16 +249,21 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 .contains("Import-Bulk", "starts_with", "contains");
     }
 
-    // ### An event type recognised by a value its record alone holds (each record's object is its own): refused,
-    // suggesting starts_with or a regex with a named group; the rare purge, on a field of few values, is not.
+    // ### An event type recognised by a message holding its record's own id ("Object rec-3 has been modified"):
+    // refused, suggesting starts_with or a regex with a named group; the rare purge, on a field of few values, is
+    // not. A field whose whole value is an id (object=rec-3) can't be told from a code (AUTH-001) and is left alone.
     @Test
     void anEventTypeRecognisedByAValueUniqueToItsRecordIsRefused() {
         final String build = "e2e-cat-unique";
-        final List<Long> raw = surveyedSample(build, "E2E-CAT-UNIQUE", sample());
+        final List<Long> raw = surveyedSample(build, "E2E-CAT-UNIQUE", sample().lines()
+                .map(line -> line + " msg=\"Object " + line.replaceAll(".*object=", "") + " has been modified\"")
+                .collect(Collectors.joining("\n", "", "\n")));
         final String reply = replyText(CATALOGUE, args("build", build, "stream_ids", raw, "proposals", List.of(
-                eventType("Update-Record", "Update", "high", when("object", "equals", "rec-3")))));
+                eventType("Update-Record", "Update", "high", when("msg", "equals",
+                        "Object rec-3 has been modified")))));
         dump("unique", reply);
-        assertThat(reply).contains("Update-Record", "nearly one a record", "starts_with", "named group");
+        assertThat(reply).contains("Update-Record", "differ only in a part that varies", "starts_with",
+                "named group");
         final Map<String, Object> purge = proposed(build, raw, List.of(
                 eventType("Delete-Records", "Delete", "high", when("action", "equals", "purge"))));
         assertThat(list(checkOf(purge), "problems")).isEmpty();

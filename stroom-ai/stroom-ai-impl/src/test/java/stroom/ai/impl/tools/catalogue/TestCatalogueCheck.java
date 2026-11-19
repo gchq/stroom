@@ -477,12 +477,12 @@ class TestCatalogueCheck {
         final CatalogueCheckResult check = check(catalogue(modified), lines);
 
         assertThat(check.refused()).isTrue();
-        assertThat(said(check)).containsExactly("Update-Object#0: the field event.message has 30 different values "
-                + "over the 30 records holding it, nearly one a record, and '" + first + "' is held by 1 record: "
-                + "an event type recognised by one of its values recognises next to no records, and in processing "
-                + "every record with a new value would be uncatalogued; recognise the event type by what its "
-                + "values share: starts_with their fixed start, or matches with a regex whose named group (names) "
-                + "keeps the part that varies");
+        assertThat(said(check)).containsExactly("Update-Object#0: '" + first + "' is one of 30 values of the field "
+                + "event.message that differ only in a part that varies (written 'Object <uuid> has been modified'): "
+                + "an event type recognised by one of them recognises next to no records, and in processing every "
+                + "record with a new value would be uncatalogued; recognise the event type by what its values "
+                + "share: starts_with their fixed start, or matches with a regex whose named group (names) keeps "
+                + "the part that varies");
     }
 
     @Test
@@ -495,7 +495,7 @@ class TestCatalogueCheck {
 
         assertThat(check.refused()).isTrue();
         assertThat(said(check)).singleElement().asString()
-                .contains("the field event.message has 30 different values over the 30 records holding it")
+                .contains("one of 30 values of the field event.message that differ only in a part that varies")
                 .contains("starts_with their fixed start, or matches with a regex whose named group");
     }
 
@@ -534,17 +534,36 @@ class TestCatalogueCheck {
     }
 
     @Test
-    void aSmallSampleOfValuesEachTheirOwnIsNotRefused() {
-        // Too few records to tell a field of values each their own from a field of codes each seen once.
-        final List<String> lines = modifiedObjects(CatalogueCheck.UNIQUE_FIELD_RECORDS - 1, 0);
+    void codesEachSeenOnceAreNotRefused() {
+        // Seen in the full e2e run (eval cases 32 and 35): a sample of one record an event type, each its own code,
+        // numeric (a Windows event's EventID) or a word (an action). Their values have no part that varies.
+        final List<String> lines = new ArrayList<>();
+        final List<String> words = List.of("Login", "Logout", "Create", "Delete", "View", "Export", "Import",
+                "Share", "Unshare", "Lock", "Unlock", "Approve", "Reject", "Restore", "Archive", "Rename", "Move",
+                "Copy", "Print", "Search", "Download", "Upload");
+        for (int n = 0; n < words.size(); n++) {
+            lines.add(line(event("com.example.Audit", "code", String.valueOf(4600 + n), "action", words.get(n))));
+        }
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.code", "4600")));
+        final EventType login = type("Authenticate-Login", "Login", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.action", "Login"), equalsTo("event.code", "4600")));
+
+        assertThat(check(catalogue(logon), lines).problems()).isEmpty();
+        assertThat(check(catalogue(login), lines).problems()).isEmpty();
+    }
+
+    @Test
+    void aValueWrittenAsTooFewOthersAreIsNotRefused() {
+        // Two values written alike may be two event types' own messages; three is a pattern.
         final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
                 way(equalsTo("event.message", "Object " + uuid(0) + " has been modified")));
 
-        assertThat(check(catalogue(modified), lines).problems()).isEmpty();
-        // One record more, and it is.
-        assertThat(check(catalogue(modified), modifiedObjects(CatalogueCheck.UNIQUE_FIELD_RECORDS, 0)).problems())
+        assertThat(check(catalogue(modified), modifiedObjects(CatalogueCheck.UNIQUE_WRITTEN_VALUES - 1, 0))
+                .problems()).isEmpty();
+        assertThat(check(catalogue(modified), modifiedObjects(CatalogueCheck.UNIQUE_WRITTEN_VALUES, 0)).problems())
                 .singleElement()
-                .satisfies(problem -> assertThat(problem.problem()).contains("nearly one a record"));
+                .satisfies(problem -> assertThat(problem.problem()).contains("differ only in a part that varies"));
     }
 
     @Test

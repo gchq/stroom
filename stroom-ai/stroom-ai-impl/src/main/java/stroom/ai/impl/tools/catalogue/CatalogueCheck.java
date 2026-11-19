@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.catalogue;
 
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.ByField;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Count;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Overlap;
@@ -50,6 +51,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /// The catalogue's check (`catalogue_event_types` `proposals=`): the whole catalogue against every record of the
 /// scope, read as processing will read them. Pure: the records in, the check's JSON out ([CatalogueCheckResult]).
@@ -67,9 +69,9 @@ import java.util.function.Predicate;
 ///   regex over its time budget (timed in Saxon's engine, as processing runs it); a regex or `contains` over values
 ///   longer than [#LONG_VALUE] where `starts_with` or `contains` recognises the same records; a condition that
 ///   depends on processing's string cut; an event type recognised by every record of a line format that shares it;
-///   an `equals` or `one_of` naming a value one or two records hold, on a field whose values are nearly each their own
-///   record's (at least [#UNIQUE_FIELD_RECORDS] records hold it, its distinct values at least
-///   [#UNIQUE_FIELD_SHARE] of them), with `starts_with` or a `matches` with a named group suggested.
+///   an `equals` or `one_of` naming a value that differs from at least [#UNIQUE_WRITTEN_VALUES] of the field's
+///   values only in a part that varies (an id, a number, an address, a quoted string: [Shapes#mask]), with
+///   `starts_with` or a `matches` with a named group suggested.
 /// * **Order**: the catalogue's ([CatalogueOrder]).
 ///
 /// Each tested field is read once a record and each condition tested once a distinct value ([RecordIndex]), so
@@ -80,14 +82,9 @@ public final class CatalogueCheck {
     /// default).
     public static final int LONG_VALUE = LocalCheck.JSON_PARSER_CUT;
 
-    /// The fewest records holding a field before its values may be judged each their own record's ([#uniqueValues]):
-    /// fewer, and a field of values each its own record's can't be told from a field of codes each seen once.
-    static final int UNIQUE_FIELD_RECORDS = 20;
-    /// A field whose distinct values are at least this share of the records holding it has values nearly each their
-    /// own record's.
-    static final double UNIQUE_FIELD_SHARE = 0.8;
-    /// A value held by at most this many records, on such a field, is one of those values each its own record's.
-    static final int UNIQUE_VALUE_RECORDS = 2;
+    /// The fewest of a field's values written alike, differing only in a part that varies, for a value of them named
+    /// by an `equals` or `one_of` to be refused ([#uniqueValues]): two may be two event types' own messages.
+    static final int UNIQUE_WRITTEN_VALUES = 3;
 
     // The most records of an event type read for whether it may be several, and of a shape for its examples.
     private static final int SEVERAL_READ = 2_000;
@@ -102,6 +99,8 @@ public final class CatalogueCheck {
     private static final double SHAPE_SHARE = 0.1;
     // The characters an XPath regex gives a meaning; escaped, each is itself.
     private static final String META = ".\\?*+{}()[]|^$";
+    // A part Shapes.mask puts in place of a variable one.
+    private static final Pattern MASKED_PART = ToolText.re("<(?:s|email|ip|uuid|hex|n)>");
     private static final String ESCAPABLE = ".\\?*+{}()[]|^$-";
 
     private CatalogueCheck() {
@@ -210,6 +209,26 @@ public final class CatalogueCheck {
     }
 
 
+    // A value as it is written, its variable parts masked (Shapes.mask), when it has both a variable part and fixed
+    // text; else null: a code (all fixed text, as "Login", or all variable, as "4624") is no pattern.
+    private static String writtenForm(final String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        final List<String> tokens = Shapes.mask(value);
+        boolean variable = false;
+        boolean fixed = false;
+        for (final String token : tokens) {
+            final String rest = MASKED_PART.matcher(token).replaceAll("");
+            variable |= rest.length() < token.length();
+            fixed |= rest.chars().anyMatch(Character::isLetter);
+        }
+        return variable && fixed
+                ? String.join(" ", tokens)
+                : null;
+    }
+
+
     // --------------------------------------------------------------------------------
 
 
@@ -225,6 +244,8 @@ public final class CatalogueCheck {
         private final List<BitSet> byType = new ArrayList<>();
         private final List<String> keys = new ArrayList<>();
         private final Map<Condition, List<String>> conditionProblems = new HashMap<>();
+        // By field: how many of its values are written each way, their variable parts masked (uniqueValues).
+        private final Map<String, Map<String, Integer>> writtenAlike = new HashMap<>();
         private final Predicate<String> onSourceType;
 
         private Run(final Catalogue catalogue, final RecordIndex index, final EventSchema schema) {
@@ -447,12 +468,14 @@ public final class CatalogueCheck {
             return out;
         }
 
-        // An equals or one_of naming a value only one or two records hold, on a field whose values are nearly each
-        // their own record's: at least UNIQUE_FIELD_RECORDS records hold the field, and its distinct values are at
-        // least UNIQUE_FIELD_SHARE of them (a message holding an object's id, a different one each record). Such an
-        // event type recognises next to no records, and in processing every new value is uncatalogued. The field's
-        // variety decides, not the value's own count: a code seen once on a field of few values (a vendor's code
-        // rare in a small sample) is never refused, nor a value many records hold on a varied field.
+        // An equals or one_of naming a value that differs from others of the field only in a part that varies (a
+        // message holding an object's id, a different one each record): at least UNIQUE_WRITTEN_VALUES of the
+        // field's values are written alike once their variable parts are masked (Shapes.mask: quoted strings,
+        // addresses, UUIDs, long hex numbers, words with a digit), keeping some fixed text. Such an event type
+        // recognises next to no records, and in processing every new value is uncatalogued. A code is never
+        // refused, however rare and however varied its field (seen in the full e2e run: eval cases 32 and 35, a
+        // sample of one record an event type, each its own EventID or action): it is all fixed text, or all
+        // variable part.
         private Optional<String> uniqueValues(final Condition c) {
             final List<String> named = c.equalTo() != null
                     ? List.of(c.equalTo())
@@ -460,22 +483,28 @@ public final class CatalogueCheck {
             if (named == null || named.isEmpty()) {
                 return Optional.empty();
             }
-            final RecordIndex.Variety variety = index.variety(c.field());
-            if (variety.holding() < UNIQUE_FIELD_RECORDS
-                || variety.distinct() < variety.holding() * UNIQUE_FIELD_SHARE) {
-                return Optional.empty();
-            }
+            final Map<String, Integer> written = writtenAlike.computeIfAbsent(c.field(), field -> {
+                final Map<String, Integer> byWritten = new HashMap<>();
+                for (final String value : index.variety(field).recordsByValue().keySet()) {
+                    final String form = writtenForm(value);
+                    if (form != null) {
+                        byWritten.merge(form, 1, Integer::sum);
+                    }
+                }
+                return byWritten;
+            });
             for (final String value : named) {
-                final int records = variety.recordsHolding(XPathText.literalText(value));
-                if (records > 0 && records <= UNIQUE_VALUE_RECORDS) {
-                    return Optional.of("the field " + c.field() + " has " + variety.distinct() + " different values "
-                            + "over the " + variety.holding() + " records holding it, nearly one a record, and '"
-                            + value + "' is held by " + records + (records == 1
-                            ? " record"
-                            : " records") + ": an event type recognised by one of its values recognises next to "
-                            + "no records, and in processing every record with a new value would be uncatalogued; "
-                            + "recognise the event type by what its values share: starts_with their fixed start, or "
-                            + "matches with a regex whose named group (names) keeps the part that varies");
+                final String form = writtenForm(XPathText.literalText(value));
+                final int alike = form == null
+                        ? 0
+                        : written.getOrDefault(form, 0);
+                if (alike >= UNIQUE_WRITTEN_VALUES) {
+                    return Optional.of("'" + value + "' is one of " + alike + " values of the field " + c.field()
+                            + " that differ only in a part that varies (written '" + form + "'): an event type "
+                            + "recognised by one of them recognises next to no records, and in processing every "
+                            + "record with a new value would be uncatalogued; recognise the event type by what its "
+                            + "values share: starts_with their fixed start, or matches with a regex whose named "
+                            + "group (names) keeps the part that varies");
                 }
             }
             return Optional.empty();
