@@ -2876,6 +2876,242 @@ the common entries.
 * **Domain-qualified user ids** (`DOMAIN\user`, `user@domain`) are put to the user in one form before saving
   (`DomainSplits`), and the answer is remembered with the XSLT (2026-10-25).
 
+### Event type catalogue (proposed 2026-11-19, for review)
+
+**Why.** A source's records were sorted by a **kind field**: a kind was one value of one field (`field=value`),
+narrowed by `within` splits (another field's value, or a pattern) and caught by per-format catch-alls. Seen in user
+testing (2026-11-19, Pega Platform logs): the only field telling the Integration log's records apart was the logger
+(`event.logger_name`), refused for its long class names, so the user could only choose "all one kind" and the
+translation had one real event type. Had it been offered, it would still have been wrong: a logger, like a log file
+path or a program name, says where a record came from, not what happened. One logger writes several event types
+(Pega's `SecurityEventLogger` writes operator, access group, password and ruleset changes, told apart by
+`eventType`; `SOAPService` writes requests, responses and faults, told apart only by its message). One field rarely
+tells a source's event types apart; a combination does.
+
+**What replaces it.** The output of cataloguing is a **catalogue of event types**: what types of event the source
+writes, what each means, and how a record of each is recognised. The agent proposes the event types; the tools give
+it the evidence and check every proposal mechanically against every sampled record; the user confirms them. Product
+knowledge is the model's; exact checking is the tools'. No phrase inference (dropped 2026-11-09 as fragile); no
+field-specific heuristics. Not in production, so nothing is migrated: kind fields, `within`, pattern kinds,
+`whole_kind` and the per-format catch-all inference go.
+
+#### Words
+
+The same few words everywhere: in forms, tables, results, hints, guides and these docs. The user already has a lot
+to take in; familiar words keep it manageable.
+
+| Word | Means | Not |
+| --- | --- | --- |
+| **source type** | Where records come from, as today (a group of an aggregated feed). | |
+| **event type** | One type of event a source writes: an entry of the catalogue (`Update-Password`). | kind, event (for the type), catalogue entry |
+| **record** | One record of the source, an instance of an event type. | event (for a record) |
+| **recognised by** | How a record of an event type is told: in words, in forms and tables. (`when`, a condition, in the model.) | condition, rule (to the user) |
+| **uncatalogued records** | Records no event type recognises, which the catch-all translates. | catch-all kind, other |
+| **rule** | Only the generated XSLT's: one per (event type, way it is recognised). | |
+
+Forms and questions to the user use only these words and the user's own (field names, values).
+
+#### The catalogue
+
+The build's source notes hold the catalogue, an ordered list of event types. Each has:
+
+| Part | Keys | What |
+| --- | --- | --- |
+| **Identity** | `type_id` | Verb-Object (`Authenticate-Logon`, `Update-Password`, `Process-SOAPRequest`), unique in the build: two event types with one TypeId are refused. A default is suggested (below). |
+| **Meaning** | `title`, `description`, `event_detail`, `action`, `success`/outcome, `actor`, `affected`, `affected_as` | What happened, as classify proposals hold it today, with today's schema checks (`partsChecked`, `affectedChecked`, `allowedAction`). |
+| **Recognition** | `recognised_by`: one or more conditions, `names` | How a record of the type is told (below). More than one when a type is written in more than one way (two log formats, two loggers): one event type, not two. A type from documentation may have none in the sample (said, not dropped). |
+| **Provenance** | `basis`, `confidence`, source type group, sample count, examples | `user_confirmed`, `documentation` or `agent_knowledge`; high, medium or low. |
+| | `drop` | True for an event type whose records are dropped (the user's word only), written as a `drop_when` rule. |
+
+**Description.** Every event type gives `EventDetail/Description`, which adds context and the freedom to say what
+happened. Where it comes from, in order: (1) a field of the record itself that says what happened (its message),
+per record, alone; (2) else the vendor documentation's text for the event type, if provided; (3) else a description
+the agent writes for the event type: fixed text, the same for every record of the type, no record values in it. The
+type's own description is kept in the source notes and shown in the confirmation table whichever is written.
+
+**Conditions.** Each is an AND of the generator's conditions (`field`, one of `equals`, `one_of`, `matches`,
+`present`), plus `starts_with` and `contains` (native XPath, cheap on long values) and `not` (must not hold; true
+when the field is missing, as XPath's `not(f = 'x')` is). No OR across fields: a second way of recognising the type
+covers it. `names` gives a `matches` condition's capture groups names, fields the translation may read (unique in the
+build). The build's source type field is never in a condition: the group's module already passes other source types
+over, and a condition on it would break when a source type joins another group.
+
+**Uncatalogued records.** The catalogue is confirmed with its catch-all: records no event type recognises are
+translated as Unknown, their fields kept as Data; the catch-all is not an event type. It is marked `catch_all: true`
+for the generator (not inferred). What it catches in processing is logged (`Caught by`, read by review_coverage) and
+becomes proposals (below).
+
+**The vendor's code.** TypeId is always Verb-Object. Every `equals`/`one_of` field of a way of recognising a type (a
+Windows `EventID`, a FortiGate `logid`, Pega's `logger_name`), except the source type field, is written as Data
+named after the field (`<Data Name="EventID" Value="4624"/>`), so searching by the vendor's code still works.
+
+**TypeId default.** When a proposal gives none: the event detail element as the verb, and as the object the type's
+`affected_as`, else the last segment of its first `equals` value with common suffixes dropped (`Impl`, `Service`,
+`Processor`), else its title's first noun; e.g. `Process-SOAPService`. The user sees and may change it in the
+confirmation table.
+
+**Order.** The tool keeps the catalogue's ways of recognising types ordered more specific first (more conditions
+before fewer), the catch-all last, shown in the review: records seen only in processing that more than one could
+recognise go to the first.
+
+**A splitter part is a line format, not an event type** (chat 166): event types within a format are told by
+conditions, never by a splitter variant each; the guide and hints say so.
+
+#### Fields and values
+
+Conditions are checked in Java against the sample and run as XPath in processing; the two must agree on every
+record. One evaluator defines each operator (`LocalCheck` evaluating exactly what the XSLT tests), with parity tests
+per operator and per case below.
+
+* **Field names**, one spelling each, as the draft names them: nested JSON objects dotted (`event.app`); XML
+  elements slashed (`Event/Header/Op`), attributes `@name`; JSON or XML held in a string read through `json_fields`
+  / `xml_fields`, up to three levels (double-escaped JSON, XML in JSON), spelt as a nested object's would be
+  (`event.logger_name` whether `event` is an object or a JSON string); a splitter's fields; a variant; capture names.
+  **Keys holding a dot or slash** themselves (an Elastic-style flat `"log.level"` beside a nested `log.level`) need a
+  spelling that can't be misread: phase 1 finds how the draft names them now and settles it.
+* **XML namespaces**: matched by local name, prefixed or not, as the draft reads them.
+* **Values are compared decoded**: JSON `\"`, `\\`, `\uXXXX`; XML entities and CDATA; CSV doubled quotes;
+  backslash-escaped key=value quotes (`EscapedQuotes`). Regexes run over decoded text.
+* **Arrays**: `equals`/`one_of` on an array field means any item, as XPath's general comparison does; a condition
+  about one item belongs to a repeated group (`for_each`, item scope).
+* **Held values that don't parse** (a bad escape, a value cut short): a condition inside them doesn't hold, so the
+  record is uncatalogued; the check says how many and why.
+* **Processing's string cut**: the JSONParser cuts a string at `stringTruncateLength` (10,000 by default) before
+  `json-to-xml` reads a held value. The check reads each record as processing will (cut at the pipeline's setting);
+  a condition depending on the cut is refused, naming the setting (tied to the profile's long-strings warning).
+* **Characters XML can't hold** (NUL and others) are removed before comparing, as the splitter and XSLT remove them.
+
+#### Evidence (what the tools give the agent)
+
+`catalogue_event_types` (replacing classify_kinds; renamed with every guide, hint and eval case) lists, for the
+build's scope (its source type group, as now):
+
+* **Fields that would tell records apart**: KindFields' value checks, with step 1's exclusions (hosts, nodes,
+  severities, shippers), their values and counts.
+* **Record shapes**: the distinct sets of fields present together (Shapes' signatures), with counts.
+* **Example records**: per shape, the records that differ most, free-text fields included, cut as today; rare records
+  (seen once or twice) always among them.
+* **A seed** (the user's choice): the draft's own rules (today's derivation from naming fields, AUTH and action
+  rules) turned into proposed event types, for the agent to correct rather than start from nothing; marked as the
+  draft's, never as the user's. A seeded event type whose records may be several event types (below) can't be
+  confirmed until the agent splits it or says why it is one: today's derivation would seed one event type per
+  logger, the very problem.
+
+#### The check (`catalogue_event_types` `proposals=`)
+
+Proposals **add, change or remove event types by TypeId**; the catalogue is never sent whole (seen: 304 kinds in one
+build). The result is compact (counts and problems; the full listing saved to the workspace). Every proposal call
+checks the whole catalogue against every sampled record of the scope, read as processing will read them, and
+returns:
+
+* **Counts** per event type, and per way of recognising it.
+* **Overlaps: refused.** A record two event types recognise is named, with both types and the fields whose values
+  tell their other records apart, so the agent has a concrete way to tighten one (against thrash on weaker models).
+  Two ways of recognising the same type may overlap.
+* **Uncatalogued records**, grouped by shape, with examples: not refused (the catch-all translates them), but counted
+  and shown in the review.
+* **May be several event types**: a type whose records split by a field of their own (KindFields over its records
+  alone, its conditions' fields excluded), or come in clearly different shapes. A warning (blocking for a seeded
+  type): the agent splits it, or says why it is one (`one_type_because`, shown in the review).
+* **Conditions**: fields the records have; XPath regex (no lookaround; `XPathRegex.problem`); capture names unique.
+  **Regex guard** (lessons: no regex over whole long values, 2026-11-12; a key=value regex's StackOverflow,
+  2026-11-06; Saxon's limits): length capped; each timed against the sample, refused over a budget; one over long
+  values (past 10,000 characters) where `starts_with` or `contains` would do is refused with that suggestion.
+* **TypeId**: Verb-Object; unique.
+
+#### Confirmation
+
+High-confidence event types are confirmed a source type group at a time in one form; medium and low in sets of up
+to 10, as today (seen: 304 kinds would be some 30 forms). The table goes in the chat and the form refers to it
+(forms are short plain text): "Accept all N event types, or type your amendments"; dropping only from the user. A
+client that can't show forms confirms through `needs_review` and its `review_id`, as now. Columns: Event type
+(TypeId and title), Recognised by (in words: `logger_name is …SecurityEventLogger and eventType is "Password
+change"`), Records, Translated as (event detail, action, who acted, acted on). The catch-all is confirmed last, with
+the uncatalogued records' count and shapes. The build plan's step is done when every event type and the catch-all
+are confirmed.
+
+#### Translation
+
+* `draft_translation_mapping` makes one rule per (event type, way of recognising it), in catalogue order, then the
+  catch-all; dropped event types become `drop_when` rules. A rule's fields are built as `SourceNotes.rule()` builds
+  them now (the sample's covering rule reused, Data from the type's own records, description, Authenticate user),
+  plus the vendor-code Data. The catalogue comes first and the XSLT follows from it.
+* **Variants** (mixed lines, alternatives, a saved converter): a way of recognising a type goes into the variants
+  whose sampled records it recognises (evaluated, not guessed from its last condition), prefixed with the
+  variant's condition.
+* **Repeated groups** (`for_each`): item-scope conditions are allowed; the check counts items; drift checks that
+  can't evaluate item rules say "not checked" rather than skip silently.
+* The generator gains `not`, `starts_with`, `contains` and the explicit `catch_all` flag; nothing else changes
+  (choose/when in order, `unmatched` warn, `mcp_log_kind`).
+
+#### Build-time checks
+
+* **Confirmed event types kept** (replacing ConfirmedKinds' field/value matching): every sampled record a confirmed
+  type recognises must be translated by that type's rules (`LocalCheck.ruleOf`), with its action element and fixed
+  Action; otherwise the confirmed-changed form, as now (`CONFIRMED_CHANGED` kept with the XSLT).
+* **Dropped event types kept dropped.**
+* `checkMapping` compares rules with event types by the records they take, not by condition text.
+
+#### After the first build
+
+* **Uncatalogued records become proposals.** review_coverage groups the records the catch-all caught in processing
+  (its `Caught by` lines) by shape and proposes event types for them, checked against the sample and those records,
+  confirmed as usual, and applied in a new version.
+* **Carried into the next version.** A build of a feed's next version starts from the promoted catalogue (its source
+  notes move with it); the review shows what changed: event types added, changed, removed.
+* **Hand edits reconciled.** A hand-edited XSLT's rules are read back (`rebuild_mapping`) into the catalogue, so the
+  catalogue stays the source of truth; an edit the catalogue can't express is named, as `... not read` is now.
+
+#### Surface
+
+* `catalogue_event_types`' description stays short (no tool bloat); the conditions, evidence and checks are in
+  `guides/mapping.md`.
+* The source notes' Markdown table becomes "Event types" (TypeId, title, Recognised by in words, Translated as,
+  basis) with the catch-all row last: the readable form of the catalogue.
+
+#### What goes, what stays
+
+* **Goes**: `Kind`, the `kinds()` derivation as the source of truth, `field=value` keys (pending, rejected, dropped,
+  amended, shown, samples), `within`, `Patterned`, `patterns_leave`, `whole_kind`, `singleKind`, catch-all inference
+  and the rated-medium rule, `kind_fields` in the notes, `SourceNotes.applyToDraft`'s ordering heuristics
+  (`covers`/`ruleFor`/`patternRule`), `VariantDrafts.belongsTo`, the kind field form, and the word "kind" for the
+  user.
+* **Stays**: Condition/EventRule/DropRule, LocalCheck evaluation, the generator, the confirm UX and tables, the
+  meaning parts and their schema checks, RecordSourceNotesTool storage, HeldKindRecords, KindFields (as evidence),
+  survey `kind_fields` (as hints only), capture names, `withDrops`, the Unknown agreement.
+* **Event types from documentation** (record_source_notes; basis documentation or agent_knowledge) are catalogue
+  entries too, recognised by conditions; one with no sampled record is said to be not in the sample, and sampled
+  records no documented type recognises are reported, as now.
+
+#### Phases (commit per phase)
+
+1. Model: the event type (identity, meaning, recognition, provenance), Condition `not`, `starts_with`, `contains`,
+   the `catch_all` flag; one evaluator with parity tests (fields and values above, incl. the key-spelling question);
+   pure, unit-tested.
+2. The check engine over sampled records read as processing will: counts, overlaps with telling fields,
+   uncatalogued records by shape, may-be-several, TypeId, the regex guard, order.
+3. `catalogue_event_types` (replacing classify_kinds): evidence, seed, proposals → check → sets → confirm; source
+   notes storage; build plan step.
+4. Translation from the catalogue: rules per way of recognising, variants, vendor-code Data, TypeId default.
+5. Build-time checks; event types from documentation; the lifecycle (uncatalogued records as proposals, carried into
+   a next version, hand edits read back).
+6. Tests: unit rewrite (TestClassifyKindsTool, TestSourceNotes, TestConfirmedKinds, TestRecordSourceNotesTool, parts
+   of TestDraftMapping), e2e (TestE2eClassifyKinds, TestE2eHeldKindFields, TestE2ePegaLoggerKinds:
+   SecurityEventLogger as four event types told by eventType, SOAPService as request, response and fault told by
+   its message, the rest one each; the `classifiedAsDrafted` helper), TOOLS.md, DESIGN.md and the guides, in these
+   words.
+7. Eval cases rescored (case 65's kind form check; catalogue checks: no overlaps, a confirmed catch-all, Verb-Object
+   TypeIds) and run on Haiku (cases 17, 19, 32, 35, 36, 47, 56, 60, 61, 65 at least); defects fixed.
+
+#### Decided (user, 2026-11-19)
+
+The output is a catalogue of event types; one familiar set of words for the user (source type, event type, record,
+recognised by). Overlaps between event types in the sample refused, catalogue order the processing fallback; a
+confirmed catch-all always (not an event type); Description from the record's message, else the vendor documentation, else the agent's fixed text; conditions an AND with NOT, `starts_with` and `contains`, no OR
+across fields; a regex guard; Verb-Object TypeId for every source, the vendor's code as Data (every tested field but
+the source type field); nothing migrated; the tool renamed; the draft's rules offered as a seed; the lifecycle after
+the first build in scope; eval cases rescored and run on Haiku.
+
 ### Generation (built)
 
 * `XsltGenerator` writes the XSLT from the mapping. `XsltReader` reads it back. Golden files fix both.
