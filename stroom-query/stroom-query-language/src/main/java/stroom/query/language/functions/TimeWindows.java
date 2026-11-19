@@ -385,6 +385,14 @@ public final class TimeWindows {
         return getLatestWindow(timeMs) - windowsPerTime * slide;
     }
 
+    /// Gets the key of the window that starts next after another window.
+    ///
+    /// @param windowKey The key of a window.
+    /// @return The key of the window one advance later, which for tumbling windows is one size later.
+    public long getNextWindow(final long windowKey) {
+        return windowKey + slide;
+    }
+
     // The key of the latest of the windows that cover a time.
     private long getLatestWindow(final long timeMs) {
         return switch (alignment) {

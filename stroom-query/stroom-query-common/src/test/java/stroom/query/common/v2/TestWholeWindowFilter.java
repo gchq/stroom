@@ -59,11 +59,12 @@ class TestWholeWindowFilter {
     }
 
     @Test
-    void rowWithLagMayReadAWindowThatIsWhollyBeforeTheRange() {
+    void rowWithLagNeedsTheEarlierWindowToBeInTheRange() {
         final WholeWindowFilter filter = filter("2026-03-10T00:00:00Z", "2026-03-13T00:00:00Z", 1);
 
-        // The 9th is before the range, so it has no events and lag gives its default.
-        assertThat(filter.isWhole(day("2026-03-10"))).isTrue();
+        // The 9th is before the range, so its events were not searched and lag would give its
+        // default for a day that may have had events.
+        assertThat(filter.isWhole(day("2026-03-10"))).isFalse();
         assertThat(filter.isWhole(day("2026-03-11"))).isTrue();
     }
 

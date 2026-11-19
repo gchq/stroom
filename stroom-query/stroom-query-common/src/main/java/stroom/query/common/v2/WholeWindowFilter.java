@@ -52,9 +52,9 @@ public final class WholeWindowFilter {
 
     /// Tests whether the row of a window was worked out from all of the events it needs.
     ///
-    /// The window itself must be wholly inside the time range. So must a later window that the row
-    /// reads with `lead`. An earlier window that the row reads with `lag` must be wholly inside the
-    /// range or wholly before it, where it has no events and `lag` gives its default.
+    /// The window itself must be wholly inside the time range, and so must every window that the
+    /// row reads with `lag` or `lead`. A window before the range may have had events that were not
+    /// searched, so `lag` would give its default for it and not what it held.
     ///
     /// @param windowKey The key of the row's window.
     /// @return True if no window that the row is worked out from is cut short by the time range.
@@ -65,9 +65,7 @@ public final class WholeWindowFilter {
         for (final int windowShift : windowShifts) {
             // A row is copied forward to the window that reads it, so the window read is as far back.
             final long windowRead = timeWindows.shift(windowKey, -windowShift);
-            final long start = timeWindows.getWindowStart(windowRead);
-            final long end = timeWindows.getWindowEnd(windowRead);
-            if (end > to || (start < from && end > from)) {
+            if (timeWindows.getWindowStart(windowRead) < from || timeWindows.getWindowEnd(windowRead) > to) {
                 return false;
             }
         }

@@ -625,7 +625,7 @@ public class TableBuilderAnalyticExecutor {
                         parentTaskContext);
 
                 // Delete old data from the DB.
-                applyDataRetentionRules(lmdbDataStore, analytic.analyticProcessConfig);
+                applyDataRetentionRules(lmdbDataStore, analytic.analyticProcessConfig, analytic.trackerData);
             }
         }
     }
@@ -802,24 +802,32 @@ public class TableBuilderAnalyticExecutor {
     }
 
     private void applyDataRetentionRules(final LmdbDataStore lmdbDataStore,
-                                         final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                                         final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig,
+                                         final TableBuilderAnalyticTrackerData trackerData) {
         final SimpleDuration dataRetention = tableBuilderAnalyticProcessConfig.getDataRetention();
         if (dataRetention != null) {
             final CurrentDbState currentDbState = lmdbDataStore.sync();
 
-            final long to = Optional
+            final long retentionTo = Optional
                     .ofNullable(currentDbState)
                     .map(CurrentDbState::getLastEventTime)
                     .map(ms -> SimpleDurationUtil.minus(Instant.ofEpochMilli(ms), dataRetention).toEpochMilli())
                     .orElse(0L);
+            // A time window is judged only when it is closed, so it is kept until then, and for as
+            // long after as a later window reads it.
+            final long to = Math.min(
+                    retentionTo,
+                    lmdbDataStore.getDeletableWindowTime(trackerData.getLastWindowEndTimeMs()));
 
-            // Create a time filter.
-            final TimeFilter timeFilter = new TimeFilter(
-                    0L,
-                    to);
+            if (to >= 0) {
+                // Create a time filter.
+                final TimeFilter timeFilter = new TimeFilter(
+                        0L,
+                        to);
 
-            // Delete old data from the DB.
-            lmdbDataStore.delete(new DeleteCommand(Key.ROOT_KEY, timeFilter));
+                // Delete old data from the DB.
+                lmdbDataStore.delete(new DeleteCommand(Key.ROOT_KEY, timeFilter));
+            }
         }
     }
 

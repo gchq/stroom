@@ -24,9 +24,12 @@ package stroom.query.common.v2;
 /// was not noted: when a store that already holds rows is opened, when rows are deleted, and when
 /// rows arrive from another node.
 ///
-/// The thread that writes to the store calls [#add(LmdbKV)] and [#committed(boolean)]. A read takes
-/// a [Snapshot] before it begins, so that it is given the windows of the rows it can see and not of
-/// rows committed while it runs. The methods that take a snapshot are called by one read at a time.
+/// The thread that writes to the store calls [#add(LmdbKV)], then [#beginCommit()] before it commits
+/// and [#committed(boolean)] after. A read takes a [Snapshot] before it begins and another once it
+/// has begun. If the two are the same and no commit was under way, the read sees just the rows that
+/// the snapshot is of. If not, a commit happened as the read began, and the read can't tell whether
+/// it sees those rows, so it reads through the store. The methods that take a snapshot are called
+/// by one read at a time.
 final class StoredWindowExtent {
 
     // The windows of rows that have been written but not committed, used by the writing thread only.
@@ -40,6 +43,9 @@ final class StoredWindowExtent {
     // Counts the changes to the store that were not noted. The first is that the store may hold rows
     // when it is opened.
     private long unknownChanges = 1;
+    // Counts the commits begun and ended, and whether one is under way.
+    private long commitCount;
+    private boolean committing;
 
     // The windows found by reading through the store, and the count of changes at that time. These
     // are used by one read at a time.
@@ -59,10 +65,19 @@ final class StoredWindowExtent {
         }
     }
 
+    /// Notes that the rows written so far are about to be committed. Until [#committed(boolean)] is
+    /// called, a read can't tell whether it sees them.
+    synchronized void beginCommit() {
+        committing = true;
+        commitCount++;
+    }
+
     /// Notes that the rows written so far have been committed, so reads can now see them.
     ///
     /// @param rowsDeleted Whether the commit removed rows from the store.
     synchronized void committed(final boolean rowsDeleted) {
+        committing = false;
+        commitCount++;
         if (rowsDeleted || uncommittedUnknown) {
             // The store has to be read through, which finds every window, so start again from there.
             unknownChanges++;
@@ -81,7 +96,16 @@ final class StoredWindowExtent {
     ///
     /// @return What is known now.
     synchronized Snapshot snapshot() {
-        return new Snapshot(unknownChanges, committedFirst, committedLast);
+        return new Snapshot(unknownChanges, committedFirst, committedLast, commitCount, committing);
+    }
+
+    /// Tests whether a read sees just the rows that its snapshot is of.
+    ///
+    /// @param before What was known before the read began.
+    /// @param after  What was known once the read had begun.
+    /// @return True if no commit began or ended as the read began.
+    static boolean isSettled(final Snapshot before, final Snapshot after) {
+        return !before.committing && before.commitCount == after.commitCount;
     }
 
     /// Tests whether a read has to read through the store to find its windows.
@@ -129,7 +153,13 @@ final class StoredWindowExtent {
     /// @param unknownChanges The count of changes to the store that were not noted.
     /// @param committedFirst The first window of the rows committed since the last such change.
     /// @param committedLast  The last window of the rows committed since the last such change.
-    record Snapshot(long unknownChanges, long committedFirst, long committedLast) {
+    /// @param commitCount    The count of commits begun and ended.
+    /// @param committing     Whether a commit was under way.
+    record Snapshot(long unknownChanges,
+                    long committedFirst,
+                    long committedLast,
+                    long commitCount,
+                    boolean committing) {
 
     }
 }

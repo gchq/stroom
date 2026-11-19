@@ -127,6 +127,27 @@ class TestStoredWindowExtent {
         assertThat(extent.needsScan(extent.snapshot())).isTrue();
     }
 
+    @Test
+    void readThatBeginsDuringACommitIsNotSettled() {
+        final StoredWindowExtent extent = scannedEmpty();
+
+        // The rows are committed after the read took its first snapshot, so the read may see them.
+        final Snapshot before = extent.snapshot();
+        extent.beginCommit();
+        assertThat(StoredWindowExtent.isSettled(before, extent.snapshot())).isFalse();
+        extent.committed(false);
+        assertThat(StoredWindowExtent.isSettled(before, extent.snapshot())).isFalse();
+
+        // The commit has begun, but the windows of its rows are not yet noted.
+        extent.beginCommit();
+        final Snapshot during = extent.snapshot();
+        assertThat(StoredWindowExtent.isSettled(during, extent.snapshot())).isFalse();
+        extent.committed(false);
+
+        final Snapshot quiet = extent.snapshot();
+        assertThat(StoredWindowExtent.isSettled(quiet, extent.snapshot())).isTrue();
+    }
+
     private static StoredWindowExtent scannedEmpty() {
         final StoredWindowExtent extent = new StoredWindowExtent();
         extent.scanned(extent.snapshot(), Long.MAX_VALUE, Long.MIN_VALUE);

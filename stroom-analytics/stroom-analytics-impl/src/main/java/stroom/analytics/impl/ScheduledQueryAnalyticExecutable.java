@@ -543,10 +543,17 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
             return item -> true;
         }
 
+        // The time range of the query only bounds the windows if it is applied to the field that
+        // the windows are of.
         final TimeRange timeRange = searchRequest.getQuery().getTimeRange();
-        final TimeFilter searched = timeRange == null
-                ? new TimeFilter(0L, Long.MAX_VALUE)
-                : DateExpressionParser.getTimeFilter(timeRange, searchRequest.getDateTimeSettings());
+        final boolean rangeIsOfWindowField = timeRange != null
+                                             && searchResponseCreatorManager
+                                                     .getTimeRangeField(searchRequest.getQuery().getDataSource())
+                                                     .filter(field -> field.equals(window.getTimeField()))
+                                                     .isPresent();
+        final TimeFilter searched = rangeIsOfWindowField
+                ? DateExpressionParser.getTimeFilter(timeRange, searchRequest.getDateTimeSettings())
+                : new TimeFilter(0L, Long.MAX_VALUE);
         final WholeWindowFilter wholeWindowFilter = new WholeWindowFilter(
                 window,
                 compiledColumns.getValueReferenceIndex().getWindowShifts(),

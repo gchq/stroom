@@ -394,6 +394,15 @@ A code review of the whole branch on 19 November 2026 led to three more commits.
 | ec99bc4097 | A scheduled query rule judges only the windows that lie wholly inside the time range of its query. The range ends at the time the rule is run for if the query gives no earlier end. A row that uses `lead` needs the later window to be whole, and a row that uses `lag` is left out if the earlier window is cut by the start of the range. |
 | 7cd6a96902 | The first and last windows with data are noted as rows are stored. The store is read through to find them only when a store that holds rows is opened, after a delete that removed rows, and when rows arrive from another node. |
 
+A second review, of those three commits, led to these changes, written on 19 November 2026:
+
+- **Data retention and windows.** A table builder rule's store no longer deletes a window before the rule has judged it, nor while a later window that is still to be judged reads it with `lag`. Before, retention deleted by window start, so a window could go before it closed.
+- **`lag` at the start of a scheduled rule's range.** A row is left out if the window it reads with `lag` is not wholly inside the range. A window before the range may have had events that were not searched, so the rule would fire on the default.
+- **Time range of a scheduled rule.** The range only limits the windows if the data source applies it to the window's time field. If not, only the time the rule is run for limits them.
+- **Commit race.** A read that begins while rows are being committed finds its windows by reading through the store, as it can't tell whether it sees those rows.
+- **Two windows that start together.** When the clocks go forward two windows can share a start. A rule now reads neither until both are closed.
+- **Counting rows.** Only top-level rows are read in full when counting, not every row at every depth.
+
 A bare name on the right of a `having` comparison is read as a column if an eval or a select column has that name, and as text if not (commit 9117902aef).
 
 ### Known limits
@@ -402,10 +411,11 @@ A bare name on the right of a `having` comparison is read as a column if an eval
 - **Clustered search.** A search across nodes still reads through the store for the first and last window, as rows from another node are not noted. A window clause has not been tested across a cluster.
 - **`lag` default that starts with `window:`.** The windows of a query are passed to window functions as a hidden last parameter of that form, so a default value such as `'window:none'` is misread.
 - **Copy limit check.** The parser compiles the columns a second time to count `lag` and `lead` distances, and reports an error from it against the first word of the query.
-- **Window key column.** The store finds it by the text of its expression, which only matters for a table that the parser did not build.
+- **Window key column.** Fixed after the second review above: the store now finds it by its compiled function, not the text of its expression.
+- **Clocks going back.** For day or week windows with an advance or offset of less than an hour, an event in the repeated hour can fall in a window that a rule has already judged. The row is not judged again.
 - **`is null`.** The tokeniser does not read `is null` in any clause, so it can't be used in `having`.
 - **Double-quoted names.** Inside an expression a double-quoted name is text, as in `eval`; only a bare name is a column.
-- **Build.** The full build and the Docker image build have not been run on the branch.
+- **Build.** The full build passed on 19 November 2026, before the changes of the second review. The Docker image build has not been run.
 
 ## Coverage against Kusto
 

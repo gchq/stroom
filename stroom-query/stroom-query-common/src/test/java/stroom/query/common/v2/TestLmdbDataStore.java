@@ -335,6 +335,32 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Test
+    void windowIsKeptUntilItIsJudgedAndNoLaterWindowReadsIt() {
+        // The table reads the window before a row's own. The 10th has been judged, and the 11th,
+        // which is next, reads the 10th, so every day before the 9th may be deleted.
+        final LmdbDataStore dataStore = (LmdbDataStore) create(lagTable("1d", null));
+
+        assertThat(Instant.ofEpochMilli(dataStore.getDeletableWindowTime(
+                Instant.parse("2026-03-10T00:00:00Z").toEpochMilli())))
+                .isEqualTo(Instant.parse("2026-03-08T23:59:59.999Z"));
+        // Nothing has been judged, so nothing may be deleted.
+        assertThat(dataStore.getDeletableWindowTime(null)).isNegative();
+    }
+
+    @Test
+    void tableWithNoWindowsDoesNotLimitWhatIsDeleted() {
+        final LmdbDataStore dataStore = (LmdbDataStore) create(TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("UserId")
+                        .name("UserId")
+                        .expression("${UserId}")
+                        .build())
+                .build());
+
+        assertThat(dataStore.getDeletableWindowTime(null)).isEqualTo(Long.MAX_VALUE);
+    }
+
+    @Test
     void tooManyCopiesOfEachRowIsRefused() {
         // Each row is in 60 windows, and is copied again to each for lag and for lead.
         assertThatThrownBy(() -> create(lagTable("1h", "1m")))
