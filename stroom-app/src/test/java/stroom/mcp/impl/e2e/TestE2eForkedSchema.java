@@ -388,13 +388,18 @@ class TestE2eForkedSchema extends AbstractE2eTest {
 
         // ### 2. The draft built, given no version: the fork chosen for the build, from its record. As the agent
         // would, its decisions made first: the device and the type (which the schema requires), and the action, the
-        // fork's own Charge, in place of the draft's catch-all rule.
+        // fork's own Charge, a sole event type recognised by every record, in place of the draft's rules and its
+        // catch-all (flagged catch_all, writing Unknown).
         @SuppressWarnings("unchecked") final Map<String, Object> completed = new LinkedHashMap<>(
                 (Map<String, Object>) drafted.get("mapping"));
         final List<Object> common = new ArrayList<>((List<?>) completed.getOrDefault("common", List.of()));
         common.add(Map.of("path", "EventSource/Device/HostName", "value", "h1"));
         common.add(Map.of("path", "EventDetail/TypeId", "value", "Charge"));
         completed.put("common", common);
+        final List<?> draftedRules = (List<?>) completed.get("events");
+        assertThat((Map<String, Object>) draftedRules.getLast()).as("the draft's last rule, for uncatalogued records")
+                .containsEntry("catch_all", true);
+        assertThat(jsonOf(draftedRules.getLast())).as("its records written as Unknown").contains("EventDetail/Unknown");
         completed.put("events", mapping().get("events"));
         final Map<String, Object> fromDraft = agreed("build_translation_xslt", args("mapping", completed,
                 "stream_ids", List.of(raw), "build", build, "name", feed + "-Draft", "feeds", List.of(feed)));

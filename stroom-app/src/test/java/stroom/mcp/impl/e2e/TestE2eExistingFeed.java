@@ -98,12 +98,12 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         assertThat(ids(first, "streams_read")).containsExactly(ids.get(3), ids.get(0));
         assertThat(kinds(first)).containsExactly("file_read", "login", "logout");
         assertThat(first).containsEntry("saturated", false);
-        // The plan goes on from the survey: no feed to make, nothing to upload, the kinds classified, then the
-        // translation.
+        // The plan goes on from the survey: no feed to make, nothing to upload, the event types catalogued, then
+        // the translation.
         final Map<String, Object> surveyed = json("build_status", args("build", BUILD));
         dump("build_status after the survey", surveyed.get("next"));
-        assertThat(nextTool(surveyed)).isEqualTo("classify_kinds");
-        final Map<String, Object> classified = classifiedAsDrafted(BUILD,
+        assertThat(nextTool(surveyed)).isEqualTo(CATALOGUE);
+        final Map<String, Object> classified = cataloguedAsSeeded(BUILD,
                 (List<?>) map(map(map(surveyed, "next"), "call"), "arguments").get("stream_ids"));
         assertThat(nextTool(classified)).isEqualTo("draft_translation_mapping");
 
@@ -341,7 +341,7 @@ class TestE2eExistingFeed extends AbstractE2eTest {
                     last = json(tool, arguments);
                     splitter = last.get("spec");
                 }
-                case "classify_kinds" -> last = classifiedAsDrafted(build, (List<?>) arguments.get("stream_ids"));
+                case CATALOGUE -> last = cataloguedAsSeeded(build, (List<?>) arguments.get("stream_ids"));
                 case "draft_translation_mapping" -> {
                     final Map<String, Object> draft = json(tool, arguments);
                     dump("draft_translation_mapping", draft);

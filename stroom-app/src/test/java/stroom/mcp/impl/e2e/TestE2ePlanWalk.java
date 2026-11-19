@@ -154,7 +154,8 @@ class TestE2ePlanWalk extends AbstractE2eTest {
             case "feed" -> feedStep(call);
             case "samples" -> samplesStep(call);
             case "converter" -> run("build_data_splitter", fill(call, "save_as", FEED + "-CSV"));
-            case "classify" -> classifiedAsDrafted(build, (List<?>) map(call, "arguments").get("stream_ids"));
+            case "classify", "catalogue" -> cataloguedAsSeeded(build, (List<?>) map(call, "arguments").get(
+                    "stream_ids"));
             case "translation" -> translationStep(call);
             case "pipeline" -> pipelineStep(call);
             case "stepped" -> steppedStep(call);

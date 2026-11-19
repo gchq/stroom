@@ -180,7 +180,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         // Translated whole, as a normal source: no registry, no group. The values the survey saw are kept.
         final Map<String, Object> rules = new LinkedHashMap<>(TestE2eSourceTypeGroups.jsonValue(
                 AZURE_FIRST_RULES));
-        classified(build, List.of(stream), rules);
+        cataloguedAsSeeded(build, List.of(stream));
         final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", List.of(stream),
                 "build", build));
         final Map<String, Object> mapping = withSystem(withRules(map(draft, "mapping"), rules));
@@ -269,7 +269,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         json("survey_feed", args("feed", feed, "build", build));
         final Map<String, Object> rules = new LinkedHashMap<>(TestE2eSourceTypeGroups.jsonValue(
                 AZURE_FIRST_RULES));
-        classified(build, List.of(stream), rules);
+        cataloguedAsSeeded(build, List.of(stream));
         final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", List.of(stream),
                 "build", build));
         final Map<String, Object> saved = agreed("build_translation_xslt", args("build", build, "feeds",
@@ -377,7 +377,8 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         assertThat(strings(written, "scope")).containsExactly("AzureActiveDirectory", "PowerBI");
         assertThat(strings(written, "unseen_source_types")).containsExactly("PowerBI");
 
-        // The group's rules end in a catch-all (no conditions after a rule with them).
+        // The group's rules end in a hand-written catch-all writing a real event: flagged catch_all (never inferred
+        // from a rule with no conditions), so its records are logged as caught by it.
         final Map<String, Object> rules = TestE2eSourceTypeGroups.jsonValue("""
                 {"common_added": [{"path": "EventSource/Device/Name", "value": "Microsoft 365"}],
                  "events": [
@@ -386,12 +387,12 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                               {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
                               {"path": "EventDetail/Authenticate/User/Id", "field": "UserId"},
                               {"path": "EventDetail/Authenticate/Outcome/Success", "value": "false"}]},
-                  {"name": "logon",
+                  {"name": "logon", "catch_all": true,
                    "fields": [{"path": "EventDetail/TypeId", "field": "Operation"},
                               {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
                               {"path": "EventDetail/Authenticate/User/Id", "field": "UserId"},
                               {"path": "EventDetail/Authenticate/Outcome/Success", "value": "true"}]}]}""");
-        classified(build, List.of(stream), rules);
+        cataloguedAsSeeded(build, List.of(stream));
         group(build, feed, group, List.of("AzureActiveDirectory", "PowerBI"), rules, stream);
         final String pipeline = uuidOf(agreed("create_pipeline", args("build", build, "group", group,
                 "template_uuid", templateUuid("translation", "Event Data (JSON)"))));
@@ -473,7 +474,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         assertThat(strings(written, "scope")).containsExactly(firstType);
         assertThat(written).containsEntry("group", firstName);
 
-        classified(first, List.of(stream), family.firstRules());
+        cataloguedAsSeeded(first, List.of(stream));
         final int placedBefore = client.forms().size();
         final Saved firstSaved = group(first, feed, firstName, List.of(firstType), family.firstRules(), stream);
         assertThat(formsSince(placedBefore)).anySatisfy(form -> assertThat(form.message())
@@ -539,7 +540,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Map<String, Object> secondScoped = json("record_source_types", args("build", second, "feed", feed,
                 "reviewed", shownAgain.get("review_id"), "rows", shownAgain.get("rows"), "group", secondName));
         assertThat(strings(secondScoped, "scope")).containsExactlyElementsOf(secondTypes);
-        classified(second, List.of(stream), family.secondRules());
+        cataloguedAsSeeded(second, List.of(stream));
         final int formsBefore = client.forms().size();
         final Saved secondSaved = group(second, feed, secondName, secondTypes, family.secondRules(), stream);
         assertThat(formsSince(formsBefore)).anySatisfy(form -> assertThat(form.message())
@@ -811,47 +812,6 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
             }
         });
         return mapping;
-    }
-
-    // classify_kinds as the agent does it with the user: each kind the rules it will write name as what they make
-    // of it (the action element and its Action), the rest Unknown.
-    private void classified(final String build, final List<Long> streams, final Map<String, Object> rules) {
-        final Map<String, Object> listed = json("classify_kinds", args("build", build, "stream_ids", streams));
-        final List<Map<String, Object>> kinds = list(listed, "to_classify");
-        if (kinds.isEmpty()) {
-            return;
-        }
-        final List<Map<String, Object>> proposals = new ArrayList<>();
-        for (final Map<String, Object> kind : kinds) {
-            final Map<String, Object> proposal = new LinkedHashMap<>();
-            proposal.put("field", kind.get("field"));
-            proposal.put("value", kind.get("value"));
-            proposal.put("description", String.valueOf(kind.get("value")));
-            proposal.put("event_detail", "Unknown");
-            proposal.put("from_user", true);
-            for (final Map<String, Object> rule : list(rules, "events")) {
-                // A rule with no conditions (a catch-all) takes the kinds the rules before it leave.
-                final List<Map<String, Object>> when = list(rule, "when");
-                final boolean forKind = when.isEmpty() || when.stream()
-                        .anyMatch(test -> kind.get("field").equals(test.get("field"))
-                                          && kind.get("value").equals(String.valueOf(test.get("equals"))));
-                if (forKind) {
-                    for (final Map<String, Object> field : list(rule, "fields")) {
-                        final String[] path = String.valueOf(field.get("path")).split("/");
-                        if (path.length > 2 && "EventDetail".equals(path[0])) {
-                            proposal.put("event_detail", path[1]);
-                            if ("Action".equals(path[path.length - 1]) && field.get("value") != null) {
-                                proposal.put("action", field.get("value"));
-                            }
-                        }
-                    }
-                    // The first rule that takes the kind, as the XSLT's rules are tried.
-                    break;
-                }
-            }
-            proposals.add(proposal);
-        }
-        json("classify_kinds", args("build", build, "proposals", proposals));
     }
 
     // The Events of the streams, processed through a pipeline once it steps clean.

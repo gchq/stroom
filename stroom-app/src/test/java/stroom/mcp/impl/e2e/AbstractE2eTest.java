@@ -106,6 +106,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -150,11 +152,18 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     static final String CSV_XSLT = textResource("e2e_translation-csv.xsl");
     /// The CSV case.
     static final Case CSV_CASE = new Case("csv", "Event Data (Text)", CSV_SAMPLE, CSV_SPLITTER, CSV_XSLT);
+    /// The tool that catalogues a source's event types.
+    static final String CATALOGUE = CatalogueSteps.CATALOGUE;
+    /// A catalogue form's message: how many event types it puts to the user.
+    static final Pattern ACCEPT_ALL = Pattern.compile("Accept all (\\d+) event types?");
 
     // The next calls [#leadsOn] makes: those that only read or step, so following them leaves the suite's state
     // as it was.
     private static final Set<String> FOLLOWED = Set.of("step_sample", "step_records", "build_status",
             "processing_status", "describe_template", "find_pipeline_templates", "get_instructions");
+    // The source notes' JSON block, as the notes doc holds it.
+    private static final Pattern NOTES_BLOCK = Pattern.compile("<!-- stroom-mcp source notes\n(.*?)\n-->",
+            Pattern.DOTALL);
 
     @Inject
     private McpTestClients clients;
@@ -542,7 +551,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return out;
     }
 
-    /// `survey_feed` of a build's own sample streams: the plan's surveyed step, which classify_kinds waits for.
+    /// `survey_feed` of a build's own sample streams: the plan's surveyed step, which catalogue_event_types waits
+    /// for.
     ///
     /// @param build   The build.
     /// @param feed    The feed the streams are in.
@@ -555,49 +565,165 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return survey;
     }
 
-    /// `classify_kinds` (the plan's classify step) answered as a user would who confirms, for each kind, what the
-    /// draft itself makes of it: its action element and Action. For tests of what follows, whose drafts stay as they
-    /// were.
+    // --------------------------------------------------------------------------------
+    // The event type catalogue
+
+    /// `catalogue_event_types` (the plan's catalogue step) answered as an agent and user would who take the draft's
+    /// seed as it is: the seed's event types added, each the check says may be several said to be one, every set
+    /// confirmed in its form, then the catch-all. For tests of what follows, whose drafts stay as they were.
     ///
     /// @param build   The build.
     /// @param streams The sample streams.
-    /// @return The last classify_kinds answer (its `next` the plan's following step).
-    Map<String, Object> classifiedAsDrafted(final String build, final List<?> streams) {
-        final Map<String, Object> listed = json("classify_kinds", args("build", build, "stream_ids", streams));
-        final List<Map<String, Object>> kinds = list(listed, "to_classify");
-        if (kinds.isEmpty()) {
-            return listed;
+    /// @return The last catalogue_event_types answer (its `next` the plan's following step).
+    Map<String, Object> cataloguedAsSeeded(final String build, final List<?> streams) {
+        return CatalogueSteps.cataloguedAsSeeded(client, build, streams);
+    }
+
+    /// `catalogue_event_types` with proposals, as the agent sends them.
+    ///
+    /// @param build     The build.
+    /// @param streams   The sample streams (null for the build's own).
+    /// @param proposals The proposals ([#eventType] and its like).
+    /// @return The check's answer.
+    Map<String, Object> proposed(final String build, final List<?> streams, final List<Map<String, Object>> proposals) {
+        final Map<String, Object> checked = json(CATALOGUE, args("build", build, "stream_ids", streams,
+                "proposals", proposals));
+        dump(CATALOGUE + " proposals", checked);
+        return checked;
+    }
+
+    /// Every set of the build's catalogue put to the user (`confirm=true`) until the catch-all is confirmed: each
+    /// form answered by the client's user, a `needs_review` answered with its review id, the catch-all agreed with
+    /// a reason.
+    ///
+    /// @param build The build.
+    /// @return The last answer.
+    Map<String, Object> confirmedCatalogue(final String build) {
+        return CatalogueSteps.confirmedCatalogue(client, build);
+    }
+
+    /// An event type as the agent proposes it: added, with its meaning and its ways of being recognised.
+    ///
+    /// @param typeId      Its TypeId (null for the default).
+    /// @param eventDetail Its event detail element.
+    /// @param confidence  high, medium or low.
+    /// @param ways        Its ways of being recognised, each the conditions all of which must hold ([#when]).
+    /// @return The proposal, to add to.
+    @SafeVarargs
+    static Map<String, Object> eventType(final String typeId,
+                                         final String eventDetail,
+                                         final String confidence,
+                                         final List<Map<String, Object>>... ways) {
+        final List<Map<String, Object>> recognisedBy = new ArrayList<>();
+        for (final List<Map<String, Object>> way : ways) {
+            recognisedBy.add(args("when", way, "names", List.of()));
         }
-        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", streams));
-        final List<Map<String, Object>> rules = list(map(draft, "mapping"), "events");
-        final List<Map<String, Object>> proposals = new ArrayList<>();
-        for (final Map<String, Object> kind : kinds) {
-            final Map<String, Object> proposal = new LinkedHashMap<>();
-            proposal.put("field", kind.get("field"));
-            proposal.put("value", kind.get("value"));
-            proposal.put("description", String.valueOf(kind.get("value")));
-            proposal.put("event_detail", "Unknown");
-            proposal.put("from_user", true);
-            for (final Map<String, Object> rule : rules) {
-                final boolean forKind = list(rule, "when").stream()
-                        .anyMatch(c -> kind.get("field").equals(c.get("field"))
-                                       && kind.get("value").equals(String.valueOf(c.get("equals"))));
-                if (!forKind) {
-                    continue;
-                }
-                for (final Map<String, Object> field : list(rule, "fields")) {
-                    final String[] path = String.valueOf(field.get("path")).split("/");
-                    if (path.length > 2 && "EventDetail".equals(path[0])) {
-                        proposal.put("event_detail", path[1]);
-                        if ("Action".equals(path[path.length - 1]) && field.get("value") != null) {
-                            proposal.put("action", field.get("value"));
-                        }
-                    }
-                }
+        return args("op", "add", "type_id", typeId, "title", typeId == null
+                        ? eventDetail
+                        : typeId.replace('-', ' '),
+                "description", "E2E: " + (typeId == null
+                        ? eventDetail
+                        : typeId),
+                "event_detail", eventDetail, "recognised_by", recognisedBy, "basis", "agent_knowledge",
+                "confidence", confidence);
+    }
+
+    /// @param proposal A proposal (or any map).
+    /// @param pairs    More keys and values, in turn.
+    /// @return A copy with them.
+    static Map<String, Object> withKeys(final Map<String, Object> proposal, final Object... pairs) {
+        final Map<String, Object> changed = new LinkedHashMap<>(proposal);
+        changed.putAll(args(pairs));
+        return changed;
+    }
+
+    /// @param drafted A draft's mapping.
+    /// @return It with a time the draft couldn't choose chosen as the agent would (the first candidate).
+    static Map<String, Object> timeChosen(final Map<String, Object> drafted) {
+        final Map<String, Object> mapping = new LinkedHashMap<>(drafted);
+        final List<Map<String, Object>> common = new ArrayList<>();
+        for (final Map<String, Object> entry : list(mapping, "common")) {
+            final Map<String, Object> kept = new LinkedHashMap<>(entry);
+            if (kept.remove("choose_from") instanceof final List<?> candidates) {
+                kept.put("field", candidates.getFirst());
             }
-            proposals.add(proposal);
+            common.add(kept);
         }
-        return json("classify_kinds", args("build", build, "proposals", proposals));
+        mapping.put("common", common);
+        return mapping;
+    }
+
+    /// @param tests Each condition's field, test (`equals`, `one_of`, `matches`, `present`, `starts_with`,
+    ///              `contains`) and value, in turn.
+    /// @return The conditions, all of which must hold.
+    static List<Map<String, Object>> when(final Object... tests) {
+        final List<Map<String, Object>> conditions = new ArrayList<>();
+        for (int i = 0; i < tests.length; i += 3) {
+            conditions.add(args("field", tests[i], (String) tests[i + 1], tests[i + 2]));
+        }
+        return conditions;
+    }
+
+    /// @param result A catalogue_event_types answer.
+    /// @return Its check.
+    static Map<String, Object> checkOf(final Map<String, Object> result) {
+        return map(result, "check");
+    }
+
+    /// @param result A catalogue_event_types answer.
+    /// @return The event types its check says may be several and that can't be confirmed so.
+    static List<Map<String, Object>> severalOf(final Map<String, Object> result) {
+        return CatalogueSteps.severalOf(result);
+    }
+
+    /// @param result A catalogue_event_types answer.
+    /// @return The number of records its check counts for each TypeId.
+    static Map<String, Long> countsOf(final Map<String, Object> result) {
+        final Map<String, Long> counts = new LinkedHashMap<>();
+        map(checkOf(result), "counts").forEach((typeId, count) -> counts.put(typeId,
+                number(((Map<?, ?>) count).get("records"))));
+        return counts;
+    }
+
+    /// The build's catalogue as its source notes keep it (their JSON block).
+    ///
+    /// @param build The build.
+    /// @return The catalogue: `event_types`, `catch_all` and `scope`.
+    Map<String, Object> catalogueOf(final String build) {
+        final ExplorerNode folder = findFolder("System/MCP Workspace/" + build)
+                .orElseThrow(() -> new AssertionError("No workspace folder for " + build));
+        final List<ExplorerNode> notes = securityContext.asProcessingUserResult(() -> explorerNodeService
+                        .getChildren(folder.getDocRef()))
+                .stream()
+                .filter(node -> DocumentationDoc.TYPE.equals(node.getType())
+                                && node.getName().endsWith(" source notes"))
+                .toList();
+        assertThat(notes).as("the source notes of %s", build).hasSize(1);
+        final Matcher block = NOTES_BLOCK.matcher(documentation(notes.getFirst().getUuid()));
+        assertThat(block.find()).as("the source notes' JSON block").isTrue();
+        return JsonUtil.readValue(block.group(1), Map.class);
+    }
+
+    /// @param build The build.
+    /// @return Its catalogue's event types, by TypeId.
+    Map<String, Map<String, Object>> eventTypesOf(final String build) {
+        final Map<String, Map<String, Object>> types = new LinkedHashMap<>();
+        list(catalogueOf(build), "event_types").forEach(type -> types.put((String) type.get("type_id"), type));
+        return types;
+    }
+
+    /// @param forms Forms the user was shown.
+    /// @return How many event types each catalogue form put to them ("Accept all N event types"), in order;
+    /// forms of anything else left out.
+    static List<Integer> eventTypesPutInEachForm(final List<ElicitFormRequest> forms) {
+        final List<Integer> sizes = new ArrayList<>();
+        for (final ElicitFormRequest form : forms) {
+            final Matcher accept = ACCEPT_ALL.matcher(form.message());
+            if (accept.find()) {
+                sizes.add(Integer.parseInt(accept.group(1)));
+            }
+        }
+        return sizes;
     }
 
     /// `create_processor_filter` for sample streams, Stroom's processing run as its job would ([#processAll]), and

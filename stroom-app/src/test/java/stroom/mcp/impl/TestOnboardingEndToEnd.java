@@ -21,6 +21,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.mcp.impl.e2e.CatalogueSteps;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
@@ -392,23 +393,20 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         return new Built(feedUuid, rawStreamId, converterUuid, xsltUuid, pipelineUuid, mapping, splitterSpec);
     }
 
-    // The plan's classify step as an agent takes it: the call it names lists the kinds. The sample's fields name no
-    // kind of event (every record a logon, told by nothing in it), so there is nothing to put to the user: no form,
-    // the step done and the draft next.
+    // The plan's catalogue step as an agent takes it: the call it names lists the evidence. The sample's records are
+    // all one event type (every record a logon, told by nothing in it): a sole event type recognised by every
+    // record, the seed taken as it is and confirmed with its catch-all (which catches nothing), and the draft next.
     private Map<String, Object> classify(final Map<String, Object> call) {
-        assertThat(call).containsEntry("tool", "classify_kinds");
+        assertThat(call).containsEntry("tool", CatalogueSteps.CATALOGUE);
         assertThat(map(call, "arguments")).containsEntry("build", BUILD).containsKey("stream_ids");
-        final int forms = client.forms().size();
-        final Map<String, Object> listed = client.json("classify_kinds", map(call, "arguments"));
-        dump("classify_kinds", listed);
-        assertThat(listed).containsEntry("kinds_found", 0).containsEntry("to_classify", List.of());
-        assertThat((String) listed.get("read_with")).isEqualTo("the build's Data Splitter '" + CONVERTER + "'");
-        assertThat((String) listed.get("hint")).startsWith("No kinds told apart");
-        assertThat(map(listed, "source_notes")).containsEntry("name", BUILD + " source notes");
-        assertThat(client.forms()).hasSize(forms);
-        assertThat((String) map(listed, "next").get("progress"))
-                .endsWith("done: feed, samples, converter, surveyed, classify");
-        return listed;
+        final List<?> streams = (List<?>) map(call, "arguments").get("stream_ids");
+        final Map<String, Object> catalogued = CatalogueSteps.cataloguedAsSeeded(client, BUILD, streams);
+        dump("catalogue_event_types", catalogued);
+        final Map<String, Object> check = map(catalogued, "check");
+        assertThat((Map<String, Object>) check.get("counts")).as("one event type, recognised by every record")
+                .hasSize(1);
+        assertThat(map(check, "uncatalogued")).containsEntry("records", 0);
+        return catalogued;
     }
 
     // The sample processed into Events: the filter made (asked for in a form), its tasks run as Stroom's job

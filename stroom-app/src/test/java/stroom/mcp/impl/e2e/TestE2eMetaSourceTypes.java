@@ -130,7 +130,7 @@ class TestE2eMetaSourceTypes extends AbstractE2eTest {
         dump("record_source_types", written);
         assertThat(strings(written, "scope")).containsExactly("AD DS");
 
-        classified(build, streams);
+        cataloguedAsSeeded(build, streams);
         final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", streams,
                 "build", build));
         dump("draft_translation_mapping", draft);
@@ -222,32 +222,6 @@ class TestE2eMetaSourceTypes extends AbstractE2eTest {
         assertThat(table).doesNotContain("couldn't be read");
         aggregates.stream().flatMap(List::stream).forEach(part -> assertThat(table)
                 .contains("| " + ((Map<String, Object>) part.get("meta")).get("RemoteHost") + " |"));
-    }
-
-    // classify_kinds as the agent does it with the user: each kind the rules name as they make it, the rest Unknown.
-    private void classified(final String build, final List<Long> streams) {
-        final Map<String, Object> listed = json("classify_kinds", args("build", build, "stream_ids", streams));
-        final List<Map<String, Object>> kinds = list(listed, "to_classify");
-        if (kinds.isEmpty()) {
-            return;
-        }
-        final List<Map<String, Object>> proposals = new ArrayList<>();
-        for (final Map<String, Object> kind : kinds) {
-            final Map<String, Object> proposal = new LinkedHashMap<>();
-            proposal.put("field", kind.get("field"));
-            proposal.put("value", kind.get("value"));
-            proposal.put("description", String.valueOf(kind.get("value")));
-            final boolean logon = List.of("4624", "4625").contains(String.valueOf(kind.get("value")));
-            proposal.put("event_detail", logon
-                    ? "Authenticate"
-                    : "Unknown");
-            if (logon) {
-                proposal.put("action", "Logon");
-            }
-            proposal.put("from_user", true);
-            proposals.add(proposal);
-        }
-        json("classify_kinds", args("build", build, "proposals", proposals));
     }
 
     // The draft's mapping with the agent's rules: its common entries kept, a time it couldn't choose chosen (the

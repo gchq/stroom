@@ -225,25 +225,23 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         assertThat((String) surveyed.get("coverage")).contains("within the scope: build '" + build + "' covers "
                                                                + "PegaALERT, PegaSecurityEvent (about ");
 
-        // Classification lists the scope's kinds alone, read from the feed's streams through the scope.
+        // The catalogue's evidence is the scope's alone, read from the feed's streams through the scope; the
+        // catalogue keeps the scope it was made for.
         final List<Long> streams = List.of(first, second, later);
-        final Map<String, Object> listed = json("classify_kinds", args("build", build, "stream_ids", streams));
-        dump("classify_kinds through the scope", listed);
-        final Map<String, Object> read = map(listed, "scope");
-        assertThat(number(read.get("records_in_scope"))).isEqualTo(count(firstText, scope)
-                                                                  + count(secondText, scope) + inScope);
-        assertThat(map(read, "records_left_out")).containsKeys("PegaDB", "PegaRULES")
-                .doesNotContainKeys(scope.toArray(String[]::new));
-        assertThat(jsonOf(listed.get("to_classify"))).isNotEqualTo("null")
-                .doesNotContain(OUT_OF_SCOPE.toArray(String[]::new)).doesNotContain("Executing query");
-        classifiedAsDrafted(build, streams);
+        final Map<String, Object> listed = json(CATALOGUE, args("build", build, "stream_ids", streams));
+        dump("catalogue_event_types through the scope", listed);
+        assertThat(jsonOf(map(listed, "evidence"))).doesNotContain(OUT_OF_SCOPE.toArray(String[]::new))
+                .doesNotContain("Executing query");
+        cataloguedAsSeeded(build, streams);
+        assertThat(strings(map(catalogueOf(build), "scope"), "source_types"))
+                .containsExactlyInAnyOrderElementsOf(scope);
 
         // The draft's rules are the scope's: nothing of the other source types' records.
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", streams, "build",
                 build));
         dump("draft_translation_mapping through the scope", draft);
-        assertThat(number(map(draft, "scope").get("records_in_scope"))).isEqualTo(number(read.get(
-                "records_in_scope")));
+        assertThat(number(map(draft, "scope").get("records_in_scope"))).isEqualTo(count(firstText, scope)
+                                                                              + count(secondText, scope) + inScope);
         assertThat(jsonOf(draft.get("mapping"))).doesNotContain(OUT_OF_SCOPE.toArray(String[]::new))
                 .doesNotContain("soapenv", "Executing query");
     }

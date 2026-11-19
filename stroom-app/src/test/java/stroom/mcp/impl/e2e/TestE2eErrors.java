@@ -86,6 +86,9 @@ class TestE2eErrors extends AbstractE2eTest {
                 .filter(field -> String.valueOf(field.get("path")).endsWith("Outcome/Success"))
                 .findFirst()
                 .orElseThrow();
+        // The logon rule, without conditions after the failed logon's, writes a real event for every record left:
+        // a hand-written catch-all, flagged so (the generator logs Caught by from the flag, never by inference).
+        E2eFixtures.rule(mapping, "logon").put("catch_all", true);
         // The agent's mistake: the result column as it is, not a boolean.
         success.remove("map");
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", mapping, "build", build,
@@ -145,12 +148,12 @@ class TestE2eErrors extends AbstractE2eTest {
                 "errors"));
         dump("summarise_streams errors", summary);
         final List<Map<String, Object>> errorGroups = groupsOf(summary);
-        // The logon rule, without conditions after the failed logon's, is the mapping's catch-all: its kinds are
-        // logged once a stream (the translation's own benign lines), the rest are the error the user accepted.
+        // The logon rule, flagged as the mapping's catch-all: what it catches is logged once a stream (the
+        // translation's own benign lines), the rest are the error the user accepted.
         final List<Map<String, Object>> caught = errorGroups.stream()
                 .filter(group -> String.valueOf(group.get("examples")).contains("Caught by rule 'logon'"))
                 .toList();
-        assertThat(caught).as("the catch-all's kinds, the translation's own benign lines").isNotEmpty()
+        assertThat(caught).as("what the catch-all caught, the translation's own benign lines").isNotEmpty()
                 .allSatisfy(group -> assertThat(group).containsEntry("class", "benign")
                         .containsEntry("own_element", true));
         assertThat(errorGroups.stream().filter(group -> !caught.contains(group)).toList())
