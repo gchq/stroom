@@ -16,13 +16,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -55,7 +56,7 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
     /**
      * The column <code>stroom.index_field_source.id</code>.
      */
-    public final TableField<IndexFieldSourceRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<IndexFieldSourceRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.index_field_source.type</code>.
@@ -165,7 +166,7 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
      */
     @Override
     public IndexFieldSource where(Condition condition) {
-        return new IndexFieldSource(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new IndexFieldSource(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -232,7 +233,7 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexFieldSource whereExists(Select<?> select) {
+    public IndexFieldSource whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -240,7 +241,7 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexFieldSource whereNotExists(Select<?> select) {
+    public IndexFieldSource whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

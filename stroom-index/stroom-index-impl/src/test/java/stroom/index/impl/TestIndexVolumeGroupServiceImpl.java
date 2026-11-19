@@ -18,8 +18,10 @@ package stroom.index.impl;
 
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.api.NodeInfo;
+import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.entityevent.EntityAction;
@@ -31,10 +33,12 @@ import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +80,9 @@ class TestIndexVolumeGroupServiceImpl {
 
     @Mock
     private EntityEventBus entityEventBus;
+
+    @Mock
+    private UserIdentity serviceUserIdentity;
 
     @BeforeEach
     void beforeEach() {
@@ -154,6 +161,59 @@ class TestIndexVolumeGroupServiceImpl {
                 .hasMessageContaining("Index volume group cannot be null");
 
         verify(indexVolumeGroupDao, never()).update(any(IndexVolumeGroup.class));
+    }
+
+    @Test
+    void testDefaultVolumeNotCreatedWhenGroupHasSharedVolume(@TempDir final Path tempDir) {
+        // A shared volume has no node and serves every node, so no local default volume is added beside it.
+        final IndexVolume sharedVolume = IndexVolume.builder()
+                .id(10)
+                .indexVolumeGroupId(1)
+                .path(tempDir.resolve("share").toString())
+                .volumeType(VolumeType.SHARED)
+                .build();
+        setUpDefaultVolumeCreation(tempDir, List.of(sharedVolume));
+
+        createService().ensureDefaultVolumes();
+
+        verify(indexVolumeDao).getVolumesInGroup("Default");
+        verify(indexVolumeDao, never()).create(any(IndexVolume.class));
+    }
+
+    @Test
+    void testDefaultVolumeCreatedWhenGroupHasVolumeWithNoNode(@TempDir final Path tempDir) {
+        // A volume row with no node name must not stop this node from getting its default volume.
+        final IndexVolume volumeWithNoNode = IndexVolume.builder()
+                .id(10)
+                .indexVolumeGroupId(1)
+                .path(tempDir.resolve("other").toString())
+                .build();
+        final IndexVolume otherNodeVolume = volumeWithNoNode.copy()
+                .id(11)
+                .nodeName("node2")
+                .build();
+        setUpDefaultVolumeCreation(tempDir, List.of(volumeWithNoNode, otherNodeVolume));
+
+        createService().ensureDefaultVolumes();
+
+        final ArgumentCaptor<IndexVolume> volumeCaptor = ArgumentCaptor.forClass(IndexVolume.class);
+        verify(indexVolumeDao).create(volumeCaptor.capture());
+        assertThat(volumeCaptor.getValue().getNodeName()).isEqualTo("node1");
+        assertThat(volumeCaptor.getValue().getVolumeType()).isEqualTo(VolumeType.LOCAL);
+    }
+
+    private void setUpDefaultVolumeCreation(final Path tempDir, final List<IndexVolume> existingVolumes) {
+        final Path defaultPath = tempDir.resolve("default");
+        when(volumeConfig.isCreateDefaultIndexVolumesOnStart()).thenReturn(true);
+        when(volumeConfig.getDefaultIndexVolumeGroupName()).thenReturn("Default");
+        when(volumeConfig.getDefaultIndexVolumeGroupPaths()).thenReturn(List.of(defaultPath.toString()));
+        lenient().when(volumeConfig.getDefaultIndexVolumeFilesystemUtilisation()).thenReturn(0.9);
+        when(userIdentityFactory.getServiceUserIdentity()).thenReturn(serviceUserIdentity);
+        lenient().when(serviceUserIdentity.getUserIdentityForAudit()).thenReturn("service");
+        when(nodeInfo.getThisNodeName()).thenReturn("node1");
+        when(indexVolumeGroupDao.getOrCreate(any(IndexVolumeGroup.class))).thenReturn(group(1, "Default"));
+        when(indexVolumeDao.getVolumesInGroup("Default")).thenReturn(existingVolumes);
+        lenient().when(pathCreator.toAppPath(defaultPath.toString())).thenReturn(defaultPath);
     }
 
     private IndexVolumeGroupServiceImpl createService() {

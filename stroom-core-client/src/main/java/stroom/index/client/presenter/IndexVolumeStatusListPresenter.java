@@ -43,6 +43,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
@@ -58,6 +59,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
     private final DateTimeFormatter dateTimeFormatter;
 
     private Consumer<ResultPage<IndexVolume>> consumer;
+    private Consumer<List<IndexVolume>> dataHandler;
     private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
 
     @Inject
@@ -82,12 +84,23 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
      * Add the columns to the table.
      */
     private void initTableColumns() {
+        // Type.
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((IndexVolume indexVolume) ->
+                                indexVolume.getVolumeType().getDisplayValue())
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("Local if only the volume's node can see it, Shared if every node can.")
+                        .build(),
+                70);
+
         // Node.
         dataGrid.addResizableColumn(DataGridUtil.textWithTooltipColumnBuilder(IndexVolume::getNodeName)
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder(IndexVolumeFields.FIELD_NODE_NAME)
-                        .withToolTip("The node that this index volume is owned by.")
+                        .withToolTip("The node that a local index volume is owned by. A shared volume has no node.")
                         .build(),
                 90);
 
@@ -255,6 +268,9 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                         .method(res -> res.find(criteria))
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
+                            if (dataHandler != null) {
+                                dataHandler.accept(result.getValues());
+                            }
                             if (consumer != null) {
                                 consumer.accept(result);
                             }
@@ -265,6 +281,13 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    /// Sets a handler that is given the listed volumes each time they are fetched.
+    ///
+    /// @param dataHandler The handler, or null for none.
+    public void setDataHandler(final Consumer<List<IndexVolume>> dataHandler) {
+        this.dataHandler = dataHandler;
     }
 
     public TaskMonitorFactory getTaskListener() {
