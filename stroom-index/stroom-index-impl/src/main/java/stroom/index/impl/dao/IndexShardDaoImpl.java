@@ -404,7 +404,10 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public boolean releaseLease(final long id, final String instanceId, final Long pruneCommitsDelayMs) {
+    public boolean releaseLease(final long id,
+                                final String instanceId,
+                                final Long pruneCommitsDelayMs,
+                                final boolean recoverPendingStreams) {
         final Field<Long> pruneCommitsAfterMs = pruneCommitsDelayMs == null
                 ? INDEX_SHARD.PRUNE_COMMITS_AFTER_MS
                 : DB_TIME_MS.plus(pruneCommitsDelayMs);
@@ -421,9 +424,52 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                 .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
                 .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, pruneCommitsAfterMs)
+                .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, recoverPendingStreams(recoverPendingStreams))
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
                 .execute()) > 0;
+    }
+
+    // The flag is only ever set here. It stays set until the streams have been marked for recovery.
+    private static Field<Byte> recoverPendingStreams(final boolean recoverPendingStreams) {
+        return recoverPendingStreams
+                ? DSL.inline((byte) 1)
+                : INDEX_SHARD.RECOVER_PENDING_STREAMS;
+    }
+
+    @Override
+    public boolean needsPendingStreamRecovery(final long id) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .fetchExists(context
+                        .selectOne()
+                        .from(INDEX_SHARD)
+                        .where(INDEX_SHARD.ID.eq(id))
+                        .and(INDEX_SHARD.RECOVER_PENDING_STREAMS.ne((byte) 0))));
+    }
+
+    @Override
+    public void setNeedsPendingStreamRecovery(final long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, (byte) 1)
+                .where(INDEX_SHARD.ID.eq(id))
+                .execute());
+    }
+
+    @Override
+    public void clearPendingStreamRecovery(final long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, (byte) 0)
+                .where(INDEX_SHARD.ID.eq(id))
+                .execute());
+    }
+
+    @Override
+    public List<IndexShard> findClosedShardsNeedingPendingStreamRecovery(final int limit) {
+        return findClosedShards(
+                INDEX_SHARD.RECOVER_PENDING_STREAMS.ne((byte) 0),
+                limit);
     }
 
     @Override
@@ -443,6 +489,12 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private List<IndexShard> findUnleasedClosedShardsOnSharedVolumes(final Condition condition,
                                                                      final int limit) {
+        return findClosedShards(
+                condition.and(INDEX_VOLUME.VOLUME_TYPE.eq(VolumeType.SHARED.getPrimitiveValue())),
+                limit);
+    }
+
+    private List<IndexShard> findClosedShards(final Condition condition, final int limit) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select()
                         .from(INDEX_SHARD)
@@ -450,7 +502,6 @@ class IndexShardDaoImpl implements IndexShardDao {
                         .where(condition)
                         .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSED.getPrimitiveValue()))
                         .and(INDEX_SHARD.LEASE_INSTANCE_ID.isNull())
-                        .and(INDEX_VOLUME.VOLUME_TYPE.eq(VolumeType.SHARED.getPrimitiveValue()))
                         .orderBy(INDEX_SHARD.ID)
                         .limit(limit)
                         .fetch())
@@ -480,21 +531,24 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public void reset(final Long id) {
-        reset(id, INDEX_SHARD.LEASE_INSTANCE_ID.isNull());
+    public void reset(final Long id, final boolean recoverPendingStreams) {
+        reset(id, INDEX_SHARD.LEASE_INSTANCE_ID.isNull(), recoverPendingStreams);
     }
 
     @Override
     public void resetAfterRestart(final Long id, final String instanceId) {
-        reset(id, INDEX_SHARD.LEASE_INSTANCE_ID.isNull().or(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId)));
+        reset(id,
+                INDEX_SHARD.LEASE_INSTANCE_ID.isNull().or(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId)),
+                true);
     }
 
-    private void reset(final Long id, final Condition leaseCondition) {
+    private void reset(final Long id, final Condition leaseCondition, final boolean recoverPendingStreams) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, IndexShardStatus.CLOSED.getPrimitiveValue())
                 .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                 .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                .set(INDEX_SHARD.RECOVER_PENDING_STREAMS, recoverPendingStreams(recoverPendingStreams))
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(leaseCondition)
                 .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())

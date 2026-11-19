@@ -18,12 +18,14 @@ package stroom.index.lucene;
 
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexShardCommitListener;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.ShardFullException;
 import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene.analyser.AnalyzerFactory;
+import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexVolume;
@@ -44,11 +46,15 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LiveIndexWriterConfig;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.NIOFSDirectory;
@@ -60,7 +66,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -120,6 +128,10 @@ class LuceneIndexShardWriter implements IndexShardWriter {
     // Set once this writer has found that the lease is no longer held. It then never writes again, even if
     // a late renewal makes the lease look held once more.
     private volatile boolean leaseLost;
+    // Told about each commit, so the streams it makes safe can be recorded. Null if nothing is to be told.
+    private volatile IndexShardCommitListener commitListener;
+    // Set when a commit has failed and that could not be recorded, or the lease was lost.
+    private volatile boolean needsPendingStreamRecovery;
     private final AtomicInteger adding = new AtomicInteger();
     private final FieldFactory fieldFactory;
 
@@ -357,18 +369,11 @@ class LuceneIndexShardWriter implements IndexShardWriter {
             LOGGER.debug(() -> "Starting flush " + this);
 
             try {
-                // Commit in two steps. The first writes and syncs the files, which can be slow. The second
-                // makes the commit visible and is quick. The lease is checked between the two, so that a
-                // commit never becomes visible long after the lease was last known to be held.
-                indexWriter.prepareCommit();
-                if (leaseHeld.getAsBoolean()) {
-                    indexWriter.commit();
-                } else {
-                    abandon("commit");
-                }
+                commit("commit");
 
             } catch (final IOException | RuntimeException e) {
                 LOGGER.error(buildErrorMessage("Error while committing writer.", e), e);
+                commitFailed();
 
             } finally {
                 // Update the shard info
@@ -380,6 +385,107 @@ class LuceneIndexShardWriter implements IndexShardWriter {
                     ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime) +
                     ") " + this);
         }
+    }
+
+    // Commits in two steps. The first writes and syncs the files, which can be slow. The second makes the
+    // commit visible and is quick. The lease is checked between the two, so that a commit never becomes
+    // visible long after the lease was last known to be held. Returns false if the lease had gone, when
+    // the writer has been rolled back and closed.
+    private boolean commit(final String action) throws IOException {
+        final List<Long> pendingStreamRowIds = beforeCommit();
+        indexWriter.prepareCommit();
+        if (leaseHeld.getAsBoolean()) {
+            indexWriter.commit();
+            afterCommit(pendingStreamRowIds);
+            return true;
+        } else {
+            abandon(action);
+            return false;
+        }
+    }
+
+    // Notes the streams whose tasks have finished. Their documents are all in the writer by now, so the
+    // commit that follows makes them safe.
+    private List<Long> beforeCommit() {
+        final IndexShardCommitListener listener = commitListener;
+        if (listener != null) {
+            try {
+                return listener.beforeCommit();
+            } catch (final RuntimeException e) {
+                // They stay as they are and are picked up by a later commit.
+                LOGGER.error(buildErrorMessage("Error finding pending streams before commit.", e), e);
+            }
+        }
+        return null;
+    }
+
+    private void afterCommit(final List<Long> pendingStreamRowIds) {
+        final IndexShardCommitListener listener = commitListener;
+        if (listener != null && pendingStreamRowIds != null) {
+            try {
+                listener.afterCommit(pendingStreamRowIds);
+            } catch (final RuntimeException e) {
+                // They stay as they are and are picked up by a later commit.
+                LOGGER.error(buildErrorMessage("Error marking pending streams as committed.", e), e);
+            }
+        }
+    }
+
+    private void commitFailed() {
+        final IndexShardCommitListener listener = commitListener;
+        if (listener != null) {
+            try {
+                listener.commitFailed();
+            } catch (final RuntimeException e) {
+                // Could not be recorded now, so it is recorded on the shard when this writer closes.
+                needsPendingStreamRecovery = true;
+                LOGGER.error(buildErrorMessage("Error marking pending streams for recovery.", e), e);
+            }
+        }
+    }
+
+    @Override
+    public synchronized void deleteStreams(final Collection<Long> streamIds) throws IndexException {
+        if (!open.get() || leaseLost || !leaseHeld.getAsBoolean()) {
+            throw new IndexException("Unable to remove streams from index shard " + indexShardId
+                                     + " as its writer is closed or no longer holds the lease on it");
+        }
+        final long startTime = System.currentTimeMillis();
+        try {
+            // The stream id is indexed as a number in all but the oldest indexes, where it is a term.
+            // Each query matches nothing in an index of the other kind.
+            final List<Query> queries = new ArrayList<>();
+            for (final Long streamId : streamIds) {
+                queries.add(LongField.newExactQuery(IndexConstants.STREAM_ID, streamId));
+                queries.add(new TermQuery(new Term(IndexConstants.STREAM_ID, streamId.toString())));
+            }
+            indexWriter.deleteDocuments(queries.toArray(new Query[0]));
+            if (!commit("remove streams from")) {
+                throw new IndexException("Unable to remove streams from index shard " + indexShardId
+                                         + " as this node no longer holds the lease on it");
+            }
+            // Adding carries on meanwhile, so this is as near as the count can be got.
+            documentCount.set(indexWriter.getDocStats().numDocs);
+        } catch (final IndexException e) {
+            throw e;
+        } catch (final IOException | RuntimeException e) {
+            // The commit may have been of other streams' documents too.
+            commitFailed();
+            throw new IndexException("Unable to remove streams from index shard " + indexShardId
+                                     + ": " + e.getMessage(), e);
+        } finally {
+            updateShardInfo(startTime);
+        }
+    }
+
+    @Override
+    public void setCommitListener(final IndexShardCommitListener commitListener) {
+        this.commitListener = commitListener;
+    }
+
+    @Override
+    public boolean needsPendingStreamRecovery() {
+        return needsPendingStreamRecovery;
     }
 
     @Override
@@ -409,19 +515,24 @@ class LuceneIndexShardWriter implements IndexShardWriter {
                     // one, so that the commit never becomes visible long after the lease was last known to
                     // be held.
                     boolean held = leaseHeld.getAsBoolean();
+                    List<Long> pendingStreamRowIds = null;
                     if (held) {
+                        pendingStreamRowIds = beforeCommit();
                         indexWriter.prepareCommit();
                         held = leaseHeld.getAsBoolean();
                     }
                     if (held) {
                         // Lucene refuses to close with a commit prepared but not finished.
                         indexWriter.commit();
+                        afterCommit(pendingStreamRowIds);
                         indexWriter.close();
                     } else {
                         discardUncommitted("close");
                     }
                 } catch (final IOException | RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
+                    // Recorded on the shard as it is closed, in the same update that closes it.
+                    needsPendingStreamRecovery = true;
                 } finally {
                     try {
                         if (directory != null) {
@@ -466,6 +577,9 @@ class LuceneIndexShardWriter implements IndexShardWriter {
 
     private void discardUncommitted(final String action) throws IOException {
         leaseLost = true;
+        // The streams whose documents are discarded here are recovered by whichever node next opens the
+        // shard. The database may well be out of reach now, which is the usual reason for losing a lease.
+        needsPendingStreamRecovery = true;
         final int documentCountBefore = documentCount.get();
         // Rolling back also closes the Lucene writer.
         indexWriter.rollback();

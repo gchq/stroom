@@ -353,6 +353,56 @@ class TestIndexShardDaoImpl {
     }
 
     @Test
+    void testPendingStreamRecoveryFlag_setOnlyByAnUncleanClose() {
+        final IndexShard cleanShard = createClosedShard(VolumeType.SHARED, "node1");
+        final IndexShard uncleanShard = createClosedShard(VolumeType.SHARED, "node1");
+        final IndexShard localShard = createClosedShard(VolumeType.LOCAL, "node1");
+        indexShardDao.claimLease(cleanShard.getId(), "node1", PROCESS_A, LEASE_MS);
+        indexShardDao.claimLease(uncleanShard.getId(), "node1", PROCESS_A, LEASE_MS);
+        // A closed shard is opened in two steps.
+        assertThat(indexShardDao.setStatus(localShard.getId(), IndexShardStatus.OPENING)).isTrue();
+        assertThat(indexShardDao.setStatus(localShard.getId(), IndexShardStatus.OPEN)).isTrue();
+
+        indexShardDao.releaseLease(cleanShard.getId(), PROCESS_A, null, false);
+        indexShardDao.releaseLease(uncleanShard.getId(), PROCESS_A, null, true);
+        indexShardDao.reset(localShard.getId(), true);
+
+        assertThat(indexShardDao.needsPendingStreamRecovery(cleanShard.getId())).isFalse();
+        assertThat(indexShardDao.needsPendingStreamRecovery(uncleanShard.getId())).isTrue();
+        assertThat(indexShardDao.needsPendingStreamRecovery(localShard.getId())).isTrue();
+        assertThat(indexShardDao.findClosedShardsNeedingPendingStreamRecovery(100))
+                .extracting(IndexShard::getId)
+                .contains(uncleanShard.getId(), localShard.getId())
+                .doesNotContain(cleanShard.getId());
+
+        // A later clean close does not clear it. Only marking the streams does.
+        indexShardDao.claimLease(uncleanShard.getId(), "node2", PROCESS_B, LEASE_MS);
+        assertThat(indexShardDao.findClosedShardsNeedingPendingStreamRecovery(100))
+                .extracting(IndexShard::getId)
+                .doesNotContain(uncleanShard.getId());
+        indexShardDao.releaseLease(uncleanShard.getId(), PROCESS_B, null, false);
+        assertThat(indexShardDao.needsPendingStreamRecovery(uncleanShard.getId())).isTrue();
+
+        indexShardDao.clearPendingStreamRecovery(uncleanShard.getId());
+        assertThat(indexShardDao.needsPendingStreamRecovery(uncleanShard.getId())).isFalse();
+
+        indexShardDao.setNeedsPendingStreamRecovery(cleanShard.getId());
+        assertThat(indexShardDao.needsPendingStreamRecovery(cleanShard.getId())).isTrue();
+    }
+
+    @Test
+    void testResetAfterRestart_marksTheShardAsNotClosedCleanly() {
+        final IndexShard indexShard = createClosedShard(VolumeType.LOCAL, "node1");
+        // A closed shard is opened in two steps.
+        assertThat(indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPENING)).isTrue();
+        assertThat(indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN)).isTrue();
+
+        indexShardDao.resetAfterRestart(indexShard.getId(), PROCESS_B);
+
+        assertThat(indexShardDao.needsPendingStreamRecovery(indexShard.getId())).isTrue();
+    }
+
+    @Test
     void testReset_leavesALeasedShardAlone() {
         // Only the holder of the lease may close a leased shard, by giving the lease up.
         final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
@@ -369,7 +419,9 @@ class TestIndexShardDaoImpl {
     @Test
     void testReset_closesAnOpenShardThatHasNoLease() {
         final IndexShard indexShard = createClosedShard(VolumeType.LOCAL, "node1");
-        indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN);
+        // A closed shard is opened in two steps.
+        assertThat(indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPENING)).isTrue();
+        assertThat(indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPEN)).isTrue();
         assertThat(indexShardDao.isLeased(indexShard.getId())).isFalse();
 
         indexShardDao.reset(indexShard.getId());

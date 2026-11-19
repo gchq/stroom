@@ -112,7 +112,45 @@ public interface IndexShardDao {
     /// @param pruneCommitsDelayMs How long from now the shard's replaced commits must be kept for, or null
     ///                            if the writer left none behind.
     /// @return True if the lease was held by the process and has been given up.
-    boolean releaseLease(long id, String instanceId, Long pruneCommitsDelayMs);
+    default boolean releaseLease(final long id, final String instanceId, final Long pruneCommitsDelayMs) {
+        return releaseLease(id, instanceId, pruneCommitsDelayMs, false);
+    }
+
+    /// Gives up the lease on a shard as [#releaseLease(long, String, Long)] does, and can record in the
+    /// same update that the writer stopped without a final commit.
+    ///
+    /// @param id                    The database ID of the shard.
+    /// @param instanceId            The id of the process holding the lease.
+    /// @param pruneCommitsDelayMs   How long from now the shard's replaced commits must be kept for, or
+    ///                              null if the writer left none behind.
+    /// @param recoverPendingStreams True if the writer stopped without committing all it had been given,
+    ///                              so the streams the shard holds pending rows for must be recovered.
+    /// @return True if the lease was held by the process and has been given up.
+    boolean releaseLease(long id, String instanceId, Long pruneCommitsDelayMs, boolean recoverPendingStreams);
+
+    /// Says whether a shard was last written to by a writer that stopped without a final commit, so that
+    /// the streams it holds pending rows for must be recovered before it is written to again.
+    ///
+    /// @param id The database ID of the shard.
+    /// @return True if the shard's pending streams need recovering.
+    boolean needsPendingStreamRecovery(long id);
+
+    /// Records that a shard was last written to by a writer that stopped without a final commit. For a
+    /// writer that can't say so as it gives up its lease, because the lease has already gone from the shard.
+    ///
+    /// @param id The database ID of the shard.
+    void setNeedsPendingStreamRecovery(long id);
+
+    /// Records that a shard's pending streams have been marked for recovery.
+    ///
+    /// @param id The database ID of the shard.
+    void clearPendingStreamRecovery(long id);
+
+    /// Finds the closed shards whose pending streams need recovering.
+    ///
+    /// @param limit The most shards to return.
+    /// @return The shards, with their volumes.
+    List<IndexShard> findClosedShardsNeedingPendingStreamRecovery(int limit);
 
     /// Finds closed, unleased shards of an index partition that are on shared volumes, which any node may
     /// claim and write to.
@@ -149,10 +187,20 @@ public interface IndexShardDao {
     /// holding the lease may close it, with [#releaseLease(long, String, Long)].
     ///
     /// @param id The database ID of the shard.
-    void reset(Long id);
+    default void reset(final Long id) {
+        reset(id, false);
+    }
+
+    /// Marks a shard that was open as closed as [#reset(Long)] does, and can record in the same update
+    /// that the writer stopped without a final commit.
+    ///
+    /// @param id                    The database ID of the shard.
+    /// @param recoverPendingStreams True if the streams the shard holds pending rows for must be recovered.
+    void reset(Long id, boolean recoverPendingStreams);
 
     /// Marks a shard that an earlier process on this node left open as closed, and clears the lease that
-    /// process held on it. For use on startup.
+    /// process held on it. That process did not close the shard, so the streams the shard holds pending
+    /// rows for are marked as needing recovery. For use on startup.
     ///
     /// @param id         The database ID of the shard.
     /// @param instanceId The id of the process that is starting, whose own leases are left alone.

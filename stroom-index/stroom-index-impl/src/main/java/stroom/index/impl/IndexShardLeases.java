@@ -79,7 +79,7 @@ public class IndexShardLeases {
 
     // Leases this process could not give up because the database was unavailable, with the prune delay each
     // was to be released with. They are given up when it next can be. Guarded by this.
-    private final Map<Long, Long> failedReleases = new HashMap<>();
+    private final Map<Long, FailedRelease> failedReleases = new HashMap<>();
 
     private volatile LongConsumer lostLeaseHandler = shardId -> {
     };
@@ -149,14 +149,34 @@ public class IndexShardLeases {
     /// @param shardId             The id of the shard.
     /// @param pruneCommitsDelayMs How long from now the shard's replaced commits must be kept for, or null
     ///                            if its writer left none behind.
-    public synchronized void release(final long shardId, final Long pruneCommitsDelayMs) {
+    public void release(final long shardId, final Long pruneCommitsDelayMs) {
+        release(shardId, pruneCommitsDelayMs, false);
+    }
+
+    /// Gives up the lease on a shard as [#release(long, Long)] does, and can record that its writer
+    /// stopped without a final commit.
+    ///
+    /// @param shardId               The id of the shard.
+    /// @param pruneCommitsDelayMs   How long from now the shard's replaced commits must be kept for, or
+    ///                              null if its writer left none behind.
+    /// @param recoverPendingStreams True if the streams the shard holds pending rows for must be recovered.
+    public synchronized void release(final long shardId,
+                                     final Long pruneCommitsDelayMs,
+                                     final boolean recoverPendingStreams) {
         lastRenewedNanos.remove(shardId);
         try {
-            final boolean released = indexShardDao.releaseLease(shardId, instanceId, pruneCommitsDelayMs);
+            final boolean released = indexShardDao.releaseLease(
+                    shardId, instanceId, pruneCommitsDelayMs, recoverPendingStreams);
+            if (!released && recoverPendingStreams) {
+                // The lease had already gone from the shard, so the release could not record that the
+                // writer discarded what it had not committed. It must still be recorded. At worst a
+                // stream that was safe is indexed again.
+                indexShardDao.setNeedsPendingStreamRecovery(shardId);
+            }
             LOGGER.debug("release() - shardId: {}, released: {}", shardId, released);
         } catch (final RuntimeException e) {
             // Left as it is the shard would stay leased to this process, and unusable, until it restarts.
-            failedReleases.put(shardId, pruneCommitsDelayMs);
+            failedReleases.put(shardId, new FailedRelease(pruneCommitsDelayMs, recoverPendingStreams));
             LOGGER.error(() -> "Unable to give up the lease on index shard " + shardId
                                + ". Will try again: " + LogUtil.exceptionMessage(e), e);
         }
@@ -224,11 +244,19 @@ public class IndexShardLeases {
     }
 
     private void retryFailedReleases() {
-        final Iterator<Entry<Long, Long>> iterator = failedReleases.entrySet().iterator();
+        final Iterator<Entry<Long, FailedRelease>> iterator = failedReleases.entrySet().iterator();
         while (iterator.hasNext()) {
-            final Entry<Long, Long> entry = iterator.next();
+            final Entry<Long, FailedRelease> entry = iterator.next();
             try {
-                indexShardDao.releaseLease(entry.getKey(), instanceId, entry.getValue());
+                final boolean released = indexShardDao.releaseLease(
+                        entry.getKey(),
+                        instanceId,
+                        entry.getValue().pruneCommitsDelayMs(),
+                        entry.getValue().recoverPendingStreams());
+                if (!released && entry.getValue().recoverPendingStreams()) {
+                    // As when a first release finds the lease already gone.
+                    indexShardDao.setNeedsPendingStreamRecovery(entry.getKey());
+                }
                 iterator.remove();
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> "Still unable to give up the lease on index shard " + entry.getKey(), e);
@@ -299,5 +327,13 @@ public class IndexShardLeases {
 
     private Duration getRenewInterval() {
         return indexWriterConfigProvider.get().getShardLeaseRenewInterval().getDuration();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record FailedRelease(Long pruneCommitsDelayMs, boolean recoverPendingStreams) {
+
     }
 }

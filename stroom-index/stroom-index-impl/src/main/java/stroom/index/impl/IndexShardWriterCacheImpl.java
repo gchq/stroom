@@ -51,6 +51,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -61,6 +62,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
@@ -84,6 +86,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Provider<LuceneProviderFactory> luceneProviderFactoryProvider;
     private final Provider<IndexWriterConfig> indexWriterConfigProvider;
     private final IndexShardLeases indexShardLeases;
+    private final IndexShardPendingStreamDao pendingStreamDao;
+    // The shards whose writers in this process stopped without committing all they had been given, and
+    // whose pending streams have not yet been marked for recovery.
+    private final Set<Long> uncleanlyClosedShards = ConcurrentHashMap.newKeySet();
     // The open shards that are on shared volumes, which this node holds a lease on while it writes to them.
     private final Set<Long> leasedShards = ConcurrentHashMap.newKeySet();
 
@@ -98,7 +104,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final PathCreator pathCreator,
                                      final Provider<LuceneProviderFactory> luceneProviderFactoryProvider,
                                      final CacheManager cacheManager,
-                                     final IndexShardLeases indexShardLeases) {
+                                     final IndexShardLeases indexShardLeases,
+                                     final IndexShardPendingStreamDao pendingStreamDao) {
         this.nodeInfo = nodeInfo;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.indexShardDao = indexShardDao;
@@ -109,6 +116,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.luceneProviderFactoryProvider = luceneProviderFactoryProvider;
         this.indexWriterConfigProvider = indexWriterConfigProvider;
         this.indexShardLeases = indexShardLeases;
+        this.pendingStreamDao = pendingStreamDao;
 
         cache = cacheManager.create(
                 "Index Shard Writer Cache",
@@ -190,6 +198,18 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     throw new IndexException("Unable to set index shard status to OPENING");
                 }
 
+                // If the shard's last writer stopped without a final commit, e.g. because its node died,
+                // it is not known which of the streams it had been given reached the disk. Have them all
+                // removed and indexed again before anything more is written.
+                if (uncleanlyClosedShards.contains(indexShardId)
+                    || indexShardDao.needsPendingStreamRecovery(indexShardId)) {
+                    final int count = pendingStreamDao.failShard(indexShardId);
+                    indexShardDao.clearPendingStreamRecovery(indexShardId);
+                    uncleanlyClosedShards.remove(indexShardId);
+                    LOGGER.info(() -> "Index shard " + indexShardId + " was not closed cleanly. " + count
+                                      + " streams that it may hold part of will be removed and indexed again");
+                }
+
                 final LuceneVersion luceneVersion = LuceneVersionUtil
                         .getLuceneVersion(indexShard.getIndexVersion());
                 final LuceneProvider luceneProvider = luceneProviderFactoryProvider.get().get(luceneVersion);
@@ -199,6 +219,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 if (leased) {
                     writer.setLeaseCheck(indexShardLeases.leaseCheck(indexShardId));
                 }
+                writer.setCommitListener(new PendingStreamCommitListener(pendingStreamDao, indexShardId));
 
                 // We have opened the index so update the DB object.
                 if (indexShardDao.setStatus(indexShardId, IndexShardStatus.OPEN)) {
@@ -216,7 +237,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         // If this was a new shard then delete it immediately.
                         LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
                         indexShardDao.logicalDelete(indexShardId);
-                        releaseLease(indexShardId, null);
+                        releaseLease(indexShardId, null, false);
                     } catch (final RuntimeException e2) {
                         LOGGER.error(() -> "Unable to delete new index shard (" + e2.getMessage() + ")", e2);
                     }
@@ -225,7 +246,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     try {
                         // Something went wrong so set the shard state back to closed.
                         LOGGER.error(() -> "Error opening index shard " + indexShardId, e);
-                        resetOrRelease(indexShardId, null);
+                        resetOrRelease(indexShardId, null, false);
                     } catch (final RuntimeException e2) {
                         LOGGER.error(() -> "Unable to reset index shard (" + e2.getMessage() + ")", e2);
                     }
@@ -256,7 +277,16 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 } finally {
                     // Update the shard status, and give up the lease if there is one so that any node may
                     // write to the shard next.
-                    resetOrRelease(indexShardId, getPruneCommitsDelayMs(indexShardWriter));
+                    final boolean recoverPendingStreams = indexShardWriter.needsPendingStreamRecovery();
+                    if (recoverPendingStreams) {
+                        // Remembered here for as long as the database has not been told.
+                        uncleanlyClosedShards.add(indexShardId);
+                    }
+                    resetOrRelease(indexShardId, getPruneCommitsDelayMs(indexShardWriter), recoverPendingStreams);
+                    // Recorded on the shard, or queued to be if the lease could not be given up yet. Left
+                    // here it would have this node fail healthy streams when it next opened the shard,
+                    // after another node had already recovered it.
+                    uncleanlyClosedShards.remove(indexShardId);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -270,17 +300,23 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     // Marks a shard as closed. A shard on a local volume is simply reset. One on a shared volume has its
     // lease given up in the same update, and only if this process still holds it.
-    private void resetOrRelease(final long indexShardId, final Long pruneCommitsDelayMs) {
+    // If the writer stopped without committing all it was given, that is recorded in the same update, so
+    // that the shard is never seen as closed without it.
+    private void resetOrRelease(final long indexShardId,
+                                final Long pruneCommitsDelayMs,
+                                final boolean recoverPendingStreams) {
         if (leasedShards.contains(indexShardId)) {
-            releaseLease(indexShardId, pruneCommitsDelayMs);
+            releaseLease(indexShardId, pruneCommitsDelayMs, recoverPendingStreams);
         } else {
-            indexShardDao.reset(indexShardId);
+            indexShardDao.reset(indexShardId, recoverPendingStreams);
         }
     }
 
-    private void releaseLease(final long indexShardId, final Long pruneCommitsDelayMs) {
+    private void releaseLease(final long indexShardId,
+                              final Long pruneCommitsDelayMs,
+                              final boolean recoverPendingStreams) {
         if (leasedShards.remove(indexShardId)) {
-            indexShardLeases.release(indexShardId, pruneCommitsDelayMs);
+            indexShardLeases.release(indexShardId, pruneCommitsDelayMs, recoverPendingStreams);
         }
     }
 
@@ -349,6 +385,39 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             }
             return openWriter;
         });
+    }
+
+    @Override
+    public boolean recoverPendingStreams(final IndexShard indexShard) {
+        final long indexShardId = indexShard.getId();
+        final AtomicBoolean recovered = new AtomicBoolean();
+        securityContext.asProcessingUser(() ->
+                // Under the same lock as opening and closing a writer for the shard.
+                openShards.compute(indexShardId, (k, openWriter) -> {
+                    if (openWriter == null) {
+                        // Only one node at a time, and not while another is writing to the shard. The
+                        // lease ensures both on a shared volume. A local volume has only this node.
+                        final boolean leased = isOnSharedVolume(indexShard);
+                        if (!leased || indexShardLeases.claim(indexShardId)) {
+                            try {
+                                if (indexShardDao.needsPendingStreamRecovery(indexShardId)) {
+                                    final int count = pendingStreamDao.failShard(indexShardId);
+                                    indexShardDao.clearPendingStreamRecovery(indexShardId);
+                                    LOGGER.info(() -> "Index shard " + indexShardId
+                                                      + " was not closed cleanly. " + count + " streams that it "
+                                                      + "may hold part of will be removed and indexed again");
+                                }
+                                recovered.set(true);
+                            } finally {
+                                if (leased) {
+                                    indexShardLeases.release(indexShardId, null, false);
+                                }
+                            }
+                        }
+                    }
+                    return openWriter;
+                }));
+        return recovered.get();
     }
 
     @Override
@@ -569,6 +638,39 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Keeps the pending stream rows of a shard in step with its writer's commits.
+    private static class PendingStreamCommitListener implements IndexShardCommitListener {
+
+        private final IndexShardPendingStreamDao pendingStreamDao;
+        private final long indexShardId;
+
+        PendingStreamCommitListener(final IndexShardPendingStreamDao pendingStreamDao, final long indexShardId) {
+            this.pendingStreamDao = pendingStreamDao;
+            this.indexShardId = indexShardId;
+        }
+
+        @Override
+        public List<Long> beforeCommit() {
+            return pendingStreamDao.findWrittenRowIds(indexShardId);
+        }
+
+        @Override
+        public void afterCommit(final List<Long> rowIds) {
+            pendingStreamDao.markCommitted(rowIds);
+        }
+
+        @Override
+        public void commitFailed() {
+            final int count = pendingStreamDao.failShard(indexShardId);
+            LOGGER.error(() -> "A commit of index shard " + indexShardId + " failed. " + count
+                               + " streams that it may hold part of will be removed and indexed again");
         }
     }
 }

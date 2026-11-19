@@ -34,6 +34,7 @@ import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -199,7 +200,7 @@ class TestIndexShardLeases {
 
         leases.release(SHARD, 1_800_000L);
 
-        Mockito.verify(indexShardDao).releaseLease(SHARD, leases.getInstanceId(), 1_800_000L);
+        Mockito.verify(indexShardDao).releaseLease(SHARD, leases.getInstanceId(), 1_800_000L, false);
         assertThat(leases.isHeld(SHARD)).isFalse();
 
         // A released lease is not then reported as lost.
@@ -211,22 +212,24 @@ class TestIndexShardLeases {
     @Test
     void testRelease_databaseUnavailable_isTriedAgainAtTheNextRenewal() {
         leases.claim(SHARD);
-        Mockito.when(indexShardDao.releaseLease(anyLong(), any(), any()))
+        Mockito.when(indexShardDao.releaseLease(anyLong(), any(), any(), anyBoolean()))
                 .thenThrow(new RuntimeException("no database"))
                 .thenReturn(true);
 
         // Does not throw, and the lease is no longer relied on.
-        leases.release(SHARD, 1_800_000L);
+        leases.release(SHARD, 1_800_000L, true);
         assertThat(leases.isHeld(SHARD)).isFalse();
 
         leases.renew();
 
-        // Given up with the same prune delay, so the shard does not stay leased to this process.
-        Mockito.verify(indexShardDao, Mockito.times(2)).releaseLease(SHARD, leases.getInstanceId(), 1_800_000L);
+        // Given up with the same prune delay and the same word that its writer did not finish cleanly, so
+        // the shard does not stay leased to this process.
+        Mockito.verify(indexShardDao, Mockito.times(2))
+                .releaseLease(SHARD, leases.getInstanceId(), 1_800_000L, true);
 
         // And only until it has worked.
         leases.renew();
-        Mockito.verify(indexShardDao, Mockito.times(2)).releaseLease(anyLong(), any(), any());
+        Mockito.verify(indexShardDao, Mockito.times(2)).releaseLease(anyLong(), any(), any(), anyBoolean());
         assertThat(lostShardIds).isEmpty();
     }
 
@@ -244,6 +247,41 @@ class TestIndexShardLeases {
 
         // Two renewals fit in the 45 seconds a lease is trusted for.
         assertThat(leases.getEffectiveRenewIntervalMs()).isEqualTo(22_500);
+    }
+
+    @Test
+    void testRelease_leaseAlreadyGone_uncleanCloseIsStillRecorded() {
+        leases.claim(SHARD);
+        // Nothing to give up, as when the lease has been cleared from the shard by someone else.
+        Mockito.when(indexShardDao.releaseLease(anyLong(), any(), any(), anyBoolean())).thenReturn(false);
+
+        leases.release(SHARD, null, true);
+
+        Mockito.verify(indexShardDao).setNeedsPendingStreamRecovery(SHARD);
+    }
+
+    @Test
+    void testRelease_retriedAndLeaseFoundGone_uncleanCloseIsStillRecorded() {
+        leases.claim(SHARD);
+        Mockito.when(indexShardDao.releaseLease(anyLong(), any(), any(), anyBoolean()))
+                .thenThrow(new RuntimeException("no database"))
+                .thenReturn(false);
+        leases.release(SHARD, null, true);
+        Mockito.verify(indexShardDao, Mockito.never()).setNeedsPendingStreamRecovery(anyLong());
+
+        leases.renew();
+
+        Mockito.verify(indexShardDao).setNeedsPendingStreamRecovery(SHARD);
+    }
+
+    @Test
+    void testRelease_leaseAlreadyGone_cleanCloseRecordsNothing() {
+        leases.claim(SHARD);
+        Mockito.when(indexShardDao.releaseLease(anyLong(), any(), any(), anyBoolean())).thenReturn(false);
+
+        leases.release(SHARD, null, false);
+
+        Mockito.verify(indexShardDao, Mockito.never()).setNeedsPendingStreamRecovery(anyLong());
     }
 
     @Test

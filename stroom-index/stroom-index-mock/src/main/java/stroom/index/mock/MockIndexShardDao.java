@@ -30,6 +30,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +45,8 @@ public class MockIndexShardDao implements IndexShardDao {
     private final AtomicLong generatedId = new AtomicLong();
     // The process that holds the lease on each leased shard.
     private final Map<Long, String> leases = new HashMap<>();
+    // The shards whose last writer stopped without a final commit.
+    private final Set<Long> needRecovery = new HashSet<>();
 
     @Override
     public Optional<IndexShard> fetch(final long id) {
@@ -153,9 +156,38 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
+    public synchronized boolean needsPendingStreamRecovery(final long id) {
+        return needRecovery.contains(id);
+    }
+
+    @Override
+    public synchronized void setNeedsPendingStreamRecovery(final long id) {
+        needRecovery.add(id);
+    }
+
+    @Override
+    public synchronized void clearPendingStreamRecovery(final long id) {
+        needRecovery.remove(id);
+    }
+
+    @Override
+    public synchronized List<IndexShard> findClosedShardsNeedingPendingStreamRecovery(final int limit) {
+        return map.values()
+                .stream()
+                .filter(indexShard -> needRecovery.contains(indexShard.getId()))
+                .filter(indexShard -> IndexShardStatus.CLOSED.equals(indexShard.getStatus()))
+                .limit(limit)
+                .toList();
+    }
+
+    @Override
     public synchronized boolean releaseLease(final long id,
                                              final String instanceId,
-                                             final Long pruneCommitsDelayMs) {
+                                             final Long pruneCommitsDelayMs,
+                                             final boolean recoverPendingStreams) {
+        if (recoverPendingStreams && instanceId.equals(leases.get(id))) {
+            needRecovery.add(id);
+        }
         if (!instanceId.equals(leases.get(id))) {
             return false;
         }
@@ -204,9 +236,12 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
-    public synchronized void reset(final Long id) {
+    public synchronized void reset(final Long id, final boolean recoverPendingStreams) {
         if (!leases.containsKey(id)) {
             setStatus(id, IndexShardStatus.CLOSED);
+            if (recoverPendingStreams) {
+                needRecovery.add(id);
+            }
         }
     }
 
@@ -215,6 +250,7 @@ public class MockIndexShardDao implements IndexShardDao {
         if (!instanceId.equals(leases.get(id))) {
             leases.remove(id);
             setStatus(id, IndexShardStatus.CLOSED);
+            needRecovery.add(id);
         }
     }
 

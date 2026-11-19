@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
 
+import java.util.Collection;
 import java.util.function.BooleanSupplier;
 
 public interface IndexShardWriter {
@@ -58,5 +59,29 @@ public interface IndexShardWriter {
     /// once the period they had to be kept for is known to have passed.
     default void pruneReplacedCommits() {
         // Writers that keep no replaced commits have nothing to remove.
+    }
+
+    /// Gives the writer something to tell about each of its commits.
+    ///
+    /// @param commitListener What to tell.
+    default void setCommitListener(final IndexShardCommitListener commitListener) {
+        // Writers that do not record pending streams have nothing to tell.
+    }
+
+    /// Says whether this writer stopped, or will stop, without committing everything it was given, e.g.
+    /// because it lost the lease on the shard or its last commit failed. The streams the shard holds
+    /// pending rows for must then be recovered.
+    ///
+    /// @return True if the shard's pending streams need recovering.
+    default boolean needsPendingStreamRecovery() {
+        return false;
+    }
+
+    /// Removes every document of the given streams from the shard and commits.
+    ///
+    /// @param streamIds The ids of the streams.
+    /// @throws IndexException If the documents could not be removed or the removal could not be committed.
+    default void deleteStreams(final Collection<Long> streamIds) throws IndexException {
+        throw new IndexException("This index shard writer cannot remove the documents of a stream");
     }
 }

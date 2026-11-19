@@ -89,23 +89,32 @@ public class ActiveShards {
     }
 
     public void addDocument(final IndexDocument document) {
+        addDocument(document, (PendingStreamTracker) null);
+    }
+
+    /// Adds a document to one of the shards.
+    ///
+    /// @param document The document.
+    /// @param tracker  Told which shard the document goes to before it is added, or null if no record of
+    ///                 the stream's uncommitted documents is being kept.
+    public void addDocument(final IndexDocument document, final PendingStreamTracker tracker) {
         // Try and add the document silently without locking.
-        final boolean success = addDocument(document, false);
+        final boolean success = addDocument(document, tracker, false);
 
         // Attempt under lock if we failed to add.
         if (!success) {
             LOGGER.debug("Trying again under lock");
             // If we failed then try under lock to make sure we get a new writer.
-            addDocumentUnderLock(document);
+            addDocumentUnderLock(document, tracker);
         }
     }
 
-    private void addDocumentUnderLock(final IndexDocument document) {
+    private void addDocumentUnderLock(final IndexDocument document, final PendingStreamTracker tracker) {
         boolean success = false;
         lock.lock();
         try {
             for (int attempt = 0; !success && attempt < MAX_ATTEMPTS; attempt++) {
-                success = addDocument(document, false);
+                success = addDocument(document, tracker, false);
                 if (!success) {
                     // If we weren't successful then try adding a shard.
                     addActiveShard(indexShardKey);
@@ -115,7 +124,7 @@ public class ActiveShards {
             // One final try that will throw an index exception if needed.
             if (!success) {
                 try {
-                    addDocument(document, true);
+                    addDocument(document, tracker, true);
                 } catch (final IndexException e) {
                     throw e;
                 } catch (final RuntimeException e) {
@@ -128,6 +137,7 @@ public class ActiveShards {
     }
 
     private boolean addDocument(final IndexDocument document,
+                                final PendingStreamTracker tracker,
                                 final boolean throwException) {
         final List<IndexShard> indexShards = getIndexShards();
         final int offset = sequence.getAndIncrement();
@@ -135,13 +145,13 @@ public class ActiveShards {
 
         for (int i = rem; i < indexShards.size(); i++) {
             final IndexShard indexShard = indexShards.get(i);
-            if (addDocument(document, indexShard, throwException)) {
+            if (addDocument(document, tracker, indexShard, throwException)) {
                 return true;
             }
         }
         for (int i = 0; i < rem; i++) {
             final IndexShard indexShard = indexShards.get(i);
-            if (addDocument(document, indexShard, throwException)) {
+            if (addDocument(document, tracker, indexShard, throwException)) {
                 return true;
             }
         }
@@ -149,16 +159,28 @@ public class ActiveShards {
     }
 
     private boolean addDocument(final IndexDocument document,
+                                final PendingStreamTracker tracker,
                                 final IndexShard indexShard,
                                 final boolean throwException) {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
             try {
+                if (tracker != null) {
+                    // Recorded first, so that there is no time when the shard holds documents of the
+                    // stream that nothing knows of.
+                    tracker.beforeAdd(indexShard.getId());
+                }
                 indexShardWriter.addDocument(document);
+                if (tracker != null) {
+                    tracker.added(indexShard.getId());
+                }
                 return true;
 
             } catch (final IndexException | UncheckedIOException e) {
                 LOGGER.trace(e::getMessage, e);
+                if (tracker != null) {
+                    tracker.addFailed(indexShard.getId());
+                }
 
                 removeActiveShard(indexShard);
                 indexShardWriterCache.close(indexShardWriter);
