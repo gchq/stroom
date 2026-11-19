@@ -113,6 +113,11 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final Pattern SAMPLED_VALUES = Pattern.compile("Sample values are what the [1-9]\\d* documents");
     private static final Pattern ERROR_LINE = Pattern.compile("\\b(ERROR|FATAL)\\b");
 
+    // Whether a reference build confirms its reference catalogue first ([#confirmCatalogue]), and at most how many
+    // times it confirms a set of event types.
+    private static final boolean CATALOGUES = Boolean.getBoolean("testEvalCatalogues");
+    private static final int CATALOGUE_SETS = 40;
+
     // The streams a question's events are in.
     private static final int QUESTION_STREAMS = 10;
 
@@ -491,6 +496,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (sourceTypes != null) {
             recordSourceTypes(build, feed, sourceTypes);
         }
+        if (CATALOGUES) {
+            confirmCatalogue(evalCase, score, build, raws);
+        }
         final Map<String, Object> translation = args("mapping", reference.get("mapping"), "stream_ids", raws,
                 "splitter", splitter, "build", build);
         if (group != null) {
@@ -620,6 +628,36 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         score.scoreForms(evalCase, formsAnswered());
         return built;
+    }
+
+    // TODO phase 3: catalogue_event_types confirms the case's reference catalogue before the translation, as an agent
+    //  would (each event type proposed, the catalogue checked against the sample, then the sets and the catch-all
+    //  confirmed by the user), and the build's catalogue is scored ([EvalScore#scoreCatalogue]) from the build's
+    //  source notes, not the reference; then the switch goes and this runs for every build case. Until the tool exists
+    //  it runs only with -DtestEvalCatalogues=true.
+    private void confirmCatalogue(final Map<String, Object> evalCase,
+                                  final EvalScore score,
+                                  final String build,
+                                  final List<Long> raws) {
+        final Map<String, Object> catalogue = EvalCatalogues.reference(evalCase);
+        final List<Map<String, Object>> proposals = new ArrayList<>();
+        for (final Map<String, Object> type : (List<Map<String, Object>>) catalogue.get("event_types")) {
+            final Map<String, Object> proposal = new LinkedHashMap<>(type);
+            proposal.put("op", "add");
+            proposals.add(proposal);
+        }
+        final Map<String, Object> checked = json("catalogue_event_types", args("build", build, "stream_ids", raws,
+                "proposals", proposals));
+        answering(choosing("Accept all"));
+        Map<String, Object> confirmed = Map.of();
+        for (int set = 0; set < CATALOGUE_SETS && !"confirmed".equals(confirmed.get("status")); set++) {
+            confirmed = json("catalogue_event_types", args("build", build, "stream_ids", raws, "confirm", true,
+                    "catch_all", Map.of("allow_unknown", "records no event type recognises")));
+        }
+        if (!"confirmed".equals(confirmed.get("status"))) {
+            score.problem("catalogue_event_types confirmed nothing: " + firstLines(String.valueOf(confirmed)));
+        }
+        score.scoreCatalogue(evalCase, catalogue, map(checked, "check"));
     }
 
     // The case's data in the feed: its streams of parts stored as the proxy aggregated them, its files on the user's

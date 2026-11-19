@@ -67,3 +67,6 @@ reference:
           - {path: EventDetail/Authenticate/Action, value: ChangePassword}
           - {path: EventDetail/Authenticate/User/Id, field: json.user}
           - {path: EventDetail/Authenticate/Outcome/Success, field: json.result, map: {success: 'true', failure: 'false'}}
+  # The reference catalogue is the mapping's (EvalCatalogues), its dropped records named as an event type here.
+  catalogue:
+    drops: [Discard-DamagedLine]

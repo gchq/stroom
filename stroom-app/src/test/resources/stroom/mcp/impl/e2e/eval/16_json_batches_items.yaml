@@ -56,3 +56,6 @@ reference:
           - {path: EventDetail/Description, value: A user signed out of the application}
           - {path: EventDetail/Authenticate/Data, data_name: action, field: action}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
+  # The reference catalogue is the mapping's (EvalCatalogues), its dropped records named as event types here.
+  catalogue:
+    drops: [Filter-QATraffic, Process-Heartbeat]

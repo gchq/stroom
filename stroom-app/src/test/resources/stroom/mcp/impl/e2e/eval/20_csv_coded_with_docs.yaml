@@ -100,3 +100,8 @@ reference:
           - {path: EventDetail/Authenticate/Data, data_name: evt, field: evt}
           - {path: EventDetail/Description, value: Account password changed}
           - {path: EventDetail/Authenticate/Action, value: ChangePassword}
+  # The reference catalogue is the mapping's (EvalCatalogues): the password change is from the documentation, with
+  # no record in the sample.
+  catalogue:
+    event_types:
+      - {type_id: Authenticate-PasswordChange, basis: documentation}
