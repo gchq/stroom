@@ -49,6 +49,11 @@ public final class JsonStringValues {
     public static final String NUL_STRINGS_NOTE = "nul_strings_note";
 
     static final int MOST_REPORTED = 5;
+    // What an event left out of a sample is called where its field or record is said.
+    static final String LEFT_OUT = "an event left out of the sample";
+    // The formats Stroom's JSONParser reads.
+    private static final Set<Object> JSON_FORMATS = Set.of(SampleProfiler.JSON_ARRAY, SampleProfiler.JSON_LINES,
+            SampleProfiler.JSON_OBJECT);
     private static final int MOST_DEPTH = 64;
     private static final char NUL = 0;
 
@@ -114,6 +119,38 @@ public final class JsonStringValues {
             profile.put(NUL_STRINGS, nul);
             profile.put(NUL_STRINGS_NOTE, nulStringsNote(nul));
         }
+    }
+
+    /// Adds to a JSON sample's profile the longest string value of events left out of the sample as too long to
+    /// sample ([PartSampler]), when it is longer than the JSONParser keeps: the warning that Stroom would cut it is
+    /// not lost because its event wasn't sampled. Nothing is added to a profile of another format.
+    ///
+    /// @param profile The profile, changed.
+    /// @param where   Where the events were left out, e.g. `stream 7 part 3`.
+    /// @param skipped The events left out there.
+    public static void addSkipped(final Map<String, Object> profile,
+                                  final String where,
+                                  final PartSampler.SkippedEvents skipped) {
+        if (skipped.longestText() <= DEFAULT_TRUNCATE_LENGTH || !JSON_FORMATS.contains(profile.get("format"))) {
+            return;
+        }
+        final List<Map<String, Object>> longest = new ArrayList<>();
+        if (profile.get(LONG_STRINGS) instanceof final List<?> list) {
+            list.forEach(item -> {
+                @SuppressWarnings("unchecked") final Map<String, Object> entry = (Map<String, Object>) item;
+                longest.add(entry);
+            });
+        }
+        longest.add(SampleProfiler.map("field", skipped.path() != null
+                        ? skipped.path()
+                        : LEFT_OUT,
+                "length", (int) Math.min(Integer.MAX_VALUE, skipped.longestText()),
+                "record", LEFT_OUT + " (" + where + ")"));
+        longest.sort(Comparator.<Map<String, Object>>comparingInt(m -> (int) m.get("length")).reversed());
+        final List<Map<String, Object>> kept = List.copyOf(longest.subList(0, Math.min(MOST_REPORTED,
+                longest.size())));
+        profile.put(LONG_STRINGS, kept);
+        profile.put(LONG_STRINGS_NOTE, longStringsNote(kept, DEFAULT_TRUNCATE_LENGTH));
     }
 
     /// @param longest The longest values, as [#longStrings] gives them.

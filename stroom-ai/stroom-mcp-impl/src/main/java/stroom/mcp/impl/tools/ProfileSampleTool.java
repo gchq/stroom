@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.AppPermission;
@@ -124,11 +125,13 @@ class ProfileSampleTool extends AbstractBuiltInTool {
         final Object samples = argsMap(call).get(SAMPLES_ARG);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
         List<String> notes = List.of();
+        List<SampleStreamTexts.Skipped> skipped = List.of();
         final Map<String, String> named;
         if (!streamIds.isEmpty() && sample == null && samples == null) {
             final SampleStreamTexts.Texts read = sampleStreamTexts.read(streamIds);
             named = read.texts();
             notes = read.notes();
+            skipped = read.skipped();
         } else {
             named = SampleTexts.asNamedSamples(samples, sample);
         }
@@ -137,6 +140,8 @@ class ProfileSampleTool extends AbstractBuiltInTool {
         }
         // XML fragments with the environment's own wrapper.
         final Map<String, Object> result = new LinkedHashMap<>(sampleProfiler.profileAll(named));
+        // A value the JSONParser would cut in an event too long to sample is still said.
+        skipped.forEach(left -> JsonStringValues.addSkipped(result, left.name(), left.events()));
         final Optional<String> tooLong = streamIds.isEmpty()
                 ? Optional.ofNullable(SampleTexts.longSamplesNote(named))
                 : Optional.empty();

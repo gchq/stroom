@@ -81,6 +81,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ai.impl.AiSamplingConfig getAiSamplingConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.impl.AiSamplingConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.ai.impl.AiWorkspaceConfig getAiWorkspaceConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -360,6 +369,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.dataconnection.impl.DataConnectionConfig getDataConnectionConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.dataconnection.impl.DataConnectionConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.docstore.impl.DocStoreConfig getDocStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -391,15 +409,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.explorer.impl.ExplorerConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.dataconnection.impl.DataConnectionConfig getDataConnectionConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.dataconnection.impl.DataConnectionConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.sample.PartSampler;
 import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.RecordStream;
@@ -76,6 +77,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,7 +129,7 @@ public class StreamReader {
     private final Provider<SecurityContext> securityContextProvider;
     private final LongSupplier clock;
     private final long cacheChars;
-    private final Map<List<Object>, CachedText> texts = new LinkedHashMap<>();
+    private final Map<List<Object>, Cached> texts = new LinkedHashMap<>();
     private final Map<Long, Map<String, Object>> reports = new LinkedHashMap<>();
 
     /// @param metaServiceProvider     Finds the streams, as the user.
@@ -813,29 +817,102 @@ public class StreamReader {
     /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
     public RawText cachedRawText(final long streamId, final int part, final int maxChars) {
         requireViewData(streamId);
-        final List<Object> key = List.of(userKey(), streamId, part, maxChars);
+        return cached(List.of(userKey(), streamId, part, maxChars), () -> rawText(streamId, part, maxChars),
+                text -> text.text().length(), text -> true);
+    }
+
+    /// The sample of one part of a raw stream, read as a stream of its events ([PartSampler]): whole events up to
+    /// the limits, an event too long to sample left out (said) rather than cut, decoded with its feed's encoding as
+    /// a pipeline decodes it (what was replaced remembered for the stream: see [#charsetReport(long)]). Kept a while
+    /// for the user, as [#cachedRawText(long, int, int)] is. Reading stops, with what is read so far, when the
+    /// call's time is nearly up; a sample cut short so isn't kept, so a later call reads the part again.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @param limits   How much is kept.
+    /// @return The sample.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public PartSampler.Sample samplePart(final long streamId, final int part, final PartSampler.Limits limits) {
+        requireViewData(streamId);
+        return cached(List.of(userKey(), "sample", streamId, part, limits), () -> readSample(streamId, part, limits),
+                sample -> sample.text().length(), sample -> !sample.timedOut());
+    }
+
+    // A value kept a while for the user: read when it isn't kept, then kept if it may be (not more than may be held).
+    @SuppressWarnings("unchecked")
+    private <T> T cached(final List<Object> key,
+                         final Supplier<T> read,
+                         final ToIntFunction<T> chars,
+                         final Predicate<T> keep) {
         final long now = clock.getAsLong();
         synchronized (texts) {
             texts.values().removeIf(cached -> now - cached.at() > SAMPLE_TTL_MS);
-            final CachedText cached = texts.get(key);
+            final Cached cached = texts.get(key);
             if (cached != null) {
-                return cached.text();
+                return (T) cached.value();
             }
         }
-        final RawText text = rawText(streamId, part, maxChars);
-        if (text.text().length() > cacheChars) {
-            // Not kept: it would push out everything else and still be more than may be kept.
-            return text;
+        final T value = read.get();
+        final int length = chars.applyAsInt(value);
+        if (length > cacheChars || !keep.test(value)) {
+            // Not kept: too big (it would push out everything else), or cut short by the call's time.
+            return value;
         }
         synchronized (texts) {
-            long held = texts.values().stream().mapToLong(cached -> cached.text().text().length()).sum();
-            while (!texts.isEmpty() && held + text.text().length() > cacheChars) {
+            long held = texts.values().stream().mapToLong(Cached::chars).sum();
+            while (!texts.isEmpty() && held + length > cacheChars) {
                 final List<Object> oldest = texts.keySet().iterator().next();
-                held -= texts.remove(oldest).text().text().length();
+                held -= texts.remove(oldest).chars();
             }
-            texts.put(key, new CachedText(now, text));
+            texts.put(key, new Cached(now, value, length));
         }
-        return text;
+        return value;
+    }
+
+    // A part's sample, read through a fresh reader each way the sampler reads it.
+    private PartSampler.Sample readSample(final long streamId, final int part, final PartSampler.Limits limits) {
+        final List<AutoCloseable> open = new ArrayList<>();
+        final List<StreamCharsets.ReportingReader> readers = new ArrayList<>();
+        try {
+            final PartSampler.Sample sample = PartSampler.sample(() -> {
+                closeAll(open);
+                final Source source = storeProvider.get().openSource(streamId);
+                open.add(source);
+                final InputStreamProvider provider = source.get(part);
+                open.add(provider);
+                final SegmentInputStream in = provider.get();
+                open.add(in);
+                in.includeAll();
+                // Bytes the encoding can't decode are replaced, as a pipeline replaces them.
+                final StreamCharsets.ReportingReader reader = StreamCharsets.reader(in, encoding(source.getMeta()));
+                readers.add(reader);
+                return reader;
+            }, limits, StreamReader::timeIsUp);
+            if (!readers.isEmpty()) {
+                remember(streamId, readers.getLast().report());
+            }
+            return sample;
+        } catch (final IOException | RuntimeException e) {
+            if (e instanceof final ToolTimeoutException timeout) {
+                throw timeout;
+            }
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw couldNotRead(streamId, e.getMessage());
+        } finally {
+            closeAll(open);
+        }
+    }
+
+    // Closes what is open, last opened first, and forgets it.
+    private static void closeAll(final List<AutoCloseable> open) {
+        for (final AutoCloseable closeable : open.reversed()) {
+            try {
+                closeable.close();
+            } catch (final Exception e) {
+                LOGGER.debug(() -> LogUtil.message("Unable to close a stream read: {}", e.getMessage()), e);
+            }
+        }
+        open.clear();
     }
 
     /// @param streamId A stream read with [#rawText(long, int)].
@@ -1215,7 +1292,7 @@ public class StreamReader {
         }
     }
 
-    private record CachedText(long at, RawText text) {
+    private record Cached(long at, Object value, int chars) {
 
     }
 

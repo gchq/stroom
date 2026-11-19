@@ -16,10 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.shared.AiToolCategory;
 import stroom.meta.shared.Meta;
@@ -128,7 +130,8 @@ class TestProfileSampleTool {
     @Test
     void sampleStreamsAreReadOnlyByAUserWhoMayViewData() {
         final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
-        final SampleStreamTexts texts = new SampleStreamTexts(Mockito.mock(StreamReader.class), documentAccess);
+        final SampleStreamTexts texts = new SampleStreamTexts(Mockito.mock(StreamReader.class), documentAccess,
+                AiConfig::new);
 
         assertThatThrownBy(() -> texts.read(List.of(7L))).isInstanceOf(ToolRefusal.class)
                 .hasMessage(SampleStreamTexts.NO_VIEW_DATA);
@@ -144,10 +147,9 @@ class TestProfileSampleTool {
         Mockito.when(streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).feedName("ACME").typeName("Raw Events")
                 .createMs(1_000L).build());
         Mockito.when(streamReader.partCount(7L)).thenReturn(1);
-        Mockito.when(streamReader.cachedRawText(7L, 0, StreamReader.MAX_SAMPLE_CHARS))
-                .thenReturn(new StreamReader.RawText("a=1\n", false));
+        SampledParts.stub(streamReader, 7L, part -> "a=1\n");
         Mockito.when(streamReader.charsetReport(7L)).thenReturn(null);
-        final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess);
+        final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess, AiConfig::new);
 
         assertThat(texts.read(List.of(7L)).texts()).containsEntry("stream 7", "a=1\n");
     }
@@ -162,18 +164,39 @@ class TestProfileSampleTool {
         Mockito.when(streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).feedName("ACME").typeName("Raw Events")
                 .createMs(1_000L).build());
         Mockito.when(streamReader.partCount(7L)).thenReturn(3);
-        final int perPart = StreamReader.MAX_SAMPLE_CHARS / 3;
-        for (int part = 0; part < 3; part++) {
-            Mockito.when(streamReader.cachedRawText(7L, part, perPart))
-                    .thenReturn(new StreamReader.RawText("part=" + part + "\n", false));
-        }
+        SampledParts.stub(streamReader, 7L, part -> "part=" + part + "\n");
         Mockito.when(streamReader.charsetReport(7L)).thenReturn(null);
-        final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess);
+        final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess, AiConfig::new);
 
         assertThat(texts.read(List.of(7L)).texts()).containsExactly(
                 Map.entry("stream 7 part 0", "part=0\n"),
                 Map.entry("stream 7 part 1", "part=1\n"),
                 Map.entry("stream 7 part 2", "part=2\n"));
+    }
+
+    @Test
+    void aLongValueInAnEventTooLongToSampleIsStillReported() {
+        // Seen in user testing: OpenWebUI events too long to sample, left out; the JSONParser would still cut their
+        // message, which the profile says.
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        Mockito.when(documentAccess.canViewData()).thenReturn(true);
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).feedName("ACME").typeName("Raw Events")
+                .createMs(1_000L).build());
+        Mockito.when(streamReader.partCount(7L)).thenReturn(1);
+        SampledParts.stub(streamReader, 7L, part -> "[{\"a\":\"short\"},{\"message\":\"" + "m".repeat(150_000)
+                                                    + "\"},{\"a\":\"also short\"}]");
+        Mockito.when(streamReader.charsetReport(7L)).thenReturn(null);
+        final ProfileSampleTool withStreams = new ProfileSampleTool(new SampleProfiling.Profiled(),
+                new SampleStreamTexts(streamReader, documentAccess, AiConfig::new));
+
+        final Map<String, Object> result = BuildToolCalls.json(withStreams.execute(BuildToolCalls.call(
+                ProfileSampleTool.NAME, "{\"stream_ids\": [7]}"), BuildToolCalls.context()).text());
+
+        assertThat(result).containsEntry("format", SampleProfiler.JSON_ARRAY).containsEntry("records", 2);
+        assertThat(String.valueOf(result.get(JsonStringValues.LONG_STRINGS))).contains("message")
+                .contains("150000").contains("an event left out of the sample (stream 7)");
+        assertThat(String.valueOf(result.get("read"))).contains("1 event over 100,000 characters left out");
     }
 
     @Test

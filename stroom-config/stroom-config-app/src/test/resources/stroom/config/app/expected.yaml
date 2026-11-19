@@ -119,6 +119,9 @@ appConfig:
       commandsLast: "PT15M"
       maxPendingPerUser: 20
       maxUploadMb: 100
+    sampling:
+      maxCharsPerStream: 2000000
+      maxEventChars: 100000
     shareActiveTab: true
     suggestFollowUps: true
     toolGroupThreshold: 24

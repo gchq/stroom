@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -863,6 +864,10 @@ public final class SampleProfiler {
             // Not reached: called only when it fails.
             return new ToolRefusal("not JSON");
         } catch (final ToolJson.JsonDecodeException e) {
+            // Cut only where what was parsed is the whole text (a pretty-printed document's first line isn't).
+            if (first.strip().equals(text.strip()) && JsonCut.cutShort(first, e.pos())) {
+                return cutInFirstRecord(first);
+            }
             final String near = first.substring(Math.max(0, e.pos() - 40), Math.min(first.length(), e.pos() + 40));
             return new ToolRefusal("This starts as JSON but isn't valid JSON: " + e.msg() + " at character "
                                    + e.pos() + ", near " + ToolText.repr(near) + ". Pass the source's text exactly as "
@@ -870,6 +875,16 @@ public final class SampleProfiler {
                                    + "disk isn't passed through you: upload_sample files= sends it whole, and the "
                                    + "server reads it from the stream.");
         }
+    }
+
+    /// JSON cut short by a read limit before its first record ends: said so, not "isn't valid JSON". Seen in user
+    /// testing: an OpenWebUI audit stream's part, one newline-free JSON array, read to 100,000 characters and cut
+    /// inside a `\\u` escape, refused as "Invalid \\uXXXX escape at character 99996".
+    private static ToolRefusal cutInFirstRecord(final String text) {
+        return new ToolRefusal("This JSON is cut at the read limit (" + String.format(Locale.ROOT, "%,d",
+                text.length()) + " characters) inside its first record, so no whole record was read. It isn't "
+                               + "invalid, only cut short: read it from its stream (stream_ids), which samples "
+                               + "whole events, or pass a part of it that holds whole records.");
     }
 
     /// (key, records) for one JSON object whose array holds the records, as AWS CloudTrail writes them
@@ -1486,15 +1501,28 @@ public final class SampleProfiler {
             JsonStringValues.addTo(found, data);
             return found;
         } catch (final ToolJson.JsonDecodeException e) {
+            final JsonCut.Scan scan = JsonCut.scan(text);
+            if (scan.badEscapeAt() >= 0) {
+                // Not a cut: an escape that isn't JSON, said where it is (notJson).
+                return null;
+            }
+            final boolean cut = scan.open() && e.pos() >= scan.lastRecordStart();
             final List<Object> head = arrayHead(text, maxRecords);
             if (head != null && head.stream().allMatch(Map.class::isInstance)) {
                 final Map<String, Object> found = with(result, "format", JSON_ARRAY, "records", head.size(),
                         "fields", inventory(flattenAll(head)),
-                        "note", "the array is cut short here: these are its first records",
+                        "note", cut
+                                ? "the array is cut short at the read limit (" + String.format(Locale.ROOT, "%,d",
+                                text.length()) + " characters) inside a record: these are its first "
+                                  + head.size() + " whole records"
+                                : "the array is cut short here: these are its first records",
                         "suggested_parser", JSON_PARSER);
                 found.putAll(jsonSetup("array"));
                 JsonStringValues.addTo(found, head);
                 return found;
+            }
+            if (head == null && cut) {
+                throw cutInFirstRecord(text);
             }
             return null;
         }

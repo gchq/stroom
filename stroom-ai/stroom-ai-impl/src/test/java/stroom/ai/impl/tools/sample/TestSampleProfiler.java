@@ -533,4 +533,69 @@ class TestSampleProfiler {
         assertThat(SampleProfiler.valueType("\"{\\\"a\\\": 1}\"")).isEqualTo("embedded json");
         assertThat(SampleProfiler.valueType("\"just text\"")).isEqualTo("string");
     }
+
+    // --------------------------------------------------------------------------------
+    // A newline-free JSON array cut by the read limit (OpenWebUI audit log, user testing 2026-11-19).
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void aOneLineJsonArrayCutInsideAnEscapeIsSaidToBeCutNotInvalid() {
+        // Seen in user testing: an OpenWebUI audit stream's part, one JSON array of filebeat events on one line, read
+        // to 100,000 characters, cut inside a \\uXXXX escape, and refused as "This starts as JSON but isn't valid
+        // JSON: Invalid \\uXXXX escape at character 99996": the JSON was only cut short by the read.
+        final String part = OpenWebUiParts.part(150_000, OpenWebUiParts.ESCAPE_AT);
+        final String cut = part.substring(0, OpenWebUiParts.PART_READ);
+        assertThat(cut).endsWith("\\u00e");
+
+        final String said = profiled(cut);
+
+        assertThat(said).doesNotContain("isn't valid JSON").doesNotContain("Invalid \\uXXXX escape")
+                .contains("cut");
+    }
+
+    @Test
+    void aOneLineJsonArrayCutInsideAStringIsSaidToBeCutNotInvalid() {
+        final String part = OpenWebUiParts.part(150_000, -1);
+
+        final String said = profiled(part.substring(0, 50_000));
+
+        assertThat(said).doesNotContain("isn't valid JSON").contains("cut");
+    }
+
+    @Test
+    void aOneLineJsonArrayCutAfterWholeRecordsGivesThoseRecords() {
+        final String part = "[" + IntStream.range(0, 5).mapToObj(i -> "{\"n\": " + i + ", \"m\": \"x\\u00e9\"}")
+                .collect(Collectors.joining(",")) + "]";
+
+        final Map<String, Object> profile = SampleProfiler.profile(part.substring(0, part.length() - 8));
+
+        assertThat(profile).containsEntry("format", SampleProfiler.JSON_ARRAY).containsEntry("records", 4);
+        assertThat((String) profile.get("note")).contains("cut short at the read limit");
+    }
+
+    @Test
+    void aMalformedEscapeNotAtACutIsStillInvalidJsonAtItsPosition() {
+        // An escape that isn't JSON, well before the text ends: invalid, not cut.
+        final String text = "[{\"a\": \"x\\+y\"}, {\"a\": \"" + "z".repeat(200) + "\"}]";
+
+        assertThat(profiled(text)).contains("isn't valid JSON").contains("at character 9,").doesNotContain("cut at");
+        assertThat(profiled(text.substring(0, 150))).as("cut too, the bad escape still said")
+                .contains("isn't valid JSON").contains("at character 9,");
+    }
+
+    @Test
+    void aOneLineJsonObjectCutInsideAStringIsSaidToBeCut() {
+        final String said = profiled("{\"message\": \"" + "x".repeat(500));
+
+        assertThat(said).doesNotContain("isn't valid JSON").contains("cut at the read limit");
+    }
+
+    // A profile's text, or the refusal's when it is refused.
+    private static String profiled(final String text) {
+        try {
+            return String.valueOf(SampleProfiler.profile(text));
+        } catch (final ToolRefusal e) {
+            return e.getMessage();
+        }
+    }
 }

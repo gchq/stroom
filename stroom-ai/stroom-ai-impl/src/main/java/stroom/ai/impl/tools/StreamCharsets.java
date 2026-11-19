@@ -18,6 +18,9 @@ package stroom.ai.impl.tools;
 
 import stroom.util.shared.NullSafe;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -125,27 +128,50 @@ public final class StreamCharsets {
         return String.format(Locale.ROOT, "%02X", value);
     }
 
+    /// A reader of bytes decoded as [#decode(byte[], String, boolean)] decodes them, a chunk at a time, so a part of
+    /// any size can be read through: what it replaced is reported once it has been read ([ReportingReader#report()]).
+    ///
+    /// @param in       The bytes.
+    /// @param encoding The feed's encoding, or null for UTF-8.
+    /// @return The reader.
+    public static ReportingReader reader(final InputStream in, final String encoding) {
+        return new ReportingReader(in, encoding);
+    }
+
     private static Map<String, Object> report(final String text,
                                               final List<int[]> bad,
                                               final String encoding,
                                               final Charset charset) {
         final Set<Integer> values = new TreeSet<>();
         bad.forEach(b -> values.add(b[1]));
-        final List<Integer> shownValues = values.stream().limit(MAX_BYTE_VALUES).toList();
-        final Map<String, String> as1252 = new LinkedHashMap<>();
-        shownValues.forEach(v -> as1252.put(hex(v), cp1252(v)));
         // Characters the stream does decode beyond ASCII: real UTF-8 in it, so it mixes character sets.
         final boolean decodedBeyondAscii = text.chars().anyMatch(c -> c > 0x7F && c != REPLACEMENT);
         final List<Map<String, Object>> examples = new ArrayList<>();
         for (final int[] b : bad.subList(0, Math.min(MAX_EXAMPLES, bad.size()))) {
-            final Map<String, Object> example = new LinkedHashMap<>();
-            example.put("at_character", b[0]);
-            example.put("byte", hex(b[1]));
-            example.put("as_windows_1252", cp1252(b[1]));
-            example.put("context", text.substring(Math.max(0, b[0] - CONTEXT_CHARS),
-                    Math.min(text.length(), b[0] + CONTEXT_CHARS)));
-            examples.add(example);
+            examples.add(example(b[0], b[1], text.substring(Math.max(0, b[0] - CONTEXT_CHARS),
+                    Math.min(text.length(), b[0] + CONTEXT_CHARS))));
         }
+        return report(values, bad.size(), decodedBeyondAscii, examples, encoding, charset);
+    }
+
+    private static Map<String, Object> example(final int at, final int value, final String context) {
+        final Map<String, Object> example = new LinkedHashMap<>();
+        example.put("at_character", at);
+        example.put("byte", hex(value));
+        example.put("as_windows_1252", cp1252(value));
+        example.put("context", context);
+        return example;
+    }
+
+    private static Map<String, Object> report(final Set<Integer> values,
+                                              final int undecodable,
+                                              final boolean decodedBeyondAscii,
+                                              final List<Map<String, Object>> examples,
+                                              final String encoding,
+                                              final Charset charset) {
+        final List<Integer> shownValues = values.stream().limit(MAX_BYTE_VALUES).toList();
+        final Map<String, String> as1252 = new LinkedHashMap<>();
+        shownValues.forEach(v -> as1252.put(hex(v), cp1252(v)));
         final String advice;
         if (!StandardCharsets.UTF_8.equals(charset)) {
             advice = "These bytes aren't characters in the feed's encoding (" + encoding + "). Ask the user which "
@@ -168,7 +194,7 @@ public final class StreamCharsets {
         }
         final Map<String, Object> report = new LinkedHashMap<>();
         report.put("encoding", encoding);
-        report.put("undecodable_bytes", bad.size());
+        report.put("undecodable_bytes", undecodable);
         report.put("byte_values", shownValues.stream().map(StreamCharsets::hex).toList());
         report.put("as_windows_1252", as1252);
         report.put("examples", examples);
@@ -200,5 +226,175 @@ public final class StreamCharsets {
     ///               `examples`, `advice`), or null if every byte decoded.
     public record Decoded(String text, Map<String, Object> report) {
 
+    }
+
+
+    /// Bytes decoded a chunk at a time, each byte the character set can't decode replaced by U+FFFD, what was
+    /// replaced remembered for [#report()].
+    public static final class ReportingReader extends Reader {
+
+        private static final int CHUNK = 64 * 1024;
+
+        private final InputStream in;
+        private final String encoding;
+        private final Charset charset;
+        private final CharsetDecoder decoder;
+        private final ByteBuffer bytes = ByteBuffer.allocate(CHUNK);
+        private final CharBuffer chars;
+        private final Set<Integer> values = new TreeSet<>();
+        private final List<Example> examples = new ArrayList<>();
+        // The last characters given, the context before a replaced byte.
+        private final StringBuilder recent = new StringBuilder();
+        private long position;
+        private long undecodable;
+        private boolean beyondAscii;
+        private boolean eof;
+        private boolean done;
+
+        private ReportingReader(final InputStream in, final String encoding) {
+            this.in = in;
+            this.encoding = NullSafe.isBlankString(encoding)
+                    ? "UTF-8"
+                    : encoding;
+            this.charset = charset(encoding);
+            this.decoder = charset.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+            this.chars = CharBuffer.allocate((int) (CHUNK * (double) decoder.maxCharsPerByte()) + CHUNK + 16);
+            chars.flip();
+        }
+
+        @Override
+        public int read(final char[] buffer, final int offset, final int length) throws IOException {
+            if (length == 0) {
+                return 0;
+            }
+            if (!chars.hasRemaining() && !fill()) {
+                return -1;
+            }
+            final int given = Math.min(length, chars.remaining());
+            chars.get(buffer, offset, given);
+            return given;
+        }
+
+        @Override
+        public void close() throws IOException {
+            in.close();
+        }
+
+        /// @return What reading replaced, as [Decoded#report()] gives it (its examples' positions counted from the
+        /// text's start), or null if every byte read decoded.
+        public Map<String, Object> report() {
+            if (undecodable == 0) {
+                return null;
+            }
+            final List<Map<String, Object>> said = examples.stream()
+                    .map(example -> example(example.at, example.value, example.context()))
+                    .toList();
+            return StreamCharsets.report(values, (int) Math.min(Integer.MAX_VALUE, undecodable), beyondAscii, said,
+                    encoding, charset);
+        }
+
+        // Decodes the next chunk; false at the end.
+        private boolean fill() throws IOException {
+            chars.clear();
+            while (chars.position() == 0 && !done) {
+                if (!eof) {
+                    final int read = in.read(bytes.array(), bytes.position(), bytes.remaining());
+                    if (read < 0) {
+                        eof = true;
+                    } else {
+                        bytes.position(bytes.position() + read);
+                    }
+                }
+                bytes.flip();
+                decode();
+                bytes.compact();
+                if (eof && bytes.position() == 0) {
+                    decoder.flush(chars);
+                    done = true;
+                }
+            }
+            chars.flip();
+            given();
+            return chars.hasRemaining();
+        }
+
+        private void decode() {
+            while (true) {
+                final CoderResult result = decoder.decode(bytes, chars, eof);
+                if (!result.isError()) {
+                    return;
+                }
+                for (int i = 0; i < result.length(); i++) {
+                    if (!chars.hasRemaining()) {
+                        return;
+                    }
+                    final int value = bytes.get() & 0xFF;
+                    undecodable++;
+                    values.add(value);
+                    if (examples.size() < MAX_EXAMPLES) {
+                        examples.add(new Example((int) Math.min(Integer.MAX_VALUE, position + chars.position()),
+                                value, recentBefore(chars.position())));
+                    }
+                    chars.put(REPLACEMENT);
+                }
+            }
+        }
+
+        // The context before a replaced byte at the chunk's position: the last characters given and those of the
+        // chunk before it.
+        private String recentBefore(final int at) {
+            final StringBuilder before = new StringBuilder(recent);
+            for (int i = Math.max(0, at - CONTEXT_CHARS); i < at; i++) {
+                before.append(chars.get(i));
+            }
+            return before.substring(Math.max(0, before.length() - CONTEXT_CHARS));
+        }
+
+        // The chunk about to be given: its characters beyond ASCII noted, and the examples' contexts after them.
+        private void given() {
+            final int from = chars.position();
+            final int to = chars.limit();
+            for (int i = from; i < to; i++) {
+                final char c = chars.get(i);
+                if (c > 0x7F && c != REPLACEMENT) {
+                    beyondAscii = true;
+                }
+            }
+            for (final Example example : examples) {
+                final long start = example.at;
+                for (long i = Math.max(start, position); i < Math.min(position + to - from, start + CONTEXT_CHARS);
+                        i++) {
+                    example.after.append(chars.get((int) (from + i - position)));
+                }
+            }
+            for (int i = Math.max(from, to - CONTEXT_CHARS); i < to; i++) {
+                recent.append(chars.get(i));
+            }
+            if (recent.length() > CONTEXT_CHARS) {
+                recent.delete(0, recent.length() - CONTEXT_CHARS);
+            }
+            position += to - from;
+        }
+
+
+        private static final class Example {
+
+            private final int at;
+            private final int value;
+            private final String before;
+            private final StringBuilder after = new StringBuilder();
+
+            private Example(final int at, final int value, final String before) {
+                this.at = at;
+                this.value = value;
+                this.before = before;
+            }
+
+            private String context() {
+                return before + after;
+            }
+        }
     }
 }

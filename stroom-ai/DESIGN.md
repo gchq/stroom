@@ -390,10 +390,14 @@ flowchart TD
 ```
 
 * `survey_feed` picks streams spread over the feed's life (the last, the first, the middle, then the quarters, so
-  any prefix spans the whole range) and reads each part's head (250,000 characters, 1,000 records), plus up to 8
-  windows of 250,000 characters further in for one-record-a-line formats. The feed's last streams and sample
-  streams are read whole up to 2,000,000 characters (seen in production: a sample read only to its 108th record of
-  1,000 hid most of its kinds of event). Records are grouped into shapes: field sets plus the values of fields that
+  any prefix spans the whole range) and reads each part's head (250,000 characters, 1,000 records, each part its
+  own budget), plus up to 8 windows of 250,000 characters further in for one-record-a-line formats. The feed's last
+  streams and sample streams are read whole up to 2,000,000 characters a part (`ai.sampling.maxCharsPerStream`; seen
+  in production: a sample read only to its 108th record of 1,000 hid most of its kinds of event). A stream of more
+  parts than a call reads (20) has them chosen spread through it, its first and last among them, every one read to
+  the same depth, and the coverage
+  names the parts read (seen in user testing: an OpenWebUI audit stream of 787 parts surveyed through its first 20,
+  "can't read further into it"). Records are grouped into shapes: field sets plus the values of fields that
   name the event; masked text for syslog; message fields unwrapped (`Shapes`).
 * Each call reads 10 streams by default, up to 100. Fewer than 10 is confirmed in a form, and only when the feed
   holds more (seen in testing: an agent surveyed a live feed 3 streams at a time).
@@ -1317,6 +1321,17 @@ The agent guides and conventions are resources of `stroom-mcp-impl`, not stroom-
   what to do.
 * **Lengths and slices are in code points** (`ToolText`), so a character outside the Basic Multilingual Plane counts as
   one wherever the tools cut text.
+* **A sample is whole events** (`StreamReader.samplePart`, `PartSampler`, settings `ai.sampling`). A sample
+  stream's part is read as a stream of whole events, not its first so many characters, and characters (not a count)
+  decide how many, whatever the format: a JSON array's items (`JsonArrayStream`, tracking nesting and strings
+  without parsing), an XML document's records in its own root, or fragments (`XmlRecordStream`), other text a line
+  at a time, each part up to its share of 2,000,000 characters a stream but never less than one event of the most
+  length, so every one of the at most 20 parts, spread through the stream, is read. An event over 100,000 characters
+  is read through and left out, never cut, and said, its longest string value still reported as the JSONParser would
+  cut it. Text still cut at a read limit is said to be cut, never invalid
+  JSON (`JsonCut`). Seen in user testing: an OpenWebUI audit stream of 787 newline-free JSON arrays, each part read to
+  100,000 characters and cut inside a `\u` escape, refused by every sampling tool as "isn't valid JSON". A sample
+  cut short by a call's time isn't cached.
 * **A big XML document read only to its head** is cut to its root and the complete records before the cut
   (`SampleProfiler.cutDocument`; seen in production: a 54 MB `<tweets>` stream, read to its head, was profiled as CSV
   with no records).
@@ -1869,8 +1884,8 @@ while any template for the stage exists, and are confirmed in a form (2026-10-27
   * A record is held only up to half the buffer, as the reader refills only below half. With 2× the longest record
     within the default (20,000) no `bufferSize` is written; otherwise it is set to 4× the longest record, capped at
     Stroom's maximum. `buffer_size=` raises it when the feed holds longer records. Given `stream_ids`, the sample
-    streams are read through whole for the longest record (`StreamReader.recordLengths`), not only the first
-    1,000,000 characters it profiles (seen: records of over 105,000 characters lost further into a 159 MB stream).
+    streams are read through whole for the longest record (`StreamReader.recordLengths`), not only the sample it
+    profiles (seen: records of over 105,000 characters lost further into a 159 MB stream).
   * `measure_records` gives the longest record of whole raw streams and the `bufferSize` that holds it, read through
     on the server a chunk at a time (`RecordLengths`). A record is a line, or with `quote` the lines a quoted value
     spans joined; one of a marked start line or a blank-line block needs the converter's pattern and isn't measured.
@@ -3856,6 +3871,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-19 | From user testing (an OpenWebUI audit stream of 787 newline-free JSON arrays, 67 MB): a sample stream's part is read as a stream of whole events, never cut, characters (not a count) deciding how many in every format: a JSON array's items, an XML document's records written back in its own root (or fragments), or lines; each part up to its share of `ai.sampling.maxCharsPerStream` (2,000,000) characters a stream, never less than one event of `maxEventChars` (100,000), so every chosen part is read; an event over that is read through and left out, said with its length and longest string value, which still feeds the `long_strings` warning. At most 20 parts, chosen spread through the stream from its first to its last, in survey_feed too, whose coverage names the parts read; survey_feed's `max_chars_per_stream` stays each part's own budget (2026-11-08). Text cut at a read limit is said to be cut, never "isn't valid JSON"; a sample cut short by a call's time isn't cached. | Reading Stroom's data; Onboard a feed that already holds data |
 | 2026-11-19 | From the agent eval (case 36 on Haiku): build_translation_xslt's extraction check reads an XML sample's xpath sources from the first 200 record documents, then, for a regex matching none of them, from all of them before calling it a problem (a warning if the check's time runs out first). The keys of records after the 200th were refused as matching nothing, and the agent saved with an empty sample to get past them. | Translation |
 | 2026-11-19 | The draft's `unescape_quotes` for a quoted delimited spec's doubled quotes (a CSV's `""`) applies wherever the splitter spec nests the delimited spec (a syslog header's body, an alternatives part, a part's body), as `unescape_backslashes` does for key_value (`EscapedQuotes.undouble`); a header's fields and the body's text it was read from are left as written. Before, only a top-level delimited spec was read. | Translation |
 | 2026-11-19 | From the agent eval (case 36 on Haiku): build_translation_xslt never saves unchecked. `sample: []` is no sample; a save (`build` or `uuid`) given neither `sample` nor `stream_ids` is checked against the build's own sample streams (the newest five), else the newest five its survey read, and is refused, asking for `stream_ids` or `sample`, only when the build has neither; a save whose check read no record is a problem, not ok (seen: `"sample": []` checked 0 records, returned ok, and the domain split, placeholder, confirmed-kinds and Unknown forms were all skipped). | Translation |

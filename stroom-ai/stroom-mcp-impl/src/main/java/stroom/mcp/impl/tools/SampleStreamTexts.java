@@ -16,12 +16,14 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.AiSamplingConfig;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.StreamCharsets;
 import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.RawText;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.sample.PartSampler;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -29,6 +31,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -58,34 +61,43 @@ class SampleStreamTexts {
 
     /// The most parts of a stream read, as survey_feed reads at most.
     static final int MAX_PARTS = 20;
-    /// The fewest characters a part is read to, however many parts share the stream's.
-    static final int MIN_PART_CHARS = 100_000;
 
     private final StreamReader streamReader;
     private final DocumentAccess documentAccess;
+    private final Provider<AiConfig> aiConfigProvider;
 
     @Inject
-    SampleStreamTexts(final StreamReader streamReader, final DocumentAccess documentAccess) {
+    SampleStreamTexts(final StreamReader streamReader,
+                      final DocumentAccess documentAccess,
+                      final Provider<AiConfig> aiConfigProvider) {
         this.streamReader = streamReader;
         this.documentAccess = documentAccess;
+        this.aiConfigProvider = aiConfigProvider;
     }
 
-    /// Every part of each stream is read, as its own text: a stream of several files received at once has a part
+    /// Each stream's parts are read, each as its own text: a stream of several files received at once has a part
     /// each, and a pipeline processes them all. Seen in testing: a feed's five latest streams uploaded again as one
     /// stream of five parts; only the first part was read, so the checks saw almost none of its kinds of event and
-    /// their extracts "matched nothing", while processing read all five.
+    /// their extracts "matched nothing", while processing read all five. A stream of more parts than are read has
+    /// them chosen spread through it, from its first to its last (seen in user testing: an OpenWebUI audit stream
+    /// of 787 parts was read through its first 20 only). Each part is read as a stream of whole events
+    /// ([StreamReader#samplePart]), up to its share of the stream's characters (ai.sampling): an event too long to
+    /// sample is left out and said, never cut.
     ///
     /// @param streamIds Sample streams.
-    /// @return Their text by name (`stream <id>`, or `stream <id> part <n>` from part 0 for a stream of several),
-    /// and notes on what was cut short or read through its bytes.
-    /// @throws ToolRefusal if the user may not view data, or a stream can't be read.
+    /// @return Their text by name (`stream <id>`, or `stream <id> part <n>` for a stream of several, `n` the part's
+    /// own number from 0), and notes on what was left out, read only in part, or read through its bytes.
+    /// @throws ToolRefusal if the user may not view data, a stream can't be read, or every event read is too long
+    /// to sample.
     Texts read(final List<Long> streamIds) {
         if (!documentAccess.canViewData()) {
             throw new ToolRefusal(NO_VIEW_DATA);
         }
+        final AiSamplingConfig sampling = sampling();
         final Map<String, String> texts = new LinkedHashMap<>();
         final List<String> notes = new ArrayList<>();
         final List<Cut> cut = new ArrayList<>();
+        final List<Skipped> skipped = new ArrayList<>();
         for (final long streamId : streamIds) {
             final int parts;
             try {
@@ -95,38 +107,90 @@ class SampleStreamTexts {
             } catch (final StreamReadException e) {
                 throw new ToolRefusal(e.getMessage());
             }
-            final int read = Math.min(parts, MAX_PARTS);
-            if (parts > read) {
-                notes.add("stream " + streamId + " has " + parts + " parts: its first " + read + " are read");
+            final List<Integer> chosen = PartSampler.spread(parts, MAX_PARTS);
+            if (parts > chosen.size()) {
+                notes.add("stream " + streamId + " has " + parts + " parts: " + chosen.size() + " of them are "
+                          + "read, spread through it (parts " + PartSampler.said(chosen) + ")");
             }
-            // The stream's share of characters, spread over its parts so none is crowded out by the first.
-            final int perPart = Math.max(MIN_PART_CHARS, StreamReader.MAX_SAMPLE_CHARS / read);
-            for (int part = 0; part < read; part++) {
-                final String name = parts == 1
-                        ? "stream " + streamId
-                        : "stream " + streamId + " part " + part;
-                final RawText text;
-                try {
-                    text = streamReader.cachedRawText(streamId, part, perPart);
-                } catch (final StreamReadException e) {
-                    throw new ToolRefusal(e.getMessage());
-                }
-                texts.put(name, text.text());
-                if (text.truncated()) {
-                    cut.add(new Cut(name, streamId, part));
-                    notes.add(name + " is read up to its first "
-                              + String.format(Locale.ROOT, "%,d", text.text().length())
-                              + " characters (the most a sample is read to" + (read > 1
-                            ? ", shared by its parts"
-                            : "") + ")");
-                }
-            }
+            readParts(streamId, parts, chosen, sampling, new Read(texts, notes, cut, skipped));
             final Map<String, Object> report = streamReader.charsetReport(streamId);
             if (report != null) {
                 notes.add(StreamCharsets.note(streamId, report));
             }
         }
-        return new Texts(texts, notes, cut);
+        if (texts.isEmpty() && !skipped.isEmpty()) {
+            throw new ToolRefusal("No event of the sample could be sampled: " + String.join("; ", notes) + ". "
+                                  + "Upload a sample of shorter events, or have ai.sampling.maxEventChars raised.");
+        }
+        return new Texts(texts, notes, cut, skipped);
+    }
+
+    // The parts chosen of one stream, each up to its share of what is left of the stream's characters, and every one
+    // at least an event of the most length: the stream's characters bound only how deep each is read.
+    private void readParts(final long streamId,
+                           final int parts,
+                           final List<Integer> chosen,
+                           final AiSamplingConfig sampling,
+                           final Read read) {
+        long left = sampling.getMaxCharsPerStream();
+        final List<Integer> inPart = new ArrayList<>();
+        for (int i = 0; i < chosen.size(); i++) {
+            final int part = chosen.get(i);
+            final String name = parts == 1
+                    ? "stream " + streamId
+                    : "stream " + streamId + " part " + part;
+            final int share = PartSampler.share(left, chosen.size() - i, sampling.getMaxEventChars());
+            final PartSampler.Sample sample;
+            try {
+                sample = streamReader.samplePart(streamId, part, new PartSampler.Limits(sampling.getMaxEventChars(),
+                        share));
+            } catch (final StreamReadException e) {
+                throw new ToolRefusal(e.getMessage());
+            }
+            left -= sample.text().length();
+            sample.said(sampling.getMaxEventChars()).forEach(said -> read.notes().add(name + ": " + said));
+            if (sample.skipped().count() > 0) {
+                read.skipped().add(new Skipped(name, sample.skipped()));
+            }
+            if (sample.timedOut()) {
+                read.notes().add(name + ": the call's time ran out while it was read, so its sample is what was "
+                                 + "read by then");
+            }
+            if (!sample.whole()) {
+                read.cut().add(new Cut(name, streamId, part));
+                if (sample.skipped().count() == 0 && !sample.unterminated() && !sample.timedOut()
+                    && sample.fellBack() == null) {
+                    inPart.add(part);
+                }
+            }
+            if ((sample.mode() == PartSampler.Mode.JSON_ARRAY || sample.mode() == PartSampler.Mode.XML)
+                && sample.events() == 0 && !sample.whole()) {
+                read.notes().add(name + ": no event of it is in the sample");
+                continue;
+            }
+            read.texts().put(name, sample.text());
+        }
+        if (!inPart.isEmpty()) {
+            read.notes().add((parts == 1
+                    ? "stream " + streamId + " is"
+                    : "stream " + streamId + " part" + (inPart.size() == 1
+                            ? " "
+                            : "s ") + PartSampler.said(inPart) + (inPart.size() == 1
+                            ? " is"
+                            : " are")) + " sampled in part: whole events up to "
+                             + (inPart.size() == 1 && parts == 1
+                                     ? "the "
+                                     : "each part's share of the ")
+                             + thousands(sampling.getMaxCharsPerStream()) + " characters of a stream's sample");
+        }
+    }
+
+    private AiSamplingConfig sampling() {
+        return NullSafe.getOrElseGet(aiConfigProvider.get(), AiConfig::getSampling, AiSamplingConfig::new);
+    }
+
+    private static String thousands(final long number) {
+        return String.format(Locale.ROOT, "%,d", number);
     }
 
     /// @param streamIds Streams.
@@ -237,7 +301,7 @@ class SampleStreamTexts {
                 ? " (each part kept or left out whole, by its stream meta attribute)"
                 : "") + ", so the kinds and rules here are the scope's.");
         final List<Cut> cut = texts.cut().stream().filter(part -> kept.containsKey(part.name())).toList();
-        return new Scoped(new Texts(kept, notes, cut), said);
+        return new Scoped(new Texts(kept, notes, cut, texts.skipped()), said);
     }
 
     /// @param streamId A sample stream.
@@ -263,16 +327,39 @@ class SampleStreamTexts {
 
     /// Sample streams' text.
     ///
-    /// @param texts Each stream's text, by name (`stream <id>`).
-    /// @param notes What was cut short, or read through its bytes.
-    /// @param cut   The parts read only to the most a sample is read to.
-    record Texts(Map<String, String> texts, List<String> notes, List<Cut> cut) {
+    /// @param texts   Each stream's text, by name (`stream <id>`).
+    /// @param notes   What was left out or read only in part, or read through its bytes.
+    /// @param cut     The parts not read whole (read only to the most a sample holds, or events left out).
+    /// @param skipped The events left out as too long to sample, by the name of the part they are in.
+    record Texts(Map<String, String> texts, List<String> notes, List<Cut> cut, List<Skipped> skipped) {
 
         /// @param texts Each stream's text, by name.
         /// @param notes What was cut short, or read through its bytes.
         Texts(final Map<String, String> texts, final List<String> notes) {
-            this(texts, notes, List.of());
+            this(texts, notes, List.of(), List.of());
         }
+
+        /// @param texts Each stream's text, by name.
+        /// @param notes What was cut short, or read through its bytes.
+        /// @param cut   The parts not read whole.
+        Texts(final Map<String, String> texts, final List<String> notes, final List<Cut> cut) {
+            this(texts, notes, cut, List.of());
+        }
+    }
+
+
+    /// Events left out of a part's sample as too long to sample.
+    ///
+    /// @param name   The part's text's name, as in [Texts#texts()].
+    /// @param events What was left out.
+    record Skipped(String name, PartSampler.SkippedEvents events) {
+
+    }
+
+
+    // What one call's reading gathers.
+    private record Read(Map<String, String> texts, List<String> notes, List<Cut> cut, List<Skipped> skipped) {
+
     }
 
 
@@ -285,7 +372,7 @@ class SampleStreamTexts {
     }
 
 
-    /// A part read only to the most a sample is read to.
+    /// A part not read whole: read only to the most a sample holds, or with events left out.
     ///
     /// @param name   Its text's name in [Texts#texts()].
     /// @param stream The stream.

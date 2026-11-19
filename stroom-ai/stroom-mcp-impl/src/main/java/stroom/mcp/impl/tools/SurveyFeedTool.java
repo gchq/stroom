@@ -17,6 +17,8 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.AiSamplingConfig;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
@@ -38,6 +40,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.sample.FeedSampling;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.KindFields;
+import stroom.ai.impl.tools.sample.PartSampler;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.Shapes;
@@ -141,6 +144,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String MAX_PARTS_ARG = "max_parts_per_stream";
     /// Why a stream read only in part can't be read further, in its `per_stream` entry.
     static final String NOT_READ_FURTHER = "not_read_further";
+    /// The parts of a stream of several read, in its `per_stream` entry.
+    static final String PARTS_READ = "parts_read";
     /// The most parts of a stream read.
     static final int MAX_PARTS = 20;
     /// The parts of each of a feed's streams read by default when it is sampled across its life.
@@ -197,6 +202,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private final SourceTypeRegistries besideFeed;
     private final Provider<BuildRecords> buildRecords;
     private final Provider<BuildPlan> plan;
+    private final Provider<AiConfig> aiConfigProvider;
 
     @Inject
     SurveyFeedTool(final StreamReader streamReader,
@@ -209,7 +215,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                    final AiAuditLog auditLog,
                    final SourceTypeRegistries besideFeed,
                    final Provider<BuildRecords> buildRecords,
-                   final Provider<BuildPlan> plan) {
+                   final Provider<BuildPlan> plan,
+                   final Provider<AiConfig> aiConfigProvider) {
         this.streamReader = streamReader;
         this.feedNames = feedNames;
         this.guard = guard;
@@ -221,6 +228,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         this.besideFeed = besideFeed;
         this.buildRecords = buildRecords;
         this.plan = plan;
+        this.aiConfigProvider = aiConfigProvider;
     }
 
     @Override
@@ -274,11 +282,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 .description("Sample a feed's streams spread over its lifetime (newest, oldest, then the middle, "
                              + "then the quarters...) and group their records into shapes (kinds of event): by "
                              + "fields and event-naming values for structured data, by masked message templates "
-                             + "for syslog and other text. Only the head of each stream is read "
-                             + "(max_chars_per_stream per part, max_parts_per_stream parts), so multi-GB streams "
-                             + "cost the same as small ones; a sample's streams (stream_ids), and a feed's last "
-                             + "streams (fewer left than max_streams), are read whole up to 2,000,000 characters, "
-                             + "and coverage says when one wasn't (the feed is then not covered). Every call reads "
+                             + "for syslog and other text. Only the head of each stream's parts is read "
+                             + "(max_chars_per_stream a part; max_parts_per_stream parts, spread through a stream "
+                             + "of more from its first to its last), so multi-GB streams cost the same as small "
+                             + "ones; a sample's streams (stream_ids), and a feed's last streams "
+                             + "(fewer left than max_streams), are read whole up to 2,000,000 characters a part "
+                             + "(unless configured), and coverage says when one wasn't (the feed is then not "
+                             + "covered). Every call reads "
                              + "all max_streams streams it picks (a quiet feed's rare kinds of event can sit behind "
                              + "several streams with nothing new: asked for by the user). The feed counts as "
                              + "covered (saturated) when a call with known_signatures reads a full max_streams "
@@ -310,14 +320,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                                              + "calls; locations then only cover "
                                                                              + "new shapes."))
                         .addIntegerProperty(MAX_CHARS_ARG, "Read at most this many characters from the start of "
-                                                           + "each part; big streams are only sampled at their "
-                                                           + "head. Default 250,000, or 2,000,000 for stream_ids "
-                                                           + "and a feed's last streams (read whole).")
+                                                           + "each part read (each part its own); big streams are "
+                                                           + "only sampled at their head. Default 250,000, or "
+                                                           + "2,000,000 (unless configured) for stream_ids and a "
+                                                           + "feed's last streams (read whole).")
                         .addIntegerProperty(MAX_PARTS_ARG, "Parts of a stream to read (a stream of several files "
                                                            + "received at once has one each), not records: "
                                                            + "max_records_per_stream counts records. Default 3, "
                                                            + "or all (up to 20) for stream_ids and a feed's last "
-                                                           + "streams.")
+                                                           + "streams; a stream of more has them chosen spread "
+                                                           + "through it, its first and last among them.")
                         .addIntegerProperty(MAX_RECORDS_ARG, "Records read from each part of a stream: default 1,000, "
                                                              + "or 10,000 for stream_ids and a feed's last streams "
                                                              + "(read in order from the start, so the user can have "
@@ -814,17 +826,20 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return withSourcesSaid(keep(context, kept, result, shapes.shapes()), build, feed);
     }
 
-    // How much of each stream a call reads: a sample's streams, and a feed's last, read whole.
-    private static Limits limits(final Request request, final boolean whole) {
+    // How much of each stream a call reads: a sample's streams, and a feed's last, read whole (up to the most
+    // characters of a stream's sample, ai.sampling).
+    private Limits limits(final Request request, final boolean whole) {
+        final AiSamplingConfig sampling = NullSafe.getOrElseGet(aiConfigProvider.get(), AiConfig::getSampling,
+                AiSamplingConfig::new);
         return new Limits(orDefault(request.maxChars(), whole
-                ? FeedSampling.SAMPLE_CHARS
+                ? sampling.getMaxCharsPerStream()
                 : FeedSampling.FEED_CHARS), orDefault(request.maxParts(), whole
                 // Streams read whole are read through every part: seen in testing, a feed's latest streams uploaded
                 // again as one stream of five parts was surveyed through three.
                 ? MAX_PARTS
                 : FEED_PARTS), orDefault(request.maxRecords(), whole
                 ? FeedSampling.SAMPLE_RECORDS
-                : FeedSampling.FEED_RECORDS), whole);
+                : FeedSampling.FEED_RECORDS), whole, sampling.getMaxEventChars());
     }
 
     // A search for one registry row's records (find=; asked for by the user: a source type they nominated, which the
@@ -1607,7 +1622,18 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     ? String.format("%,d", number.longValue())
                     : "some";
             final Object why = stream.get(NOT_READ_FURTHER);
-            each.add("Stream " + id + ": " + records + " records from its start" + (why != null
+            // A stream of several parts names those read (seen in user testing: told only "can't read further into
+            // it" of a stream of 787 parts read through its first 20).
+            final List<Integer> partsRead = JsonValues.listOrEmpty(stream.get(PARTS_READ)).stream()
+                    .filter(Number.class::isInstance)
+                    .map(part -> ((Number) part).intValue())
+                    .toList();
+            final String where = partsRead.isEmpty()
+                    ? " from its start"
+                    : " from part" + (partsRead.size() == 1
+                            ? " "
+                            : "s ") + PartSampler.said(partsRead);
+            each.add("Stream " + id + ": " + records + " records" + where + (why != null
                     ? "; " + why
                     : "") + ".");
         }
@@ -1617,10 +1643,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 : forForm && ids.size() > Consent.LINES_SHOWN
                         ? "streams " + idsSaid(streams)
                         : "streams " + String.join(", ", ids.subList(0, ids.size() - 1)) + " and " + ids.getLast();
-        return "The survey read only the start of " + named + ", too big to read whole in one go, and can't read "
-               + "further into " + (ids.size() == 1
-                ? "it"
-                : "them") + "." + (forForm
+        return "The survey read only part of " + named + ", too big to read whole in one go." + (forForm
                 ? "\n" + Consent.firstLines(each, "each is in the survey's per_stream")
                 : " " + String.join(" ", each));
     }
@@ -1812,7 +1835,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     }
 
     // One stream's parts, each up to its own budget of records (asked for by the user: a source can write different
-    // data to different parts, so a budget the parts shared could miss kinds of event in the later ones).
+    // data to different parts, so a budget the parts shared could miss kinds of event in the later ones). A stream
+    // of more parts than a call reads has them chosen spread through it, from its first to its last (seen in user
+    // testing: an OpenWebUI audit stream of 787 parts was read through its first 20 only, and the kinds of event
+    // only in its later parts could never be seen). Every part chosen is read to the same depth, its own budget.
     private void readStream(final Reading reading, final Meta meta, final Shapes shapes, final Limits limits) {
         int newHere = 0;
         long readHere = 0;
@@ -1821,23 +1847,25 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         boolean inPart = false;
         // Why the stream can't be read further than this call reads, said to the user if it isn't read whole.
         String notFurther = null;
-        int parts = 1;
-        int part = 0;
-        while (part < Math.min(parts, limits.maxParts())) {
-            if (timeIsUp() && !(part == 0 && reading.peeked.containsKey(meta.getId()))) {
+        final RawHead peekedHead = reading.peeked.remove(meta.getId());
+        int parts = peekedHead != null
+                ? peekedHead.parts()
+                : partCount(meta.getId());
+        List<Integer> chosen = PartSampler.spread(parts, limits.maxParts());
+        final List<Integer> partsRead = new ArrayList<>();
+        for (int i = 0; i < chosen.size(); i++) {
+            final int part = chosen.get(i);
+            if (timeIsUp() && !(i == 0 && peekedHead != null)) {
                 // Stopped part-way: what is read of it so far counts, as the start of the stream.
                 reading.stop();
                 cut = true;
                 notFurther = "the survey's time ran out";
                 break;
             }
-            final RawHead head;
+            RawHead head;
             try {
-                final RawHead before = part == 0
-                        ? reading.peeked.remove(meta.getId())
-                        : null;
-                head = before != null
-                        ? before
+                head = i == 0 && peekedHead != null
+                        ? peekedHead
                         : streamReader.readHead(meta.getId(), part, limits.maxChars());
             } catch (final StreamReadException e) {
                 // A feed's oldest streams are read too, and the likeliest to be on a volume Stroom can no longer
@@ -1846,14 +1874,25 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         "Stroom couldn't read it: " + e.getMessage()));
                 break;
             }
-            parts = head.parts();
-            cut = cut || head.truncated();
+            if (head.parts() > parts) {
+                // More parts than were counted: chosen again (the first is still the first).
+                parts = head.parts();
+                chosen = PartSampler.spread(parts, limits.maxParts());
+            }
             final int budget = limits.maxRecords();
             // Within a build's scope, the budget is of the scope's records: more of the head is split to find them.
             final boolean scoped = reading.scopes != null && reading.scopes.scoped(meta.getId());
             final int most = budget * SPLIT_MORE * (scoped
                     ? SCOPE_SPREAD
                     : 1);
+            if (head.truncated() && startsAsArray(head.text())) {
+                // One JSON array cut by the read: its whole events read instead, one too long to sample left out
+                // (seen in user testing: a newline-free array cut inside a \\u escape).
+                head = wholeEvents(reading, meta.getId(), part, head, new PartSampler.Limits(limits.maxEventChars(),
+                        limits.maxChars()), limits.maxEventChars());
+            }
+            partsRead.add(part);
+            cut = cut || head.truncated();
             final RecordSplitter.Chunk chunk;
             try {
                 // More than are read, so those read can be spread over them (see below).
@@ -1862,15 +1901,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 // A part this detector cannot split.
                 reading.perStream.add(entry("stream", meta.getId(), "part", part, "error",
                         "could not split records: " + e.getMessage()));
-                part++;
                 continue;
+            }
+            if (chunk.note() != null) {
+                reading.perStream.add(entry("stream", meta.getId(), "part", part, "note", chunk.note()));
             }
             // The part's records are judged with its own meta (a source type field read from it).
             shapes.at(meta.getId(), part);
             if (reading.format != null && !chunk.format().equals(reading.format)) {
                 reading.perStream.add(entry("stream", meta.getId(), "part", part, "note",
                         "reads as " + chunk.format() + ", not " + reading.format + "; skipped"));
-                part++;
                 continue;
             }
             if (reading.format == null) {
@@ -1947,17 +1987,21 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 }
             }
             readHere += partRead;
-            part++;
         }
         reading.recordsRead += readHere;
-        if (parts > limits.maxParts()) {
-            notFurther = "it has " + parts + " parts, more than a call reads (" + limits.maxParts() + ")";
+        final boolean someParts = parts > chosen.size();
+        if (someParts) {
+            notFurther = "it has " + parts + " parts, more than a call reads (" + limits.maxParts() + "), so "
+                         + chosen.size() + " were read, spread through it from its first to its last";
         }
         final Map<String, Object> entry = entry("stream", meta.getId(), "created", meta.getCreateMs() != 0
                         ? FeedSampling.iso(meta.getCreateMs())
                         : null,
-                "records", readHere, "parts", parts, "head_only", cut || parts > limits.maxParts() || inPart,
+                "records", readHere, "parts", parts, "head_only", cut || someParts || inPart,
                 "new_shapes", newHere);
+        if (parts > 1) {
+            entry.put(PARTS_READ, partsRead);
+        }
         if (windowsHere > 0) {
             entry.put("windows", windowsHere);
         }
@@ -1966,6 +2010,48 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
         entry.putAll(FeedSampling.charsetEntry(streamReader.charsetReport(meta.getId())));
         reading.perStream.add(entry);
+    }
+
+    // How many parts a stream has; 1 when it can't be told (its first part's head then tells).
+    private int partCount(final long streamId) {
+        try {
+            return Math.max(1, streamReader.partCount(streamId));
+        } catch (final RuntimeException e) {
+            return 1;
+        }
+    }
+
+    // Whether a part's head starts as a JSON array.
+    private static boolean startsAsArray(final String text) {
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
+            if (!Character.isWhitespace(c) && c != '﻿') {
+                return c == '[';
+            }
+        }
+        return false;
+    }
+
+    // A part that is one JSON array read as its whole events (PartSampler), what was left out said in per_stream;
+    // the head as read when the part can't be read so.
+    private RawHead wholeEvents(final Reading reading,
+                                final long streamId,
+                                final int part,
+                                final RawHead head,
+                                final PartSampler.Limits limits,
+                                final int maxEventChars) {
+        final PartSampler.Sample sample;
+        try {
+            sample = streamReader.samplePart(streamId, part, limits);
+        } catch (final StreamReadException e) {
+            return head;
+        }
+        if (sample == null || sample.mode() != PartSampler.Mode.JSON_ARRAY) {
+            return head;
+        }
+        sample.said(maxEventChars).forEach(said -> reading.perStream.add(entry("stream", streamId, "part", part,
+                "note", said)));
+        return new RawHead(sample.text(), !sample.whole(), head.parts());
     }
 
     // A part's size in bytes; 0 when it can't be told.
@@ -2719,12 +2805,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     /// How much of each stream is read.
     ///
-    /// @param maxChars   The most characters of a part.
-    /// @param maxParts   The most parts of a stream.
-    /// @param maxRecords The most records of each part.
-    /// @param whole      Whether the streams are to be read whole (a sample's, or a feed's last): each part in order
-    ///                   from its start, so the user can have it read deeper.
-    private record Limits(int maxChars, int maxParts, int maxRecords, boolean whole) {
+    /// @param maxChars      The most characters of each part's head (its own, not shared by a stream's parts).
+    /// @param maxParts      The most parts of a stream, chosen spread through it.
+    /// @param maxRecords    The most records of each part.
+    /// @param whole         Whether the streams are to be read whole (a sample's, or a feed's last): each part in
+    ///                      order from its start, so the user can have it read deeper.
+    /// @param maxEventChars The longest event of a part that is one JSON array kept (a longer one is left out).
+    private record Limits(int maxChars, int maxParts, int maxRecords, boolean whole, int maxEventChars) {
 
     }
 
