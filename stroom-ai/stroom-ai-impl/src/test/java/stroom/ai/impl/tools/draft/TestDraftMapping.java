@@ -938,6 +938,7 @@ class TestDraftMapping extends DraftFixtures {
         type.put("basis", "user_confirmed");
         return type;
     }
+
     @Test
     void whoActedAndWhatWasActedOnAreDraftedWhereTheCatalogueSays() {
         // Asked for by the user: an event type's actor is its event's user, and what it was done to its action
@@ -967,6 +968,7 @@ class TestDraftMapping extends DraftFixtures {
         final XsltGenerator.Generated checked = generate(mappingOf(draft), SCHEMA, "4.1.0");
         assertThat(checked.problems()).noneMatch(problem -> problem.contains("needs one of"));
     }
+
     @Test
     void anEventTypeKeepsWhatTheSamplesRuleReadAndItsOwnMessage() {
         // Seen in the agent eval: a catalogue rule wrote one fixed description over each record's message, and its
@@ -999,6 +1001,7 @@ class TestDraftMapping extends DraftFixtures {
                                                                 + "of the records")
                                                   && note.contains("Authenticate-Logoff: actor 'src' holds addresses"));
     }
+
     @Test
     void anAffectedObjectIsCheckedAgainstTheActionElement() {
         assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Network/Permit", "Destination"))
@@ -1364,6 +1367,7 @@ class TestDraftMapping extends DraftFixtures {
                 .contains("action");
         assertThat(dataNames(rules.get("print_document"))).doesNotContain("session").contains("printer", "pages");
     }
+
     private static List<String> dataNames(final Map<String, Object> rule) {
         return JsonValues.maps(rule.get("fields")).stream()
                 .filter(field -> field.get("data_name") != null)

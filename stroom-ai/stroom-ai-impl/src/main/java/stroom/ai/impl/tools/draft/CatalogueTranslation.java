@@ -470,7 +470,8 @@ final class CatalogueTranslation {
         final Set<String> out = new LinkedHashSet<>();
         for (final Condition condition : way.when()) {
             if (condition.field() != null && !condition.not() && condition.xpath() == null
-                && (condition.equalTo() != null || condition.oneOf() != null) && !isSourceTypeField(condition.field())) {
+                && (condition.equalTo() != null || condition.oneOf() != null)
+                && !isSourceTypeField(condition.field())) {
                 out.add(condition.field());
             }
         }

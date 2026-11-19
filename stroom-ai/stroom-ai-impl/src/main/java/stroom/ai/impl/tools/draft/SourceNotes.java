@@ -16,7 +16,6 @@
 
 package stroom.ai.impl.tools.draft;
 
-import stroom.ai.impl.tools.IpAddresses;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
@@ -28,7 +27,6 @@ import stroom.util.shared.NullSafe;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,8 +40,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /// Source notes: what the user's vendor or event reference documentation says about a source, kept so the tools use
 /// it.
@@ -78,7 +74,6 @@ public final class SourceNotes {
     private static final Pattern FAILURE = Pattern.compile(
             "\\b(fail(ed|ure)?|denied|den(y|ies)|reject(ed)?|block(ed)?|error|invalid|locked)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern NOT_NAME = Pattern.compile("[^A-Za-z0-9]+");
     private static final Set<String> NOT_ACTIONS = Set.of("TypeId", "Description", "Classification", "Purpose");
     private static final Set<String> ALLOW_OR_DENY = Set.of("allow", "allowed", "accept", "permit", "deny",
             "denied", "block", "blocked", "drop", "reject", "traffic");

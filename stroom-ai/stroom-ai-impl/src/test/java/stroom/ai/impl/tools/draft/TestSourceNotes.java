@@ -16,12 +16,10 @@
 
 package stroom.ai.impl.tools.draft;
 
-import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
