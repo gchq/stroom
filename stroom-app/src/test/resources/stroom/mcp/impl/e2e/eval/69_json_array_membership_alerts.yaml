@@ -24,8 +24,9 @@ expected:
     EventSource/Device/HostName: [mx-gw1, mx-gw2]
   type_ids:
     min_distinct: 3
+    # The two malware alerts, by their senders: a subject has its own place (Alert/Subject), so it need not be Data.
     same:
-      - [{subject: Invoice overdue}, {subject: Your parcel}]
+      - [{sender: billing@evil.example}, {sender: post@evil.example}]
   unknown_at_most: 0
   catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true}
 sample: |
