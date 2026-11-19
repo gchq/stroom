@@ -1653,8 +1653,12 @@ to delete them by hand.~~
   * Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
     (`AnalyticProcessingController.setProcessType`).
-  * An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
-    paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).
+  * ~~An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
+    paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).~~
+    **Gone** (checked 19 November 2026): the recipients are edited in the notification dialog,
+    whose OK reads the fields, so a pasted address is kept and the rule is changed; the key up
+    only re-shows the destination. Guarded by `App/Editors/AnalyticRuleEditor`
+    `PastedRecipientIsKept` (an `input` event with no keys, then OK; passes without a change).
   * ~~The query result's source pane declares a stepping button that nothing shows
     (`QueryTextPane.ui.xml`, `steppingButton`); it was never shown before either. To go with the
     other removals.~~ **Deleted** (checked 30 October 2026: `QueryTextPane` has no stepping button).

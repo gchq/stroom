@@ -498,6 +498,28 @@ public final class AnalyticRuleEditorStories {
                             .toHaveLength(1);
                     expectNoProblems(play);
                 })
+                // A recipient pasted with the mouse (an input event, no keys) is kept by OK and makes
+                // the rule changed, though the field reports a change only on a key up
+                .story("PastedRecipientIsKept", context -> render(context, NOTIFICATION_FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    final Query save = play.findByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.findByText("ops@example.com", StroomDom.GRID_CELL_TEXT));
+                    final Query edit = play.getByTitle("Edit Selected Notification");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play dialog = dialog(screen, "Edit Notification");
+                    play.waitFor(() -> play.expect(toField(dialog)).toHaveValue("ops@example.com"));
+                    play.fireEvent().input(toField(dialog), "pasted@example.com");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Notification", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.findByText("pasted@example.com", StroomDom.GRID_CELL_TEXT);
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    expectNoProblems(play);
+                })
                 // Deleting the selected execution schedule (the last) selects the one now last once
                 // the schedules are found again, and shows its history. The deleted one once stayed
                 // selected, and the history still showed the deleted schedule's
