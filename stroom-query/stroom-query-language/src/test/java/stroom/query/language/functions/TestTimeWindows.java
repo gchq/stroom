@@ -274,10 +274,21 @@ class TestTimeWindows {
         final TimeWindows windows = windows("1d", "30m", null, LONDON);
         final List<Long> keys = keys(windows, "2026-03-29T12:00:00Z");
 
-        // Local 01:00 and 01:30 are skipped, so four windows share two starts. Each is still given
-        // once, so a time is counted once in each window.
+        // Local 01:00 and 01:30 are skipped, so the windows of those times start when the clocks
+        // resume, with the window of 02:00. Each is still given once, so a time is counted once in
+        // each window.
         assertThat(keys).hasSize(48).isSorted().doesNotHaveDuplicates();
         assertThat(starts(windows, "2026-03-29T12:00:00Z").stream().distinct()).hasSize(46);
+    }
+
+    @Test
+    void windowThatWouldStartInASkippedHourStartsWhenTheClocksResume() {
+        final TimeWindows windows = windows("1d", null, "90m", LONDON);
+
+        // The window of local 01:30 on 29 March starts at 02:00 British Summer Time, which is
+        // 01:00Z, so a time just after the clocks resume is not before the start of its window.
+        assertThat(starts(windows, "2026-03-29T01:10:00Z")).containsExactly("2026-03-29T01:00:00Z");
+        assertThat(starts(windows, "2026-03-29T00:59:59Z")).containsExactly("2026-03-28T01:30:00Z");
     }
 
     @Test

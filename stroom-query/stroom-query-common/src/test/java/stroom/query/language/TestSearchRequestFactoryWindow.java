@@ -249,6 +249,19 @@ class TestSearchRequestFactoryWindow {
     }
 
     @Test
+    void bracketedQueryDoesNotTakeTheWindowOfTheQueryItIsIn() {
+        assertRefused("""
+                        from (
+                          from events
+                          select windowStart() as Day, UserId
+                        ) as daily
+                        window EventTime by 1d
+                        group by UserId
+                        select UserId, count() as Events""",
+                "'windowStart' can only be used in a query that has a window clause");
+    }
+
+    @Test
     void windowInABracketedQuery() {
         final SearchRequest searchRequest = create("""
                 from (

@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.zone.ZoneOffsetTransition;
 import java.util.Objects;
 import java.util.function.LongConsumer;
 
@@ -471,17 +472,18 @@ public final class TimeWindows {
         return timeMs + zoneOffset.getTotalSeconds() * MILLIS_PER_SECOND;
     }
 
-    // A wall clock time that the clocks skip is moved on by the length of the gap, and one that
-    // comes twice is taken as the first of the two.
+    // A wall clock time that the clocks skip is taken as the time that the clocks resume, and one
+    // that comes twice is taken as the first of the two.
     private long toEpochMillis(final long localMillis) {
-        return LocalDateTime
-                .ofEpochSecond(
-                        Math.floorDiv(localMillis, MILLIS_PER_SECOND),
-                        (int) Math.floorMod(localMillis, MILLIS_PER_SECOND) * 1_000_000,
-                        ZoneOffset.UTC)
-                .atZone(zoneId)
-                .toInstant()
-                .toEpochMilli();
+        final LocalDateTime localDateTime = LocalDateTime.ofEpochSecond(
+                Math.floorDiv(localMillis, MILLIS_PER_SECOND),
+                (int) Math.floorMod(localMillis, MILLIS_PER_SECOND) * 1_000_000,
+                ZoneOffset.UTC);
+        final ZoneOffsetTransition transition = zoneId.getRules().getTransition(localDateTime);
+        if (transition != null && transition.isGap()) {
+            return transition.getInstant().toEpochMilli();
+        }
+        return localDateTime.atZone(zoneId).toInstant().toEpochMilli();
     }
 
     @Override

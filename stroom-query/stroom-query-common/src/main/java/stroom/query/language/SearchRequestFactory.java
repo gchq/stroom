@@ -1765,7 +1765,8 @@ public class SearchRequestFactory {
                     securityContext,
                     maxWindowCopiesPerEvent,
                     true);
-            builder.expressionContext = expressionContext;
+            // The bracketed query has the windows of its own window clause, if any, and not this query's.
+            builder.expressionContext = expressionContext.copy().window(null).build();
             builder.paramMap = paramMap;
             builder.params = params;
             builder.timeRange = timeRange;

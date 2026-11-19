@@ -325,11 +325,14 @@ public class LmdbDataStore implements DataStore {
     // Finds the first and last windows that hold a real row, and not only copies of rows from other
     // windows. The range is of the whole store, whatever span of time is being read from it, as a
     // window can read one that is outside that span.
-    private void setWindowRange(final LmdbReadContext readContext) {
+    //
+    // The version is that of the rows before the read began. One taken after could be of rows that
+    // were stored since, which the read does not see, and the range would then be kept as if it
+    // covered them.
+    private void setWindowRange(final LmdbReadContext readContext, final long version) {
         if (windowKeyGenerator == null) {
             return;
         }
-        final long version = windowRowVersion.get();
         if (version == windowRangeVersion) {
             return;
         }
@@ -1109,6 +1112,7 @@ public class LmdbDataStore implements DataStore {
             // reads the DB state without holding this object's monitor, so share the lock.
             readTxnLock.lock();
             try {
+                final long windowRowVersionBeforeRead = windowRowVersion.get();
                 env.read(readTxn ->
                         SimpleMetrics.measure("fetch", () -> {
                             try {
@@ -1122,7 +1126,7 @@ public class LmdbDataStore implements DataStore {
                                         db,
                                         readTxn,
                                         timeFilter);
-                                setWindowRange(readContext);
+                                setWindowRange(readContext, windowRowVersionBeforeRead);
 
                                 getChildren(
                                         readContext,

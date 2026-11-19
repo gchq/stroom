@@ -27,7 +27,6 @@ import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
-import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -891,13 +890,15 @@ public class TableBuilderAnalyticExecutor {
                     if (fieldValue != null) {
                         final String fieldName = column.getDisplayValue();
 
-                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                        // The stream and event of an ungrouped row are in hidden columns that the
+                        // query adds, and are the event that the detection links to.
+                        if (FieldIndex.isStreamIdFieldName(fieldName)) {
                             try {
                                 streamId = Long.parseLong(fieldValue);
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                             }
-                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                        } else if (FieldIndex.isEventIdFieldName(fieldName)) {
                             try {
                                 eventId = Long.parseLong(fieldValue);
                             } catch (final RuntimeException e) {

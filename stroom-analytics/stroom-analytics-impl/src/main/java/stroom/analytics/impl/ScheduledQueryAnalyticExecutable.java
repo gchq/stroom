@@ -23,7 +23,6 @@ import stroom.analytics.shared.ExecutionTracker;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
-import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
@@ -55,6 +54,7 @@ import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
@@ -206,10 +206,10 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                     final Val val = item.getValue(i);
                                     if (val != null) {
                                         boolean detectionValue = !Boolean.FALSE.equals(column.isVisible());
-                                        if (IndexConstants.STREAM_ID.equals(columnName)) {
+                                        if (FieldIndex.isStreamIdFieldName(columnName)) {
                                             streamId = DetectionConsumerProxy.getSafeLong(val);
                                             detectionValue = true;
-                                        } else if (IndexConstants.EVENT_ID.equals(columnName)) {
+                                        } else if (FieldIndex.isEventIdFieldName(columnName)) {
                                             eventId = DetectionConsumerProxy.getSafeLong(val);
                                             detectionValue = true;
                                         }
