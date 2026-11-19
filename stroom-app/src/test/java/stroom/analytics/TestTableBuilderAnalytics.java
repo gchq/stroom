@@ -107,6 +107,19 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 2);
     }
 
+    // The same rule as testWindowCount(), with the count written in the having clause.
+    @Test
+    void testWindowHavingExpression() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1y
+                group by UserId
+                having count() > 3 and count() >= lag(count(), 1, 0) + 1
+                select windowStart() as Year, UserId, count() as Events""";
+        basicTest(query, 9, 2);
+    }
+
     // The test events are all in one year, so the year before it is outside the range of the data
     // and lag gives its default, where a year inside the range with no events would give zero.
     @Test

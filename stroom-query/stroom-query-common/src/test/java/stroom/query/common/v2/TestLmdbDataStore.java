@@ -23,6 +23,9 @@ import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Format;
 import stroom.query.api.HoppingWindow;
 import stroom.query.api.OffsetRange;
@@ -263,6 +266,40 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .filter(depth -> depth > 0)
                 .count();
         assertThat(detailRows).isEqualTo(3);
+    }
+
+    @Test
+    void comparisonOfTwoExpressionsFiltersRows() {
+        // What `having count() > lag(count(), 1)` is parsed into: a hidden column that is true or
+        // false, and a filter on it.
+        final TableSettings tableSettings = lagTable("1d", null)
+                .copy()
+                .addColumns(Column.builder()
+                        .id("__having_1__")
+                        .name("having_1")
+                        .expression("count() > lag(count(), 1, 'window:1d|||Z')")
+                        .visible(false)
+                        .special(true)
+                        .build())
+                .aggregateFilter(ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder()
+                                .field("having_1")
+                                .condition(Condition.EQUALS)
+                                .value("true")
+                                .build())
+                        .build())
+                .build();
+        final DataStore dataStore = create(tableSettings);
+
+        addEvent(dataStore, "2026-03-10T09:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-11T09:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-11T10:00:00Z", "user1");
+        addEvent(dataStore, "2026-03-12T09:00:00Z", "user1");
+
+        // Only the 11th has more events than the day before it. The 10th has no day before to compare
+        // with, and the 12th has fewer.
+        assertThat(windowRows(dataStore, tableSettings, 5)).containsExactly(
+                Arrays.asList("user1", "2026-03-11T00:00:00.000Z", "2", "1", "1"));
     }
 
     @Test

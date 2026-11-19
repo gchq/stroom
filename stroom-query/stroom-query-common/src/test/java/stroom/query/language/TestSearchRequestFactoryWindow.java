@@ -216,6 +216,20 @@ class TestSearchRequestFactoryWindow {
     }
 
     @Test
+    void lagTakesTheNameOfAnAggregate() {
+        final TableSettings tableSettings = table("""
+                from events
+                window EventTime by 1d
+                eval Events = count()
+                eval Before = lag(Events, 1)
+                group by UserId
+                select UserId, Before""");
+
+        assertThat(column(tableSettings, "Before").getExpression())
+                .isEqualTo("lag(count(), 1, 'window:1d|||Z')");
+    }
+
+    @Test
     void periodIsRefusedWithWhatToWriteInstead() {
         assertRefused("from events window EventTime by 1d select period(1, count()) as Before",
                 "The 'period' function has been removed");

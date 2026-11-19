@@ -69,7 +69,12 @@ abstract class AbstractWindowShiftFunction extends AbstractWindowFunction {
         // The parameter must be an aggregate over the rows of a window. A function that reads the rows
         // of a group one by one, such as first(), or that reads another window itself, can't be
         // gathered from the copies of another window's rows.
-        if (ownParams[AGGREGATE_PARAM] instanceof final Function function
+        // A name, as in `lag(Events, 1)`, gives the expression of that name, which holds the function.
+        Param aggregateParam = ownParams[AGGREGATE_PARAM];
+        while (aggregateParam instanceof final Expression expression) {
+            aggregateParam = expression.getFunction();
+        }
+        if (aggregateParam instanceof final Function function
             && function.isAggregate()
             && !function.requiresChildData()
             && !(function instanceof AbstractWindowFunction)) {

@@ -399,6 +399,17 @@ class Structures {
                         ```stroomql
                         having count > 3
                         ```
+                        A condition can test a column by name, or an expression, e.g.
+                        ```stroomql
+                        having count() > 3 and max(Bytes) < 1000
+                        ```
+                        Two expressions can be compared with `=`, `!=`, `>`, `>=`, `<` or `<=`, e.g.
+                        ```stroomql
+                        having count() > lag(count(), 1) * 2
+                        ```
+                        A row is kept only if the comparison is true, so a row with nothing to compare
+                        with is left out. To keep the first window, give `lag` a value to use, as in
+                        `lag(count(), 1, 0)`.
                         """,
                 "having ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.LIMIT),

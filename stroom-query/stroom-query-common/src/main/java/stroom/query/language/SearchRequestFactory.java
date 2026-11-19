@@ -54,7 +54,6 @@ import stroom.query.api.token.TokenGroup;
 import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
@@ -242,6 +241,9 @@ public class SearchRequestFactory {
         private final Map<String, Expression> expressionMap;
         private final Set<String> addedFields = new HashSet<>();
         private final List<AbstractToken> additionalFields = new ArrayList<>();
+        // The expressions of the select clause's columns, by the names of the columns.
+        private final Map<String, Expression> columnExpressions = new HashMap<>();
+        private final HavingExpressions havingExpressions;
         private boolean inHaving;
         private boolean hasWindow;
         // The windows of the query's window clause, which are parsed before any other clause so that
@@ -274,6 +276,7 @@ public class SearchRequestFactory {
             this.fieldIndex = new FieldIndex();
             this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
+            this.havingExpressions = new HavingExpressions(expressionMap, fieldIndex);
             this.joinClauses = new JoinClauses(this, fieldIndex, bracketed);
         }
 
@@ -497,13 +500,27 @@ public class SearchRequestFactory {
 
 
         private ExpressionTerm createTerm(
-                final List<AbstractToken> tokens) {
+                final List<AbstractToken> termTokens) {
             final ExpressionTerm expressionTerm;
 
-            if (NullSafe.isEmptyCollection(tokens)) {
+            if (NullSafe.isEmptyCollection(termTokens)) {
                 throw new RuntimeException("createTerm called with empty list");
-            } else if (tokens.size() < 3) {
-                throw new TokenException(tokens.getFirst(), "Incomplete term");
+            } else if (termTokens.size() < 3) {
+                throw new TokenException(termTokens.getFirst(), "Incomplete term");
+            }
+            final List<AbstractToken> tokens;
+            if (inHaving) {
+                // A comparison of two expressions becomes a test of one hidden column.
+                final ExpressionTerm comparison = havingExpressions.createComparisonTerm(termTokens);
+                if (comparison != null) {
+                    return comparison;
+                }
+                tokens = havingExpressions.replaceLeftExpression(termTokens);
+                if (tokens.size() < 3) {
+                    throw new TokenException(termTokens.getLast(), "Incomplete term");
+                }
+            } else {
+                tokens = termTokens;
             }
 
             final AbstractToken fieldToken = tokens.get(0);
@@ -706,23 +723,13 @@ public class SearchRequestFactory {
             for (final AbstractToken token : tokens) {
                 if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
                     final FunctionGroup functionGroup = (FunctionGroup) token;
-                    DatePoint foundFunction = null;
                     if (functionGroup.getName().equalsIgnoreCase("param")) {
                         return resolveParam(functionGroup);
 
+                    } else if (HavingExpressions.findDatePoint(token.getUnescapedText()) == null) {
+                        throw new TokenException(token, "Unexpected function in value");
                     } else {
-                        final String function = token.getUnescapedText();
-                        for (final DatePoint datePoint : DatePoint.values()) {
-                            if (datePoint.getFunction().equals(function)) {
-                                foundFunction = datePoint;
-                                break;
-                            }
-                        }
-                        if (foundFunction == null) {
-                            throw new TokenException(token, "Unexpected function in value");
-                        } else {
-                            dateExpression = true;
-                        }
+                        dateExpression = true;
                     }
                 } else if (TokenType.DURATION.equals(token.getTokenType())) {
                     dateExpression = true;
@@ -880,7 +887,9 @@ public class SearchRequestFactory {
                 }
                 if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
                     out.add(processLogic(keywordGroup.getChildren()));
-                } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
+                } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup
+                           && !(inHaving && HavingExpressions.isExpression(tokenGroup))) {
+                    // Brackets hold conditions, or in a having clause may start an expression.
                     out.add(processLogic(tokenGroup.getChildren()));
                 } else if (TokenType.AND.equals(token.getTokenType()) ||
                            TokenType.OR.equals(token.getTokenType()) ||
@@ -1151,7 +1160,8 @@ public class SearchRequestFactory {
             joinClauses.getPostJoinColumns().forEach((field, columnName) ->
                     tableSettingsBuilder.addColumns(createFieldColumn(columnName, field)));
 
-            // Add missing fields if needed.
+            // Add missing fields if needed, with the expressions of the having clause.
+            additionalFields.addAll(havingExpressions.resolve(expressionContext, columnExpressions, addedFields));
             for (final AbstractToken token : additionalFields) {
                 final String fieldName = token.getUnescapedText();
                 if (!addedFields.contains(fieldName)) {
@@ -1661,6 +1671,7 @@ public class SearchRequestFactory {
                 }
             }
 
+            columnExpressions.put(columnName, expression);
             final String expressionString = expression.toString();
             return Column.builder()
                     .id(id)
@@ -1681,6 +1692,7 @@ public class SearchRequestFactory {
                                     final Map<String, Integer> groupMap,
                                     final Map<String, IncludeExcludeFilter> filterMap) {
             addedFields.add(columnName);
+            columnExpressions.put(columnName, expression);
             final String expressionString = expression.toString();
             return Column.builder()
                     .id(id)
