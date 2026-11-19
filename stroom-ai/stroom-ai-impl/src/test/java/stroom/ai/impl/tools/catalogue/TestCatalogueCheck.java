@@ -306,6 +306,27 @@ class TestCatalogueCheck {
     }
 
     @Test
+    void aRegexOverAValueProcessingCutsIsStillOverALongValue() {
+        // Seen in the e2e regex guard: a top-level body past 10,000 characters, cut by processing's JSONParser to
+        // exactly 10,000, was taken for a short value and its regex let through.
+        final TranslationMapping reading = CatalogueSample.reading("json", null, null, null, null, null, null);
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 4; n++) {
+            lines.add("{\"action\": \"login\", \"body\": \"" + (n % 2 == 0
+                    ? "L".repeat(10_050)
+                    : "short") + "\"}");
+        }
+        final EventType bulk = type("Import-Bulk", "Bulk import", EventType.AGENT_KNOWLEDGE,
+                way(matches("body", "^L+$")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(bulk), CatalogueSample.read(reading,
+                String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null), null);
+
+        assertThat(said(check)).singleElement().asString().contains("reads values longer than 10,000",
+                "use starts_with");
+    }
+
+    @Test
     void aConditionThatDependsOnProcessingsStringCutIsRefusedNamingTheSetting() {
         final Map<String, Object> held = new LinkedHashMap<>();
         held.put("padding", "p".repeat(10_050));

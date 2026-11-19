@@ -34,12 +34,14 @@ import stroom.ai.impl.tools.catalogue.CatalogueDiff;
 import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.catalogue.CatalogueSeed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation;
+import stroom.ai.impl.tools.catalogue.EventMeaning;
 import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -370,7 +372,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Records read = read(calling);
         final Catalogue none = new Catalogue(List.of(), Catalogue.CatchAll.PROPOSED, calling.catalogue().scope());
         final CatalogueCheckResult asIs = CatalogueCheck.check(none, read.sample(), null);
-        final List<EventType> seed = CatalogueSeed.fromDraft(read.draft());
+        final List<EventType> seed = seed(read, calling.catalogue().scope().sourceTypeField());
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put(STATUS, LISTED);
         read.said(result);
@@ -394,13 +396,56 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     }
 
 
+    // The seed: the draft's own rules as event types. Within a source type group the draft may tell its records
+    // apart by the build's source type field, which no event type is recognised by (the group's module passes other
+    // source types over already): then the seed is derived as the draft derives its rules, by the field naming what
+    // happened, chosen among the records' other fields ([KindFields]), an event type a value.
+    private static List<EventType> seed(final Records read, final String sourceTypeField) {
+        final List<EventType> drafted = CatalogueSeed.fromDraft(read.draft());
+        final boolean bySourceType = sourceTypeField != null && drafted.stream()
+                .flatMap(type -> type.recognisedBy().stream())
+                .flatMap(way -> way.when().stream())
+                .anyMatch(c -> CatalogueValidation.onSourceTypeField(sourceTypeField, c.field()));
+        if (!bySourceType) {
+            return drafted;
+        }
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (final Map<String, Object> record : read.evidenceRecords()) {
+            final Map<String, Object> copy = new LinkedHashMap<>(record);
+            copy.keySet().removeIf(field -> CatalogueValidation.onSourceTypeField(sourceTypeField, field));
+            records.add(copy);
+        }
+        final List<String> fields = KindFields.choose(records).fields();
+        if (fields.isEmpty()) {
+            return List.of();
+        }
+        final String field = fields.getFirst();
+        final Set<String> values = new LinkedHashSet<>();
+        records.forEach(record -> {
+            if (record.get(field) != null && !String.valueOf(record.get(field)).isBlank()) {
+                values.add(String.valueOf(record.get(field)));
+            }
+        });
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        for (final String value : values) {
+            final Map<String, Object> rule = new LinkedHashMap<>();
+            rule.put("name", value);
+            rule.put("when", List.of(Map.of("field", field, "equals", value)));
+            rule.put("fields", List.of());
+            rules.add(rule);
+        }
+        return CatalogueSeed.fromDraft(Map.of("mapping", Map.of("events", rules)));
+    }
+
     // --------------------------------------------------------------------------------
     // The check
 
 
     private Map<String, Object> proposed(final Calling calling, final List<Map<?, ?>> proposals) {
         final Records read = read(calling);
-        final CatalogueProposals.Applied applied = CatalogueProposals.apply(calling.catalogue(), proposals);
+        final CatalogueProposals.Applied proposed = CatalogueProposals.apply(calling.catalogue(), proposals);
+        final CatalogueProposals.Applied applied = new CatalogueProposals.Applied(withLeaves(proposed.catalogue(),
+                notes.schemaOrNull(calling.context(), calling.build())), proposed.refused());
         final CatalogueCheckResult check = check(calling, applied.catalogue(), read);
         // Problems the proposals bring are refused, not those the catalogue had already.
         final Set<String> before = new LinkedHashSet<>();
@@ -485,6 +530,30 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                      + "(the table above is the first set).");
         }
         return String.join(" ", said);
+    }
+
+    // The catalogue with each event type's affected_as written out to the leaf the affected field's value goes in
+    // (User becomes User/Id), as the translation writes it; as given where the schema doesn't say (or is unreadable).
+    private static Catalogue withLeaves(final Catalogue catalogue, final EventSchema schema) {
+        if (schema == null) {
+            return catalogue;
+        }
+        final List<EventType> types = new ArrayList<>();
+        for (final EventType type : catalogue.eventTypes()) {
+            if (type.affectedAs() == null || type.affectedAs().isBlank() || type.eventDetail() == null) {
+                types.add(type);
+                continue;
+            }
+            final String leaf = EventMeaning.affected(schema, "event type " + type.typeId(), type.eventDetail(),
+                    type.affectedAs()).path();
+            types.add(leaf == null || leaf.equals(type.affectedAs())
+                    ? type
+                    : new EventType(type.typeId(), type.title(), type.description(), type.eventDetail(),
+                            type.action(), type.success(), type.actor(), type.affected(), leaf,
+                            type.recognisedBy(), type.drop(), type.basis(), type.confidence(),
+                            type.oneTypeBecause(), type.status()));
+        }
+        return catalogue.withEventTypes(types);
     }
 
     // The catalogue's check over the scope's records.

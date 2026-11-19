@@ -425,7 +425,8 @@ public final class CatalogueCheck {
         private int recordsWithLongValues(final String field) {
             int out = 0;
             for (final List<String> values : index.values(field)) {
-                if (values.stream().anyMatch(value -> value.length() > LONG_VALUE)) {
+                // Processing's cut leaves a long value at the cut's length: still a long value.
+                if (values.stream().anyMatch(value -> value.length() >= LONG_VALUE)) {
                     out++;
                 }
             }

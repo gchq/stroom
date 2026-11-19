@@ -124,7 +124,9 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(map(catalogueOf(build), "catch_all")).containsEntry("status", "confirmed");
         assertThat(eventTypesOf(build).values()).allSatisfy(type -> assertThat(type)
                 .containsEntry("status", "confirmed"));
-        assertThat(nextTool(confirmed)).isEqualTo("draft_translation_mapping");
+        // The plan goes on past the catalogue (to the sample's converter here, then the draft).
+        assertThat(map(confirmed, "next").get("step")).isNotEqualTo("catalogue");
+        assertThat(nextTool(confirmed)).isIn("draft_translation_mapping", "build_data_splitter");
 
         // ### The draft follows the catalogue: a rule a way of recognising, each its TypeId and action element, the
         // vendor's code written as Data, the catch-all last.
@@ -140,8 +142,9 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(rules).hasSize(5);
     }
 
-    // ### A seeded event type whose records may be several (one per logger, as the draft derives it): not
-    // confirmed until the agent splits it or says why it is one.
+    // ### A seeded event type whose records may be several (one per logger, the derivation the design warns of): not
+    // confirmed until the agent splits it or says why it is one. This sample's draft derives its rules by op, not
+    // the logger, so the per-logger seed is sent as the seed's (basis draft), as a seed of a logger would be.
     @Test
     void aSeededEventTypeThatMayBeSeveralIsNotConfirmedUntilSplitOrSaidToBeOne() {
         final String build = "e2e-cat-several";
@@ -149,9 +152,12 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         createFeed(build, feed);
         final List<Long> raw = List.of(upload(feed, loggers()));
         surveyed(build, feed, raw);
-        final Map<String, Object> listed = json(CATALOGUE, args("build", build, "stream_ids", raw));
+        json(CATALOGUE, args("build", build, "stream_ids", raw));
         final List<Map<String, Object>> seed = new ArrayList<>();
-        list(map(listed, "evidence"), "seed").forEach(seeded -> seed.add(withKeys(seeded, "op", "add")));
+        for (final String logger : List.of("com.acme.audit.SecurityLogger", "com.acme.web.RequestLogger")) {
+            seed.add(withKeys(eventType(null, "Process", "low", when("logger", "equals", logger)), "basis",
+                    "draft", "title", logger));
+        }
         final Map<String, Object> seeded = proposed(build, raw, seed);
         final List<Map<String, Object>> several = severalOf(seeded);
         assertThat(several).as("the security logger's type may be several, told by op").anySatisfy(type ->
@@ -264,22 +270,23 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 .containsEntry("Authenticate-Logoff", 8L);
     }
 
-    // ### A client that can't show forms: the set comes back as needs_review with its review id, for the chat to
-    // show; called again with it, confirmed.
+    // ### A client that can't show forms confirms nothing: every change in Stroom needs the user's agreement in a
+    // form (FormsRequired, decided 2026-11-18: no id is given to pass back instead, as the model could approve its
+    // own call with it), so its calls are refused and the catalogue stays as it was; a client with forms confirms it.
     @Test
-    void aClientWithoutFormsConfirmsThroughNeedsReview() {
+    void aClientWithoutFormsConfirmsNothing() {
         final String build = "e2e-cat-review";
         final List<Long> raw = surveyedSample(build, "E2E-CAT-REVIEW", sample());
         proposed(build, raw, List.of(
                 eventType("Authenticate-Logon", "Authenticate", "high", when("action", "equals", "login")),
                 eventType("Authenticate-Logoff", "Authenticate", "high", when("action", "equals", "logout"))));
         final int formsBefore = client.forms().size();
-        final Map<String, Object> review = plainClient.json(CATALOGUE, args("build", build, "confirm", true));
-        dump("needs_review", review);
-        assertThat(review).containsEntry("status", "needs_review").containsKey("review_id");
-        assertThat(jsonOf(review)).contains(TABLE_HEADER);
-        CatalogueSteps.confirmedCatalogue(plainClient, build);
+        assertThat(McpTestClient.text(plainClient.call(CATALOGUE, args("build", build, "confirm", true))))
+                .contains("needs the user's agreement in a form");
         assertThat(client.forms()).hasSize(formsBefore);
+        assertThat(eventTypesOf(build).values()).allSatisfy(type -> assertThat(type)
+                .containsEntry("status", "proposed"));
+        confirmedCatalogue(build);
         assertThat(eventTypesOf(build).values()).allSatisfy(type -> assertThat(type)
                 .containsEntry("status", "confirmed"));
     }

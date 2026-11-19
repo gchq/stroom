@@ -191,12 +191,17 @@ class TestE2ePegaEventTypes extends AbstractE2eTest {
                 logged("Call-HTTPService", "Export", HTTP),
                 logged("Poll-Mailbox", "Import", EMAIL),
                 withKeys(logged("Authenticate-Operator", "Authenticate", AUTHN), "action", "Logon"),
-                logged("Authorise-Privilege", "Authorise", AUTHZ));
+                withKeys(logged("Authorise-Privilege", "Authorise", AUTHZ), "affected", "event.privilege",
+                        "affected_as", "Object"));
     }
 
-    // A change the security logger writes, told by its eventType.
+    // A change the security logger writes, told by its eventType: the operator changed (or the ruleset) is what it
+    // acts on (Update needs After).
     private static Map<String, Object> securityChange(final String typeId, final Map<String, Object> told) {
-        return logged(typeId, "Update", SECURITY, told);
+        return withKeys(logged(typeId, "Update", SECURITY, told), "affected", "event.target", "affected_as",
+                "Unlock-Ruleset".equals(typeId)
+                        ? "Object"
+                        : "User");
     }
 
     // An event type a logger writes: recognised by the logger and any more conditions, the Pega operator acting.

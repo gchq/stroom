@@ -35,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///   default, the [AwkwardValues] long value's cut) depends on the cut: refused, naming the setting;
 /// - a held value that doesn't parse (a bad escape) holds no condition: its records are uncatalogued, counted with
 ///   why, and processing translates them by the catch-all;
-/// - a NUL inside a type-telling value is removed before comparing, as the splitter and XSLT remove it;
+/// - a NUL inside a type-telling value held in a JSON string is compared as processing reads it: `json-to-xml()`
+///   makes it U+FFFD (settled with the core, lane A), so the value is no longer the type's;
 /// - and the processed Events of each event type are as many as the check counted.
 @SuppressWarnings("unchecked")
 class TestE2eConditionParityProcessed extends AbstractE2eTest {
@@ -81,7 +82,7 @@ class TestE2eConditionParityProcessed extends AbstractE2eTest {
             sample.append(record(n++, ToolJson.dumps(Map.of("kind", "login", "seq", i))));
             sample.append(record(n++, ToolJson.dumps(Map.of("kind", "logout", "seq", i))));
         }
-        // A NUL inside the kind: removed before comparing, as Stroom's splitter and XSLT remove it.
+        // A NUL inside the held kind: json-to-xml() makes it U+FFFD, so it isn't login (settled with lane A).
         for (int i = 0; i < 2; i++) {
             sample.append(record(n++, ToolJson.dumps(Map.of("kind", "log\u0000in", "seq", 10 + i))));
         }
@@ -99,12 +100,14 @@ class TestE2eConditionParityProcessed extends AbstractE2eTest {
                 withKeys(eventType("Authenticate-Logoff", "Authenticate", "high", when(TELLING, "equals", "logout")),
                         "action", "Logoff", "actor", "user")));
         final Map<String, Long> counts = countsOf(checked);
-        assertThat(counts).containsEntry("Authenticate-Logon", 8L).containsEntry("Authenticate-Logoff", 6L);
+        assertThat(counts).containsEntry("Authenticate-Logon", 6L).containsEntry("Authenticate-Logoff", 6L);
         final Map<String, Object> unparsed = map(checkOf(checked), "unparsed");
         assertThat(unparsed).containsEntry("records", 2);
         assertThat(strings(unparsed, "why")).isNotEmpty().allSatisfy(why -> assertThat(why).contains("event"));
-        final long uncatalogued = number(map(checkOf(checked), "uncatalogued").get("records"));
-        assertThat(uncatalogued).isEqualTo(2);
+        // The NUL's records uncatalogued; the bad escape's counted as unparsed: both go to the catch-all.
+        final long uncatalogued = number(map(checkOf(checked), "uncatalogued").get("records"))
+                                  + number(unparsed.get("records"));
+        assertThat(uncatalogued).isEqualTo(4);
         confirmedCatalogue(build);
 
         // ### Processed through the draft's translation: as many of each event type as the check counted, the
@@ -139,6 +142,8 @@ class TestE2eConditionParityProcessed extends AbstractE2eTest {
         final Map<String, Object> record = new LinkedHashMap<>();
         record.put("ts", "2026-11-10T10:%02d:%02d.000Z".formatted(i / 60, i % 60));
         record.put("user", "user" + i % 4);
+        // The device the record came from (EventSource/Device is required).
+        record.put("host", "web" + i % 2);
         record.put("event", held);
         return ToolJson.dumps(record) + "\n";
     }
