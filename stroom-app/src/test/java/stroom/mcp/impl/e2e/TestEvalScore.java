@@ -532,6 +532,25 @@ class TestEvalScore {
     }
 
     @Test
+    void soManyEventTypesRecognisedTwoWaysAreScoredWhateverTheirTypeIds() {
+        // Seen in eval cases 30 and 67 (2026-11-20): the agent's TypeIds are its own (Start-Session for
+        // Authenticate-Logon), so a case may count the event types recognised two ways instead of naming them.
+        final EvalScore one = new EvalScore("c");
+        one.scoreCatalogue(expecting(Map.of("catalogue", Map.of("recognised_two_ways", 1))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) one.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) one.toMap().get("catalogue_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("at least 1 recognised two ways");
+
+        final EvalScore two = new EvalScore("c");
+        two.scoreCatalogue(expecting(Map.of("catalogue", Map.of("recognised_two_ways", 2))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) two.toMap().get("problems")).containsExactly(
+                "1 event type(s) recognised two or more ways [Authenticate-Logon], expected at least 2");
+    }
+
+    @Test
     void aCatalogueThatGrewHasAtLeastSoManyEventTypesNotDropped() {
         final EvalScore grown = new EvalScore("c");
         grown.scoreCatalogue(expecting(Map.of("catalogue", Map.of("event_types_at_least", 3))), catalogue(),

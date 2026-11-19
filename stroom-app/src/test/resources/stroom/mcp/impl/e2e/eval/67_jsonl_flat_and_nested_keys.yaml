@@ -27,8 +27,9 @@ expected:
       - [{action: user-login}]
       - [{action: file-delete}]
   unknown_at_most: 0
+  # Each of the three event types recognised two ways (nested and flat), whatever the agent names them.
   catalogue: {catch_all_confirmed: true, no_overlaps: true, description_every: true,
-              recognised_two_ways: [Authenticate-Logon]}
+              recognised_two_ways: 3}
 sample: |
   {"@timestamp": "2026-11-19T08:00:00.000Z", "event": {"action": "user-login", "outcome": "success"}, "log": {"level": "info"}, "user": {"name": "alice"}, "host": {"name": "ws01"}, "message": "alice signed in"}
   {"@timestamp": "2026-11-19T08:01:00.000Z", "event.action": "user-login", "event.outcome": "failure", "log.level": "warn", "user.name": "bob", "host.name": "ws02", "message": "bob failed to sign in"}

@@ -349,7 +349,7 @@ final class EvalScore {
     /// - `description_every`: every event type has a description.
     /// - `no_condition_on_source_type_field`: no way of recognising an event type tests the scope's source type
     ///   field (`event>log_type` is `event.log_type` too).
-    /// - `recognised_two_ways`: each event type named is recognised two or more ways.
+    /// - `recognised_two_ways`: each event type named, or at least so many, is recognised two or more ways.
     /// - `documentation_only`: each event type named, or at least so many, is from the documentation (`basis`
     ///   `documentation`) with no record in the sample.
     /// - `dropped`: each event type named is dropped.
@@ -406,6 +406,17 @@ final class EvalScore {
             catalogueCheck("no condition on the source type field", testing.isEmpty(), "event types recognised by "
                                                                                         + "the source type field "
                                                                                         + field + ": " + testing);
+        }
+        if (expected.get("recognised_two_ways") instanceof final Number least) {
+            // So many, whatever the agent named them (seen in cases 30 and 67: Start-Session for
+            // Authenticate-Logon).
+            final List<String> twoWays = types.stream()
+                    .filter(type -> ((List<?>) type.getOrDefault("recognised_by", List.of())).size() >= 2)
+                    .map(EvalScore::typeIdOf)
+                    .toList();
+            catalogueCheck("at least " + least + " recognised two ways", twoWays.size() >= least.intValue(),
+                    twoWays.size() + " event type(s) recognised two or more ways " + twoWays + ", expected at least "
+                    + least);
         }
         for (final String named : strings(expected.get("recognised_two_ways"))) {
             final Map<String, Object> type = typeNamed(types, named);
