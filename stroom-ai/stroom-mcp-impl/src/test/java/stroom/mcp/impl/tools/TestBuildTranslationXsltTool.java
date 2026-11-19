@@ -524,6 +524,26 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void theBuildsLatestMappingIsTheOneSentForItsTranslationThenItsDraftThenTheOneKept() {
+        // What catalogue_event_types reads the records with: the build's translation as it is now.
+        assertThat(world.builds.latestMapping(world.context(), "acme-v1")).isEmpty();
+        final Map<String, Object> draft = Map.of("input", "json", "events", List.of());
+        SentMappings.remember(world.context(), SentMappings.DRAFT + "acme-v1", draft);
+        assertThat(world.builds.latestMapping(world.context(), "acme-v1")).contains(draft);
+
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events"));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        assertThat(world.builds.latestMapping(world.context(), "acme-v1").orElseThrow())
+                .containsEntry("input", TranslationWorld.mapping().get("input"))
+                .containsKey("events")
+                .isEqualTo(SentMappings.sent(world.context(), uuid).orElseThrow());
+        // A session without a workspace: the one kept with the XSLT.
+        assertThat(world.builds.latestMapping(BuildToolCalls.context(), "acme-v1").orElseThrow())
+                .containsEntry("input", TranslationWorld.mapping().get("input"));
+    }
+
+    @Test
     void aGroupsTranslationGivenNoNameIsSentForTheXsltNamedAfterTheGroup() {
         // Seen in TestE2eAggregatedFeedWalks: a group's call gave build and group but no name, so its target was ""
         // and the user's answer to the confirmed-changed form was kept nowhere; the Unknown review that followed

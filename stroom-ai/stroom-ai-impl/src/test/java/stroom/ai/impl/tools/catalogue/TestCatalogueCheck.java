@@ -327,6 +327,26 @@ class TestCatalogueCheck {
     }
 
     @Test
+    void aReadingOfRepeatedGroupsChecksEachItemAsARecord() {
+        // Seen in the reference eval (cases 16, 40 and 69): one object wrapping the records (for_each), whose item
+        // fields were refused as "no record has the field": the rules take the items.
+        final TranslationMapping reading = TranslationMapping.parse(Map.of("input", "json", "json_layout", "lines",
+                "for_each", "events", "events", List.of(Map.of("name", "r", "fields", List.of()))));
+        final String batches = "{\"source\": \"a\", \"events\": [{\"action\": \"login\"}, {\"action\": "
+                               + "\"logout\"}]}\n{\"source\": \"b\", \"events\": [{\"action\": \"login\"}]}\n";
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("action", "login")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(logon), CatalogueSample.read(reading,
+                batches, null, LocalCheck.JSON_PARSER_CUT, null), null);
+
+        assertThat(said(check)).isEmpty();
+        assertThat(check.toJson().get("counts")).isEqualTo(Map.of("Authenticate-Logon", Map.of("records", 2,
+                "by_way", List.of(2))));
+        assertThat(check.uncatalogued().records()).isEqualTo(1);
+    }
+
+    @Test
     void aConditionThatDependsOnProcessingsStringCutIsRefusedNamingTheSetting() {
         final Map<String, Object> held = new LinkedHashMap<>();
         held.put("padding", "p".repeat(10_050));

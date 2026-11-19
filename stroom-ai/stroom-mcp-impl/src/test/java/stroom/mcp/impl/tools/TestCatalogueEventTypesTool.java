@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
@@ -216,6 +217,45 @@ class TestCatalogueEventTypesTool {
                 "export")), "names", List.of()))))), false)).contains("no record has the field acton");
         assertThat(SourceNotes.catalogue(notes()).eventTypes()).singleElement()
                 .satisfies(type -> assertThat(type.recognisedBy()).isEmpty());
+    }
+
+    @Test
+    void aFieldTheGivenReadingExtractsIsOneTheConditionsMayTest() {
+        // Seen in the reference eval (cases 11, 16, 19 and others): the records read only as a fresh draft reads
+        // them, a field the source's extraction gives was refused as "no record has the field".
+        final List<Map<String, Object>> proposals = List.of(numbered());
+        assertThat(JsonUtil.writeValueAsString(propose(proposals), false))
+                .contains("no record has the field record_number");
+
+        final Map<String, Object> checked = call(Map.of("build", BUILD, "stream_ids", List.of(7), "proposals",
+                proposals, "reading", Map.of("extract", List.of(recordNumber()))), plain());
+
+        assertThat(checked).containsEntry("recorded", true);
+        assertThat(JsonUtil.writeValueAsString(checked, false)).doesNotContain("no record has the field");
+        // Kept for the calls after it (the confirmation's), which don't give it again.
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)), plain());
+        assertThat(listed).containsKey("check");
+        assertThat(JsonUtil.writeValueAsString(listed.get("check"), false)).doesNotContain("no record has the field");
+    }
+
+    @Test
+    void theBuildsLatestMappingReadsTheRecordsWhenNoReadingIsGiven() {
+        Mockito.when(builds.latestMapping(Mockito.any(), Mockito.eq(BUILD))).thenReturn(Optional.of(Map.of(
+                "input", "data_splitter", "extract", List.of(recordNumber()), "events", List.of())));
+
+        final Map<String, Object> checked = propose(List.of(numbered()));
+
+        assertThat(checked).containsEntry("recorded", true);
+        assertThat(JsonUtil.writeValueAsString(checked, false)).doesNotContain("no record has the field");
+    }
+
+    @Test
+    void aReadingIsOnlyHowRecordsAreRead() {
+        assertThat(text(Map.of("build", BUILD, "stream_ids", List.of(7), "reading", Map.of("events", List.of(),
+                "json_fields", List.of("msg"))), plain()))
+                .contains("reading takes only how a record is read (input, ", "not events");
+        assertThat(text(Map.of("build", BUILD, "stream_ids", List.of(7), "reading", Map.of("extract", List.of(
+                Map.of("field", "object")))), plain())).contains("reading can't be read");
     }
 
     @Test
@@ -499,6 +539,17 @@ class TestCatalogueEventTypesTool {
                     "names", List.of())));
         }
         return out;
+    }
+
+    // An event type recognised by the number an extraction reads from the record's object.
+    private static Map<String, Object> numbered() {
+        return withKeys(type("Delete-Records", "Delete", "low", null), "recognised_by", List.of(Map.of("when",
+                List.of(Map.of("field", "record_number", "equals", "99")), "names", List.of())));
+    }
+
+    // The extraction reading the record's number from its object (rec-99).
+    private static Map<String, Object> recordNumber() {
+        return Map.of("field", "object", "regex", "^rec-(\\d+)$", "names", List.of("record_number"));
     }
 
     // The only event type, recognised by every record.

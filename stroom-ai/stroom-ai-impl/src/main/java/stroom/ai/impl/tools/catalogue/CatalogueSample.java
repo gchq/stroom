@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -84,11 +85,23 @@ public record CatalogueSample(TranslationMapping reading,
                                        final int stringTruncateLength,
                                        final String variantField) {
         final int cut = Math.max(0, stringTruncateLength);
-        final List<Object> records = LocalCheck.sampleRecords(reading, sample, splitter, cut).records();
+        final List<Object> records = items(reading, LocalCheck.sampleRecords(reading, sample, splitter, cut)
+                .records());
         final List<Object> whole = cut > 0 && "json".equals(reading.input())
-                ? LocalCheck.sampleRecords(reading, sample, splitter, 0).records()
+                ? items(reading, LocalCheck.sampleRecords(reading, sample, splitter, 0).records())
                 : null;
         return new CatalogueSample(reading, records, whole, null, variantField, cut, null);
+    }
+
+    // A reading of repeated groups (for_each): each record's items, the records the translation's rules take (the
+    // Contracts: item-scope conditions, the check counting items); else the records as they are.
+    private static List<Object> items(final TranslationMapping reading, final List<Object> records) {
+        if (reading.forEach() == null || reading.forEach().isBlank()) {
+            return records;
+        }
+        final List<Object> items = new ArrayList<>();
+        records.forEach(record -> items.addAll(LocalCheck.itemsOf(record, reading.forEach())));
+        return items;
     }
 
     /// A mapping to evaluate conditions by, for a draft whose own mapping isn't finished (its rules and time not yet

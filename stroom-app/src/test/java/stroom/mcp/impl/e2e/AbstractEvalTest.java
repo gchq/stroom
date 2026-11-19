@@ -117,6 +117,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     // -DtestEvalCatalogues=false; and at most how many times it confirms a set of event types.
     private static final boolean CATALOGUES = Boolean.parseBoolean(System.getProperty("testEvalCatalogues", "true"));
     private static final int CATALOGUE_SETS = 40;
+    // The keys of a mapping that say how its records are read, which catalogue_event_types takes as its reading.
+    private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace",
+            "json_layout", "json_fields", "xml_fields", "pairs", "extract", "nil_values");
 
     // The streams a question's events are in.
     private static final int QUESTION_STREAMS = 10;
@@ -514,7 +517,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             McpTestClient.text(client.call("survey_feed", args("feed", feed, "build", build, "stream_ids", raws)));
         }
         if (CATALOGUES) {
-            confirmCatalogue(evalCase, score, build, raws);
+            confirmCatalogue(evalCase, score, build, raws, (Map<String, Object>) reference.get("mapping"));
         }
         final Map<String, Object> translation = args("mapping", reference.get("mapping"), "stream_ids", raws,
                 "splitter", splitter, "build", build);
@@ -660,7 +663,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private void confirmCatalogue(final Map<String, Object> evalCase,
                                   final EvalScore score,
                                   final String build,
-                                  final List<Long> raws) {
+                                  final List<Long> raws,
+                                  final Map<String, Object> mapping) {
         final Map<String, Object> catalogue = EvalCatalogues.reference(evalCase);
         if (catalogue == null) {
             return;
@@ -675,8 +679,18 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
             proposals.add(proposal);
         }
+        // The records read as the reference mapping reads them (its extractions, pairs and held fields), as a
+        // source with no mapping saved yet gives its reading.
+        final Map<String, Object> reading = new LinkedHashMap<>();
+        for (final String key : READING_KEYS) {
+            if (mapping != null && mapping.get(key) != null) {
+                reading.put(key, mapping.get(key));
+            }
+        }
         final Map<String, Object> checked = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws,
-                "proposals", proposals));
+                "proposals", proposals, "reading", reading.isEmpty()
+                        ? null
+                        : reading));
         if (!Boolean.TRUE.equals(checked.get("recorded")) || checked.get("refused") != null) {
             score.problem("catalogue_event_types refused the reference catalogue: " + firstLines(String.valueOf(
                     checked.getOrDefault("refused", checked.get("hint")))));

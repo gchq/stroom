@@ -112,6 +112,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String SOURCE_ARG = "source";
     private static final String STREAM_IDS_ARG = "stream_ids";
     private static final String SPLITTER_ARG = "splitter";
+    private static final String READING_ARG = "reading";
     private static final String PROPOSALS_ARG = "proposals";
     private static final String CONFIRM_ARG = "confirm";
     private static final String CATCH_ALL_ARG = "catch_all";
@@ -130,6 +131,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String DIGEST = "digest";
     private static final String AMENDED = "amended";
     private static final String STREAMS = "streams";
+    // The reading a call gave (a source with no mapping yet), kept for the calls after it.
+    private static final String READING = "reading";
     // How long a shown set stays in view for its form: past it, the set is shown again before the form.
     private static final long SHOWN_FRESH_MS = 90_000;
     private static final int MAX_SAMPLE_STREAMS = 5;
@@ -137,6 +140,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final int MOST_SURVEY_STREAMS = 20;
     private static final String LISTING_FOLDER = "/outputs/catalogue/";
     private static final Pattern PLAIN = Pattern.compile("[^A-Za-z0-9._-]");
+    // The keys of a translation mapping that say how a record is read (not how it is translated): what the conditions
+    // are evaluated over.
+    private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace", "json_layout",
+            "json_fields", "xml_fields", "pairs", "extract", "nil_values", "for_each");
+    // A rule for a reading parsed as a mapping, which needs one: never evaluated.
+    private static final Map<String, Object> READING_RULE = Map.of("name", "reading", "fields",
+            List.of(Map.of("path", "EventDetail/TypeId", "value", "Reading")));
 
     private final RecordSourceNotesTool notes;
     private final SampleStreamTexts sampleStreamTexts;
@@ -231,6 +241,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                         .addProperty(SPLITTER_ARG, TranslationArgs.object("The Data Splitter spec the text is read "
                                                                           + "with; the build's saved one when left "
                                                                           + "out."))
+                        .addProperty(READING_ARG, TranslationArgs.object("For a source with no mapping yet: how "
+                                                                         + "its records are read, as a mapping's "
+                                                                         + "reading keys (" + String.join(", ",
+                                READING_KEYS) + ")."))
                         .addProperty(PROPOSALS_ARG, ArraySchema.builder()
                                 .description("Changes to the catalogue: {op: add|change|remove, type_id, ...the "
                                              + "event type's keys: title, description, event_detail, action, "
@@ -467,7 +481,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         result.put("recorded", recorded);
         if (recorded) {
             result.put("source_notes", notes.recordCatalogue(calling.context(), calling.build(), calling.source(),
-                    kept, withStreams(confirming(calling.notesNow()), read.streams())));
+                    kept, withStreams(confirming(calling.notesNow()), read)));
         }
         if (!applied.refused().isEmpty()) {
             result.put("refused", applied.refused().stream().map(CatalogueProposals.Refused::toJson).toList());
@@ -922,7 +936,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
     // The scope's records, read as processing will: the build's sample streams (or those given, or those the
     // catalogue was last checked against), only the scope's source types, with the build's saved Data Splitter
-    // unless one is given.
+    // unless one is given, and as the build's latest mapping reads them ([#readingOf]).
     private Records read(final Calling calling) {
         List<Long> streams = StartOnboardingTool.streamIds(calling.call(), STREAM_IDS_ARG);
         if (streams.isEmpty()) {
@@ -963,14 +977,94 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Map<String, Object> draft = DraftMapping.draft(sampleTexts, calling.source(), null, null, null, null,
                 splitter);
         final Map<String, Object> mapping = NullSafe.map(JsonValues.map(draft.get("mapping")));
+        final Optional<Map<String, Object>> reading = readingOf(calling, mapping);
         final List<Map<String, Object>> raw = DraftMapping.records(samples, splitter).records();
         final String variantField = variantField(draft, raw);
-        final CatalogueSample sample = CatalogueSample.read(reading(mapping), sampleTexts, splitter == null
+        final CatalogueSample sample = CatalogueSample.read(reading
+                .map(CatalogueEventTypesTool::parsedReading)
+                .orElseGet(() -> reading(mapping)), sampleTexts, splitter == null
                 ? inferred(draft)
                 : splitter, LocalCheck.JSON_PARSER_CUT, variantField);
+        final Map<String, Object> given = argsMap(calling.call()).get(READING_ARG) == null
+                ? null
+                : reading.orElse(null);
         return new Records(streams, readWith, draft, sample, scoped == null
                 ? null
-                : scoped.said(), HeldKindRecords.unpacked(raw, mapping));
+                : scoped.said(), HeldKindRecords.unpacked(raw, reading.orElse(mapping)), given);
+    }
+
+    // How the records are read for the check, as the build will read them: the reading given (over the draft's own),
+    // else the build's latest mapping's (the one last sent for its translation, else its draft this session, else the
+    // one kept with its XSLT), else the one an earlier call gave; empty for the draft's own. Seen in the reference
+    // eval: fields an extraction, pairs or held JSON gave were refused as "no record has the field", the records read
+    // only as a fresh draft reads them.
+    private Optional<Map<String, Object>> readingOf(final Calling calling, final Map<String, Object> draftMapping) {
+        final Object given = argsMap(calling.call()).get(READING_ARG);
+        if (given != null) {
+            if (!(given instanceof final Map<?, ?> keys)) {
+                throw new ToolRefusal(READING_ARG + " is an object of a mapping's reading keys (" + String.join(", ",
+                        READING_KEYS) + ")");
+            }
+            final List<String> others = keys.keySet().stream()
+                    .map(String::valueOf)
+                    .filter(key -> !READING_KEYS.contains(key))
+                    .toList();
+            if (!others.isEmpty()) {
+                throw new ToolRefusal(READING_ARG + " takes only how a record is read (" + String.join(", ",
+                        READING_KEYS) + "), not " + String.join(", ", others));
+            }
+            final Map<String, Object> reading = readingKeys(draftMapping);
+            keys.forEach((key, value) -> reading.put(String.valueOf(key), value));
+            try {
+                parsedReading(reading);
+            } catch (final IllegalArgumentException e) {
+                throw new ToolRefusal(READING_ARG + " can't be read: " + e.getMessage());
+            }
+            return Optional.of(reading);
+        }
+        final Optional<Map<String, Object>> latest = builds.latestMapping(calling.context(), calling.build());
+        if (latest.isPresent()) {
+            final Map<String, Object> reading = readingKeys(latest.get());
+            try {
+                parsedReading(reading);
+                return Optional.of(reading);
+            } catch (final IllegalArgumentException e) {
+                LOGGER.debug(() -> LogUtil.message("The latest mapping of {} can't be read, so the draft's reading is "
+                                                   + "used: {}", calling.build(), e.getMessage()));
+            }
+        }
+        // The reading an earlier call gave, before the build had a mapping.
+        final Map<String, Object> kept = JsonValues.map(confirming(calling.notesNow()).get(READING));
+        if (kept != null) {
+            try {
+                parsedReading(kept);
+                return Optional.of(kept);
+            } catch (final IllegalArgumentException e) {
+                LOGGER.debug(() -> LogUtil.message("The reading kept for {} can't be read: {}", calling.build(),
+                        e.getMessage()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    // A mapping's reading keys alone.
+    private static Map<String, Object> readingKeys(final Map<String, Object> mapping) {
+        final Map<String, Object> reading = new LinkedHashMap<>();
+        READING_KEYS.forEach(key -> {
+            if (mapping.get(key) != null) {
+                reading.put(key, mapping.get(key));
+            }
+        });
+        return reading;
+    }
+
+    // A reading as the mapping the conditions are evaluated by (its pairs read as extractions, as the translation
+    // reads them).
+    private static TranslationMapping parsedReading(final Map<String, Object> reading) {
+        final Map<String, Object> json = new LinkedHashMap<>(reading);
+        json.putIfAbsent("input", "data_splitter");
+        json.put("events", List.of(READING_RULE));
+        return TranslationMapping.parse(json);
     }
 
     // The Data Splitter the draft inferred for the records (a data_splitter input given none), or null.
@@ -1074,9 +1168,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return out;
     }
 
-    private static Map<String, Object> withStreams(final Map<String, Object> confirming, final List<Long> streams) {
+    // The confirmation's marks with the streams read, and the reading given (kept for the calls after it).
+    private static Map<String, Object> withStreams(final Map<String, Object> confirming, final Records read) {
         final Map<String, Object> out = new LinkedHashMap<>(confirming);
-        out.put(STREAMS, streams);
+        out.put(STREAMS, read.streams());
+        if (read.given() != null) {
+            out.put(READING, read.given());
+        }
         return out;
     }
 
@@ -1141,12 +1239,14 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     /// @param sample          The records as processing reads them, for the check.
     /// @param scopeSaid       What the scope left out, or null without one.
     /// @param evidenceRecords The records as the draft reads them, the fields inside held values among them.
+    /// @param given           The reading the call gave, or null.
     private record Records(List<Long> streams,
                            String readWith,
                            Map<String, Object> draft,
                            CatalogueSample sample,
                            Map<String, Object> scopeSaid,
-                           List<Map<String, Object>> evidenceRecords) {
+                           List<Map<String, Object>> evidenceRecords,
+                           Map<String, Object> given) {
 
         // What was read, said in a result.
         private void said(final Map<String, Object> result) {

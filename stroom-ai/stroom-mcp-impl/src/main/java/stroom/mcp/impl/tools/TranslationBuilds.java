@@ -590,6 +590,53 @@ class TranslationBuilds {
         return found;
     }
 
+    /// The build's latest translation mapping, for reading its records as the build's translation will: the one last
+    /// sent this session for a translation XSLT of the build (by its uuid, or `build/name`), else the draft
+    /// draft_translation_mapping made for the build this session, else the one kept with a translation XSLT of the
+    /// build.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return The mapping, as JSON maps and lists; empty when the build has none (or can't be listed).
+    Optional<Map<String, Object>> latestMapping(final ToolCallContext context, final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        final List<Map<String, Object>> kept = new ArrayList<>();
+        final List<WriteGuard.BuildDoc> xslts = new ArrayList<>();
+        try {
+            for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+                if (!XsltDoc.TYPE.equals(doc.type())) {
+                    continue;
+                }
+                final Optional<KeptMapping.Kept> found = documentAccess.read(doc.docRef(), XsltDoc.class)
+                        .flatMap(xslt -> KeptMapping.readMapping(xslt.getDescription()));
+                if (found.isPresent() && !"translation".equals(found.get().kind())) {
+                    // An index or CEF plan's XSLT: not how the records are read into events.
+                    continue;
+                }
+                xslts.add(doc);
+                found.map(one -> one.payload().get("mapping"))
+                        .filter(Map.class::isInstance)
+                        .ifPresent(mapping -> kept.add(copy((Map<?, ?>) mapping)));
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No translation XSLT read from build {}: {}", build, e.getMessage()));
+        }
+        for (final WriteGuard.BuildDoc doc : xslts) {
+            final Optional<Map<String, Object>> sent = SentMappings.sent(context, doc.uuid())
+                    .or(() -> SentMappings.sent(context, build + "/" + doc.name()));
+            if (sent.isPresent()) {
+                return sent;
+            }
+        }
+        final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT + build);
+        if (draft.isPresent()) {
+            return draft;
+        }
+        return kept.stream().findFirst();
+    }
+
     /// @param mapping A mapping.
     /// @param imports The imports it is to have.
     /// @return It with them.
