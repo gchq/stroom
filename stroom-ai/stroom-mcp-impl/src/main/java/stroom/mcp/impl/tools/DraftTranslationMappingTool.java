@@ -283,8 +283,12 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 readWith = saved.get().getKey();
             }
         }
+        // Drafted per item where the catalogue reads the items inside records as its records (seen in eval case 69).
+        final String forEach = SourceNotes.catalogue(sourceNotes) == null
+                ? null
+                : builds.catalogueForEach(context, build).orElse(null);
         final Map<String, Object> result = drafted(samples, call, system, sourceNotes,
-                detailCheck(context, build, sourceNotes, version), splitter);
+                detailCheck(context, build, sourceNotes, version), splitter, forEach);
         if (readWith != null) {
             result.put("read_with", "the build's Data Splitter '" + readWith + "'");
         }
@@ -435,9 +439,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                         final SystemGiven system,
                                         final Map<String, Object> sourceNotes,
                                         final Function<String, String> detailCheck,
-                                        final SplitterSpec splitter) {
+                                        final SplitterSpec splitter,
+                                        final String forEach) {
         return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
-                SystemNames.single(system.systemName()), system.environment(), sourceNotes, detailCheck, splitter));
+                SystemNames.single(system.systemName()), system.environment(), sourceNotes, detailCheck, splitter,
+                forEach));
     }
 
     // A catalogue of event types still to confirm: the translation follows the catalogue, so the draft waits for it

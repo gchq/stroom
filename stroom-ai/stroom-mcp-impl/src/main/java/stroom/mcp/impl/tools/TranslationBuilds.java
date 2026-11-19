@@ -611,6 +611,46 @@ class TranslationBuilds {
         return kept.stream().findFirst();
     }
 
+    /// The repeated group the build's catalogue of event types reads as its records (a reading's `for_each`): the
+    /// reading given to catalogue_event_types (kept in the source notes' confirmation), else the build's latest
+    /// mapping's ([#latestMapping]), as the catalogue's check reads the records. The reading given comes first: it
+    /// is the one the catalogue was told to read by, where a draft this session may still read whole records (seen
+    /// in eval case 69: the catalogue read each item of a batch as its record, the draft read whole batches).
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return The field holding the items; empty when the catalogue reads whole records (or the build has none).
+    Optional<String> catalogueForEach(final ToolCallContext context, final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        Optional<String> given = Optional.empty();
+        try {
+            for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+                if (given.isEmpty() && DocumentationDoc.TYPE.equals(doc.type())
+                    && doc.name().endsWith(SourceNotes.NOTES_SUFFIX)) {
+                    given = documentAccess.read(doc.docRef(), DocumentationDoc.class)
+                            .map(read -> SourceNotes.readNotes(BuildRecords.bodyText(read)))
+                            .map(notes -> JsonValues.map(notes.get(RecordSourceNotesTool.CONFIRMING)))
+                            .map(confirming -> JsonValues.map(confirming.get(CatalogueEventTypesTool.READING)))
+                            .flatMap(TranslationBuilds::forEachOf);
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No source notes read from build {}: {}", build, e.getMessage()));
+        }
+        return given.isPresent()
+                ? given
+                : latestMapping(context, build).flatMap(TranslationBuilds::forEachOf);
+    }
+
+    // A reading's or mapping's for_each, when it has one.
+    private static Optional<String> forEachOf(final Map<String, Object> reading) {
+        return reading != null && reading.get("for_each") instanceof final String forEach && !forEach.isBlank()
+                ? Optional.of(forEach)
+                : Optional.empty();
+    }
+
     /// @param mapping A mapping.
     /// @param imports The imports it is to have.
     /// @return It with them.

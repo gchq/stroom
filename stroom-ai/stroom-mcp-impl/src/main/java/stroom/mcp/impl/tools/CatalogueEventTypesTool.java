@@ -107,6 +107,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     static final String CONFIRMED = "confirmed";
     /// The most medium- or low-confidence event types put to the user at once.
     static final int SET_SIZE = 10;
+    /// The confirmation's key for the reading a call gave (a source with no mapping yet), kept for the calls after
+    /// it.
+    static final String READING = "reading";
 
     private static final String BUILD_ARG = "build";
     private static final String SOURCE_ARG = "source";
@@ -131,8 +134,6 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String DIGEST = "digest";
     private static final String AMENDED = "amended";
     private static final String STREAMS = "streams";
-    // The reading a call gave (a source with no mapping yet), kept for the calls after it.
-    private static final String READING = "reading";
     // How long a shown set stays in view for its form: past it, the set is shown again before the form.
     private static final long SHOWN_FRESH_MS = 90_000;
     private static final int MAX_SAMPLE_STREAMS = 5;

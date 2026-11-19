@@ -420,6 +420,48 @@ class TestDraftTranslationMappingTool {
         assertThat(ToolJson.dumps(draft.get("notes"))).contains("No catalogue of event types yet");
     }
 
+    @Test
+    void aCatalogueReadingTheItemsInsideRecordsIsDraftedPerItem() {
+        // Seen in eval case 69: the catalogue read each alert of a batch as its record (reading for_each, given to
+        // catalogue_event_types and kept in the notes); the draft read whole batches, and its rules matched nothing.
+        final String batches = """
+                [{"gateway": "gw1", "alerts": [{"time": "2026-11-19T09:00:00Z", "kind": "malware", "to": "alice"}, \
+                {"time": "2026-11-19T09:00:05Z", "kind": "phishing", "to": "bob"}]},
+                 {"gateway": "gw2", "alerts": [{"time": "2026-11-19T09:01:00Z", "kind": "malware", "to": "carol"}]}]
+                """;
+        final String types = "{\"type_id\": \"Alert-Malware\", \"title\": \"Malware\", \"event_detail\": "
+                             + "\"Alert\", \"recognised_by\": [{\"when\": [{\"field\": \"kind\", "
+                             + "\"equals\": \"malware\"}]}], \"status\": \"confirmed\"}";
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", "
+                      + "\"fields\": [], \"event_types\": [" + types + "], \"catch_all\": {\"status\": "
+                      + "\"confirmed\"}, \"confirming\": {\"reading\": {\"input\": \"json\", "
+                      + "\"json_layout\": \"array\", \"for_each\": \"alerts\"}}}\n-->\n")
+                .build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("alerts.json", batches),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error").containsEntry("records", 3);
+        final Map<?, ?> mapping = (Map<?, ?>) draft.get("mapping");
+        assertThat(mapping.get("for_each")).isEqualTo("alerts");
+        assertThat(ToolJson.dumps(draft.get("notes"))).doesNotContain("not in the sample");
+        assertThat(ToolJson.dumps(mapping.get("events"))).contains("\"field\": \"kind\", \"equals\": "
+                                                                   + "\"malware\"")
+                .contains("\"field\": \"gateway\", \"scope\": \"record\"");
+    }
+
+    @Test
+    void aCatalogueReadingWholeRecordsDraftsWholeRecords() {
+        notes("confirmed", "confirmed");
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(((Map<?, ?>) draft.get("mapping")).get("for_each")).isNull();
+    }
+
     // The build's source notes: a catalogue of a logon (confirmed) and a logoff (of the status given), told by
     // action, and its catch-all (of the status given).
     private void notes(final String logoff, final String catchAll) {

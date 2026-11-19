@@ -177,6 +177,10 @@ public final class DraftMapping {
                                                            + "|'((?:\\\\.|[^'\\\\])*+)')");
     // The info key the keys given more than once in a line are kept under.
     private static final String REPEATED_KEYS = "repeated_keys";
+    // The profile's key for the field of each record holding the items read as the records (a repeated group).
+    private static final String FOR_EACH = "for_each";
+    // The profile's key for the enclosing records' own fields, beside an item's: read with `scope: record`.
+    private static final String RECORD_FIELDS = "record_fields";
     // An unquoted value with two items or more (group 1 the second's separator), to white space or the end.
     private static final Pattern LIST_VALUE = ToolText.re("[^\\s,;\"=]+([,;][^\\s,;\"=]+)+(?:\\s|$)");
     // The type of a value ending in XML after words of its own.
@@ -256,8 +260,35 @@ public final class DraftMapping {
                                             final Map<String, Object> sourceNotes,
                                             final Function<String, String> detailCheck,
                                             final SplitterSpec splitter) {
+        return draft(samples, sourceName, systemName, environment, sourceNotes, detailCheck, splitter, null);
+    }
+
+    /// [#draft(Object, String, String, String, Map, Function, SplitterSpec)] reading the items of a repeated group
+    /// inside each record as its records, as the build's catalogue of event types reads them (its `for_each`): the
+    /// mapping reads them `for_each`, its rules' conditions and fields relative to the item, the enclosing record's
+    /// own fields (every item of it shares them) read with `scope: record`, and the sample's counts are of items.
+    ///
+    /// @param samples     The samples ([SampleTexts#asNamedSamples(Object, String)]).
+    /// @param sourceName  The source's name ("" for none).
+    /// @param systemName  EventSource/System/Name, or null.
+    /// @param environment EventSource/System/Environment, or null.
+    /// @param sourceNotes The source notes, or null.
+    /// @param detailCheck Why a catalogued event's `event_detail` can't be an action element, or null.
+    /// @param splitter    The Data Splitter the text is read with, or null to infer it.
+    /// @param forEach     The field of a JSON record holding its items (an array of objects), or null to read the
+    ///                    records as they are; records holding no items under it are read as they are too.
+    /// @return What [#draft(Object, String, String, String, Map, Function, SplitterSpec)] returns.
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public static Map<String, Object> draft(final Object samples,
+                                            final String sourceName,
+                                            final String systemName,
+                                            final String environment,
+                                            final Map<String, Object> sourceNotes,
+                                            final Function<String, String> detailCheck,
+                                            final SplitterSpec splitter,
+                                            final String forEach) {
         final Map<String, String> named = SampleTexts.asNamedSamples(samples, null);
-        final Records read = records(named, splitter);
+        final Records read = records(named, splitter, forEach);
         final String source = sourceName == null
                 ? ""
                 : sourceName;
@@ -282,6 +313,67 @@ public final class DraftMapping {
     /// @return The profile (merged across files), the records as flat name to value maps, and the splitter spec
     /// for text.
     public static Records records(final Map<String, String> named, final SplitterSpec given) {
+        return records(named, given, null);
+    }
+
+    /// The sample's records as the draft reads them, a JSON record's items read as records where `forEach` names
+    /// them ([#draft(Object, String, String, String, Map, Function, SplitterSpec, String)]).
+    ///
+    /// @param named   The samples by name.
+    /// @param given   The Data Splitter spec to read text with, or null to infer one.
+    /// @param forEach The field of a JSON record holding its items, or null.
+    /// @return What [#records(Map, SplitterSpec)] returns; with items, the profile says the field holding them and
+    /// the enclosing records' own fields.
+    public static Records records(final Map<String, String> named, final SplitterSpec given, final String forEach) {
+        final Records read = recordsAsTheyAre(named, given);
+        final String format = String.valueOf(read.info().get("format"));
+        if (forEach == null || forEach.isBlank() || !(JSON_ARRAY.equals(format) || JSON_LINES.equals(format))
+            || JsonValues.truthy(read.info().get("malformed_lines"))) {
+            return read;
+        }
+        return itemRecords(named, read, forEach);
+    }
+
+    // Each JSON record's items (under forEach) as the records, each with its enclosing record's own fields beside
+    // the item's (an item's field of the same name read first, as the item's); the records as they are when none
+    // holds an item. A record holding none gives no record, as for_each in processing gives it no event.
+    private static Records itemRecords(final Map<String, String> named, final Records read, final String forEach) {
+        final List<Map<String, Object>> items = new ArrayList<>();
+        final Set<String> itemFields = new LinkedHashSet<>();
+        final Set<String> enclosingFields = new LinkedHashSet<>();
+        for (final String text : named.values()) {
+            for (final Object value : jsonValues(ToolText.strip(text))) {
+                if (!(value instanceof final Map<?, ?> record)) {
+                    continue;
+                }
+                final Map<String, Object> enclosing = asText(SampleProfiler.flatten(withoutKey(record, forEach)),
+                        "");
+                enclosingFields.addAll(enclosing.keySet());
+                for (final Object item : LocalCheck.itemsOf(record, forEach)) {
+                    final Map<String, Object> one = asText(SampleProfiler.flatten(item), "");
+                    itemFields.addAll(one.keySet());
+                    enclosing.forEach(one::putIfAbsent);
+                    items.add(one);
+                }
+            }
+        }
+        if (items.isEmpty()) {
+            return read;
+        }
+        enclosingFields.removeAll(itemFields);
+        final Map<String, Object> info = new LinkedHashMap<>(read.info());
+        info.put(FOR_EACH, forEach);
+        info.put(RECORD_FIELDS, List.copyOf(enclosingFields));
+        return new Records(info, items, read.spec());
+    }
+
+    private static Map<Object, Object> withoutKey(final Map<?, ?> record, final String key) {
+        final Map<Object, Object> out = new LinkedHashMap<>(record);
+        out.remove(key);
+        return out;
+    }
+
+    private static Records recordsAsTheyAre(final Map<String, String> named, final SplitterSpec given) {
         if (named.isEmpty()) {
             throw new IllegalArgumentException("no samples");
         }
@@ -924,6 +1016,7 @@ public final class DraftMapping {
             notes.addAll(ListFields.propose(mapping, values, "json".equals(mapping.get("input"))));
             // The records hold a JSON array as its text: a condition on one is written over its items.
             ArrayConditions.overItems(mapping);
+            enclosingRecordScoped();
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("mapping", mapping);
             result.put("source_notes", applied);
@@ -989,6 +1082,10 @@ public final class DraftMapping {
                 mapping.put("json_layout", JSON_LINES.equals(fmt)
                         ? "lines"
                         : "array");
+                if (info.get(FOR_EACH) != null) {
+                    // The records are the items of a repeated group inside each record ([#itemRecords]).
+                    mapping.put("for_each", info.get(FOR_EACH));
+                }
             } else if (SampleProfiler.JSON_OBJECT.equals(fmt)) {
                 mapping.put("input", "json");
                 mapping.put("json_layout", "lines");
@@ -2373,6 +2470,51 @@ public final class DraftMapping {
                           + "logon Authenticate, a file read View...) and move its Data entries into that element; "
                           + "otherwise catalogue the event types (catalogue_event_types) once you know how they are "
                           + "told apart.");
+            }
+        }
+
+        // With the items of a repeated group read as the records: every field of the enclosing record (not one of
+        // the items' own) read with scope record, in entries, conditions and extractions alike, as for_each reads
+        // fields relative to the item.
+        private void enclosingRecordScoped() {
+            final Set<String> enclosing = new HashSet<>(JsonValues.strings(info.get(RECORD_FIELDS)));
+            if (enclosing.isEmpty()) {
+                return;
+            }
+            recordScoped(mapping, "common", enclosing);
+            recordScoped(mapping, EXTRACT, enclosing);
+            for (final Map<String, Object> rule : JsonValues.maps(mapping.get(EVENTS))) {
+                recordScoped(rule, FIELDS, enclosing);
+                recordScoped(rule, "when", enclosing);
+            }
+            for (final Map<String, Object> drop : JsonValues.maps(mapping.get("drop_when"))) {
+                recordScoped(drop, "when", enclosing);
+            }
+        }
+
+        // The entries under the key, those reading an enclosing record's field given scope record.
+        private static void recordScoped(final Map<String, Object> holder,
+                                         final String key,
+                                         final Set<String> enclosing) {
+            if (!(holder.get(key) instanceof final List<?> entries)) {
+                return;
+            }
+            final List<Object> out = new ArrayList<>();
+            boolean changed = false;
+            for (final Object entry : entries) {
+                if (entry instanceof final Map<?, ?> map && map.get(FIELD) instanceof final String field
+                    && enclosing.contains(field) && map.get("scope") == null) {
+                    final Map<String, Object> scoped = new LinkedHashMap<>();
+                    map.forEach((name, value) -> scoped.put(String.valueOf(name), value));
+                    scoped.put("scope", "record");
+                    out.add(scoped);
+                    changed = true;
+                } else {
+                    out.add(entry);
+                }
+            }
+            if (changed) {
+                holder.put(key, out);
             }
         }
 

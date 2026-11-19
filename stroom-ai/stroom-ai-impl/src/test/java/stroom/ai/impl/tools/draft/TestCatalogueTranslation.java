@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -47,6 +48,25 @@ class TestCatalogueTranslation extends DraftFixtures {
             2026-10-01T08:11:00Z,dc01,4634,carol,10.0.0.3,0x0
             2026-10-01T08:12:00Z,dc01,9999,carol,10.0.0.3,0x0
             2026-10-01T08:13:00Z,dc01,1102,carol,10.0.0.3,0x0
+            """;
+    // Each record a batch of alerts, each alert told by an item of its tags (eval case 69).
+    private static final String BATCHES = """
+            [{"gateway": "mx-gw1", "batch": 101, "alerts": [{"time": "2026-11-19T09:00:00Z", "tags": ["inbound", \
+            "malware", "high"], "sender": "billing@evil.example", "recipient": "alice@corp.example", "subject": \
+            "Invoice overdue"}, {"time": "2026-11-19T09:00:05Z", "tags": ["inbound", "phishing"], "sender": \
+            "it-help@evil.example", "recipient": "bob@corp.example", "subject": "Reset your password"}]},
+             {"gateway": "mx-gw2", "batch": 102, "alerts": [{"time": "2026-11-19T09:01:00Z", "tags": ["outbound", \
+            "policy", "low"], "sender": "carol@corp.example", "recipient": "someone@partner.example", "subject": \
+            "Customer list"}]},
+             {"gateway": "mx-gw1", "batch": 103, "alerts": [{"time": "2026-11-19T09:02:00Z", "tags": ["malware", \
+            "inbound"], "sender": "post@evil.example", "recipient": "dave@corp.example", "subject": "Your parcel"}, \
+            {"time": "2026-11-19T09:02:30Z", "tags": ["high", "inbound", "phishing"], "sender": "ceo@evil.example", \
+            "recipient": "erin@corp.example", "subject": "Urgent transfer"}, {"time": "2026-11-19T09:03:00Z", \
+            "tags": ["policy", "outbound"], "sender": "bob@corp.example", "recipient": "me@home.example", \
+            "subject": "Payroll"}]},
+             {"gateway": "mx-gw2", "batch": 104, "alerts": [{"time": "2026-11-19T09:04:00Z", "tags": ["inbound", \
+            "low", "phishing"], "sender": "prize@evil.example", "recipient": "alice@corp.example", "subject": \
+            "You won"}]}]
             """;
 
     @Test
@@ -316,6 +336,73 @@ class TestCatalogueTranslation extends DraftFixtures {
         // Its own records counted: the delete is uncatalogued.
         assertThat(notes(draft)).anyMatch(note -> note.startsWith("1 sampled record(s) no event type recognises"));
         assertThat(generate(mappingOf(draft)).problems()).isEmpty();
+    }
+
+    @Test
+    void aCatalogueReadingItemsInsideRecordsIsDraftedPerItem() {
+        // Seen in eval case 69 (Haiku): each record a batch of alerts, the catalogue reading each alert as its own
+        // record (for_each); the draft drafted whole batches, said every event type was not in the sample, and its
+        // rules matched nothing.
+        final Map<String, Object> malware = type("Alert-Malware", "Malware found", "Alert", null, null,
+                way(eq("tags", "malware")));
+        final Map<String, Object> phishing = type("Alert-Phishing", "Phishing found", "Alert", null, null,
+                way(eq("tags", "phishing")));
+        final Map<String, Object> policy = type("Alert-PolicyViolation", "Policy broken", "Alert", null, null,
+                way(eq("tags", "policy")));
+        for (final Map<String, Object> type : List.of(malware, phishing, policy)) {
+            type.put("actor", "recipient");
+            type.put("description", "The gateway raised an alert");
+        }
+        final Map<String, Object> draft = DraftMapping.draft(List.of(BATCHES), "Acme", "Acme", "Test",
+                notes(List.of(malware, phishing, policy), true), CHECK, null, "alerts");
+
+        final Map<String, Object> mapping = mappingOf(draft);
+        assertThat(mapping).containsEntry("input", "json").containsEntry("json_layout", "array")
+                .containsEntry("for_each", "alerts");
+        // Items counted, every one recognised: nothing not in the sample, nothing uncatalogued.
+        assertThat(draft.get("records")).isEqualTo(7);
+        assertThat(notes(draft)).noneMatch(note -> note.startsWith("Event types no sampled record"))
+                .noneMatch(note -> note.contains("no event type recognises"));
+        final List<Map<String, Object>> rules = JsonValues.maps(mapping.get("events"));
+        assertThat(rules).extracting(rule -> rule.get("name")).containsExactly("alert_malware", "alert_phishing",
+                "alert_policyviolation", "uncatalogued");
+        // Conditions and fields relative to the item; the batch's own fields read with scope record.
+        assertThat(rules.getFirst().get("when")).isEqualTo(List.of(Map.of("field", "tags", "equals", "malware")));
+        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
+        rules.forEach(rule -> entries.addAll(JsonValues.maps(rule.get("fields"))));
+        assertThat(entries).filteredOn(entry -> "gateway".equals(entry.get("field")))
+                .isNotEmpty()
+                .allMatch(entry -> "record".equals(entry.get("scope")));
+        assertThat(entries).filteredOn(entry -> "sender".equals(entry.get("field")))
+                .isNotEmpty()
+                .allMatch(entry -> entry.get("scope") == null);
+        assertThat(fields(rules.getFirst()).get("EventSource/User/Id")).containsEntry("field", "recipient");
+        assertThat(fields(rules.getFirst()).get("EventDetail/Description")).containsEntry("value",
+                "The gateway raised an alert");
+        // The rules recognise the items, by the one evaluator, as processing reads them.
+        final TranslationMapping parsed = TranslationMapping.parse(mapping);
+        final List<String> taken = new ArrayList<>();
+        for (final Object record : LocalCheck.sampleRecords(parsed, BATCHES, null, 0).records()) {
+            for (final Object item : LocalCheck.itemsOf(record, "alerts")) {
+                taken.add(LocalCheck.ruleOf(parsed, item, null));
+            }
+        }
+        assertThat(taken).containsExactly("alert_malware", "alert_phishing", "alert_policyviolation",
+                "alert_malware", "alert_phishing", "alert_policyviolation", "alert_phishing");
+        // Generated: what is left is the schema's to fill (the device, the alert's type), nothing unreadable.
+        assertThat(generate(mapping).problems()).as("generates")
+                .allMatch(problem -> problem.endsWith("is required by the schema; map it"));
+    }
+
+    @Test
+    void aCatalogueReadingItemsWhereRecordsHoldNoneDraftsTheRecordsAsTheyAre() {
+        // A for_each the records don't hold (a reading kept from another sample): the records as they are.
+        final Map<String, Object> draft = DraftMapping.draft(List.of(BATCHES), "Acme", "Acme", "Test",
+                notes(List.of(type("Alert-Malware", "Malware found", "Alert", null, null,
+                        way(eq("tags", "malware")))), true), CHECK, null, "nothing_here");
+
+        assertThat(mappingOf(draft)).doesNotContainKey("for_each");
+        assertThat(draft.get("records")).isEqualTo(4);
     }
 
     @Test
