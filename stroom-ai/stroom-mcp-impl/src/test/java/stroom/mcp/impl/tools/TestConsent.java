@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.ChatForms;
 import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ChatUserQuestions;
@@ -27,6 +28,7 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.shared.AiMessageType;
 import stroom.docref.DocRef;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
@@ -38,6 +40,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -53,6 +57,7 @@ class TestConsent {
     private static final ToolSession SESSION = new ToolSession(ToolSession.Kind.MCP, "s1",
             new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client"));
     private static final ToolCall CALL = new ToolCall("call-1", "create_feed", "{}");
+    private static final String SOURCE_QUESTION = "Which field says which source a record came from?";
 
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final Consent consent = new Consent(() -> auditLog);
@@ -263,6 +268,173 @@ class TestConsent {
                 .isInstanceOf(ToolRefusal.class);
         // Without a form, the agent asks.
         assertThat(consent.answer(CALL, textOnly(), "classify_kinds", "Review them.", "Accept?", "Accept")).isEmpty();
+    }
+
+    @Test
+    void aQuestionPutAsideByAMessageTheUserTypedTellsTheAgentToReadTheMessageNotToAskAgain() {
+        // Seen in testing: survey_feed's "Which field says which source a record came from?" form was shown, and
+        // the user typed a question in the chat instead of answering it. The call, made again, was told the form
+        // was closed or ran out, and to call survey_feed again with the same arguments: the form was shown again,
+        // and the user's question never answered.
+        final ChatForms chat = new ChatForms(7);
+        final ToolCall call = new ToolCall("call-1", "survey_feed", "{\"feed\": \"ACME\"}");
+        final ToolCallContext context = chat.context();
+        final String intro = "Feed 'ACME' may aggregate several sources.";
+        final List<String> options = List.of("event.app", "event.logger_name", "Not aggregated");
+        assertThatThrownBy(() -> consent.answer(call, context, "survey_feed", intro, SOURCE_QUESTION, options))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final String typed = "What's the difference between event.app and event.logger_name?";
+        assertThat(chat.userSendsInstead(typed)).isEqualTo(1);
+
+        final String told = toldTheAgent(() -> consent.answer(call, context, "survey_feed", intro,
+                SOURCE_QUESTION, options));
+
+        assertThat(told).as("what the re-made call tells the agent")
+                .containsIgnoringCase("sent a message instead")
+                .contains(typed)
+                .doesNotContain("closed or ran out")
+                .doesNotContain("again with the same arguments");
+    }
+
+    @Test
+    void aConfirmationPutAsideByAMessageTheUserTypedTellsTheAgentToReadTheMessageNotToAskAgain() {
+        // As for a question (above): a confirmation's form put aside by a message the user typed.
+        final ChatForms chat = new ChatForms(7);
+        final ToolCallContext context = chat.context();
+        assertThatThrownBy(() -> consent.require(CALL, context, confirmation()))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final String typed = "Hang on, why is it called A?";
+        assertThat(chat.userSendsInstead(typed)).isEqualTo(1);
+
+        final String told = toldTheAgent(() -> {
+            consent.require(CALL, context, confirmation());
+            return null;
+        });
+
+        assertThat(told).as("what the re-made call tells the agent")
+                .containsIgnoringCase("sent a message instead")
+                .contains(typed)
+                .doesNotContain("closed or ran out")
+                .doesNotContain("again with the same arguments");
+    }
+
+    @Test
+    void aQuestionPutAsideByAMessageIsAnsweredInTheChatFromThenOnItsFormNotShownAgain() {
+        // Decided by the user, 2026-11-19: once put aside, the question's answer is the one said in the chat; a
+        // later call (its argument the user's answer, or without it) never shows the form again.
+        final ChatForms chat = new ChatForms(7);
+        final ToolCallContext context = chat.context();
+        final ToolCall call = new ToolCall("call-1", "survey_feed", "{}");
+        final List<String> options = List.of("event.app", "Not aggregated");
+        assertThatThrownBy(() -> consent.answer(call, context, "survey_feed", "Intro", SOURCE_QUESTION, options))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        chat.userSendsInstead("Why do you ask?");
+        assertThatThrownBy(() -> consent.answer(call, context, "survey_feed", "Intro", SOURCE_QUESTION, options))
+                .isInstanceOf(ToolRefusal.class);
+        final int formsShown = forms(chat);
+
+        final ToolCall later = new ToolCall("call-2", "survey_feed", "{\"source_type_field\": \"event.app\"}");
+        final Optional<String> asked = consent.answer(later, context, "survey_feed", "Intro", SOURCE_QUESTION,
+                options);
+
+        assertThat(asked).as("asked in a form again").isEmpty();
+        assertThat(forms(chat)).as("forms shown").isEqualTo(formsShown);
+        assertThat(consent.takesChatAnswer(context, "survey_feed", SOURCE_QUESTION))
+                .as("the argument taken as the user's chat answer").isTrue();
+        assertThat(consent.whyInChat(context, "survey_feed", SOURCE_QUESTION)).as("why it isn't in a form")
+                .contains("put it aside");
+        assertThat(consent.wasAskedInChat(context, "survey_feed", SOURCE_QUESTION))
+                .as("the agent was told the answer is said in the chat").isTrue();
+        // Another question of the tool is asked in its form as ever.
+        assertThat(consent.takesChatAnswer(context, "survey_feed", "Another question?")).isFalse();
+    }
+
+    @Test
+    void aConfirmationPutAsideByAMessageIsNeverTakenFromTheChatButAskedInItsFormAgain() {
+        // A confirmation is only ever given in a form (the agent could otherwise agree for the user).
+        final ChatForms chat = new ChatForms(7);
+        final ToolCallContext context = chat.context();
+        assertThatThrownBy(() -> consent.require(CALL, context, confirmation()))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        chat.userSendsInstead("Go on then");
+        final String told = refusal(() -> consent.require(CALL, context, confirmation()));
+        assertThat(told).contains("Go on then").contains("asked to agree in the form again");
+        final int formsShown = forms(chat);
+
+        assertThatThrownBy(() -> consent.require(new ToolCall("call-2", CALL.name(), "{}"), context,
+                confirmation())).as("a later call").isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+
+        assertThat(forms(chat)).as("forms shown").isEqualTo(formsShown + 1);
+        assertThat(consent.takesChatAnswer(context, CALL.name(), confirmation().summary())).isFalse();
+    }
+
+    @Test
+    void eachFormHelperPutAsideByAMessageTellsTheAgentToReplyToIt() {
+        // choose, chooseEach, answerEach, pick and review alike, as answer is (above).
+        final Map<String, BiFunction<ToolCall, ToolCallContext, Object>> helpers = new LinkedHashMap<>();
+        helpers.put("choose", (call, context) -> consent.choose(call, context, "a_tool", "Which one?",
+                List.of("A", "B"), null));
+        helpers.put("chooseEach", (call, context) -> consent.chooseEach(call, context, "a_tool", "Choose each",
+                Map.of("x", new Consent.Question("Which x?", List.of("A", "B")))));
+        helpers.put("answerEach", (call, context) -> consent.answerEach(call, context, "a_tool", "Answer each",
+                Map.of("x", new Consent.Question("Which x?", List.of("A", "B")))));
+        helpers.put("pick", (call, context) -> consent.pick(call, context, "a_tool", "Pick", "Which?",
+                Map.of("A", "a", "B", "b"), "Name", null));
+        helpers.put("review", (call, context) -> consent.review(call, context, "a_tool", "Review",
+                Map.of("x", new Consent.Editable("X", "x")), "Anything else?"));
+        int chatId = 10;
+        for (final Map.Entry<String, BiFunction<ToolCall, ToolCallContext, Object>> helper : helpers.entrySet()) {
+            final ChatForms chat = new ChatForms(chatId++);
+            final ToolCallContext context = chat.context();
+            final ToolCall call = new ToolCall("call-1", "a_tool", "{}");
+            assertThatThrownBy(() -> helper.getValue().apply(call, context)).as("%s shows its form", helper.getKey())
+                    .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+            chat.userSendsInstead("A message to " + helper.getKey());
+
+            final String told = toldTheAgent(() -> helper.getValue().apply(call, context));
+
+            assertThat(told).as(helper.getKey()).contains("sent a message instead")
+                    .contains("A message to " + helper.getKey()).contains("Don't call a_tool again")
+                    .doesNotContain("made no choice").doesNotContain("declined").doesNotContain("closed or ran out");
+        }
+    }
+
+    @Test
+    void wordsInAFormAreTakenForAnAnswerOnlyWhenTheyAreOneWhole() {
+        final List<String> options = List.of("Use these patterns", "One source type per value");
+
+        assertThat(Consent.exactly("  use THESE patterns ", options)).contains("Use these patterns");
+        assertThat(Consent.exactly("one source type per value", options)).contains("One source type per value");
+        assertThat(Consent.exactly("which pattern would match?", options)).isEmpty();
+        assertThat(Consent.exactly("Use these patterns, but why?", options)).isEmpty();
+        assertThat(Consent.exactly("One", options)).isEmpty();
+        assertThat(Consent.exactly("", options)).isEmpty();
+        assertThat(Consent.exactly(null, options)).isEmpty();
+    }
+
+    @Test
+    void wordsWrittenInsteadOfAnAnswerArePutToTheAgentAndTheQuestionAnsweredInTheChat() {
+        final ChatForms chat = new ChatForms(7);
+        final ToolCallContext context = chat.context();
+        final String typed = "What's the difference?";
+
+        final ToolRefusal refusal = consent.wroteInstead(context, "survey_feed", SOURCE_QUESTION, typed,
+                "ask them in the chat which field it is.");
+
+        assertThat(refusal.getMessage()).contains("\"" + typed + "\"").contains("If it's a question, answer it "
+                                                                                    + "first")
+                .contains("ask them in the chat which field it is.");
+        assertThat(consent.takesChatAnswer(context, "survey_feed", SOURCE_QUESTION)).isTrue();
+        assertThat(consent.answer(new ToolCall("call-2", "survey_feed", "{}"), context, "survey_feed", "Intro",
+                SOURCE_QUESTION, List.of("event.app"))).as("asked in a form again").isEmpty();
+        assertThat(forms(chat)).isZero();
+    }
+
+    // The forms shown in the chat so far.
+    private static int forms(final ChatForms chat) {
+        return (int) chat.messages().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .count();
     }
 
     @Test
@@ -499,6 +671,16 @@ class TestConsent {
         final Matcher matcher = Pattern.compile(argument + "='([0-9a-f]+)'").matcher(text);
         assertThat(matcher.find()).as("%s in %s", argument, text).isTrue();
         return matcher.group(1);
+    }
+
+    // What the agent is told by a call that asks the user: the refusal it is given (as the tool's result), else
+    // the answer.
+    private static String toldTheAgent(final Supplier<Object> ask) {
+        try {
+            return "answered: " + ask.get();
+        } catch (final ToolRefusal e) {
+            return e.getMessage();
+        }
     }
 
     private static ToolCall withArg(final String name, final String value) {

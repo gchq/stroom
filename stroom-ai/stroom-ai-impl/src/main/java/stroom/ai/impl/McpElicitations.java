@@ -38,6 +38,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +63,9 @@ public class McpElicitations {
     private static final Duration RUN_STOP_CHECK = Duration.ofMillis(50);
     // Who asks the questions of Stroom AI's own agent.
     private static final String STROOM_AI = "Stroom AI";
+    /// The key of an answer's meta that says Stroom's own form was put aside by a message the user sent instead,
+    /// its value what they sent (see [#sentInstead]).
+    public static final String SENT_INSTEAD = "stroom.ai/sentInstead";
 
     private final AiDao aiDao;
     private final AiChatRunDao runDao;
@@ -131,7 +135,8 @@ public class McpElicitations {
     /// @param message What the questions are for.
     /// @param schema  The questions, as a form.
     /// @return The user's answer, or a decline or cancel if too many forms are waiting (asked outside a tool call),
-    /// the user sent a message instead, or the run was stopped.
+    /// the user sent a message instead (a cancel that [#sentInstead] reads the message from), or the run was
+    /// stopped.
     /// @throws AiChatRunManager.WaitingForUserException if the run is to stop until the user answers.
     /// @throws ToolRefusal if the form can never be shown (e.g. it is too large), with or without a call id.
     public ElicitResult askUser(final int chatId,
@@ -150,12 +155,14 @@ public class McpElicitations {
             return handle(chatId, STROOM_AI, tool, new ElicitFormRequest(message, schema, null));
         }
         // Asked before the run stopped: the answer, if there is one now.
-        final ElicitationRecord asked = findForCall(chatId, callId).flatMap(McpElicitations::read).orElse(null);
+        final AiChatMessage askedMessage = findForCall(chatId, callId).orElse(null);
+        final ElicitationRecord asked = NullSafe.get(askedMessage, form -> read(form).orElse(null));
         if (asked != null) {
             return switch (asked.status()) {
                 case ACCEPTED -> new ElicitResult(Action.ACCEPT, asked.content());
                 case DECLINED -> new ElicitResult(Action.DECLINE, null);
-                case CANCELLED, EXPIRED, SUPERSEDED -> new ElicitResult(Action.CANCEL, null);
+                case CANCELLED, EXPIRED -> new ElicitResult(Action.CANCEL, null);
+                case SUPERSEDED -> putAside(chatId, askedMessage.getId());
                 case PENDING -> throw waitForAnswers(chatId);
             };
         }
@@ -224,7 +231,9 @@ public class McpElicitations {
             try {
                 final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.ELICITATION,
                         JsonUtil.writeValueAsString(record, false));
-                return await(chatId, message.getId(), expiresMs, stop);
+                // Only Stroom AI's own tools (which name themselves) are told what the user sent instead: an MCP
+                // server is answered as the protocol has it, a cancel.
+                return await(chatId, message.getId(), expiresMs, stop, tool != null);
             } finally {
                 if (paused) {
                     runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.WAITING_FOR_USER),
@@ -286,7 +295,8 @@ public class McpElicitations {
     }
 
     /// Puts aside the forms in a chat that are waiting for answers, as the user has sent a message instead: the tools
-    /// that asked are told they weren't answered, and the run carries on, with the message.
+    /// that asked are told they weren't answered (Stroom AI's own, what the user sent: [#sentInstead]; an MCP server,
+    /// a cancel), and the run carries on, with the message.
     ///
     /// @param chatId The chat.
     /// @return How many forms were put aside.
@@ -316,7 +326,8 @@ public class McpElicitations {
     private ElicitResult await(final int chatId,
                                final int messageId,
                                final long expiresMs,
-                               final AtomicBoolean stop) {
+                               final AtomicBoolean stop,
+                               final boolean ownTool) {
         while (true) {
             final AiChatMessage message = find(chatId, messageId).orElse(null);
             final ElicitationRecord record = message != null
@@ -333,8 +344,11 @@ public class McpElicitations {
                     return new ElicitResult(Action.DECLINE, null);
                 case CANCELLED:
                 case EXPIRED:
-                case SUPERSEDED:
                     return new ElicitResult(Action.CANCEL, null);
+                case SUPERSEDED:
+                    return ownTool
+                            ? putAside(chatId, messageId)
+                            : new ElicitResult(Action.CANCEL, null);
                 default:
                     break;
             }
@@ -410,6 +424,53 @@ public class McpElicitations {
                 .max()
                 .orElse(Integer.MAX_VALUE);
         return messageId > latestQuestionId;
+    }
+
+    /// @param result A form's answer, as [#askUser] gives it.
+    /// @return What the user sent in the chat instead of answering the form (blank if it can't be found), if they
+    /// did: the form was put aside by it, not closed or run out. Empty for any other answer.
+    public static Optional<String> sentInstead(final ElicitResult result) {
+        return Optional.ofNullable(result)
+                .filter(answer -> answer.action() == Action.CANCEL)
+                .map(answer -> NullSafe.map(answer.meta()).get(SENT_INSTEAD))
+                .map(String::valueOf);
+    }
+
+    /// What a tool tells the agent when the user sent a message in the chat instead of answering its form, one
+    /// wording for every form of Stroom's own tools: the message comes before the call's result in the agent's
+    /// context, so the agent is told to reply to it, not to ask again.
+    ///
+    /// @param asked     What the form asked, e.g. its question or what it asked the user to agree to.
+    /// @param tool      The tool that asked.
+    /// @param sent      What the user sent instead ([#sentInstead]), blank if unknown.
+    /// @param afterward What the agent does once the user has said what they want, e.g. how the question's answer
+    ///                  is given then, or blank for nothing more.
+    /// @return What the agent is told.
+    public static String sentInsteadText(final String asked,
+                                         final String tool,
+                                         final String sent,
+                                         final String afterward) {
+        final String quoted = NullSafe.isBlankString(sent)
+                ? " (it is in the chat, just before this)"
+                : ": \"" + sent.strip() + "\"";
+        return "The user sent a message instead of answering '" + NullSafe.string(asked).strip() + "'" + quoted
+               + ". Nothing was done. Reply to their message first. Don't call " + tool + " again until they've "
+               + "said what they want." + (NullSafe.isBlankString(afterward)
+                ? ""
+                : " " + afterward.strip());
+    }
+
+    // A form put aside by a message the user sent instead: a cancel, as for an MCP server, carrying what they sent,
+    // the first message sent to the chat's run after the form was shown (AskStroomAIService stores it, then puts
+    // the form aside).
+    private ElicitResult putAside(final int chatId, final int formId) {
+        final String sent = aiDao.getMessages(chatId).stream()
+                .filter(message -> message.getId() > formId
+                                   && message.getMessageType() == AiMessageType.STEER_MESSAGE)
+                .min(Comparator.comparingInt(AiChatMessage::getId))
+                .map(AiChatMessage::getMessage)
+                .orElse("");
+        return new ElicitResult(Action.CANCEL, null, Map.of(SENT_INSTEAD, sent));
     }
 
     // The questions a tool call asked, in a run that stopped to wait for the answers.

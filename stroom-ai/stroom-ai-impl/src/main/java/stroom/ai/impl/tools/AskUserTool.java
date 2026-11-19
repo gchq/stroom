@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.ElicitationSchema;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
@@ -136,9 +137,11 @@ class AskUserTool extends AbstractBuiltInTool {
             case DECLINE -> "The user chose not to answer these questions. Don't ask them again now: carry on with "
                             + "what you recommended if you can, saying what you assumed, or stop and say what "
                             + "you need.";
-            case CANCEL -> "The questions were not answered (the user stopped the chat, sent a message instead, which "
-                           + "follows if so, or didn't answer in time). "
-                           + "Don't carry on as if they had.";
+            case CANCEL -> McpElicitations.sentInstead(result)
+                    .map(sent -> McpElicitations.sentInsteadText(intro, NAME, sent,
+                            "Don't carry on as if they had answered these questions."))
+                    .orElse("The questions were not answered (the user stopped the chat, or didn't answer in "
+                            + "time). Don't carry on as if they had.");
         };
         return ToolResult.text(text);
     }

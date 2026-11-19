@@ -1591,4 +1591,78 @@ class TestSurveyFeedTool {
         assertThat(result.isError()).as(result.text()).isFalse();
         return new LinkedHashMap<>(JsonUtil.readValue(result.text(), Map.class));
     }
+
+    // Forms answered with a question: the user types a question in a form's own-words box rather than an answer.
+
+    @Test
+    void aQuestionTypedInTheSourceTypeFieldFormIsPutToTheAgentToAnswerNotTakenForAFieldName() {
+        // Seen in testing: the user put a question in the own-words ("Other") box of "Which field says which source
+        // a record came from?". It was taken for a field's name, and refused as naming none of the records'
+        // fields, so the agent asked the same question again in the chat rather than answering the user's.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        final String question = "What's the difference between event.app and event.logger_name?";
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", question));
+
+        final ToolResult result = call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}",
+                user.context());
+
+        assertThat(user.shown()).first().asString().contains("aggregates several sources");
+        assertThat(result.text()).as("what the agent is told")
+                .doesNotContain("names none of the records' fields")
+                .contains(question)
+                .containsIgnoringCase("question");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void afterAQuestionTypedInTheSourceTypeFieldFormItsAnswerIsTakenFromTheChatNeverTheFormAgain() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        final String args = "{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"";
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Which one is it, do you think?"));
+        assertThat(call(args + "}", user.context()).isError()).isTrue();
+        assertThat(user.shown()).hasSize(1);
+
+        // Without the user's answer: not asked in a form again, the agent told to pass what they say.
+        final Map<String, Object> without = json(call(args + "}", user.context()));
+
+        assertThat(user.shown()).as("forms shown").hasSize(1);
+        assertThat(without).containsEntry("status", "needs_source_type_field");
+        assertThat(String.valueOf(without.get("hint"))).contains("put it aside", "source_type_field");
+
+        // With it: taken, not asked.
+        final Map<String, Object> given = json(call(args + ", \"source_type_field\": \"source\"}",
+                user.context()));
+
+        assertThat(user.shown()).as("forms shown").hasSize(1);
+        assertThat((Map<String, Object>) given.get("source_types")).containsEntry("field", "source")
+                .containsEntry("by", "user");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aFieldOrOptionTypedWholeInTheSourceTypeFieldFormIsTakenWhateverItsCase() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        final String args = "{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}";
+
+        final Map<String, Object> field = json(call(args, BuildToolCalls.user(Map.of("answer", " SOURCE "))
+                .context()));
+
+        assertThat((Map<String, Object>) field.get("source_types")).containsEntry("field", "source");
+    }
+
+    @Test
+    void oneSourceTypedWholeInTheSourceTypeFieldFormIsTakenButNotWordsThatStartSo() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        final String args = "{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}";
+
+        final ToolResult partly = call(args, BuildToolCalls.user(Map.of("answer", "not aggregated, or is it?"))
+                .context());
+
+        assertThat(partly.isError()).isTrue();
+        assertThat(partly.text()).contains("If it's a question, answer it first");
+    }
 }
