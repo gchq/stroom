@@ -231,6 +231,21 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void theArrayForEachReadsIsNotAnUnreadField() {
+        // Seen (eval 69): the alerts array for_each reads item by item was said to be read by nothing.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "array", "for_each": "alerts", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "time", "time_format": "yyyy-MM-dd'T'HH:mm:ssX"},
+                 {"path": "EventSource/Device/HostName", "field": "gateway", "scope": "record"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                [{"gateway": "gw1", "batch": 1, "alerts": [{"time": "2026-11-19T09:00:00Z"}]}]""", null);
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records))).containsExactly(
+                "fields in the sample that nothing reads (1 of 4): ['batch']: map each to the element that means it "
+                + "(a Data entry if nothing else fits), or leave it out on purpose.");
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void anXmlSamplesCheckListsItsFieldsAndSaysWhatItCouldNotCheck() {
         // Seen: 1000 XML records checked clean with fields_seen [], every rule testing a field extracted from an

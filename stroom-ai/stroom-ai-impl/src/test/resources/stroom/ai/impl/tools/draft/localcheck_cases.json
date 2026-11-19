@@ -3016,9 +3016,7 @@
    "check": {
     "records": 3,
     "problems": [],
-    "warnings": [
-     "fields in the sample that nothing reads (1 of 7): ['events']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
-    ],
+    "warnings": [],
     "fields_seen": [
      "host",
      "batch",

@@ -1911,6 +1911,8 @@ public final class LocalCheck {
                 texts.forEach(text -> readWords.addAll(ToolText.findall(WORD, text)));
             }
             final List<String> unread = seen.stream()
+                    // The array for_each reads item by item is read: seen, said to be read by nothing.
+                    .filter(k -> !k.equals(mapping.forEach()))
                     .filter(k -> !derived.contains(k) && !suggested.contains(k) && !MappingFacts.readsInput(mapping, k))
                     .filter(k -> !(xml && readWords.containsAll(ToolText.findall(WORD, k))))
                     .toList();
