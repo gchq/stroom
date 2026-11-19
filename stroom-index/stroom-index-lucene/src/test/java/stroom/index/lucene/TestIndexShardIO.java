@@ -22,6 +22,7 @@ import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.LuceneVersionUtil;
@@ -33,8 +34,11 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NIOFSDirectory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -75,6 +79,42 @@ class TestIndexShardIO extends StroomUnitTest {
         pathCreator = new SimplePathCreator(
                 () -> tempDir.resolve("home"),
                 () -> tempDir);
+    }
+
+    @Test
+    void testReplacedCommitsAreKeptOnASharedVolumeOnly() throws IOException {
+        // Other nodes may be reading a shard on a shared volume, so its writer keeps the commits it replaces.
+        assertThat(countCommitsAfterTwoFlushes(VolumeType.SHARED)).isEqualTo(2);
+        // A shard on a local volume is only read by its own node, so nothing changes for it.
+        assertThat(countCommitsAfterTwoFlushes(VolumeType.LOCAL)).isEqualTo(1);
+    }
+
+    private int countCommitsAfterTwoFlushes(final VolumeType volumeType) throws IOException {
+        final IndexVolume volume = IndexVolume
+                .builder()
+                .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                .volumeType(volumeType)
+                .build();
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
+        final IndexShard indexShard = createShard(index, volume);
+        final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
+
+        final IndexShardWriter writer = new LuceneIndexShardWriter(
+                null, new IndexConfig(), indexShard, pathCreator, MAX_DOCS, fieldFactory);
+        try {
+            writer.addDocument(buildDocument(1));
+            writer.flush();
+            writer.addDocument(buildDocument(2));
+            writer.flush();
+            try (final Directory directory = new NIOFSDirectory(dir)) {
+                return DirectoryReader.listCommits(directory).size();
+            }
+        } finally {
+            writer.close();
+        }
     }
 
     @Test

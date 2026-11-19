@@ -151,6 +151,7 @@ class TestJoinTableFetcher {
                 List.of(),
                 null,
                 List.of(),
-                sourceNode);
+                sourceNode,
+                null);
     }
 }

@@ -7570,6 +7570,10 @@ paths:
         name: queryKey
         schema:
           type: string
+      - in: query
+        name: dispatchId
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -7603,6 +7607,10 @@ paths:
       parameters:
       - in: query
         name: queryKey
+        schema:
+          type: string
+      - in: query
+        name: dispatchId
         schema:
           type: string
       responses:
@@ -17993,6 +18001,8 @@ components:
       properties:
         dateTimeSettings:
           $ref: "#/components/schemas/DateTimeSettings"
+        dispatchId:
+          type: string
         key:
           $ref: "#/components/schemas/QueryKey"
         query:

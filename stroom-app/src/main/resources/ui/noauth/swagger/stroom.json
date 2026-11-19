@@ -11046,6 +11046,12 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "in" : "query",
+          "name" : "dispatchId",
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "default" : {
@@ -11091,6 +11097,12 @@
         "parameters" : [ {
           "in" : "query",
           "name" : "queryKey",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "dispatchId",
           "schema" : {
             "type" : "string"
           }
@@ -24642,6 +24654,9 @@
         "properties" : {
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "dispatchId" : {
+            "type" : "string"
           },
           "key" : {
             "$ref" : "#/components/schemas/QueryKey"

@@ -27,15 +27,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final StroomDuration DEFAULT_REPLACED_COMMIT_RETENTION = StroomDuration.ofMinutes(30);
 
     private final CacheConfig activeShardCache;
     private final CacheConfig indexShardWriterCache;
     @Deprecated
     private final IndexShardWriterCacheConfig indexShardWriterCacheConfig;
     private final StroomDuration slowIndexWriteWarningThreshold;
+    private final StroomDuration replacedCommitRetention;
 
     public IndexWriterConfig() {
         activeShardCache = CacheConfig.builder()
@@ -51,6 +56,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
                 .withMaxItems(100)
                 .build();
         slowIndexWriteWarningThreshold = StroomDuration.ofSeconds(1);
+        replacedCommitRetention = DEFAULT_REPLACED_COMMIT_RETENTION;
     }
 
     @SuppressWarnings("unused")
@@ -59,11 +65,15 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty("activeShardCache") final CacheConfig activeShardCache,
             @JsonProperty("indexShardWriterCache") final CacheConfig indexShardWriterCache,
             @JsonProperty("cache") final IndexShardWriterCacheConfig indexShardWriterCacheConfig,
-            @JsonProperty("slowIndexWriteWarningThreshold") final StroomDuration slowIndexWriteWarningThreshold) {
+            @JsonProperty("slowIndexWriteWarningThreshold") final StroomDuration slowIndexWriteWarningThreshold,
+            @JsonProperty("replacedCommitRetention") final StroomDuration replacedCommitRetention) {
         this.activeShardCache = activeShardCache;
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardWriterCacheConfig = indexShardWriterCacheConfig;
         this.slowIndexWriteWarningThreshold = slowIndexWriteWarningThreshold;
+        this.replacedCommitRetention = Objects.requireNonNullElse(
+                replacedCommitRetention,
+                DEFAULT_REPLACED_COMMIT_RETENTION);
     }
 
     public CacheConfig getActiveShardCache() {
@@ -88,6 +98,20 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
         return slowIndexWriteWarningThreshold;
     }
 
+    /// Gets how long a writer keeps the commits it has replaced in a shard on a shared volume.
+    ///
+    /// @return The retention period, never null.
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("How long the writer of an index shard on a shared index volume keeps the " +
+            "commits it has replaced before deleting their files. Other nodes may be reading the shard, and a " +
+            "search fails if a file it is reading is deleted, so this must be longer than the longest time a " +
+            "search holds a shard open. Longer periods use more disk space. A value of '0' or 'PT0' deletes " +
+            "replaced commits at once. Shards on local index volumes are not affected.")
+    public StroomDuration getReplacedCommitRetention() {
+        return replacedCommitRetention;
+    }
+
     @Override
     public String toString() {
         return "IndexWriterConfig{" +
@@ -95,6 +119,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
                 ", indexShardWriterCache=" + indexShardWriterCache +
                 ", indexShardWriterCacheConfig=" + indexShardWriterCacheConfig +
                 ", slowIndexWriteWarningThreshold=" + slowIndexWriteWarningThreshold +
+                ", replacedCommitRetention=" + replacedCommitRetention +
                 '}';
     }
 }

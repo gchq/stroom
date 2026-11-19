@@ -26,6 +26,7 @@ import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene.analyser.AnalyzerFactory;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexVolume;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.FieldValue;
@@ -199,6 +200,22 @@ class LuceneIndexShardWriter implements IndexShardWriter {
                     loggerPrintStream.addWatchTerm(term);
                 }
                 luceneIndexWriterConfig.setInfoStream(loggerPrintStream);
+            }
+
+            // Other nodes may be reading a shard on a shared volume, so keep the commits this writer
+            // replaces for long enough that they can finish. A shard on a local volume is only read by this
+            // node, where a deleted file stays readable for as long as it is open.
+            final long replacedCommitRetentionMs = NullSafe.test(indexShard.getVolume(), IndexVolume::isShared)
+                    ? NullSafe.getOrElse(
+                            indexConfig,
+                            IndexConfig::getIndexWriterConfig,
+                            stroom.index.impl.IndexWriterConfig::getReplacedCommitRetention,
+                            StroomDuration.ZERO).toMillis()
+                    : 0;
+            if (replacedCommitRetentionMs > 0) {
+                luceneIndexWriterConfig.setIndexDeletionPolicy(new RetainReplacedCommitsDeletionPolicy(
+                        replacedCommitRetentionMs,
+                        System::currentTimeMillis));
             }
 
             // Create lucene directory object.
