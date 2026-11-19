@@ -1658,9 +1658,18 @@ to delete them by hand.~~
     or blank one is never applied. Play: `App/Main/TimePreferences` `EveryFieldReportsItsChange`
     (failed before). Cancel's revert of what was applied is unchanged, and is covered with the
     dialog's stories (`App/Main/AppShell`).
-  * Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
+  * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
-    (`AnalyticProcessingController.setProcessType`).
+    (`AnalyticProcessingController.setProcessType`).~~ **Fixed** (19 November 2026): showing the
+    Table Builder panel lists the nodes and fetches the progress (`TableBuilderProcessingController.show`),
+    as the other types fetch theirs; its settings are read only when the rule has them
+    (`readSettings`), as a rule switched to it has none. Play: `App/Editors/AnalyticRuleEditor`
+    `SwitchToTableBuilderLoadsIt` (failed before). As the nodes are now listed each time the panel
+    is shown, the node box keeps the node already chosen if it is still listed (it went back to the
+    first, so a rule switched away and back would have saved the wrong node; play
+    `SwitchAwayAndBackKeepsTheNode`, which fails with the old `setNodes`). Opening a scheduled or
+    streaming rule no longer fetches its schedules or filters twice. Left: every story fixture for a
+    scheduled rule answers the progress request, so a needless one wouldn't fail a story.
   * ~~An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
     paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).~~
     **Gone** (checked 19 November 2026): the recipients are edited in the notification dialog,

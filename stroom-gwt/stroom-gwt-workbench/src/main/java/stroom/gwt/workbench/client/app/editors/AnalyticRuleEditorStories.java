@@ -127,9 +127,7 @@ public final class AnalyticRuleEditorStories {
     };
     private static QueryResultTableController otherTable;
 
-    private static final RestFixtures SHARD_FIXTURES = analyticRoutes(RestFixtures.builder()
-            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", SCHEDULED))))
-            .build();
+    private static final RestFixtures SHARD_FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", SCHEDULED));
 
     // An email notification
     private static final String NOTIFICATION = """
@@ -240,6 +238,38 @@ public final class AnalyticRuleEditorStories {
                     play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
                     play.expect(DocumentEditors.tab(play, "Duplicate Management")).not().toBeVisible();
                     play.waitFor(() -> play.expect(play.getByText("Processing Info")).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // Switching a rule to Table Builder lists the nodes and fetches its progress at once.
+                // Before, both waited until the rule was opened again: the node box was empty and
+                // Refresh did nothing
+                .story("SwitchToTableBuilderLoadsIt", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Execution");
+                    play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+                    play.click(play.getByDisplayValue("Scheduled Query"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(screen.getByDisplayValue("node1")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("4321")).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // A table builder rule switched away and back keeps its node (node9), though the
+                // nodes are listed again; the box had gone back to the first node, which a save stored
+                .story("SwitchAwayAndBackKeepsTheNode", context -> render(context, TABLE_BUILDER_FIXTURES,
+                        UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Execution");
+                    play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
+                    play.click(play.getByDisplayValue("Table Builder"));
+                    play.click(screen.findByText("Scheduled Query", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+                    play.click(play.getByDisplayValue("Scheduled Query"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(play.getByText("Processing Info")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
+                    play.expect(screen.queryByDisplayValue("node1")).toBeNull();
                     expectNoProblems(play);
                 })
                 // A table builder rule's Shards tab lists the shards found on every node, each node's
@@ -803,6 +833,10 @@ public final class AnalyticRuleEditorStories {
     }
 
     private static RestFixtures fixtures(final String doc) {
-        return analyticRoutes(RestFixtures.builder().get("/analyticRule/v1/rule-1", RestReply.json(doc))).build();
+        return analyticRoutes(RestFixtures.builder()
+                .get("/analyticRule/v1/rule-1", RestReply.json(doc))
+                // A rule switched to a table builder fetches its progress (TABLE_BUILDER_FIXTURES,
+                // not made here, answers it with its own route)
+                .route(RequestMatcher.post("/analyticProcess/v1/tracker"), RestReply.json(TRACKER))).build();
     }
 }
