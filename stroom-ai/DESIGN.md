@@ -3193,6 +3193,22 @@ reads them; output JSON):
 * Documentation event types are proposed through `catalogue_event_types` (`basis: documentation`); record_source_notes
   keeps fields and documents only.
 
+**Settled with the core (lane A, 2026-11-19):**
+
+* **JSON arrays**: Stroom's JSON as XML gives an array's items run together as its text (`["a","b"]` is "ab"), so
+  the generator compares a JSON array field's items one by one (any item; `not`: none), as the contract says; the
+  evaluator and parity suite follow it (seen: eval case 46's draft rule `event.category equals '["authentication"]'`
+  could never match).
+* **Splitter values decoded in conditions**: a Data Splitter keeps CSV `""` and key=value `\"` as written; a
+  condition on such a field is generated over the value as its mapping decodes it (the field's unescape transform),
+  so conditions compare decoded values, as the contract says.
+* **Held values that don't parse**: a `not` condition over them holds (as XPath has it); the check counts and names
+  such records (`unparsed`) rather than calling them uncatalogued.
+* **Keys holding `.` or `/`** (or starting `[`) are spelt in brackets: `['log.level']`,
+  `labels['app.kubernetes.io/name']` (`'` doubled inside), everywhere fields are named (survey, draft, conditions).
+* TypeId: `^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters; titles unique
+  ignoring case; a regex at most 500 characters.
+
 **Code homes**: model and check in `stroom-ai-impl` `stroom.ai.impl.tools.catalogue`; the evaluator in
 `tools/draft/LocalCheck` (and its helpers); the tool in `stroom-mcp-impl` `tools/CatalogueEventTypesTool`.
 
