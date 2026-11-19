@@ -93,8 +93,8 @@ public final class SetupSampleData {
             // Setup the DB ready to load content and data.
             commonTestControl.setup(null);
 
-        // Pull in content packs from the content store
-        devSetup.installSampleDataPacks();
+            // Pull in content packs from the content store
+            devSetup.installSampleDataPacks();
 
             // Load the sample data and content from the 'samples' dirs
             setupSampleDataBean.run(true);
