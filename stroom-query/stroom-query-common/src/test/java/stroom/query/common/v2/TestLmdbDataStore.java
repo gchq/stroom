@@ -52,12 +52,16 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
@@ -69,6 +73,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -230,6 +235,68 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 Arrays.asList("user2", "2026-03-11T00:00:00.000Z", "1", "0", "1"),
                 Arrays.asList("user2", "2026-03-12T00:00:00.000Z", "1", "1", "0"),
                 Arrays.asList("user2", "2026-03-13T00:00:00.000Z", "0", "1", null));
+    }
+
+    // A search across nodes builds a store on each node and sends its rows to the node that the
+    // search was started on, which merges them. The result is the same as if one store had been
+    // given every event.
+    @Test
+    void lagAndLeadOfRowsMergedFromTwoNodes() throws InterruptedException {
+        final TableSettings tableSettings = lagTable("1d", null);
+        final DataStoreSettings nodeSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
+        final DataStore node1 = create(tableSettings, nodeSettings);
+        final DataStore node2 = create(tableSettings, nodeSettings);
+        final DataStore dataStore = create(tableSettings);
+
+        // The events of the same user and day are split between the nodes.
+        addEvent(node1, "2026-03-10T09:00:00Z", "user1");
+        addEvent(node2, "2026-03-10T10:00:00Z", "user1");
+        addEvent(node2, "2026-03-11T09:00:00Z", "user1");
+        addEvent(node1, "2026-03-13T09:00:00Z", "user1");
+        addEvent(node1, "2026-03-11T09:00:00Z", "user2");
+        addEvent(node2, "2026-03-12T09:00:00Z", "user2");
+
+        transferPayloads(node1, dataStore);
+        transferPayloads(node2, dataStore);
+
+        // The same rows as lagAndLeadGiveTheCountOfTheWindowsEitherSide().
+        assertThat(windowRows(dataStore, tableSettings, 5)).containsExactlyInAnyOrder(
+                Arrays.asList("user1", "2026-03-10T00:00:00.000Z", "2", null, "1"),
+                Arrays.asList("user1", "2026-03-11T00:00:00.000Z", "1", "2", "0"),
+                Arrays.asList("user1", "2026-03-12T00:00:00.000Z", "0", "1", "1"),
+                Arrays.asList("user1", "2026-03-13T00:00:00.000Z", "1", "0", null),
+                Arrays.asList("user2", "2026-03-10T00:00:00.000Z", "0", null, "1"),
+                Arrays.asList("user2", "2026-03-11T00:00:00.000Z", "1", "0", "1"),
+                Arrays.asList("user2", "2026-03-12T00:00:00.000Z", "1", "1", "0"),
+                Arrays.asList("user2", "2026-03-13T00:00:00.000Z", "0", "1", null));
+    }
+
+    @Test
+    void hoppingWindowRowsMergedFromTwoNodes() throws InterruptedException {
+        final TableSettings tableSettings = windowTable("1h", "30m");
+        final DataStoreSettings nodeSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
+        final DataStore node1 = create(tableSettings, nodeSettings);
+        final DataStore node2 = create(tableSettings, nodeSettings);
+        final DataStore single = create(tableSettings);
+        final DataStore merged = create(tableSettings);
+
+        final List<String> times = List.of(
+                "2026-03-10T10:10:00Z",
+                "2026-03-10T10:40:00Z",
+                "2026-03-10T10:50:00Z",
+                "2026-03-10T11:20:00Z");
+        for (int i = 0; i < times.size(); i++) {
+            addEvent(single, times.get(i), "user1");
+            addEvent(i % 2 == 0
+                    ? node1
+                    : node2, times.get(i), "user1");
+        }
+        transferPayloads(node1, merged);
+        transferPayloads(node2, merged);
+
+        assertThat(windowRows(merged, tableSettings))
+                .isNotEmpty()
+                .containsExactlyInAnyOrderElementsOf(windowRows(single, tableSettings));
     }
 
     @Test
@@ -528,6 +595,24 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     // The store asks for the window's time field first, so it is the first value of a row.
+    // Sends the rows of a node's store to another store, as a search across nodes does.
+    private void transferPayloads(final DataStore node, final DataStore destination) throws InterruptedException {
+        node.getCompletionState().signalComplete();
+        boolean complete = false;
+        for (int i = 0; i < 1_000 && !complete; i++) {
+            // The node's store is complete once its last payload has been taken.
+            complete = node.getCompletionState().awaitCompletion(10, TimeUnit.MILLISECONDS);
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            try (final Output output = new Output(outputStream)) {
+                node.writePayload(output);
+            }
+            try (final Input input = new Input(new ByteArrayInputStream(outputStream.toByteArray()))) {
+                destination.readPayload(input);
+            }
+        }
+        assertThat(complete).isTrue();
+    }
+
     private void addEvent(final DataStore dataStore, final String time, final String userId) {
         dataStore.accept(Val.of(ValDate.create(Instant.parse(time).toEpochMilli()), ValString.create(userId)));
     }

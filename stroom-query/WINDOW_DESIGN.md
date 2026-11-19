@@ -408,14 +408,14 @@ A bare name on the right of a `having` comparison is read as a column if an eval
 ### Known limits
 
 - **Rule clock.** A table builder rule closes a window on the time of the last event it has read, less its time to wait for data. That time can move back when events arrive out of order, and there is no clock part, so the last window is judged only when a later event arrives. The clock-and-coverage rule comes with the views work.
-- **Clustered search.** A search across nodes still reads through the store for the first and last window, as rows from another node are not noted. A window clause has not been tested across a cluster.
+- **Clustered search.** A search across nodes still reads through the store for the first and last window, as rows from another node are not noted. Store tests merge the rows of two nodes' stores into a third, for lag, lead and hopping windows, and get the rows that one store gives. A window clause has not been run on a real cluster.
 - **`lag` default that starts with `window:`.** The windows of a query are passed to window functions as a hidden last parameter of that form. A value that the query gives, such as a default, is now refused with a message if it starts with that prefix, as in `'window:none'`. One case remains: a default typed in exactly the form Stroom writes, with the query's own windows, is taken as the hidden parameter and the function has no default.
 - **Copy limit check.** The parser compiles the columns a second time to count `lag` and `lead` distances, and reports an error from it against the first word of the query.
 - **Window key column.** Fixed after the second review above: the store now finds it by its compiled function, not the text of its expression.
 - **Clocks going back.** For day or week windows with an advance or offset of less than an hour, an event in the repeated hour can fall in a window that a rule has already judged. The row is not judged again.
 - **`is null`.** The tokeniser does not read `is null` in any clause, so it can't be used in `having`.
 - **Double-quoted names.** Inside an expression a double-quoted name is text, as in `eval`; only a bare name is a column.
-- **Build.** The full build passed on 19 November 2026, before the changes of the second review. The Docker image build has not been run.
+- **Build.** The full build passed on 19 November 2026, after the changes of the second review. The Docker image build has not been run.
 
 ## Coverage against Kusto
 
