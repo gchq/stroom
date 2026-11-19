@@ -8,6 +8,10 @@ capabilities: [multiline, event_boundaries]
 # errors and configuration changes coming after.
 request: >
   Onboard our billing service's application log (the file on my disk). Index the events.
+# The host is no field of the log: the user knows it (the reference writes it as a constant).
+user_knows: >
+  The service runs on the host billing01, which is not in the log. The system is Billing Service. Payment errors
+  are what the analysts alert on.
 expected:
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
