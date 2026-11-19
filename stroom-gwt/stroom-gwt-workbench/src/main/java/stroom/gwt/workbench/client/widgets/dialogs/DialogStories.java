@@ -31,8 +31,10 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -143,7 +145,21 @@ public final class DialogStories {
                         context -> trigger(context, "Open Create/OK/Cancel dialog", dialog(
                             PopupType.CREATE_OK_CANCEL_DIALOG, "Create New Item")
                             .size(600, 400)
+                            .onHideRequest(DialogStories::workOnNewThenStayOpen)
                             .text("Configure the new item, then Create, OK, or Cancel.")))
+                // New shows it is busy on itself while the screen handles it, as OK does (it was on
+                // Cancel), and stops once the screen keeps the dialog open
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open Create/OK/Cancel dialog")));
+                    final Play dialog = play.within(play.screen().findByRole("dialog", "Create New Item"));
+                    final Query newButton = dialog.getByRole("button", StroomDom.button("New"));
+                    play.click(newButton);
+                    play.waitFor(() -> play.expect(newButton).toHaveClass("button--loading"));
+                    play.expect(dialog.getByRole("button", StroomDom.button("Cancel")))
+                            .not().toHaveClass("button--loading");
+                    play.waitFor(() -> play.expect(newButton).not().toHaveClass("button--loading"));
+                    play.keyboard("{Escape}");
+                })
                 // Alert popup — WARNING icon in title bar + Close
                 .story("AlertPopup", "Alert popup",
                         context -> trigger(context, "Show Alert", dialog(
@@ -256,6 +272,21 @@ public final class DialogStories {
         play.keyboard("{Escape}");
     }
 
+    // As a screen that works on New for a moment, then keeps the dialog open (e.g. to show what it
+    // made); the other buttons close it
+    private static void workOnNewThenStayOpen(final HidePopupRequestEvent e) {
+        if (e.isCreate()) {
+            new Timer() {
+                @Override
+                public void run() {
+                    e.reset();
+                }
+            }.schedule(1000);
+        } else {
+            e.hide();
+        }
+    }
+
     private static DialogSpec dialog(final PopupType popupType, final String caption) {
         return new DialogSpec(popupType, caption);
     }
@@ -289,6 +320,7 @@ public final class DialogStories {
         private PopupSize popupSize;
         private SvgImage icon;
         private boolean modal;
+        private HidePopupRequestEvent.Handler onHideRequest;
         private String html = "";
 
         private DialogSpec(final PopupType popupType, final String caption) {
@@ -312,6 +344,13 @@ public final class DialogStories {
             return this;
         }
 
+        /// @param onHideRequest Told when a button asks to close the dialog, as a screen is, in place
+        ///                      of closing it at once.
+        private DialogSpec onHideRequest(final HidePopupRequestEvent.Handler onHideRequest) {
+            this.onHideRequest = onHideRequest;
+            return this;
+        }
+
         /// The dialog's paragraphs (constant text, so safe as HTML).
         private DialogSpec text(final String... paragraphs) {
             final StringBuilder sb = new StringBuilder();
@@ -326,13 +365,16 @@ public final class DialogStories {
             // A new controller each time, as Stroom's controllers are, since PopupManager toggles a
             // controller that is shown twice
             final StoryContent controller = StoryContent.html(popups.getEventBus(), html);
-            ControllerDialog.showOnce(popups, controller)
+            final ShowPopupEvent.Builder builder = ControllerDialog.showOnce(popups, controller)
                     .popupType(popupType)
                     .popupSize(popupSize)
                     .icon(icon)
                     .caption(caption)
-                    .modal(modal)
-                    .fire();
+                    .modal(modal);
+            if (onHideRequest != null) {
+                builder.onHideRequest(onHideRequest);
+            }
+            builder.fire();
         }
     }
 }

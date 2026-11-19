@@ -1498,9 +1498,13 @@ to delete them by hand.~~
 * ~~`CharacterNavigatorPresenter` is given a `SourceProgressBar` it never shows (found 25 October
   2026 in wave 3's audit): it is only ever hidden, and the code that would show it is commented
   out.~~ Gone in wave 4: the `CharacterNavigatorController` that replaces it has no progress bar.
-* A dialog's New button (`DialogFrame` with New, OK and Cancel; was `CreateOkCancelContent`) shows
+* ~~A dialog's New button (`DialogFrame` with New, OK and Cancel; was `CreateOkCancelContent`) shows
   its busy spinner on Cancel, not on itself, while the screen handles it (found 24 October 2026 in wave 3; as it was in
-  `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.
+  `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.~~ **Fixed**
+  (19 November 2026): the pressed button shows it, and is the one cleared when the screen keeps the
+  dialog open. Play: `Widgets/Dialogs/Dialog` `CreateOkCancel` (failed before; New is worked on for a
+  second, then the dialog stays open). Left: a dialog that hides keeps its pressed button spinning,
+  as OK always has; harmless unless a frame is ever shown again.
 * ~~Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
   `pager-button` (`components.css`; nothing has either class). Delete them once removals are
   allowed.~~ **Deleted** (checked 30 October 2026: neither is named anywhere).
@@ -1631,9 +1635,10 @@ to delete them by hand.~~
   `BucketGranularity` has no display names.~~ **Fixed** (19 November 2026): it has display names
   (Hour, Day, Week); stored documents keep the enum names. Play: `App/Editors/PlanBEditor` `Trace`
   (failed before).
-* The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
+* ~~The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
   (`$\{BaseField.score\}`), not UiBinder's `{{`, so it may show the backslashes
-  (`ElasticIndexSettings.ui.xml`).
+  (`ElasticIndexSettings.ui.xml`).~~ **Gone** (checked 19 November 2026): the rerank settings moved
+  to each field's settings (#5976, `ElasticFieldSettings.ui.xml`), whose help has no braces.
 * Found in wave 8's audit (26 October 2026; master has each):
   * A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
     `TableFilterPresenter.focus()` focused the selected tab's layer, which wasn't a `Focus`. Its
