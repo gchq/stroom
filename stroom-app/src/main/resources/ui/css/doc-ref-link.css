@@ -1,0 +1,48 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A link to a document (DocRefCell, FeedRefCell), or a value that can be copied (CopyTextUtil) or
+   opened (OpenLinkUtil), in a list's cell or a popup: its icon, its name, then its icons (copy,
+   open, insert; doc-ref-link__icon--hover), shown on a hover or with the keyboard focus on the row.
+   Was ref-link.css's, with user-ref-link.css and command-link.css. */
+
+.doc-ref-link__copy,
+.doc-ref-link__open,
+.doc-ref-link__insert {
+    cursor: pointer;
+}
+
+.doc-ref-link {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.doc-ref-link .svg-image.doc-ref-link__icon--hover {
+    opacity: 0;
+}
+
+/* Shown on hover, and on the row with keyboard focus so keyboard users see them too; the same
+   whether the row is disabled or not */
+.data-grid__row--keyboard:focus-within .doc-ref-link .svg-image.doc-ref-link__icon--hover,
+.data-grid__cell:hover .doc-ref-link .svg-image.doc-ref-link__icon--hover,
+.doc-ref-link:hover .svg-image.doc-ref-link__icon--hover,
+.data-grid__cell--disabled.data-grid__cell:hover .doc-ref-link .doc-ref-link__icon,
+.data-grid__cell--disabled .doc-ref-link:hover .svg-image.doc-ref-link__icon--hover {
+    opacity: .8;
+    color: var(--text-color);
+    cursor: pointer;
+}

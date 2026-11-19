@@ -17,9 +17,9 @@
 package stroom.query.api.datasource;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,7 +33,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class FindFieldCriteria extends BaseCriteria {
+public class FindFieldCriteria extends QuickFilterCriteria {
 
     public static final CriteriaFieldSort DEFAULT_SORT =
             new CriteriaFieldSort(FieldFields.NAME, false, true);
@@ -42,8 +42,6 @@ public class FindFieldCriteria extends BaseCriteria {
 
     @JsonProperty
     private final DocRef dataSourceRef;
-    @JsonProperty
-    private final String filter;
     @JsonProperty
     private final Boolean queryable;
     @JsonProperty
@@ -58,20 +56,20 @@ public class FindFieldCriteria extends BaseCriteria {
     /// @param pageRequest   The page of fields to return.
     /// @param sortList      How to sort the fields.
     /// @param dataSourceRef The data source.
-    /// @param filter        A filter on field names, or `null`.
+    /// @param quickFilter   A filter on field names, or `null`.
     /// @param queryable     True for only fields that can be queried, or `null` for all.
     public FindFieldCriteria(final PageRequest pageRequest,
                              final List<CriteriaFieldSort> sortList,
                              final DocRef dataSourceRef,
-                             final String filter,
+                             final String quickFilter,
                              final Boolean queryable) {
-        this(pageRequest, sortList, dataSourceRef, filter, queryable, null);
+        this(pageRequest, sortList, dataSourceRef, quickFilter, queryable, null);
     }
 
     /// @param pageRequest   The page of fields to return.
     /// @param sortList      How to sort the fields.
     /// @param dataSourceRef The data source.
-    /// @param filter        A filter on field names, or `null`.
+    /// @param quickFilter   A filter on field names, or `null`.
     /// @param queryable     True for only fields that can be queried, or `null` for all.
     /// @param nativeQuery   The query's native query, such as the SQL of a Data Connection, whose
     ///                      fields depend on it, or `null`.
@@ -79,12 +77,11 @@ public class FindFieldCriteria extends BaseCriteria {
     public FindFieldCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
-                             @JsonProperty("filter") final String filter,
+                             @JsonProperty("quickFilter") final String quickFilter,
                              @JsonProperty("queryable") final Boolean queryable,
                              @JsonProperty("nativeQuery") final String nativeQuery) {
-        super(pageRequest, sortList);
+        super(pageRequest, sortList, quickFilter);
         this.dataSourceRef = dataSourceRef;
-        this.filter = filter;
         this.queryable = queryable;
         this.nativeQuery = nativeQuery;
     }
@@ -93,9 +90,6 @@ public class FindFieldCriteria extends BaseCriteria {
         return dataSourceRef;
     }
 
-    public String getFilter() {
-        return filter;
-    }
 
     public Boolean getQueryable() {
         return queryable;
@@ -119,13 +113,13 @@ public class FindFieldCriteria extends BaseCriteria {
         }
         final FindFieldCriteria that = (FindFieldCriteria) o;
         return Objects.equals(dataSourceRef, that.dataSourceRef) &&
-               Objects.equals(filter, that.filter) &&
+               Objects.equals(getQuickFilter(), that.getQuickFilter()) &&
                Objects.equals(queryable, that.queryable) &&
                Objects.equals(nativeQuery, that.nativeQuery);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, filter, queryable, nativeQuery);
+        return Objects.hash(super.hashCode(), dataSourceRef, getQuickFilter(), queryable, nativeQuery);
     }
 }

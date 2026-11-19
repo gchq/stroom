@@ -1,0 +1,40 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A form label (stroom.widget.form.client.FormLabel), as a form group and a tick box use, named BEM
+   style (block, block__element, block--modifier).
+*/
+
+
+/* A form label (FormLabel), as a form group and a tick box use */
+.form-label {
+    margin-bottom: .25rem;
+    font-weight: 600;
+    color: var(--form-group__label-color);
+}
+
+.form-label--disabled {
+    color: var(--text-color--disabled);
+}
+
+/* A required field's label ends with an asterisk (FormGroup's required, #5410). Screen readers skip
+   it (its alternative text, after the slash, is empty), as they hear "required" from the field */
+.form-label--required::after {
+    content: "*";
+    content: "*" / "";
+    margin-left: 0.15em;
+}

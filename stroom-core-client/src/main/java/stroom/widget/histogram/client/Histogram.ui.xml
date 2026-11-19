@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A histogram (histogram.css): the canvas the bars are drawn on (made in Java, as a canvas may not be
+  supported) and the tooltip over it that shows a bar's count.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="histogram">
+        <g:FlowPanel ui:field="wrapper" styleName="histogram__wrapper">
+            <tx:Label ui:field="tooltip" addStyleNames="histogram__tooltip"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

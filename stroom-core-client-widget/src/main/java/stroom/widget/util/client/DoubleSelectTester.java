@@ -79,6 +79,13 @@ public class DoubleSelectTester implements HasHandlers {
         }
     }
 
+    /// Forgets the last selection and ends any double select period, so the next selection
+    /// can't complete a double select.
+    public void reset() {
+        doubleSelectTimer.cancel();
+        clear();
+    }
+
     private void clear() {
         lastSelection = null;
         inDoubleSelectPeriod = false;

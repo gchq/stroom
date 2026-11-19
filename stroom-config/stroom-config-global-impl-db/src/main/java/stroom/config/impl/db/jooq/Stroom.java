@@ -15,6 +15,7 @@ import org.jooq.impl.SchemaImpl;
 import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
 import stroom.config.impl.db.jooq.tables.Preferences;
+import stroom.config.impl.db.jooq.tables.QuickFilterHistory;
 
 
 /**
@@ -46,6 +47,11 @@ public class Stroom extends SchemaImpl {
     public final Preferences PREFERENCES = Preferences.PREFERENCES;
 
     /**
+     * The table <code>stroom.quick_filter_history</code>.
+     */
+    public final QuickFilterHistory QUICK_FILTER_HISTORY = QuickFilterHistory.QUICK_FILTER_HISTORY;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -63,7 +69,8 @@ public class Stroom extends SchemaImpl {
         return Arrays.asList(
             Config.CONFIG,
             ConfigUpdateTracker.CONFIG_UPDATE_TRACKER,
-            Preferences.PREFERENCES
+            Preferences.PREFERENCES,
+            QuickFilterHistory.QUICK_FILTER_HISTORY
         );
     }
 }

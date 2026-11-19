@@ -1,0 +1,43 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A content pack's details in the content store (content-store-content-pack-details.css) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="content-store-content-pack-details">
+        <tx:Html ui:field="icon" addStyleNames="content-store-content-pack-details__icon"/>
+        <g:FlowPanel styleName="content-store-content-pack-details__main">
+            <tx:Label ui:field="name" addStyleNames="content-store-content-pack-details__heading"/>
+            <tx:Html ui:field="details" wordWrap="true"
+                    addStyleNames="content-store-content-pack-details__description control-box"/>
+            <g:FlowPanel styleName="content-store-content-pack-details__list">
+                <tx:Label text="Installed status:"/>
+                <tx:Label ui:field="installedStatus"/>
+                <tx:Label text="Licence:"/>
+                <tx:Label ui:field="licence"/>
+                <tx:Label text="Licence details:"/>
+                <g:FlowPanel>
+                    <tx:Link ui:field="licenceLink"/>
+                    <tx:InlineLabel ui:field="licenceUrl" addStyleNames="content-store-content-pack-details__url"/>
+                </g:FlowPanel>
+                <tx:Label text="Installed location:"/>
+                <tx:Label ui:field="installedLocation"/>
+                <tx:Label text="Git URL:"/>
+                <g:FlowPanel>
+                    <tx:Link ui:field="gitLink"/>
+                    <tx:InlineLabel ui:field="gitUrl" addStyleNames="content-store-content-pack-details__url"/>
+                </g:FlowPanel>
+                <tx:Label text="Git branch:"/>
+                <tx:Label ui:field="gitBranch"/>
+                <tx:Label text="Git path:"/>
+                <tx:Label ui:field="gitPath"/>
+                <tx:Label text="Git commit:"/>
+                <tx:Label ui:field="gitCommit"/>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="content-store-content-pack-details__buttons">
+                <b:Button ui:field="install" text="Install"/>
+                <b:Button ui:field="upgrade" text="Upgrade"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

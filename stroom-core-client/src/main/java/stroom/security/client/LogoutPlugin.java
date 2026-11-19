@@ -18,12 +18,12 @@ package stroom.security.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.security.client.event.RequestLogoutEvent;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.Separator;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

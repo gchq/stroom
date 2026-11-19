@@ -17,19 +17,19 @@
 package stroom.security.client;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.SplashPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.security.client.event.CurrentUserChangedEvent;
+import stroom.security.client.event.RequestLogoutEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.splash.client.SplashScreen;
 import stroom.util.shared.UserRef;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -50,7 +50,9 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final Provider<SplashPresenter> splashPresenterProvider;
+    // A provider, as the splash screen needs the UI config, which needs the security context this
+    // is part of
+    private final Provider<SplashScreen> splashScreenProvider;
     private final CurrentActivity currentActivity;
     private UserRef userRef;
     private Set<AppPermission> permissions;
@@ -58,11 +60,11 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     @Inject
     public CurrentUser(final EventBus eventBus,
                        final RestFactory restFactory,
-                       final Provider<SplashPresenter> splashPresenterProvider,
+                       final Provider<SplashScreen> splashScreenProvider,
                        final CurrentActivity currentActivity) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-        this.splashPresenterProvider = splashPresenterProvider;
+        this.splashScreenProvider = splashScreenProvider;
         this.currentActivity = currentActivity;
     }
 
@@ -144,7 +146,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     private void showSplash() {
-        splashPresenterProvider.get().show(ok -> {
+        splashScreenProvider.get().show(this, ok -> {
             if (ok) {
                 currentActivity.showInitialActivityChooser(activity -> CurrentUserChangedEvent.fire(CurrentUser.this));
             }

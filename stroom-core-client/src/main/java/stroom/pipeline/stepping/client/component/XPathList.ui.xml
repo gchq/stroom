@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The XPath filters a stepping element's output must match, with a pager and a toolbar for the screen's buttons -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager">
+        <dg:DataGrid ui:field="dataGrid" tableName="XPath Matches"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

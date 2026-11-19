@@ -23,13 +23,13 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.floormap.client.presenter.FloorMapEventStorePresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.floormap.client.component.FloorMapEventStoreEditor;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.floormap.shared.FloorMapEventStoreResource;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -46,25 +46,27 @@ public class FloorMapEventStorePlugin extends DocumentPlugin<FloorMapEventStoreD
     private static final FloorMapEventStoreResource RESOURCE =
             GWT.create(FloorMapEventStoreResource.class);
 
-    private final Provider<FloorMapEventStorePresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FloorMapEventStoreEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public FloorMapEventStorePlugin(
             final EventBus eventBus,
-            final Provider<FloorMapEventStorePresenter> editorProvider,
+            final Provider<FloorMapEventStoreEditor> editorProvider,
             final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager entityPluginEventManager,
             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), FloorMapEventStoreDoc.TYPE);
     }
 
     @Override

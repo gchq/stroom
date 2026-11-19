@@ -17,16 +17,15 @@
 package stroom.contentstore.client;
 
 import stroom.content.client.ContentPlugin;
-import stroom.contentstore.client.presenter.ContentStorePresenter;
+import stroom.contentstore.client.component.ContentStoreTabController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -39,7 +38,7 @@ import javax.inject.Singleton;
  * Ensures that the menu item is present and correctly configured.
  */
 @Singleton
-public class ContentStorePlugin extends ContentPlugin<ContentStorePresenter> {
+public class ContentStorePlugin extends ContentPlugin<ContentStoreTabController> {
 
     /** Used to check whether user can access the App Store */
     private final ClientSecurityContext securityContext;
@@ -48,18 +47,18 @@ public class ContentStorePlugin extends ContentPlugin<ContentStorePresenter> {
      * Injected constructor.
      * @param eventBus GWT event bus
      * @param contentManager Not sure yet...
-     * @param presenterProvider The presenter that will be opened when the
-     *                          menu button is clicked to show the app store.
+     * @param controllerProvider The controller that will be opened when the
+     *                           menu button is clicked to show the app store.
      * @param securityContext Permissions object.
      */
     @SuppressWarnings("unused")
     @Inject
     public ContentStorePlugin(final EventBus eventBus,
                               final ContentManager contentManager,
-                              final Provider<ContentStorePresenter> presenterProvider,
+                              final Provider<ContentStoreTabController> controllerProvider,
                               final ClientSecurityContext securityContext,
                               final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 
@@ -82,6 +81,6 @@ public class ContentStorePlugin extends ContentPlugin<ContentStorePresenter> {
 
     @Override
     public String getType() {
-        return ContentStorePresenter.TAB_TYPE;
+        return ContentStoreTabController.TAB_TYPE;
     }
 }

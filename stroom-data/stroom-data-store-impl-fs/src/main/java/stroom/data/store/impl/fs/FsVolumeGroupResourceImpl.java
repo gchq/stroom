@@ -22,6 +22,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -49,6 +50,7 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
 
     @Override
     public FsVolumeGroup create(final String name) {
+        RestUtil.checkPathSafeName(name);
         return volumeGroupServiceProvider.get().create(name);
     }
 
@@ -64,6 +66,7 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
 
     @Override
     public FsVolumeGroup update(final Integer id, final FsVolumeGroup indexVolumeGroup) {
+        RestUtil.checkPathSafeName(indexVolumeGroup.getName());
         return volumeGroupServiceProvider.get().update(indexVolumeGroup);
     }
 

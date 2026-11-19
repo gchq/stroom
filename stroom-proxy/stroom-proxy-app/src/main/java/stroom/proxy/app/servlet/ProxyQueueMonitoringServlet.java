@@ -53,7 +53,7 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
             throws ServletException, IOException {
         final QueueMonitors queueMonitors = queueMonitorsProvider.get();
         final Writer writer = response.getWriter();
-        writer.write("<html>\n" +
+        writer.write("<html lang=\"en\">\n" +
                      "<head>\n" +
                      "<style>\n" +
                      "body {\n" +

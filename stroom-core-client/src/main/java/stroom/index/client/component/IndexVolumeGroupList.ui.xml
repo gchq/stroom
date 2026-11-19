@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The index volume groups, with a pager and a toolbar for the screen's buttons -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" addStyleNames="default-min-sizes">
+        <dg:DataGrid ui:field="dataGrid" tableName="Index Volume Groups"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

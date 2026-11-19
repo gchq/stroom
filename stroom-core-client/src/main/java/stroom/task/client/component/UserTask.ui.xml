@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A task of the user's (user-task.css): its name, age and status, taking the width, then its
+  Terminate button, shown while it can be terminated.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="user-task">
+        <g:FlowPanel styleName="user-task__details">
+            <tx:Label ui:field="taskName" addStyleNames="user-task__text user-task__name"/>
+            <tx:Label ui:field="taskAge" addStyleNames="user-task__text"/>
+            <tx:Label ui:field="taskStatus" addStyleNames="user-task__text"/>
+        </g:FlowPanel>
+        <g:SimplePanel styleName="user-task__actions">
+            <b:Toolbar name="Task actions">
+                <b:ToolbarButton ui:field="terminate" svg="STOP" title="Terminate"
+                                 addStyleNames="user-task__terminate" visible="false"/>
+            </b:Toolbar>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
+    <!-- A quick filter above the explorer's tree, in a bordered panel, which its controller fills -->
+    <g:FlowPanel styleName="max dock-container-vertical quick-filter-layout">
+        <v:QuickFilter accessibleName="Filter documents" ui:field="nameFilter" addStyleNames="dock-min"/>
+        <layout:ScrollPane addStyleNames="dock-max control-box">
+            <ex:ExplorerTree ui:field="tree"/>
+        </layout:ScrollPane>
+    </g:FlowPanel>
+</ui:UiBinder>

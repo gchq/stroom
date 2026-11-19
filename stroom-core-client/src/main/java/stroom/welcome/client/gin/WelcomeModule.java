@@ -18,15 +18,11 @@ package stroom.welcome.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.welcome.client.WelcomePlugin;
-import stroom.welcome.client.presenter.WelcomePresenter;
-import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
-import stroom.welcome.client.view.WelcomeViewImpl;
 
 public class WelcomeModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(WelcomePlugin.class);
-        bindPresenterWidget(WelcomePresenter.class, WelcomeView.class, WelcomeViewImpl.class);
     }
 }

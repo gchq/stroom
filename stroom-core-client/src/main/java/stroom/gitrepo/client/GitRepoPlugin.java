@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.gitrepo.client.presenter.GitRepoPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,26 @@ public class GitRepoPlugin extends DocumentPlugin<GitRepoDoc> {
 
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
 
-    private final Provider<GitRepoPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<GitRepoEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public GitRepoPlugin(final EventBus eventBus,
-                         final Provider<GitRepoPresenter> editorProvider,
+                         final Provider<GitRepoEditor> editorProvider,
                          final RestFactory restFactory,
                          final ContentManager contentManager,
                          final DocumentPluginEventManager entityPluginEventManager,
                          final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), GitRepoDoc.TYPE);
     }
 
     @Override

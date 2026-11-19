@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Find's and Recent Items' content: the filter above the documents found -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
+    <ex:FindPanel ui:field="findPanel">
+        <ex:content>
+            <ex:FindDocResultList ui:field="resultList"/>
+        </ex:content>
+    </ex:FindPanel>
+</ui:UiBinder>

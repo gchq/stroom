@@ -17,7 +17,7 @@
 package stroom.dataconnection.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dataconnection.client.presenter.DataConnectionPresenter;
+import stroom.dataconnection.client.component.DataConnectionEditor;
 import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.dataconnection.shared.DataConnectionResource;
 import stroom.dispatch.client.RestErrorHandler;
@@ -26,9 +26,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -42,33 +42,35 @@ import javax.inject.Singleton;
 @Singleton
 public class DataConnectionPlugin extends DocumentPlugin<DataConnectionDoc> {
 
-    private static final DataConnectionResource DATA_CONNECTION_RESOURCE =
-            GWT.create(DataConnectionResource.class);
+    private static final DataConnectionResource DATA_CONNECTION_RESOURCE = GWT.create(DataConnectionResource.class);
 
-    private final Provider<DataConnectionPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<DataConnectionEditor> editorProvider;
     private final RestFactory restFactory;
 
-    /// @param eventBus                   The event bus.
-    /// @param editorProvider             Makes the document's editor.
-    /// @param restFactory                Calls the server.
-    /// @param contentManager             Manages the open tabs.
-    /// @param entityPluginEventManager   Handles document events.
-    /// @param securityContext            The user's permissions.
+    /// @param eventBus                 The application's event bus.
+    /// @param editorProvider           Makes the document's editor.
+    /// @param restFactory              Loads and saves the document.
+    /// @param contentManager           Manages the open tabs.
+    /// @param entityPluginEventManager Handles document events.
+    /// @param securityContext          The user's permissions.
     @Inject
-    public DataConnectionPlugin(final EventBus eventBus,
-                                    final Provider<DataConnectionPresenter> editorProvider,
-                                    final RestFactory restFactory,
-                                    final ContentManager contentManager,
-                                    final DocumentPluginEventManager entityPluginEventManager,
-                                    final ClientSecurityContext securityContext) {
+    public DataConnectionPlugin(
+            final EventBus eventBus,
+            final Provider<DataConnectionEditor> editorProvider,
+            final RestFactory restFactory,
+            final ContentManager contentManager,
+            final DocumentPluginEventManager entityPluginEventManager,
+            final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), DataConnectionDoc.TYPE);
     }
 
     @Override

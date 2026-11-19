@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.widget.button.client">
+    <i:Toolbar name="Stepping" addStyleNames="icon-colour__green">
+        <i:ToolbarButton ui:field="filterButton" svg="FILTER" title="Manage Step Filters"/>
+        <i:ToolbarButton ui:field="firstButton" svg="FAST_BACKWARD" title="Step To First" enabled="false"/>
+        <i:ToolbarButton ui:field="backwardButton" svg="STEP_BACKWARD" title="Step Backward" enabled="false"/>
+        <i:ToolbarButton ui:field="forwardButton" svg="STEP_FORWARD" title="Step Forward" enabled="false"/>
+        <i:ToolbarButton ui:field="lastButton" svg="FAST_FORWARD" title="Step To Last" enabled="false"/>
+        <i:ToolbarButton ui:field="refreshButton" svg="REFRESH" title="Refresh Current Step" enabled="false"/>
+    </i:Toolbar>
+</ui:UiBinder>

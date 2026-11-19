@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The item selection dialog's content (ItemSelection), the BEM block item-selection
+     (item-selection.css): the item to show, of how many -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+    <g:FlowPanel styleName="item-selection max">
+        <v:ValueSpinner ui:field="itemNoSpinner" addStyleNames="dock-max" minValue="1"
+                        accessibleName="Item number"/>
+        <g:HTMLPanel styleName="dock-min item-selection__count">of <span ui:field="itemCount"/></g:HTMLPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

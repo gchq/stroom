@@ -1,0 +1,70 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A value in the value picker (stroom.query.client.component.FieldValueCell), named BEM style: a tick
+   box when several values can be picked, the value (field-value-cell__text), a bar as wide as the
+   share of records that have it (field-value-cell__bar, its fill's width from
+   --field-value-cell__percent), and that share (field-value-cell__percent). A value that can't be
+   picked (field-value-cell--unpickable) is faded.
+*/
+.field-value-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
+}
+
+.field-value-cell__text {
+    flex: 1 1 auto;
+    /* Lets a long value shrink, so it is cut short with an ellipsis */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.field-value-cell__bar {
+    flex: 0 0 60px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgba(var(--blue-500-rgb), 0.15);
+    overflow: hidden;
+}
+
+.field-value-cell__bar-fill {
+    width: var(--field-value-cell__percent);
+    height: 100%;
+    background-color: rgba(var(--blue-500-rgb), 0.8);
+}
+
+.field-value-cell__percent {
+    flex: 0 0 45px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* A value that can't be picked, e.g. one holding a comma for an 'in' term. 60% keeps the text at
+   4.5:1 or more in both themes, as column-value-cell.css's unavailable values */
+.field-value-cell--unpickable {
+    cursor: default;
+}
+
+.field-value-cell--unpickable .field-value-cell__text,
+.field-value-cell--unpickable .field-value-cell__percent {
+    opacity: 0.6;
+}

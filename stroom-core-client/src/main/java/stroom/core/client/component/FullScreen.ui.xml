@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
+         stop it held the whole screen, with no name -->
+    <g:FlowPanel styleName="full-screen">
+        <g:ResizeLayoutPanel ui:field="contentPanel"
+                             styleName="full-screen__content-panel">
+        </g:ResizeLayoutPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

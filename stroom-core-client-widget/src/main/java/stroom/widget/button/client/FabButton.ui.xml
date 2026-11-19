@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A round floating action button: the face inside is the real button, which takes the focus and is
+  named by its aria-label; the icon is decoration.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="fab-button">
+        <button ui:field="face" type="button" class="fab-button__face">
+            <div ui:field="icon" class="icon-wrap" aria-hidden="true"></div>
+        </button>
+    </div>
+</ui:UiBinder>

@@ -16,10 +16,11 @@
 
 package stroom.floormap.client.playback;
 
+
 /// Whether a proposed timeline playback range is usable.
 ///
 /// Kept free of GWT types so the rules can be tested on the JVM; the timeline
-/// presenter that applies them cannot be.
+/// controller that applies them cannot be.
 public final class FloorMapPlaybackRange {
 
     /// Sentinel for "no time entered", which is what the settings view's

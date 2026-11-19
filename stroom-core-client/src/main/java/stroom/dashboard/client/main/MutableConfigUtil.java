@@ -16,11 +16,11 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.flexlayout.MutableLayoutConfig;
-import stroom.dashboard.client.flexlayout.MutableSize;
-import stroom.dashboard.client.flexlayout.MutableSplitLayoutConfig;
-import stroom.dashboard.client.flexlayout.MutableTabConfig;
-import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
+import stroom.dashboard.client.model.MutableLayoutConfig;
+import stroom.dashboard.client.model.MutableSize;
+import stroom.dashboard.client.model.MutableSplitLayoutConfig;
+import stroom.dashboard.client.model.MutableTabConfig;
+import stroom.dashboard.client.model.MutableTabLayoutConfig;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.Size;
 import stroom.dashboard.shared.SplitLayoutConfig;
@@ -86,7 +86,7 @@ public class MutableConfigUtil {
         }
         if (layoutConfig instanceof final SplitLayoutConfig splitLayoutConfig) {
             final MutableSplitLayoutConfig mutableSplitLayoutConfig = new MutableSplitLayoutConfig(
-                    fromSize(splitLayoutConfig.getPreferredSize()),
+                    fromPreferredSize(splitLayoutConfig.getPreferredSize()),
                     splitLayoutConfig.getDimension());
             if (!NullSafe.isEmptyCollection(splitLayoutConfig.getChildren())) {
                 splitLayoutConfig.getChildren().forEach(child ->
@@ -96,7 +96,7 @@ public class MutableConfigUtil {
 
         } else if (layoutConfig instanceof final TabLayoutConfig tabLayoutConfig) {
             final MutableTabLayoutConfig mutableTabLayoutConfig = new MutableTabLayoutConfig(
-                    fromSize(tabLayoutConfig.getPreferredSize()),
+                    fromPreferredSize(tabLayoutConfig.getPreferredSize()),
                     tabLayoutConfig.getSelected());
             if (!NullSafe.isEmptyCollection(tabLayoutConfig.getTabs())) {
                 tabLayoutConfig.getTabs().forEach(child ->
@@ -105,6 +105,15 @@ public class MutableConfigUtil {
             return mutableTabLayoutConfig;
         }
         return null;
+    }
+
+    // A layout's preferred size, or a default if it has none (e.g. a dashboard written without
+    // them), as FlexLayout expects every layout to have one
+    private static MutableSize fromPreferredSize(final Size size) {
+        final MutableSize mutableSize = fromSize(size);
+        return mutableSize != null
+                ? mutableSize
+                : new MutableSize();
     }
 
     public static MutableSize fromSize(final Size size) {

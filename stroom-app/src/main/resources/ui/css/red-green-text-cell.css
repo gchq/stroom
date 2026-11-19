@@ -1,0 +1,24 @@
+.red-green-text-cell {
+    /*font-weight:bold*/
+}
+
+.red-green-text-cell--green {
+    color:var(--text-color--green);
+}
+
+.red-green-text-cell--red {
+    color:var(--text-color--red);
+}
+
+.data-grid__row--selected .data-grid__cell--disabled .red-green-text-cell--green,
+.data-grid__row--selected .data-grid__cell--disabled .red-green-text-cell--red,
+.data-grid__cell--disabled .red-green-text-cell--green,
+.data-grid__cell--disabled .red-green-text-cell--red {
+    color:var(--text-color--disabled);
+}
+
+/* Not enough contrast on blue bg to use red and green */
+.data-grid__row--selected .red-green-text-cell--green,
+.data-grid__row--selected .red-green-text-cell--red {
+    color:var(--text-color);
+}

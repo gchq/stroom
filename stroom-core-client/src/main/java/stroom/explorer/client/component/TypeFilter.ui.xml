@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The explorer's type filter: a list of the document types, each ticked or not (All / None part
+  ticked when some are). As wide as its longest type and as high as its types, up to the popup's
+  size (explorer-tree.css), then scrolling. As compact as the explorer's rows, whose cell draws its
+  own padding, with a line under All / None
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:ScrollPanel styleName="type-filter__scroll">
+        <dg:DataGrid ui:field="list" profile="LISTBOX" pageSize="100" accessibleName="Document types"
+                     fitContent="true" fitWidth="true" cellPadding="false" addStyleNames="type-filter"/>
+    </g:ScrollPanel>
+</ui:UiBinder>

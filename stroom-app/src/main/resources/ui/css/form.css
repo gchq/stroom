@@ -1,0 +1,29 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Forms: a form's groups in a column, the layout many templates share. A form group is
+   form-group.css, its label form-label.css, and a button in either button.css.
+*/
+
+/* A form: its groups in a column (with form-padding, layout-helpers.css, inset from the edges of its
+   panel) */
+.form {
+    display: flex;
+    gap: var(--control__gap--vertical);
+    flex-direction: column;
+    overflow: auto;
+}

@@ -1,0 +1,105 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Toolbars (stroom.widget.button.client.Toolbar, ToolbarRow and ToolbarSeparator), named BEM style
+   (block, block__element, block--modifier); states come from ARIA attributes, not modifiers.
+
+   The buttons inside are icon buttons, styled by toolbar-button.css, as are the looks this block's
+   modifiers give them (toolbar--quiet, toolbar--control, toolbar--text-colour); a row of toolbars
+   is toolbar-row.css.
+*/
+
+/* A named group of buttons that sit together, one tab stop. Its padding holds its buttons' focus
+   rings (a 4px band, toolbar-button.css), so nothing around it that hides its overflow can cut them
+   off */
+.toolbar {
+    display: flex;
+    padding: 4px;
+    gap: 2px;
+}
+
+/* A column of buttons (Toolbar.setVertical); ButtonGroupFocus says so with aria-orientation */
+.toolbar[aria-orientation="vertical"] {
+    flex-direction: column;
+}
+
+/* The explorer's toolbar, without margins, as it sits in the explorer's own row (its buttons take
+   the explorer's colours, as all buttons in the explorer do: see explorer.css) */
+.toolbar--navigation {
+    margin: 0;
+}
+
+/* A toolbar inside a form control (e.g. a search box's options), without room around it, as the
+   control holds it, and with its icons in the control's text colour (toolbar-button.css) */
+.toolbar--control {
+    margin: 0;
+    padding: 0;
+}
+
+/* For now, a toolbar that a document's tab adds to its document's toolbar
+   (HasToolbar.getDocumentButtons) sits in it as its own buttons would: 4px from the button before
+   it, as two toolbars side by side were. Remove this when those buttons are made in the toolbar
+   itself. */
+.toolbar > .toolbar {
+    margin: 0 0 0 2px;
+    padding: 0;
+}
+
+/* A line between a toolbar's buttons, close enough that they still look one group (the
+   workbench's ButtonRuns treats buttons more than 8px apart as separate groups) */
+.toolbar__separator {
+    align-self: stretch;
+    width: 1px;
+    margin: 2px 1px;
+    background-color: var(--border-color);
+}
+
+/* Where the user's toolbar display preference shows text, an action toolbar may be narrower than
+   its buttons, which it then fits by moving those at its end into its More menu (Toolbar.fit). A
+   toolbar kept to icons whatever the preference (toolbar--icons, e.g. a pager's arrows and the main
+   toolbar's buttons), in or beside a field (toolbar--control) or part of what it sits in
+   (toolbar--text-colour) isn't */
+.toolbar-display--icons-and-text .toolbar:not(.toolbar--control):not(.toolbar--text-colour):not(.toolbar--icons),
+.toolbar-display--text .toolbar:not(.toolbar--control):not(.toolbar--text-colour):not(.toolbar--icons) {
+    min-width: 0;
+}
+
+/* Text alone: the buttons, which have borders then (toolbar-button.css), 4px apart, so that they
+   look like buttons side by side rather than one strip */
+.toolbar-display--text .toolbar:not(.toolbar--control):not(.toolbar--text-colour):not(.toolbar--icons) {
+    gap: 4px;
+}
+
+/* A button or separator that doesn't fit the toolbar, in its More menu instead, and the More button
+   (the toolbar's last) while every button fits (Toolbar.fit) */
+.toolbar__item--overflowed {
+    display: none !important;
+}
+
+/* A toolbar pushed to the end of its row, e.g. a floor map editor's help toolbar */
+.toolbar--end {
+    margin-left: auto;
+}
+
+/* In forced colours (e.g. Windows high contrast) a separator, a background, vanished. There it keeps
+   its own colours, in the text colour */
+@media (forced-colors: active) {
+    .toolbar__separator {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+}

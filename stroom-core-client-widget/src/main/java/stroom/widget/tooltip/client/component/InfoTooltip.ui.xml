@@ -1,0 +1,7 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A grid row's information popup's content (info-tooltip.css): text or HTML, set in Java -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <tx:Html styleName="info-tooltip"/>
+</ui:UiBinder>

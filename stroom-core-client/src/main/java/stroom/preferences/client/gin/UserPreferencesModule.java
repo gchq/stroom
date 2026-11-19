@@ -17,40 +17,12 @@
 package stroom.preferences.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.preferences.client.EditorPreferencesPresenter;
-import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
-import stroom.preferences.client.EditorPreferencesViewImpl;
-import stroom.preferences.client.ThemePreferencesPresenter;
-import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
-import stroom.preferences.client.ThemePreferencesViewImpl;
-import stroom.preferences.client.TimePreferencesPresenter;
-import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
-import stroom.preferences.client.TimePreferencesViewImpl;
 import stroom.preferences.client.UserPreferencesPlugin;
-import stroom.preferences.client.UserPreferencesPresenter;
-import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
-import stroom.preferences.client.UserPreferencesViewImpl;
 
 public class UserPreferencesModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPresenterWidget(
-                UserPreferencesPresenter.class,
-                UserPreferencesView.class,
-                UserPreferencesViewImpl.class);
-        bindPresenterWidget(
-                ThemePreferencesPresenter.class,
-                ThemePreferencesView.class,
-                ThemePreferencesViewImpl.class);
-        bindPresenterWidget(
-                EditorPreferencesPresenter.class,
-                EditorPreferencesView.class,
-                EditorPreferencesViewImpl.class);
-        bindPresenterWidget(
-                TimePreferencesPresenter.class,
-                TimePreferencesView.class,
-                TimePreferencesViewImpl.class);
 
         bindPlugin(UserPreferencesPlugin.class);
     }

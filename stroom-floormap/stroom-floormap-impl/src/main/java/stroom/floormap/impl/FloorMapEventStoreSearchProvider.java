@@ -92,7 +92,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /// store serves three reads and only one of them is a snapshot: the density histogram and the
 /// timeline extent both need every row. And because defaulting would be inference from absence — the
 /// Events Query tab and any dashboard send a time range and cannot set a param from query text, so
-/// they would silently get a read nobody asked for. The map is presenter code and opts in with one
+/// they would silently get a read nobody asked for. The map is controller code and opts in with one
 /// line; a human writing a query gets what they wrote.
 ///
 /// This replaces a mechanism that inferred the mode from whether a time term happened to be

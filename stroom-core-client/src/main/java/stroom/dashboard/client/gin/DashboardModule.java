@@ -18,20 +18,9 @@ package stroom.dashboard.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
-import stroom.dashboard.client.main.ComponentRegistry;
-import stroom.dashboard.client.main.DashboardPresenter;
-import stroom.dashboard.client.main.DashboardViewImpl;
-import stroom.dashboard.client.main.LayoutConstraintPresenter;
-import stroom.dashboard.client.main.LayoutConstraintPresenter.LayoutConstraintView;
-import stroom.dashboard.client.main.LayoutConstraintViewImpl;
-import stroom.dashboard.client.main.RenameTabPresenter;
-import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
-import stroom.dashboard.client.main.RenameTabViewImpl;
-import stroom.dashboard.client.unknown.HTMLView;
-import stroom.dashboard.client.unknown.HTMLViewImpl;
-import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
-import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
-import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
+import stroom.dashboard.client.main.DashboardPaneTypes;
+import stroom.dashboard.client.main.PaneRegistry;
+import stroom.visualisation.client.VisFunctionCache;
 
 import com.google.inject.Singleton;
 
@@ -39,26 +28,14 @@ public class DashboardModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 
-        bind(ComponentRegistry.class).in(Singleton.class);
+        bind(PaneRegistry.class).in(Singleton.class);
+        // Registers the pane types as the app starts
+        bind(DashboardPaneTypes.class).asEagerSingleton();
+        // The vis panes' cache of vis functions, one for the app (the dashboard app has no
+        // VisualisationModule)
+        bind(VisFunctionCache.class).in(Singleton.class);
 
         bindPlugin(DashboardPlugin.class);
-
-        bindPresenterWidget(
-                DashboardPresenter.class,
-                DashboardPresenter.DashboardView.class,
-                DashboardViewImpl.class);
-        bindPresenterWidget(
-                RenameTabPresenter.class,
-                RenameTabView.class,
-                RenameTabViewImpl.class);
-        bindPresenterWidget(
-                LayoutConstraintPresenter.class,
-                LayoutConstraintView.class,
-                LayoutConstraintViewImpl.class);
-
-        bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
-        bindSharedView(HTMLView.class, HTMLViewImpl.class);
     }
 }

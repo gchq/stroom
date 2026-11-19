@@ -3,6 +3,8 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
+  <!-- IconBox is a component -->
+  <inherits name="stroom.widget.component.Component"/>
   <source path="client" />
   <source path="shared" />
 </module>

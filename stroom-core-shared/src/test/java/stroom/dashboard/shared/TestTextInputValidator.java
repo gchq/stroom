@@ -166,4 +166,39 @@ class TestTextInputValidator {
     void testIsValidPattern(final String pattern, final boolean expected) {
         assertThat(TextInputValidator.isValidPattern(pattern)).isEqualTo(expected);
     }
+
+    /// A value that conforms has no reason, whatever the format.
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', nullValues = "NULL", value = {
+            "TEXT|NULL|anything",
+            "NULL|NULL|anything",
+            "NUMBER|NULL|12.5",
+            "DATE_TIME|NULL|now()-1d",
+            "DATE_TIME|NULL|2026-01-31T13:45:00.000+10:00",
+            "PATTERN|[a-z]+|abc",
+            "NUMBER|NULL|''",
+    })
+    void testGetInvalidReason_valid(final TextInputFormat format,
+                                    final String pattern,
+                                    final String value) {
+        assertThat(TextInputValidator.getInvalidReason(format, pattern, value)).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', nullValues = "NULL", value = {
+            "NUMBER|NULL|abc|Must be a number",
+            "DATE_TIME|NULL|yesterday|Must be a date and time, e.g. 2026-01-31T13:45:00.000Z, "
+            + "or an expression such as now()-1d",
+            "DATE_TIME|NULL|2026-01-31T13:45:00.000+1000|Must be a date and time, e.g. 2026-01-31T13:45:00.000Z, "
+            + "or an expression such as now()-1d",
+            "PATTERN|[a-z]+|123|Must match the pattern [a-z]+",
+            "PATTERN|[unclosed|abc|The pattern in the settings isn't a valid regular expression",
+            "PATTERN|NULL|abc|The pattern in the settings isn't a valid regular expression",
+    })
+    void testGetInvalidReason_invalid(final TextInputFormat format,
+                                      final String pattern,
+                                      final String value,
+                                      final String expected) {
+        assertThat(TextInputValidator.getInvalidReason(format, pattern, value)).isEqualTo(expected);
+    }
 }

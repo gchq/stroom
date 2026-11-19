@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- The map tile of the GeoMap visualisation stories, in place of a tile server's, so that the
+       stories need no network: a plain tile with a grid, the same at every position and zoom -->
+  <rect width="256" height="256" fill="#dfe6e9"/>
+  <path d="M0 0H256V256" fill="none" stroke="#b2bec3" stroke-width="2"/>
+  <path d="M128 0V256M0 128H256" fill="none" stroke="#cfd8dc" stroke-width="1"/>
+</svg>

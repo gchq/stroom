@@ -3,5 +3,9 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
+  <!-- DropDownBox is a component -->
+  <inherits name="stroom.widget.component.Component"/>
+  <!-- A problem shown as its tooltip is shown with the keyboard focus too -->
+  <inherits name="stroom.widget.tooltip.Tooltip"/>
   <source path="client" />
 </module>

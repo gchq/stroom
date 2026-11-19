@@ -1,0 +1,30 @@
+/*
+ * Presets that fill in a value (QuickSettings), in titled groups side by side: a time range's and a
+ * schedule's. Each group (quick-settings__group, role="group") has a title and LinkButtons
+ * (quick-settings__setting) drawn as links.
+ */
+
+.quick-settings {
+    display: flex;
+    min-width: 32rem;
+}
+
+.quick-settings__group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.4rem;
+    min-width: 8rem;
+}
+
+.quick-settings__title {
+    padding: 0.4rem 0;
+    font-weight: 300;
+}
+
+/* At least 24px high, the smallest target WCAG 2.5.8 allows */
+.quick-settings__setting {
+    min-height: 24px;
+    color: var(--link__text-color);
+    white-space: nowrap;
+}

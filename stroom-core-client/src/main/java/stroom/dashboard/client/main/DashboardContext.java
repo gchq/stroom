@@ -22,12 +22,14 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Param;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
+import stroom.visualisation.shared.VisColourList;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface DashboardContext extends ParamValues {
 
@@ -38,7 +40,7 @@ public interface DashboardContext extends ParamValues {
 
     TimeRange getResolvedTimeRange();
 
-    Components getComponents();
+    Panes getComponents();
 
     DocRef getDashboardDocRef();
 
@@ -48,11 +50,24 @@ public interface DashboardContext extends ParamValues {
 
     Optional<ExpressionOperator> createSelectionHandlerExpression(List<ComponentSelectionHandler> selectionHandlers);
 
-    HandlerRegistration addComponentChangeHandler(ComponentChangeEvent.Handler handler);
+    /// Listens for a component's selection or settings changing, until the registration is removed.
+    ///
+    /// @param listener Told the component.
+    /// @return The registration, for the listener's owner to own.
+    HandlerRegistration addComponentChangeListener(Consumer<DashboardPane> listener);
 
-    HandlerRegistration addContextChangeHandler(DashboardContextChangeEvent.Handler handler);
+    /// Listens for anything the context gives changing (its parameters, time range or
+    /// selections), until the registration is removed.
+    ///
+    /// @param listener What to run.
+    /// @return The registration, for the listener's owner to own.
+    HandlerRegistration addContextChangeListener(Runnable listener);
 
-    void fireComponentChangeEvent(Component component);
+    void fireComponentChangeEvent(DashboardPane component);
 
     void fireContextChangeEvent();
+
+    /// @return The colours of the values the dashboard's visualisations colour by, which they
+    /// share so that a value has the same colour in each of them.
+    VisColourList getVisColourList();
 }

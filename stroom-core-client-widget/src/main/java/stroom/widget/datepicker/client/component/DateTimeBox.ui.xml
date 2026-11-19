@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A date-time box (DateTimeBox), the BEM block date-time-box (date-time-box.css): a text field
+     with a calendar that opens the "Set Date And Time" dialog -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <form:IconBox ui:field="iconBox" addStyleNames="date-time-box" icon="CALENDAR" opensDialog="true">
+        <form:field>
+            <form:TextBox ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/>
+        </form:field>
+    </form:IconBox>
+</ui:UiBinder>

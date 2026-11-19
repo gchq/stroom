@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A setting of an annotation: its ⋮ hint (or button, once it has a title), then the setting itself,
+     added after it -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:svg="urn:import:stroom.svg.client">
+    <g:FlowPanel ui:field="formGroupPanel" styleName="setting-block icon-colour__grey">
+        <c:AriaPanel ui:field="icon" styleName="setting-block__icon icon-colour__grey icon-wrap" ariaHidden="true">
+            <svg:Icon image="ELLIPSES_VERTICAL" addStyleNames="setting-block__icon-image"/>
+        </c:AriaPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

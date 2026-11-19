@@ -17,12 +17,15 @@
 package stroom.dispatch.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.Task;
-import stroom.task.client.TaskMonitor;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.Task;
+import stroom.widget.task.client.TaskMonitor;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -37,18 +40,27 @@ import org.fusesource.restygwt.client.Dispatcher;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
+import org.fusesource.restygwt.client.RestServiceProxy;
+import org.fusesource.restygwt.client.callback.CallbackAware;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-class RestFactoryImpl implements RestFactory, HasHandlers {
+/// Stroom's [RestFactory], which sends requests with RestyGWT using the [Dispatcher] it is given.
+/// It is normally bound by [RestModule], but is public so that it can also be created directly,
+/// e.g. with a test dispatcher.
+public class RestFactoryImpl implements RestFactory, HasHandlers {
 
     private final EventBus eventBus;
+    private final Dispatcher dispatcher;
 
+    /// @param eventBus   The event bus to fire events on, e.g. alerts for failed requests.
+    /// @param dispatcher The dispatcher to send every request with.
     @Inject
     public RestFactoryImpl(final EventBus eventBus, final Dispatcher dispatcher) {
         this.eventBus = eventBus;
+        this.dispatcher = dispatcher;
 
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
         hostPageBaseUrl = trimPath(hostPageBaseUrl);
@@ -72,23 +84,26 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
     @Override
     public <T extends DirectRestService> Resource<T> create(final T service) {
-        return new ResourceImpl<>(this, service);
+        return new ResourceImpl<>(this, dispatcher, service);
     }
 
     private static class ResourceImpl<T extends DirectRestService> implements Resource<T> {
 
         private final HasHandlers hasHandlers;
+        private final Dispatcher dispatcher;
         private final T service;
 
         public ResourceImpl(final HasHandlers hasHandlers,
+                            final Dispatcher dispatcher,
                             final T service) {
             this.hasHandlers = hasHandlers;
+            this.dispatcher = dispatcher;
             this.service = service;
         }
 
         @Override
         public <R> MethodExecutor<T, R> method(final Function<T, R> function) {
-            return new MethodExecutorImpl<>(hasHandlers, service, function);
+            return new MethodExecutorImpl<>(hasHandlers, dispatcher, service, function);
         }
 
         @Override
@@ -97,23 +112,27 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                 consumer.accept(t);
                 return null;
             };
-            return new MethodExecutorImpl<>(hasHandlers, service, function);
+            return new MethodExecutorImpl<>(hasHandlers, dispatcher, service, function);
         }
     }
 
     private static class MethodExecutorImpl<T extends DirectRestService, R> implements MethodExecutor<T, R> {
 
         private final HasHandlers hasHandlers;
+        private final Dispatcher dispatcher;
         private final T service;
         private final Function<T, R> function;
 
         private Consumer<R> resultConsumer;
         private RestErrorHandler errorConsumer;
+        private ControllerNode owner;
 
         public MethodExecutorImpl(final HasHandlers hasHandlers,
+                                  final Dispatcher dispatcher,
                                   final T service,
                                   final Function<T, R> function) {
             this.hasHandlers = hasHandlers;
+            this.dispatcher = dispatcher;
             this.service = service;
             this.function = function;
         }
@@ -128,12 +147,28 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                                                      final String taskMessage) {
             return new TaskExecutorImpl<>(
                     hasHandlers,
+                    dispatcher,
                     service,
                     function,
                     resultConsumer,
                     errorConsumer,
-                    taskMonitorFactory,
-                    taskMessage);
+                    taskMonitorFactory != null
+                            ? taskMonitorFactory
+                            : getOwnersTaskMonitorFactory(),
+                    taskMessage,
+                    owner);
+        }
+
+        // The owner's task monitor, unless nothing provides one (the context's default shows
+        // nothing, where a request's default fires task events)
+        private TaskMonitorFactory getOwnersTaskMonitorFactory() {
+            if (owner == null) {
+                return null;
+            }
+            final TaskMonitorFactory taskMonitorFactory = owner.lookup(Contexts.TASK_MONITOR);
+            return taskMonitorFactory == Contexts.TASK_MONITOR.getDefaultValue()
+                    ? null
+                    : taskMonitorFactory;
         }
 
         @Override
@@ -149,6 +184,12 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
+        public MethodExecutor<T, R> owner(final HasControllerNode owner) {
+            this.owner = Objects.requireNonNull(owner, "owner").getControllerNode();
+            return this;
+        }
+
+        @Override
         public void exec() {
             taskMonitorFactory(null).exec();
         }
@@ -157,6 +198,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     private static class TaskExecutorImpl<T extends DirectRestService, R> implements TaskExecutor<T, R> {
 
         private final HasHandlers hasHandlers;
+        private final Dispatcher dispatcher;
         private final T service;
         private final Function<T, R> function;
 
@@ -164,21 +206,27 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private final RestErrorHandler errorHandler;
         private final TaskMonitorFactory taskMonitorFactory;
         private final Task task;
+        // The component the reply is for, or null
+        private final ControllerNode owner;
 
         public TaskExecutorImpl(final HasHandlers hasHandlers,
+                                final Dispatcher dispatcher,
                                 final T service,
                                 final Function<T, R> function,
                                 final Consumer<R> resultConsumer,
                                 final RestErrorHandler errorHandler,
                                 final TaskMonitorFactory taskMonitorFactory,
-                                final String taskMessage) {
+                                final String taskMessage,
+                                final ControllerNode owner) {
             this.hasHandlers = hasHandlers;
+            this.dispatcher = dispatcher;
             this.service = service;
             this.function = function;
             this.resultConsumer = resultConsumer;
             this.errorHandler = errorHandler;
             this.taskMonitorFactory = taskMonitorFactory;
             this.task = new RestFactoryTask<>(service, function, taskMessage);
+            this.owner = owner;
         }
 
         @Override
@@ -192,7 +240,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     // Reload as we have been logged out.
                     Console.info(() -> "Unauthorised request, assuming user session is invalid, reloading...");
                     Location.reload();
-                } else {
+                } else if (!isOwnerDisposed()) {
                     innerErrorHandler.onError(error);
                 }
             };
@@ -200,15 +248,32 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     () -> new DefaultTaskMonitorFactory(hasHandlers));
 
             final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
+            final Consumer<R> resultConsumer = this.resultConsumer == null || owner == null
+                    ? this.resultConsumer
+                    : result -> {
+                        if (!isOwnerDisposed()) {
+                            this.resultConsumer.accept(result);
+                        }
+                    };
             final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
                     hasHandlers,
                     resultConsumer,
                     errorHandler,
                     taskMonitor,
                     task);
-            final REST<R> rest = REST.withCallback(methodCallback);
+            // Send the request with this factory's dispatcher rather than RestyGWT's static
+            // default, so that factories with different dispatchers can be used side by side
+            // (e.g. in tests). The service instances are shared, but the request is created and
+            // sent synchronously within the call below, so it picks up this dispatcher.
+            if (service instanceof RestServiceProxy) {
+                ((RestServiceProxy) service).setDispatcher(dispatcher);
+            }
             taskMonitor.onStart(task);
-            function.apply(rest.call(service));
+            call(service, methodCallback, function);
+        }
+
+        private boolean isOwnerDisposed() {
+            return owner != null && owner.isDisposed();
         }
     }
 
@@ -216,6 +281,26 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
+    }
+
+    /// Calls a service's method with a callback, which the request is made with. RestyGWT leaves
+    /// the callback on the service, and a service is shared (usually a static `GWT.create`), so it
+    /// is taken off once the request is made: it kept the caller, and all the caller reached, until
+    /// the service's next call (e.g. a closed query editor, kept by the query resource).
+    ///
+    /// @param service  The service.
+    /// @param callback The callback for the call's reply.
+    /// @param function Calls the service's method, which makes and sends the request.
+    /// @param <T>      The service's type.
+    /// @param <R>      The type of the call's reply.
+    static <T extends DirectRestService, R> void call(final T service,
+                                                      final MethodCallback<R> callback,
+                                                      final Function<T, R> function) {
+        try {
+            function.apply(REST.withCallback(callback).call(service));
+        } finally {
+            ((CallbackAware) service).setCallback(null);
+        }
     }
 
     private static class MethodCallbackImpl<R> implements MethodCallback<R> {

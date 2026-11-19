@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's Text Input pane: one text box, whose value is a query parameter, or, for a date
+     and time, a date-time box with a calendar -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dt="urn:import:stroom.widget.datepicker.client.component">
+    <g:SimplePanel styleName="max dock-container-horizontal">
+        <g:FlowPanel styleName="dashboard-input dock-max">
+            <form:TextBox ui:field="value" addStyleNames="w-100 allow-focus"/>
+            <dt:DateTimeBox ui:field="dateTimeValue" expressionsAllowed="true" optional="true"
+                            addStyleNames="w-100" visible="false"/>
+        </g:FlowPanel>
+    </g:SimplePanel>
+</ui:UiBinder>

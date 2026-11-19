@@ -17,6 +17,7 @@
 package stroom.dataconnection;
 
 import stroom.credentials.impl.CredentialsService;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dataconnection.impl.DataConnectionConfig;
 import stroom.dataconnection.impl.DataConnectionStore;
@@ -32,17 +33,24 @@ import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TimeRange;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
+import stroom.query.impl.QueryService;
+import stroom.query.impl.QueryStore;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.ProjectPathUtil;
@@ -69,6 +77,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -137,6 +146,10 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
     private ExpressionContextFactory expressionContextFactory;
     @Inject
     private ResultStoreManager resultStoreManager;
+    @Inject
+    private QueryStore queryStore;
+    @Inject
+    private QueryService queryService;
 
     @TempDir
     private Path unpacked;
@@ -190,7 +203,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
     @BeforeEach
     void importPack() throws IOException, SQLException {
         final Path pack = ProjectPathUtil.resolveDir("stroom-data-connection").resolve(PACK);
-        queries = unpack(pack, unpacked);
+        final List<DocRef> packedQueries = unpack(pack, unpacked);
 
         final ExplorerNode root = explorerNodeService.getRoot();
         importExportSerializer.read(unpacked, null, ImportSettings.builder()
@@ -200,15 +213,22 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
                 .rootDocRef(root.getDocRef())
                 .build());
 
+        // Each query as imported, so a query that didn't import fails here.
+        queries = new LinkedHashMap<>();
+        for (final DocRef packedQuery : packedQueries) {
+            final QueryDoc queryDoc = queryStore.readDocument(packedQuery);
+            queries.put(queryDoc.getName(), queryDoc);
+        }
+
         setUpStroomDb();
         setUpDirectory();
         addThisNode();
         addStreamsAndTasks();
     }
 
-    // Unpacks the zip, returning each query by name.
-    private static Map<String, QueryDoc> unpack(final Path pack, final Path dir) throws IOException {
-        final Map<String, QueryDoc> queries = new LinkedHashMap<>();
+    // Unpacks the zip, returning each query in it.
+    private static List<DocRef> unpack(final Path pack, final Path dir) throws IOException {
+        final List<DocRef> queries = new ArrayList<>();
         try (final ZipInputStream zip = new ZipInputStream(Files.newInputStream(pack))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -219,7 +239,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
                 Files.write(file, bytes);
                 if (entry.getName().contains(".Query.") && entry.getName().endsWith(".meta")) {
                     final QueryDoc queryDoc = JsonUtil.readValue(bytes, QueryDoc.class);
-                    queries.put(queryDoc.getName(), queryDoc);
+                    queries.add(QueryDoc.buildDocRef().uuid(queryDoc.getUuid()).build());
                 }
             }
         }
@@ -365,7 +385,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
 
     @Test
     void everyQueryIsValidStroomQl() {
-        assertThat(queries).hasSize(10);
+        assertThat(queries).hasSize(20);
         queries.forEach((name, queryDoc) ->
                 assertThatCode(() -> searchRequest(queryDoc.getQuery(), queryDoc.getTimeRange()))
                         .as(name)
@@ -378,6 +398,152 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
                 List.of("Platform", "6"),
                 List.of("Security", "5"),
                 List.of("Support", "3"));
+    }
+
+    @Test
+    void leftJoinGivesEveryPersonWithTheirTeam() {
+        assertThat(blankForNull(run("Join - people with their team", 4))).containsExactly(
+                List.of("Alice", "Platform", "6", "true"),
+                List.of("Ben", "Data", "4", "false"),
+                List.of("Chloe", "Security", "5", "true"),
+                List.of("Dev", "Analysis", "8", "false"),
+                List.of("Ella", "Platform", "6", "true"),
+                List.of("Femi", "Design", "", ""),
+                List.of("Gus", "Support", "3", "true"));
+    }
+
+    @Test
+    void joinGivesItsRowsInTheQueryPane() throws InterruptedException {
+        final QueryDoc queryDoc = queries.get("Join - people with their team");
+        final QuerySearchRequest request = QuerySearchRequest.builder()
+                .searchRequestSource(SearchRequestSource.builder()
+                        .sourceType(SourceType.QUERY_UI)
+                        .ownerDocRef(queryDoc.asDocRef())
+                        .componentId("table")
+                        .build())
+                .query(queryDoc.getQuery())
+                .queryContext(QueryContext.builder()
+                        .timeRange(queryDoc.getTimeRange())
+                        .dateTimeSettings(DateTimeSettings.builder().build())
+                        .build())
+                .incremental(true)
+                .build();
+
+        // As the Query pane does: polls with the search's key until a response says it is complete.
+        DashboardSearchResponse response = queryService.search(request);
+        final QueryKey queryKey = response.getQueryKey();
+        try {
+            final Instant deadline = Instant.now().plusSeconds(30);
+            while (!response.isComplete() && Instant.now().isBefore(deadline)) {
+                Thread.sleep(100);
+                response = queryService.search(request.copy().queryKey(queryKey).build());
+            }
+
+            assertThat(response.isComplete()).isTrue();
+            assertThat(response.getErrorMessages()).isNullOrEmpty();
+            assertThat(response.getResults()).singleElement()
+                    .isInstanceOfSatisfying(TableResult.class, table -> assertThat(table.getRows())
+                            .extracting(row -> row.getValues().getFirst())
+                            .containsExactly("Alice", "Ben", "Chloe", "Dev", "Ella", "Femi", "Gus"));
+        } finally {
+            resultStoreManager.destroy(queryKey, DestroyReason.NO_LONGER_NEEDED);
+        }
+    }
+
+    @Test
+    void semiJoinGivesPeopleInOnCallTeams() {
+        assertThat(run("Join - people in on-call teams", 2)).containsExactly(
+                List.of("Alice", "Platform"),
+                List.of("Chloe", "Security"),
+                List.of("Ella", "Platform"),
+                List.of("Gus", "Support"));
+    }
+
+    @Test
+    void antiJoinGivesPeopleInNoKnownTeam() {
+        assertThat(run("Join - people in no known team", 2)).containsExactly(List.of("Femi", "Design"));
+    }
+
+    @Test
+    void existsGivesTheSameRowsAsTheSemiJoin() {
+        assertThat(run("Join - people in on-call teams, with exists", 2))
+                .isNotEmpty()
+                .isEqualTo(run("Join - people in on-call teams", 2));
+    }
+
+    @Test
+    void notExistsGivesTheSameRowsAsTheAntiJoin() {
+        assertThat(run("Join - people in no known team, with not exists", 2))
+                .isNotEmpty()
+                .isEqualTo(run("Join - people in no known team", 2));
+    }
+
+    @Test
+    void inGivesPeopleInKnownTeams() {
+        assertThat(run("Join - people in known teams, with in", 2)).containsExactly(
+                List.of("Alice", "Platform"),
+                List.of("Ben", "Data"),
+                List.of("Chloe", "Security"),
+                List.of("Dev", "Analysis"),
+                List.of("Ella", "Platform"),
+                List.of("Gus", "Support"));
+    }
+
+    @Test
+    void rightJoinGivesEveryTeamWithItsPeople() {
+        assertThat(blankForNull(run("Join - teams with their people, with right join", 2))).containsExactly(
+                List.of("Analysis", "Dev"),
+                List.of("Data", "Ben"),
+                List.of("Platform", "Alice"),
+                List.of("Platform", "Ella"),
+                List.of("Research", ""),
+                List.of("Security", "Chloe"),
+                List.of("Support", "Gus"));
+    }
+
+    @Test
+    void fullOuterJoinGivesEveryPersonAndEveryTeam() {
+        assertThat(blankForNull(run("Join - people and teams, with full outer join", 4)))
+                .containsExactlyInAnyOrder(
+                        List.of("Alice", "Platform", "Platform", "6"),
+                        List.of("Ben", "Data", "Data", "4"),
+                        List.of("Chloe", "Security", "Security", "5"),
+                        List.of("Dev", "Analysis", "Analysis", "8"),
+                        List.of("Ella", "Platform", "Platform", "6"),
+                        List.of("Femi", "Design", "", ""),
+                        List.of("Gus", "Support", "Support", "3"),
+                        List.of("", "", "Research", "2"));
+    }
+
+    @Test
+    void joinToABracketedQueryComparesTeamSizesWithPeopleListed() {
+        assertThat(run("Join - team sizes against people listed", 3)).containsExactly(
+                List.of("Analysis", "8", "1"),
+                List.of("Data", "4", "1"),
+                List.of("Platform", "6", "2"),
+                List.of("Security", "5", "1"),
+                List.of("Support", "3", "1"));
+    }
+
+    @Test
+    void joinOnADateFindsPeopleWhoStartedOnABankHoliday() {
+        final List<List<String>> rows = run("Join - people who started on a bank holiday", 3);
+
+        assertThat(rows).extracting(row -> row.get(0)).containsExactly("Ben", "Dev");
+        assertThat(rows).extracting(row -> row.get(2)).containsExactly("Good Friday", "Spring bank holiday");
+        assertThat(rows.get(0).get(1)).startsWith("2026-04-03");
+        assertThat(rows.get(1).get(1)).startsWith("2026-05-25");
+    }
+
+    // The rows with each value that is missing as blank.
+    private static List<List<String>> blankForNull(final List<List<String>> rows) {
+        return rows.stream()
+                .map(row -> row.stream()
+                        .map(value -> value == null
+                                ? ""
+                                : value)
+                        .toList())
+                .toList();
     }
 
     @Test

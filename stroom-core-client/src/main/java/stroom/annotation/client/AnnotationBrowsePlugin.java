@@ -16,17 +16,18 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.BrowseAnnotationController;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.Plugin;
 import stroom.core.client.event.CloseContentEvent;
-import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -42,18 +43,18 @@ public class AnnotationBrowsePlugin extends Plugin {
 
     private final ClientSecurityContext securityContext;
     private final ContentManager contentManager;
-    private final Provider<BrowseAnnotationPresenter> presenterProvider;
-    private BrowseAnnotationPresenter presenter;
+    private final Provider<BrowseAnnotationController> controllerProvider;
+    private BrowseAnnotationController controller;
 
     @Inject
     public AnnotationBrowsePlugin(final EventBus eventBus,
                                   final ClientSecurityContext securityContext,
                                   final ContentManager contentManager,
-                                  final Provider<BrowseAnnotationPresenter> presenterProvider) {
+                                  final Provider<BrowseAnnotationController> controllerProvider) {
         super(eventBus);
         this.securityContext = securityContext;
         this.contentManager = contentManager;
-        this.presenterProvider = presenterProvider;
+        this.controllerProvider = controllerProvider;
 
         final Action openAction = getOpenAction();
         if (openAction != null) {
@@ -86,25 +87,25 @@ public class AnnotationBrowsePlugin extends Plugin {
     }
 
     private void open() {
-        if (presenter == null) {
-            // If the presenter is null then we haven't got this tab open.
-            // Create a new presenter.
-            presenter = presenterProvider.get();
+        if (controller == null) {
+            // If the controller is null then we haven't got this tab open.
+            // Create a new controller.
+            controller = controllerProvider.get();
         }
 
         final CloseContentEvent.Handler closeHandler = event -> {
             // Give the content manager the ok to close the tab.
             event.getCallback().closeTab(true);
 
-            // After we close the tab set the presenter back to null so
+            // After we close the tab set the controller back to null so
             // that we can open it again.
-            presenter = null;
+            controller = null;
         };
 
         // Tell the content manager to open the tab.
-        final TabData tabData = presenter;
-        presenter.refresh();
-        contentManager.open(closeHandler, tabData, presenter);
+        final TabData tabData = controller;
+        controller.refresh();
+        contentManager.open(closeHandler, tabData, controller);
     }
 
     protected Action getOpenAction() {

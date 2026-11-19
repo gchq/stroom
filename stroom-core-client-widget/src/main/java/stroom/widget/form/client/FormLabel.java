@@ -24,6 +24,7 @@ public class FormLabel extends Composite {
 
     public static final String BASE_STYLE = "form-label";
     public static final String STYLE_FORM_LABEL_DISABLED = BASE_STYLE + "--disabled";
+    public static final String STYLE_FORM_LABEL_REQUIRED = BASE_STYLE + "--required";
 
     private final Lbl lbl = new Lbl();
     private boolean disabled = false;
@@ -33,8 +34,15 @@ public class FormLabel extends Composite {
         initWidget(lbl);
     }
 
+    /// Makes this the label for an element.
+    ///
+    /// @param id The id of the element this labels, or null for none.
     public void setIdentity(final String id) {
-        lbl.getElement().setAttribute("for", id);
+        if (id == null) {
+            lbl.getElement().removeAttribute("for");
+        } else {
+            lbl.getElement().setAttribute("for", id);
+        }
     }
 
     public void setLabel(final String label) {
@@ -57,6 +65,14 @@ public class FormLabel extends Composite {
 
     public boolean isDisabled() {
         return disabled;
+    }
+
+    /// Marks the label of a field that must be filled in with an asterisk after it (drawn by
+    /// `form-label.css`, hidden from screen readers, which hear "required" from the field itself).
+    ///
+    /// @param required Whether the field is required.
+    public void setRequired(final boolean required) {
+        lbl.setStyleName(STYLE_FORM_LABEL_REQUIRED, required);
     }
 
     // --------------------------------------------------------------------------------

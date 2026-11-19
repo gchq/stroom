@@ -17,13 +17,13 @@
 package stroom.help.client;
 
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -56,12 +56,16 @@ public class HelpPlugin extends Plugin {
                             .icon(SvgImage.HELP)
                             .text("Help")
                             .command(() -> Window.open(helpUrl, "_blank", ""))
+                            .opensNewTab()
                             .build();
                 } else {
+                    // Shown, as other unavailable items are, as disabled, so that it isn't
+                    // announced as something to choose
                     helpMenuItem = new IconMenuItem.Builder()
                             .priority(1)
                             .icon(SvgImage.HELP)
                             .text("Help is not configured!")
+                            .enabled(false)
                             .build();
                 }
 
@@ -75,6 +79,7 @@ public class HelpPlugin extends Plugin {
                 .text("API Specification")
                 .command(() ->
                         Window.open("/swagger-ui", "_blank", ""))
+                .opensNewTab()
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, apiMenuItem);
     }

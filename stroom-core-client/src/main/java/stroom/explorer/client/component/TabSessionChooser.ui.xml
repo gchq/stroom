@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The tab sessions to choose from: a bordered list -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical overflow-hidden">
+        <g:FlowPanel styleName="max control-box">
+            <dg:DataGrid ui:field="list" pageSize="100000" profile="LISTBOX" accessibleName="Tab sessions"
+                         addStyleNames="w-100"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

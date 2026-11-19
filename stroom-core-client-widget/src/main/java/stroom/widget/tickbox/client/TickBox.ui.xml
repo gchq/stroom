@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A tick box (tick-box.css): a label element, so its text names the tick box and clicking anywhere on
+  it ticks it, holding the native check box (unseen, over the box, so it has the focus, the clicks and
+  the state), the box drawn for it (its tick is set in Java, shared with the grid's TickBoxCell) and
+  its text.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <label class="tick-box">
+        <input ui:field="input" type="checkbox" class="tick-box__input"/>
+        <span ui:field="mark" class="tick-box__mark"></span>
+        <span ui:field="label" class="tick-box__label"></span>
+    </label>
+</ui:UiBinder>

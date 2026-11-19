@@ -1,0 +1,622 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.floormap.client.component;
+
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.document.asset.client.component.DocumentAssetSelectionController;
+import stroom.floormap.client.geometry.FloorMapScreenGeometry;
+import stroom.floormap.client.model.FloorMapEditorModel;
+import stroom.floormap.client.value.FloorMapEntryParser;
+import stroom.floormap.client.value.ParsedValue;
+import stroom.floormap.client.value.ValueAccessor;
+import stroom.floormap.client.value.ValueAccessorFactory;
+import stroom.floormap.shared.FloorMapDoc;
+import stroom.floormap.shared.FloorMapFieldMapping;
+import stroom.floormap.shared.FloorMapFieldMapping.Role;
+import stroom.floormap.shared.FloorMapGeometry;
+import stroom.floormap.shared.FloorMapJsonKeys;
+import stroom.floormap.shared.TypeStyle;
+import stroom.util.shared.TemporalEntry;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
+import stroom.widget.popup.client.PopupType;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+/// The properties form ([FloorMapObjectEdit]) used to edit individual floor-map object
+/// entries (temporal versions of a fact), in a dialog its owner keeps and shows again.
+///
+/// Used by the **Editor tab** ([FloorMapEditorTabController]) only, always as a
+/// modal OK/Cancel dialog via [#show(String, TemporalEntry, Consumer)]. The Map tab held an
+/// inline copy of this form once; it no longer does.
+///
+/// ### Managed form fields
+///
+/// - Type, Name — free-text identification of the object.
+/// - Image — selected from the document-asset dropdown.
+/// - X / Y coordinates — the fact's stored pre-transform offset, round-tripped unchanged.
+///   The form does not show or edit them; placement is edited via the matrix below.
+/// - Effective time — the timestamp of this temporal version.
+/// - World-to-Map matrix — 6-element affine transform. Every fact, background included, is
+///   placed by this one; there is no separate Map-to-Screen field.
+///
+/// ### Preconditions
+///
+/// [#setMapName(String)] **must** be called before
+/// [#buildEntry(long, String)] or [#show(String, TemporalEntry, Consumer)]
+/// is invoked; otherwise an [IllegalStateException] is thrown.
+public class FloorMapObjectEditController extends Controller {
+
+    private final FloorMapObjectEdit view;
+
+    private final DocumentAssetSelectionController assetSelection;
+    private String objectId;
+    private String mapName;
+    private FloorMapDoc floorMapDoc;
+
+    /// Supplies image aspect ratios; see [#setAspectRatioResolver].
+    private Function<String, Double> aspectRatioResolver;
+
+    /// The entry the form was last populated from. [#buildValue()] starts
+    /// from this entry's parsed value and overlays the form fields on top, so
+    /// data the form does not manage — an area's geometry, any custom-mapped
+    /// fields — survives a property edit instead of being silently rebuilt away.
+    private TemporalEntry loadedEntry;
+
+    /// Whether [#loadedEntry] carries area geometry.
+    private boolean loadedHasGeometry;
+
+    /// Resolves the JSON path for the given [Role] using the current
+    /// document's value schema.
+    ///
+    /// Requires that [#setFloorMapDoc(FloorMapDoc)] has been called
+    /// with a non-null document before any invocation.
+    ///
+    /// @param role the field role to resolve
+    /// @return the dot-separated JSON path for the role, or `null`
+    ///         if the role is not present in the schema
+    /// @throws NullPointerException if no document has been set
+    private String pathForRole(final Role role) {
+        return FloorMapFieldMapping.findPath(floorMapDoc.getValueSchema(), role);
+    }
+
+    /// Stores the map name for later use by [#buildEntry(long, String)].
+    ///
+    /// This method **must** be called at least once before
+    /// any call to [#buildEntry(long, String)] or
+    /// [#show(String, TemporalEntry, Consumer)].
+    ///
+    /// @param mapName the temporal-store map name; must not be `null`
+    /// @throws IllegalArgumentException if `mapName` is `null`
+    public void setMapName(final String mapName) {
+        if (mapName == null) {
+            throw new IllegalArgumentException("mapName must not be null");
+        }
+        this.mapName = mapName;
+    }
+
+    private String requireMapName() {
+        if (mapName == null) {
+            throw new IllegalStateException(
+                    "mapName has not been set — call setMapName() before using this controller");
+        }
+        return mapName;
+    }
+
+    /// Supplies image aspect ratios, so an image fact's real-world size can be
+    /// stated and edited. Wired by the hosting tab to its canvas, which has
+    /// already measured any image it has drawn.
+    ///
+    /// @param aspectRatioResolver returns width/height for an image URL, or
+    ///         `null` when it is not known
+    public void setAspectRatioResolver(final Function<String, Double> aspectRatioResolver) {
+        this.aspectRatioResolver = aspectRatioResolver;
+    }
+
+    /// The fact's size in map units at scale 1 — what the form multiplies by the
+    /// placement matrix's scale to state a real-world size, and divides a typed
+    /// size by to set that scale.
+    ///
+    /// `null` when the fact has no measurable extent, which hides the
+    /// size fields: a shape glyph is drawn at a fixed screen size and does not
+    /// scale at all, and an image whose proportions the canvas has not measured
+    /// yet has a width but no knowable height.
+    ///
+    /// @param image    the fact's image path, if any
+    /// @param vertices the fact's outline in its own frame, if any
+    /// @return `{width, height}` in map units, or `null`
+    private double[] baseSize(final String image, final double[][] vertices) {
+        if (image != null && !image.isEmpty()) {
+            final Double aspect = aspectRatioResolver != null
+                    ? aspectRatioResolver.apply(image)
+                    : null;
+            if (aspect == null || aspect <= 0 || Double.isNaN(aspect) || Double.isInfinite(aspect)) {
+                return null;
+            }
+            final double width = FloorMapScreenGeometry.DEFAULT_IMAGE_DISPLAY_WIDTH;
+            return new double[]{width, width / aspect};
+        }
+        // An area is measured across its outline; the vertices are stored in the
+        // fact's own frame, so this is its size before the matrix scales it.
+        final double[] bounds = FloorMapGeometry.aabb(vertices);
+        if (bounds == null) {
+            return null;
+        }
+        final double width = bounds[2] - bounds[0];
+        final double height = bounds[3] - bounds[1];
+        return width > 0 && height > 0
+                ? new double[]{width, height}
+                : null;
+    }
+
+    /// Sets the floor-map document and configures the asset dropdown to list
+    /// assets belonging to that document.
+    ///
+    /// A `null` document is **not** a supported state for
+    /// editing. There is no fallback to a default value schema: the next call to
+    /// [#pathForRole(Role)] throws [NullPointerException], as its own
+    /// `@throws` records, and `buildValue` and `resetInputs` do
+    /// the same. Passing `null` is only safe when clearing a dialog that will
+    /// not be shown again before a real document is set.
+    ///
+    /// @param floorMapDoc the floor-map document, or `null` to clear
+    public void setFloorMapDoc(final FloorMapDoc floorMapDoc) {
+        this.floorMapDoc = floorMapDoc;
+        assetSelection.setDocument(floorMapDoc);
+        // Always called before the form is populated, so the position boxes know
+        // their scale by the time they are filled in.
+        view.setMeasurementUnits(floorMapDoc != null
+                ? floorMapDoc.getMeasurementUnits()
+                : null);
+    }
+
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          The content.
+    /// @param assetSelectionProvider        Makes the image picker's controller.
+    /// @param dateTimeBoxControllerProvider Makes the effective time box's controller.
+    @Inject
+    public FloorMapObjectEditController(final EventBus eventBus,
+                                        final FloorMapObjectEdit view,
+                                        final Provider<DocumentAssetSelectionController> assetSelectionProvider,
+                                        final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        make(dateTimeBoxControllerProvider).attach(view.getEffectiveTimeBox());
+
+        assetSelection = make(assetSelectionProvider);
+        assetSelection.attach(view.getAssetBox());
+        // Typing "area" into a fresh Add-Object dialog reveals the area fields.
+        view.setOnTypeChange(this::onTypeChanged);
+    }
+
+    /// Re-applies everything the object's type decides: whether the area-only
+    /// fields are shown, and which default fill the swatch advertises.
+    private void onTypeChanged(final String type) {
+        updateAreaFieldsVisibility(type);
+        view.setDefaultFill(defaultFillForType(type));
+    }
+
+    /// Shows or hides the area-only fields (fill colour, opacity, vertex count):
+    /// visible when the object is typed `"area"` or already carries
+    /// geometry.
+    private void updateAreaFieldsVisibility(final String type) {
+        final boolean isArea = isArea(type);
+        view.setAreaFieldsVisible(isArea);
+    }
+
+    /// The colour the canvas fills an area of this type with when it carries no
+    /// fill of its own — resolved against the document's type styles by the same
+    /// shared rule the renderer uses, so the picker and the map agree.
+    private String defaultFillForType(final String type) {
+        return TypeStyle.colourForType(type == null ? null : type.trim(),
+                floorMapDoc != null ? floorMapDoc.getTypeStyles() : null);
+    }
+
+    private boolean isArea(final String type) {
+        return (type != null && FloorMapJsonKeys.AREA.equals(type.trim()))
+                || loadedHasGeometry;
+    }
+
+    /// Shows the properties form as a modal OK/Cancel dialog for a
+    /// *new* (not yet persisted) entry.
+    ///
+    /// The form is pre-populated from `entry`. When the user clicks OK
+    /// the current form state is built into a [TemporalEntry] and passed
+    /// to `onSave`. Clicking Cancel discards the changes. Editing the
+    /// effective time simply sets the new entry's time — no move/clone
+    /// question is asked, since there is no persisted version to move.
+    ///
+    /// @param caption the dialog title — e.g. "Add Time Properties" or "Add Object"
+    /// @param entry   the entry to pre-populate the form with; may be `null` for a blank form
+    /// @param onSave  called with the built entry when the user clicks OK
+    public void show(final String caption,
+                     final TemporalEntry entry,
+                     final Consumer<TemporalEntry> onSave) {
+        //noinspection unused clone
+        doShow(caption, entry, false, (built, clone) -> {
+            onSave.accept(built);
+            return true;
+        });
+    }
+
+    /// Shows the properties form as a modal OK/Cancel dialog for an
+    /// *existing* entry.
+    ///
+    /// Behaves like [#show(String, TemporalEntry, Consumer)], except
+    /// that when the user changes the effective time they are asked whether to
+    /// *move* the version to the new time or *clone* it (keeping
+    /// the original version at the old time). The choice is reported via the
+    /// second argument of `onSave`.
+    ///
+    /// @param caption the dialog title — e.g. "Edit Time Properties"
+    /// @param entry   the entry to pre-populate the form with; must not be `null`
+    /// @param onSave  called with the built entry when the user clicks OK; the
+    ///         boolean is `true` when the user chose to clone
+    ///         rather than move (only possible when the time changed).
+    ///         Return `false` to reject the save and leave the dialog
+    ///         open with the user's input intact
+    public void showForEdit(final String caption,
+                            final TemporalEntry entry,
+                            final SaveHandler onSave) {
+        doShow(caption, entry, true, onSave);
+    }
+
+    /// Shared implementation behind [#show] and [#showForEdit].
+    ///
+    /// The key the dialog will write under is resolved **once, here**
+    /// and captured for the OK handler, so it cannot drift if the surrounding
+    /// selection changes while the dialog is open, and cannot be left stale by a
+    /// caller that forgot [#setObject]. For an existing entry it is that
+    /// entry's own key; only a blank new-object form falls back to
+    /// [#objectId].
+    ///
+    /// @param caption        the dialog title
+    /// @param entry          the entry to pre-populate from, or `null` for a blank form
+    /// @param askMoveOrClone whether to ask move-or-clone when the effective time changes
+    /// @param onSave         called with the built entry and the clone flag on OK; the
+    ///         dialog stays open if it returns `false`
+    private void doShow(final String caption,
+                        final TemporalEntry entry,
+                        final boolean askMoveOrClone,
+                        final SaveHandler onSave) {
+        final String key = FloorMapEditorModel.resolveEntryKey(entry, objectId);
+        loadEntry(entry);
+        //noinspection unused e
+        ControllerDialog.show(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption(caption)
+                .onShow(e -> view.setEnabled(true))
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        // Every path that declines to close MUST call e.reset(). Clicking OK
+                        // puts the dialog into its in-progress state - both buttons disabled
+                        // and OK showing a spinner (DialogFrame.onDialogAction) - and only
+                        // reset() or hide() releases it. Returning without either leaves the
+                        // dialog open but dead: Escape is the only way out, and it discards
+                        // everything the user typed. The three sibling dialogs
+                        // (FloorMapSetScaleController, FloorMapGroupEditController,
+                        // FloorMapLayerStyleController) all pass e::reset for this reason.
+                        final String type = view.getType();
+                        if (type == null || type.trim().isEmpty()) {
+                            AlertEvent.fireError(this,
+                                    "Object type must not be empty. "
+                                    + "Please enter a type (e.g. 'gate', 'camera', 'person').",
+                                    e::reset);
+                            return;
+                        }
+                        if (isArea(type) && !view.isOpacityValid()) {
+                            AlertEvent.fireError(this,
+                                    "Area fill opacity must be a number between 0 and 1, "
+                                    + "or empty for the default.",
+                                    e::reset);
+                            return;
+                        }
+                        final String badGeometryField = view.getGeometryFieldError();
+                        if (badGeometryField != null) {
+                            // Checked before reading the matrix, for the same reason as the
+                            // effective time below: the geometry boxes are free text, and a
+                            // parse failure used to be silently replaced by a default and
+                            // saved as a deliberate edit.
+                            AlertEvent.fireError(this,
+                                    badGeometryField + " must be a number.",
+                                    e::reset);
+                            return;
+                        }
+                        if (!view.isEffectiveTimeValid()) {
+                            // Checked before reading the value: DateTimeBox yields null for a
+                            // cleared or unparseable field, and unboxing that threw an NPE from
+                            // inside this handler - before any validation ran, and with the
+                            // buttons already disabled.
+                            AlertEvent.fireError(this,
+                                    "Effective From Time must be a valid date and time.",
+                                    e::reset);
+                            return;
+                        }
+                        // Kept primitive: TemporalEntry.getEffectiveTimeMs() is a Long, so
+                        // comparing it against a Long below would ask whether the two are
+                        // the same object rather than the same instant.
+                        final long time = view.getEffectiveTime();
+                        if (askMoveOrClone && entry != null && entry.getEffectiveTimeMs() != time) {
+                            // Effective time changed — ask whether to move or clone.
+                            ConfirmEvent.fire(this,
+                                    "You have changed the effective time. "
+                                    + "Do you want to move the version to the new time? "
+                                    + "(OK to move, Cancel to create a new cloned version at the new time)",
+                                    move -> {
+                                        // Keep the dialog open when the handler rejects, so the
+                                        // user's input survives - but reset it, or "open" means
+                                        // "open and unusable".
+                                        if (onSave.onSave(buildEntry(time, key), !move)) {
+                                            e.hide();
+                                        } else {
+                                            e.reset();
+                                        }
+                                    });
+                        } else {
+                            if (onSave.onSave(buildEntry(time, key), false)) {
+                                e.hide();
+                            } else {
+                                e.reset();
+                            }
+                        }
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
+    }
+
+    /// Stores the object ID. Called by the Editor tab.
+    /// Does not trigger a server fetch — form population is driven by
+    /// [#loadEntry(TemporalEntry)].
+    ///
+    /// @param objectId the fact key for the object being edited
+    public void setObject(final String objectId) {
+        this.objectId = objectId;
+    }
+
+    /// Loads a temporal entry into the form.
+    ///
+    /// Called internally when the dialog opens, and by
+    /// [stroom.floormap.client.component.FloorMapEditorTabController] with `null` to clear
+    /// the form after a delete. It is not driven by the Time List selection. Populates all form
+    /// fields and enables or disables the form based on whether `entry` is non-null.
+    ///
+    /// @param entry the entry to display, or `null` to clear and disable the form
+    public void loadEntry(final TemporalEntry entry) {
+        view.setEnabled(entry != null);
+        assetSelection.setEnabled(entry != null);
+        resetInputs(entry);
+    }
+
+    /// Builds a serialised value string from the current view state using
+    /// the format-independent [ValueAccessor] abstraction.
+    ///
+    /// @return the serialised value (JSON or XML); never `null`
+    private String buildValue() {
+        final ValueAccessor accessor = ValueAccessorFactory.forFormat(floorMapDoc.getValueFormat());
+
+        // Start from the loaded entry's value and overlay the form fields, so
+        // data the form does not manage (area geometry, custom-mapped fields)
+        // round-trips a property edit untouched.
+        ParsedValue newValue = loadedEntry != null
+                ? accessor.parse(loadedEntry.getValue())
+                : null;
+        if (newValue == null) {
+            newValue = accessor.createEmpty("entry");
+        }
+
+        accessor.setString(newValue, pathForRole(Role.TYPE), view.getType());
+        accessor.setString(newValue, pathForRole(Role.LABEL), view.getName());
+        accessor.setString(newValue, pathForRole(Role.IMAGE),
+                assetSelection.getSelectedAssetPath() == null
+                        ? ""
+                        : assetSelection.getSelectedAssetPath());
+
+        accessor.setArray(newValue, pathForRole(Role.POSITION),
+                new double[]{view.getX(), view.getY()});
+
+        // Every fact — background included — is placed by its WORLD_TO_MAP matrix.
+        accessor.setArray(newValue, pathForRole(Role.WORLD_TO_MAP),
+                view.getWorldToMapMatrix());
+
+        // Fill/opacity are written only for areas, so non-area objects never
+        // accumulate empty area fields even when the schema maps the roles.
+        // An empty fill / blank opacity means "use the default" and removes
+        // the field. The fill is written only when the user actually touched
+        // the fill controls — a stored value the picker cannot represent
+        // (e.g. "red") must survive an edit of unrelated fields. GEOMETRY is
+        // never written from the form — it is preserved purely by the overlay
+        // above.
+        if (isArea(view.getType())) {
+            final String fillPath = pathForRole(Role.FILL);
+            if (fillPath != null && view.isFillDirty()) {
+                final String fill = view.getFill();
+                accessor.setString(newValue, fillPath,
+                        fill != null && !fill.isEmpty() ? fill : null);
+            }
+            final String opacityPath = pathForRole(Role.OPACITY);
+            if (opacityPath != null) {
+                accessor.setNumber(newValue, opacityPath, view.getOpacity());
+            }
+        }
+
+        return accessor.serialise(newValue);
+    }
+
+    /// Builds a [TemporalEntry] from the current view state without
+    /// making a REST call.
+    ///
+    /// The key is passed in rather than read from [#objectId] so that an
+    /// edit is always written under the key of the entry actually being edited —
+    /// see [FloorMapEditorModel#resolveEntryKey].
+    ///
+    /// @param effectiveTimeMs the effective time for the new entry
+    /// @param key             the fact key to write under
+    /// @return the constructed entry; never `null`
+    private TemporalEntry buildEntry(final long effectiveTimeMs, final String key) {
+        return new TemporalEntry(requireMapName(), key, effectiveTimeMs, buildValue());
+    }
+
+    /// Populates the form fields from the given temporal entry, or resets all
+    /// fields to sensible defaults if `selected` is `null`.
+    ///
+    /// When an entry is provided its JSON value is parsed to extract type,
+    /// name, image path, coordinates, and the affine transformation matrices.
+    /// Any parse errors are silently ignored and the affected fields retain
+    /// their zero/identity defaults.
+    ///
+    /// When `selected` is `null` and the current
+    /// [#objectId] is the background sentinel, the name and type fields
+    /// are pre-filled with the background defaults; otherwise they are left
+    /// blank.
+    ///
+    /// @param selected the temporal entry to populate from, or `null`
+    ///         to reset
+    private void resetInputs(final TemporalEntry selected) {
+        loadedEntry = selected;
+        loadedHasGeometry = false;
+        if (selected != null) {
+            view.setEffectiveTime(selected.getEffectiveTimeMs());
+            double x = 0.0;
+            double y = 0.0;
+            String name = "";
+            String type = "";
+            String img = "";
+            String fill = "";
+            Double opacity = null;
+            Integer vertexCount = null;
+            double[][] vertices = null;
+            final double[] w2m = new double[]{1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+
+            try {
+                final ValueAccessor accessor = ValueAccessorFactory.forFormat(floorMapDoc.getValueFormat());
+                final ParsedValue parsed = accessor.parse(selected.getValue());
+                if (parsed != null) {
+                    final String parsedName = accessor.getString(parsed, pathForRole(Role.LABEL));
+                    if (parsedName != null) {
+                        name = parsedName;
+                    }
+                    final String parsedType = accessor.getString(parsed, pathForRole(Role.TYPE));
+                    if (parsedType != null) {
+                        type = parsedType;
+                    }
+                    final String parsedImg = accessor.getString(parsed, pathForRole(Role.IMAGE));
+                    if (parsedImg != null) {
+                        img = parsedImg;
+                    }
+
+                    final double[] coords = accessor.getArray(parsed, pathForRole(Role.POSITION));
+                    if (coords != null && coords.length >= 2) {
+                        x = coords[0];
+                        y = coords[1];
+                    }
+
+                    final double[] parsedW2m = accessor.getArray(parsed, pathForRole(Role.WORLD_TO_MAP));
+                    if (parsedW2m != null && parsedW2m.length >= 6) {
+                        System.arraycopy(parsedW2m, 0, w2m, 0, 6);
+                    }
+
+                    final String geometryPath = pathForRole(Role.GEOMETRY);
+                    if (geometryPath != null) {
+                        final double[] geometry = accessor.getArray(parsed, geometryPath);
+                        if (geometry != null && geometry.length >= 6) {
+                            loadedHasGeometry = true;
+                            vertexCount = geometry.length / 2;
+                            vertices = FloorMapEntryParser.parseVertices(geometry);
+                        }
+                    }
+                    final String fillPath = pathForRole(Role.FILL);
+                    if (fillPath != null) {
+                        final String parsedFill = accessor.getString(parsed, fillPath);
+                        if (parsedFill != null) {
+                            fill = parsedFill;
+                        }
+                    }
+                    final String opacityPath = pathForRole(Role.OPACITY);
+                    if (opacityPath != null) {
+                        opacity = accessor.getNumber(parsed, opacityPath);
+                    }
+                }
+            } catch (final Exception ex) {
+                // Ignore
+            }
+            view.setX(x);
+            view.setY(y);
+            view.setName(name);
+            view.setType(type);
+            assetSelection.setSelectedAssetPath(img);
+            view.setWorldToMapMatrix(w2m);
+            // Before setFill: the swatch shows the default while Default is ticked.
+            view.setDefaultFill(defaultFillForType(type));
+            view.setFill(fill);
+            view.setOpacity(opacity);
+            view.setVertexCount(vertexCount);
+            view.setBaseSize(baseSize(img, vertices));
+            updateAreaFieldsVisibility(type);
+        } else {
+            view.setEffectiveTime(0L);
+            view.setX(0.0);
+            view.setY(0.0);
+            final boolean background = FloorMapJsonKeys.BACKGROUND.equals(objectId);
+            view.setName(background
+                    ? FloorMapJsonKeys.BACKGROUND_DISPLAY_NAME
+                    : "");
+            view.setType(background
+                    ? FloorMapJsonKeys.BACKGROUND
+                    : "");
+            assetSelection.setSelectedAssetPath("");
+            view.setWorldToMapMatrix(new double[]{1.0, 0.0, 0.0, 1.0, 0.0, 0.0});
+            view.setDefaultFill(defaultFillForType(background
+                    ? FloorMapJsonKeys.BACKGROUND
+                    : null));
+            view.setFill("");
+            view.setOpacity(null);
+            view.setVertexCount(null);
+            view.setBaseSize(null);
+            updateAreaFieldsVisibility(null);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Save handler that can *reject* what the user entered.
+    ///
+    /// Returning `false` keeps the dialog open, so a caller that rejects
+    /// a save (for example because the chosen effective time is already occupied)
+    /// does not also throw away everything the user typed.
+    @FunctionalInterface
+    public interface SaveHandler {
+
+        /// @param entry the entry built from the current form state
+        /// @param clone `true` when the user chose to clone rather than move
+        /// @return `true` to accept and close, `false` to stay open
+        boolean onSave(TemporalEntry entry, boolean clone);
+    }
+}

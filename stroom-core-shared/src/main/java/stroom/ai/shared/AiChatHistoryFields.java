@@ -21,5 +21,6 @@ import stroom.query.api.datasource.QueryField;
 public class AiChatHistoryFields {
     public static final String NAME = "Name";
 
-    public static final QueryField NAME_FIELD = QueryField.createText(NAME);
+    // AI_CHAT.TITLE via an identity converter in AiDaoImpl. See QueryField.createSqlText.
+    public static final QueryField NAME_FIELD = QueryField.createSqlText(NAME);
 }

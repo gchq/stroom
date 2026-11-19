@@ -104,7 +104,6 @@ class TestFloorMapHighlight {
                 groupOverlay(PURPLE, "alice"), areaOverlayFocusedOnBay());
 
         assertThat(highlight.colourFor("nobody")).isNull();
-        assertThat(highlight.isHighlighted("nobody")).isFalse();
         assertThat(highlight.isDashed("nobody")).isFalse();
     }
 

@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.client.component.VisualisationEditor;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -45,24 +45,26 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
 
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
-    private final Provider<VisualisationPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<VisualisationEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public VisualisationPlugin(final EventBus eventBus,
-                               final Provider<VisualisationPresenter> editorProvider,
+                               final Provider<VisualisationEditor> editorProvider,
                                final RestFactory restFactory,
                                final ContentManager contentManager,
                                final DocumentPluginEventManager entityPluginEventManager,
                                final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), VisualisationDoc.TYPE);
     }
 
     @Override

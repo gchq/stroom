@@ -17,8 +17,7 @@
 package stroom.data.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.DataPreviewTabPresenter;
-import stroom.data.client.presenter.DataViewType;
+import stroom.data.client.component.DataPreviewTabController;
 import stroom.pipeline.shared.SourceLocation;
 
 import com.google.inject.Inject;
@@ -29,13 +28,13 @@ import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreviewKey, DataPreviewTabPresenter> {
+public class DataPreviewTabPlugin extends AbstractTabPlugin<DataPreviewKey, DataPreviewTabController> {
 
     @Inject
     public DataPreviewTabPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
-                                final Provider<DataPreviewTabPresenter> dataPreviewTabPresenterProvider) {
-        super(eventBus, contentManager, dataPreviewTabPresenterProvider);
+                                final Provider<DataPreviewTabController> dataPreviewTabControllerProvider) {
+        super(eventBus, contentManager, dataPreviewTabControllerProvider);
     }
 
     @Override
@@ -46,16 +45,16 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
     /**
      * 4. This method will open the source and show it in the content pane.
      */
-    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation,
+    public Optional<DataPreviewTabController> open(final SourceLocation sourceLocation,
                                                   final DataViewType initDataViewType,
                                                   final boolean forceOpen) {
 
-        return super.openTabPresenter(
+        return super.openTabController(
                 forceOpen,
                 new DataPreviewKey(sourceLocation),
-                dataPreviewTabPresenter -> {
-                    dataPreviewTabPresenter.setInitDataViewType(initDataViewType);
-                    dataPreviewTabPresenter.setSourceLocation(sourceLocation);
+                dataPreviewTabController -> {
+                    dataPreviewTabController.setInitDataViewType(initDataViewType);
+                    dataPreviewTabController.setSourceLocation(sourceLocation);
                 });
 
     }

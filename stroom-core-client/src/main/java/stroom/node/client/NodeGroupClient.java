@@ -23,8 +23,8 @@ import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupResource;
 import stroom.node.shared.NodeGroupState;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.shared.GWT;
 
@@ -121,13 +121,21 @@ public class NodeGroupClient {
                 .exec();
     }
 
+    /// Deletes a node group.
+    ///
+    /// @param id                 The group's id.
+    /// @param consumer           Given whether it was deleted.
+    /// @param errorHandler       Told if the delete failed.
+    /// @param taskMonitorFactory Shows the request is running.
     public void delete(final int id,
                        final Consumer<Boolean> consumer,
+                       final RestErrorHandler errorHandler,
                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.delete(id))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -135,10 +143,24 @@ public class NodeGroupClient {
     public void getNodeGroupState(final int id,
                                   final Consumer<NodeGroupState> consumer,
                                   final TaskMonitorFactory taskMonitorFactory) {
+        getNodeGroupState(id, consumer, null, taskMonitorFactory);
+    }
+
+    /// Fetches which nodes a group has.
+    ///
+    /// @param id                 The group's ID.
+    /// @param consumer           Given the group's state.
+    /// @param errorHandler       Told of a failure, or `null` for the default (an alert).
+    /// @param taskMonitorFactory Shows the fetch's progress.
+    public void getNodeGroupState(final int id,
+                                  final Consumer<NodeGroupState> consumer,
+                                  final RestErrorHandler errorHandler,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.getNodeGroupState(id))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

@@ -15,6 +15,16 @@ This licence is included in the _licences/custom_ folder.
 Some of the SVG icons used in _Stroom_ are taken from or derived from [FontAwesome](https://github.com/FortAwesome/Font-Awesome).
 These icons are licenced under [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/).
 
+The _Stroom GWT Workbench_ (`stroom-gwt/stroom-gwt-workbench-framework`) is inspired by [Storybook](https://storybook.js.org/),
+and is not affiliated with or endorsed by Storybook or Chromatic.
+Some of its code and assets are taken from or derived from Storybook, which is Copyright (c) 2024 Storybook and licensed under the MIT licence:
+the SVG icons (from [@storybook/icons](https://github.com/storybookjs/icons), whose own MIT licence is also included, and from Storybook itself),
+the colour vision filters, the measure overlay, and the story id and URL args formats.
+These licences are included in the _licences/custom_ folder.
+
+The _Stroom GWT Workbench_ downloads [axe-core](https://github.com/dequelabs/axe-core) with npm when it is run, to check stories for accessibility.
+axe-core is licensed under the Mozilla Public Licence, Version 2.0 and is not distributed with _Stroom_.
+
 The table below includes licences for all Maven dependencies. 
 
 | Group                            | Artifact                                     | Version          | Licence       | Licence   | Licence       |
@@ -44,16 +54,6 @@ The table below includes licences for all Maven dependencies.
 | com.google.inject.extensions     | guice-assistedinject                         | 3.0-rc2          | APL 2.0       |           |               |
 | com.google.inject.extensions     | guice-servlet                                | 3                | APL 2.0       |           |               |
 | com.google.protobuf              | protobuf-java                                | 2.5.0            | Custom BSD    |           |               |
-| com.gwtplatform                  | gwtp-all                                     | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-clients-common                          | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-crawler                                 | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-client                         | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-server                         | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-server-guice                   | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-shared                         | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-mvp-client                              | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-processors                              | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-tester                                  | 0.7              | APL 2.0       |           |               |
 | com.jamesmurty.utils             | java-xmlbuilder                              | 0.4              | APL 2.0       |           |               |
 | com.jcraft                       | jsch                                         | 0.1.42           | Custom BSD    |           |               |
 | com.lmax                         | disruptor                                    | 3.3.0            | APL 2.0       |           |               |

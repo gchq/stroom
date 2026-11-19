@@ -1016,7 +1016,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ExpressionCriteria"
+              $ref: "#/components/schemas/FindAnnotationTagCriteria"
         description: request
         required: true
       responses:
@@ -3855,6 +3855,46 @@ paths:
       summary: Exports all configuration to a file.
       tags:
       - Export
+  /expression/v1/formatQuickFilter:
+    post:
+      operationId: formatQuickFilter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormatQuickFilterRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormatQuickFilterResult"
+          description: default response
+      summary: Write an expression tree as quick filter text
+      tags:
+      - Expressions
+  /expression/v1/parseQuickFilter:
+    post:
+      operationId: parseQuickFilter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseQuickFilterRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseQuickFilterResult"
+          description: default response
+      summary: Parse quick filter text into an expression tree
+      tags:
+      - Expressions
   /expression/v1/validate:
     post:
       operationId: validate
@@ -5761,22 +5801,27 @@ paths:
         name: nonce
         schema:
           type: string
+          nullable: true
       - in: query
         name: state
         schema:
           type: string
+          nullable: true
       - in: query
         name: prompt
         schema:
           type: string
+          nullable: true
       - in: query
         name: code_challenge
         schema:
           type: string
+          nullable: true
       - in: query
         name: code_challenge_method
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -6565,6 +6610,27 @@ paths:
                 type: boolean
           description: default response
       summary: Bulk change processors
+      tags:
+      - Processor Filters
+  /processorFilter/v1/bulkChange/count:
+    post:
+      operationId: getBulkChangeCount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkProcessorFilterChangeRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Count the processor filters a bulk change would change
       tags:
       - Processor Filters
   /processorFilter/v1/find:
@@ -7359,6 +7425,65 @@ paths:
       summary: Update a query doc
       tags:
       - Queries
+  /quickFilterHistory/v1/clear:
+    post:
+      operationId: clearQuickFilterHistory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuickFilterHistoryKey"
+        description: key
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Forget the calling user's recently used filters for one quick filter
+      tags:
+      - Quick Filter History
+  /quickFilterHistory/v1/fetch:
+    post:
+      operationId: fetchQuickFilterHistory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuickFilterHistoryKey"
+        description: key
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: default response
+      summary: "Fetch the calling user's recently used filters for one quick filter,\
+        \ most recent first"
+      tags:
+      - Quick Filter History
+  /quickFilterHistory/v1/record:
+    post:
+      operationId: recordQuickFilterUse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordQuickFilterUseRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Record that the calling user used a filter in one quick filter
+      tags:
+      - Quick Filter History
   /refData/v1/clearBufferPool:
     delete:
       operationId: clearBufferPool
@@ -7367,6 +7492,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7443,6 +7569,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7472,6 +7599,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7498,6 +7626,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7558,6 +7687,23 @@ paths:
                 type: boolean
           description: default response
       summary: Destroy search results
+      tags:
+      - Remote Search
+  /remoteSearch/v1/joinTables:
+    get:
+      operationId: getRemoteSearchJoinTables
+      parameters:
+      - in: query
+        name: queryKey
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/octet-stream: {}
+          description: default response
+      summary: "Get the join tables of a search, for a node that searches its first\
+        \ source"
       tags:
       - Remote Search
   /remoteSearch/v1/poll:
@@ -10761,6 +10907,8 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         requiredPermissions:
           type: array
           items:
@@ -10786,6 +10934,8 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         requiredPermissions:
           type: array
           items:
@@ -11907,6 +12057,8 @@ components:
     CacheInfoResponse:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -11916,6 +12068,8 @@ components:
     CacheNamesResponse:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -12155,6 +12309,8 @@ components:
         availableCount:
           type: integer
           format: int64
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -13112,6 +13268,8 @@ components:
     DataRetentionDeleteSummaryResponse:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         queryId:
@@ -13389,7 +13547,7 @@ components:
       properties:
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        partialName:
+        quickFilter:
           type: string
         sort:
           type: string
@@ -13642,6 +13800,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - CUT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -13691,7 +13850,6 @@ components:
           - DOUBLE_ARROW
           - DOWN
           - DOWNLOAD
-          - DROP_DOWN
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -13753,11 +13911,13 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - NOT_ALLOWED
           - OK
           - OO
           - OPEN
           - OPERATOR
           - PASSWORD
+          - PASTE
           - PATHWAYS_CHOICE
           - PATHWAYS_NODE
           - PATHWAYS_SEQUENCE
@@ -13791,6 +13951,7 @@ components:
           - PROPERTIES
           - QUESTION
           - RAW
+          - REDO
           - REFRESH
           - REGEX
           - REMOVE
@@ -13801,6 +13962,7 @@ components:
           - SAVEAS
           - SEARCH
           - SELECTION
+          - SELECT_ALL
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -15070,10 +15232,10 @@ components:
     FetchAppUserPermissionsRequest:
       type: object
       properties:
-        expression:
-          $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         showLevel:
           type: string
           enum:
@@ -15157,10 +15319,10 @@ components:
       properties:
         docRef:
           $ref: "#/components/schemas/DocRef"
-        expression:
-          $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         showLevel:
           type: string
           enum:
@@ -15179,6 +15341,8 @@ components:
     FetchExplorerNodeResult:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         openedItems:
           type: array
           items:
@@ -15271,6 +15435,8 @@ components:
     FetchNodeStatusResponse:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -15351,10 +15517,10 @@ components:
     FindAccountRequest:
       type: object
       properties:
-        expression:
-          $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         sort:
           type: string
           writeOnly: true
@@ -15365,10 +15531,10 @@ components:
     FindAiChatHistoryCriteria:
       type: object
       properties:
-        filter:
-          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         sort:
           type: string
           writeOnly: true
@@ -15383,8 +15549,6 @@ components:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        quickFilterInput:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -15398,10 +15562,10 @@ components:
         destinationId:
           type: integer
           format: int64
-        filter:
-          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         requiredPermission:
           type: string
           enum:
@@ -15420,15 +15584,36 @@ components:
         sourceId:
           type: integer
           format: int64
+    FindAnnotationTagCriteria:
+      type: object
+      properties:
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        type:
+          type: string
+          enum:
+          - STATUS
+          - LABEL
+          - COLLECTION
+          - COMMENT
     FindApiKeyCriteria:
       type: object
       properties:
-        expression:
-          $ref: "#/components/schemas/ExpressionOperator"
         owner:
           $ref: "#/components/schemas/UserRef"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         sort:
           type: string
           writeOnly: true
@@ -15451,10 +15636,10 @@ components:
             - KEY_STORE_FILE
             - AWS_KEY
           uniqueItems: true
-        filter:
-          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         requiredPermission:
           type: string
           enum:
@@ -15503,8 +15688,6 @@ components:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        quickFilterInput:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -15530,14 +15713,14 @@ components:
       properties:
         dataSourceRef:
           $ref: "#/components/schemas/DocRef"
-        filter:
-          type: string
         nativeQuery:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         queryable:
           type: boolean
+        quickFilter:
+          type: string
         sort:
           type: string
           writeOnly: true
@@ -15716,8 +15899,6 @@ components:
       properties:
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        quickFilterInput:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -15779,10 +15960,10 @@ components:
           items:
             $ref: "#/components/schemas/TaskProgress"
           uniqueItems: true
-        nameFilter:
-          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         sessionId:
           type: string
         sort:
@@ -15856,6 +16037,8 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         sort:
           type: string
           writeOnly: true
@@ -15866,10 +16049,10 @@ components:
     FindUserDependenciesCriteria:
       type: object
       properties:
-        expression:
-          $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        quickFilter:
+          type: string
         sort:
           type: string
           writeOnly: true
@@ -16100,6 +16283,26 @@ components:
           type: boolean
       required:
       - type
+    FormatQuickFilterRequest:
+      type: object
+      properties:
+        defaultFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryField"
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
+        qualifiedFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryField"
+    FormatQuickFilterResult:
+      type: object
+      properties:
+        error:
+          type: string
+        text:
+          type: string
     FormatSettings:
       type: object
       discriminator:
@@ -16464,7 +16667,7 @@ components:
       properties:
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        quickFilterInput:
+        quickFilter:
           type: string
         sort:
           type: string
@@ -17168,6 +17371,8 @@ components:
     JobNodeAndInfoListResponse:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -17189,6 +17394,33 @@ components:
         scheduleReferenceTime:
           type: integer
           format: int64
+    JoinKey:
+      type: object
+      description: A pair of expressions whose values must be equal for two rows to
+        join
+      properties:
+        left:
+          type: string
+          description: The expression worked out from the rows the join is applied
+            to
+        right:
+          type: string
+          description: The expression worked out from the joined source's rows
+    JoinWindow:
+      type: object
+      description: The time window a joined row's time must fall in
+      properties:
+        after:
+          type: boolean
+          description: "True if the window starts at the time field and runs forward,\
+            \ false or missing if it ends there and runs back"
+        duration:
+          type: string
+          description: "The length of the window as a StroomQL duration, e.g. 10m"
+        timeField:
+          type: string
+          description: The field of the rows being joined that holds the time the
+            window starts or ends at
     KafkaConfigDoc:
       type: object
       properties:
@@ -17387,6 +17619,8 @@ components:
       type: object
       description: List of config properties
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         nodeName:
           type: string
         pageResponse:
@@ -17514,6 +17748,7 @@ components:
         partitionBy:
           type: string
           enum:
+          - NONE
           - DAY
           - WEEK
           - MONTH
@@ -17938,6 +18173,8 @@ components:
           items:
             type: integer
             format: int64
+        sourceNode:
+          type: string
         sourceTaskId:
           $ref: "#/components/schemas/TaskId"
         taskName:
@@ -18168,6 +18405,26 @@ components:
           enum:
           - OPTIONAL
           - MANDATORY
+    ParseQuickFilterRequest:
+      type: object
+      properties:
+        defaultFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryField"
+        qualifiedFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryField"
+        text:
+          type: string
+    ParseQuickFilterResult:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/TokenError"
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
     PathKey:
       type: object
       discriminator:
@@ -18229,6 +18486,8 @@ components:
     PathwayResultPage:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -18376,6 +18635,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - CUT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -18425,7 +18685,6 @@ components:
           - DOUBLE_ARROW
           - DOWN
           - DOWNLOAD
-          - DROP_DOWN
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -18487,11 +18746,13 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - NOT_ALLOWED
           - OK
           - OO
           - OPEN
           - OPERATOR
           - PASSWORD
+          - PASTE
           - PATHWAYS_CHOICE
           - PATHWAYS_NODE
           - PATHWAYS_SEQUENCE
@@ -18525,6 +18786,7 @@ components:
           - PROPERTIES
           - QUESTION
           - RAW
+          - REDO
           - REFRESH
           - REGEX
           - REMOVE
@@ -18535,6 +18797,7 @@ components:
           - SAVEAS
           - SEARCH
           - SELECTION
+          - SELECT_ALL
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -19050,6 +19313,8 @@ components:
     ProcessorListRowResultPage:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -19247,16 +19512,24 @@ components:
       type: object
       description: The query terms for the search
       properties:
+        alias:
+          type: string
         dataSource:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        joins:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryJoin"
         nativeQuery:
           type: string
         params:
           type: array
           items:
             $ref: "#/components/schemas/Param"
+        sourceTableSettings:
+          $ref: "#/components/schemas/TableSettings"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
       required:
@@ -19410,12 +19683,13 @@ components:
           - '''between'''
           - "'=', '!=', 'in'"
           - "'contains', '=', '!=', 'matches regex', 'in'"
-          - "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in',\
-            \ 'in dictionary'"
+          - "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', '>',\
+            \ '>=', '<', '<=', 'in', 'in dictionary'"
           - "'=', '!='"
+          - "'contains', '=', '!=', 'in', 'in dictionary'"
           - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
             \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
-            \ regex (CS)', 'in', 'in dictionary'"
+            \ regex (CS)', 'word boundary', '>', '>=', '<', '<=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'is'"
           - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
@@ -19609,6 +19883,36 @@ components:
           - STRUCTURE
           - VISUALISATION
           - DICTIONARY
+    QueryJoin:
+      type: object
+      description: A source joined to the rows of a query
+      properties:
+        alias:
+          type: string
+          description: "The name the joined source's fields are prefixed with, as\
+            \ in <alias>.<field>"
+        keys:
+          type: array
+          description: The pairs of expressions whose values must be equal for rows
+            to join
+          items:
+            $ref: "#/components/schemas/JoinKey"
+        query:
+          $ref: "#/components/schemas/Query"
+        tableSettings:
+          $ref: "#/components/schemas/TableSettings"
+        type:
+          type: string
+          description: The kind of join
+          enum:
+          - INNER
+          - LEFT
+          - SEMI
+          - ANTI
+          - RIGHT
+          - FULL
+        window:
+          $ref: "#/components/schemas/JoinWindow"
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -19732,6 +20036,13 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         showValueFilters:
           type: boolean
+    QuickFilterHistoryKey:
+      type: object
+      properties:
+        context:
+          type: string
+        dataSourceUuid:
+          type: string
     RangeInteger:
       type: object
       properties:
@@ -19851,6 +20162,13 @@ components:
           type: string
         version:
           type: string
+    RecordQuickFilterUseRequest:
+      type: object
+      properties:
+        filterText:
+          type: string
+        key:
+          $ref: "#/components/schemas/QuickFilterHistoryKey"
     RefDataLookupRequest:
       type: object
       properties:
@@ -20161,6 +20479,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20171,6 +20491,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20181,6 +20503,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20191,6 +20515,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20201,6 +20527,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20211,6 +20539,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20221,6 +20551,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20231,6 +20563,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20241,6 +20575,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20251,6 +20587,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20261,6 +20599,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20271,6 +20611,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20281,6 +20623,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20291,6 +20635,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20301,6 +20647,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20311,6 +20659,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20321,6 +20671,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20331,6 +20683,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20341,6 +20695,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20351,6 +20707,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20361,6 +20719,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20371,6 +20731,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20381,6 +20743,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20391,6 +20755,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20401,6 +20767,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20411,6 +20779,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20421,6 +20791,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20431,6 +20803,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20441,6 +20815,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20451,6 +20827,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20461,6 +20839,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20471,6 +20851,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20481,6 +20863,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20491,6 +20875,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20501,6 +20887,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20511,6 +20899,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20521,6 +20911,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20531,6 +20923,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20541,6 +20935,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20551,6 +20947,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20561,6 +20959,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20571,6 +20971,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20581,6 +20983,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20591,6 +20995,8 @@ components:
       type: object
       description: A page of results.
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -20676,6 +21082,8 @@ components:
           type: array
           items:
             type: string
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -21264,6 +21672,8 @@ components:
     SessionListResponse:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -22719,6 +23129,8 @@ components:
           type: array
           items:
             type: string
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -23064,6 +23476,13 @@ components:
       properties:
         from:
           $ref: "#/components/schemas/DefaultLocation"
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
         text:
           type: string
         to:
@@ -23247,6 +23666,8 @@ components:
     TracesResultPage:
       type: object
       properties:
+        filterError:
+          $ref: "#/components/schemas/TokenError"
         histogram:
           $ref: "#/components/schemas/TraceHistogram"
         pageResponse:
@@ -23322,13 +23743,13 @@ components:
           type: string
         nodeMonitoring:
           $ref: "#/components/schemas/NodeMonitoringConfig"
-        oncontextmenu:
-          type: string
-          pattern: ^return (true|false);$
         process:
           $ref: "#/components/schemas/ProcessConfig"
         query:
           $ref: "#/components/schemas/QueryConfig"
+        quickFilterHistorySize:
+          type: integer
+          format: int32
         referencePipelineSelectorIncludedTags:
           type: array
           items:
@@ -23547,6 +23968,8 @@ components:
           - "OFF"
         editorTheme:
           type: string
+        enableCharacterKeyShortcuts:
+          type: boolean
         enableTransparency:
           type: boolean
         font:
@@ -23555,10 +23978,29 @@ components:
           type: string
         hideConditionalStyles:
           type: boolean
+        keyBindings:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        textContextMenu:
+          type: string
+          enum:
+          - STROOM
+          - BROWSER
         theme:
           type: string
         timeZone:
           $ref: "#/components/schemas/UserTimeZone"
+        toolbarDisplay:
+          type: string
+          enum:
+          - ICONS
+          - ICONS_AND_TEXT
+          - TEXT
+        visualisationPalette:
+          type: string
     UserRef:
       type: object
       properties:

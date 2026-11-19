@@ -20,7 +20,9 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
+import stroom.util.shared.PathSafeNames;
 
+import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +44,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the audit logging of {@link NodeGroupResourceImpl#updateNodeGroupState}.
+ * Covers the audit logging of {@link NodeGroupResourceImpl#updateNodeGroupState}, and the names
+ * {@link NodeGroupResourceImpl} accepts.
  * <p>
  * See issue #5773's sibling, #5800. The auto logger cannot derive a before or after for this
  * method, so it produced no audit event at all and merely logged
@@ -209,6 +212,33 @@ class TestNodeGroupResourceImpl {
                 .isSameAs(expected);
 
         verify(mockDocumentEventLog).update(eq(change), eq(null), eq(TYPE_ID), any(String.class), eq(expected));
+    }
+
+    @Test
+    void testCreate_nameWithSlash() {
+        // Regression test (gwt-bugs #42): a name with a '/' is looked up in a URL's path, where the
+        // server refuses it, so the name can't be used; it is now refused when created
+        assertThatThrownBy(() -> resource.create("A/B nodes"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage(PathSafeNames.CONTAINS_SLASH_MESSAGE);
+        Mockito.verifyNoInteractions(mockNodeGroupService);
+    }
+
+    @Test
+    void testCreate() {
+        resource.create("Nodes");
+
+        verify(mockNodeGroupService).create("Nodes");
+    }
+
+    @Test
+    void testUpdate_nameWithSlash() {
+        final NodeGroup renamed = NodeGroup.builder().id(NODE_GROUP_ID).name("A/B nodes").build();
+
+        assertThatThrownBy(() -> resource.update(NODE_GROUP_ID, renamed))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage(PathSafeNames.CONTAINS_SLASH_MESSAGE);
+        Mockito.verifyNoInteractions(mockNodeGroupService);
     }
 
     private void assertBeforeOrAfterHasAValue() {

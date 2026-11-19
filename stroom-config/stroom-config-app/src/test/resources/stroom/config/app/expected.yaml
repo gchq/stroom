@@ -509,6 +509,19 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
   docstore:
+    common:
+      docRefInfoCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
+      docRefNameCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
     db:
       connection:
         jdbcDriverClassName: null
@@ -525,18 +538,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-    docRefInfoCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    docRefNameCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
     physicalDeleteAge: "P30D"
   documentAsset:
     aceEditorModes:
@@ -1191,6 +1192,8 @@ appConfig:
     maxBooleanClauseCount: 1024
     maxStoredDataQueueSize: 1000
     resultStore:
+      joinMaxRows: 1000000
+      joinMaxSize: "256M"
       lmdb:
         localDir: "search_results"
         maxReaders: 10
@@ -1554,11 +1557,11 @@ appConfig:
       \ systems.</p>"
     activity:
       chooseOnStartup: false
-      editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
+      editorBody: "<label>Activity Code:</br><input type=\"text\" name=\"code\"></input></label></br></br><label>Activity\
         \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
         description\" validation=\".{80,}\" validationMessage=\"The activity description\
-        \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
-        \ is"
+        \ must be at least 80 characters long.\" ></textarea></label>Explain what\
+        \ the activity is"
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
@@ -1592,7 +1595,6 @@ appConfig:
     nodeMonitoring:
       pingMaxThreshold: 500
       pingWarnThreshold: 100
-    oncontextmenu: "return false;"
     process:
       defaultRecordLimit: 1000000
       defaultTimeLimit: 30
@@ -1607,6 +1609,7 @@ appConfig:
         validationRegex: "^[\\s\\S]{3,}$"
       viewPipelineSelectorIncludedTags:
       - "extraction"
+    quickFilterHistorySize: 20
     referencePipelineSelectorIncludedTags:
     - "reference-loader"
     reportUiDefaultConfig:

@@ -31,14 +31,14 @@ import java.util.Set;
 /// move over time, interpolating between positions, recording fading movement
 /// trails, and teleporting on discontinuous time jumps.
 ///
-/// Kept out of the GWT canvas presenter so this logic — the animate-vs-teleport
+/// Kept out of the GWT canvas controller so this logic — the animate-vs-teleport
 /// decision, the return-to-previous-target case, trail capping and fade timing — is
 /// unit-testable on the JVM. It holds no GWT/DOM
-/// types and knows nothing about rendering or scheduling: the presenter owns the
+/// types and knows nothing about rendering or scheduling: the controller owns the
 /// `AnimationScheduler` loop, camera-follow and the SVG draw, and drives
 /// this class one frame at a time via [#advanceFrame].
 ///
-/// All positions are in map space. The presenter decorates the returned draw
+/// All positions are in map space. The controller decorates the returned draw
 /// list with image "twins" (a view concern) before rendering.
 public final class FloorMapEntityAnimator {
 

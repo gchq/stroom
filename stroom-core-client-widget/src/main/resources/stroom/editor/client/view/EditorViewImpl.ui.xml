@@ -1,9 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:e="urn:import:stroom.editor.client.view">
-    <g:FlowPanel styleName="EditorViewImpl max dock-container-horizontal">
-        <g:SimplePanel ui:field="content" styleName="codeEditor-text dock-max"/>
-        <e:RightBar ui:field="rightBar" styleName="codeEditor-rightBar dock-min"/>
-    </g:FlowPanel>
-</ui:UiBinder>

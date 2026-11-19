@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:ed="urn:import:stroom.editor.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="filter" label="Filter" addStyleNames="dock-max"
+                        helpText="Text to filter this column's values by. Plain text keeps rows whose value contains it; start with ! to exclude, or use operators such as =, &gt;, &lt; with and, or and not, e.g. &gt;100 and &lt;200."
+                        screenReaderText="Plain text matches values containing it. Operators such as &gt;, = and ! are allowed.">
+            <g:SimplePanel styleName="dock-max control-box">
+                <ed:CodeEditor ui:field="editor"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

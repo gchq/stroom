@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -103,7 +104,6 @@ class TestFloorMapClusterOverlay {
         assertThat(cluster.getMapX()).isEqualTo(500);
         assertThat(cluster.getMapY()).isEqualTo(500);
         assertThat(overlay.isClustered("user7")).isTrue();
-        assertThat(overlay.getClusteredEntityCount()).isEqualTo(10);
     }
 
     /// Coincident entities merge no matter how far in the user zooms: the
@@ -547,7 +547,7 @@ class TestFloorMapClusterOverlay {
                 .isLessThan(FloorMapCluster.sizeFactor(200));
         // However big the crowd, the badge cannot blot out the floor plan.
         assertThat(FloorMapCluster.sizeFactor(1_000_000))
-                .isEqualTo(FloorMapCluster.maxSizeFactor());
+                .isEqualTo(FloorMapCluster.sizeFactor(Integer.MAX_VALUE));
     }
 
     /// A big badge is hoverable to its edge: the hit radius is scaled by the same
@@ -615,7 +615,11 @@ class TestFloorMapClusterOverlay {
             allMembers.addAll(cluster.getMemberIds());
         }
         assertThat(allMembers).doesNotHaveDuplicates();
-        assertThat(total).isEqualTo(overlay.getClusteredEntityCount());
+        // Every entity the overlay says is clustered is a member of some cluster
+        final long clusteredCount = IntStream.range(0, 40)
+                .filter(i -> overlay.isClustered("user" + i))
+                .count();
+        assertThat(total).isEqualTo(clusteredCount);
     }
 
     // =========================================================================

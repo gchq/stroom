@@ -1,0 +1,143 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A picker (stroom.widget.dropdowntree.client.DropDownBox, the document and user
+   pickers), named BEM style (block, block__element): a button showing the chosen value
+   (drop-down__value), with the "…" icon at its end (drop-down__icon). A problem with the value is
+   shown as a form shows what is wrong with a field: the picker is aria-invalid, and the message is in
+   its form group's feedback, or a line of its own under it (drop-down__feedback), or, for a picker
+   with no room for a line (drop-down--problem-tooltip, unstyled, which FocusTooltip looks for), its
+   tooltip.
+   It draws the field with the shared stroom-control class, whose disabled class gives it the
+   disabled look every field has; read only, its value is greyed (drop-down--read-only).
+   The button and its feedback line are held by a wrapper (drop-down__wrapper) with no box of its
+   own, so they are laid out as their parent's children.
+*/
+
+.drop-down__wrapper {
+    display: contents;
+}
+
+.drop-down {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: calc(200px * var(--text-scale));
+    cursor: pointer;
+}
+
+/* One that can't be used (disabled, or read only, which is aria-disabled too) */
+.drop-down[aria-disabled="true"] {
+    cursor: default;
+}
+
+/* Read only (DropDownBox): the normal field with its value and icon greyed, as a read-only
+   field's are */
+.drop-down--read-only {
+    color: var(--control__text-color--readonly);
+}
+
+.drop-down--read-only svg {
+    opacity: var(--disabled-opacity);
+}
+
+/* The chosen value, on one line, ending in an ellipsis clear of the icon */
+.drop-down__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 20px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The "…" icon, a picture of what the button does, in the bottom corner */
+.drop-down__icon {
+    position: absolute;
+    display: flex;
+    bottom: 0;
+    right: 4px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.drop-down__icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* The icon raised from the bottom corner, for a picker without a border (e.g. the AI chat's model) */
+.drop-down--icon-raised .drop-down__icon {
+    bottom: 3px;
+}
+
+/* A problem with the value (e.g. the document can't be found): the red border of an invalid field,
+   and, outside a form group (which shows it in its own feedback), the message under the picker */
+.drop-down[aria-invalid="true"] {
+    border: thin solid var(--focus-border--invalid) !important;
+}
+
+/* With the keyboard focus, the red ring an invalid text field has */
+.drop-down[aria-invalid="true"]:focus-visible {
+    box-shadow: var(--focus-shadow--invalid);
+}
+
+/* Its margin clears the picker's focus ring (a 4px box-shadow), as a form group's message does */
+.drop-down__feedback {
+    display: block;
+    margin-top: .25rem;
+    font-size: 80%;
+    color: var(--feedback);
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the colours that are all that show a field's
+   state, so a rejected value (a red border), a read-only value (greyed) and a disabled picker looked like any
+   other. There each state has a border of its own: a rejected value a thicker, dashed one (its message
+   says why), read only a dotted one; disabled, its value, icon and border in GrayText, as a disabled text box's are */
+@media (forced-colors: active) {
+    .drop-down[aria-invalid="true"] {
+        border-width: 2px !important;
+        border-style: dashed !important;
+    }
+
+    .drop-down--read-only:not([aria-invalid="true"]) {
+        border-style: dotted;
+    }
+
+    .drop-down[aria-disabled="true"]:not(.drop-down--read-only) {
+        border-color: GrayText;
+        color: GrayText;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(.drop-down, .drop-down *) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(.drop-down[aria-disabled="true"]:not(.drop-down--read-only),
+            .drop-down[aria-disabled="true"]:not(.drop-down--read-only) *) {
+        color: GrayText !important;
+    }
+}

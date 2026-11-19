@@ -1,0 +1,50 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:item="urn:import:stroom.widget.selection.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max form">
+        <!-- Date time settings -->
+        <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format"
+                        helpText="The format used to show dates and times. Default is yyyy-MM-dd'T'HH:mm:ss.SSSXX unless an administrator has changed the defaults."
+                        screenReaderText="Choose a format, or tick Custom to enter your own.">
+            <item:SelectionBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Use your own pattern, entered in Custom Format, instead of one from Date and Time Format. Ticked automatically if your saved format is not in the list. Default is not ticked.">
+            <tickbox:TickBox ui:field="custom" identity="userPreferencesCustom" label="Custom"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format"
+                        helpText="A Java DateTimeFormatter pattern, e.g. dd/MM/yyyy HH:mm:ss. Only editable when Custom is ticked."
+                        screenReaderText="Java date pattern, e.g. dd/MM/yyyy HH:mm:ss. Editable when Custom is ticked.">
+            <form:TextBox ui:field="text" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone"
+                        helpText="The time zone used to show dates and times: Local (your browser's time zone), UTC, Id (a named zone) or Offset (hours from UTC). Default is UTC unless an administrator has changed the defaults."
+                        screenReaderText="Local, UTC, Id or Offset. Default is UTC.">
+            <item:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userPreferencesTimeZoneId" identity="userPreferencesTimeZoneId"
+                        label="Time Zone Id"
+                        helpText="A named time zone, e.g. Europe/London. Only shown when Time Zone is Id."
+                        screenReaderText="Named zone, e.g. Europe/London.">
+            <item:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userPreferencesTimeZoneOffset" identity="userPreferencesTimeZoneOffset"
+                        label="Time Zone Offset"
+                        helpText="The number of hours ahead of or behind UTC, from -12 to +12. Only shown when Time Zone is Offset."
+                        screenReaderText="Hours from UTC, -12 to +12.">
+            <g:FlowPanel>
+                <!-- Named by the part they are, as the Time Zone Offset label names the pair -->
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours" accessibleName="Hours"
+                                           minValue="-12" maxValue="12" minStep="1" maxStep="1"/>
+                <!-- Browsers don't support minute offsets, so it is hidden for now -->
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" accessibleName="Minutes"
+                                           minValue="0" maxValue="45" minStep="15" maxStep="15" delta="15"
+                                           visible="false"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

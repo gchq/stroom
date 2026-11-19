@@ -65,6 +65,13 @@ class TestSessionListServlet {
         verify(response).setContentType("text/html; charset=UTF-8");
     }
 
+    @Test
+    void sessionListDeclaresItsLanguage() throws Exception {
+        // The page says it is in English, for screen readers (gchq/stroom#5408).
+        final String html = render(sessionWith("Mozilla/5.0", "alice"));
+        assertThat(html).startsWith("<html lang=\"en\">");
+    }
+
     private String render(final SessionDetails sessionDetails) throws Exception {
         final StringWriter stringWriter = new StringWriter();
         driveInto(sessionDetails, stringWriter);

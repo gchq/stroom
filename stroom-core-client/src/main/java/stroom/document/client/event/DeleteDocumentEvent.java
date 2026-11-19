@@ -17,7 +17,8 @@
 package stroom.document.client.event;
 
 import stroom.docref.DocRef;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.document.client.ResultCallback;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

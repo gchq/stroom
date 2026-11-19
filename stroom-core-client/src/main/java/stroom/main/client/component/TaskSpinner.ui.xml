@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The main toolbar's spinner, shown while the app's tasks run; clicking it opens the task manager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:sp="urn:import:stroom.widget.spinner.client">
+    <g:FlowPanel styleName="task-spinner">
+        <sp:LargeBusySpinner ui:field="spinner" soft="true" visible="false"/>
+    </g:FlowPanel>
+</ui:UiBinder>

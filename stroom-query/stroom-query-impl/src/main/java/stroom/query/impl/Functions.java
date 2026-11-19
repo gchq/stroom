@@ -629,7 +629,7 @@ public class Functions {
                 signature.getPrimaryCategory().toLowerCase().replace(' ', '-') +
                 "#" +
                 functionSignatureToAnchor(signature),
-                "Help Documentation");
+                signature.getName() + " documentation");
         htmlBuilder.append(".");
     }
 

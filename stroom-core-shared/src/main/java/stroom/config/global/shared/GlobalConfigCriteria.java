@@ -16,9 +16,9 @@
 
 package stroom.config.global.shared;
 
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,34 +30,22 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class GlobalConfigCriteria extends BaseCriteria {
+public class GlobalConfigCriteria extends QuickFilterCriteria {
 
-    @JsonProperty
-    private String quickFilterInput;
 
     @JsonCreator
     public GlobalConfigCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                @JsonProperty("quickFilterInput") final String quickFilterInput) {
-        super(pageRequest, sortList);
-        this.quickFilterInput = quickFilterInput;
+                                @JsonProperty("quickFilter") final String quickFilter) {
+        super(pageRequest, sortList, quickFilter);
     }
 
     public GlobalConfigCriteria() {
         this(null);
     }
 
-    public GlobalConfigCriteria(final String quickFilterInput) {
-        super(PageRequest.unlimited(), new ArrayList<>());
-        this.quickFilterInput = quickFilterInput;
-    }
-
-    public String getQuickFilterInput() {
-        return quickFilterInput;
-    }
-
-    public void setQuickFilterInput(final String quickFilterInput) {
-        this.quickFilterInput = quickFilterInput;
+    public GlobalConfigCriteria(final String quickFilter) {
+        super(PageRequest.unlimited(), new ArrayList<>(), quickFilter);
     }
 
     @Override
@@ -72,18 +60,18 @@ public class GlobalConfigCriteria extends BaseCriteria {
             return false;
         }
         final GlobalConfigCriteria that = (GlobalConfigCriteria) o;
-        return Objects.equals(quickFilterInput, that.quickFilterInput);
+        return Objects.equals(getQuickFilter(), that.getQuickFilter());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), quickFilterInput);
+        return Objects.hash(super.hashCode(), getQuickFilter());
     }
 
     @Override
     public String toString() {
         return "GlobalConfigCriteria{" +
-                "quickFilterInput='" + quickFilterInput + '\'' +
+                "quickFilter='" + getQuickFilter() + '\'' +
                 '}';
     }
 }

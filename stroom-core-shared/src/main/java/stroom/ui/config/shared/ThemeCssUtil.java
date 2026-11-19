@@ -16,6 +16,7 @@
 
 package stroom.ui.config.shared;
 
+import stroom.ui.config.shared.UserPreferences.ToolbarDisplay;
 import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
@@ -77,8 +78,26 @@ public class ThemeCssUtil {
             Optional.ofNullable(currentUserPreferences.getFontSize())
                     .map(fontSizeMap::get)
                     .ifPresent(classJoiner::add);
+
+            NullSafe.consume(getToolbarDisplayClass(currentUserPreferences.getToolbarDisplay()), classJoiner::add);
         }
         return classJoiner.toString();
+    }
+
+    /// The page class that says how toolbar buttons are shown (`toolbar-button.css`).
+    ///
+    /// @param toolbarDisplay How toolbar buttons are shown, or null for the default.
+    /// @return `toolbar-display--icons-and-text` or `toolbar-display--text`, or null for icons
+    ///         only, which is how toolbars look with no class.
+    public static String getToolbarDisplayClass(final ToolbarDisplay toolbarDisplay) {
+        if (toolbarDisplay == null) {
+            return null;
+        }
+        return switch (toolbarDisplay) {
+            case ICONS_AND_TEXT -> "toolbar-display--icons-and-text";
+            case TEXT -> "toolbar-display--text";
+            case ICONS -> null;
+        };
     }
 
     public static List<String> getThemes() {

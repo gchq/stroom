@@ -31,19 +31,17 @@ import stroom.query.api.Param;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
-import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TimeRange;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.client.presenter.ResultStoreModel;
-import stroom.query.client.presenter.SearchErrorListener;
-import stroom.query.client.presenter.SearchStateListener;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.query.client.DateTimeSettingsFactory;
+import stroom.query.client.SearchErrorListener;
+import stroom.query.client.SearchStateListener;
+import stroom.query.client.model.ResultStoreModel;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -59,7 +57,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
+public class SearchModel implements HasHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
@@ -71,7 +69,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
-    private Map<String, ResultComponent> resultComponents = new HashMap<>();
+    private Map<String, DashboardResultPane> resultComponents = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
     private QueryKey currentQueryKey;
@@ -112,7 +110,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        resultComponents.values().forEach(ResultComponent::endSearch);
+        resultComponents.values().forEach(DashboardResultPane::endSearch);
 
         // Stop polling.
         polling = false;
@@ -134,7 +132,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        resultComponents.values().forEach(ResultComponent::endSearch);
+        resultComponents.values().forEach(DashboardResultPane::endSearch);
 
         // Stop polling.
         polling = false;
@@ -183,13 +181,13 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
-                // Let the query presenter know search is active.
+                // Let the query controller know search is active.
                 setSearching(true);
 
                 // Reset all result components and tell them that search is
                 // starting.
-                resultComponents.values().forEach(ResultComponent::reset);
-                resultComponents.values().forEach(ResultComponent::startSearch);
+                resultComponents.values().forEach(DashboardResultPane::reset);
+                resultComponents.values().forEach(DashboardResultPane::startSearch);
 
                 // Start polling.
                 polling = true;
@@ -225,10 +223,12 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
     }
 
     private boolean exec(final String componentId, final Consumer<Result> resultConsumer, final QueryKey queryKey) {
-        final ResultComponent resultComponent = resultComponents.get(componentId);
+        final DashboardResultPane resultComponent = resultComponents.get(componentId);
         if (resultComponent == null) {
             return false;
         }
+        // The search this is for, to tell whether it is still current when the reply comes
+        final Search searchAtStart = currentSearch;
 
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap == null) {
@@ -284,7 +284,10 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                 })
                 .onFailure(throwable -> {
                     try {
-                        if (queryKey.equals(currentQueryKey)) {
+                        // A forced new search (no query key) reports if its search is still current
+                        if (queryKey == null
+                                ? searchAtStart == currentSearch
+                                : queryKey.equals(currentQueryKey)) {
                             setErrors(Collections.singletonList(
                                     new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
@@ -318,8 +321,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         final Search search = currentSearch;
         if (search != null && polling) {
             final List<ComponentResultRequest> requests = new ArrayList<>();
-            for (final Entry<String, ResultComponent> entry : resultComponents.entrySet()) {
-                final ResultComponent resultComponent = entry.getValue();
+            for (final Entry<String, DashboardResultPane> entry : resultComponents.entrySet()) {
+                final DashboardResultPane resultComponent = entry.getValue();
 
                 final Fetch fetch;
                 if (resultComponent.isPaused()) {
@@ -345,8 +348,6 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                     .create(DASHBOARD_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
-//                        GWT.log(response.toString());
-
                         if (search == currentSearch) {
                             if (response != null) {
                                 currentQueryKey = response.getQueryKey();
@@ -356,6 +357,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                                     update(response);
                                 } catch (final RuntimeException e) {
                                     GWT.log(e.getMessage());
+                                    // update() is what sees the search finish, so stop it here
+                                    endSearchWithError(e.toString());
                                 }
 
                                 if (polling) {
@@ -365,9 +368,9 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                                 // Tell all components if we are complete.
                                 // Stop the spinner from spinning and tell components that they
                                 // no longer want data.
-                                resultComponents.values().forEach(ResultComponent::endSearch);
+                                resultComponents.values().forEach(DashboardResultPane::endSearch);
 
-                                // Let the query presenter know search is inactive.
+                                // Let the query controller know search is inactive.
                                 setSearching(false);
 
                                 // If we have completed search then stop the task spinner.
@@ -378,20 +381,10 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                         }
                     })
                     .onFailure(throwable -> {
-//                        GWT.log(throwable.getMessage());
-
-                        try {
-                            if (search == currentSearch) {
-                                setErrors(Collections.singletonList(
-                                        new ErrorMessage(Severity.ERROR, throwable.toString())));
-                                polling = false;
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-
-                        if (polling) {
-                            poll(Fetch.CHANGES, false);
+                        // A failed request ends the search it was for. A failure for an earlier
+                        // search is ignored: the current search has its own polling.
+                        if (search == currentSearch) {
+                            endSearchWithError(throwable.toString());
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -427,7 +420,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                final ResultComponent resultComponent = resultComponents.get(componentResult.getComponentId());
+                final DashboardResultPane resultComponent = resultComponents.get(componentResult.getComponentId());
                 if (resultComponent != null) {
                     resultComponent.setData(componentResult);
                 }
@@ -438,18 +431,31 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            resultComponents.values().forEach(ResultComponent::endSearch);
+            resultComponents.values().forEach(DashboardResultPane::endSearch);
         }
 
         setErrors(response.getErrorMessages());
 
         if (response.isComplete()) {
-            // Let the query presenter know search is inactive.
+            // Let the query controller know search is inactive.
             setSearching(false);
 
             // If we have completed search then stop the task spinner.
             polling = false;
         }
+    }
+
+    // Ends a search that failed, or whose results couldn't be handled: stops polling (else the
+    // search would never be seen to finish, and the client would poll it for ever), stops the search
+    // on the server (as no one will poll it again; its results are kept, as for stop()), tells the
+    // components the search has ended, says what went wrong and stops showing it as running (which
+    // lets an auto refresh be scheduled). The error is set first, as a completed search's are.
+    private void endSearchWithError(final String message) {
+        polling = false;
+        terminate(currentNode, currentQueryKey);
+        resultComponents.values().forEach(DashboardResultPane::endSearch);
+        setErrors(Collections.singletonList(new ErrorMessage(Severity.ERROR, message)));
+        setSearching(false);
     }
 
     private void setErrors(final List<ErrorMessage> errors) {
@@ -496,8 +502,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         }
 
         final List<ComponentResultRequest> requests = new ArrayList<>();
-        for (final Entry<String, ResultComponent> entry : resultComponents.entrySet()) {
-            final ResultComponent resultComponent = entry.getValue();
+        for (final Entry<String, DashboardResultPane> entry : resultComponents.entrySet()) {
+            final DashboardResultPane resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.createDownloadQueryRequest();
             requests.add(componentResultRequest);
         }
@@ -544,16 +550,16 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         return currentResponse;
     }
 
-    public void addComponent(final String componentId, final ResultComponent resultComponent) {
+    public void addComponent(final String componentId, final DashboardResultPane resultComponent) {
         // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultComponent> componentMap = new HashMap<>(this.resultComponents);
+        final Map<String, DashboardResultPane> componentMap = new HashMap<>(this.resultComponents);
         componentMap.put(componentId, resultComponent);
         this.resultComponents = componentMap;
     }
 
     public void removeComponent(final String componentId) {
         // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultComponent> componentMap = new HashMap<>(this.resultComponents);
+        final Map<String, DashboardResultPane> componentMap = new HashMap<>(this.resultComponents);
         componentMap.remove(componentId);
         this.resultComponents = componentMap;
     }
@@ -574,11 +580,9 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         errorListeners.remove(listener);
     }
 
-    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
-
-    }
-
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the controller that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

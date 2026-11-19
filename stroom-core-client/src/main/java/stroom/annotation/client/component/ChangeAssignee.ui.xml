@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:stroom.annotation.client.component">
+    <g:FlowPanel addStyleNames="annotation-setting">
+        <c:AnnotationAssignedToSetting ui:field="assignedTo"
+                                       helpText="The user to assign all the selected annotations to when you select OK. Select it to choose a user, or select Assign Yourself. If it shows Nobody when you select OK, the annotations are unassigned."/>
+    </g:FlowPanel>
+</ui:UiBinder>

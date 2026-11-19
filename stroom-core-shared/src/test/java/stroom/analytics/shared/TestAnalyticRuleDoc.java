@@ -17,8 +17,11 @@
 package stroom.analytics.shared;
 
 import stroom.test.common.TestUtil;
+import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -55,6 +58,36 @@ class TestAnalyticRuleDoc {
                 .isNull();
         assertThat(result.getStatus())
                 .isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ENABLED", "", "Not a status"})
+    void testDeserialisation_unknownStatus(final String status) {
+        // Regression test (gwt-bugs #35): a rule whose stored status isn't one of the statuses (it was
+        // once free text) failed to deserialise, so the rule couldn't be opened. It now reads as no
+        // status, and the rest of the rule is kept.
+        final String json = "{\"uuid\": \"test-uuid\", \"name\": \"My rule\", \"status\": \""
+                            + status + "\"}";
+
+        final AnalyticRuleDoc result = JsonUtil.readValue(json, AnalyticRuleDoc.class);
+
+        assertThat(result.getStatus())
+                .isNull();
+        assertThat(result.getName())
+                .isEqualTo("My rule");
+    }
+
+    @Test
+    void testDeserialisation_statusInAnyCase() {
+        final AnalyticRuleDoc result = JsonUtil.readValue(
+                "{\"uuid\": \"test-uuid\", \"status\": \"stable\"}",
+                AnalyticRuleDoc.class);
+
+        assertThat(result.getStatus())
+                .isEqualTo(AnalyticRuleStatus.STABLE);
+        // It is still written by its name
+        assertThat(JsonUtil.writeValueAsString(result, false))
+                .contains("\"status\":\"STABLE\"");
     }
 
     @Test

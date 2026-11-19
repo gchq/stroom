@@ -1,0 +1,423 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Tab bars (stroom.widget.tab.client.AbstractTabBar), named BEM style (block, block__element,
+   block--modifier): the document tabs' curved bar (tab-bar--curved) and the link tabs' bar
+   (tab-bar--link). States come from ARIA attributes and pseudo-classes, not modifiers: a selected
+   tab is [aria-selected="true"], the tab stop [tabindex="0"], and keyboard focus :focus-visible.
+   The bar places its tabs and separators (--tab-bar__left on each); a tab that doesn't fit is
+   tab-bar__tab--hidden, and one that can't be closed tab-bar__tab--fixed. Its overflow selector is
+   a block of its own (tab-selector.css).
+*/
+
+.tab-bar {
+    position: relative;
+}
+
+.tab-bar--curved {
+    width: 100%;
+    height: 100%;
+}
+
+/* A link bar's padding holds its tabs' focus rings (a 4px band beyond the tab, below), so nothing
+   around it that hides its overflow can cut them off, as a toolbar's does (toolbar.css) */
+.tab-bar--link {
+    white-space: nowrap;
+    padding: 4px;
+}
+
+/* In a dialog, drawn 4px into the room round it (which holds focus rings): the content's above and
+   before it (dialog.css), and the panel's below it */
+.dialog__content .tab-bar--link {
+    margin: -4px 0 -4px -4px;
+}
+
+/* In a dialog, the panel the tabs show is a form group's gap below them, whatever it holds (a form,
+   or a grid or editor that fills it), so the tabs read as its heading. It doesn't clip (a layer
+   container does), so a form tab's room for focus rings (layout-helpers.css), which reaches into
+   the content's and this gap, isn't cut off; it shows one layer at a time, so has nothing to hide */
+.dialog__content .tab-bar__panel {
+    overflow: visible;
+    padding-top: var(--control__gap--vertical);
+}
+
+/* The tab list: the tabs and their separators, over the whole bar, so they are placed in it as in
+   the bar (the overflow selector is beside it, in the bar) */
+.tab-bar__tabs {
+    position: absolute;
+    inset: 0;
+}
+
+/* Room before the first document tab for its focus ring */
+.tab-bar--curved .tab-bar__tabs {
+    left: 6px;
+}
+
+/* A link bar's tabs, inside its padding */
+.tab-bar--link .tab-bar__tabs {
+    inset: 4px;
+}
+
+/* Invisible text that gives a link bar its height: a tab's. Hidden, not transparent, so it neither
+   paints over the tabs nor takes their clicks */
+.tab-bar__strut {
+    display: block;
+    height: 24px;
+    visibility: hidden;
+}
+
+/* The "|" between link tabs, centred on the tabs' height (it reaches below the line's baseline, so
+   unlike their labels it needs no nudge), with room either side for a focused tab's band (the
+   tabs' own padding holds the ring's line) */
+.tab-bar__separator {
+    position: absolute;
+    left: var(--tab-bar__left, 0);
+    top: 0;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+/* --------------------------------------------------------------------------------
+   Tabs, placed by the bar */
+
+.tab-bar__tab {
+    position: absolute;
+    left: var(--tab-bar__left, 0);
+    top: 0;
+}
+
+/* A tab that doesn't fit, out of sight until it does (within the bar, to outweigh its look) */
+.tab-bar .tab-bar__tab--hidden {
+    visibility: hidden;
+    left: -1000px;
+}
+
+/* A document tab: an icon, its label, then its spinner or close cross. 24px high (a 24px target, as
+   a toolbar button is), 4px into the 32px bar, so its focus ring (below) has the bar's 4px above
+   and below it; the bar leaves 6px between tabs for the ring at the sides (CurveTabBar.getTabGap) */
+.tab-bar--curved .tab-bar__tab {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    top: 4px;
+    height: 24px;
+    border-radius: 4px;
+    background-color: var(--curve-tab__background-color);
+    color: var(--control__text-color);
+}
+
+.tab-bar--curved .tab-bar__tab:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+/* A selected tab's line, under it on the bar's bottom edge, over the line along it (the bar's row's
+   border, curve-tab-layout.css), in the bar's room below the tab, which its focus ring's band
+   shares */
+.tab-bar--curved .tab-bar__tab[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -5px;
+    height: 3px;
+    background-color: var(--curve-tab__selected-color);
+    pointer-events: none;
+}
+
+.tab-bar__icon {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    user-select: none;
+    margin: 0 5px;
+}
+
+.tab-bar__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* A long name is cut short with an ellipsis (about 50 characters), here rather than in its text, so
+   that a screen reader reads all of it (CurveTab.setText); its tooltip shows all of it too. While
+   the tabs don't all fit, the bar cuts the widest more (--tab-bar__label-cap, CurveTabBar.fitTabs),
+   but no narrower than about 10 characters, past which tabs overflow into its selector. Its widths
+   are its text's, without its padding (which a tab with no icon has more of), so a name of 10
+   characters or fewer is never cut */
+.tab-bar--curved .tab-bar__label {
+    position: relative;
+    box-sizing: content-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: max(10ch, min(42ch, var(--tab-bar__label-cap, 42ch)));
+    padding: 1px;
+    user-select: none;
+    opacity: 0.8;
+}
+
+/* A tab with no icon: room before its label, as an icon's margin gives a tab that has one */
+.tab-bar--curved .tab-bar__label:first-child {
+    padding-left: 8px;
+}
+
+.tab-bar--curved .tab-bar__tab[aria-selected="true"] .tab-bar__label {
+    opacity: 1;
+}
+
+/* The spinner, which the close cross replaces on hover or keyboard focus: room for the cross's 24px
+   and 2px before it, clear of the label */
+.tab-bar__end {
+    position: relative;
+    width: 26px;
+    height: 22px;
+}
+
+/* Centred where the cross is */
+.tab-bar__spinner {
+    position: absolute;
+    left: 3px;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.tab-bar__spinner svg {
+    color: var(--curve-tab__svg-color);
+    opacity: 0.8;
+}
+
+/* The close cross: a 24px target (WCAG 2.5.8), at the end of the end's room, ending at the tab's
+   edge, with a toolbar button's hover and pressed fills (toolbar-button.css), drawn by ::before
+   under its icon */
+.tab-bar__close {
+    position: absolute;
+    top: -1px;
+    left: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: .25rem;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.tab-bar__close::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: .25rem;
+}
+
+.tab-bar__close:hover::before {
+    background-color: var(--icon-button__background-color--hover);
+    border: thin solid var(--icon-button__border-color--hover);
+}
+
+.tab-bar__close:active::before {
+    background-color: var(--icon-button__background-color--active);
+    border: none;
+}
+
+.tab-bar__tab:hover .tab-bar__spinner,
+.tab-bar__tab:focus-visible .tab-bar__spinner {
+    opacity: 0;
+}
+
+.tab-bar__tab:hover .tab-bar__close,
+.tab-bar__tab:focus-visible .tab-bar__close {
+    opacity: 1;
+}
+
+.tab-bar__close svg {
+    position: relative;
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+    color: var(--curve-tab__svg-color);
+    opacity: 0.8;
+}
+
+.tab-bar__close:hover svg {
+    opacity: 1;
+}
+
+/* A document tab that can't be closed: no cross, and room after its label instead */
+.tab-bar__tab--fixed .tab-bar__close {
+    display: none;
+}
+
+.tab-bar--curved .tab-bar__tab--fixed .tab-bar__label {
+    padding-right: 20px;
+}
+
+/* With no cross, its end is only its spinner's room */
+.tab-bar__tab--fixed .tab-bar__end {
+    width: 22px;
+}
+
+.tab-bar__tab--fixed .tab-bar__spinner {
+    left: 0;
+}
+
+/* A link tab: its label, drawn over an invisible bold copy (the sizer) that keeps its width the
+   same when it is selected (bold). 24px high at least and 4px wider than its label either side,
+   so it is a 24px target (WCAG 2.5.8) with its focus ring on its edge */
+.tab-bar--link .tab-bar__tab {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 4px;
+    opacity: 0.8;
+    transition: opacity 0.5s linear;
+    color: var(--link-tab__text-color);
+}
+
+.tab-bar--link.tab-bar--multiple .tab-bar__tab,
+.flex-layout--design-mode .tab-bar--link .tab-bar__tab {
+    cursor: pointer;
+}
+
+.tab-bar--link .tab-bar__tab[aria-selected="true"],
+.tab-bar--link .tab-bar__tab[tabindex="0"] {
+    opacity: 1;
+}
+
+.tab-bar--link.tab-bar--multiple .tab-bar__tab:hover,
+.flex-layout--design-mode .tab-bar--link .tab-bar__tab:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+/* A dashboard's link tabs (DashboardBody) stay faded, even when selected or hovered */
+.dashboard-body .tab-bar--link .tab-bar__tab {
+    opacity: 0.8 !important;
+    color: var(--link-tab__text-color) !important;
+    transition: none;
+    -webkit-transition: none;
+}
+
+.tab-bar__sizer {
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 600;
+    opacity: 0;
+}
+
+/* Over the sizer, in the tab's padding. Its line is centred 1px low (the padding), as a line's
+   room for descenders would otherwise leave its capitals and lower-case letters 1px high */
+.tab-bar--link .tab-bar__label {
+    position: absolute;
+    inset: 0 4px;
+    box-sizing: border-box;
+    padding-top: 2px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: inherit;
+    white-space: nowrap;
+}
+
+.tab-bar--link .tab-bar__tab[aria-selected="true"] .tab-bar__label {
+    font-weight: 600;
+}
+
+/* Where a dashboard pane being dragged would be dropped */
+.tab-bar__hotspot {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    border: 1px solid black;
+    background-color: red;
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.tab-bar--multiple .tab-bar__hotspot {
+    cursor: pointer;
+}
+
+.tab-bar__hotspot--visible {
+    opacity: .3 !important;
+}
+
+/* --------------------------------------------------------------------------------
+   Keyboard focus (not a mouse click's): a line in the focus colour with a band of it beside the
+   line, as a focused control has */
+
+/* On a tab's edge, its band reaching into the bar's padding and the room between tabs (a document
+   tab's gap, a link tab's beside the separators); a document tab's is above its neighbours */
+.tab-bar .tab-bar__tab:focus-visible {
+    outline: none;
+}
+
+.tab-bar--curved .tab-bar__tab:focus-visible {
+    z-index: 1;
+}
+
+/* A selected document tab's line, with the keyboard focus, over the ring's band (the same width as
+   without it), so the band doesn't tint it */
+.tab-bar--curved .tab-bar__tab[aria-selected="true"]:focus-visible::before {
+    z-index: 1;
+}
+
+.tab-bar .tab-bar__tab:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--tab__focus-color);
+    box-shadow: 0 0 0 4px var(--tab__focus-band-color);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+
+/* In forced colours (e.g. Windows high contrast) a box shadow isn't drawn, so focus is an outline */
+@media (forced-colors: active) {
+    .tab-bar .tab-bar__tab:focus-visible::after {
+        border-color: Highlight;
+    }
+
+    /* Its line shows a tab's focus, so not the outline base.css gives whatever has the keyboard focus
+       there (important, to win over it); a panel's ring is inside it, as it is otherwise */
+    .tab-bar .tab-bar__tab:focus-visible {
+        outline: none !important;
+    }
+
+    .tab-bar__panel:focus-visible {
+        outline-offset: -2px !important;
+    }
+
+    /* A selected document tab's line, which would otherwise be replaced */
+    .tab-bar--curved .tab-bar__tab[aria-selected="true"]::before {
+        forced-color-adjust: none;
+        background-color: Highlight;
+    }
+}
+
+/* The panel the tabs show (AbstractTabBar.setTabPanel), a tab stop while it holds none of its own
+   (TabPanelTabStop): its focus ring is inset, as it fills its space and hides what overflows it */
+.tab-bar__panel:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
+}

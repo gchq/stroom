@@ -30,6 +30,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class FindAnnotationCell extends AbstractCell<Annotation> {
 
+    private static final String BLOCK = "find-annotation-cell";
+
     private final DurationLabel durationLabel;
 
     public FindAnnotationCell(final DurationLabel durationLabel) {
@@ -50,19 +52,19 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
                         main.append(SvgImageUtil.toSafeHtml(
                                 docRef.getType(),
                                 documentType.getIcon(),
-                                getCellClassName() + "-icon",
-                                "svgIcon"));
+                                BLOCK + "__icon",
+                                "icon-wrap"));
                     }
 
                     // Add name
                     final String name = docRef.getName();
-                    main.div(div -> div.append(name), Attribute.className(getCellClassName() + "-name"));
+                    main.div(div -> div.append(name), Attribute.className(BLOCK + "__name"));
 
                     Lozenge.append(main, value.getStatus());
                     NullSafe.list(value.getLabels()).forEach(label -> Lozenge.append(main, label));
                     NullSafe.list(value.getCollections()).forEach(collection -> Lozenge.append(main, collection));
 
-                }, Attribute.className(getCellClassName() + "-main"));
+                }, Attribute.className(BLOCK + "__main"));
 
                 // Add sub text.
                 row.div(sub -> {
@@ -83,7 +85,7 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
 
                     // When
                     durationLabel.div(sub,
-                            "annotationDurationLabel",
+                            "duration-label",
                             value.getCreateTimeMs(),
                             System.currentTimeMillis());
 
@@ -95,12 +97,8 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
                         sub.div(div -> div.append(value.getAssignedTo().toDisplayString()));
                     }
 
-                }, Attribute.className(getCellClassName() + "-sub"));
-            }, Attribute.className(getCellClassName() + "-row"));
+                }, Attribute.className(BLOCK + "__sub"));
+            }, Attribute.className(BLOCK));
         }
-    }
-
-    private String getCellClassName() {
-        return "findAnnotationCell";
     }
 }

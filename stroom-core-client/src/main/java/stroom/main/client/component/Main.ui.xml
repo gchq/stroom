@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:s="urn:import:stroom.main.client.component"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:l="urn:import:stroom.widget.layout.client"
+             xmlns:e="urn:import:stroom.explorer.client.component"
+             xmlns:t="urn:import:stroom.content.client.component">
+    <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
+         stop it held the whole app, with no name -->
+    <g:FlowPanel styleName="main-screen">
+        <!-- An alert, so that a screen reader says the maintenance message when it is shown.
+             The role is there before any text is, as a live region must exist before what it
+             announces -->
+        <c:AriaPanel ui:field="banner" styleName="main-screen__banner" role="alert" visible="false"/>
+        <!-- The main toolbar is shown at the top right, over the content, but comes first so
+             that the Tab key reaches it before the content -->
+        <g:FlowPanel ui:field="main" styleName="main-screen__main">
+            <s:MainToolbar ui:field="mainToolbar"/>
+            <g:ResizeLayoutPanel ui:field="contentPanel" styleName="main-screen__content-panel">
+                <!-- The explorer beside the document tabs, its splitter in the navigation colours;
+                     each a landmark screen readers can go to (addStyleNames, as styleName would
+                     replace the split pane's own class) -->
+                <l:SplitPane ui:field="explorerSplit"
+                             thin="true"
+                             sizes="300px, *"
+                             names="Explorer, Content"
+                             addStyleNames="split-pane--navigation">
+                    <e:Explorer ui:field="explorer" role="navigation" ariaLabel="Explorer"/>
+                    <t:CurveTabLayout ui:field="content" role="main"/>
+                </l:SplitPane>
+            </g:ResizeLayoutPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

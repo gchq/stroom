@@ -74,7 +74,11 @@ include 'stroom-aws:stroom-aws-s3-impl'
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
-include 'stroom-gwt'
+
+// GWT
+include 'stroom-gwt:stroom-gwt-compiler'
+include 'stroom-gwt:stroom-gwt-workbench'
+include 'stroom-gwt:stroom-gwt-workbench-framework'
 
 // Bytebuffer
 include 'stroom-bytebuffer'
@@ -113,7 +117,6 @@ include 'stroom-credentials:stroom-credentials-impl'
 include 'stroom-credentials:stroom-credentials-impl-db'
 
 // Dashboard
-include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-impl'
 include 'stroom-dashboard:stroom-storedquery-api'
@@ -333,3 +336,4 @@ include 'stroom-util-shared'
 // View
 include 'stroom-view:stroom-view-api'
 include 'stroom-view:stroom-view-impl'
+include 'stroom-docstore:stroom-docstore-impl-database'

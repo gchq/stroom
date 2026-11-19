@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.pipeline.client.presenter.XsltPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.pipeline.client.component.XsltEditor;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,26 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
 
     private static final XsltResource XSLT_RESOURCE = GWT.create(XsltResource.class);
 
-    private final Provider<XsltPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<XsltEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public XsltPlugin(final EventBus eventBus,
-                      final Provider<XsltPresenter> editorProvider,
+                      final Provider<XsltEditor> editorProvider,
                       final RestFactory restFactory,
                       final ContentManager contentManager,
                       final DocumentPluginEventManager entityPluginEventManager,
                       final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), XsltDoc.TYPE);
     }
 
     @Override

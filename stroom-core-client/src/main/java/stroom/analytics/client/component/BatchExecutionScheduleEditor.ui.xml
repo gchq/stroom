@@ -1,0 +1,88 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A change to make to many execution schedules, each field ticked to change it -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:schedule="urn:import:stroom.schedule.client.component"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client.component"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
+    <g:FlowPanel styleName="batch-execution-schedule-editor form max dock-container-vertical overflow-hidden">
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="nameEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change Schedule Name"/>
+            <form:FormGroup ui:field="nameForm" addStyleNames="batch-execution-schedule-editor__field" identity="name" label="Schedule Name"
+                            helpText="New name for the schedules. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
+                            screenReaderText="Applied only if its tick box is ticked.">
+                <form:TextBox ui:field="nameBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="enabledEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change Enabled"/>
+            <form:FormGroup ui:field="enabledForm" addStyleNames="batch-execution-schedule-editor__field"
+                            helpText="Enables or disables the schedules. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
+                            screenReaderText="Applied only if its tick box is ticked.">
+                <tickbox:TickBox ui:field="enabledBox" label="Enabled"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="nodeEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change Processing Node"/>
+            <form:FormGroup ui:field="nodeForm" addStyleNames="batch-execution-schedule-editor__field" identity="analyticProcessingNode" label="Processing Node"
+                            helpText="Node that runs the schedules; a schedule only ever runs on the node it names. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
+                            screenReaderText="Schedules run only on this node. Applied only if its tick box is ticked.">
+                <l:SelectionBox ui:field="nodeBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="scheduleEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change Schedule"/>
+            <form:FormGroup ui:field="scheduleForm" addStyleNames="batch-execution-schedule-editor__field" identity="schedule" label="Schedule"
+                            helpText="When the schedules run: Instant, Cron or Frequency. Running every minute or more often is not allowed. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
+                            screenReaderText="Must run less often than once a minute. Applied only if its tick box is ticked.">
+                <schedule:ScheduleBox ui:field="scheduleBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="startTimeEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change Start Time"/>
+            <form:FormGroup ui:field="startTimeForm" addStyleNames="batch-execution-schedule-editor__field" identity="startTime" label="Start Time"
+                            helpText="Effective time of the first run, for schedules that have not run yet; schedules that have already run are not affected. Enter an ISO 8601 date and time, e.g. 2026-01-01T00:00:00.000Z. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
+                            screenReaderText="First run time for schedules not yet run. Applied only if its tick box is ticked.">
+                <datetimebox:DateTimeBox ui:field="startTimeBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="endTimeEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change End Time"/>
+            <form:FormGroup ui:field="endTimeForm" addStyleNames="batch-execution-schedule-editor__field" identity="endTime" label="End Time (Optional)"
+                            helpText="No runs are made with an effective time after this. Leave blank for no end. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
+                            screenReaderText="Leave blank for no end. Applied only if its tick box is ticked.">
+                <datetimebox:DateTimeBox ui:field="endTimeBox" optional="true" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="batch-execution-schedule-editor__row">
+            <tickbox:TickBox ui:field="runAsUserEnable" addStyleNames="batch-execution-schedule-editor__tick" ariaLabel="Change Run As User"/>
+            <form:FormGroup ui:field="runAsUserForm" addStyleNames="batch-execution-schedule-editor__field" identity="runAsUser" label="Run As User"
+                            helpText="User whose permissions the schedules run with. The change is refused if you are not allowed to run as that user. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used.">
+                <g:SimplePanel addStyleNames="w-100">
+                    <dd:DropDownBox ui:field="runAsUserBox" addStyleNames="w-100"/>
+                </g:SimplePanel>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel styleName="dialog__buttons">
+            <g:SimplePanel styleName="batch-execution-schedule-editor__button">
+                <b:Button ui:field="applySelectionButton" icon="OK" addStyleNames="allow-focus button--contained-primary w-100" text="Apply to Selection"/>
+            </g:SimplePanel>
+            <g:SimplePanel styleName="batch-execution-schedule-editor__button">
+                <b:Button ui:field="applyFilteredButton" icon="GENERATE" addStyleNames="allow-focus button--contained-green w-100" text="Apply to Filtered"/>
+            </g:SimplePanel>
+        </g:FlowPanel>
+
+    </g:FlowPanel>
+</ui:UiBinder>
+

@@ -1,0 +1,70 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A table column's values, each ticked or not, below Select All and Select None and a filter: a
+   popup from the column's heading, or a part of a dashboard's table filter */
+.column-values-filter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--control__padding--vertical);
+}
+
+.column-values-filter .column-values-filter__bar {
+    display: flex;
+    /* The separator between the links in line with their text, not at the top of the bar */
+    align-items: center;
+    gap: var(--control__padding--horizontal);
+}
+
+.column-values-filter .column-values-filter__link {
+    display: inline-flex;
+    align-items: center;
+    /* At least 24px high, the minimum target size (WCAG 2.5.8) */
+    min-height: 24px;
+    cursor: pointer;
+    padding: 2px 5px;
+    text-decoration: underline;
+}
+
+.table-filter .column-values-filter {
+    gap: 0;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.popupContent .column-values-filter {
+    width: calc(400px * var(--text-scale));
+    height: 400px;
+}
+
+/* Separates the values the table has from the rest, which come after it faded
+   (column-value-cell--unavailable): a line in the middle of a 9px gap above the first of the rest, 4px
+   from each row, so a focused row's ring never touches it. The line is outside the row, which the
+   grid doesn't clip at this list's page size (data-grid--contain is for pages over 200 rows), and in
+   the tick boxes' border colour, as a menu separator's is too faint in the dark theme */
+.column-values-filter .column-values-filter__row--first-unavailable {
+    position: relative;
+    margin-top: 9px;
+}
+
+.column-values-filter .column-values-filter__row--first-unavailable::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--control__border-color);
+}

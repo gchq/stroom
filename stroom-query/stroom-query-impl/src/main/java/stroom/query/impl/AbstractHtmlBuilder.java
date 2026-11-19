@@ -21,6 +21,9 @@ import java.util.function.Consumer;
 
 public abstract class AbstractHtmlBuilder<B extends AbstractHtmlBuilder<?>>  {
 
+    // Hidden from sight but not from screen readers by the UI's sr-only class
+    static final String NEW_TAB_HINT_HTML = "<span class=\"sr-only\"> (opens in new tab)</span>";
+
     private final StringBuilder sb = new StringBuilder();
 
     public B append(final String text) {
@@ -74,14 +77,24 @@ public abstract class AbstractHtmlBuilder<B extends AbstractHtmlBuilder<?>>  {
         return self();
     }
 
+    /// Appends a link that opens in a new browser tab. The link ends with the visually hidden
+    /// text " (opens in new tab)", so screen readers say where it goes (WCAG 2.4.4), and has
+    /// `rel="noopener noreferrer"`, as the UI's own new tab links (`NewTabLink`) do.
+    ///
+    /// @param url   The URL the link goes to.
+    /// @param title The link's text. If null or empty, the URL is the text.
+    /// @return This builder.
     public B appendLink(final String url, final String title) {
         Objects.requireNonNull(url);
         sb.append("<a href=\"");
         append(url);
-        sb.append("\" target=\"_blank\">");
+        sb.append("\" target=\"_blank\" rel=\"noopener noreferrer\">");
         if (title != null && !title.isEmpty()) {
             append(title);
+        } else {
+            append(url);
         }
+        sb.append(NEW_TAB_HINT_HTML);
         sb.append("</a>");
         return self();
     }

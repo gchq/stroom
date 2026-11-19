@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -86,6 +88,34 @@ public class UserPreferences {
     @JsonProperty
     private final AskStroomAiConfig askStroomAiConfig;
 
+    @JsonProperty
+    @JsonPropertyDescription("The keyboard shortcuts that the user has changed from the defaults, by action " +
+                             "name. Each shortcut is either a key combination, e.g. `Ctrl+Shift+S`, or two keys " +
+                             "pressed one after the other, e.g. `G U`. An empty list means the action has no " +
+                             "shortcut.")
+    private final Map<String, List<String>> keyBindings;
+
+    @JsonProperty
+    @JsonPropertyDescription("Whether keyboard shortcuts made only of character keys, e.g. `W` or `G U`, are " +
+                             "turned on. Users of speech input may want to turn them off.")
+    private final Boolean enableCharacterKeyShortcuts;
+
+    @JsonProperty
+    @JsonPropertyDescription("The palette visualisations colour categories (e.g. series) from, `Vivid` or " +
+                             "`Colour-blind safe`")
+    private final String visualisationPalette;
+
+    @JsonProperty
+    @JsonPropertyDescription("Whether a right-click in a text field or code editor shows Stroom's own edit " +
+                             "menu (`STROOM`) or the browser's (`BROWSER`). A Shift+right-click always shows " +
+                             "the browser's.")
+    private final TextContextMenu textContextMenu;
+
+    @JsonProperty
+    @JsonPropertyDescription("How toolbar buttons are shown: as icons (`ICONS`), as icons with their names " +
+                             "(`ICONS_AND_TEXT`) or as their names alone (`TEXT`).")
+    private final ToolbarDisplay toolbarDisplay;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -98,7 +128,12 @@ public class UserPreferences {
                            @JsonProperty("timeZone") final UserTimeZone timeZone,
                            @JsonProperty("enableTransparency") final Boolean enableTransparency,
                            @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles,
-                           @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig) {
+                           @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig,
+                           @JsonProperty("keyBindings") final Map<String, List<String>> keyBindings,
+                           @JsonProperty("enableCharacterKeyShortcuts") final Boolean enableCharacterKeyShortcuts,
+                           @JsonProperty("visualisationPalette") final String visualisationPalette,
+                           @JsonProperty("textContextMenu") final TextContextMenu textContextMenu,
+                           @JsonProperty("toolbarDisplay") final ToolbarDisplay toolbarDisplay) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = Objects.requireNonNullElse(
@@ -113,6 +148,11 @@ public class UserPreferences {
         this.enableTransparency = Objects.requireNonNullElse(enableTransparency, true);
         this.hideConditionalStyles = hideConditionalStyles;
         this.askStroomAiConfig = askStroomAiConfig;
+        this.keyBindings = keyBindings;
+        this.enableCharacterKeyShortcuts = Objects.requireNonNullElse(enableCharacterKeyShortcuts, true);
+        this.visualisationPalette = visualisationPalette;
+        this.textContextMenu = Objects.requireNonNullElse(textContextMenu, TextContextMenu.DEFAULT);
+        this.toolbarDisplay = Objects.requireNonNullElse(toolbarDisplay, ToolbarDisplay.DEFAULT);
     }
 
     public String getTheme() {
@@ -163,6 +203,34 @@ public class UserPreferences {
         return askStroomAiConfig;
     }
 
+    /// @return The keyboard shortcuts that the user has changed from the defaults, by action name,
+    /// or null if they haven't changed any.
+    public Map<String, List<String>> getKeyBindings() {
+        return keyBindings;
+    }
+
+    /// @return Whether keyboard shortcuts made only of character keys are turned on.
+    public Boolean getEnableCharacterKeyShortcuts() {
+        return enableCharacterKeyShortcuts;
+    }
+
+    /// @return The name of the palette visualisations colour categories from (see
+    /// `stroom.visualisation.shared.VisPalette`), or null for the default.
+    public String getVisualisationPalette() {
+        return visualisationPalette;
+    }
+
+    /// @return Whether a right-click in a text field or code editor shows Stroom's edit menu or the
+    /// browser's.
+    public TextContextMenu getTextContextMenu() {
+        return textContextMenu;
+    }
+
+    /// @return How toolbar buttons are shown: as icons, icons and text, or text.
+    public ToolbarDisplay getToolbarDisplay() {
+        return toolbarDisplay;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -183,7 +251,12 @@ public class UserPreferences {
                Objects.equals(timeZone, that.timeZone) &&
                Objects.equals(enableTransparency, that.enableTransparency) &&
                Objects.equals(hideConditionalStyles, that.hideConditionalStyles) &&
-               Objects.equals(askStroomAiConfig, that.askStroomAiConfig);
+               Objects.equals(askStroomAiConfig, that.askStroomAiConfig) &&
+               Objects.equals(keyBindings, that.keyBindings) &&
+               Objects.equals(enableCharacterKeyShortcuts, that.enableCharacterKeyShortcuts) &&
+               Objects.equals(visualisationPalette, that.visualisationPalette) &&
+               textContextMenu == that.textContextMenu &&
+               toolbarDisplay == that.toolbarDisplay;
     }
 
     @Override
@@ -198,7 +271,12 @@ public class UserPreferences {
                 dateTimePattern,
                 timeZone,
                 enableTransparency,
-                hideConditionalStyles);
+                hideConditionalStyles,
+                keyBindings,
+                enableCharacterKeyShortcuts,
+                visualisationPalette,
+                textContextMenu,
+                toolbarDisplay);
     }
 
     @Override
@@ -216,6 +294,11 @@ public class UserPreferences {
                ", enableTransparency=" + enableTransparency +
                ", hideConditionalStyles=" + hideConditionalStyles +
                ", askStroomAiConfig='" + askStroomAiConfig + '\'' +
+               ", keyBindings=" + keyBindings +
+               ", enableCharacterKeyShortcuts=" + enableCharacterKeyShortcuts +
+               ", visualisationPalette='" + visualisationPalette + '\'' +
+               ", textContextMenu=" + textContextMenu +
+               ", toolbarDisplay=" + toolbarDisplay +
                '}';
     }
 
@@ -271,6 +354,81 @@ public class UserPreferences {
     //--------------------------------------------------------------------------------
 
 
+    /// What a right-click in a text field or code editor shows.
+    public enum TextContextMenu {
+        /// Stroom's own edit menu, styled as Stroom's other menus.
+        STROOM("Stroom"),
+        /// The browser's own menu (e.g. for its spelling suggestions or password manager).
+        BROWSER("Browser");
+
+        public static final TextContextMenu DEFAULT = STROOM;
+
+        private final String displayValue;
+
+        TextContextMenu(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        /// @return The value's name, as the preferences dialog shows it.
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        /// @param displayValue A value's name, as the preferences dialog shows it.
+        /// @return The value, or the default if the name is no value's.
+        public static TextContextMenu fromDisplayValue(final String displayValue) {
+            for (final TextContextMenu value : values()) {
+                if (value.displayValue.equalsIgnoreCase(displayValue)) {
+                    return value;
+                }
+            }
+            return DEFAULT;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------
+
+
+    /// How toolbar buttons are shown. Only an action toolbar's buttons follow it: buttons in or
+    /// beside a field, a pager's arrows and the like stay icons (`toolbar--icons`).
+    public enum ToolbarDisplay {
+        /// Each button's icon, its name its tooltip (the default).
+        ICONS("Icons"),
+        /// Each button's icon and its label beside it.
+        ICONS_AND_TEXT("Icons and Text"),
+        /// Each button's label, with no icon.
+        TEXT("Text");
+
+        public static final ToolbarDisplay DEFAULT = ICONS;
+
+        private final String displayValue;
+
+        ToolbarDisplay(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        /// @return The value's name, as the preferences dialog shows it.
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        /// @param displayValue A value's name, as the preferences dialog shows it.
+        /// @return The value, or the default if the name is no value's.
+        public static ToolbarDisplay fromDisplayValue(final String displayValue) {
+            for (final ToolbarDisplay value : values()) {
+                if (value.displayValue.equalsIgnoreCase(displayValue)) {
+                    return value;
+                }
+            }
+            return DEFAULT;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String theme;
@@ -285,6 +443,11 @@ public class UserPreferences {
         private Boolean enableTransparency;
         private Boolean hideConditionalStyles;
         private AskStroomAiConfig askStroomAiConfig;
+        private Map<String, List<String>> keyBindings;
+        private Boolean enableCharacterKeyShortcuts;
+        private String visualisationPalette;
+        private TextContextMenu textContextMenu;
+        private ToolbarDisplay toolbarDisplay;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -298,6 +461,7 @@ public class UserPreferences {
             timeZone = UserTimeZone.builder().use(Use.UTC).build();
             enableTransparency = true;
             askStroomAiConfig = new AskStroomAiConfig();
+            enableCharacterKeyShortcuts = true;
         }
 
         private Builder(final UserPreferences userPreferences) {
@@ -313,6 +477,11 @@ public class UserPreferences {
             this.enableTransparency = userPreferences.enableTransparency;
             this.hideConditionalStyles = userPreferences.hideConditionalStyles;
             this.askStroomAiConfig = userPreferences.askStroomAiConfig;
+            this.keyBindings = userPreferences.keyBindings;
+            this.enableCharacterKeyShortcuts = userPreferences.enableCharacterKeyShortcuts;
+            this.visualisationPalette = userPreferences.visualisationPalette;
+            this.textContextMenu = userPreferences.textContextMenu;
+            this.toolbarDisplay = userPreferences.toolbarDisplay;
         }
 
         public Builder theme(final String theme) {
@@ -375,6 +544,45 @@ public class UserPreferences {
             return this;
         }
 
+        /// @param keyBindings The keyboard shortcuts that the user has changed from the defaults, by
+        ///                    action name, or null if they haven't changed any.
+        /// @return This builder.
+        public Builder keyBindings(final Map<String, List<String>> keyBindings) {
+            this.keyBindings = keyBindings;
+            return this;
+        }
+
+        /// @param enableCharacterKeyShortcuts Whether keyboard shortcuts made only of character
+        ///                                    keys are turned on.
+        /// @return This builder.
+        public Builder enableCharacterKeyShortcuts(final Boolean enableCharacterKeyShortcuts) {
+            this.enableCharacterKeyShortcuts = enableCharacterKeyShortcuts;
+            return this;
+        }
+
+        /// @param visualisationPalette The name of the palette visualisations colour categories from,
+        ///                             or null for the default.
+        /// @return This builder.
+        public Builder visualisationPalette(final String visualisationPalette) {
+            this.visualisationPalette = visualisationPalette;
+            return this;
+        }
+
+        /// @param textContextMenu Whether a right-click in a text field or code editor shows
+        ///                        Stroom's edit menu or the browser's, or null for the default.
+        /// @return This builder.
+        public Builder textContextMenu(final TextContextMenu textContextMenu) {
+            this.textContextMenu = textContextMenu;
+            return this;
+        }
+
+        /// @param toolbarDisplay How toolbar buttons are shown, or null for the default (icons).
+        /// @return This builder.
+        public Builder toolbarDisplay(final ToolbarDisplay toolbarDisplay) {
+            this.toolbarDisplay = toolbarDisplay;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -388,7 +596,12 @@ public class UserPreferences {
                     timeZone,
                     enableTransparency,
                     hideConditionalStyles,
-                    askStroomAiConfig);
+                    askStroomAiConfig,
+                    keyBindings,
+                    enableCharacterKeyShortcuts,
+                    visualisationPalette,
+                    textContextMenu,
+                    toolbarDisplay);
         }
     }
 

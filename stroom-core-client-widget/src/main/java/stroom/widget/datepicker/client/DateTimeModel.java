@@ -64,6 +64,7 @@ public class DateTimeModel {
     private static final int MAX_DAYS_IN_MONTH = 31;
 
     private final String[] dayOfWeekNames = DATE_TIME_CONSTANTS.getDayOfWeekNames();
+    private final String[] longDayOfWeekNames = DATE_TIME_CONSTANTS.getLongDayOfWeekNames();
     private final String[] dayOfMonthNames = DATE_TIME_CONSTANTS.getDayOfMonthNames();
     private final String[] monthOfYearNames = DATE_TIME_CONSTANTS.getMonthNames();
     private final UTCDate currentMonth;
@@ -75,7 +76,7 @@ public class DateTimeModel {
         currentMonth = getFirstDayOfMonth(UTCDate.create());
     }
 
-    public static UTCDate getFirstDayOfMonth(final UTCDate date) {
+    private static UTCDate getFirstDayOfMonth(final UTCDate date) {
         return UTCDate.create(
                 date.getFullYear(),
                 date.getMonth(),
@@ -104,6 +105,14 @@ public class DateTimeModel {
      */
     public String formatDayOfWeek(final int dayInWeek) {
         return dayOfWeekNames[dayInWeek];
+    }
+
+    /// Formats a day of the week in full, e.g. "Monday".
+    ///
+    /// @param dayInWeek The day of the week, from 0 (Sunday) to 6 (Saturday).
+    /// @return The day's full name.
+    public String formatDayOfWeekLong(final int dayInWeek) {
+        return longDayOfWeekNames[dayInWeek];
     }
 
     /**
@@ -177,7 +186,6 @@ public class DateTimeModel {
      */
     public void shiftCurrentMonth(final int deltaMonths) {
         CalendarUtil.addMonthsToDate(currentMonth, deltaMonths);
-//        refresh();
     }
 
     public UTCDate getTodayUTC() {
@@ -264,12 +272,17 @@ public class DateTimeModel {
         if (offsetMillis == 0) {
             sb.append("Z");
         } else {
-            sb.append(getOffsetString(value));
+            // ISO 8601's extended form, +10:00, as the server's ZonedDateTime.parse needs; +1000
+            // fails there
+            final String offset = getOffsetString(value);
+            sb.append(offset.substring(0, 3));
+            sb.append(":");
+            sb.append(offset.substring(3, 5));
         }
         return sb.toString();
     }
 
-    public String getOffsetString(final UTCDate value) {
+    private String getOffsetString(final UTCDate value) {
         final String tz = parseTimeZone(value);
         String offset = tz.replaceAll("GMT", "");
         offset = offset.replaceAll(":", "");
@@ -301,7 +314,7 @@ public class DateTimeModel {
         return millis;
     }
 
-    public String parseTimeZone(final UTCDate value) {
+    private String parseTimeZone(final UTCDate value) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .hour(Hour.TWO_DIGIT)

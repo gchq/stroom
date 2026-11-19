@@ -36,14 +36,6 @@ public class Size {
     public double getHeight() {
         return height;
     }
-//
-//    public void set(final double dimension, final double size) {
-//        if (dimension == 0) {
-//            width = size;
-//        } else {
-//            height = size;
-//        }
-//    }
 
     public double get(final double dimension) {
         if (dimension == 0) {

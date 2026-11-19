@@ -16,23 +16,24 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.component.client.Controller;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final Controller controller;
     private final String caption;
 
-    private RenamePopupEvent(final PresenterWidget<?> presenterWidget, final String caption) {
-        this.presenterWidget = presenterWidget;
+    private RenamePopupEvent(final Controller controller, final String caption) {
+        this.controller = controller;
         this.caption = caption;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
-        return new Builder(presenterWidget);
+    public static Builder builder(final Controller controller) {
+        return new Builder(controller);
     }
 
     public static Type<Handler> getType() {
@@ -52,8 +53,9 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
         handler.onRename(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    /// @return The controller shown as the popup.
+    public Controller getController() {
+        return controller;
     }
 
     public String getCaption() {
@@ -67,11 +69,11 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final Controller controller;
         private String caption;
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
-            this.presenterWidget = presenterWidget;
+        public Builder(final Controller controller) {
+            this.controller = controller;
         }
 
         public Builder caption(final String caption) {
@@ -80,7 +82,7 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
         }
 
         public void fire() {
-            presenterWidget.fireEvent(new RenamePopupEvent(presenterWidget, caption));
+            controller.fireEvent(new RenamePopupEvent(controller, caption));
         }
     }
 }

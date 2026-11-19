@@ -76,7 +76,7 @@ public class MockIndexFieldService implements IndexFieldService {
         ensureLoaded(dataSourceRef);
 
         final Predicate<IndexField> namePredicate = expressionPredicateFactory
-                .create(criteria.getFilter(), IndexField::getFldName);
+                .create(criteria.getQuickFilter(), IndexField::getFldName);
         final List<Predicate<IndexField>> predicates = new ArrayList<>(2);
         predicates.add(namePredicate);
         if (criteria.getQueryable() != null) {
@@ -130,7 +130,7 @@ public class MockIndexFieldService implements IndexFieldService {
                 PageRequest.oneRow(),
                 null,
                 docRef,
-                StringExpressionUtil.equalsCaseSensitive(fieldName),
+                StringExpressionUtil.equalTo(fieldName),
                 null);
         final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
         if (!resultPage.isEmpty()) {

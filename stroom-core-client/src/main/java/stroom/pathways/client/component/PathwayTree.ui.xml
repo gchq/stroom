@@ -1,0 +1,25 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!--
+      A pathway's graph of nodes (pathway-tree.css), under a toolbar of its actions. The graph's HTML
+      and SVG are drawn from the pathway in the Java
+    -->
+    <g:FlowPanel addStyleNames="max dock-container-vertical">
+        <g:FlowPanel styleName="dock-container-horizontal dock-min align-center">
+            <g:FlowPanel addStyleNames="pathway-tree__toolbar">
+                <b:Toolbar name="Pathway actions">
+                    <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Path"/>
+                    <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Path" enabled="false"/>
+                    <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Path" enabled="false"/>
+                    <b:ToolbarButton ui:field="viewTracesButton" svg="EYE" title="View Matching Traces"/>
+                </b:Toolbar>
+            </g:FlowPanel>
+        </g:FlowPanel>
+        <g:FlowPanel addStyleNames="pathway-tree__list dock-max">
+            <tx:Html ui:field="tree" addStyleNames="max"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

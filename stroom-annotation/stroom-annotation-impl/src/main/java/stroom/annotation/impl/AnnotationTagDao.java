@@ -19,7 +19,7 @@ package stroom.annotation.impl;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
-import stroom.entity.shared.ExpressionCriteria;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
@@ -33,7 +33,7 @@ public interface AnnotationTagDao {
 
     Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
-    ResultPage<AnnotationTag> findAnnotationTags(ExpressionCriteria request,
+    ResultPage<AnnotationTag> findAnnotationTags(FindAnnotationTagCriteria request,
                                                  Predicate<String> uuidPredicate);
 
     Optional<AnnotationTag> findAnnotationTag(AnnotationTagType annotationTagType, String name);

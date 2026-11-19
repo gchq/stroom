@@ -27,10 +27,13 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContextFactory;
@@ -47,6 +50,7 @@ import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CompareUtil.FieldComparators;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -59,6 +63,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GlobalConfigService implements GlobalConfig {
 
@@ -72,7 +77,9 @@ public class GlobalConfigService implements GlobalConfig {
                     .put(GlobalConfigResource.FIELD_DEF_SOURCE, configProperty ->
                             configProperty.getSource().getName())
                     .put(GlobalConfigResource.FIELD_DEF_DESCRIPTION, ConfigProperty::getDescription);
-    public static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(GlobalConfigResource.FIELD_DEFINITIONS);
+    public static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            GlobalConfigResource.DEFAULT_QUERY_FIELDS,
+            GlobalConfigResource.QUERY_FIELDS);
 
     private static final FieldComparators<ConfigProperty> FIELD_COMPARATORS = FieldComparators.builder(
                     ConfigProperty.class)
@@ -149,16 +156,30 @@ public class GlobalConfigService implements GlobalConfig {
 
             // Extracting the value out of the json details is not very efficient.  May be better to use
             // something like jsoniter on the raw json.
-            return expressionPredicateFactory.filterAndSortStream(
+            // ExpressionPredicateFactory swallows a bad filter and matches nothing, which is the
+            // right result on a debounced filter - but the reason has to come back with the empty
+            // page or it is indistinguishable from "nothing matched". See ResultPage.filterError.
+            final AtomicReference<TokenException> filterError = new AtomicReference<>();
+            final ListConfigResponse response = expressionPredicateFactory.filterAndSortStream(
                             configMapper.getGlobalProperties().stream(),
-                            criteria.getQuickFilterInput(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORIES,
-                            optConfigPropertyComparator)
+                            criteria.getQuickFilter(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORIES,
+                            DateTimeSettings.builder().build(),
+                            optConfigPropertyComparator,
+                            filterError::set)
                     .collect(ListConfigResponse.collector(
                             pageRequest,
                             (configProperties, pageResponse) ->
                                     new ListConfigResponse(configProperties,
                                             pageResponse,
                                             nodeInfo.getThisNodeName())));
+            if (filterError.get() != null) {
+                return new ListConfigResponse(
+                        Collections.emptyList(),
+                        PageResponse.empty(),
+                        nodeInfo.getThisNodeName(),
+                        TokenErrorUtil.toTokenError(filterError.get()));
+            }
+            return response;
         });
     }
 

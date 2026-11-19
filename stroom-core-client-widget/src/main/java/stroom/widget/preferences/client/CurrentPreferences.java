@@ -1,0 +1,75 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.widget.preferences.client;
+
+import stroom.ui.config.shared.UserPreferences.Toggle;
+
+import javax.inject.Singleton;
+
+@Singleton
+public class CurrentPreferences {
+
+    private String theme;
+    private String editorTheme;
+    private String editorKeyBindings;
+    private Toggle editorLiveAutoCompletion;
+    private String visualisationPalette;
+
+    public String getTheme() {
+        return theme;
+    }
+
+    public String getEditorTheme() {
+        return editorTheme;
+    }
+
+    public String getEditorKeyBindings() {
+        return editorKeyBindings;
+    }
+
+    public Toggle getEditorLiveAutoCompletion() {
+        return editorLiveAutoCompletion;
+    }
+
+    public void setTheme(final String theme) {
+        this.theme = theme;
+    }
+
+    public void setEditorTheme(final String editorTheme) {
+        this.editorTheme = editorTheme;
+    }
+
+    public void setEditorKeyBindings(final String editorKeyBindings) {
+        this.editorKeyBindings = editorKeyBindings;
+    }
+
+    public void setEditorLiveAutoCompletion(final Toggle editorLiveAutoCompletion) {
+        this.editorLiveAutoCompletion = editorLiveAutoCompletion;
+    }
+
+    /// @return The name of the palette visualisations colour categories from, or null for the
+    /// default.
+    public String getVisualisationPalette() {
+        return visualisationPalette;
+    }
+
+    /// @param visualisationPalette The name of the palette visualisations colour categories from,
+    ///                             or null for the default.
+    public void setVisualisationPalette(final String visualisationPalette) {
+        this.visualisationPalette = visualisationPalette;
+    }
+}

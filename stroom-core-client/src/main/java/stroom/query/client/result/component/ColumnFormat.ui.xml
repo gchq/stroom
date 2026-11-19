@@ -1,0 +1,71 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:v="urn:import:stroom.widget.tickbox.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="formatType" label="Type"
+                        helpText="How values in this column are formatted: General, Number, Date Time or Text. Number and Date Time show further options."
+                        screenReaderText="General, Number, Date Time or Text.">
+            <i:SelectionBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+
+        <!-- Number format settings -->
+        <form:FormGroup ui:field="formatDecimalPlaces" identity="formatDecimalPlaces" label="Decimal Places"
+                        helpText="Number of decimal places to show, from 0 to 10."
+                        screenReaderText="0 to 10.">
+            <valuespinner:ValueSpinner ui:field="decimalPlaces" minValue="0" maxValue="10"
+                                       addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatUseSeparator"
+                        helpText="Groups the digits of large numbers with a comma every three digits, e.g. 1,234,567. Default is not ticked.">
+            <v:TickBox ui:field="separate" identity="formatUseSeparator" label="Use Separator (,)"/>
+        </form:FormGroup>
+
+        <!-- Date time settings -->
+        <form:FormGroup ui:field="formatUsePreferences"
+                        helpText="Shows dates using the date and time format and time zone from your user preferences. Untick to choose them here with Format, Custom Format and Time Zone. Default is ticked.">
+            <v:TickBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format"
+                        helpText="Date and time format to use, chosen from a list of standard formats. Ignored when Use Preferences is ticked."
+                        screenReaderText="Ignored when Use Preferences is ticked.">
+            <i:SelectionBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatCustom"
+                        helpText="Uses your own pattern from Custom Format in place of the Format list, which is then ignored. Ticked automatically when the saved pattern is not one of the standard formats.">
+            <v:TickBox ui:field="custom" identity="formatCustom" label="Custom"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format"
+                        helpText="Your own date and time pattern, e.g. dd/MM/yyyy HH:mm. Used only when Custom is ticked."
+                        screenReaderText="Pattern, e.g. dd/MM/yyyy HH:mm. Used when Custom is ticked.">
+            <form:TextBox ui:field="text" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatTimeZone" identity="formatTimeZone" label="Time Zone"
+                        helpText="Time zone used to show dates when Use Preferences is not ticked: Local (your browser's time zone), UTC, Id (a named zone) or Offset (a fixed offset from UTC). Default is UTC."
+                        screenReaderText="Local, UTC, Id or Offset. Used when Use Preferences is not ticked.">
+            <i:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatTimeZoneId" identity="formatTimeZoneId" label="Time Zone Id"
+                        helpText="Named time zone to use, e.g. Europe/London."
+                        screenReaderText="e.g. Europe/London.">
+            <i:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatTimeZoneOffset" identity="formatTimeZoneOffset" label="Time Zone Offset"
+                        helpText="Fixed offset from UTC, as hours (-12 to +12) and minutes (0 to 59)."
+                        screenReaderText="Hours, then minutes.">
+            <g:FlowPanel>
+                <!-- Named by the part they are, as the Time Zone Offset label names the pair -->
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours" minValue="-12" maxValue="12"
+                                           minStep="1" maxStep="1" ariaLabel="Hours"/>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" minValue="0" maxValue="59"
+                                           minStep="30" maxStep="30" ariaLabel="Minutes"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+
+        <form:FormGroup helpText="Wraps long values in this column onto several lines, so the whole value shows. When not ticked, values stay on one line and are cut off at the column edge. Default is not ticked.">
+            <v:TickBox ui:field="wrap" identity="formatWrapText" label="Wrap Text"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

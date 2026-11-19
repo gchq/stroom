@@ -16,7 +16,7 @@
 
 package stroom.menubar.client.event;
 
-import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.MenuItems;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

@@ -16,7 +16,7 @@
   -->
 
 <module>
-    <inherits name="stroom.entity.Entity"/>
+    <inherits name="stroom.document.Document"/>
     <inherits name="stroom.util.Util"/>
 
     <source path="client"/>

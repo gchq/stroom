@@ -18,20 +18,11 @@ package stroom.view.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.view.client.ViewPlugin;
-import stroom.view.client.presenter.ViewPresenter;
-import stroom.view.client.presenter.ViewSettingsPresenter;
-import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
-import stroom.view.client.view.ViewSettingsViewImpl;
 
 public class ViewModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(ViewPlugin.class);
-
-        bind(ViewPresenter.class);
-
-        bindSharedView(ViewSettingsView.class, ViewSettingsViewImpl.class);
-        bind(ViewSettingsPresenter.class);
     }
 }

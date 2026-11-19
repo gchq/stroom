@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The link tabs' bar (tab-bar.css): its tab list, which the tabs and the "|" between them go in,
+  then invisible text that gives the bar its height (so screen readers don't read it). The bar adds
+  its overflow selector after them when made, hidden until some tabs don't fit (an element root like
+  this one can't declare a widget; see AbstractTabBar).
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="tab-bar tab-bar--link">
+        <div ui:field="tabList" class="tab-bar__tabs" role="tablist"></div>
+        <div class="tab-bar__strut" aria-hidden="true">A</div>
+    </div>
+</ui:UiBinder>

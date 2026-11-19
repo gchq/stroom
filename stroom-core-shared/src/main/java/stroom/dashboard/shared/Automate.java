@@ -28,6 +28,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class Automate {
 
+    /// The refresh interval used when none has been set, e.g. for a dashboard saved before the
+    /// interval had a default.
+    public static final String DEFAULT_REFRESH_INTERVAL = "10s";
+
     @JsonProperty("open")
     private final boolean open;
     @JsonProperty("refresh")
@@ -96,7 +100,7 @@ public class Automate {
 
         private boolean open;
         private boolean refresh;
-        private String refreshInterval = "10s";
+        private String refreshInterval = DEFAULT_REFRESH_INTERVAL;
 
         private Builder() {
         }

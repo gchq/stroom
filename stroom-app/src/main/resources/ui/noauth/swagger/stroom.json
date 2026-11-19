@@ -1480,7 +1480,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ExpressionCriteria"
+                "$ref" : "#/components/schemas/FindAnnotationTagCriteria"
               }
             }
           },
@@ -5669,6 +5669,66 @@
         "tags" : [ "Export" ]
       }
     },
+    "/expression/v1/formatQuickFilter" : {
+      "post" : {
+        "operationId" : "formatQuickFilter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FormatQuickFilterRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FormatQuickFilterResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Write an expression tree as quick filter text",
+        "tags" : [ "Expressions" ]
+      }
+    },
+    "/expression/v1/parseQuickFilter" : {
+      "post" : {
+        "operationId" : "parseQuickFilter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ParseQuickFilterRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ParseQuickFilterResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Parse quick filter text into an expression tree",
+        "tags" : [ "Expressions" ]
+      }
+    },
     "/expression/v1/validate" : {
       "post" : {
         "operationId" : "validate",
@@ -8422,31 +8482,36 @@
           "in" : "query",
           "name" : "nonce",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         }, {
           "in" : "query",
           "name" : "state",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         }, {
           "in" : "query",
           "name" : "prompt",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         }, {
           "in" : "query",
           "name" : "code_challenge",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         }, {
           "in" : "query",
           "name" : "code_challenge_method",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         } ],
         "responses" : {
@@ -9612,6 +9677,37 @@
         "tags" : [ "Processor Filters" ]
       }
     },
+    "/processorFilter/v1/bulkChange/count" : {
+      "post" : {
+        "operationId" : "getBulkChangeCount",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkProcessorFilterChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Count the processor filters a bulk change would change",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
     "/processorFilter/v1/find" : {
       "post" : {
         "operationId" : "findProcessorFilters",
@@ -10760,6 +10856,91 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/quickFilterHistory/v1/clear" : {
+      "post" : {
+        "operationId" : "clearQuickFilterHistory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuickFilterHistoryKey"
+              }
+            }
+          },
+          "description" : "key",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Forget the calling user's recently used filters for one quick filter",
+        "tags" : [ "Quick Filter History" ]
+      }
+    },
+    "/quickFilterHistory/v1/fetch" : {
+      "post" : {
+        "operationId" : "fetchQuickFilterHistory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuickFilterHistoryKey"
+              }
+            }
+          },
+          "description" : "key",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the calling user's recently used filters for one quick filter, most recent first",
+        "tags" : [ "Quick Filter History" ]
+      }
+    },
+    "/quickFilterHistory/v1/record" : {
+      "post" : {
+        "operationId" : "recordQuickFilterUse",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecordQuickFilterUseRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Record that the calling user used a filter in one quick filter",
+        "tags" : [ "Quick Filter History" ]
+      }
+    },
     "/refData/v1/clearBufferPool" : {
       "delete" : {
         "operationId" : "clearBufferPool",
@@ -10767,7 +10948,8 @@
           "in" : "query",
           "name" : "nodeName",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         } ],
         "responses" : {
@@ -10869,7 +11051,8 @@
           "in" : "query",
           "name" : "nodeName",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         } ],
         "responses" : {
@@ -10909,7 +11092,8 @@
           "in" : "query",
           "name" : "nodeName",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         } ],
         "responses" : {
@@ -10944,7 +11128,8 @@
           "in" : "query",
           "name" : "nodeName",
           "schema" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           }
         } ],
         "responses" : {
@@ -11030,6 +11215,28 @@
           }
         },
         "summary" : "Destroy search results",
+        "tags" : [ "Remote Search" ]
+      }
+    },
+    "/remoteSearch/v1/joinTables" : {
+      "get" : {
+        "operationId" : "getRemoteSearchJoinTables",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "queryKey",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/octet-stream" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get the join tables of a search, for a node that searches its first source",
         "tags" : [ "Remote Search" ]
       }
     },
@@ -15610,6 +15817,9 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
+          "quickFilter" : {
+            "type" : "string"
+          },
           "requiredPermissions" : {
             "type" : "array",
             "items" : {
@@ -15638,6 +15848,9 @@
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "requiredPermissions" : {
             "type" : "array",
@@ -16945,6 +17158,9 @@
       "CacheInfoResponse" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -16959,6 +17175,9 @@
       "CacheNamesResponse" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -17284,6 +17503,9 @@
           "availableCount" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
           },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
@@ -18560,6 +18782,9 @@
       "DataRetentionDeleteSummaryResponse" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -18884,7 +19109,7 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
-          "partialName" : {
+          "quickFilter" : {
             "type" : "string"
           },
           "sort" : {
@@ -19190,7 +19415,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_CONNECTION", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FLOOR_MAP_EVENT_STORE", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "CUT", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_CONNECTION", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FLOOR_MAP_EVENT_STORE", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "NOT_ALLOWED", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PASTE", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REDO", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SELECT_ALL", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -20773,11 +20998,11 @@
       "FetchAppUserPermissionsRequest" : {
         "type" : "object",
         "properties" : {
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "showLevel" : {
             "type" : "string",
@@ -20883,11 +21108,11 @@
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "showLevel" : {
             "type" : "string",
@@ -20911,6 +21136,9 @@
       "FetchExplorerNodeResult" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "openedItems" : {
             "type" : "array",
             "items" : {
@@ -21046,6 +21274,9 @@
       "FetchNodeStatusResponse" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -21165,11 +21396,11 @@
       "FindAccountRequest" : {
         "type" : "object",
         "properties" : {
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -21186,11 +21417,11 @@
       "FindAiChatHistoryCriteria" : {
         "type" : "object",
         "properties" : {
-          "filter" : {
-            "type" : "string"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -21213,9 +21444,6 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
-          "quickFilterInput" : {
-            "type" : "string"
-          },
           "sort" : {
             "type" : "string",
             "writeOnly" : true
@@ -21235,11 +21463,11 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "filter" : {
-            "type" : "string"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "requiredPermission" : {
             "type" : "string",
@@ -21261,17 +21489,42 @@
           }
         }
       },
+      "FindAnnotationTagCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "STATUS", "LABEL", "COLLECTION", "COMMENT" ]
+          }
+        }
+      },
       "FindApiKeyCriteria" : {
         "type" : "object",
         "properties" : {
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "owner" : {
             "$ref" : "#/components/schemas/UserRef"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -21296,11 +21549,11 @@
             },
             "uniqueItems" : true
           },
-          "filter" : {
-            "type" : "string"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "requiredPermission" : {
             "type" : "string",
@@ -21366,9 +21619,6 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
-          "quickFilterInput" : {
-            "type" : "string"
-          },
           "sort" : {
             "type" : "string",
             "writeOnly" : true
@@ -21407,9 +21657,6 @@
           "dataSourceRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "filter" : {
-            "type" : "string"
-          },
           "nativeQuery" : {
             "type" : "string"
           },
@@ -21418,6 +21665,9 @@
           },
           "queryable" : {
             "type" : "boolean"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -21687,9 +21937,6 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
-          "quickFilterInput" : {
-            "type" : "string"
-          },
           "sort" : {
             "type" : "string",
             "writeOnly" : true
@@ -21781,11 +22028,11 @@
             },
             "uniqueItems" : true
           },
-          "nameFilter" : {
-            "type" : "string"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "sessionId" : {
             "type" : "string"
@@ -21892,6 +22139,9 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
+          "quickFilter" : {
+            "type" : "string"
+          },
           "sort" : {
             "type" : "string",
             "writeOnly" : true
@@ -21907,11 +22157,11 @@
       "FindUserDependenciesCriteria" : {
         "type" : "object",
         "properties" : {
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilter" : {
+            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -22201,6 +22451,37 @@
           }
         },
         "required" : [ "type" ]
+      },
+      "FormatQuickFilterRequest" : {
+        "type" : "object",
+        "properties" : {
+          "defaultFields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "qualifiedFields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
+          }
+        }
+      },
+      "FormatQuickFilterResult" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
       },
       "FormatSettings" : {
         "type" : "object",
@@ -22672,7 +22953,7 @@
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
-          "quickFilterInput" : {
+          "quickFilter" : {
             "type" : "string"
           },
           "sort" : {
@@ -23566,6 +23847,9 @@
       "JobNodeAndInfoListResponse" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -23595,6 +23879,38 @@
           "scheduleReferenceTime" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "JoinKey" : {
+        "type" : "object",
+        "description" : "A pair of expressions whose values must be equal for two rows to join",
+        "properties" : {
+          "left" : {
+            "type" : "string",
+            "description" : "The expression worked out from the rows the join is applied to"
+          },
+          "right" : {
+            "type" : "string",
+            "description" : "The expression worked out from the joined source's rows"
+          }
+        }
+      },
+      "JoinWindow" : {
+        "type" : "object",
+        "description" : "The time window a joined row's time must fall in",
+        "properties" : {
+          "after" : {
+            "type" : "boolean",
+            "description" : "True if the window starts at the time field and runs forward, false or missing if it ends there and runs back"
+          },
+          "duration" : {
+            "type" : "string",
+            "description" : "The length of the window as a StroomQL duration, e.g. 10m"
+          },
+          "timeField" : {
+            "type" : "string",
+            "description" : "The field of the rows being joined that holds the time the window starts or ends at"
           }
         }
       },
@@ -23880,6 +24196,9 @@
         "type" : "object",
         "description" : "List of config properties",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "nodeName" : {
             "type" : "string"
           },
@@ -24067,7 +24386,7 @@
           },
           "partitionBy" : {
             "type" : "string",
-            "enum" : [ "DAY", "WEEK", "MONTH", "YEAR" ]
+            "enum" : [ "NONE", "DAY", "WEEK", "MONTH", "YEAR" ]
           },
           "partitionSize" : {
             "type" : "integer",
@@ -24577,6 +24896,9 @@
               "format" : "int64"
             }
           },
+          "sourceNode" : {
+            "type" : "string"
+          },
           "sourceTaskId" : {
             "$ref" : "#/components/schemas/TaskId"
           },
@@ -24899,6 +25221,37 @@
           }
         }
       },
+      "ParseQuickFilterRequest" : {
+        "type" : "object",
+        "properties" : {
+          "defaultFields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
+          },
+          "qualifiedFields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ParseQuickFilterResult" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          }
+        }
+      },
       "PathKey" : {
         "type" : "object",
         "discriminator" : {
@@ -24988,6 +25341,9 @@
       "PathwayResultPage" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -25160,7 +25516,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_CONNECTION", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FLOOR_MAP_EVENT_STORE", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "CUT", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_CONNECTION", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FLOOR_MAP_EVENT_STORE", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "NOT_ALLOWED", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PASTE", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REDO", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SELECT_ALL", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -25821,6 +26177,9 @@
       "ProcessorListRowResultPage" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -26091,11 +26450,20 @@
         "type" : "object",
         "description" : "The query terms for the search",
         "properties" : {
+          "alias" : {
+            "type" : "string"
+          },
           "dataSource" : {
             "$ref" : "#/components/schemas/DocRef"
           },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "joins" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryJoin"
+            }
           },
           "nativeQuery" : {
             "type" : "string"
@@ -26105,6 +26473,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Param"
             }
+          },
+          "sourceTableSettings" : {
+            "$ref" : "#/components/schemas/TableSettings"
           },
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
@@ -26286,7 +26657,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', '>', '>=', '<', '<=', 'in', 'in dictionary'", "'=', '!='", "'contains', '=', '!=', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'word boundary', '>', '>=', '<', '<=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -26486,6 +26857,37 @@
           }
         }
       },
+      "QueryJoin" : {
+        "type" : "object",
+        "description" : "A source joined to the rows of a query",
+        "properties" : {
+          "alias" : {
+            "type" : "string",
+            "description" : "The name the joined source's fields are prefixed with, as in <alias>.<field>"
+          },
+          "keys" : {
+            "type" : "array",
+            "description" : "The pairs of expressions whose values must be equal for rows to join",
+            "items" : {
+              "$ref" : "#/components/schemas/JoinKey"
+            }
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/Query"
+          },
+          "tableSettings" : {
+            "$ref" : "#/components/schemas/TableSettings"
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "The kind of join",
+            "enum" : [ "INNER", "LEFT", "SEMI", "ANTI", "RIGHT", "FULL" ]
+          },
+          "window" : {
+            "$ref" : "#/components/schemas/JoinWindow"
+          }
+        }
+      },
       "QueryKey" : {
         "type" : "object",
         "description" : "A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.",
@@ -26663,6 +27065,17 @@
           }
         }
       },
+      "QuickFilterHistoryKey" : {
+        "type" : "object",
+        "properties" : {
+          "context" : {
+            "type" : "string"
+          },
+          "dataSourceUuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "RangeInteger" : {
         "type" : "object",
         "properties" : {
@@ -26827,6 +27240,17 @@
           },
           "version" : {
             "type" : "string"
+          }
+        }
+      },
+      "RecordQuickFilterUseRequest" : {
+        "type" : "object",
+        "properties" : {
+          "filterText" : {
+            "type" : "string"
+          },
+          "key" : {
+            "$ref" : "#/components/schemas/QuickFilterHistoryKey"
           }
         }
       },
@@ -27247,6 +27671,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27262,6 +27689,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27277,6 +27707,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27292,6 +27725,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27307,6 +27743,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27322,6 +27761,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27337,6 +27779,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27352,6 +27797,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27367,6 +27815,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27382,6 +27833,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27397,6 +27851,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27412,6 +27869,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27427,6 +27887,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27442,6 +27905,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27457,6 +27923,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27472,6 +27941,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27487,6 +27959,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27502,6 +27977,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27517,6 +27995,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27532,6 +28013,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27547,6 +28031,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27562,6 +28049,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27577,6 +28067,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27592,6 +28085,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27607,6 +28103,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27622,6 +28121,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27637,6 +28139,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27652,6 +28157,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27667,6 +28175,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27682,6 +28193,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27697,6 +28211,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27712,6 +28229,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27727,6 +28247,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27742,6 +28265,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27757,6 +28283,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27772,6 +28301,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27787,6 +28319,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27802,6 +28337,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27817,6 +28355,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27832,6 +28373,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27847,6 +28391,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27862,6 +28409,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27877,6 +28427,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27892,6 +28445,9 @@
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -27997,6 +28553,9 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
           },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
@@ -28756,6 +29315,9 @@
       "SessionListResponse" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -30643,6 +31205,9 @@
               "type" : "string"
             }
           },
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -31054,6 +31619,10 @@
           "from" : {
             "$ref" : "#/components/schemas/DefaultLocation"
           },
+          "severity" : {
+            "type" : "string",
+            "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
+          },
           "text" : {
             "type" : "string"
           },
@@ -31308,6 +31877,9 @@
       "TracesResultPage" : {
         "type" : "object",
         "properties" : {
+          "filterError" : {
+            "$ref" : "#/components/schemas/TokenError"
+          },
           "histogram" : {
             "$ref" : "#/components/schemas/TraceHistogram"
           },
@@ -31405,15 +31977,15 @@
           "nodeMonitoring" : {
             "$ref" : "#/components/schemas/NodeMonitoringConfig"
           },
-          "oncontextmenu" : {
-            "type" : "string",
-            "pattern" : "^return (true|false);$"
-          },
           "process" : {
             "$ref" : "#/components/schemas/ProcessConfig"
           },
           "query" : {
             "$ref" : "#/components/schemas/QueryConfig"
+          },
+          "quickFilterHistorySize" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "referencePipelineSelectorIncludedTags" : {
             "type" : "array",
@@ -31725,6 +32297,9 @@
           "editorTheme" : {
             "type" : "string"
           },
+          "enableCharacterKeyShortcuts" : {
+            "type" : "boolean"
+          },
           "enableTransparency" : {
             "type" : "boolean"
           },
@@ -31737,11 +32312,31 @@
           "hideConditionalStyles" : {
             "type" : "boolean"
           },
+          "keyBindings" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          },
+          "textContextMenu" : {
+            "type" : "string",
+            "enum" : [ "STROOM", "BROWSER" ]
+          },
           "theme" : {
             "type" : "string"
           },
           "timeZone" : {
             "$ref" : "#/components/schemas/UserTimeZone"
+          },
+          "toolbarDisplay" : {
+            "type" : "string",
+            "enum" : [ "ICONS", "ICONS_AND_TEXT", "TEXT" ]
+          },
+          "visualisationPalette" : {
+            "type" : "string"
           }
         }
       },

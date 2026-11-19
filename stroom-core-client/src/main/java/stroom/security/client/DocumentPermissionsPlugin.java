@@ -18,9 +18,9 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.MonitoringPlugin;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
-import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.ShowDocumentPermissionsEvent;
 import stroom.explorer.shared.ExplorerConstants;
@@ -29,17 +29,14 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
-import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
-import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.component.BatchDocumentPermissionsController;
+import stroom.security.client.component.DocumentUserPermissionsContentTabController;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
+import stroom.widget.menu.client.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -48,46 +45,38 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPermissionsPresenter> {
+public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPermissionsController> {
 
     @Inject
     public DocumentPermissionsPlugin(final EventBus eventBus,
                                      final ContentManager contentManager,
-                                     final Provider<BatchDocumentPermissionsPresenter> presenterProvider,
-                                     final AsyncProvider<DocumentUserPermissionsPresenter>
-                                             documentPermissionsPresenterProvider,
+                                     final Provider<BatchDocumentPermissionsController> controllerProvider,
+                                     final Provider<DocumentUserPermissionsContentTabController>
+                                             documentPermissionsControllerProvider,
                                      final ClientSecurityContext securityContext,
                                      final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowDocumentPermissionsEvent.getType(), event -> {
-            documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
-                @Override
-                public void onSuccess(final DocumentUserPermissionsPresenter presenter) {
-                    presenter.setDocRef(event.getDocRef());
-                    final CloseContentEvent.Handler closeHandler = (event) -> {
-                        if (presenter instanceof CloseContentEvent.Handler) {
-                            final Callback callback = ok -> {
-                                event.getCallback().closeTab(ok);
-                            };
-
-                            ((CloseContentEvent.Handler) presenter)
-                                    .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
-                        } else {
-                            // Give the content manager the ok to close the tab.
-                            event.getCallback().closeTab(true);
-                        }
+            final DocumentUserPermissionsContentTabController controller = documentPermissionsControllerProvider.get();
+            controller.setDocRef(event.getDocRef());
+            final CloseContentEvent.Handler closeHandler = closeEvent -> {
+                if (controller instanceof CloseContentEvent.Handler) {
+                    final Callback callback = ok -> {
+                        closeEvent.getCallback().closeTab(ok);
                     };
 
-                    // Tell the content manager to open the tab.
-                    contentManager.open(closeHandler, presenter, presenter);
+                    ((CloseContentEvent.Handler) controller)
+                            .onCloseRequest(new CloseContentEvent(closeEvent.getDirtyMode(), callback));
+                } else {
+                    // Give the content manager the ok to close the tab.
+                    closeEvent.getCallback().closeTab(true);
                 }
+            };
 
-                @Override
-                public void onFailure(final Throwable caught) {
-                }
-            });
+            // Tell the content manager to open the tab.
+            contentManager.open(closeHandler, controller, controller);
         });
     }
 
@@ -107,8 +96,8 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
     }
 
     @Override
-    public void open(final Consumer<BatchDocumentPermissionsPresenter> consumer) {
-        super.open(presenter -> {
+    public void open(final Consumer<BatchDocumentPermissionsController> consumer) {
+        super.open(controller -> {
             final ExpressionTerm term = ExpressionTerm
                     .builder()
                     .field(DocumentPermissionFields.DESCENDANTS.getFldName())
@@ -119,8 +108,8 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
                     .builder()
                     .addTerm(term)
                     .build();
-            presenter.setExpression(operator);
-            consumer.accept(presenter);
+            controller.setExpression(operator);
+            consumer.accept(controller);
         });
     }
 
@@ -136,6 +125,6 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
 
     @Override
     public String getType() {
-        return BatchDocumentPermissionsPresenter.TAB_TYPE;
+        return BatchDocumentPermissionsController.TAB_TYPE;
     }
 }

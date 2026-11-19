@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The virtual field group dialog's content: the group's name, then the query run when users search
+  the virtual field for it, which takes the rest of the dialog
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:q="urn:import:stroom.query.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form dock-container-vertical">
+        <form:FormGroup identity="elasticVirtualFieldGroupName" label="Name" required="true" addStyleNames="dock-min"
+                        helpText="The value users search the virtual field for to run the group's query. It must not be another group's name.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticVirtualFieldGroupQuery" label="Query" addStyleNames="dock-max"
+                        helpText="The query run when users search the virtual field for the group. Its terms may use the index's keyword fields.">
+            <g:SimplePanel styleName="max">
+                <q:ExpressionEditor ui:field="expressionEditor"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

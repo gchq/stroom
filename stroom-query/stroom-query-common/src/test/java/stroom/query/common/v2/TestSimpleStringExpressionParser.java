@@ -17,7 +17,10 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.ExpressionOperator;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.language.token.AbstractQueryTest;
 
 import java.nio.file.Files;
@@ -44,8 +47,9 @@ public class TestSimpleStringExpressionParser extends AbstractQueryTest {
 
     private ExpressionOperator getExpression(final String string) {
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of("defaultField"),
-                List.of("field1", "field2"));
+                List.of(QueryField.createUiText("defaultField")),
+                List.of(QueryField.createUiText("field1"),
+                        QueryField.createUiText("field2")));
         return SimpleStringExpressionParser
                 .create(fieldProvider, string)
                 .orElseThrow();

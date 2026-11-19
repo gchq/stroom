@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A message in an Ask Stroom AI conversation shown as details (ai-message.css), collapsed until its
+  summary is pressed: the AI's thinking, data sent to it, a request's detail, or what it is working
+  on. The summary is an icon and what the message is; then the message, and when it was sent.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:svg="urn:import:stroom.svg.client">
+    <g:HTMLPanel ui:field="root" tag="details" styleName="ai-message">
+        <summary class="ai-message__header">
+            <svg:Icon ui:field="icon" addStyleNames="ai-message__summary-icon"/>
+            <span ui:field="summary"></span>
+        </summary>
+        <div ui:field="content" class="ai-message__details"></div>
+        <div class="ai-message__footer">
+            <div ui:field="timestamp" class="ai-message__timestamp"></div>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder>

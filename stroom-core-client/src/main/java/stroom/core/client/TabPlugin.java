@@ -16,7 +16,6 @@
 
 package stroom.core.client;
 
-import stroom.core.client.presenter.Plugin;
 
 import com.google.web.bindery.event.shared.EventBus;
 

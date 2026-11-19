@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The pipeline tree (pipeline-tree-diagram.css): its elements' boxes, the tree for assistive technology,
+  with the faded group (a detached element and those after it, with their connectors) under the
+  other boxes. Not a group of the tree's: its boxes are items of the tree as the others are. The
+  connectors' canvas goes before the boxes, where the browser has canvas.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:stroom.widget.component.client">
+    <g:FlowPanel ui:field="panel" styleName="pipeline-tree-diagram">
+        <c:AriaPanel ui:field="boxPanel" styleName="pipeline-tree-diagram__items" role="tree" ariaLabel="Pipeline structure">
+            <c:AriaPanel ui:field="fadedGroup" styleName="pipeline-tree-diagram__faded" role="none"/>
+        </c:AriaPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

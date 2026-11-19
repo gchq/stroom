@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <!--
+      The stepping screen's pipeline bar (pipeline-path-bar.css): a toolbar of chevrons, which the Java
+      draws, and a live region that tells screen reader users which elements a step has given new
+      or worse problems
+    -->
+    <g:HTMLPanel>
+        <div ui:field="bar" class="pipeline-path-bar" role="toolbar" aria-label="Pipeline"></div>
+        <div ui:field="liveRegion" class="sr-only" role="status" aria-live="polite"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

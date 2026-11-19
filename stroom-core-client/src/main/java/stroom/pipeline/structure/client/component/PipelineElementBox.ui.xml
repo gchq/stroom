@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  An element's box in the pipeline tree (pipeline-element-box.css): its name. Its type icon goes before
+  the name, and its embedded document icon after it, when it has them. On one line, so that the box
+  has no text between its parts.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:HTMLPanel styleName="pipeline-element-box"><div ui:field="label" class="pipeline-element-box__label"></div></g:HTMLPanel>
+</ui:UiBinder>

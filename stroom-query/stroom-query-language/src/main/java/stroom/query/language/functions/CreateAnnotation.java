@@ -21,7 +21,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import java.util.function.Supplier;
 
 /**
- * See also HyperlinkEventHandlerImpl
+ * See also HyperlinkOpener
  */
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(

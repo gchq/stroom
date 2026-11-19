@@ -107,6 +107,7 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-database')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-documentation:stroom-documentation-impl')
     implementation project(':stroom-dropwizard-common')
@@ -231,6 +232,7 @@ dependencies {
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-api')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
     testImplementation project(':stroom-explorer:stroom-explorer-api')
@@ -275,7 +277,10 @@ dependencies {
     swaggerBuild libs.jakarta.servlet.api
     swaggerBuild libs.swagger.annotations
     swaggerBuild libs.swagger.core
-    swaggerBuild libs.swagger.jaxrs
+    swaggerBuild libs.swagger.rest
+    // swagger-integration v3.0.0 (pulled in from swagger-rest) uses v4.8 of classgraph, so we use a different
+    // version of classgraph to that used by stroom
+    swaggerBuild libs.classgraph.legacy
     swaggerBuild libs.ws.rs.api
 }
 
@@ -293,15 +298,11 @@ jar {
 
 //// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
 //task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
-//task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
 //buildUiPart2.mustRunAfter  ":stroom-app-gwt:jar"
-//buildUiPart3.mustRunAfter  ":stroom-dashboard-gwt:jar"
 //buildUiPart2.mustRunAfter buildUiPart1
-//buildUiPart3.mustRunAfter buildUiPart2
 //
 // Make sure GWT compilation doesn't run before tests.
 //tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
-//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
 
 // Display info to confirm what we are compiling with
 compileJava {
@@ -322,24 +323,42 @@ compileJava {
 }
 
 shadowJar {
-    // We want to run the tests before we build the fat jar.
-    dependsOn test
+    // If the tests and the fat jar are both requested, run the tests first. Ordering only, so
+    // that assemble (which Shadow wires to shadowJar) does not run the tests.
+    mustRunAfter test
     // We want to compile all GWT and React content before we build the fat jar.
     dependsOn ":stroom-app-gwt:gwtCompile"
-//    dependsOn ":stroom-dashboard-gwt:gwtCompile"
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
     dependsOn resolve
 
     // Allows us to build fat jars with lots of files
     zip64 = true
 
-    // Ensure we include the GWT and Rest generated resources.
-    from './src/main/resources'
+    // processResources runs before gwtCompile, so include the GWT output generated afterwards.
+    // The remaining main resources are already included from sourceSets.main.output.
+    from('./src/main/resources') {
+        include 'ui/stroom/**'
+    }
+//    from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
-    // Without INCLUDE, it drops any duplicates
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    // Warn about dup classes.
+    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
+    // other duplicate entries.
+    filesMatching('**/*.class') {
+        duplicatesStrategy = DuplicatesStrategy.WARN
+    }
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    filesMatching('META-INF/*.kotlin_module') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+
+    // Exclude all other dups, which will mostly be text files
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     archiveFileName = fatJarName
     // restygwt and some of its deps pull in the source (for GWT transpiling) but we don't need the
@@ -479,23 +498,36 @@ tasks.register('copyFilesForStroomDockerBuild') {
 //    }
 //}
 
+// Task from swagger-gradle-plugin that generates the swagger spec files
 resolve {
     outputFileName = 'stroom'
     outputFormat = 'JSONANDYAML'
-    prettyPrint = 'TRUE'
-    sortOutput = 'TRUE'
+    prettyPrint = true
+    sortOutput = true
     openApiFile = file('openapi.yaml')
     // As we are pulling in the whole classpath, that includes stroom-app and all the dropwiz
     // deps which includes logback-classic.  In the absence of a logback.xml logback will output
     // DEBUG which makes for a LOT of output. Thus provide it with a logback.xml to use
     // so we have control.
-    classpath = configurations.runtimeClasspath + files("../config/swagger-plugin")
+    // Exclude classgraph because the swagger plugin requires v4 while we have v6 on the main stroom
+    // classpath
+    classpath = configurations.runtimeClasspath - configurations.runtimeClasspath.filter {
+        it.name.startsWith('classgraph-')
+    } + files("../config/swagger-plugin")
 
     // We need to use specific deps for the plugin itself so it knows how to handle jakarta annos
     buildClasspath = configurations.swaggerBuild
 
     resourcePackages = ['stroom']
     outputDir = file('src/main/resources/ui/noauth/swagger')
+}
+
+// Swagger output is generated into the main resources directory, so it must exist before
+// processResources reads that directory.
+tasks.named('processResources') {
+    dependsOn(tasks.named('resolve'))
+    // GWT writes this directory after processResources has run. It is added directly to shadowJar below.
+    exclude 'ui/stroom/**'
 }
 
 //// A task to fix the classpath for running the swagger plugin and
@@ -735,10 +767,6 @@ tasks.register('setupSampleDataApplication', JavaExec) {
 
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
-//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
-
-// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
-//tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter ':stroom-app-gwt:gwtCompile'
 
 // Make the build command create the full distribution
 tasks.build.dependsOn resolve

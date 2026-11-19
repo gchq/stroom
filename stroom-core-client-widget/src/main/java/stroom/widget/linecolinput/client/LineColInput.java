@@ -18,35 +18,56 @@ package stroom.widget.linecolinput.client;
 
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
+import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
+/// A text box for a position in a stream: a line number, optionally with a column number after a
+/// colon, e.g. `12` or `12:5`. Only digits and a colon can be typed; anything else that makes it
+/// no such position marks it invalid (`aria-invalid`, as `FieldValidity` does).
+///
+/// BEM block `line-col-input` (no rules of its own: its field looks as every text field does), its
+/// text box `line-col-input__field`; its markup
+/// is `LineColInput.ui.xml`.
 public class LineColInput extends Composite {
 
-    private final TextBox valueBox = new TextBox();
-    private final RegExp regExp;
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final RegExp LINE_COL = RegExp.compile("^[0-9]+(:[0-9]+)?$");
+
+    @UiField
+    TextBox valueBox;
+    private HandlerRegistration onChangeRegistration;
 
     public LineColInput() {
-
+        initWidget(BINDER.createAndBindUi(this));
         valueBox.addKeyPressHandler(LineColInput::onKeyPress);
         valueBox.addKeyUpHandler(this::validateEntry);
-        valueBox.addStyleName("allow-focus");
+    }
 
-        final FlowPanel layout = new FlowPanel();
-        layout.setStylePrimaryName("lineColInput");
-        layout.add(valueBox);
-
-        initWidget(layout);
-
-        regExp = RegExp.compile("^[0-9]+(:[0-9]+)?$");
+    /// @param onChange Told the position typed, or empty if it is no position, when the user changes
+    ///                 it and leaves the box (as a value change event is), or null for nothing.
+    public void setOnChange(final Consumer<Optional<Location>> onChange) {
+        if (onChangeRegistration != null) {
+            onChangeRegistration.removeHandler();
+            onChangeRegistration = null;
+        }
+        if (onChange != null) {
+            onChangeRegistration = valueBox.addValueChangeHandler(event -> onChange.accept(getLocation()));
+        }
     }
 
     private static void onKeyPress(final KeyPressEvent event) {
@@ -65,11 +86,7 @@ public class LineColInput extends Composite {
 
         final String value = ((TextBox) keyUpEvent.getSource()).getValue();
 
-        if (value != null && !value.isEmpty() && !regExp.test(value)) {
-            valueBox.addStyleName("highlight");
-        } else {
-            valueBox.removeStyleName("highlight");
-        }
+        FieldValidity.setInvalid(valueBox.getElement(), value != null && !value.isEmpty() && !LINE_COL.test(value));
     }
 
     /**
@@ -86,6 +103,13 @@ public class LineColInput extends Composite {
         return valueBox.isEnabled();
     }
 
+    /// Names its text box for assistive technology, where no label is for it (see [AccessibleName]).
+    ///
+    /// @param name The name, e.g. `Line and column`.
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(this, name);
+    }
+
     /**
      * Sets whether this widget is enabled.
      *
@@ -93,6 +117,14 @@ public class LineColInput extends Composite {
      */
     public void setEnabled(final boolean enabled) {
         valueBox.setEnabled(enabled);
+    }
+
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        valueBox.setReadOnly(readOnly);
     }
 
     public void setValue(final Integer lineNo, final Integer colNo) {
@@ -117,5 +149,13 @@ public class LineColInput extends Composite {
 
     public Optional<Location> getLocation() {
         return DefaultLocation.parse(valueBox.getValue());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, LineColInput> {
+
     }
 }

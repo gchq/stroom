@@ -16,22 +16,16 @@
 
 package stroom.dashboard.impl.visualisation;
 
-import stroom.dashboard.impl.VisField;
-import stroom.dashboard.impl.VisLimit;
-import stroom.dashboard.impl.VisNest;
-import stroom.dashboard.impl.VisValues;
 import stroom.dashboard.impl.vis.VisSettings;
 import stroom.dashboard.impl.vis.VisSettings.Control;
-import stroom.dashboard.impl.vis.VisSettings.Data;
-import stroom.dashboard.impl.vis.VisSettings.Nest;
-import stroom.dashboard.impl.vis.VisSettings.Structure;
 import stroom.dashboard.impl.vis.VisSettings.Tab;
+import stroom.dashboard.impl.vis.VisStructureMapper;
+import stroom.dashboard.impl.vis.VisStructureMapper.VisTable;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.QLVisSettings;
-import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.FunctionGroup;
@@ -43,16 +37,18 @@ import stroom.query.language.DataSourceResolver;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
+import stroom.visualisation.shared.VisInput;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -115,6 +111,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                                 visName,
                                 controls,
                                 parentTableSettings);
+                        checkRequiredInputs(paramsToken, visName, controls, visParameters);
                         childIndex++;
                     } else {
                         throw new TokenException(paramsToken, "Expected visualisation parameters in brackets");
@@ -144,6 +141,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                         visName,
                         controls,
                         parentTableSettings);
+                checkRequiredInputs(functionGroup, visName, controls, visParameters);
 
             } else {
                 throw new TokenException(token, "Expected visualisation name");
@@ -163,7 +161,6 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return mapVisSettingsToTableSettings(
                 visualisationDoc,
                 visSettings,
-                controls,
                 visParameters,
                 parentTableSettings);
     }
@@ -246,6 +243,16 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                         throw new TokenException(t, "Unable to find selected column: " + columnName);
                     }
 
+                    // And that the column's type is one the visualisation's input takes
+                    final VisInput input = controls.getInput(controlId);
+                    final Format.Type columnType = NullSafe.get(column.getFormat(), Format::getType);
+                    if (input != null && !input.accepts(columnType)) {
+                        throw new TokenException(t, "Column '" + columnName + "' is "
+                                                    + columnType.getDisplayValue().toLowerCase(Locale.ROOT)
+                                                    + " but '" + inputName(input) + "' of '" + visName
+                                                    + "' takes " + typeNames(input));
+                    }
+
                     controlValue = columnName;
 
                 } else if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
@@ -274,70 +281,51 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return params;
     }
 
-    private stroom.query.api.TableSettings mapVisSettingsToTableSettings(
-            final VisualisationDoc visualisation,
-            final VisSettings visSettings,
-            final Controls controls,
-            final Map<String, String> params,
-            final TableSettings parentTableSettings) {
-
-        final Structure structure = Optional
-                .ofNullable(visSettings.getData())
-                .map(Data::getStructure)
-                .orElseGet(Structure::new);
-
-        final SettingResolver settingResolver = new SettingResolver(controls, params);
-        final Map<String, Format> formatMap = new HashMap<>();
-        if (parentTableSettings.getColumns() != null) {
-            for (final Column column : parentTableSettings.getColumns()) {
-                if (column != null) {
-                    formatMap.put(column.getName(), column.getFormat());
+    // Checks that every input the visualisation needs has a column, given or by default
+    private static void checkRequiredInputs(final AbstractToken token,
+                                            final String visName,
+                                            final Controls controls,
+                                            final Map<String, String> params) {
+        for (final VisInput input : controls.getInputs()) {
+            if (input.isRequired() && NullSafe.isBlankString(params.get(input.getId()))) {
+                final Control control = controls.getControl(input.getId());
+                if (control == null || NullSafe.isBlankString(control.getDefaultValue())) {
+                    throw new TokenException(token, "'" + visName + "' needs a column for '" + inputName(input)
+                                                    + "' (" + input.getId() + ")");
                 }
             }
         }
+    }
 
-        final List<Column> columns = new ArrayList<>();
-        final List<Long> limits = new ArrayList<>();
+    private static String inputName(final VisInput input) {
+        return NullSafe.isBlankString(input.getLabel())
+                ? input.getId()
+                : input.getLabel();
+    }
 
-        VisNest nest = mapNest(structure.getNest(), settingResolver);
-        VisValues values = mapVisValues(structure.getValues(), settingResolver);
+    // The types an input takes, for people to read, e.g. 'numbers or dates'
+    private static String typeNames(final VisInput input) {
+        return input.getInputTypes()
+                .stream()
+                .map(type -> switch (type) {
+                    case TEXT -> "text";
+                    case NUMBER -> "numbers";
+                    case DATE_TIME -> "dates";
+                })
+                .collect(Collectors.joining(" or "));
+    }
 
-        int group = 0;
-        while (nest != null) {
-            final Column.Builder builder = convertField(nest.getKey(), formatMap);
-            builder.group(group++);
-
-            columns.add(builder.build());
-
-            // Get limit from nest.
-            Long limit = null;
-            if (nest.getLimit() != null) {
-                limit = nest.getLimit().getSize();
-            }
-            limits.add(limit);
-
-            values = nest.getValues();
-            nest = nest.getNest();
+    private TableSettings mapVisSettingsToTableSettings(final VisualisationDoc visualisation,
+                                                        final VisSettings visSettings,
+                                                        final Map<String, String> params,
+                                                        final TableSettings parentTableSettings) {
+        final VisTable visTable = VisStructureMapper.map(visSettings, params, parentTableSettings.getColumns());
+        final TableSettings.Builder builder = TableSettings.builder();
+        if (visTable != null) {
+            builder.addColumns(visTable.columns())
+                    .addMaxResults(visTable.maxResults());
         }
-
-        if (values != null) {
-            // Get limit from values.
-            Long limit = Long.MAX_VALUE;
-            if (values.getLimit() != null) {
-                limit = values.getLimit().getSize();
-            }
-            limits.add(limit);
-
-            if (values.getFields() != null) {
-                for (final VisField visField : values.getFields()) {
-                    columns.add(convertField(visField, formatMap).build());
-                }
-            }
-        }
-
-        return TableSettings.builder()
-                .addColumns(columns)
-                .addMaxResults(limits)
+        return builder
                 .showDetail(true)
                 .visSettings(createVisSettings(visualisation, params))
                 .build();
@@ -349,112 +337,10 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return new QLVisSettings(DocRefUtil.create(visualisation), json);
     }
 
-    private Column.Builder convertField(final VisField visField,
-                                        final Map<String, stroom.query.api.Format> formatMap) {
-        final Column.Builder builder = Column.builder();
-
-        builder.format(Format.GENERAL);
-
-        if (visField.getId() != null) {
-            final stroom.query.api.Format format = formatMap.get(visField.getId());
-            if (format != null) {
-                builder.format(format);
-            }
-
-            builder.expression("${" + visField.getId() + "}");
-        }
-        builder.sort(visField.getSort());
-
-        return builder;
-    }
-
-
-    private VisNest mapNest(final Nest nest, final SettingResolver settingResolver) {
-        if (nest == null) {
-            return null;
-        }
-
-        final VisNest copy = new VisNest();
-        copy.setKey(mapVisField(nest.getKey(), settingResolver));
-        copy.setNest(mapNest(nest.getNest(), settingResolver));
-        copy.setValues(mapVisValues(nest.getValues(), settingResolver));
-        copy.setLimit(mapVisLimit(nest.getLimit(), settingResolver));
-
-        return copy;
-    }
-
-    private VisField mapVisField(final VisSettings.Field field, final SettingResolver settingResolver) {
-        if (field == null) {
-            return null;
-        }
-
-        final VisField copy = new VisField();
-        copy.setId(settingResolver.resolveField(field.getId()));
-        copy.setSort(mapVisSort(field.getSort(), settingResolver));
-
-        return copy;
-    }
-
-    private stroom.query.api.Sort mapVisSort(final VisSettings.Sort sort, final SettingResolver settingResolver) {
-        if (sort == null) {
-            return null;
-        }
-
-        final Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
-        if (enabled != null && enabled) {
-            final String dir = settingResolver.resolveString(sort.getDirection());
-
-            if (dir != null) {
-                final SortDirection direction;
-                if (dir.equalsIgnoreCase(SortDirection.ASCENDING.getDisplayValue())) {
-                    direction = SortDirection.ASCENDING;
-                } else if (dir.equalsIgnoreCase(SortDirection.DESCENDING.getDisplayValue())) {
-                    direction = SortDirection.DESCENDING;
-                } else {
-                    return null;
-                }
-                return new stroom.query.api.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
-            }
-        }
-        return null;
-    }
-
-    private VisValues mapVisValues(final VisSettings.Values values, final SettingResolver settingResolver) {
-        if (values == null) {
-            return null;
-        }
-
-        VisField[] fields = null;
-        if (values.getFields() != null) {
-            fields = new VisField[values.getFields().length];
-            for (int i = 0; i < values.getFields().length; i++) {
-                fields[i] = mapVisField(values.getFields()[i], settingResolver);
-            }
-        }
-
-        final VisValues copy = new VisValues();
-        copy.setFields(fields);
-        copy.setLimit(mapVisLimit(values.getLimit(), settingResolver));
-
-        return copy;
-    }
-
-    private VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
-        if (limit != null) {
-            final Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
-            if (enabled == null || enabled) {
-                final VisLimit copy = new VisLimit();
-                copy.setSize(settingResolver.resolveLong(limit.getSize()));
-                return copy;
-            }
-        }
-
-        return null;
-    }
-
     private static class Controls {
 
         private final Map<String, Control> controls = new HashMap<>();
+        private final Map<String, VisInput> inputs = new LinkedHashMap<>();
 
         public Controls(final VisSettings visSettings) {
             // Create a map of controls.
@@ -469,88 +355,24 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     }
                 }
             }
+            for (final VisInput input : NullSafe.list(visSettings.getInputs())) {
+                if (input != null && input.getId() != null) {
+                    inputs.put(input.getId(), input);
+                }
+            }
         }
 
         public Control getControl(final String controlId) {
             return controls.get(controlId);
         }
-    }
 
-    private static class SettingResolver {
-
-        private final Controls controls;
-        private final Map<String, String> dashboardSettings;
-
-        public SettingResolver(final Controls controls,
-                               final Map<String, String> dashboardSettings) {
-            this.controls = controls;
-            this.dashboardSettings = dashboardSettings;
+        // The input of a field control, if the visualisation declares one
+        public VisInput getInput(final String controlId) {
+            return inputs.get(controlId);
         }
 
-        public String resolveField(final String value) {
-            if (value == null) {
-                throw new RuntimeException("Structure element with missing field name");
-            }
-
-            return resolveString(value);
-        }
-
-        public String resolveString(final String value) {
-            String val = value;
-            if (val != null) {
-                if (isReference(val)) {
-                    final String controlId = getReference(val);
-                    val = dashboardSettings.get(controlId);
-
-                    if (val == null) {
-                        final Control control = controls.getControl(controlId);
-                        if (control != null) {
-                            val = control.getDefaultValue();
-                        }
-                    }
-                }
-            }
-
-            return val;
-        }
-
-        public Boolean resolveBoolean(final String value) {
-            final String str = resolveString(value);
-            if (str == null) {
-                return null;
-            }
-            return Boolean.valueOf(str);
-        }
-
-        public Integer resolveInteger(final String value) {
-            final String str = resolveString(value);
-            if (str == null) {
-                return null;
-            }
-            return Integer.valueOf(str);
-        }
-
-        public Long resolveLong(final String value) {
-            final String str = resolveString(value);
-            if (str == null) {
-                return null;
-            }
-            return Long.valueOf(str);
-        }
-
-        private boolean isReference(final String value) {
-            if (value != null) {
-                return value.startsWith("${") && value.endsWith("}");
-            }
-
-            return false;
-        }
-
-        private String getReference(final String value) {
-            String ref = value;
-            ref = ref.substring(2);
-            ref = ref.substring(0, ref.length() - 1);
-            return ref;
+        public Collection<VisInput> getInputs() {
+            return inputs.values();
         }
     }
 }

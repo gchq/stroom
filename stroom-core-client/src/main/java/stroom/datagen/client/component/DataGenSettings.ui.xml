@@ -1,0 +1,27 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:ed="urn:import:stroom.editor.client.component">
+    <g:FlowPanel styleName="max dock-container-vertical form-padding form">
+
+        <form:FormGroup identity="dataGenDestinationFeed"
+                        label="Destination Feed"
+                        helpText="The feed that the generated data will be sent to."
+                        addStyleNames="dock-min">
+            <dd:DropDownBox ui:field="destinationFeed"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="dataGenSettingsTemplate"
+                        label="Template"
+                        helpText="The text written to the destination feed as a new Raw Events stream each time the schedule runs. It is sent exactly as entered, in UTF-8."
+                        addStyleNames="dock-max"
+                        screenReaderText="Sent as entered, as a new Raw Events stream on each run.">
+            <g:SimplePanel styleName="max form-control-border">
+                <ed:CodeEditor ui:field="template"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+
+    </g:FlowPanel>
+</ui:UiBinder>

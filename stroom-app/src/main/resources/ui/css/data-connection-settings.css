@@ -1,0 +1,38 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A Data Connection's Settings tab (DataConnectionSettings). */
+
+/* A section of the form shown or hidden together (one type's settings, e.g. JdbcSection), its
+   groups spaced as the form's own are. Unlike .form it doesn't scroll, so it doesn't clip the focus
+   glow of the controls at its edges. */
+.data-connection-settings__section {
+    display: flex;
+    gap: var(--control__gap--vertical);
+    flex-direction: column;
+}
+
+/* The CSV editor (CsvSection), at a fixed height */
+.data-connection-settings__csv-editor {
+    height: 300px;
+}
+
+/* A button in a section (Detect Columns, Detect Attributes): as wide as its text, but at least as
+   wide as the form's other controls, as a button directly in the form is (button.css) */
+.data-connection-settings__button {
+    align-self: flex-start;
+    min-width: calc(200px * var(--text-scale));
+}

@@ -142,8 +142,7 @@ class TestDuplicateCheckFactoryImpl {
         final FindDuplicateCheckCriteria criteria = new FindDuplicateCheckCriteria(
                 PageRequest.createDefault(),
                 null,
-                analyticRuleUuid,
-                null);
+                analyticRuleUuid);
         final DuplicateCheckRows rows = duplicateCheckFactory.fetchData(criteria);
         assertThat(rows.getColumnNames().size()).isOne();
         assertThat(rows.getResultPage().size()).isEqualTo(100);

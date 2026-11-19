@@ -16,9 +16,16 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationIdentity;
+import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.AnnotationTagType;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.HasId;
@@ -29,6 +36,8 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -48,9 +57,15 @@ class TestAnnotationService {
     @Mock
     private AnnotationConfig mockAnnotationConfig;
     @Mock
+    private AnnotationTagDao mockAnnotationTagDao;
+    @Mock
+    private SecurityContext mockSecurityContext;
+    @Mock
     private EntityEventBus mockEntityEventBus;
     @Captor
     private ArgumentCaptor<EntityEventBatch> entityEventBatchArgumentCaptor;
+    @Captor
+    private ArgumentCaptor<EntityEvent> entityEventArgumentCaptor;
 
     private ClusterLockService clusterLockService = new MockClusterLockService();
 
@@ -144,6 +159,107 @@ class TestAnnotationService {
         // No batches
         Mockito.verify(mockEntityEventBus, Mockito.times(0))
                 .fire(entityEventBatchArgumentCaptor.capture());
+    }
+
+    @Test
+    void updateAnnotationTag_comment() {
+        // Regression test: a comment tag has no decoration field, so firing its event threw an NPE
+        // after the update had already been saved.
+        final AnnotationTag annotationTag = createAnnotationTag(AnnotationTagType.COMMENT);
+        Mockito.when(mockAnnotationTagDao.updateAnnotationTag(annotationTag))
+                .thenReturn(annotationTag);
+
+        final AnnotationTag result = createTagService().updateAnnotationTag(annotationTag);
+
+        assertThat(result)
+                .isSameAs(annotationTag);
+        Mockito.verify(mockEntityEventBus, Mockito.never())
+                .fire(Mockito.any(EntityEvent.class));
+    }
+
+    @Test
+    void deleteAnnotationTag_comment() {
+        // Regression test: a comment tag has no decoration field, so firing its event threw an NPE
+        // after the delete had already been saved.
+        final AnnotationTag annotationTag = createAnnotationTag(AnnotationTagType.COMMENT);
+        Mockito.when(mockAnnotationTagDao.deleteAnnotationTag(annotationTag))
+                .thenReturn(true);
+
+        final Boolean result = createTagService().deleteAnnotationTag(annotationTag);
+
+        assertThat(result)
+                .isTrue();
+        Mockito.verify(mockEntityEventBus, Mockito.never())
+                .fire(Mockito.any(EntityEvent.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AnnotationTagType.class, names = {"LABEL", "STATUS", "COLLECTION"})
+    void updateAnnotationTag_decorationField(final AnnotationTagType tagType) {
+        final AnnotationTag annotationTag = createAnnotationTag(tagType);
+        Mockito.when(mockAnnotationTagDao.updateAnnotationTag(annotationTag))
+                .thenReturn(annotationTag);
+
+        createTagService().updateAnnotationTag(annotationTag);
+
+        assertFieldEvent(EntityAction.UPDATE, getExpectedFieldName(tagType));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AnnotationTagType.class, names = {"LABEL", "STATUS", "COLLECTION"})
+    void deleteAnnotationTag_decorationField(final AnnotationTagType tagType) {
+        final AnnotationTag annotationTag = createAnnotationTag(tagType);
+        Mockito.when(mockAnnotationTagDao.deleteAnnotationTag(annotationTag))
+                .thenReturn(true);
+
+        createTagService().deleteAnnotationTag(annotationTag);
+
+        assertFieldEvent(EntityAction.DELETE, getExpectedFieldName(tagType));
+    }
+
+    private AnnotationService createTagService() {
+        Mockito.when(mockSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS))
+                .thenReturn(true);
+        return new AnnotationService(
+                null,
+                mockAnnotationTagDao,
+                mockSecurityContext,
+                null,
+                null,
+                null,
+                null,
+                null,
+                mockEntityEventBus,
+                clusterLockService);
+    }
+
+    private AnnotationTag createAnnotationTag(final AnnotationTagType tagType) {
+        return AnnotationTag.builder()
+                .uuid("tag-uuid")
+                .type(tagType)
+                .name("X")
+                .build();
+    }
+
+    private String getExpectedFieldName(final AnnotationTagType tagType) {
+        return switch (tagType) {
+            case LABEL -> AnnotationDecorationFields.ANNOTATION_LABEL;
+            case STATUS -> AnnotationDecorationFields.ANNOTATION_STATUS;
+            case COLLECTION -> AnnotationDecorationFields.ANNOTATION_COLLECTION;
+            case COMMENT -> throw new IllegalArgumentException("A comment tag has no field");
+        };
+    }
+
+    private void assertFieldEvent(final EntityAction entityAction, final String fieldName) {
+        Mockito.verify(mockEntityEventBus)
+                .fire(entityEventArgumentCaptor.capture());
+        final EntityEvent entityEvent = entityEventArgumentCaptor.getValue();
+        assertThat(entityEvent.getAction())
+                .isEqualTo(entityAction);
+        assertThat(entityEvent.getDataObjectAs(
+                AnnotationFieldsEntityEventData.class,
+                AnnotationFieldsEntityEventData::getChangedFields))
+                .containsExactly(fieldName);
     }
 
     private List<AnnotationIdentity> createLongList(final int fromInc, final int count) {

@@ -18,6 +18,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,10 +30,16 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SessionListResponse extends ResultPage<SessionDetails> {
 
+    public SessionListResponse(final List<SessionDetails> values,
+                               final PageResponse pageResponse) {
+        this(values, pageResponse, null);
+    }
+
     @JsonCreator
     public SessionListResponse(@JsonProperty("values") final List<SessionDetails> values,
-                               @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        super(values, pageResponse);
+                               @JsonProperty("pageResponse") final PageResponse pageResponse,
+                               @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
     }
 
     public SessionListResponse(final List<SessionDetails> values) {

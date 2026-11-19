@@ -16,7 +16,8 @@
 
 package stroom.widget.form.client;
 
-import com.google.gwt.user.client.ui.HTML;
+import stroom.widget.text.client.Html;
+
 
 /**
  * A widget to contain HTML help content for a {@link FormGroup}.
@@ -25,7 +26,7 @@ import com.google.gwt.user.client.ui.HTML;
  * If you only need plain text help content then just use
  * {@link FormGroup#setHelpText(String)}
  */
-public class HelpHTML extends HTML {
+public class HelpHTML extends Html {
 
 
 }

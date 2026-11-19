@@ -16,7 +16,7 @@
 
 package stroom.dispatch.client;
 
-import stroom.task.client.Task;
+import stroom.widget.task.client.Task;
 
 import org.fusesource.restygwt.client.DirectRestService;
 

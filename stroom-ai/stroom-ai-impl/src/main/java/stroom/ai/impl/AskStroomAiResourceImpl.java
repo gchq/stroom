@@ -314,7 +314,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(Query.builder()
                                 .withRaw(NullSafe.get(criteria,
-                                        FindAiChatHistoryCriteria::getFilter))
+                                        FindAiChatHistoryCriteria::getQuickFilter))
                                 .build())
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {

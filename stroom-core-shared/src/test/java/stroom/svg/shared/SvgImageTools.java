@@ -73,11 +73,9 @@ public class SvgImageTools {
             "--row__background-color--focussed",
             "--row__background-color--selected--focussed",
 
-            "--pipeline-element-box__background-color",
-            "--pipeline-element-box__background-color--hover",
-            "--pipeline-element-box__background-color--selected",
-            "--pipeline-element-box__background-color--selected--hover",
-            "--pipeline-element-box__background-color--hotspot"
+            "--pipeline-element__background-color",
+            "--pipeline-element__background-color--selected",
+            "--pipeline-element__background-color--selected--hover"
     );
 
     private static final Set<Path> THIRD_PARTY_SVGS = Set.of(

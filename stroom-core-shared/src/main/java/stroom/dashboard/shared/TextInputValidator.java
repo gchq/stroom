@@ -79,6 +79,30 @@ public final class TextInputValidator {
         };
     }
 
+    /// Says what is wrong with a text input value, for the user, as [#isValid] judges it.
+    ///
+    /// @param format  The format to test against. `null` is treated as [TextInputFormat#TEXT].
+    /// @param pattern The regular expression to match when `format` is [TextInputFormat#PATTERN].
+    /// @param value   The value entered by the user.
+    /// @return What is wrong with `value`, e.g. `Must be a number`, or `null` if it conforms.
+    public static String getInvalidReason(final TextInputFormat format,
+                                          final String pattern,
+                                          final String value) {
+        if (isValid(format, pattern, value)) {
+            return null;
+        }
+        return switch (Objects.requireNonNullElse(format, TextInputFormat.TEXT)) {
+            case NUMBER -> "Must be a number";
+            case DATE_TIME -> "Must be a date and time, e.g. 2026-01-31T13:45:00.000Z, "
+                              + "or an expression such as now()-1d";
+            case PATTERN -> isValidPattern(pattern)
+                    ? "Must match the pattern " + pattern
+                    : "The pattern in the settings isn't a valid regular expression";
+            // Any text is valid
+            case TEXT -> null;
+        };
+    }
+
     /// Tests whether a string is a usable regular expression for [TextInputFormat#PATTERN].
     ///
     /// @param pattern The regular expression to test.

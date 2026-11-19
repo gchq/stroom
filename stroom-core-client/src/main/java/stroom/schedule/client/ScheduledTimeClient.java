@@ -22,8 +22,8 @@ import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.scheduler.Schedule;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;

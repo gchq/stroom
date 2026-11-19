@@ -1,0 +1,106 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.gwt.workbench.client;
+
+import stroom.gwt.workbench.framework.client.story.StoryDecorator;
+import stroom.gwt.workbench.framework.client.story.StoryTheme;
+import stroom.ui.config.shared.Theme;
+
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
+
+/// Shows each story on the Stroom theme's page colour, as a Storybook decorator would. The theme is
+/// selected by the classes on the `<html>` element of iframe.html, which [#applyTheme(StoryTheme)]
+/// sets to the workbench's chosen theme.
+///
+/// Some of Stroom's code doesn't follow the page's classes but the user's preferences (an Ace
+/// editor's theme, a visualisation's or Markdown preview's frame), so stories give Stroom the same
+/// theme with [#getStroomThemeName()], as `ScreenHarness` does for the user's preferences.
+public class StroomThemeDecorator implements StoryDecorator {
+
+    /// The space around each story, in pixels. A story that fills the page's height takes twice
+    /// this off it, so that the page doesn't scroll.
+    public static final int PADDING_PX = 24;
+
+    /// The height a story fills to fill the window: the window's less the frame's padding above and
+    /// below, so a full-screen screen ends at the window's bottom edge rather than below it.
+    public static final String CANVAS_HEIGHT = "calc(100vh - " + (2 * PADDING_PX) + "px)";
+
+    private static final String PAGE_BACKGROUND = "var(--page__background-color, rgb(34, 37, 44))";
+
+    // The theme applied to the page, one story being shown per page
+    private static StoryTheme theme = StoryTheme.DEFAULT;
+
+    /// @return True if the stories are shown in Stroom's dark theme, e.g. for a play that checks a
+    /// colour that differs between the themes.
+    public static boolean isDark() {
+        return toStroomTheme(theme).getThemeType().isDark();
+    }
+
+    /// @return True if the stories are shown with forced colours, as with a high contrast theme
+    /// such as Windows' (the test runner's `--forced-colours`), when the browser gives the page
+    /// the high contrast theme's colours.
+    public static native boolean isForcedColours() /*-{
+        return $wnd.matchMedia("(forced-colors: active)").matches;
+    }-*/;
+
+    /// @return The name of the Stroom theme the stories are shown in, e.g. `Dark`, for Stroom's
+    /// user preferences (`UserPreferences.theme`, `CurrentPreferences.setTheme`).
+    public static String getStroomThemeName() {
+        return toStroomTheme(theme).getThemeName();
+    }
+
+    /// Sets the page's Stroom theme class (e.g. `stroom-theme-light`) for the workbench's theme.
+    ///
+    /// @param theme The theme chosen in the workbench's toolbar.
+    @Override
+    public void applyTheme(final StoryTheme theme) {
+        StroomThemeDecorator.theme = theme;
+        final Element html = Document.get().getDocumentElement();
+        for (final Theme stroomTheme : Theme.values()) {
+            html.removeClassName(stroomTheme.getCssClass());
+        }
+        html.addClassName(toStroomTheme(theme).getCssClass());
+    }
+
+    private static Theme toStroomTheme(final StoryTheme theme) {
+        return theme == StoryTheme.LIGHT
+                ? Theme.LIGHT
+                : Theme.DARK;
+    }
+
+    @Override
+    public Widget decorate(final Widget story) {
+        final FlowPanel frame = new FlowPanel();
+        final Style style = frame.getElement().getStyle();
+        // CANVAS_HEIGHT allows for this padding
+        style.setProperty("padding", PADDING_PX + "px");
+        style.setProperty("minHeight", "100vh");
+        // The theme's page colour, which Stroom's panels and dialogs are drawn on (not the app's
+        // background behind them, which in the light theme is blue), on the page as well as the
+        // story's frame, as a story that doesn't fill the page (e.g. centred) leaves the page's
+        // background showing around it
+        style.setProperty("background", PAGE_BACKGROUND);
+        Document.get().getBody().getStyle().setProperty("background", PAGE_BACKGROUND);
+        style.setProperty("color", "var(--text-color, #dce4e5)");
+        frame.add(story);
+        return frame;
+    }
+}

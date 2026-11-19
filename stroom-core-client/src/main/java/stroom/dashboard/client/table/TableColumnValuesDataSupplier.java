@@ -32,6 +32,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableSettings;
+import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.util.shared.PageRequest;
 
 import com.google.gwt.core.client.GWT;
@@ -104,9 +105,9 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
     }
 
     @Override
-    protected void exec(final Range range,
-                        final Consumer<ColumnValues> dataConsumer,
-                        final RestErrorHandler errorHandler) {
+    public void exec(final Range range,
+                     final Consumer<ColumnValues> dataConsumer,
+                     final RestErrorHandler errorHandler) {
         if (searchRequest == null) {
             clear(dataConsumer);
 

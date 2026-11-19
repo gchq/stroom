@@ -1,0 +1,464 @@
+# Handler inventory — the behaviour denominator
+
+**Generated** by `stroom-gwt-suite/tools/build-handler-inventory.mjs`. Do not hand-edit. BEHAVIOUR-PLAN.md § B1.
+
+A behaviour is a handler registration in the GWT client, attributed to the class that DECLARES it. A
+handler is *exercised* when the walk fired it: a click handler when an affordance with its label was
+clicked on a node the coverage ledger attributes to the declaring class or a subclass; OK / Cancel when
+a dialog under that class had them pressed (an OK the guard aborted is `ok-blocked`); a selection handler
+when a post-action selection state was reached under it. The rest are classified by what would fire them.
+
+## Totals
+
+| | declared | exercised | |
+| --- | ---: | ---: | ---: |
+| **all classes** | 1546 | 823 | 53.2% |
+| **presenters** | 804 | 502 | 62.4% |
+
+_62 of the exercised are joined by LABEL alone (a label one or two classes use, clicked somewhere the ledger did not attribute to the class); the rest by the ledger's attribution of the node to the class, a subclass, or a presenter that embeds it._
+
+| kind | declared | exercised | |
+| --- | ---: | ---: | ---: |
+| click | 471 | 254 | 53.9% |
+| value | 314 | 120 | 38.2% |
+| command | 213 | 136 | 63.8% |
+| selection | 158 | 75 | 47.5% |
+| ok | 98 | 80 | 81.6% |
+| cancel | 98 | 80 | 81.6% |
+| key | 83 | 21 | 25.3% |
+| hide | 33 | 20 | 60.6% |
+| dirty | 15 | 5 | 33.3% |
+| mousedown | 14 | 4 | 28.6% |
+| context | 11 | 11 | 100.0% |
+| dom | 10 | 4 | 40.0% |
+| close | 8 | 3 | 37.5% |
+| dblclick | 6 | 0 | 0.0% |
+| mouseover | 4 | 2 | 50.0% |
+| mouseout | 4 | 2 | 50.0% |
+| mouseup | 4 | 4 | 100.0% |
+| mousemove | 2 | 2 | 100.0% |
+
+## The unexercised, by what would fire them
+
+| why | handlers | meaning |
+| --- | ---: | --- |
+| `unreached` | 233 | labelled, in a presenter, and never clicked on a node attributed to it |
+| `needs-value` | 194 | a value must be typed or chosen (B3) |
+| `widget` | 90 | declared in a widget class — inherited by many presenters, counted once here |
+| `view` | 67 | declared in a ViewImpl (a @UiHandler) — joined by ui.xml label, none matched |
+| `needs-key` | 62 | a keyboard event (B3) |
+| `unlabelled` | 48 | a click handler on a receiver whose label the miner could not resolve (miner gap) |
+| `needs-dirty` | 10 | an editor made dirty (B3) |
+| `absent` | 7 | the class is not in the running application — unreachable, not outstanding |
+| `needs-dom` | 6 | a DOM event the walk has no step for |
+| `needs-close` | 5 | a tab or panel closed |
+| `ok-blocked` | 1 | the OK writes, and the guard aborted it (B4) |
+
+## Per presenter
+
+_Presenters with any unexercised handler, most gaps first; the `why` column is the split._
+
+| presenter | declared | exercised | unexercised by why |
+| --- | ---: | ---: | --- |
+| `ContentTemplateTabPresenter` | 20 | 6 | unreached 14 |
+| `AnnotationEditPresenter` | 11 | 4 | unreached 6, needs-key 1 |
+| `DataRetentionPolicyPresenter` | 19 | 12 | unreached 7 |
+| `AbstractNotificationListPresenter` | 9 | 3 | unreached 6 |
+| `TablePresenter` | 13 | 7 | unlabelled 2, unreached 3, needs-close 1 |
+| `SteppingPresenter` | 11 | 5 | unreached 5, needs-value 1 |
+| `NewPropertyPresenter` | 6 | 0 | unreached 1, needs-value 5 |
+| `DataRetentionImpactPresenter` | 8 | 2 | unreached 5, unlabelled 1 |
+| `AskStroomAiPresenter` | 5 | 0 | unreached 5 |
+| `ProcessorPresenter` | 10 | 5 | unreached 4, unlabelled 1 |
+| `UserAndGroupsPresenter` | 10 | 5 | unreached 5 |
+| `TaskManagerListPresenter` | 10 | 5 | unreached 5 |
+| `VisualisationAssetsPresenter` | 14 | 9 | unreached 5 |
+| `ManageActivityPresenter` | 4 | 0 | unreached 4 |
+| `AnalyticEmailDestinationPresenter` | 4 | 0 | unreached 3, needs-value 1 |
+| `ScheduledProcessListPresenter` | 5 | 1 | unreached 4 |
+| `SelectionHandlersPresenter` | 10 | 6 | unreached 4 |
+| `FeedSettingsPresenter` | 11 | 7 | needs-value 4 |
+| `ConstraintListPresenter` | 4 | 0 | unreached 4 |
+| `QueryEditPresenter` | 4 | 0 | unreached 1, needs-value 3 |
+| `RuleSetPresenter` | 7 | 3 | needs-dirty 4 |
+| `UserPermissionReportPresenter` | 6 | 2 | unreached 3, needs-value 1 |
+| `BatchExecutionScheduleEditPresenter` | 3 | 0 | unreached 2, needs-value 1 |
+| `ScheduledProcessEditPresenter` | 5 | 2 | unreached 2, needs-value 1 |
+| `ScheduledProcessHistoryListPresenter` | 3 | 0 | unreached 3 |
+| `ContentStoreContentPackDetailsPresenter` | 4 | 1 | unreached 3 |
+| `CredentialsListPresenter` | 5 | 2 | unreached 3 |
+| `EmbeddedQueryPresenter` | 3 | 0 | unreached 2, needs-value 1 |
+| `DashboardPresenter` | 9 | 6 | needs-value 2, unreached 1 |
+| `QueryFavouritesPresenter` | 6 | 3 | unreached 3 |
+| `QueryPresenter` | 19 | 16 | unreached 3 |
+| `RulesPresenter` | 13 | 10 | unreached 2, needs-dirty 1 |
+| `DictionaryListPresenter` | 4 | 1 | unreached 3 |
+| `MainPresenter` | 3 | 0 | unlabelled 1, needs-key 2 |
+| `PathwayListPresenter` | 4 | 1 | unreached 3 |
+| `NewPipelineReferencePresenter` | 3 | 0 | unreached 2, needs-value 1 |
+| `PipelineStructurePresenter` | 9 | 6 | unreached 3 |
+| `UserPreferencesPresenter` | 6 | 3 | needs-value 3 |
+| `ApiKeysPresenter` | 4 | 1 | unreached 3 |
+| `ViewSettingsPresenter` | 3 | 0 | unreached 2, needs-value 1 |
+| `AbstractEditorPresenter` | 3 | 0 | needs-value 1, needs-key 2 |
+| `ActivityEditPresenter` | 2 | 0 | unreached 2 |
+| `SplashPresenter` | 2 | 0 | unreached 2 |
+| `AnalyticNotificationEditPresenter` | 2 | 0 | needs-value 2 |
+| `AnnotationLinkPresenter` | 3 | 1 | unreached 2 |
+| `LinkedEventPresenter` | 3 | 1 | unreached 2 |
+| `ManageGlobalPropertyEditPresenter` | 5 | 3 | unreached 2 |
+| `QueryInfoPresenter` | 2 | 0 | unreached 2 |
+| `IncludeExcludeFilterDictionaryPresenter` | 3 | 1 | unreached 2 |
+| `EditExpressionPresenter` | 22 | 20 | unreached 2 |
+| `VisPresenter` | 2 | 0 | unreached 2 |
+| `DataPresenter` | 3 | 1 | unlabelled 1, unreached 1 |
+| `MetaPresenter` | 17 | 15 | unreached 2 |
+| `NavigationPresenter` | 12 | 10 | unlabelled 1, unreached 1 |
+| `GitRepoSettingsPresenter` | 2 | 0 | unreached 2 |
+| `ExportConfigPresenter` | 4 | 2 | unreached 1, ok-blocked 1 |
+| `ImportConfigConfirmPresenter` | 2 | 0 | unreached 2 |
+| `IndexShardPresenter` | 2 | 0 | unreached 2 |
+| `PathwayEditPresenter` | 2 | 0 | unreached 2 |
+| `PathwayTreePresenter` | 2 | 0 | unlabelled 1, unreached 1 |
+| `TracesListTabPresenter` | 2 | 0 | unreached 1, needs-value 1 |
+| `ElementPresenter` | 2 | 0 | needs-value 1, needs-key 1 |
+| `PipelineReferenceListPresenter` | 5 | 3 | unreached 2 |
+| `EditFeedDependencyPresenter` | 2 | 0 | unreached 1, needs-value 1 |
+| `FeedDependencyListPresenter` | 5 | 3 | unreached 2 |
+| `ProcessorProfilePresenter` | 4 | 2 | unreached 2 |
+| `ProfilePeriodListPresenter` | 4 | 2 | unreached 2 |
+| `ExpressionTreePresenter` | 3 | 1 | unreached 2 |
+| `QueryResultTablePresenter` | 11 | 9 | unlabelled 2 |
+| `QueryResultTableSplitPresenter` | 2 | 0 | unreached 1, needs-value 1 |
+| `ResultStoreListPresenter` | 4 | 2 | unreached 2 |
+| `AppPermissionsPresenter` | 4 | 2 | needs-value 2 |
+| `XMLSchemaPresenter` | 2 | 0 | unreached 1, needs-value 1 |
+| `MenuPresenter` | 2 | 0 | unreached 2 |
+| `AskStroomAiConfigPresenter` | 3 | 2 | unreached 1 |
+| `AbstractProcessingPresenter` | 1 | 0 | needs-value 1 |
+| `AbstractQueryEditPresenter` | 1 | 0 | needs-value 1 |
+| `AnalyticStreamDestinationPresenter` | 1 | 0 | unreached 1 |
+| `DuplicateManagementListPresenter` | 2 | 1 | unreached 1 |
+| `ScheduledProcessingPresenter` | 1 | 0 | unreached 1 |
+| `AddEventLinkPresenter` | 3 | 2 | needs-key 1 |
+| `AnnotationPresenter` | 2 | 1 | needs-dirty 1 |
+| `ChangeStatusPresenter` | 3 | 2 | unreached 1 |
+| `ChooserPresenter` | 1 | 0 | unreached 1 |
+| `FindAnnotationListPresenter` | 1 | 0 | unreached 1 |
+| `MultiChooserPresenter` | 1 | 0 | unreached 1 |
+| `ContentTabPanePresenter` | 1 | 0 | needs-value 1 |
+| `FullScreenPresenter` | 1 | 0 | needs-dirty 1 |
+| `CredentialEditPresenter` | 3 | 2 | unreached 1 |
+| `BasicTableFilterSettingsPresenter` | 1 | 0 | needs-value 1 |
+| `MultiRulesPresenter` | 1 | 0 | needs-dirty 1 |
+| `LayoutConstraintPresenter` | 1 | 0 | needs-value 1 |
+| `SettingsPresenter` | 1 | 0 | unreached 1 |
+| `CurrentSelectionPresenter` | 1 | 0 | unreached 1 |
+| `QueryHistoryPresenter` | 3 | 2 | unreached 1 |
+| `TableFilterPresenter` | 3 | 2 | unreached 1 |
+| `BasicVisSettingsPresenter` | 1 | 0 | unreached 1 |
+| `ProcessorTaskListPresenter` | 1 | 0 | unlabelled 1 |
+| `TextPresenter` | 1 | 0 | needs-value 1 |
+| `DataGenSettingsPresenter` | 2 | 1 | needs-value 1 |
+| `DictionarySettingsPresenter` | 1 | 0 | needs-value 1 |
+| `InfoDocumentPresenter` | 1 | 0 | unreached 1 |
+| `MarkdownEditPresenter` | 3 | 2 | needs-value 1 |
+| `FindInContentPresenter` | 1 | 0 | unreached 1 |
+| `FindPresenter` | 1 | 0 | unreached 1 |
+| `RecentItemsPresenter` | 1 | 0 | unreached 1 |
+| `TabSessionChooserPresenter` | 1 | 0 | unreached 1 |
+| `NodeJobListPresenter` | 1 | 0 | unreached 1 |
+| `NodeStatusListPresenter` | 1 | 0 | unreached 1 |
+| `ConstraintEditPresenter` | 1 | 0 | unreached 1 |
+| `TracesListPresenter` | 1 | 0 | unreached 1 |
+| `TracesSettingsPresenter` | 1 | 0 | needs-value 1 |
+| `PipelinePresenter` | 2 | 1 | needs-value 1 |
+| `StepLocationLinkPresenter` | 3 | 2 | unlabelled 1 |
+| `PlanBSettingsPresenter` | 1 | 0 | needs-value 1 |
+| `ProcessorListPresenter` | 1 | 0 | unlabelled 1 |
+| `QueryDocEditPresenter` | 3 | 2 | needs-value 1 |
+| `QueryHelpPresenter` | 1 | 0 | unreached 1 |
+| `ScriptSettingsPresenter` | 1 | 0 | needs-value 1 |
+| `SolrIndexSettingsPresenter` | 2 | 1 | needs-value 1 |
+| `AppPermissionsEditPresenter` | 2 | 1 | unreached 1 |
+| `BatchDocumentPermissionsPresenter` | 5 | 4 | unreached 1 |
+| `DocumentCreatePermissionsListPresenter` | 1 | 0 | unreached 1 |
+| `SigningKeyPresenter` | 3 | 2 | unreached 1 |
+| `UserInfoPresenter` | 1 | 0 | needs-value 1 |
+| `UserTabPresenter` | 1 | 0 | unreached 1 |
+| `UsersPresenter` | 3 | 2 | unreached 1 |
+| `AccountsListPresenter` | 4 | 3 | unreached 1 |
+| `UserTaskManagerPresenter` | 1 | 0 | unreached 1 |
+| `EditorMenuPresenter` | 1 | 0 | unreached 1 |
+| `MenuItemPresenter` | 1 | 0 | unlabelled 1 |
+| `CurveTabLayoutPresenter` | 1 | 0 | unreached 1 |
+| `LinkTabsPresenter` | 1 | 0 | unreached 1 |
+| `StatisticsCustomMaskListPresenter` | 4 | 3 | unreached 1 |
+
+## Messages the client can show — the validation matrix (B3)
+
+_Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `ErrorEvent.fire` and `throw new ValidationException` with a literal message, as a template (`…` = a variable part), joined by prefix to the alert and confirm bodies the walk read. An unobserved message is a validation the walk has never provoked — the row of the matrix still to drive. Templates with under eight literal characters do not join._
+
+**71 of 277 observed (25.6%).**
+
+| kind | declared | observed |
+| --- | ---: | ---: |
+| error | 122 | 36 |
+| confirm | 59 | 13 |
+| warn | 57 | 22 |
+| info | 37 | 0 |
+| validation-exception | 2 | 0 |
+
+### Never observed
+
+- `AbstractMetaListPresenter` (error, line 580) — You have not selected any items
+- `AbstractMetaListPresenter` (info, line 745) — Created processor filter
+- `AbstractMetaListPresenter` (info, line 797) — Result Details
+- `AbstractMetaListPresenter` (warn, line 804) — Result Details
+- `AbstractMetaListPresenter` (error, line 812) — Result Details
+- `AbstractMetaListPresenter` (confirm, line 856) — You have clicked the select all checkbox. If you continue Stroom will … all items that match the filter, not just those visible on screen. Are you sure you want to continue?
+- `AbstractMetaListPresenter` (error, line 872) — You have not selected any items
+- `AccountsListPresenter` (error, line 345) — Error fetching accounts: …
+- `ActivityEditPresenter` (warn, line 213) — Validation Error
+- `AddEventLinkPresenter` (error, line 56) — Invalid event id '…'
+- `AddEventLinkPresenter` (error, line 67) — Invalid event id '…'
+- `AnnotationEditPresenter` (error, line 603) — Unable to copy
+- `AnnotationEditPresenter` (confirm, line 710) — Are you sure you want to delete this entry?
+- `AnnotationLinkPresenter` (confirm, line 74) — Are you sure you want to remove this reference?
+- `ApiKeysListPresenter` (error, line 443) — Error fetching API Keys: …
+- `AskStroomAiConfigPresenter` (info, line 135) — Default config updated
+- `AskStroomAiPresenter` (confirm, line 914) — Are you sure you want to delete this message?
+- `AskStroomAiPresenter` (confirm, line 931) — Are you sure you want to delete all messages and attachments in this conversation?
+- `BasicEmbeddedQuerySettingsPresenter` (error, line 178) — Error loading '…'
+- `BasicEmbeddedQuerySettingsPresenter` (info, line 183) — Copy of '…' complete
+- `BatchDocumentPermissionsEditPresenter` (warn, line 175) — No documents are included in the current filter for this permission change.
+- `BatchDocumentPermissionsEditPresenter` (info, line 207) — Successfully changed permissions.
+- `BatchDocumentPermissionsEditPresenter` (error, line 215) — Failed to change permissions.
+- `BatchProcessorFilterEditPresenter` (warn, line 100) — No change selected.
+- `BatchProcessorFilterEditPresenter` (warn, line 106) — No user selected.
+- `BatchProcessorFilterEditPresenter` (info, line 160) — Successfully changed.
+- `BatchProcessorFilterEditPresenter` (error, line 168) — Failed to change.
+- `ConstraintEditPresenter` (validation-exception, line 345) — A constraint must have a name
+- `ContentStoreContentPackDetailsPresenter` (warn, line 310) — No credentials were selected; this content pack cannot be downloaded
+- `ContentStoreContentPackDetailsPresenter` (error, line 323) — This content pack requires credentials, but you don't have permission to access credentials
+- `ContentStoreContentPackDetailsPresenter` (info, line 348) — Creation success
+- `ContentStoreContentPackDetailsPresenter` (error, line 356) — Create failed
+- `ContentStoreContentPackDetailsPresenter` (error, line 362) — Create failed
+- `ContentStoreContentPackDetailsPresenter` (info, line 389) — Content pack upgrade success
+- `ContentStoreContentPackListPresenter` (error, line 286) — Check for updated content failed
+- `ContentTemplateTabPresenter` (confirm, line 339) — Are you sure you want to delete template …?
+- `ContentTemplateTabPresenter` (confirm, line 669) — There are unsaved changes. Are you sure you want to close this tab?
+- `CreateDocumentPresenter` (warn, line 114) — No parent folder has been selected
+- `CreateExternalUserPresenter` (confirm, line 71) — A deleted user already exists with the same name, would you like to restore the existing user?
+- `CreateMultipleUsersPresenter` (confirm, line 55) — Some deleted users already exist with the same names, would you like to restore them?
+- `CreateNewGroupPresenter` (confirm, line 74) — A deleted group already exists with the same name, would you like to restore the existing group?
+- `CredentialsListPresenter` (confirm, line 312) — Are you sure you want to delete the credentials '…' ?
+- `CurrentPasswordPresenter` (confirm, line 129) — Your password has been changed. Do you also want to sign out of all your other sessions (on other browsers and devices)?
+- `CurrentPasswordPresenter` (info, line 150) — Signed out of your other sessions.
+- `DataRetentionPresenter` (confirm, line 199) — There are unsaved changes. Are you sure you want to close this tab?
+- `DataUploadPresenter` (info, line 72) — Uploaded file
+- `DataUploadPresenter` (warn, line 87) — Feed not set!
+- `DataUploadPresenter` (warn, line 91) — Stream Type not set!
+- `DocumentUserCreatePermissionsEditPresenter` (info, line 193) — Successfully changed permissions.
+- `DocumentUserCreatePermissionsEditPresenter` (error, line 198) — Failed to change permissions.
+- `DocumentUserPermissionsEditPresenter` (error, line 169) — There are no descendant documents in this folder.
+- `DocumentUserPermissionsEditPresenter` (info, line 185) — Successfully changed permissions.
+- `DocumentUserPermissionsEditPresenter` (error, line 190) — Failed to change permissions.
+- `DuplicateManagementListPresenter` (confirm, line 164) — Are you sure you want to delete the selected row…s…?
+- `EditAccountPresenter` (error, line 179) — Error creating account: …
+- `EditApiKeyPresenter` (error, line 195) — Error updating API key: …
+- `EditApiKeyPresenter` (confirm, line 207) — You will never be able to view the API Key after you close this dialog. Stroom does not store the API Key. You must copy it elsewhere first. Are you sure you want to close this dialog?
+- `EditApiKeyPresenter` (confirm, line 220) — Cancelling will delete the API Key that you have just created, are you sure?
+- `EditApiKeyPresenter` (error, line 233) — Error deleting API key: …
+- `EditApiKeyPresenter` (error, line 254) — API Key expiry date cannot be in the past.
+- `EditApiKeyPresenter` (error, line 256) — API Key expiry date cannot be after …
+- `EditApiKeyPresenter` (error, line 261) — An owner must be provided for the API key.
+- `EditApiKeyPresenter` (error, line 292) — Error creating API key: …
+- `ElasticClusterSettingsPresenter` (info, line 60) — Connection Success
+- `ElasticClusterSettingsPresenter` (error, line 62) — Connection Failure
+- `ElasticIndexSettingsPresenter` (info, line 97) — Connection Success
+- `ElasticIndexSettingsPresenter` (error, line 99) — Connection Failure
+- `EmailResetPasswordPresenter` (info, line 82) — Password Reset
+- `ExplorerNodeEditTagsPresenter` (error, line 71) — No explorer nodes supplied
+- `ExplorerNodeRemoveTagsPresenter` (error, line 69) — No explorer nodes supplied
+- `ExplorerPopupPresenter` (error, line 115) — You must choose a valid item.
+- `FeedDependencyListPresenter` (error, line 189) — You must specify a stream type to use.
+- `FieldEditPresenter` (warn, line 47) — A field with this name already exists. Field names are case insensitive.
+- `FsVolumeGroupEditPresenter` (error, line 236) — Group name '…' is already in use by another group.
+- `GitRepoSettingsPresenter` (warn, line 183) — Git repository information not available
+- `GitRepoSettingsPresenter` (info, line 202) — Push Success
+- `GitRepoSettingsPresenter` (error, line 207) — Push Failure
+- `GitRepoSettingsPresenter` (info, line 227) — Pull Success
+- `GitRepoSettingsPresenter` (error, line 232) — Pull Failure
+- `GitRepoSettingsPresenter` (warn, line 242) — Git repository information not available
+- `GitRepoSettingsPresenter` (info, line 257) — Update Check Success
+- `GitRepoSettingsPresenter` (warn, line 278) — Git repository information is not available
+- `ImportConfigConfirmPresenter` (warn, line 220) — No items are selected for import
+- `ImportConfigConfirmPresenter` (confirm, line 228) — There are warnings in the items selected. Are you sure you want to import?.
+- `ImportConfigConfirmPresenter` (warn, line 496) — Import Aborted
+- `ImportConfigConfirmPresenter` (info, line 516) — Import Complete
+- `IndexShardPresenter` (confirm, line 470) — Are you sure you want to flush all index shards?
+- `IndexShardPresenter` (confirm, line 472) — You have selected to flush all filtered index shards! Are you absolutely sure you want to do this?
+- `IndexShardPresenter` (confirm, line 483) — Are you sure you want to flush the selected index shards?
+- `IndexShardPresenter` (warn, line 493) — No index shards have been selected for flushing!
+- `IndexShardPresenter` (confirm, line 502) — Are you sure you want to delete all index shards?
+- `IndexShardPresenter` (confirm, line 505) — You have selected to delete all filtered index shards! Are you absolutely sure you want to do this?
+- `IndexShardPresenter` (confirm, line 516) — Are you sure you want to delete the selected index shards?
+- `IndexShardPresenter` (warn, line 524) — No index shards have been selected for deletion!
+- `IndexShardPresenter` (info, line 543) — Selected index shards will be flushed. Please be patient as this may take some time.
+- `IndexShardPresenter` (info, line 560) — Selected index shards will be deleted. Please be patient as this may take some time.
+- `IndexVolumeGroupEditPresenter` (error, line 248) — Group name '…' is already in use by another group.
+- `JobListPresenter` (error, line 204) — Help is not configured!
+- `ManageGlobalPropertyEditPresenter` (error, line 533) — Help is not configured!
+- `MarkdownEditPresenter` (error, line 195) — Help is not configured!
+- `MetaPresenter` (confirm, line 204) — You are setting advanced filters! It is recommended you constrain your filter (e.g. by 'Created') to avoid an expensive query. Are you sure you want to apply this advanced filter?
+- `NameDocumentPresenter` (warn, line 89) — You must provide a new name for …
+- `NewFsVolumeGroupPresenter` (error, line 88) — Group name '…' is already in use by another group.
+- `NewIndexVolumeGroupPresenter` (error, line 87) — Group name '…' is already in use by another group.
+- `NewNodeGroupPresenter` (error, line 80) — Group name '…' is already in use by another group.
+- `OpenAIModelSettingsPresenter` (info, line 71) — Model Validation Successful
+- `PathwayEditPresenter` (validation-exception, line 267) — A pathway must have a name
+- `PipelineReferenceListPresenter` (error, line 333) — You must specify a stream type to use.
+- `PipelineStructurePresenter` (warn, line 126) — A pipeline cannot inherit from itself
+- `PipelineStructurePresenter` (error, line 524) — You must save changes to this pipeline before you can view the source
+- `PipelineStructurePresenter` (confirm, line 571) — Are you sure you want to save changes to the underlying JSON?
+- `ProcessorEditPresenter` (confirm, line 216) — You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?
+- `ProcessorEditPresenter` (confirm, line 363) — You are about to process all stream types. Are you sure you wish to do this?
+- `ProcessorPresenter` (error, line 388) — Unable to load filter
+- `ProcessorProfileEditPresenter` (error, line 147) — Processor profile name '…' is already in use by another processor profile.
+- `PropertyListPresenter` (error, line 451) — Unable to create embedded document
+- `QueryFavouritesPresenter` (confirm, line 121) — Are you sure you want to delete this favourite?
+- `QueryInfoPresenter` (warn, line 88) — The text entered is not valid
+- `QueryPresenter` (warn, line 459) — No data source has been chosen to search
+- `QueryPresenter` (info, line 542) — Created batch processor
+- `QueryResultTablePresenter` (confirm, line 302) — Search still in progress. Do you want to download the current results? Note that these may be incomplete.
+- `RenameColumnPresenter` (error, line 88) — Field name "…" is already in use
+- `ResetPasswordPresenter` (info, line 103) — Your password has been reset. Please sign in with your new password.
+- `ResultStoreListPresenter` (confirm, line 142) — Are you sure you want to terminate this search?
+- `ResultStoreListPresenter` (info, line 146) — Terminated
+- `ResultStoreListPresenter` (warn, line 148) — Failed to terminate
+- `ResultStoreListPresenter` (confirm, line 160) — Are you sure you want to delete this result store?
+- `ResultStoreListPresenter` (info, line 168) — Destroyed store
+- `ResultStoreListPresenter` (warn, line 170) — Failed to destroy store
+- `ResultStoreSettingsPresenter` (warn, line 52) — … must be set, e.g. 10m, 1h or 1d.
+- `RuleSetPresenter` (error, line 132) — Unable to load Receive Data Rules
+- `RuleSetPresenter` (confirm, line 347) — There are unsaved changes. Are you sure you want to close this tab?
+- `RuleSetSettingsPresenter` (error, line 130) — You need to create one or more fields before you can add a rule.
+- `RuleSetSettingsPresenter` (confirm, line 354) — …This rule contains conditions that are not compatible with obfuscated fields. Values in the effected terms will not be obfuscated on Stroom-Proxy. Do you wish to continue?
+- `ScheduledProcessingPresenter` (warn, line 121) — Please ensure all settings are correct and save before adding executions
+- `SolrIndexFieldEditPresenter` (warn, line 69) — An index field name must conform to the pattern '…'
+- `SolrIndexFieldEditPresenter` (warn, line 75) — An index field with this name already exists
+- `SolrIndexSettingsPresenter` (info, line 81) — Connection Success
+- `SolrIndexSettingsPresenter` (error, line 84) — Connection Failure
+- `SourcePresenter` (error, line 453) — Unexpected type …
+- `SplashPresenter` (warn, line 77) — You must accept the terms to use this system
+- `SteppingPresenter` (confirm, line 304) — You are setting advanced filters! It is recommended you constrain your filter (e.g. by 'Created') to avoid an expensive query. Are you sure you want to apply this advanced filter?
+- `StreamingProcessingPresenter` (warn, line 40) — Please ensure all settings are correct and save before adding executions
+- `TablePresenter` (confirm, line 367) — Search still in progress. Do you want to download the current results? Note that these may be incomplete.
+- `TaskManagerListPresenter` (error, line 655) — Unable to find feed '…'
+- `TextPresenter` (error, line 703) — No stream id
+- `UserAccessListPresenter` (error, line 140) — Error fetching user access: …
+- `UserPreferencesPresenter` (confirm, line 129) — Are you sure you want to set the current preferences as the defaults for ALL users? This will not change individual users' saved preferences.
+- `UserSessionsListPresenter` (error, line 120) — Error fetching sessions: …
+- `VisPresenter` (error, line 499) — There was an error checking if the visualisation document has an index.html asset: …
+- `VisualisationAssetsPresenter` (error, line 344) — There was an error saving the document to a new document
+- `VisualisationAssetsPresenter` (error, line 350) — There was an error saving the document to a new document: …
+- `VisualisationAssetsPresenter` (error, line 498) — Error reverting to live version
+- `VisualisationAssetsPresenter` (error, line 505) — Error reverting to live version: …
+- `VisualisationAssetsPresenter` (error, line 603) — Error saving assets
+- `VisualisationAssetsPresenter` (error, line 609) — Error saving assets: …
+- `VisualisationAssetsPresenter` (error, line 628) — There was an error creating a new folder
+- `VisualisationAssetsPresenter` (error, line 634) — There was an error creating a new folder: …
+- `VisualisationAssetsPresenter` (error, line 656) — There was an error creating a new file
+- `VisualisationAssetsPresenter` (error, line 662) — There was an error creating a new file: …
+- `VisualisationAssetsPresenter` (error, line 687) — There was an error uploading a new file
+- `VisualisationAssetsPresenter` (error, line 693) — There was an error uploading a new file: …
+- `VisualisationAssetsPresenter` (error, line 780) — There was an error updating content
+- `VisualisationAssetsPresenter` (error, line 786) — There was an error updating content: …
+- `VisualisationAssetsPresenter` (error, line 833) — There was an error getting content for '…': …
+- `VisualisationAssetsPresenter` (error, line 870) — Error downloading assets for this visualisation: …
+- `XMLSchemaPresenter` (confirm, line 251) — The XML schema appears to be invalid. Are you sure you want to save?
+
+## Unreached click handlers in presenters
+
+_A labelled button in a presenter the walk attributes nodes to, whose label was never clicked there. Each is a walker gap, a miner mislabel, or a button the UI never shows — and only reading it says which._
+
+- `ManageActivityPresenter` · `New Activity` (newButton, line 100)
+- `ManageActivityPresenter` · `Edit Selected Activity` (openButton, line 107)
+- `ManageActivityPresenter` · `Delete Selected Activity` (deleteButton, line 114)
+- `AnalyticEmailDestinationPresenter` · `Send Test Email` (getSendTestEmailBtn(), line 64)
+- `AnalyticEmailDestinationPresenter` · `Test Template` (getTestSubjectTemplateBtn(), line 65)
+- `AnalyticEmailDestinationPresenter` · `Test Template` (getTestBodyTemplateBtn(), line 68)
+- `ScheduledProcessHistoryListPresenter` · `Replay Selected Execution` (replayButton, line 86)
+- `ScheduledProcessListPresenter` · `Edit Selected Execution Schedule` (editButton, line 124)
+- `ScheduledProcessListPresenter` · `Delete Selected Execution Schedule` (removeButton, line 125)
+- `AnnotationLinkPresenter` · `Remove Annotation Link` (remove, line 71)
+- `LinkedEventPresenter` · `Remove Event Link` (removeEventButton, line 120)
+- `ManageGlobalPropertyEditPresenter` · `Show Cluster Values (all nodes have the same effective value)` (effectiveValueInfoButton, line 124)
+- `ManageGlobalPropertyEditPresenter` · `Show Cluster Values` (effectiveValueWarningsButton, line 125)
+- `ContentStoreContentPackDetailsPresenter` · `Install` (btnCreateGitRepo, line 140)
+- `CredentialsListPresenter` · `Edit Selected Credential` (btnEdit, line 216)
+- `QueryFavouritesPresenter` · `Change Favourite Name` (editButton, line 109)
+- `QueryFavouritesPresenter` · `Delete Favourite` (deleteButton, line 117)
+- `QueryPresenter` · `Duplicate Selected Expression Item` (copyButton, line 225)
+- `QueryPresenter` · `Show Messages` (errorsButton, line 264)
+- `SelectionHandlersPresenter` · `Edit Selected Selection Handler` (editButton, line 121)
+- `SelectionHandlersPresenter` · `Duplicate Selected Selection Handler` (copyButton, line 127)
+- `SelectionHandlersPresenter` · `Delete Selected Selection Handler` (deleteButton, line 161)
+- `IncludeExcludeFilterDictionaryPresenter` · `Remove Dictionary` (removeButton, line 64)
+- `TablePresenter` · `Download Table Results` (downloadButton, line 364)
+- `RulesPresenter` · `Edit Selected Formatting Rule` (editButton, line 94)
+- `RulesPresenter` · `Delete Selected Formatting Rule` (deleteButton, line 135)
+- `VisPresenter` · `Refresh` (getRefreshButton(), line 196)
+- `MetaPresenter` · `Restore Selected Streams` (streamListRestore, line 295)
+- `MetaPresenter` · `Restore Selected Related Streams` (streamRelationListRestore, line 302)
+- `DictionaryListPresenter` · `Remove Imported Dictionary` (removeButton, line 67)
+- `NavigationPresenter` · `Show Alerts` (toolbar toggle, line 141)
+- `IndexShardPresenter` · `Flush Selected Index Shards` (buttonFlush, line 112)
+- `IndexShardPresenter` · `Delete Selected Index Shards` (buttonDelete, line 119)
+- `NodeJobListPresenter` · `Auto Refresh` (autoRefreshButton, line 121)
+- `NodeStatusListPresenter` · `Auto Refresh` (autoRefreshButton, line 173)
+- `ConstraintListPresenter` · `New Constraint` (newButton, line 86)
+- `ConstraintListPresenter` · `Edit Selected Constraint` (editButton, line 93)
+- `ConstraintListPresenter` · `Delete Selected Constraints` (removeButton, line 100)
+- `PathwayListPresenter` · `Edit Selected Pathway` (editButton, line 107)
+- `PathwayListPresenter` · `Delete Selected Pathways` (removeButton, line 114)
+- `PathwayTreePresenter` · `View Matching Traces` (viewTracesButton, line 99)
+- `SteppingPresenter` · `Terminate Stepping` (terminateButton, line 240)
+- `SteppingPresenter` · `Log Pane` (toggleLogPaneButton, line 241)
+- `PipelineReferenceListPresenter` · `Remove Selected Pipeline Reference` (removeButton, line 124)
+- `FeedDependencyListPresenter` · `Remove Selected Feed Dependency` (removeButton, line 85)
+- `ProcessorPresenter` · `Edit Selected Processor` (editButton, line 157)
+- `ProcessorPresenter` · `Duplicate Selected Processor` (duplicateButton, line 166)
+- `ProcessorPresenter` · `Delete Selected Processors` (removeButton, line 175)
+- `ProcessorPresenter` · `Show Tasks for Selected Processor` (showTasksButton, line 217)
+- `ProcessorProfilePresenter` · `Edit Selected Processor Profile` (openButton, line 63)
+- `ProfilePeriodListPresenter` · `Remove Selected Profile Period` (removeButton, line 82)
+- `ResultStoreListPresenter` · `Terminate Search` (terminateButton, line 139)
+- `ResultStoreListPresenter` · `Delete Selected Result Store` (deleteButton, line 157)
+- `ContentTemplateTabPresenter` · `Move Template Down` (moveDownButton, line 272)
+- `ContentTemplateTabPresenter` · `Move Template Up` (moveUpButton, line 298)
+- `ContentTemplateTabPresenter` · `Delete Selected Template` (deleteButton, line 326)
+- `ContentTemplateTabPresenter` · `Duplicate Selected Template` (copyButton, line 367)
+- `ContentTemplateTabPresenter` · `Edit Selected Template` (editButton, line 418)
+- `ContentTemplateTabPresenter` · `Save Templates` (saveButton, line 449)
+- `DataRetentionImpactPresenter` · `Run` (runButton, line 255)
+- `DataRetentionImpactPresenter` · `Stop` (stopButton, line 259)
+- `DataRetentionImpactPresenter` · `Filter` (filterButton, line 262)
+- `DataRetentionImpactPresenter` · `Expand All Results` (expandAllButton, line 270)
+- `DataRetentionImpactPresenter` · `Collapse All Results` (collapseAllButton, line 274)
+- `ApiKeysPresenter` · `Edit Selected API Key` (editButton, line 98)
+- `ApiKeysPresenter` · `Delete Selected API Key` (deleteButton, line 103)
+- `BatchDocumentPermissionsPresenter` · `Edit Permissions For Selected Document` (docEdit, line 124)
+- `SigningKeyPresenter` · `Clear` (revokeAllButton, line 69)
+- `UserAndGroupsPresenter` · `Create User Or Group` (createButton, line 139)
+- `UserAndGroupsPresenter` · `No Selection` (editButton, line 144)
+- `UserAndGroupsPresenter` · `No Selection` (deleteButton, line 149)
+- `UserAndGroupsPresenter` · `Remove from Selected Group` (removeMemberOfButton, line 186)
+- `UserAndGroupsPresenter` · `Remove Selected Member From Group` (removeMembersInButton, line 215)
+- `UserPermissionReportPresenter` · `Edit Permissions For Selected Document` (docEdit, line 120)
+- `UsersPresenter` · `No Selection` (deleteButton, line 86)
+- `TaskManagerListPresenter` · `Terminate Selected Tasks` (terminateButton, line 163)
+- `VisualisationAssetsPresenter` · `Revert Asset Changes` (revertButton, line 195)
+- `XMLSchemaPresenter` · `Alert` (validationIndicator, line 165)
+- `StatisticsCustomMaskListPresenter` · `Remove Selected Roll-up Permutation` (removeButton, line 69)

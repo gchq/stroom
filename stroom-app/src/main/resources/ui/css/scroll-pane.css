@@ -1,0 +1,51 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A scroll pane (ScrollPane) fills its parent, and its content is at least as big as it. Imported
+   last (app.css), so its size wins over other classes, as its inline size once did. One that fits
+   its content (its fit modifier) is sized by its other classes or its content instead */
+.scroll-pane:where(:not(.scroll-pane--fit)),
+:where(.scroll-pane:not(.scroll-pane--fit)) > .scroll-pane__content {
+    width: 100%;
+    height: 100%;
+}
+
+/* A pane that is a tab stop, so that its content can be scrolled with the keys (ScrollPane), shows
+   its keyboard focus on its scrollbars, where it scrolls: their tracks tinted the focus ring's
+   colour and their thumbs in the focus colour (as a dragged thumb is). The scrollbars Stroom draws
+   (webkit-scrollbar.css) always show */
+.scroll-pane:focus-visible {
+    outline: none;
+}
+
+.scroll-pane:focus-visible::-webkit-scrollbar-track {
+    background-color: var(--focus-ring__color);
+}
+
+.scroll-pane:focus-visible::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb__background-color--active);
+}
+
+/* Where the browser has no ::-webkit-scrollbar (e.g. Firefox), the scrollbars are coloured by
+   scrollbar-color (which Chrome would otherwise take over the rules above), and can hide until
+   scrolled (e.g. on macOS), so the pane also shows the focus ring inside its edge, as it fills its
+   space (as a scroll-region does) */
+@supports not selector(::-webkit-scrollbar) {
+    .scroll-pane:focus-visible {
+        box-shadow: inset var(--focus-shadow);
+        scrollbar-color: var(--scrollbar-thumb__background-color--active) var(--focus-ring__color);
+    }
+}

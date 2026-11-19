@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.openai.client.presenter.OpenAIModelPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.openai.client.component.OpenAIModelEditor;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,25 +43,27 @@ public class OpenAIModelPlugin extends DocumentPlugin<OpenAIModelDoc> {
 
     private static final OpenAIModelResource OPEN_AI_MODEL_RESOURCE = GWT.create(OpenAIModelResource.class);
 
-    private final Provider<OpenAIModelPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<OpenAIModelEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public OpenAIModelPlugin(
             final EventBus eventBus,
-            final Provider<OpenAIModelPresenter> editorProvider,
+            final Provider<OpenAIModelEditor> editorProvider,
             final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager entityPluginEventManager,
             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), OpenAIModelDoc.TYPE);
     }
 
     @Override

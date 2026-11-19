@@ -1,0 +1,67 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="EmbeddingModel"
+                        label="Embedding Model"
+                        helpText="The AI model used to turn this field's text into vectors, both when indexing and when building a query. Choose an OpenAI model document.">
+            <dd:DropDownBox ui:field="embeddingModel"/>
+        </form:FormGroup>
+        <form:FormGroup identity="vectorSimilarityFunctionType"
+                        label="Vector Similarity Function Type"
+                        helpText="How the similarity between two vectors is measured when indexing and searching: Euclidean distance, Dot product, Cosine similarity or Maximum inner product. Dot product needs all vectors normalised to unit length. Default is Dot product."
+                        screenReaderText="How vector similarity is measured. Dot product needs normalised vectors.">
+            <l:SelectionBox ui:field="vectorSimilarityFunctionType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="segmentSize"
+                        label="Segment Size"
+                        helpText="The maximum size of each segment that the field's text is split into before it is converted to vectors, in tokens. Default is 2000."
+                        screenReaderText="Maximum segment size in tokens.">
+            <v:ValueSpinner ui:field="segmentSize" addStyleNames="value-spinner--wide"
+                            minValue="1" maxValue="1000000"/>
+        </form:FormGroup>
+        <form:FormGroup identity="overlapSize"
+                        label="Overlap Size"
+                        helpText="The maximum number of tokens that adjoining segments share, so that context is not lost at a split. Only whole sentences are included in the overlap. Default is 200."
+                        screenReaderText="Maximum overlap between segments in tokens. Whole sentences only.">
+            <v:ValueSpinner ui:field="overlapSize" addStyleNames="value-spinner--wide"
+                            minValue="1" maxValue="1000000"/>
+        </form:FormGroup>
+        <form:FormGroup identity="nearestNeighbourCount"
+                        label="Nearest Neighbour Count"
+                        helpText="The number of nearest neighbours (most similar vectors) to return for a vector query. Default is 10."
+                        screenReaderText="Number of most similar vectors to return per query.">
+            <v:ValueSpinner ui:field="nearestNeighbourCount" addStyleNames="value-spinner--wide"
+                            minValue="1" maxValue="1000000"/>
+        </form:FormGroup>
+        <form:FormGroup identity="RerankModel"
+                        label="Reranking Model"
+                        helpText="The AI model used to rerank the results of a vector search by relevance. Reranking only happens when the query asks for the field's rerank score. Choose an OpenAI model document.">
+            <dd:DropDownBox ui:field="rerankModel"/>
+        </form:FormGroup>
+        <form:FormGroup identity="rerankModelType"
+                        label="Rerank Model Type"
+                        helpText="The kind of service the reranking model runs on: Jina, Cohere or Open AI. Default is Open AI."
+                        screenReaderText="Service the reranking model runs on.">
+            <l:SelectionBox ui:field="rerankModelType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="rerankBatchSize"
+                        label="Rerank Batch Size"
+                        helpText="The number of search results sent to the reranking model in each request. Default is 1000."
+                        screenReaderText="Number of results sent to the reranking model per request.">
+            <v:ValueSpinner ui:field="rerankBatchSize" addStyleNames="value-spinner--wide"
+                            minValue="1" maxValue="1000000"/>
+        </form:FormGroup>
+        <form:FormGroup identity="rerankScoreMinimum"
+                        label="Minimum Rerank Score"
+                        helpText="Results scoring below this value are removed after reranking. Enter a decimal number; anything else is treated as the default. Applies to Jina and Cohere models only. Default is 0.8."
+                        screenReaderText="Decimal number. Jina and Cohere only. Default is 0.8.">
+            <form:TextBox ui:field="rerankScoreMinimum"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>
+

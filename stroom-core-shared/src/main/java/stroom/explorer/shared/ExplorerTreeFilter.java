@@ -17,6 +17,9 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -43,6 +46,21 @@ public class ExplorerTreeFilter {
 
     public static List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_NAME, FIELD_DEF_TYPE, FIELD_DEF_UUID, FIELD_DEF_TAG);
+
+    // What NodeInclusionChecker's quick filter declares it can honour. Filtered in memory by
+    // ExpressionPredicateFactory, hence ALL_UI_TEXT. Derived rather than hand-written so the
+    // qualifiers cannot drift from FIELD_DEFINITIONS.
+    public static List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
+    public static List<QueryField> DEFAULT_QUERY_FIELDS =
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
+
+    // Shared by every screen that filters the explorer tree - the navigation pane, the entity
+    // pickers, the export tree - because they all parse against these fields.
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "explorer",
+            FIELD_DEFINITIONS,
+            DEFAULT_QUERY_FIELDS,
+            QUERY_FIELDS);
 
     @JsonProperty
     private final Set<String> includedTypes;

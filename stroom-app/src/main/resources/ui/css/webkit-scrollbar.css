@@ -66,23 +66,4 @@
 	height: 0;
 }
 
-.gwt-TextArea-readonly::-webkit-scrollbar {
-	/* Use transparent background so it looks better with non-white readonly text areas */
-	background: rgb(0,0,0,0);
-}
-
-.gwt-TextArea-readonly::-webkit-scrollbar-corner {
-	/* Use transparent background so it looks better with non-white readonly text areas */
-	background: rgb(0,0,0,0);
-}
-/*
-.stroom-theme-dark .gwt-TextArea-readonly::-webkit-scrollbar {
-	* Use transparent background so it looks better with non-white readonly text areas *
-	background: var(--scrollbar__background-color);
-}
-
-.stroom-theme-dark .gwt-TextArea-readonly::-webkit-scrollbar-corner {
-	* Use transparent background so it looks better with non-white readonly text areas *
-	background: var(--scrollbar-corner__background-color);
-}
-*/
+/* A read-only text area's scroll bar is in text-field.css */

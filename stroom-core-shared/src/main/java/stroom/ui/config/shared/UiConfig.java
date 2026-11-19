@@ -31,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.Pattern;
 
 import java.util.Objects;
 import java.util.Set;
@@ -41,6 +40,7 @@ import java.util.Set;
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DEFAULT_USER_GUIDE_BASE_SUB_PATH = "/user-guide";
+    private static final int DEFAULT_QUICK_FILTER_HISTORY_SIZE = 20;
     private static final int DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES = 1_000;
 
     @JsonProperty
@@ -113,13 +113,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("The title to use for the application in the browser.")
     private final String htmlTitle;
 
-    @Pattern(regexp = "^return (true|false);$")
-    @JsonProperty
-    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is " +
-                             "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to " +
-                             "'return true;' to see the standard browser menu.")
-    private final String oncontextmenu;
-
     @JsonProperty
     private final SplashConfig splash;
 
@@ -173,6 +166,11 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                              "ctrl-space or live autocompletion.")
     private final int maxEditorCompletionEntries;
 
+    @JsonProperty
+    @JsonPropertyDescription("The number of recently used filters to remember per user for each quick " +
+                             "filter. Older filters are forgotten as new ones are used.")
+    private final int quickFilterHistorySize;
+
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -192,7 +190,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
         htmlTitle = "Stroom";
-        oncontextmenu = "return false;";
         splash = new SplashConfig();
         activity = new ActivityConfig();
         source = new SourceConfig();
@@ -204,6 +201,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 StandardExplorerTags.REFERENCE_LOADER);
         defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
         maxEditorCompletionEntries = DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES;
+        quickFilterHistorySize = DEFAULT_QUICK_FILTER_HISTORY_SIZE;
     }
 
     @JsonCreator
@@ -225,7 +223,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("query") final QueryConfig query,
                     @JsonProperty("namePattern") final String namePattern,
                     @JsonProperty("htmlTitle") final String htmlTitle,
-                    @JsonProperty("oncontextmenu") final String oncontextmenu,
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("source") final SourceConfig source,
@@ -235,7 +232,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
                     @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
-                    @JsonProperty("maxEditorCompletionEntries") final Integer maxEditorCompletionEntries) {
+                    @JsonProperty("maxEditorCompletionEntries") final Integer maxEditorCompletionEntries,
+                    @JsonProperty("quickFilterHistorySize") final Integer quickFilterHistorySize) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -253,7 +251,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.query = query;
         this.namePattern = namePattern;
         this.htmlTitle = htmlTitle;
-        this.oncontextmenu = oncontextmenu;
         this.splash = splash;
         this.activity = activity;
         this.source = source;
@@ -264,6 +261,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
         this.maxEditorCompletionEntries = Objects.requireNonNullElse(maxEditorCompletionEntries, DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES);
+        this.quickFilterHistorySize = Objects.requireNonNullElse(quickFilterHistorySize, DEFAULT_QUICK_FILTER_HISTORY_SIZE);
     }
 
     public String getWelcomeHtml() {
@@ -402,10 +400,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return htmlTitle;
     }
 
-    public String getOncontextmenu() {
-        return oncontextmenu;
-    }
-
     public SourceConfig getSource() {
         return source;
     }
@@ -438,6 +432,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return maxEditorCompletionEntries;
     }
 
+    public int getQuickFilterHistorySize() {
+        return quickFilterHistorySize;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -463,7 +461,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                && Objects.equals(query, uiConfig.query)
                && Objects.equals(namePattern, uiConfig.namePattern)
                && Objects.equals(htmlTitle, uiConfig.htmlTitle)
-               && Objects.equals(oncontextmenu, uiConfig.oncontextmenu)
                && Objects.equals(splash, uiConfig.splash)
                && Objects.equals(activity, uiConfig.activity)
                && Objects.equals(source, uiConfig.source)
@@ -473,7 +470,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
                && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
-               && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
+               && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries)
+               && quickFilterHistorySize == uiConfig.quickFilterHistorySize;
     }
 
     @Override
@@ -493,7 +491,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 query,
                 namePattern,
                 htmlTitle,
-                oncontextmenu,
                 splash,
                 activity,
                 source,
@@ -503,7 +500,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 nestedIndexFieldsDelimiterPattern,
                 referencePipelineSelectorIncludedTags,
                 defaultApiKeyHashAlgorithm,
-                maxEditorCompletionEntries);
+                maxEditorCompletionEntries,
+                quickFilterHistorySize);
     }
 
     @Override
@@ -524,7 +522,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                ", query=" + query +
                ", namePattern='" + namePattern + '\'' +
                ", htmlTitle='" + htmlTitle + '\'' +
-               ", oncontextmenu='" + oncontextmenu + '\'' +
                ", splash=" + splash +
                ", activity=" + activity +
                ", source=" + source +
@@ -535,6 +532,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
                ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
                ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
+               ", quickFilterHistorySize=" + quickFilterHistorySize +
                '}';
     }
 }

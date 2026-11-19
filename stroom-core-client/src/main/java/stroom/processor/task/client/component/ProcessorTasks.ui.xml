@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:t="urn:import:stroom.processor.task.client.component"
+             xmlns:split="urn:import:stroom.widget.layout.client">
+    <!-- Processor tasks: their summary above the tasks of the summary row selected -->
+    <g:SimplePanel styleName="max">
+        <split:SplitPane ui:field="splitPane" vertical="true" thin="true" sizes="400px, *"
+                         names="Task summary, Tasks" addStyleNames="max">
+            <g:SimplePanel styleName="max overflow-hidden">
+                <t:ProcessorTaskSummaryList ui:field="summary"/>
+            </g:SimplePanel>
+            <g:SimplePanel styleName="max overflow-hidden">
+                <t:ProcessorTaskList ui:field="tasks"/>
+            </g:SimplePanel>
+        </split:SplitPane>
+    </g:SimplePanel>
+</ui:UiBinder>

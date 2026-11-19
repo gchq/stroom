@@ -27,7 +27,7 @@ import com.google.gwt.dom.client.Element;
  * security filter requires for session-authenticated, state-changing requests. Cross-site
  * scripts cannot set custom headers, so the header proves the request came from our own UI.
  */
-final class FileUploadSubmitter {
+public final class FileUploadSubmitter {
 
     /**
      * Must match {@code ImportFileServlet.FILE_UPLOAD_PROP_NAME} on the server.
@@ -41,16 +41,16 @@ final class FileUploadSubmitter {
     }
 
     /**
-     * Upload the file currently selected in the given file input element to the given URL.
+     * Upload the file currently selected in the given file input element to the given URL. This
+     * is Stroom's default {@link FileUploadTransport}.
      *
      * @param url              The upload endpoint (same-origin as the app).
      * @param fileInputElement The {@code <input type="file">} element holding the selected file.
-     * @param callback         Notified of the start, success or failure of the upload.
+     * @param callback         Notified of the success or failure of the upload.
      */
-    static void submit(final String url,
-                       final Element fileInputElement,
-                       final FileUploadCallback callback) {
-        callback.onUploadStart();
+    public static void submit(final String url,
+                              final Element fileInputElement,
+                              final FileUploadCallback callback) {
         doSubmit(url, fileInputElement, FILE_FIELD_NAME, CSRF_HEADER, CSRF_VALUE, callback);
     }
 

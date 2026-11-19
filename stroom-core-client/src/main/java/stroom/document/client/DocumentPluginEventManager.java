@@ -23,9 +23,9 @@ import stroom.content.client.ContentPlugin;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
+import stroom.core.client.Plugin;
 import stroom.core.client.TabPlugin;
 import stroom.core.client.UrlParameters;
-import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
@@ -43,7 +43,6 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
-import stroom.document.client.event.ResultCallback;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.document.client.event.SetDocumentAsFavouriteEvent;
@@ -52,8 +51,10 @@ import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
+import stroom.explorer.client.DocumentTypeCache;
+import stroom.explorer.client.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
-import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
+import stroom.explorer.client.event.ExplorerItemKeyEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -66,7 +67,6 @@ import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
 import stroom.explorer.shared.DeleteConfirmation;
@@ -95,18 +95,17 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.IconParentMenuItem;
+import stroom.widget.menu.client.Item;
+import stroom.widget.menu.client.MenuItem;
+import stroom.widget.menu.client.Separator;
+import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -114,16 +113,15 @@ import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.RequestCloseTabsEvent;
 import stroom.widget.tab.client.event.RequestMoveTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -131,7 +129,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -190,6 +187,8 @@ public class DocumentPluginEventManager extends Plugin {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
         });
+        KeyBinding.addCommand(Action.ITEM_CLOSE_SAVED, () ->
+                RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this));
         KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () ->
                 RequestCloseAllTabsEvent.fire(this));
 
@@ -209,109 +208,57 @@ public class DocumentPluginEventManager extends Plugin {
                 LocateDocEvent.fire(this, selectedDoc);
             }
         });
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
-                selectedTab = e.getTabData()));
+        getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                selectedTab = e.getTabData());
 
         // Add support to locate items in the explorer tree.
-        registerHandler(getEventBus().addHandler(LocateDocEvent.getType(), e -> {
+        getEventBus().addHandler(LocateDocEvent.getType(), e -> {
             if (e.getDocRef() != null) {
                 highlight(e.getDocRef(), explorerListener);
             }
-        }));
-
-
-        // // 2. Handle requests to close tabs.
-        // registerHandler(getEventBus().addHandler(
-        // RequestCloseTabEvent.getType(), new RequestCloseTabHandler() {
-        // @Override
-        // public void onCloseTab(final RequestCloseTabEvent event) {
-        // final TabData tabData = event.getTabData();
-        // if (tabData instanceof EntityTabData) {
-        // final EntityTabData entityTabData = (EntityTabData) tabData;
-        // final DocumentPlugin<?> plugin = pluginMap
-        // .get(entityTabData.getType());
-        // if (plugin != null) {
-        // plugin.close(entityTabData, false);
-        // }
-        // }
-        // }
-        // }));
-        //
-        // // 3. Handle requests to close all tabs.
-        // registerHandler(getEventBus().addHandler(
-        // RequestCloseAllTabsEvent.getType(), new CloseAllTabsHandler() {
-        // @Override
-        // public void onCloseAllTabs(
-        // final RequestCloseAllTabsEvent event) {
-        // for (final DocumentPlugin<?> plugin : pluginMap.values()) {
-        // plugin.closeAll(event.isLogoffAfterClose());
-        // }
-        // }
-        // }));
+        });
 
         // 4. Handle explorer events and open items as required.
-        registerHandler(
-                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
-                    // Remember the selection model.
-                    if (event.getSelectionModel() != null) {
-                        selectionModel = event.getSelectionModel();
-                    }
+        getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
+            // Remember the selection model.
+            if (event.getSelectionModel() != null) {
+                selectionModel = event.getSelectionModel();
+            }
 
-                    if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
-                        final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
-                        if (explorerNode != null) {
-                            // Dont try to open the doc if we have a tab with the same docref already selected
-                            if (selectedTab instanceof final DocumentTabData documentTabData
-                                && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
-                                return;
-                            }
-                            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(
-                                    explorerNode.getType());
-                            if (plugin != null) {
-                                plugin.open(
-                                        explorerNode.getDocRef(),
-                                        event.getSelectionType().isDoubleSelect(),
-                                        false,
-                                        new DefaultTaskMonitorFactory(this));
-                            }
-                        }
+            if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
+                final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
+                if (explorerNode != null) {
+                    // Dont try to open the doc if we have a tab with the same docref already selected
+                    if (selectedTab instanceof final DocumentTabData documentTabData
+                        && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
+                        return;
                     }
-                }));
-
-//        clientPropertyCache.get()
-//                .onSuccess(uiConfig -> {
-//                    registerHandler(
-//                            getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
-//                                final Hyperlink hyperlink = new Hyperlink.Builder()
-//                                        .text("Permissions")
-//                                        .href(uiConfig.getUrl().getDocumentPermissions() +
-//                                        event.getExplorerNode().getUuid())
-//                                        .type(HyperlinkType.TAB + "|Document Permissions")
-//                                        .icon(SvgPresets.PERMISSIONS)
-//                                        .build();
-//                                HyperlinkEvent.fire(this, hyperlink);
-//                            }));
-//                });
+                    final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(
+                            explorerNode.getType());
+                    if (plugin != null) {
+                        plugin.open(
+                                explorerNode.getDocRef(),
+                                event.getSelectionType().isDoubleSelect(),
+                                false,
+                                new DefaultTaskMonitorFactory(this));
+                    }
+                }
+            }
+        });
 
 
         // 11. Handle entity reload events.
-        registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(event.getDocRef().getType());
             if (plugin != null) {
-//                GWT.log("reloading " + event.getDocRef().getName());
                 plugin.reload(event.getDocRef());
             }
-        }));
+        });
 
         // 5. Handle save events.
-        registerHandler(getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
             if (isDirty(event.getTabData())) {
                 final DocumentTabData entityTabData = event.getTabData();
                 final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(entityTabData.getType());
@@ -319,10 +266,10 @@ public class DocumentPluginEventManager extends Plugin {
                     plugin.save(entityTabData);
                 }
             }
-        }));
+        });
 
         // 6. Handle save as events.
-        registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             final DocumentTabData tabData = event.getTabData();
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(tabData.getType());
             if (plugin != null) {
@@ -342,20 +289,20 @@ public class DocumentPluginEventManager extends Plugin {
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
-        }));
+        });
 
         // ---------------------------------------------------------------------
         // START EXPLORER EVENTS
         // ---------------------------------------------------------------------/
 
         // 1. Handle entity creation events.
-        registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
+        getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
                 create(event.getDocType(),
                         event.getDocName(),
                         event.getDestinationFolder(),
                         event.getPermissionInheritance(),
                         explorerNode -> {
-                            // Hide the create document presenter.
+                            // Hide the create document controller.
                             event.getHidePopupRequestEvent().hide();
 
                             highlight(explorerNode);
@@ -363,10 +310,10 @@ public class DocumentPluginEventManager extends Plugin {
                             // The initiator of this event can now do what they want with the docref.
                             event.getNewDocConsumer().accept(explorerNode);
                         }, explorerListener,
-                        event.getHidePopupRequestEvent())));
+                        event.getHidePopupRequestEvent()));
 
         // 8.1. Handle entity open events.
-        registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
+        getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
                 open(event.getDocRef(),
                         event.isForceOpen(),
                         event.isFullScreen(),
@@ -375,21 +322,21 @@ public class DocumentPluginEventManager extends Plugin {
                         event.getCallbackOnFailure().orElse(() -> {
                         }),
                         event.isDuplicate(),
-                        explorerListener)));
+                        explorerListener));
 
-        registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
             RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab, event.runOnClose(),
                     event.resizeTabBar());
-        }));
+        });
 
         // 8.2. Handle entity copy events.
-        registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
+        getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
                 event.getExplorerNodes(),
                 event.getDestinationFolder(),
                 event.isAllowRename(),
                 event.getDocName(),
                 event.getPermissionInheritance(), result -> {
-                    // Hide the copy document presenter.
+                    // Hide the copy document controller.
                     event.getHidePopupRequestEvent().hide();
 
                     if (NullSafe.isNonEmptyString(result.getMessage())) {
@@ -403,12 +350,12 @@ public class DocumentPluginEventManager extends Plugin {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
-                event.getHidePopupRequestEvent())));
+                event.getHidePopupRequestEvent()));
 
         // 8.3. Handle entity move events.
-        registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
+        getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
                 event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
-                    // Hide the move document presenter.
+                    // Hide the move document controller.
                     event.getHidePopupRequestEvent().hide();
 
                     if (NullSafe.isNonEmptyString(result.getMessage())) {
@@ -422,10 +369,10 @@ public class DocumentPluginEventManager extends Plugin {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
-                event.getHidePopupRequestEvent())));
+                event.getHidePopupRequestEvent()));
 
         // 8.4. Handle entity delete events.
-        registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
             final Runnable action = () ->
                     delete(event.getDocRefs(), result ->
                             handleDeleteResult(result, event.getCallback()), explorerListener);
@@ -437,29 +384,30 @@ public class DocumentPluginEventManager extends Plugin {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.fetchDeleteConfirmation(
                                 new DeleteConfirmationRequest(event.getDocRefs())))
-                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action))
+                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action, event.getCallback()))
                         .onFailure(err -> confirmDeleteAfterLookupError(
-                                event.getDocRefs(), err.getMessage(), action))
+                                event.getDocRefs(), err.getMessage(), action, event.getCallback()))
                         .taskMonitorFactory(explorerListener)
                         .exec();
             } else {
                 action.run();
             }
-        }));
+        });
 
         // 9. Handle entity rename events.
-        registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
-            // Hide the rename document presenter.
-            event.getHidePopupRequestEvent().hide();
-
+        getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
             rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
+                // Hide the rename dialog only once the rename has succeeded, so a failure
+                // keeps it open with the new name
+                event.getHidePopupRequestEvent().hide();
+
                 highlight(explorerNode);
                 RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
             }, explorerListener, event.getHidePopupRequestEvent());
-        }));
+        });
 
         // 10. Handle entity delete events.
-        registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
+        getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (NullSafe.hasItems(getSelectedItems())) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap -> {
                     final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
@@ -471,12 +419,12 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 }, explorerListener);
             }
-        }));
+        });
 
         // Handle setting document as Favourite events
-        registerHandler(getEventBus().addHandler(SetDocumentAsFavouriteEvent.getType(), event -> {
+        getEventBus().addHandler(SetDocumentAsFavouriteEvent.getType(), event -> {
             setAsFavourite(event.getDocRef(), event.getSetFavourite(), explorerListener);
-        }));
+        });
 
         // ---------------------------------------------------------------------
         // END EXPLORER EVENTS
@@ -484,7 +432,7 @@ public class DocumentPluginEventManager extends Plugin {
 
 
         // Handle the display of the `New` item menu
-        registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
+        getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection).onSuccess(children ->
@@ -492,15 +440,15 @@ public class DocumentPluginEventManager extends Plugin {
                                 .builder()
                                 .items(children)
                                 .popupPosition(event.getPopupPosition())
-                                .addAutoHidePartner(event.getElement())
+                                .opener(event.getElement())
                                 .fire(this));
             }
-        }));
+        });
 
         // Handle key bind for creating a doc in the selected folder
-        registerHandler(getEventBus().addHandler(CreateNewDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(CreateNewDocumentEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
-            // TODO The CreateDocumentPresenter has an exp tree picker on it so debatable whether
+            // TODO The CreateDocumentController has an exp tree picker on it so debatable whether
             //  we should just show the dialog regardless of selection/perms and let the dialog
             //  deal with it.
             if (selectedItems.size() == 1) {
@@ -516,10 +464,10 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 }, explorerListener);
             }
-        }));
+        });
 
         // Handle the display of the explorer item context menu
-        registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
+        getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
@@ -527,10 +475,29 @@ public class DocumentPluginEventManager extends Plugin {
             if (!selectedItems.isEmpty() && !ExplorerConstants.isFavouritesNode(primarySelection)) {
                 showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
             }
-        }));
+        });
+
+        // Handle the keys for an explorer item's actions (e.g. F2 to rename it), which act as the
+        // item's menu would
+        getEventBus().addHandler(ExplorerItemKeyEvent.getType(), event -> {
+            final List<ExplorerNode> selectedItems = getSelectedItems();
+            if (!selectedItems.isEmpty()) {
+                fetchPermissions(selectedItems, documentPermissionMap -> {
+                    final String whyNot = ExplorerItemKeys.whyNot(event.getAction(), selectedItems,
+                            documentPermissionMap);
+                    if (whyNot != null) {
+                        event.announce(whyNot);
+                    } else if (event.getAction() == Action.EXPLORER_INFO) {
+                        showInfo(selectedItems.get(0), explorerListener);
+                    } else {
+                        renameItems(selectedItems);
+                    }
+                }, explorerListener);
+            }
+        });
 
         // Handle the context menu for open tabs
-        registerHandler(getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
+        getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
             final List<Item> menuItems = new ArrayList<>();
             int priority = 0;
             menuItems.add(createCloseMenuItem(++priority, event.getTabData()));
@@ -562,10 +529,11 @@ public class DocumentPluginEventManager extends Plugin {
 
             ShowMenuEvent
                     .builder()
+                    .name("Actions for tab '" + event.getTabData().getLabel() + "'")
                     .items(menuItems)
                     .popupPosition(event.getPopupPosition())
                     .fire(this);
-        }));
+        });
     }
 
     private void showItemContextMenu(final ShowExplorerMenuEvent event,
@@ -587,11 +555,26 @@ public class DocumentPluginEventManager extends Plugin {
 
                     ShowMenuEvent
                             .builder()
+                            .name(getItemContextMenuName(selectedItems, primarySelection))
                             .items(menuItems)
                             .popupPosition(event.getPopupPosition())
                             .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
                             .fire(this);
                 }, explorerListener), explorerListener);
+    }
+
+    // The explorer context menu's accessible name, saying what it acts on, e.g.
+    // "Actions for Feed 'MY_FEED'" or "Actions for 3 selected items"
+    private static String getItemContextMenuName(final List<ExplorerNode> selectedItems,
+                                                 final ExplorerNode primarySelection) {
+        if (selectedItems.size() != 1 || primarySelection == null) {
+            return "Actions for " + selectedItems.size() + " selected items";
+        }
+        final DocumentType documentType = DocumentTypeRegistry.get(primarySelection.getType());
+        final String type = documentType != null
+                ? documentType.getDisplayType()
+                : primarySelection.getType();
+        return "Actions for " + type + " '" + primarySelection.getDisplayValue() + "'";
     }
 
     private void renameItems(final List<ExplorerNode> explorerNodeList) {
@@ -665,32 +648,6 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-//    private void deleteDocument(final DocRef document, final DocumentTabData tabData) {
-//        delete(document).onSuccess(e -> {
-//            if (tabData != null) {
-//                // Cleanup reference to this tab data.
-//                removeTabData(tabData);
-//                contentManager.forceClose(tabData);
-//            }
-//            // Refresh the explorer tree so the document is marked as deleted.
-//            RefreshExplorerTreeEvent.fire(DocumentPlugin.this);
-//        });
-//    }
-
-
-//    /**
-//     * 8.1. This method will copy documents.
-//     */
-//    void copyDocument(final PresenterWidget<?> popup, final DocRef document, final DocRef folder,
-//                      final PermissionInheritance permissionInheritance) {
-//        copy(document, folder, permissionInheritance).onSuccess(newDocRef -> {
-//            // Hide the copy document presenter.
-//            HidePopupEvent.fire(DocumentPluginEventManager.this, popup);
-//
-//            // Select it in the explorer tree.
-//            highlight(newDocRef);
-//        });
-//    }
 
 
     public void create(final String docType,
@@ -785,13 +742,10 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDelete(final List<DocRef> docRefs,
                                final DeleteConfirmation info,
-                               final Runnable action) {
+                               final Runnable action,
+                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
-        final ConfirmCallback callback = ok -> {
-            if (ok) {
-                action.run();
-            }
-        };
+        final ConfirmCallback callback = createDeleteConfirmCallback(action, resultCallback);
 
         if (info == null || info.isEmpty()) {
             final String msg = cnt > 1
@@ -834,60 +788,49 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private SafeHtml buildDeleteConfirmationDetail(final DeleteConfirmation info) {
-        final HtmlBuilder builder = HtmlBuilder.builder();
+        final DeleteConfirmationDetail detail = new DeleteConfirmationDetail();
 
         // Items contained within the folder(s) being deleted.
         if (info.hasChildItems()) {
             final int count = info.getTotalChildCount();
             if (count > 0) {
-                final String header = count == 1
+                // Summary: a header followed by one line per doc type count, then one icon + name row
+                // per item.
+                detail.addHeader(count == 1
                         ? "The following contained item will also be deleted:"
-                        : "The following " + count + " contained items will also be deleted:";
-                // Summary: a header div followed by one div per doc type count.
-                builder.div(header, Attribute.className("deleteConfirm-summaryHeader"));
-                buildTypeCountLines(info.getChildTypeCounts()).forEach(line ->
-                        builder.div(line, Attribute.className("deleteConfirm-typeCount")));
-
-                // Extra gap between the summary and the detailed item list.
-                builder.div(hb -> {
-                }, Attribute.className("deleteConfirm-gap"), Attribute.style("height:6px"));
-
-                // Detail: one icon + name row per item.
-                appendDocRefRows(builder, info.getChildItems());
+                        : "The following " + count + " contained items will also be deleted:");
+                detail.addTypeCounts(buildTypeCountLines(info.getChildTypeCounts()));
+                detail.addDocuments(info.getChildItems());
                 if (info.isChildItemsTruncated()) {
-                    builder.div("…and more", Attribute.className("docRefLinkContainer"));
+                    detail.addMore();
                 }
             }
             if (info.isHasHiddenChildItems()) {
                 // Contained items the user cannot view they also cannot delete (permissions are
                 // hierarchical), and the server will not delete a folder that still contains such items.
-                final String msg = count > 0
+                detail.addNote(count > 0
                         ? "The folder also contains items you do not have permission to delete, so the "
                           + "folder itself will not be removed."
                         : "This folder contains items you do not have permission to delete, so it cannot "
-                          + "be removed.";
-                builder.br();
-                builder.append(msg);
+                          + "be removed.");
             }
         }
 
         // Items outside the selection that depend on what is being deleted.
         if (info.hasDependants()) {
             if (info.hasChildItems()) {
-                builder.br();
+                detail.addLineBreak();
             }
             if (NullSafe.hasItems(info.getVisibleDependants())) {
-                builder.div("The following items depend on this:",
-                        Attribute.className("deleteConfirm-summaryHeader"));
-                appendDocRefRows(builder, info.getVisibleDependants());
+                detail.addHeader("The following items depend on this:");
+                detail.addDocuments(info.getVisibleDependants());
             }
             if (info.isHasHiddenDependants()) {
-                builder.br();
-                builder.append("There are also dependants that you do not have permission to view.");
+                detail.addNote("There are also dependants that you do not have permission to view.");
             }
         }
 
-        return builder.toSafeHtml();
+        return detail.toSafeHtml();
     }
 
     /**
@@ -913,56 +856,42 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     /**
-     * Render each DocRef as an icon + name row, reusing the same classes as the explorer/grid DocRef
-     * cells so it picks up the existing inline styling.
-     */
-    private void appendDocRefRows(final HtmlBuilder builder, final List<DocRef> docRefs) {
-        for (final DocRef docRef : docRefs) {
-            builder.div(hb -> {
-                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                if (documentType != null && documentType.getIcon() != null) {
-                    hb.append(SvgImageUtil.toSafeHtml(
-                            documentType.getDisplayType(),
-                            documentType.getIcon(),
-                            "svgIcon",
-                            "docRefLinkIcon"));
-                }
-                final String name = NullSafe.isBlankString(docRef.getName())
-                        ? docRef.getUuid()
-                        : docRef.getName();
-                hb.append(name);
-            }, Attribute.className("docRefLinkContainer"));
-        }
-    }
-
-    /**
      * The delete-confirmation lookup failed, so we cannot say what would be affected. Warn the user
      * (surfacing the error) but still let them proceed with the delete rather than blocking it.
      */
     private void confirmDeleteAfterLookupError(final List<DocRef> docRefs,
                                                final String errorMessage,
-                                               final Runnable action) {
+                                               final Runnable action,
+                                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
         final String msg = cnt > 1
                 ? "Unable to check what would be affected by deleting these " + cnt + " items. Are you "
                   + "sure you want to delete them anyway?"
                 : "Unable to check what would be affected by deleting this item. Are you sure you want "
                   + "to delete it anyway?";
-        final HtmlBuilder detail = HtmlBuilder.builder();
-        detail.append("The check failed:");
+        final DeleteConfirmationDetail detail = new DeleteConfirmationDetail();
+        detail.addText("The check failed:");
         if (!NullSafe.isBlankString(errorMessage)) {
-            detail.br();
-            detail.append(errorMessage);
+            detail.addNote(errorMessage);
         }
         ConfirmEvent.fireWarn(
                 DocumentPluginEventManager.this,
                 SafeHtmlUtil.getSafeHtml(msg),
                 detail.toSafeHtml(),
-                ok -> {
-                    if (ok) {
-                        action.run();
-                    }
-                });
+                createDeleteConfirmCallback(action, resultCallback));
+    }
+
+    /// Runs the delete if the user agrees. If they cancel, the caller's callback (if any) is told the
+    /// delete didn't happen, so anything waiting on the result isn't left waiting.
+    private ConfirmCallback createDeleteConfirmCallback(final Runnable action,
+                                                        final ResultCallback resultCallback) {
+        return ok -> {
+            if (ok) {
+                action.run();
+            } else if (resultCallback != null) {
+                resultCallback.onResult(false);
+            }
+        };
     }
 
     private void setAsFavourite(final DocRef docRef,
@@ -989,14 +918,14 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean forceOpen,
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
-                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                     final Consumer<Controller> callbackOnOpen,
                      final Runnable callbackOnFailure,
                      final boolean duplicate,
                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef != null && docRef.getType() != null) {
             final TabPlugin tabPlugin = documentPluginRegistry.get(docRef.getType());
             if (tabPlugin instanceof final DocumentPlugin<?> documentPlugin) {
-                // Decorate the DocRef with its name from the info service (required by the doc presenter)
+                // Decorate the DocRef with its name from the info service (required by the doc controller)
                 restFactory
                         .create(EXPLORER_RESOURCE)
                         .method(res ->
@@ -1016,6 +945,7 @@ public class DocumentPluginEventManager extends Plugin {
                                         fullScreen,
                                         selectedLinkTab,
                                         callbackOnOpen,
+                                        callbackOnFailure,
                                         duplicate,
                                         new DefaultTaskMonitorFactory(this));
                                 if (!duplicate) {
@@ -1034,14 +964,16 @@ public class DocumentPluginEventManager extends Plugin {
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             } else if (tabPlugin instanceof final ContentPlugin<?> contentPlugin) {
-                contentPlugin.open(p -> {
-                    if (callbackOnOpen != null) {
-                        callbackOnOpen.accept(p);
-                    }
-                });
+                contentPlugin.open(ContentOpenCallback.of(callbackOnOpen));
             } else {
                 Console.error(() -> "Document type '" + docRef.getType() + "' not registered");
+                if (callbackOnFailure != null) {
+                    callbackOnFailure.run();
+                }
             }
+        } else if (callbackOnFailure != null) {
+            // Nothing to open (e.g. a tab session's reference with no type): carry on
+            callbackOnFailure.run();
         }
     }
 
@@ -1117,40 +1049,6 @@ public class DocumentPluginEventManager extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
-
-//        final FutureImpl<List<Item>> future = new FutureImpl<>();
-//        final List<ExplorerNode> selectedItems = getSelectedItems();
-//        final boolean singleSelection = selectedItems.size() == 1;
-//        final ExplorerNode primarySelection = getPrimarySelection();
-//
-//        fetchPermissions(selectedItems,
-//                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
-//                    final List<Item> menuItems = new ArrayList<>();
-//
-////                    // Only allow the new menu to appear if we have a single selection.
-////                    addNewMenuItem(menuItems,
-////                            singleSelection,
-////                            documentPermissionMap,
-////                            primarySelection,
-////                            documentTypes);
-////                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-//                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-////                    menuItems.add(new Separator(5));
-////                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-//                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
-////                    menuItems.add(new Separator(9));
-////                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-//
-//                    future.setResult(menuItems);
-//                }));
-//
-//        // Add menu bar item menu.
-//        event.getMenuItems()
-//                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem.Builder()
-//                        .priority(11)
-//                        .text("Item")
-//                        .children(future)
-//                        .build());
     }
 
     private Future<List<Item>> getNewMenuItems(final ExplorerNode explorerNode) {
@@ -1432,7 +1330,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Others")
+                .text("Close Other Tabs")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
                 .build();
@@ -1443,7 +1341,8 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Saved")
+                .text("Close Saved Tabs")
+                .action(Action.ITEM_CLOSE_SAVED)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
@@ -1454,7 +1353,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close All")
+                .text("Close All Tabs")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this))
@@ -1499,7 +1398,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Tab to Start")
                 .enabled(isTabItemSelected(selectedTab) && !isFirstTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, 0))
                 .build();
@@ -1511,7 +1410,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Tab to End")
                 .enabled(isTabItemSelected(selectedTab) && !isLastTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
                 .build();
@@ -1548,7 +1447,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SAVE)
-                .text("Save All")
+                .text("Save All Tabs")
                 .action(Action.ITEM_SAVE_ALL)
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
@@ -1600,40 +1499,35 @@ public class DocumentPluginEventManager extends Plugin {
                                         final int priority,
                                         final boolean enabled,
                                         final TaskMonitorFactory taskMonitorFactory) {
-        final Command command;
-        if (enabled && explorerNode != null) {
-            command = () -> {
-                // Should only be one item as info is not supported for multi selection
-                // in the tree
-                restFactory
-                        .create(EXPLORER_RESOURCE)
-                        .method(res -> res.info(explorerNode.getDocRef()))
-                        .onSuccess(explorerNodeInfo -> {
-                            if (explorerNodeInfo == null) {
-                                AlertEvent.fireError(DocumentPluginEventManager.this,
-                                        buildNotFoundMessage(explorerNode.getDocRef()),
-                                        null);
-                            } else {
-                                ShowInfoDocumentDialogEvent.fire(
-                                        DocumentPluginEventManager.this,
-                                        explorerNodeInfo);
-                            }
-                        })
-                        .onFailure(this::handleFailure)
-                        .taskMonitorFactory(taskMonitorFactory)
-                        .exec();
-            };
-        } else {
-            command = null;
-        }
+        // Should only be one item as info is not supported for multi selection in the tree
+        final Command command = enabled && explorerNode != null
+                ? () -> showInfo(explorerNode, taskMonitorFactory)
+                : null;
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
-                .text("Info")
+                .text("Show Info")
+                .action(Action.EXPLORER_INFO)
                 .enabled(enabled && explorerNode != null)
                 .command(command)
                 .build();
+    }
+
+    private void showInfo(final ExplorerNode explorerNode, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(res -> res.info(explorerNode.getDocRef()))
+                .onSuccess(explorerNodeInfo -> {
+                    if (explorerNodeInfo == null) {
+                        AlertEvent.fireError(this, buildNotFoundMessage(explorerNode.getDocRef()), null);
+                    } else {
+                        ShowInfoDocumentDialogEvent.fire(this, explorerNodeInfo);
+                    }
+                })
+                .onFailure(this::handleFailure)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     private void handleFailure(final RestError t) {
@@ -1691,8 +1585,8 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
-                .command(() -> ClipboardUtil.copy(docUrl))
+                .text("Link")
+                .command(() -> Clipboard.writeText(docUrl))
                 .build();
     }
 
@@ -1705,7 +1599,8 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy")
+                // Opens a dialog to choose the folder to copy to
+                .text("Copy To...")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1719,7 +1614,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy to Clipboard")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -1738,7 +1633,7 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
@@ -1747,7 +1642,7 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUID to Clipboard")
+                        .text("UUID")
                         .enabled(true)
                         .command(() -> copyAs(allNodes, ExplorerNode::getUuid, "\n"))
                         .build());
@@ -1757,14 +1652,14 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (lines)")
+                    .text("Names (One per Line)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (comma delimited)")
+                    .text("Names (Comma Separated)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, ","))
                     .build());
@@ -1773,14 +1668,14 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (lines)")
+                        .text("UUIDs (One per Line)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, "\n"))
                         .build());
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (comma delimited)")
+                        .text("UUIDs (Comma Separated)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, ","))
                         .build());
@@ -1803,7 +1698,7 @@ public class DocumentPluginEventManager extends Plugin {
                     .collect(Collectors.joining(delimter));
         }
         if (!NullSafe.isBlankString(value)) {
-            ClipboardUtil.copy(value);
+            Clipboard.writeText(value);
         }
     }
 
@@ -1832,6 +1727,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.EDIT)
                 .text("Rename")
+                .action(Action.EXPLORER_RENAME)
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1857,7 +1753,6 @@ public class DocumentPluginEventManager extends Plugin {
                                                final boolean enabled) {
         final Command command = () -> {
             if (docRef != null) {
-//                ShowDocumentPermissionsEvent.fire(DocumentPluginEventManager.this, docRef);
                 OpenDocumentEvent.builder(DocumentPluginEventManager.this, docRef)
                         .selectedTab(CommonDocLinkTab.PERMISSIONS)
                         .fire();
@@ -1867,7 +1762,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.LOCKED)
-                .text("Permissions")
+                .text("Edit Permissions")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1877,7 +1772,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.UPLOAD)
-                .text("Import")
+                .text("Import Content")
                 .command(() -> ImportConfigEvent.fire(DocumentPluginEventManager.this))
                 .build();
     }
@@ -1896,7 +1791,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependants")
+                .text("Show Dependants")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,
@@ -1908,7 +1803,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependencies")
+                .text("Show Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,

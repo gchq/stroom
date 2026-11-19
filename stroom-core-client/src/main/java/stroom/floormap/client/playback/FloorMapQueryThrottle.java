@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.playback;
 
+
 /// Rate limiter for the server queries timeline playback issues.
 ///
 /// Playback moves the scrubber every animation frame — around 60 times a second —
@@ -25,9 +26,9 @@ package stroom.floormap.client.playback;
 /// by up to one interval. That is the intended trade.
 ///
 /// Holds no GWT types, so the rate limit can be tested on the JVM by driving
-/// timestamps through it — which the presenter that owns it cannot be.
+/// timestamps through it — which the controller that owns it cannot be.
 ///
-/// ### Why this is a class rather than two fields on the presenter
+/// ### Why this is a class rather than two fields on the controller
 ///
 /// It used to be a `double` field, and the throttle was defeated by a single
 /// line elsewhere in the playback loop that set it back to zero on every loop wrap,

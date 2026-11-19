@@ -129,16 +129,6 @@ if (localYamlFile.exists()) {
     }
 }
 
-// Convert the abs root project dir into a string that can be used as a dir
-// to allow us to have a dir for multiple repo instances that don't conflict
-// e.g. 'home+dev+git_work+gchq+stroom'
-ext.rootProjectAbsPathStr = project.rootProject.rootDir
-        .toPath()
-        .toAbsolutePath()
-        .toString()
-        .replaceAll("^/", "")
-        .replaceAll("/", "+")
-
 ext.gwtCompilerProps = [
         mainClass: 'stroom.gwt.GwtCompilerWrapper',
         minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
@@ -235,6 +225,7 @@ subprojects {
             implementation platform(libs.aws.bom)
             implementation platform(libs.jackson.bom)
             implementation platform(libs.jackson2.bom)
+            implementation platform(libs.langchain4j.bom)
 
             // This is only here because DW 5.0.2 pulls in jetty 12.1.9 which has
             // vulns, so force it up to 12.1.4 for the fix
@@ -275,8 +266,17 @@ subprojects {
                 }
 
                 dependencySubstitution {
+
+                    // aopalliance-repackaged is basically aopalliance:1.0 with added OSGI headers, which we don't want/use.
+                    // Both deps use the same packages, so this results in duplicates in the fat jar. Thus, just use 1.0
+                    substitute module('org.glassfish.hk2.external:aopalliance-repackaged') using module('aopalliance:aopalliance:1.0')
+
+
+                    // solr pulls in swagger-annotations-jakarta, which uses the same packages as swagger-annotation
+                    // so use the more recent one that we pull in directly
+                    substitute module('io.swagger.core.v3:swagger-annotations-jakarta') using module("io.swagger.core.v3:swagger-annotations:3.0.0")
+
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
-                    //substitute module('aopalliance:aopalliance') using module("org.glassfish.hk2.external:aopalliance-repackaged:3.0.5")
                     //substitute module('com.fasterxml.jackson.datatype:jackson-datatype-joda') using module("com.fasterxml.jackson.datatype:jackson-datatype-joda:2.13.1")
                     //substitute module("com.fasterxml.jackson.core:jackson-databind") using module('com.fasterxml.jackson.core:jackson-databind:2.10.5.1') withoutClassifier()
                     substitute module('com.google.code.findbugs:jsr305') using module("javax.annotation:javax.annotation-api:1.3.2")

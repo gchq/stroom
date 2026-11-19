@@ -18,17 +18,16 @@ package stroom.receive.rules.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.receive.rules.client.component.RuleSetTabController;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.menu.client.IconMenuItem;
+import stroom.widget.menu.client.MenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -38,20 +37,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ReceiveDataRuleSetPlugin extends MonitoringPlugin<RuleSetPresenter> {
+public class ReceiveDataRuleSetPlugin extends MonitoringPlugin<RuleSetTabController> {
 
     @Inject
     public ReceiveDataRuleSetPlugin(final EventBus eventBus,
-                                    final Provider<RuleSetPresenter> editorProvider,
+                                    final Provider<RuleSetTabController> editorProvider,
                                     final ContentManager contentManager,
                                     final ClientSecurityContext securityContext,
                                     final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, editorProvider, securityContext, documentPluginRegistry);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
     }
 
     @Override

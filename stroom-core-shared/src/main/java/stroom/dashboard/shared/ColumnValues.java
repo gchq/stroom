@@ -19,6 +19,7 @@ package stroom.dashboard.shared;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,11 +36,23 @@ public class ColumnValues extends ResultPage<ColumnValue> {
     @JsonProperty
     private final long availableCount;
 
+    /// Creates a page of values with no filter error.
+    ///
+    /// @param values         The page's values, available ones first.
+    /// @param pageResponse   Where the page is in all of the values.
+    /// @param availableCount The number of available values across all pages.
+    public ColumnValues(final List<ColumnValue> values,
+                        final PageResponse pageResponse,
+                        final long availableCount) {
+        this(values, pageResponse, null, availableCount);
+    }
+
     @JsonCreator
     public ColumnValues(@JsonProperty("values") final List<ColumnValue> values,
                         @JsonProperty("pageResponse") final PageResponse pageResponse,
+                        @JsonProperty("filterError") final TokenError filterError,
                         @JsonProperty("availableCount") final Long availableCount) {
-        super(values, pageResponse);
+        super(values, pageResponse, filterError);
         this.availableCount = NullSafe.getLong(availableCount);
     }
 

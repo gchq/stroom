@@ -27,6 +27,7 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.HoppingWindow;
 import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
@@ -38,6 +39,7 @@ import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TimeRange;
 import stroom.query.api.Window;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
@@ -113,8 +115,7 @@ public class SearchRequestFactory {
 
     public void extractDataSourceOnly(final String string,
                                       final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
-                .extractDataSourceOnly(string, consumer);
+        newBuilder().extractDataSourceOnly(string, consumer);
     }
 
     /// Finds the native query, such as SQL, in the `sql` clause of a query that may be incomplete, as
@@ -125,8 +126,11 @@ public class SearchRequestFactory {
     public Optional<String> extractNativeQuery(final String string) {
         try {
             final TokenGroup tokenGroup = StructureBuilder.create(Tokeniser.parse(string));
+            // Only the sql clause straight after from is for the from source; a later one is a
+            // joined source's.
             return tokenGroup.getChildren()
                     .stream()
+                    .limit(2)
                     .filter(token -> TokenType.SQL.equals(token.getTokenType()))
                     .findFirst()
                     .map(token -> ((KeywordGroup) token).getChildren())
@@ -141,18 +145,52 @@ public class SearchRequestFactory {
         }
     }
 
+    /// Finds the data source of the last join line in a query that may be incomplete, as it is while
+    /// being typed, for deciding what can follow it.
+    ///
+    /// @param string The query text.
+    /// @return The data source of the last join line, or empty if there is no join line or its data
+    /// source is not a name that can be found yet.
+    public Optional<DocRef> extractLastJoinDataSource(final String string) {
+        try {
+            final TokenGroup tokenGroup = StructureBuilder.create(Tokeniser.parse(string));
+            final Optional<AbstractToken> source = tokenGroup.getChildren()
+                    .stream()
+                    .filter(token -> TokenType.JOIN.equals(token.getTokenType()))
+                    .reduce((first, second) -> second)
+                    .map(token -> ((KeywordGroup) token).getChildren())
+                    .filter(children -> !children.isEmpty())
+                    .map(List::getFirst)
+                    .filter(TokenType::isString);
+            return source.map(token -> securityContext.useAsReadResult(() ->
+                    dataSourceResolver.resolveDataSourceRef(token.getUnescapedText())));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to find the joined data source in '{}'", string), e);
+            return Optional.empty();
+        }
+    }
+
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
-                .create(string, in, expressionContext);
+        return newBuilder().create(string, in, expressionContext);
+    }
+
+    // A builder for a whole query, rather than a bracketed query inside one.
+    private Builder newBuilder() {
+        return new Builder(
+                visualisationTokenConsumer,
+                dataSourceResolver,
+                queryFieldProviderProvider,
+                securityContext,
+                false);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private static class Builder {
+    private static class Builder implements JoinClauses.Parser {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
         private final DataSourceResolver dataSourceResolver;
@@ -164,24 +202,45 @@ public class SearchRequestFactory {
         private Map<String, String> paramMap;
         private final Map<String, Expression> expressionMap;
         private final Set<String> addedFields = new HashSet<>();
-        // The from and sql clauses, if there are any, for pointing errors at.
-        private AbstractToken fromToken;
-        private AbstractToken sqlToken;
         private final List<AbstractToken> additionalFields = new ArrayList<>();
         private boolean inHaving;
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
+        // True if this builder parses a bracketed query inside another query.
+        private final boolean bracketed;
+        // The params and time range of the request, which bracketed and joined queries share.
+        private List<Param> params;
+        private TimeRange timeRange;
+        // The where and filter clauses, which are only placed once any joins are known.
+        private ExpressionOperator whereExpression;
+        private ExpressionOperator filterExpression;
+        // The from and join lines, and how where is placed around them.
+        private final JoinClauses joinClauses;
+
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
                 final DataSourceResolver dataSourceResolver,
                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
-                final SecurityContext securityContext) {
+                final SecurityContext securityContext,
+                final boolean bracketed) {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
             this.dataSourceResolver = dataSourceResolver;
             this.queryFieldProviderProvider = queryFieldProviderProvider;
             this.securityContext = securityContext;
+            this.bracketed = bracketed;
             this.fieldIndex = new FieldIndex();
             this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
+            this.joinClauses = new JoinClauses(this, fieldIndex, bracketed);
+        }
+
+        @Override
+        public List<Param> getParams() {
+            return params;
+        }
+
+        @Override
+        public TimeRange getTimeRange() {
+            return timeRange;
         }
 
         void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
@@ -228,6 +287,8 @@ public class SearchRequestFactory {
 
                 final Query.Builder queryBuilder = Query.builder();
                 if (in.getQuery() != null) {
+                    params = in.getQuery().getParams();
+                    timeRange = in.getQuery().getTimeRange();
                     paramMap = ParamUtil.createParamMap(in.getQuery().getParams());
                     queryBuilder.params(in.getQuery().getParams());
                     queryBuilder.timeRange(in.getQuery().getTimeRange());
@@ -273,6 +334,11 @@ public class SearchRequestFactory {
 
         // A data source that takes a native query must have one, and no other may.
         private void checkNativeQuery(final Query query) {
+            checkNativeQuery(query, joinClauses.getSqlToken(), joinClauses.getFromToken());
+        }
+
+        @Override
+        public void checkNativeQuery(final Query query, final AbstractToken sqlToken, final AbstractToken fromToken) {
             final DocRef dataSource = query.getDataSource();
             final boolean takesNativeQuery = dataSourceResolver.takesNativeQuery(dataSource);
             final boolean hasNativeQuery = NullSafe.isNonBlankString(query.getNativeQuery());
@@ -321,8 +387,12 @@ public class SearchRequestFactory {
                                 .collect(Collectors.joining(", ")));
             }
 
-            fromToken = keywordGroup;
             final AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
+            if (dataSourceToken instanceof final TokenGroup bracketedQuery
+                && !bracketedQuery.getChildren().isEmpty()) {
+                addDataSource(bracketedQuery.getChildren(), consumer, isLenient);
+                return tokens.subList(1, tokens.size());
+            }
             final String dataSourceName = resolveDataSourceName(dataSourceToken);
             final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
                     dataSourceResolver.resolveDataSourceRef(dataSourceName));
@@ -719,7 +789,8 @@ public class SearchRequestFactory {
             }
         }
 
-        private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
+        @Override
+        public ExpressionOperator processLogic(final List<AbstractToken> tokens) {
             // Replace all term tokens with expression items.
             List<Object> out = gatherTerms(tokens);
 
@@ -759,6 +830,10 @@ public class SearchRequestFactory {
             // Gather terms.
             final List<AbstractToken> termTokens = new ArrayList<>();
             for (final AbstractToken token : tokens) {
+                // The exists and in forms at the top level of where have already become joins.
+                if (WhereSubqueries.isSubquery(token)) {
+                    throw new TokenException(token, WhereSubqueries.MISPLACED_MESSAGE);
+                }
                 if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
                     out.add(processLogic(keywordGroup.getChildren()));
                 } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
@@ -871,24 +946,37 @@ public class SearchRequestFactory {
                 final AbstractToken token = remaining.getFirst();
 
                 if (token instanceof final KeywordGroup keywordGroup) {
+                    joinClauses.checkJoinHasKeys(keywordGroup);
                     switch (keywordGroup.getTokenType()) {
                         case FROM -> {
                             checkTokenOrder(token, consumedTokens);
-                            remaining = addDataSource(remaining, queryBuilder::dataSource, false);
+                            joinClauses.processFrom(keywordGroup, queryBuilder);
+                            remaining.removeFirst();
                         }
                         case SQL -> {
                             checkTokenOrder(token, consumedTokens);
-                            processSql(keywordGroup, queryBuilder);
+                            joinClauses.processSqlClause(keywordGroup, consumedTokens, queryBuilder);
+                            remaining.removeFirst();
+                        }
+                        case JOIN -> {
+                            checkTokenOrder(token, consumedTokens);
+                            joinClauses.processJoin(keywordGroup);
+                            remaining.removeFirst();
+                        }
+                        case ON -> {
+                            checkTokenOrder(token, consumedTokens);
+                            joinClauses.processOn(keywordGroup);
                             remaining.removeFirst();
                         }
                         case WHERE -> {
                             checkTokenOrder(token, consumedTokens);
+                            remaining.set(0, joinClauses.addWhereSubqueryJoins(keywordGroup, queryBuilder));
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
-                                            Set.of(TokenType.FROM, TokenType.SQL),
+                                            Set.of(TokenType.FROM, TokenType.SQL, TokenType.JOIN, TokenType.ON),
                                             TokenType.WHERE,
-                                            queryBuilder::expression);
+                                            expression -> whereExpression = expression);
                         }
                         case EVAL -> {
                             checkTokenOrder(token, consumedTokens);
@@ -910,11 +998,13 @@ public class SearchRequestFactory {
                                             Set.of(
                                                     TokenType.FROM,
                                                     TokenType.SQL,
+                                                    TokenType.JOIN,
+                                                    TokenType.ON,
                                                     TokenType.WHERE,
                                                     TokenType.EVAL,
                                                     TokenType.WINDOW),
                                             TokenType.FILTER,
-                                            tableSettingsBuilder::valueFilter);
+                                            expression -> filterExpression = expression);
                         }
                         case SORT -> {
                             checkTokenOrder(token, consumedTokens);
@@ -963,6 +1053,9 @@ public class SearchRequestFactory {
                         }
                         case SHOW -> {
                             checkTokenOrder(token, consumedTokens);
+                            if (bracketed) {
+                                throw new TokenException(token, "A bracketed query can't show a visualisation");
+                            }
                             final TableSettings parentTableSettings = tableSettingsBuilder.build();
                             visTableSettings = visualisationTokenConsumer
                                     .processVis(keywordGroup, parentTableSettings);
@@ -976,9 +1069,14 @@ public class SearchRequestFactory {
 
                 consumedTokens.add(token.getTokenType());
             }
+            joinClauses.checkNoPendingJoin();
 
-            // Ensure StreamId and EventId fields exist if there is no grouping.
-            if (groupDepth == 0) {
+            // Place the where and filter clauses, now that any joins are known.
+            joinClauses.placeConditions(queryBuilder, tableSettingsBuilder, whereExpression, filterExpression);
+
+            // Ensure StreamId and EventId fields exist if there is no grouping. A bracketed query's
+            // rows are not events, so neither it nor a query reading one has them.
+            if (groupDepth == 0 && !bracketed && !joinClauses.hasBracketedFrom()) {
                 if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
@@ -992,6 +1090,10 @@ public class SearchRequestFactory {
                     addedFields.add(SpecialColumns.RESERVED_ANNOTATION_ID);
                 }
             }
+
+            // Add the hidden columns that the where conditions on joined rows test.
+            joinClauses.getPostJoinColumns().forEach((field, columnName) ->
+                    tableSettingsBuilder.addColumns(createFieldColumn(columnName, field)));
 
             // Add missing fields if needed.
             for (final AbstractToken token : additionalFields) {
@@ -1442,24 +1544,85 @@ public class SearchRequestFactory {
                     .build();
         }
 
-        // The SQL is a single quoted string. A triple-quoted one is taken as written, so it can hold
-        // double quotes and backslashes without escaping.
-        private void processSql(final KeywordGroup keywordGroup, final Query.Builder queryBuilder) {
-            sqlToken = keywordGroup;
-            final List<AbstractToken> children = keywordGroup.getChildren();
-            if (children.isEmpty()) {
-                throw new TokenException(keywordGroup, "Expected the SQL to run after sql, as a quoted string, "
-                                                       + "e.g. sql \"\"\"select * from my_table\"\"\"");
+        // A hidden column that holds a field as it is, for a condition to test. The field is named by
+        // its plain name, so a quoted name in the where clause still names the field, not a value.
+        private Column createFieldColumn(final String columnName, final String field) {
+            final Token fieldToken = new Token(TokenType.STRING, field.toCharArray(), 0, field.length() - 1);
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(Collections.emptyMap()));
+            try {
+                final Expression expression = expressionParser.parse(
+                        expressionContext,
+                        fieldIndex,
+                        Collections.singletonList(fieldToken));
+                return Column.builder()
+                        .id(columnName)
+                        .name(columnName)
+                        .expression(expression.toString())
+                        .visible(false)
+                        .special(true)
+                        .build();
+            } catch (final ParseException e) {
+                throw new TokenException(fieldToken, e.getMessage());
             }
-            final AbstractToken sql = children.getFirst();
-            if (!(sql instanceof QuotedStringToken)) {
-                throw new TokenException(sql, "The SQL must be a quoted string, e.g. "
-                                              + "sql \"\"\"select * from my_table\"\"\"");
+        }
+
+        // Parses one side of a key as an expression, to check it and to put it in the same form as the
+        // expressions of columns.
+        @Override
+        public String parseKeyExpression(final List<AbstractToken> tokens) {
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+            try {
+                return expressionParser.parse(expressionContext, fieldIndex, tokens).toString();
+            } catch (final ParseException e) {
+                throw new TokenException(tokens.getFirst(), e.getMessage());
             }
-            if (children.size() > 1) {
-                throw new TokenException(children.get(1), "Unexpected token after the SQL");
+        }
+
+        @Override
+        public DocRef resolveDataSource(final AbstractToken dataSourceToken) {
+            final String dataSourceName = resolveDataSourceName(dataSourceToken);
+            return securityContext.useAsReadResult(() ->
+                    dataSourceResolver.resolveDataSourceRef(dataSourceName));
+        }
+
+        // Parses a bracketed query, as in 'from (from X where Y group by Z select Z, count())', with its
+        // own fields and eval, but the params and time range of the query it is in.
+        @Override
+        public ParsedQuery parseBracketedQuery(final TokenGroup tokenGroup) {
+            final List<AbstractToken> children = tokenGroup.getChildren();
+            if (children.isEmpty() || !TokenType.FROM.equals(children.getFirst().getTokenType())) {
+                throw new TokenException(tokenGroup, "A bracketed query must start with from");
             }
-            queryBuilder.nativeQuery(sql.getUnescapedText());
+
+            final Builder builder = new Builder(
+                    visualisationTokenConsumer,
+                    dataSourceResolver,
+                    queryFieldProviderProvider,
+                    securityContext,
+                    true);
+            builder.expressionContext = expressionContext;
+            builder.paramMap = paramMap;
+            builder.params = params;
+            builder.timeRange = timeRange;
+
+            final Query.Builder queryBuilder = Query.builder()
+                    .params(params)
+                    .timeRange(timeRange);
+            final List<ResultRequest> resultRequests = builder.addTableSettings(
+                    null, children, new ArrayList<>(), queryBuilder);
+            Query query = queryBuilder.build();
+            // The query it is in only takes a bracketed query's source, where and table, so its own
+            // joins, alias or bracketed query would be dropped without a word.
+            if (query.needsJoinSupport()) {
+                throw new TokenException(tokenGroup, "A bracketed query can't have joins, an alias or a "
+                                                     + "bracketed query of its own yet");
+            }
+            builder.checkNativeQuery(query);
+            if (query.getExpression() == null) {
+                query = query.copy().expression(ExpressionOperator.builder().build()).build();
+            }
+            final TableSettings tableSettings = resultRequests.getFirst().getMappings().getFirst();
+            return new ParsedQuery(query, tableSettings);
         }
 
         private void processLimit(final KeywordGroup keywordGroup,

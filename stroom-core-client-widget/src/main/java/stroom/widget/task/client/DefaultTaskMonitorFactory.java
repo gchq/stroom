@@ -1,0 +1,45 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.widget.task.client;
+
+import com.google.gwt.event.shared.HasHandlers;
+
+public class DefaultTaskMonitorFactory implements TaskMonitorFactory {
+
+    private final HasHandlers hasHandlers;
+
+    public DefaultTaskMonitorFactory(final HasHandlers hasHandlers) {
+        this.hasHandlers = hasHandlers;
+    }
+
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                // Add the task to the map.
+                TaskStartEvent.fire(hasHandlers, task);
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+                // Remove the task from the task count.
+                TaskEndEvent.fire(hasHandlers, task);
+            }
+        };
+    }
+}

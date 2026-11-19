@@ -18,15 +18,15 @@ package stroom.index.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.ToolsContentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.index.client.presenter.IndexVolumeGroupPresenter;
+import stroom.index.client.component.IndexVolumeGroupsController;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -36,15 +36,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolumeGroupPresenter> {
+public class ManageIndexVolumesPlugin extends ToolsContentPlugin<IndexVolumeGroupsController> {
 
     @Inject
     ManageIndexVolumesPlugin(final EventBus eventBus,
                              final ContentManager contentManager,
-                             final Provider<IndexVolumeGroupPresenter> presenterProvider,
+                             final Provider<IndexVolumeGroupsController> controllerProvider,
                              final DocumentPluginRegistry documentPluginRegistry,
                              final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry, securityContext);
     }
 
     @Override
@@ -75,6 +75,6 @@ public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolume
 
     @Override
     public String getType() {
-        return IndexVolumeGroupPresenter.TAB_TYPE;
+        return IndexVolumeGroupsController.TAB_TYPE;
     }
 }

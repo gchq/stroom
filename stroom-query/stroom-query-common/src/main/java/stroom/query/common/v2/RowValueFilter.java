@@ -25,8 +25,11 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SingleFieldProvider;
 import stroom.query.language.functions.Values;
 
 import java.util.HashMap;
@@ -81,7 +84,7 @@ public class RowValueFilter {
             final ColumnFilter columnFilter = column.getColumnFilter();
             if (columnFilter != null && columnFilter.isEnabled()) {
                 final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
-                        new SingleFieldProvider(column.getId()),
+                        new SingleFieldProvider(QueryField.createUiText(column.getId())),
                         columnFilter.getFilter());
                 operator.ifPresent(valueFilterBuilder::addOperator);
             }

@@ -16,12 +16,12 @@
 
 package stroom.widget.popup.client.gin;
 
-import stroom.widget.help.client.presenter.HelpManager;
-import stroom.widget.popup.client.presenter.PopupManager;
+import stroom.widget.help.client.HelpManager;
+import stroom.widget.popup.client.PopupManager;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AbstractGinModule;
 
-public class PopupModule extends AbstractPresenterModule {
+public class PopupModule extends AbstractGinModule {
 
     @Override
     protected void configure() {

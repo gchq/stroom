@@ -23,6 +23,7 @@ import stroom.util.shared.NullSafe;
 import org.apache.poi.UnsupportedFileFormatException;
 import org.apache.poi.openxml4j.exceptions.OpenXML4JException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.util.CellReference;
@@ -33,7 +34,6 @@ import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler.SheetContentsHandler;
 import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.model.StylesTable;
-import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -214,7 +214,7 @@ final class ExcelReader {
         }
 
         @Override
-        public void cell(final String cellReference, final String formattedValue, final XSSFComment comment) {
+        public void cell(final String cellReference, final String formattedValue, final Comment comment) {
             final int column = cellReference == null
                     ? row.size()
                     : new CellReference(cellReference).getCol();

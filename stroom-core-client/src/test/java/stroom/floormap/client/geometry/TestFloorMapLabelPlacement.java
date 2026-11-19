@@ -141,14 +141,56 @@ class TestFloorMapLabelPlacement {
         }
     }
 
-    /// Captions that merely abut are both readable, so both are kept.
+    /// Captions that touch run together and read as one ("dave desk-1"), so the
+    /// less important one is dropped.
     @Test
-    void testTouchingEdgesDoNotCount() {
+    void testTouchingCaptionsAreNotBothDrawn() {
         // 80 wide, centred at 100 and 180 → they share the edge at x=140.
         assertThat(place(
                 label("a", 100, 500, 0),
-                label("b", 180, 500, 0)))
+                label("b", 180, 500, 1)))
+                .containsExactly("a");
+    }
+
+    /// Side by side, a caption closer than the gap is dropped; one exactly the
+    /// gap away is kept.
+    @Test
+    void testCaptionsSideBySideNeedTheGap() {
+        final double gap = FloorMapLabelPlacement.MIN_GAP_X_PX;
+        assertThat(place(
+                label("a", 100, 500, 0),
+                label("b", 180 + gap - 1, 500, 1)))
+                .containsExactly("a");
+        assertThat(place(
+                label("a", 100, 500, 0),
+                label("b", 180 + gap, 500, 1)))
                 .containsExactlyInAnyOrder("a", "b");
+    }
+
+    /// One above the other, a caption closer than the gap is dropped; one
+    /// exactly the gap away is kept.
+    @Test
+    void testCaptionsAboveAndBelowNeedTheGap() {
+        final double gap = FloorMapLabelPlacement.MIN_GAP_Y_PX;
+        assertThat(place(
+                label("a", 100, 500, 0),
+                label("b", 100, 514 + gap - 1, 1)))
+                .containsExactly("a");
+        assertThat(place(
+                label("a", 100, 500, 0),
+                label("b", 100, 514 + gap, 1)))
+                .containsExactlyInAnyOrder("a", "b");
+    }
+
+    /// The gap is seen across a cell boundary: these two captions are in
+    /// neighbouring 128px cells, 3px apart.
+    @Test
+    void testTheGapIsCheckedAcrossCells() {
+        // a spans x 47 to 127, b spans x 130 to 210
+        assertThat(place(
+                label("a", 87, 500, 0),
+                label("b", 170, 500, 1)))
+                .containsExactly("a");
     }
 
     /// A caption entirely off-screen is not drawn — and, importantly, does not

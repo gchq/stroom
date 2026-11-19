@@ -16,39 +16,40 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.AnnotationTagsController;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.ToolsContentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPresenter> {
+abstract class AnnotationPlugin extends ToolsContentPlugin<AnnotationTagsController> {
 
     private final String tabLabel;
 
     AnnotationPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
-                     final Provider<AnnotationTagPresenter> presenterProvider,
+                     final Provider<AnnotationTagsController> controllerProvider,
                      final DocumentPluginRegistry documentPluginRegistry,
                      final ClientSecurityContext securityContext,
                      final String tabLabel,
                      final AnnotationTagType annotationTagType) {
         super(eventBus, contentManager, () -> {
-            final AnnotationTagPresenter annotationTagPresenter = presenterProvider.get();
-            annotationTagPresenter.setTabLabel(tabLabel);
-            annotationTagPresenter.setAnnotationTagType(annotationTagType);
-            annotationTagPresenter.refresh();
-            return annotationTagPresenter;
+            final AnnotationTagsController annotationTagController = controllerProvider.get();
+            annotationTagController.setTabLabel(tabLabel);
+            annotationTagController.setAnnotationTagType(annotationTagType);
+            annotationTagController.refresh();
+            return annotationTagController;
         }, documentPluginRegistry, securityContext);
         this.tabLabel = tabLabel;
     }

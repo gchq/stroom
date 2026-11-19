@@ -24,7 +24,7 @@ import java.util.List;
 ///
 /// The tracking panel's **Area** column has a single meaning on
 /// every row — *which area is this inside?* — so there is one form of words,
-/// and it lives here where it can be unit-tested without a GWT presenter. The
+/// and it lives here where it can be unit-tested without a GWT controller. The
 /// Groups panel's **Areas** column answers the same question for a
 /// whole group, and so shares the wording with a member count appended.
 ///

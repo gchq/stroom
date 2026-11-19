@@ -18,13 +18,13 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.component.UserTabController;
 import stroom.security.shared.AppPermission;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -34,17 +34,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
+public class UserPlugin extends MonitoringPlugin<UserTabController> {
 
     private final ClientSecurityContext securityContext;
 
     @Inject
     public UserPlugin(final EventBus eventBus,
                       final ContentManager contentManager,
-                      final Provider<UserTabPresenter> presenterProvider,
+                      final Provider<UserTabController> controllerProvider,
                       final ClientSecurityContext securityContext,
                       final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
+        super(eventBus, contentManager, controllerProvider, securityContext, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 
@@ -66,8 +66,8 @@ public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
 
     @Override
     public final void open() {
-        open(presenter -> {
-            presenter.setUserRef(securityContext.getUserRef());
+        open(controller -> {
+            controller.setUserRef(securityContext.getUserRef());
         });
     }
 
@@ -86,6 +86,6 @@ public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
 
     @Override
     public String getType() {
-        return UserTabPresenter.TAB_TYPE;
+        return UserTabController.TAB_TYPE;
     }
 }

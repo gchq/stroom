@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:ed="urn:import:stroom.editor.client.component"
+             xmlns:if="urn:import:stroom.iframe.client.component"
+             xmlns:split="urn:import:stroom.widget.layout.client">
+    <split:SplitPane thin="true" sizes="800px, *"
+                     names="Editor, Preview" addStyleNames="max">
+        <g:SimplePanel styleName="max">
+            <ed:CodeEditor ui:field="editor"/>
+        </g:SimplePanel>
+        <g:FlowPanel styleName="max dock-container-vertical">
+            <g:SimplePanel styleName="max">
+                <if:IFrame ui:field="preview" accessibleName="Preview"/>
+            </g:SimplePanel>
+        </g:FlowPanel>
+    </split:SplitPane>
+</ui:UiBinder>

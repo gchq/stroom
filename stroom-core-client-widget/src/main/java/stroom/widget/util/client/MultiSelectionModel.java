@@ -20,7 +20,9 @@ import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 
 public interface MultiSelectionModel<T> {
 
@@ -98,6 +100,30 @@ public interface MultiSelectionModel<T> {
      * Clears all selected items.
      */
     void clear(boolean fireEvents);
+
+    /// Selects the row that takes the place of rows being removed, once the list shows them
+    /// gone: the row now at the first of them, else the last row (Stroom's pager moves a page they
+    /// shortened back, to show a full page); nothing if none is left (UI-GUIDE.md, "What a list
+    /// selects"). If the page still shows them (not removed after all, or listed whatever), they
+    /// stay selected. Call it once they are removed, then fetch the list again, once all are.
+    /// Selecting a row meanwhile cancels it.
+    ///
+    /// @param rows The rows being removed; those not shown are ignored.
+    void selectNextAfterRemove(Collection<? extends T> rows);
+
+    /// Selects the first row that matches when the list's page next arrives, e.g. a row just
+    /// created whose id alone is known, and selects nothing if none does, as a row not shown can't
+    /// be acted on (UI-GUIDE.md, "What a list selects"). Selecting a row meanwhile cancels it.
+    ///
+    /// @param match Whether a row is the one to select.
+    void selectWhenShown(Predicate<? super T> match);
+
+    /// Whether the first row is selected whenever the list's page arrives with none of its rows
+    /// selected, e.g. for a list whose selected row a pane beside it shows (UI-GUIDE.md, "What a
+    /// list selects"); not for a grid that keeps hidden rows selected (a picker's).
+    ///
+    /// @param selectFirst Whether it is.
+    void setSelectFirst(boolean selectFirst);
 
     /**
      * Add a handler to listen to selection actions on the multi selection model.

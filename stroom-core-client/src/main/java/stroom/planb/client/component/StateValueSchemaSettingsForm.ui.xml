@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.widget.selection.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="State Value Type"
+                        helpText="The data type used to store values. Fixed-size types (Boolean to Double) are compact; String stores text; the lookup table types de-duplicate values to save space at some cost to speed; Variable stores short values directly and longer ones in a lookup table. Default is Variable."
+                        screenReaderText="Fixed-size types are compact; lookup tables are smaller but slower. Default is Variable.">
+            <i:SelectionBox ui:field="stateValueType" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Hash Length"
+                        helpText="The size of the hash used by the Hash lookup table and Variable value types: Integer (4 bytes) or Long (8 bytes). Only enabled for those types. Default is Integer."
+                        screenReaderText="Integer (4 bytes) or Long (8 bytes); only used by hash lookup and Variable types.">
+            <i:SelectionBox ui:field="hashLength" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

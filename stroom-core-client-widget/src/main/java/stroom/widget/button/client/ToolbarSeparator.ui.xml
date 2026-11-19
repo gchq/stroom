@@ -1,0 +1,5 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A line between a toolbar's buttons -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="toolbar__separator" role="separator" aria-orientation="vertical"></div>
+</ui:UiBinder>

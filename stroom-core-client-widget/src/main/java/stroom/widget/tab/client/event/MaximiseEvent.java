@@ -19,19 +19,22 @@ package stroom.widget.tab.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.View;
+import com.google.gwt.user.client.ui.IsWidget;
 
+/// Asks the main screen to maximise what a tab shows, or, with nothing, to show or hide the explorer.
 public class MaximiseEvent extends GwtEvent<MaximiseEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final View view;
+    private final IsWidget content;
 
-    private MaximiseEvent(final View view) {
-        this.view = view;
+    private MaximiseEvent(final IsWidget content) {
+        this.content = content;
     }
 
-    public static void fire(final HasHandlers handlers, final View view) {
-        handlers.fireEvent(new MaximiseEvent(view));
+    /// @param handlers What fires it.
+    /// @param content  What to maximise, or null to show or hide the explorer.
+    public static void fire(final HasHandlers handlers, final IsWidget content) {
+        handlers.fireEvent(new MaximiseEvent(content));
     }
 
     public static Type<Handler> getType() {
@@ -51,8 +54,9 @@ public class MaximiseEvent extends GwtEvent<MaximiseEvent.Handler> {
         handler.onMaximise(this);
     }
 
-    public View getView() {
-        return view;
+    /// @return What to maximise, or null to show or hide the explorer.
+    public IsWidget getContent() {
+        return content;
     }
 
     public interface Handler extends EventHandler {

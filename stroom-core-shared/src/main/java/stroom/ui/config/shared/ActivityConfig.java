@@ -61,16 +61,18 @@ public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
         chooseOnStartup = DEFAULT_CHOOSE_ON_STARTUP;
         managerTitle = "Choose Activity";
         editorTitle = "Edit Activity";
-        editorBody = "Activity Code:</br>" +
-                "<input type=\"text\" name=\"code\"></input></br></br>" +
-                "Activity Description:</br>" +
+        // Each field is in its label, so a screen reader can say what it is. (Not a label for an
+        // id, as a field's id is the id of the property it sets.)
+        editorBody = "<label>Activity Code:</br>" +
+                "<input type=\"text\" name=\"code\"></input></label></br></br>" +
+                "<label>Activity Description:</br>" +
                 "<textarea " +
                 "rows=\"4\" " +
                 "style=\"width:100%;height:80px\" " +
                 "name=\"description\" " +
                 "validation=\".{80,}\" " +
                 "validationMessage=\"The activity description must be at least 80 characters long.\" >" +
-                "</textarea>" +
+                "</textarea></label>" +
                 "Explain what the activity is";
     }
 

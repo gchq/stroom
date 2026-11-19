@@ -1,0 +1,33 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:item="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max form">
+        <!-- Ace editor theme -->
+        <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme"
+                        helpText="The colour theme for code editors. The themes offered match the Light or Dark Stroom theme, and changing the Stroom theme resets this to its default."
+                        screenReaderText="Themes offered match the Light or Dark Stroom theme.">
+            <item:SelectionBox ui:field="editorTheme" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Ace editor key bindings -->
+        <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings"
+                        helpText="The keyboard shortcuts used in code editors: Standard or Vim. Default is Standard unless an administrator has changed the defaults."
+                        screenReaderText="Standard or Vim.">
+            <item:SelectionBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Ace editor live auto completion -->
+        <form:FormGroup identity="userPreferencesEditorLiveAutoCompletion" label="Editor Live Auto Completion"
+                        helpText="Whether code editors show completion suggestions automatically as you type. Default is Off unless an administrator has changed the defaults."
+                        screenReaderText="Shows suggestions as you type. Default is Off.">
+            <item:SelectionBox ui:field="editorLiveAutoCompletion" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- What a right-click in a text field or code editor shows -->
+        <form:FormGroup identity="userPreferencesTextContextMenu" label="Text Context Menu"
+                        helpText="What a right-click in a text field or code editor shows. Stroom shows Stroom's own menu (Cut, Copy, Paste, Select All and so on), styled as Stroom's other menus. Browser shows your browser's menu, with its spelling suggestions and password manager. A Shift+right-click always shows the browser's menu. Default is Stroom unless an administrator has changed the defaults."
+                        screenReaderText="Stroom or Browser. Shift+right-click always shows the browser's menu.">
+            <item:SelectionBox ui:field="textContextMenu" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

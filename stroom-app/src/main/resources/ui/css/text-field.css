@@ -1,0 +1,263 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The text field: every text box and text area (GWT's TextBox and TextArea, which Stroom's copies of
+   them give this class), named BEM style (block, block--modifier). A text area is the block with
+   the multiline modifier.
+
+   Its states come from the element itself: :disabled, [readonly], :focus-visible and, for a
+   rejected value, [aria-invalid="true"] (FieldValidity, which also explains it in the form group's
+   feedback). This is the only stylesheet for a text field. A field keeps this class when its
+   template adds its own (addStyleNames, not styleName, which would replace it).
+
+   Each rule weighs what the rule it replaced did (states in :where() add nothing), so other
+   stylesheets' rules for a particular field win or lose as they did.
+*/
+
+/*
+   Inputs and text areas that aren't text fields (with no block of their own yet, e.g. hand-built
+   forms) have the same look, at an element's weight (:where() adds nothing),
+   so that any class outweighs it. They are here, as it is this block that says which fields are
+   text fields; they were base.css's, and nothing loaded between the two styles inputs or text
+   areas, so they win and lose as they did.
+*/
+textarea:where(:not(.text-field)) {
+	display: block;
+	margin: 0px;
+	_margin-top: -1px;
+	resize: none;
+	height: 80px;
+	/* To ensure we get a pointer for the scrollbar */
+	cursor: auto;
+}
+
+textarea:where(:not(.text-field)),
+input:where(:not(.text-field)),
+input[type="text"]:where(:not(.text-field)) {
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
+}
+
+/* Fix auto fill colours */
+input:where(:not(.text-field)):-webkit-autofill,
+input:where(:not(.text-field)):-webkit-autofill:hover,
+input:where(:not(.text-field)):-webkit-autofill:focus,
+input:where(:not(.text-field)):-webkit-autofill:active {
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
+	font-weight: 400;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	box-sizing: border-box;
+	background-size: 100% 100%;
+	outline: none;
+	background-color: var(--control__background-color) !important;
+	color: var(--control__text-color) !important;
+	-webkit-box-shadow: 0 0 0px 30px var(--control__background-color) inset;
+	-webkit-text-fill-color: var(--control__text-color) !important;
+	transition: background-color 5000s ease-in-out 0s;
+	transition: color 5000s ease-in-out 0s;
+}
+
+textarea:where(:not(.text-field)):disabled,
+input:where(:not(.text-field)):disabled,
+input[type="text"]:where(:not(.text-field)):disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+/*
+The one read-only look for every control: the normal field (its border and background) with its
+value greyed. Disabled controls use the --control__*--disabled look above instead: a filled field
+with no border. (input[readonly] also beats input[type="text"], which once kept read-only text boxes
+looking editable.)
+*/
+input:where(:not(.text-field))[readonly],
+textarea:where(:not(.text-field))[readonly] {
+  color: var(--control__text-color--readonly);
+}
+
+/* Placeholders in the muted text colour, which is 4.5:1 on inputs (the browser's and Bootstrap's
+   greys aren't); Firefox also fades them, which opacity: 1 stops */
+:where(:not(.text-field))::placeholder {
+  color: var(--text-color--muted);
+  opacity: 1;
+}
+
+/* Keyboard focus on a field that isn't a text field (a text field's is below; a drop-down list's
+   is base.css's) */
+input:where(:not(.text-field)):focus-visible,
+textarea:where(:not(.text-field)):focus-visible {
+  border: thin solid var(--focus-border) !important;
+  box-shadow: var(--focus-shadow);
+}
+
+input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
+textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
+  box-shadow: var(--focus-shadow--invalid);
+}
+
+/* A rejected value (aria-invalid, as FieldValidity sets it) */
+input:where(:not(.text-field))[aria-invalid="true"],
+textarea:where(:not(.text-field))[aria-invalid="true"] {
+  border: thin solid var(--focus-border--invalid) !important;
+}
+
+/* The text field: */
+
+.text-field {
+    margin: 0;
+    outline: none !important;
+}
+
+/* Its size, at no weight (:where()), so that any class sizing a field outweighs it, wherever its
+   sheet comes in app.css: a layout helper (max, which comes before this sheet), a screen's own rule
+   or a modifier below */
+:where(.text-field) {
+    width: calc(200px * var(--text-scale));
+}
+
+/* Its look, at an element and a class's weight for a text box (a text area's is a class's) */
+.text-field,
+input.text-field {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    padding: var(--input__padding--vertical) var(--input__padding--horizontal);
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+}
+
+/* Disabled: the filled field with no border that every disabled control has */
+.text-field:disabled,
+input.text-field:disabled {
+    border-color: var(--control__border-color--disabled);
+    background-color: var(--control__background-color--disabled);
+    color: var(--control__text-color--disabled);
+}
+
+/* Read only: the normal field with its value greyed */
+:is(input, textarea).text-field:where([readonly]) {
+    color: var(--control__text-color--readonly);
+}
+
+/* Keyboard focus */
+:is(input, textarea).text-field:where(:focus-visible) {
+    border: thin solid var(--focus-border) !important;
+    box-shadow: var(--focus-shadow);
+}
+
+/* A rejected value (aria-invalid, as FieldValidity sets it): a red border, and a red ring with the
+   focus */
+:is(input, textarea).text-field:where([aria-invalid="true"]) {
+    border: thin solid var(--focus-border--invalid) !important;
+}
+
+:is(input, textarea).text-field:where([aria-invalid="true"]):focus-visible {
+    box-shadow: var(--focus-shadow--invalid);
+}
+
+/* A hint, in the muted text colour, which is 4.5:1 on the field (the browser's grey isn't); Firefox
+   also fades it, which opacity: 1 stops */
+:where(.text-field)::placeholder {
+    color: var(--text-color--muted);
+    opacity: 1;
+}
+
+/* A value the browser filled in keeps the field's colours rather than the browser's */
+input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-autofill:focus,
+:-webkit-autofill:active) {
+    font-family: var(--regular-font-family);
+    font-size: var(--font-size-13);
+    font-weight: 400;
+    box-sizing: border-box;
+    background-size: 100% 100%;
+    outline: none;
+    background-color: var(--control__background-color) !important;
+    color: var(--control__text-color) !important;
+    -webkit-box-shadow: 0 0 0 30px var(--control__background-color) inset;
+    -webkit-text-fill-color: var(--control__text-color) !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+}
+
+/* In a grid's cell (TextFieldCell): as wide as its column */
+.text-field--cell {
+    width: 100%;
+}
+
+/* A narrow field, e.g. for a short number */
+.text-field.text-field--narrow {
+    width: calc(80px * var(--text-scale));
+}
+
+/* A wide field, e.g. for a name, path or URI */
+.text-field.text-field--wide {
+    width: calc(400px * var(--text-scale));
+}
+
+/* A text area: several lines, scrolling when there are more, at a fixed height a screen can change
+   (at no weight, as the width above) */
+.text-field--multiline {
+    display: block;
+    overflow-y: auto;
+    resize: none;
+}
+
+:where(.text-field--multiline) {
+    height: 80px;
+}
+
+/* A read-only text area's scroll bar shows its field through it */
+.text-field--multiline[readonly]::-webkit-scrollbar,
+.text-field--multiline[readonly]::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the colours that are all that show a field's
+   state, so a rejected value (a red border), a read-only value (greyed) and a disabled one looked like any
+   other. There each state has a border of its own: a rejected value a thicker, dashed one (its message
+   says why), read only a dotted one; disabled is the system's GrayText already */
+@media (forced-colors: active) {
+    :is(input, textarea)[aria-invalid="true"] {
+        border-width: 2px !important;
+        border-style: dashed !important;
+    }
+
+    :is(input, textarea)[readonly]:not([aria-invalid="true"]) {
+        border-style: dotted !important;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(input, textarea) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+        -webkit-text-fill-color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(input, textarea):disabled {
+        color: GrayText !important;
+        -webkit-text-fill-color: GrayText !important;
+    }
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.widget.selection.client">
+    <!-- A Plan B store's Settings tab, also a Traces store's (its state type hidden): the state
+         type above the settings of that type -->
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup ui:field="stateTypeGroup"
+                        label="State Type"
+                        helpText="The kind of data this store holds: State, Range State, Temporal State, Temporal Range State, Session, Histogram or Metric. The other settings change to suit. Default is Temporal State."
+                        screenReaderText="The kind of data held; other settings change to suit. Default is Temporal State.">
+            <i:SelectionBox ui:field="stateType" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="settings"/>
+    </g:FlowPanel>
+</ui:UiBinder>

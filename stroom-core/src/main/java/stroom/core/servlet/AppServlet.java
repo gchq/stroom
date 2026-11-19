@@ -41,7 +41,6 @@ public abstract class AppServlet extends HttpServlet {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppServlet.class);
 
     private static final String TITLE = "@TITLE@";
-    private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String ROOT_CLASS = "@ROOT_CLASS@";
     private static final String BOOTSTRAP = "@BOOTSTRAP@";
 
@@ -77,7 +76,6 @@ public abstract class AppServlet extends HttpServlet {
         String html = getHtmlTemplate();
         html = html.replace(ROOT_CLASS, classNames);
         html = html.replace(TITLE, uiConfig.getHtmlTitle());
-        html = html.replace(ON_CONTEXT_MENU, uiConfig.getOncontextmenu());
         if (useBootstrap()) {
             html = html.replace(BOOTSTRAP, getBootstrapScript(getScript()));
         } else {

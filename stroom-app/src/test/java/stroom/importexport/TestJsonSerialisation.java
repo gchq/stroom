@@ -97,13 +97,19 @@ class TestJsonSerialisation {
 //        String routeAnnotation = JsonCreator.class.getName();// "com.fasterxml.jackson.annotation.JsonCreator";
 //        try (ScanResult scanResult =
 //                     new ClassGraph()
-//                             .enableAllInfo()             // Scan classes, methods, fields, annotations
+//                             .enableClasspath()
+//                             .enableNonSystemModules()
+//                             .enableClassInfo()
+//                             .enableMethodInfo()
+//                             .enableFieldInfo()
+//                             .enableAnnotationInfo()       // Scan classes, methods, fields, annotations
 //                             .acceptPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
 //                                                                      scan all packages)
 //                             .scan()) {                   // Start the scan
 //            for (ClassInfo routeClassInfo : scanResult.getClassesWithMethodAnnotation(routeAnnotation)) {
 //                try {
-//                    Class<?> clazz = routeClassInfo.loadClass();
+//                    Class<?> clazz = Class.forName(routeClassInfo.getName(), false,
+//                            TestJsonSerialisation.class.getClassLoader());
 //                    Constructor<?> constructor = clazz.getConstructor();
 //                    Object o = constructor.newInstance();
 //
@@ -128,7 +134,7 @@ class TestJsonSerialisation {
 //                    System.err.println(e.getMessage());
 //                }
 
-    /// /                AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
+    /// /                AnnotationInfo routeAnnotationInfo = routeClassInfo.getAllAnnotationInfo(routeAnnotation);
     /// /                List<AnnotationParameterValue> routeParamVals = routeAnnotationInfo.getParameterValues();
     /// /                // @com.xyz.Route has one required parameter
     /// /                String route = (String) routeParamVals.get(0).getValue();
@@ -825,6 +831,8 @@ class TestJsonSerialisation {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (final ScanResult scanResult =
                 new ClassGraph()
+                        .enableClasspath()
+                        .enableNonSystemModules()
                         .enableClassInfo()             // Scan classes, methods, fields, annotations
                         .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .enableAnnotationInfo()
@@ -837,18 +845,18 @@ class TestJsonSerialisation {
                     JsonTypeInfo.class,
                     JsonSubTypes.class,
                     JsonProperty.class)) {
-                final Class<?> clazz = routeClassInfo.loadClass();
+                final Class<?> clazz = loadClass(routeClassInfo.getName());
                 addJsonRelatedClasses(clazz, scanResult, stroomClasses);
             }
 
-            for (final ClassInfo routeClassInfo : scanResult.getClassesImplementing(
+            for (final ClassInfo routeClassInfo : scanResult.getAllClassesImplementing(
                     DirectRestService.class.getName())) {
 
-                final Class<?> clazz = routeClassInfo.loadClass();
+                final Class<?> clazz = loadClass(routeClassInfo.getName());
                 addPublicMethods(stroomClasses, clazz);
             }
-            for (final ClassInfo routeClassInfo : scanResult.getClassesImplementing(RestResource.class.getName())) {
-                final Class<?> clazz = routeClassInfo.loadClass();
+            for (final ClassInfo routeClassInfo : scanResult.getAllClassesImplementing(RestResource.class.getName())) {
+                final Class<?> clazz = loadClass(routeClassInfo.getName());
                 addPublicMethods(stroomClasses, clazz);
             }
         }
@@ -884,8 +892,8 @@ class TestJsonSerialisation {
         for (final Type type : types) {
             addType(stroomClasses, type);
 
-            for (final ClassInfo routeClassInfo : scanResult.getSubclasses(type.getClass())) {
-                final Class<?> inner = routeClassInfo.loadClass();
+            for (final ClassInfo routeClassInfo : scanResult.getAllSubclasses(type.getClass())) {
+                final Class<?> inner = loadClass(routeClassInfo.getName());
                 addJsonRelatedClasses(inner, scanResult, stroomClasses);
             }
         }
@@ -896,6 +904,8 @@ class TestJsonSerialisation {
 
         try (final ScanResult scanResult =
                 new ClassGraph()
+                        .enableClasspath()
+                        .enableNonSystemModules()
                         .enableClassInfo()
                         .acceptPackages(PACKAGE_NAME)
                         .rejectPackages("hadoopcommonshaded")
@@ -912,7 +922,7 @@ class TestJsonSerialisation {
                     !name.contains("$") &&
                     !name.contains("_")) {
                     try {
-                        final Class<?> clazz = routeClassInfo.loadClass();
+                        final Class<?> clazz = loadClass(routeClassInfo.getName());
                         if (!Modifier.isInterface(clazz.getModifiers()) &&
                             !Modifier.isAbstract(clazz.getModifiers()) &&
                             !RestResource.class.isAssignableFrom(clazz) &&
@@ -983,5 +993,12 @@ class TestJsonSerialisation {
 
         return strategies;
     }
-}
 
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, TestJsonSerialisation.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

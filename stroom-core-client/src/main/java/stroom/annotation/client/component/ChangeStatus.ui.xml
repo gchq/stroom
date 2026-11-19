@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:stroom.annotation.client.component">
+    <g:FlowPanel addStyleNames="annotation-setting">
+        <c:AnnotationStatusSetting ui:field="status"
+                                   helpText="The status to set on all the selected annotations when you select OK. Select it to choose a status; OK asks for one while it shows None."/>
+    </g:FlowPanel>
+</ui:UiBinder>

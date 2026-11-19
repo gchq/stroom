@@ -1,0 +1,146 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The floor map's icon picker (stroom.floormap.client.component.FloorMapIconPicker), the BEM block
+   floormap-icon-picker: a radio group (role="radiogroup") of its icons (floormap-icon-picker__cell, a
+   label), each holding an unseen native radio button (__input), its picture (__glyph) and its name
+   (__label). The chosen and focused looks are drawn from the radio button's state.
+*/
+
+/*
+ * Built-in icon grid. Wider than the 260px the dialog gives its drop-down — 76px
+ * columns let every icon's name sit under it unabbreviated, and a grid of unlabelled
+ * pictograms would make the user guess which is which. Seven columns keep the 21 icons
+ * to three rows, so the dialog, its labels above its controls, fits a small window.
+ * Its width comes from --floor-map-layer-style__control-width (floor-map-layer-style.css).
+ */
+.floormap-icon-picker {
+    display: grid;
+    grid-template-columns: repeat(7, 76px);
+    gap: 2px;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+/* In a form group, still a grid: its icons are labels, and form-group.css lays out a group's child
+   holding a label (a tick box and its label) as a row */
+.form-group > .floormap-icon-picker {
+    display: grid;
+}
+
+/* An icon: a label holding its radio button (unseen), its picture and its name */
+.floormap-icon-picker__cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+    padding: 6px 3px 5px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+/* The radio button, unseen but focusable: the cell shows its state. Under the cell, to outrank
+   radio-button.css's rules for every radio input */
+.floormap-icon-picker__cell > .floormap-icon-picker__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.floormap-icon-picker__cell:hover {
+    background-color: rgba(128, 128, 128, 0.14);
+}
+
+/* The chosen icon */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:checked) {
+    border-color: var(--blue-500);
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+/* The focused icon (from the keyboard), as every control's focus is shown */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:focus-visible) {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* Disabled (its graphic isn't an icon): faded, as a disabled radio group's options are, and not
+   chosen from */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) {
+    cursor: default;
+    color: var(--control__text-color--disabled);
+}
+
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) .floormap-icon-picker__glyph {
+    opacity: 0.45;
+}
+
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled):hover {
+    background-color: transparent;
+}
+
+.floormap-icon-picker__glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+}
+
+.floormap-icon-picker__label {
+    display: block;
+    font-size: 0.72rem;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+    color: var(--text-color--low-emphasis);
+}
+
+/* In forced colours (e.g. Windows high contrast) every cell's transparent border was drawn, and the
+   chosen icon was told by its fill, which is replaced. There a cell's border is the page's colour, the
+   chosen icon is filled with Highlight (its picture and name in HighlightText), and keyboard focus is
+   the outline base.css gives (on the cell, as the radio button is unseen) */
+@media (forced-colors: active) {
+    .floormap-icon-picker__cell {
+        border-color: Canvas;
+    }
+
+    .floormap-icon-picker__cell:has(.floormap-icon-picker__input:checked) {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        border-color: Highlight;
+        color: HighlightText;
+    }
+
+    .floormap-icon-picker__cell:has(.floormap-icon-picker__input:checked) .floormap-icon-picker__label {
+        color: HighlightText;
+    }
+
+    .floormap-icon-picker__cell:has(.floormap-icon-picker__input:focus-visible) {
+        outline: 2px solid Highlight;
+        outline-offset: 1px;
+    }
+
+    .floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) {
+        color: GrayText;
+    }
+}

@@ -18,17 +18,10 @@ package stroom.visualisation.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.visualisation.client.VisualisationPlugin;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
-import stroom.visualisation.client.presenter.VisualisationSettingsPresenter;
-import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
-import stroom.visualisation.client.view.VisualisationSettingsViewImpl;
 
 public class VisualisationModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(VisualisationPlugin.class);
-        bind(VisualisationPresenter.class);
-        bindPresenterWidget(VisualisationSettingsPresenter.class, VisualisationSettingsView.class,
-                VisualisationSettingsViewImpl.class);
     }
 }

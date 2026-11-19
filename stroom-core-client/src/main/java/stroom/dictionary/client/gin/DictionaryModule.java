@@ -18,19 +18,11 @@ package stroom.dictionary.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.dictionary.client.DictionaryPlugin;
-import stroom.dictionary.client.presenter.DictionaryPresenter;
-import stroom.dictionary.client.presenter.DictionarySettingsPresenter;
-import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
-import stroom.dictionary.client.view.DictionarySettingsViewImpl;
 
 public class DictionaryModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(DictionaryPlugin.class);
-        bind(DictionaryPresenter.class);
-        bindPresenterWidget(DictionarySettingsPresenter.class,
-                DictionarySettingsView.class,
-                DictionarySettingsViewImpl.class);
     }
 }

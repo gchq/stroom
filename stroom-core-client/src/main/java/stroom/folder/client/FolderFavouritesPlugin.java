@@ -16,10 +16,10 @@
 
 package stroom.folder.client;
 
-import stroom.core.client.presenter.Plugin;
+import stroom.core.client.Plugin;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

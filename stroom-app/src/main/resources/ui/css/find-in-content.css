@@ -1,0 +1,55 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Find in Content (stroom.explorer.client.component.FindInContent), a dialog's content: the pattern
+   with its options' buttons over its top right (find-in-content__top), what may be typed and what
+   is wrong with it (find-in-content__guidance), then the results above the text of the one
+   selected (find-in-content__bottom) */
+.find-in-content {
+    gap: var(--control__gap--vertical);
+}
+
+.find-in-content__top {
+    position: relative;
+}
+
+.find-in-content__top .text-field--multiline.find-in-content__pattern {
+    /* Single line */
+    height: 2.1rem;
+}
+
+.find-in-content__top .text-field--multiline.find-in-content__pattern--multiline {
+    /* Multi line */
+    height: 6.3rem;
+}
+
+/* The pattern's options (match case, regex), over the top right of the pattern */
+.find-in-content__buttons {
+    display: flex;
+    position: absolute;
+    right: 3px;
+    top: 3px;
+}
+
+/* What may be typed in the pattern, and what is wrong with it, under the pattern */
+.find-in-content__guidance {
+    margin: 0.2rem 0 0.4rem 0;
+}
+
+.find-in-content__bottom {
+    position: relative;
+    overflow: hidden;
+}

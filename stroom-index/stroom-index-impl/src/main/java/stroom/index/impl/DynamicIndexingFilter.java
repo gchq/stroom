@@ -125,9 +125,11 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             }
 
             // Create a key to create shards with.
-            if (metaHolder == null || metaHolder.getMeta() == null || index.getPartitionBy() == null) {
-                // Many tests don't use streams so where this is the case just
-                // create a basic key.
+            if (metaHolder == null
+                || metaHolder.getMeta() == null
+                || !index.getPartitionBy().isTimeBased()) {
+                // The index is not partitioned by time, or there is no stream (many tests don't use
+                // streams), so just create a basic key.
                 final Partition partition = AllPartition.INSTANCE;
                 defaultPartition = partition;
                 final IndexShardKey indexShardKey = IndexShardKey.createKey(index, partition);
@@ -210,7 +212,8 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
         if (!document.getValues().isEmpty()) {
             try {
                 Partition partition = defaultPartition;
-                if (currentEventTime != null) {
+                // Only choose a partition by event time if the index is partitioned by time.
+                if (currentEventTime != null && index.getPartitionBy().isTimeBased()) {
                     final Entry<Long, TimePartition> entry = timePartitionTreeMap.floorEntry(currentEventTime);
                     if (entry != null &&
                         entry.getValue().getPartitionFromTime() <= currentEventTime &&

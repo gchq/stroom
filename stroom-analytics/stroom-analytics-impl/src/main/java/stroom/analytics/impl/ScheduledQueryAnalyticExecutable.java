@@ -154,8 +154,11 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                         .getResultStore(mappedRequest);
                 final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                 try {
-                    final DataStore dataStore = requestAndStore
-                            .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
+                    // A search with joins starts with a placeholder store, so wait for the store
+                    // that holds the results.
+                    final DataStore dataStore = searchResponseCreatorManager
+                            .getSearchStore(requestAndStore)
+                            .getData(SearchRequestFactory.TABLE_COMPONENT_ID);
                     // Wait for search to complete.
                     dataStore.getCompletionState().awaitCompletion();
 

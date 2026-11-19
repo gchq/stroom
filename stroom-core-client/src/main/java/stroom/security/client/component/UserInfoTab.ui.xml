@@ -1,0 +1,68 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+
+        <form:FormGroup ui:field="displayNameFormGroup"
+                        identity="userInfoDisplayName"
+                        label="Display Name"
+                        screenReaderText="Read only. Updated from the identity provider at sign-in.">
+            <form:HelpHTML>
+                <p>This is the display name for the user that will be used in most screens in Stroom and
+                    in audit log entries.
+                </p>
+                <p>Stroom's property
+                    <code>stroom.security.authentication.openId.userDisplayNameClaim</code>
+                    determines which Open ID Connect claim is used to supply the Display Name.
+                </p>
+                <p>It is read only here: it is obtained from the identity provider and updated each time
+                    the user signs in.
+                </p>
+            </form:HelpHTML>
+            <form:TextBox ui:field="displayName" addStyleNames="text-field--wide" readOnly="true"/>
+        </form:FormGroup>
+
+        <form:FormGroup ui:field="fullNameFormGroup"
+                        identity="userInfoFullName"
+                        label="Full Name"
+                        screenReaderText="Read only. Updated from the identity provider at sign-in.">
+            <form:HelpHTML>
+                <p>The full name of the user, e.g. <code>Joe Bloggs</code>.
+                </p>
+                <p>It is read only here: it is obtained from the identity provider and updated each time
+                    the user signs in.
+                </p>
+            </form:HelpHTML>
+            <form:TextBox ui:field="fullName" addStyleNames="text-field--wide" readOnly="true"/>
+        </form:FormGroup>
+
+        <form:FormGroup ui:field="subjectIdFormGroup"
+                        identity="userInfoSubjectId"
+                        label="Unique Identifier">
+            <form:HelpHTML>
+                <p>This is the user's unique identifier on the external identity provider
+                    (e.g. Azure Entra ID, Cognito, Keycloak, etc.).
+                </p>
+                <p>The identifier may be a UUID like <code>b2cf3670-9d78-4bdf-9638-21f96b522b87</code>,
+                    look like an email address or be something else. To find a user, look them up in the
+                    identity provider by this identifier.
+                </p>
+                <p>Stroom's property
+                    <code>stroom.security.authentication.openId.uniqueIdentityClaim</code>
+                    determines which Open ID Connect claim is used for the unique identity.
+                </p>
+            </form:HelpHTML>
+            <form:TextBox ui:field="subjectId" addStyleNames="text-field--wide" readOnly="true"/>
+        </form:FormGroup>
+
+        <form:FormGroup ui:field="enabledFormGroup"
+                        identity="userInfoIsEnabled"
+                        helpText="Untick to stop the user signing in. The change is saved immediately. Their permissions and content are kept."
+                        screenReaderText="Unticked users cannot sign in. Saved immediately.">
+            <tickbox:TickBox ui:field="isEnabledTickBox" label="Enabled"/>
+        </form:FormGroup>
+
+    </g:FlowPanel>
+</ui:UiBinder>

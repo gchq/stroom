@@ -19,7 +19,6 @@ package stroom.analytics.shared;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,13 +33,8 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindDuplicateCheckCriteria extends BaseCriteria {
 
-    public static final String FIELD_NAME = "Name";
-    public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
-
     @JsonProperty
     private String analyticDocUuid;
-    @JsonProperty
-    private String quickFilterInput;
 
     public FindDuplicateCheckCriteria() {
     }
@@ -48,10 +42,8 @@ public class FindDuplicateCheckCriteria extends BaseCriteria {
     @JsonCreator
     public FindDuplicateCheckCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                       @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                      @JsonProperty("analyticDocUuid") final String analyticDocUuid,
-                                      @JsonProperty("quickFilterInput") final String quickFilterInput) {
+                                      @JsonProperty("analyticDocUuid") final String analyticDocUuid) {
         super(pageRequest, sortList);
-        this.quickFilterInput = quickFilterInput;
         this.analyticDocUuid = analyticDocUuid;
     }
 
@@ -61,13 +53,5 @@ public class FindDuplicateCheckCriteria extends BaseCriteria {
 
     public void setAnalyticDocUuid(final String analyticDocUuid) {
         this.analyticDocUuid = analyticDocUuid;
-    }
-
-    public String getQuickFilterInput() {
-        return quickFilterInput;
-    }
-
-    public void setQuickFilterInput(final String quickFilterInput) {
-        this.quickFilterInput = quickFilterInput;
     }
 }

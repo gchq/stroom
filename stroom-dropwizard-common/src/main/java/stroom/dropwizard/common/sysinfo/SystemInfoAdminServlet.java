@@ -188,7 +188,7 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
     private static void writeHtmlHeader(final Writer writer) throws IOException {
         writer.write("""
                 <!DOCTYPE html>
-                <html>
+                <html lang="en">
                   <head>
                     <title>System Info Providers</title>
                     <style>

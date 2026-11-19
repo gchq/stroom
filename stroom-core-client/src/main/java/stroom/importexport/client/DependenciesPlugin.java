@@ -18,18 +18,20 @@ package stroom.importexport.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.importexport.client.component.DependenciesInfoController;
+import stroom.importexport.client.component.DependenciesTabController;
+import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.component.client.AppRoot;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -39,30 +41,31 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
+public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabController> {
 
     @Inject
     public DependenciesPlugin(final EventBus eventBus,
                               final ContentManager eventManager,
-                              final Provider<DependenciesTabPresenter> presenterProvider,
+                              final Provider<DependenciesTabController> controllerProvider,
                               final ClientSecurityContext securityContext,
-                              final DocumentPluginRegistry documentPluginRegistry) {
-        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
+                              final DocumentPluginRegistry documentPluginRegistry,
+                              final Provider<DependenciesInfoController> dependenciesInfoControllerProvider,
+                              final AppRoot appRoot) {
+        super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
 
         // Open the Dependencies view, filtered by a particular DocRef
-        registerHandler(getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
-            open(presenter -> {
+        getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
+            open(controller -> {
                 final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
                         ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
                         : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
-                presenter.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
+                controller.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
             });
-        }));
+        });
+
+        // The screens it opens, made when asked for; the app owns each while it is shown
+        eventBus.addHandler(ShowDependenciesInfoDialogEvent.getType(), event ->
+                dependenciesInfoControllerProvider.get().show(appRoot, event.getDocRef()));
     }
 
     @Override
@@ -89,6 +92,6 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
 
     @Override
     public String getType() {
-        return DependenciesTabPresenter.TAB_TYPE;
+        return DependenciesTabController.TAB_TYPE;
     }
 }

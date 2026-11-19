@@ -18,15 +18,15 @@ package stroom.data.store.impl.fs.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
+import stroom.core.client.ToolsContentPlugin;
+import stroom.data.store.impl.fs.client.component.FsVolumeGroupsController;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -36,15 +36,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupPresenter> {
+public class ManageFsVolumesPlugin extends ToolsContentPlugin<FsVolumeGroupsController> {
 
     @Inject
     ManageFsVolumesPlugin(final EventBus eventBus,
                           final ContentManager contentManager,
-                          final Provider<FsVolumeGroupPresenter> presenterProvider,
+                          final Provider<FsVolumeGroupsController> controllerProvider,
                           final DocumentPluginRegistry documentPluginRegistry,
                           final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
+        super(eventBus, contentManager, controllerProvider, documentPluginRegistry, securityContext);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupP
 
     @Override
     public String getType() {
-        return FsVolumeGroupPresenter.TAB_TYPE;
+        return FsVolumeGroupsController.TAB_TYPE;
     }
 }
 

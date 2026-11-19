@@ -1,9 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FlowPanel styleName="max dock-container-vertical quickFilter-container">
-        <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min"/>
-        <g:MaxScrollPanel ui:field="explorerTreeContainer" styleName="dock-max form-control-border form-control-background"/>
-    </g:FlowPanel>
-</ui:UiBinder> 

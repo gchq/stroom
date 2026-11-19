@@ -17,20 +17,33 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.tooltip.client.FocusTooltip;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.ButtonElement;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
+/// A round floating action button with an icon, e.g. a Text component's Enter Stepping Mode. The
+/// button that takes the focus and is announced is the face inside its element.
 public class FabButton extends ButtonBase {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private final Parts parts;
     private final Element face;
+    private Runnable onClick;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
@@ -42,29 +55,81 @@ public class FabButton extends ButtonBase {
     private boolean allowClick;
 
     public FabButton() {
-        super(Document.get().createDivElement());
+        this(new Parts());
+    }
+
+    private FabButton(final Parts parts) {
+        super(BINDER.createAndBindUi(parts));
+        this.parts = parts;
+        face = parts.face;
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS);
+        addClickHandler(event -> {
+            if (onClick != null) {
+                onClick.run();
+            }
+        });
+        // Shows the button's name when it has the keyboard focus
+        FocusTooltip.install();
+    }
 
-        getElement().setClassName("stroom-button-fab");
+    /// The button is the face inside this element, so only the face takes the focus: GWT makes a
+    /// focus widget's element a tab stop when it is attached, which would make this two.
+    @Override
+    protected void onAttach() {
+        super.onAttach();
+        getElement().removeAttribute("tabindex");
+    }
 
-        face = Document.get().createPushButtonElement();
-        face.setClassName("face");
+    /// @param onClick Run when the button is pressed, or null for nothing.
+    public void setOnClick(final Runnable onClick) {
+        this.onClick = onClick;
+    }
 
-        getElement().appendChild(face);
+    /// Puts the focus on the button (its face).
+    public void focus() {
+        face.focus();
+    }
+
+    @Override
+    public void setFocus(final boolean focused) {
+        if (focused) {
+            face.focus();
+        } else {
+            face.blur();
+        }
     }
 
     @Override
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
+        // The face is the real button: disabled, it stays focusable so its name and tooltip can
+        // still be reached, and says it is disabled (onBrowserEvent ignores it while disabled)
         if (enabled) {
-            face.removeClassName("face--disabled");
+            face.removeClassName("fab-button__face--disabled");
+            face.removeAttribute("aria-disabled");
         } else {
-            face.addClassName("face--disabled");
+            face.addClassName("fab-button__face--disabled");
+            face.setAttribute("aria-disabled", "true");
+        }
+    }
+
+    /// Sets the tooltip, which also names the button for screen readers (it has only an icon).
+    ///
+    /// @param title The tooltip and name.
+    @Override
+    public void setTitle(final String title) {
+        super.setTitle(title);
+        if (title == null || title.isEmpty()) {
+            face.removeAttribute("aria-label");
+        } else {
+            face.setAttribute("aria-label", title);
         }
     }
 
     public void setIcon(final SvgImage svgImage) {
-        face.setInnerHTML("<div class=\"svgIcon " + svgImage.getClassName() + "\">" + svgImage.getSvg() + "</div>");
+        // The icon is decoration: the button is named by its aria-label
+        parts.icon.setClassName("icon-wrap " + svgImage.getClassName());
+        parts.icon.setInnerHTML(svgImage.getSvg());
     }
 
     @Override
@@ -141,11 +206,11 @@ public class FabButton extends ButtonBase {
     }
 
     private void onClickStart() {
-        face.addClassName("face--down");
+        face.addClassName("fab-button__face--down");
     }
 
     private void onClickCancel() {
-        face.removeClassName("face--down");
+        face.removeClassName("fab-button__face--down");
     }
 
     private void onClick() {
@@ -159,5 +224,27 @@ public class FabButton extends ButtonBase {
         final NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false, false, false, false);
         getElement().dispatchEvent(evt);
         allowClick = false;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The parts of the template the button changes; its outer element is the template's root
+    static final class Parts {
+
+        @UiField
+        ButtonElement face;
+        @UiField
+        DivElement icon;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @UiTemplate("FabButton.ui.xml")
+    interface Binder extends UiBinder<DivElement, Parts> {
+
     }
 }

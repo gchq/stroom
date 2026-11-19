@@ -1,0 +1,31 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+/*
+   A floor map layer's preview (stroom.floormap.client.FloorMapSwatchHtml), named BEM style (block,
+   block__element). floor-map-swatch__image is the thumbnail of a layer's graphic: the size of the
+   preview box (--floor-map-swatch__size), letterboxed into it so a non-square image isn't distorted,
+   as the canvas draws the graphic. Its size is given as a class, not left to its width and height
+   attributes alone, so that a stylesheet rule on img can't collapse the box and, with it,
+   object-fit.
+*/
+
+.floor-map-swatch__image {
+    width: var(--floor-map-swatch__size);
+    height: var(--floor-map-swatch__size);
+    object-fit: contain;
+}

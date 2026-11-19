@@ -106,13 +106,6 @@ public final class FloorMapHighlight {
         return groups.colourFor(id) == null && areas.isRelated(id);
     }
 
-    /// `true` when the entity carries any non-selection highlight.
-    ///
-    /// @param id a fact key or event entity id; may be `null`
-    public boolean isHighlighted(final String id) {
-        return colourFor(id) != null;
-    }
-
     /// `true` if nothing at all is highlighted.
     public boolean isEmpty() {
         return !groups.hasAny() && !areas.hasRelated();

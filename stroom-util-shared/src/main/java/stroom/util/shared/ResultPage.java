@@ -56,16 +56,59 @@ public class ResultPage<T> implements Serializable {
     @JsonProperty
     private final PageResponse pageResponse;
 
+    /**
+     * A non-fatal diagnostic about the filter that produced this page, or null.
+     * <p>
+     * Quick filters query on a debounce as the user types, so a bad filter must never become an
+     * HTTP error - a half-typed term is an expected transient state, not a fault. Every DAO
+     * therefore catches parse and mapping failures and returns an empty page. That is the right
+     * interim behaviour but loses the reason, so a rejected filter looks exactly like a filter
+     * that matched nothing.
+     * <p>
+     * This carries the reason back on the normal successful response instead, positionally, so
+     * the offending token can be underlined rather than described. Same pattern as
+     * {@code DashboardSearchResponse.tokenError}.
+     */
+    @JsonProperty
+    private final TokenError filterError;
+
     public ResultPage(final List<T> values) {
-        this.values = values;
-        this.pageResponse = createPageResponse(values);
+        this(values, createPageResponse(values), null);
+    }
+
+    public ResultPage(final List<T> values,
+                      final PageResponse pageResponse) {
+        this(values, pageResponse, null);
     }
 
     @JsonCreator
     public ResultPage(@JsonProperty("values") final List<T> values,
-                      @JsonProperty("pageResponse") final PageResponse pageResponse) {
+                      @JsonProperty("pageResponse") final PageResponse pageResponse,
+                      @JsonProperty("filterError") final TokenError filterError) {
         this.values = values;
         this.pageResponse = pageResponse;
+        this.filterError = filterError;
+    }
+
+    /**
+     * An empty page that says why it is empty. See {@link #filterError}.
+     */
+    public static <T> ResultPage<T> emptyWithFilterError(final TokenError filterError) {
+        return ResultPage.<T>builder()
+                .filterError(filterError)
+                .build();
+    }
+
+    public TokenError getFilterError() {
+        return filterError;
+    }
+
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    public Builder<T> copy() {
+        return new Builder<>(this);
     }
 
     /**
@@ -408,12 +451,13 @@ public class ResultPage<T> implements Serializable {
         }
         final ResultPage<?> that = (ResultPage<?>) o;
         return Objects.equals(values, that.values) &&
-               Objects.equals(pageResponse, that.pageResponse);
+               Objects.equals(pageResponse, that.pageResponse) &&
+               Objects.equals(filterError, that.filterError);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(values, pageResponse);
+        return Objects.hash(values, pageResponse, filterError);
     }
 
     @Override
@@ -423,4 +467,86 @@ public class ResultPage<T> implements Serializable {
                ", pageResponse=" + pageResponse +
                '}';
     }
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Self-typed so the nine {@link ResultPage} subclasses can extend it and add their own fields
+     * while still returning their own builder from the setters here. Same shape as
+     * {@code BaseCriteria.BaseCriteriaBuilder}.
+     */
+    public abstract static class AbstractResultPageBuilder<
+            T,
+            T_RESULT_PAGE extends ResultPage<T>,
+            B extends AbstractResultPageBuilder<T, T_RESULT_PAGE, B>>
+            extends AbstractBuilder<T_RESULT_PAGE, B> {
+
+        protected List<T> values = Collections.emptyList();
+        protected PageResponse pageResponse;
+        protected TokenError filterError;
+
+        protected AbstractResultPageBuilder() {
+        }
+
+        protected AbstractResultPageBuilder(final T_RESULT_PAGE resultPage) {
+            this.values = resultPage.getValues();
+            this.pageResponse = resultPage.getPageResponse();
+            this.filterError = resultPage.getFilterError();
+        }
+
+        public B values(final List<T> values) {
+            this.values = values;
+            return self();
+        }
+
+        public B pageResponse(final PageResponse pageResponse) {
+            this.pageResponse = pageResponse;
+            return self();
+        }
+
+        /**
+         * @see ResultPage#getFilterError()
+         */
+        public B filterError(final TokenError filterError) {
+            this.filterError = filterError;
+            return self();
+        }
+
+        /**
+         * The page response every subclass should fall back to when none was set explicitly, so
+         * that {@code builder().values(list).build()} behaves like {@code new ResultPage<>(list)}.
+         */
+        protected PageResponse pageResponseOrDefault() {
+            return pageResponse != null
+                    ? pageResponse
+                    : createPageResponse(values);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class Builder<T>
+            extends AbstractResultPageBuilder<T, ResultPage<T>, Builder<T>> {
+
+        private Builder() {
+        }
+
+        private Builder(final ResultPage<T> resultPage) {
+            super(resultPage);
+        }
+
+        @Override
+        protected Builder<T> self() {
+            return this;
+        }
+
+        @Override
+        public ResultPage<T> build() {
+            return new ResultPage<>(values, pageResponseOrDefault(), filterError);
+        }
+    }
+
 }

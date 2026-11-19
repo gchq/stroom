@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:c="urn:import:stroom.widget.component.client">
+
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup ui:field="keysFormGroup" identity="keyShortcutRecorderKeys" label="Keys"
+                        helpText="Press the keys of the shortcut, e.g. Ctrl+Shift+S, or two keys one after the other without modifiers, e.g. G then U. Press the keys again to start over. Enter accepts the shortcut, Escape cancels and Tab moves on. Some keys, such as Ctrl+W, are kept by the browser and can't be used."
+                        screenReaderText="Press the keys of the shortcut, then Enter to accept or Escape to cancel.">
+            <!-- Read only, so that a screen reader reads the keys as its value: they are recorded
+                 from key presses, not typed -->
+            <form:TextBox ui:field="keys" addStyleNames="w-100 key-shortcut-recorder__keys" readOnly="true"
+                            placeholder="Press keys"/>
+        </form:FormGroup>
+        <!-- Polite, as it changes with each key press while the keys keep the focus -->
+        <c:AriaPanel ui:field="message" styleName="key-shortcut-recorder__message" ariaLive="polite"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -24,7 +24,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import java.util.function.Supplier;
 
 /**
- * See also HyperlinkEventHandlerImpl
+ * See also HyperlinkOpener
  */
 
 @Deprecated // Users are no longer expected to use this function to create or edit annotations

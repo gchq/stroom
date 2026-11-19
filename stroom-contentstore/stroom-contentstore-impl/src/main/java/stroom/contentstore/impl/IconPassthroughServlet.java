@@ -18,6 +18,7 @@ package stroom.contentstore.impl;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.net.SsrfGuard;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.NullSafe;
 
@@ -29,11 +30,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +46,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Thus, this servlet can be given the content pack's ID and will stream
  * the image from its original URL directly back to the client.
  */
+// The icon URLs come from the content store definitions, which are fetched from remote URLs,
+// so they are not trusted. Only http(s) URLs that pass SsrfGuard are fetched, only image
+// responses are passed through, and the response is served with headers that stop it being
+// sniffed or run as an active document on Stroom's origin.
 public class IconPassthroughServlet extends HttpServlet implements IsServlet {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IconPassthroughServlet.class);
@@ -59,6 +65,27 @@ public class IconPassthroughServlet extends HttpServlet implements IsServlet {
 
     /** Set of paths to access this servlet */
     private static final Set<String> PATH_SPECS = Set.of(PATH_PART);
+
+    private static final Set<String> ALLOWED_SCHEMES = Set.of("http", "https");
+
+    private static final String IMAGE_MIMETYPE_PREFIX = "image/";
+
+    // Redirects are followed by hand so each hop can be checked.
+    private static final int MAX_REDIRECTS = 5;
+
+    private static final int CONNECT_TIMEOUT_MS = 10_000;
+
+    private static final int READ_TIMEOUT_MS = 10_000;
+
+    static final String CONTENT_TYPE_OPTIONS_HEADER = "X-Content-Type-Options";
+
+    static final String CONTENT_TYPE_OPTIONS_NOSNIFF = "nosniff";
+
+    static final String CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy";
+
+    // Stops an icon (e.g. an SVG) running script or loading anything if it is opened directly
+    // rather than through an img tag. The same policy GitHub uses for raw content.
+    static final String CONTENT_SECURITY_POLICY_INERT = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
 
     /**
      * Call to provide a map from the ID to the URL for the icon.
@@ -83,30 +110,37 @@ public class IconPassthroughServlet extends HttpServlet implements IsServlet {
             final String id = URLDecoder.decode(query, StandardCharsets.UTF_8);
             final String url = ID_URL_MAP.get(id);
             if (NullSafe.isNonBlankString(url)) {
-                InputStream istr = null;
-                OutputStream ostr = null;
-
+                HttpURLConnection connection = null;
                 try {
-                    final URI uri = new URI(url);
-                    final URLConnection connection = uri.toURL().openConnection();
+                    connection = openConnection(url);
 
                     final String httpContentType = connection.getContentType();
-                    if (httpContentType != null && !httpContentType.isBlank()) {
-                        LOGGER.debug("Setting content type to {}", httpContentType);
-                        response.setHeader("Content-Type", httpContentType);
+                    if (!isImageContentType(httpContentType)) {
+                        LOGGER.error("Icon for content pack with ID '{}' from '{}' has content type '{}', " +
+                                     "which is not an image", id, url, httpContentType);
+                        response.setStatus(HttpServletResponse.SC_BAD_GATEWAY);
+                        return;
                     }
-                    istr = connection.getInputStream();
-                    ostr = response.getOutputStream();
-                    final byte[] buffer = new byte[IO_BUF_SIZE];
-                    for (int length; (length = istr.read(buffer)) != -1; ) {
-                        ostr.write(buffer, 0, length);
+
+                    LOGGER.debug("Setting content type to {}", httpContentType);
+                    response.setHeader("Content-Type", httpContentType);
+                    response.setHeader(CONTENT_TYPE_OPTIONS_HEADER, CONTENT_TYPE_OPTIONS_NOSNIFF);
+                    response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_INERT);
+
+                    try (final InputStream istr = connection.getInputStream();
+                            final OutputStream ostr = response.getOutputStream()) {
+                        final byte[] buffer = new byte[IO_BUF_SIZE];
+                        for (int length; (length = istr.read(buffer)) != -1; ) {
+                            ostr.write(buffer, 0, length);
+                        }
                     }
-                } catch (final URISyntaxException e) {
-                    LOGGER.error("Cannot parse the icon URL for content pack with ID '{}': {}",
+                } catch (final URISyntaxException | IllegalArgumentException e) {
+                    LOGGER.error("Refusing to fetch the icon for content pack with ID '{}' from '{}': {}",
                             id,
+                            url,
                             e.getMessage(),
                             e);
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.setStatus(HttpServletResponse.SC_BAD_GATEWAY);
                 } catch (final IOException e) {
                     LOGGER.error("Error downloading icon for content pack with ID '{}' from '{}': {}",
                             id,
@@ -115,11 +149,8 @@ public class IconPassthroughServlet extends HttpServlet implements IsServlet {
                             e);
                     response.setStatus(HttpServletResponse.SC_BAD_GATEWAY);
                 } finally {
-                    if (istr != null) {
-                        istr.close();
-                    }
-                    if (ostr != null) {
-                        ostr.close();
+                    if (connection != null) {
+                        connection.disconnect();
                     }
                 }
             } else {
@@ -132,6 +163,63 @@ public class IconPassthroughServlet extends HttpServlet implements IsServlet {
             LOGGER.error("No query string found in icon passthrough servlet");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
+    }
+
+    /// Opens a connection to the URL, following any redirects by hand so that every URL
+    /// visited is checked.
+    ///
+    /// @param url The URL to fetch.
+    /// @return A connection that has received a non-redirect response.
+    /// @throws IllegalArgumentException If a URL is not allowed or there are too many redirects.
+    private HttpURLConnection openConnection(final String url) throws IOException, URISyntaxException {
+        String currentUrl = url;
+        for (int redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
+            final URI uri = checkUrl(currentUrl);
+            final HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            connection.setInstanceFollowRedirects(false);
+            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(READ_TIMEOUT_MS);
+
+            final int status = connection.getResponseCode();
+            final String location = connection.getHeaderField("Location");
+            if (isRedirect(status) && location != null) {
+                connection.disconnect();
+                currentUrl = uri.resolve(location).toString();
+                LOGGER.debug("Following redirect from '{}' to '{}'", uri, currentUrl);
+            } else {
+                return connection;
+            }
+        }
+        throw new IllegalArgumentException("Too many redirects fetching '" + url + "'");
+    }
+
+    /// Checks that an icon URL is safe to fetch.
+    ///
+    /// @param url The URL to check.
+    /// @return The parsed URL if it is http(s) and its host is not a disallowed address.
+    /// @throws URISyntaxException If the URL cannot be parsed.
+    /// @throws IllegalArgumentException If the URL is not allowed.
+    static URI checkUrl(final String url) throws URISyntaxException {
+        final URI uri = new URI(url);
+        final String scheme = NullSafe.get(uri.getScheme(), str -> str.toLowerCase(Locale.ROOT));
+        if (scheme == null || !ALLOWED_SCHEMES.contains(scheme)) {
+            throw new IllegalArgumentException("URL scheme must be one of " + ALLOWED_SCHEMES + ": '" + url + "'");
+        }
+        SsrfGuard.rejectMetadataAndWildcard(url);
+        return uri;
+    }
+
+    /// Checks whether a response content type is an image.
+    ///
+    /// @param contentType The content type, possibly with parameters. May be null.
+    /// @return True if the content type is an image type.
+    static boolean isImageContentType(final String contentType) {
+        return NullSafe.isNonBlankString(contentType)
+               && contentType.trim().toLowerCase(Locale.ROOT).startsWith(IMAGE_MIMETYPE_PREFIX);
+    }
+
+    private static boolean isRedirect(final int status) {
+        return status >= 300 && status < 400 && status != HttpURLConnection.HTTP_NOT_MODIFIED;
     }
 
     @Override

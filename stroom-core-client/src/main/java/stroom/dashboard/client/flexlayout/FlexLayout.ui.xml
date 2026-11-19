@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's layout: its panes and splitters on a design surface, which scrolls when it is
+     bigger than the space it has -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:SimplePanel styleName="flex-layout">
+        <g:SimplePanel ui:field="scrollPanel" styleName="flex-layout__scroll">
+            <g:SimplePanel ui:field="layout" styleName="flex-layout__layout">
+                <g:FlowPanel ui:field="designSurface" styleName="flex-layout__design-surface"/>
+            </g:SimplePanel>
+        </g:SimplePanel>
+    </g:SimplePanel>
+</ui:UiBinder>

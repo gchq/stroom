@@ -1,0 +1,62 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Edit Tags: a field tags are typed in above the known tags and the document's, with buttons that
+   move tags between them */
+/* The field's row, and the lists' row with the move buttons between them (each a form, which is
+   a column) */
+.explorer-node-edit-tags__input-container,
+.explorer-node-edit-tags__input-panel,
+.explorer-node-edit-tags__lists {
+    flex-direction: row;
+}
+
+/* The buttons that move tags between the lists, one above the other, centred */
+.explorer-node-edit-tags__move {
+    flex-direction: column;
+    justify-content: center;
+}
+
+.explorer-node-edit-tags__all-tags,
+.explorer-node-edit-tags__node-tags {
+    flex-basis: 200px;
+}
+
+/* The Clear button's toolbar, over the end of the field */
+.explorer-node-edit-tags__input-panel .explorer-node-edit-tags__clear-toolbar {
+    position: absolute;
+    margin-top: 7px;
+    right: 50px;
+}
+
+/* Its icon in the field's text colour: the colour a toolbar button's icon takes (toolbar-button.css) */
+.explorer-node-edit-tags__clear {
+    --icon-button__color: var(--control__text-color);
+}
+
+/* The lists' groups side by side, so without the space a form group has above it after the first
+   (form-group.css) */
+.explorer-node-edit-tags__lists .explorer-node-edit-tags__all-tags,
+.explorer-node-edit-tags__lists .explorer-node-edit-tags__node-tags {
+    margin-top: 0px;
+}
+
+/* The tag lists' row takes the height left in the dialog, not the height of every tag, so that a
+   long list scrolls within its border rather than squashing the field above */
+.explorer-node-edit-tags__lists {
+    flex-basis: 0;
+    min-height: 0;
+}

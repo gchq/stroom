@@ -20,29 +20,26 @@ import java.time.Instant
 
 ext.moduleName = 'stroom.app.gwt'
 
-def getSysPropertyOrDefault = { propName, defaultValue ->
-    def val
-    if (System.hasProperty(propName)
-            && System.getProperty(propName) != "unspecified"
-            && System.getProperty(propName) != "") {
-        val = System.getProperty(propName)
-        logger.info("Using property [${propName}] with value [${val}]")
-    } else {
-        val = defaultValue
-        logger.info("Property [${propName}] has no value, using default value [${val}]")
-    }
-    return val
-}
-
 def resourcesDir = project(':stroom-app').file('src/main/resources')
 def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
-def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
-logger.info('javaIoTmpDir: ' + javaIoTmpDir)
-// Append the rootDir so gwt builds from different dirs don't conflict
-def gwtBuildDir = "${javaIoTmpDir}/gwt/${rootProjectAbsPathStr}/app-gwt_build"
-gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
+// The GWT build directory, which holds the copied sources and the compile's scratch directories (tmp,
+// work, deploy, extra). By default it is under java.io.tmpdir, with the repo's path appended so builds
+// from different checkouts don't conflict. /tmp is often a RAM-backed tmpfs, which these can fill, so
+// to keep them on disk set the STROOM_GWT_BUILD_DIR env var to a directory, or 'project' to use this
+// project's build directory. -PgwtBuildDir=<dir> overrides both.
+def gwtBuildDir
+if (findProperty('gwtBuildDir')) {
+    gwtBuildDir = "${findProperty('gwtBuildDir')}/app-gwt_build"
+} else if (System.getenv('STROOM_GWT_BUILD_DIR') == 'project') {
+    gwtBuildDir = layout.buildDirectory.dir('gwt').get().asFile.toString()
+} else if (System.getenv('STROOM_GWT_BUILD_DIR')) {
+    gwtBuildDir = "${System.getenv('STROOM_GWT_BUILD_DIR')}/app-gwt_build"
+} else {
+    gwtBuildDir = "${System.getProperty('java.io.tmpdir')}/gwt/${rootDir.absolutePath}/app-gwt_build"
+            .replaceAll('/+', '/')
+}
 logger.info('gwtBuildDir: ' + gwtBuildDir)
 
 def gwtTmpDir = "${gwtBuildDir}/tmp"
@@ -84,7 +81,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-docref')
-    implementation project(':stroom-gwt')
+    implementation project(':stroom-gwt:stroom-gwt-compiler')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-statistics:stroom-statistics-client')
 
@@ -93,7 +90,6 @@ dependencies {
     implementation libs.guice.gwt
     implementation libs.gwt.dev
     implementation libs.gwt.user
-    implementation libs.gwtp.mvp.client
     implementation libs.jackson.annotations
     implementation libs.jaxb.api.gwt
     // needed so gwt can compile the stroom-query code that contains swagger annotations
@@ -102,14 +98,13 @@ dependencies {
 
     gwtSourceImplementation libs.gin
     gwtSourceImplementation libs.gwt.user
-    gwtSourceImplementation libs.gwtp.mvp.client
     gwtSourceImplementation libs.jaxb.api.gwt
     // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.swagger.annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws.rs.api.gwt
 
-    gwtDevSourceImplementation project(':stroom-gwt')
+    gwtDevSourceImplementation project(':stroom-gwt:stroom-gwt-compiler')
     gwtDevSourceImplementation libs.gwt.dev
 
     jakartaTransformerImplementation libs.eclipse.transformer.cli

@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-page form">
+        <form:FormGroup helpText="Fits the dashboard to the width of the window. When not ticked, the dashboard keeps the width set in design mode and scrolls sideways if it is wider than the window. Default is ticked.">
+            <tickbox:TickBox ui:field="fitWidth" label="Fit Width" identity="layoutConstraintFitWidth"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Fits the dashboard to the height of the window. When not ticked, the dashboard keeps the height set in design mode and scrolls up and down if it is taller than the window. Default is ticked.">
+            <tickbox:TickBox ui:field="fitHeight" label="Fit Height" identity="layoutConstraintFitHeight"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

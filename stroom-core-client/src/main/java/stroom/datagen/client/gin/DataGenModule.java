@@ -18,30 +18,14 @@ package stroom.datagen.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.datagen.client.DataGenPlugin;
-import stroom.datagen.client.presenter.DataGenPresenter;
-import stroom.datagen.client.presenter.DataGenProcessingPresenter;
-import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
-import stroom.datagen.client.presenter.DataGenSettingsPresenter;
-import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsView;
-import stroom.datagen.client.view.DataGenProcessingViewImpl;
-import stroom.datagen.client.view.DataGenSettingsViewImpl;
 
 /**
- * GIN bindings for the data generator's client-side plugin, presenters and views.
+ * GIN bindings for the data generator's client-side plugin, controllers and components.
  */
 public class DataGenModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(DataGenPlugin.class);
-
-        bind(DataGenPresenter.class);
-
-        bindPresenterWidget(DataGenSettingsPresenter.class,
-                DataGenSettingsView.class,
-                DataGenSettingsViewImpl.class);
-        bindPresenterWidget(DataGenProcessingPresenter.class,
-                DataGenProcessingView.class,
-                DataGenProcessingViewImpl.class);
     }
 }

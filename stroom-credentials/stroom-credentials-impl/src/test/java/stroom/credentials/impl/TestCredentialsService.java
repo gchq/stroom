@@ -37,6 +37,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -98,6 +100,67 @@ class TestCredentialsService {
                 new KeyStoreFilePathChecker(pathCreator, credentialsConfigProvider));
         // Lenient as getKeyStore() is used internally so doesn't check the app permission
         lenient().when(securityContext.hasAppPermission(AppPermission.CREDENTIALS)).thenReturn(true);
+    }
+
+    @Test
+    void testDeleteRemovesTheCredentialsPermissions() {
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.DELETE)))
+                .thenReturn(true);
+
+        credentialsService.deleteCredentialsAndSecret(UUID);
+
+        verify(credentialsDao).deleteCredentialsAndSecret(UUID);
+        // Creating it made its creator the owner, so a delete that left that row behind would leave
+        // a permission on a credential that no longer exists.
+        final ArgumentCaptor<DocRef> removed = ArgumentCaptor.forClass(DocRef.class);
+        verify(documentPermissionService).removeAllDocumentPermissions(removed.capture());
+        assertThat(removed.getValue().getType())
+                .isEqualTo(Credential.TYPE);
+        assertThat(removed.getValue().getUuid())
+                .isEqualTo(UUID);
+    }
+
+    @Test
+    void testDeleteWithoutPermissionRemovesNothing() {
+        assertThatThrownBy(() -> credentialsService.deleteCredentialsAndSecret(UUID))
+                .isInstanceOf(PermissionException.class);
+
+        verify(credentialsDao, never()).deleteCredentialsAndSecret(any());
+        verify(documentPermissionService, never()).removeAllDocumentPermissions(any(DocRef.class));
+    }
+
+    @Test
+    void testFailedDeleteKeepsThePermissions() {
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.DELETE)))
+                .thenReturn(true);
+        doThrow(new RuntimeException("database unavailable"))
+                .when(credentialsDao).deleteCredentialsAndSecret(UUID);
+
+        assertThatThrownBy(() -> credentialsService.deleteCredentialsAndSecret(UUID))
+                .hasMessage("database unavailable");
+
+        verify(documentPermissionService, never()).removeAllDocumentPermissions(any(DocRef.class));
+    }
+
+    @Test
+    void testStoringANewCredentialMakesItsCreatorTheOwner() {
+        final UserRef creator = UserRef.builder().uuid("creator-uuid").subjectId("creator").build();
+        when(securityContext.getUserRef()).thenReturn(creator);
+        final Credential credential = new Credential(UUID,
+                "a credential",
+                null,
+                null,
+                null,
+                null,
+                CredentialType.USERNAME_PASSWORD,
+                null,
+                null);
+
+        credentialsService.storeCredentials(new PutCredentialRequest(credential,
+                new UsernamePasswordSecret("user", "password")));
+
+        verify(credentialsDao).putStoredSecret(any(), anyBoolean());
+        verify(documentPermissionService).setPermission(credential.asDocRef(), creator, DocumentPermission.OWNER);
     }
 
     @Test

@@ -29,9 +29,7 @@ import com.google.gwt.dom.client.InputElement;
  *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
- * <li>.gwt-PasswordTextBox { primary style }</li>
- * <li>.gwt-PasswordTextBox-readonly { dependent style set when the password
- * text box is read-only }</li>
+ * <li>.text-field { primary style (Stroom's, in text-field.css) }</li>
  * </ul>
  *
  * <p>
@@ -68,7 +66,8 @@ public class PasswordTextBox extends TextBox {
      * Creates an empty password text box.
      */
     public PasswordTextBox() {
-        super(Document.get().createPasswordInputElement(), "gwt-PasswordTextBox");
+        // Stroom: the text field block (text-field.css), in place of GWT's gwt-PasswordTextBox
+        super(Document.get().createPasswordInputElement(), "text-field");
     }
 
     /**

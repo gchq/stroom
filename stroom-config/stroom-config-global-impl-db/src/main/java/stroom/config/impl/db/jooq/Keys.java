@@ -12,9 +12,11 @@ import org.jooq.impl.Internal;
 import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
 import stroom.config.impl.db.jooq.tables.Preferences;
+import stroom.config.impl.db.jooq.tables.QuickFilterHistory;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.config.impl.db.jooq.tables.records.ConfigUpdateTrackerRecord;
 import stroom.config.impl.db.jooq.tables.records.PreferencesRecord;
+import stroom.config.impl.db.jooq.tables.records.QuickFilterHistoryRecord;
 
 
 /**
@@ -33,4 +35,6 @@ public class Keys {
     public static final UniqueKey<ConfigUpdateTrackerRecord> KEY_CONFIG_UPDATE_TRACKER_PRIMARY = Internal.createUniqueKey(ConfigUpdateTracker.CONFIG_UPDATE_TRACKER, DSL.name("KEY_config_update_tracker_PRIMARY"), new TableField[] { ConfigUpdateTracker.CONFIG_UPDATE_TRACKER.ID }, true);
     public static final UniqueKey<PreferencesRecord> KEY_PREFERENCES_PRIMARY = Internal.createUniqueKey(Preferences.PREFERENCES, DSL.name("KEY_preferences_PRIMARY"), new TableField[] { Preferences.PREFERENCES.ID }, true);
     public static final UniqueKey<PreferencesRecord> KEY_PREFERENCES_USER_UUID = Internal.createUniqueKey(Preferences.PREFERENCES, DSL.name("KEY_preferences_user_uuid"), new TableField[] { Preferences.PREFERENCES.USER_UUID }, true);
+    public static final UniqueKey<QuickFilterHistoryRecord> KEY_QUICK_FILTER_HISTORY_PRIMARY = Internal.createUniqueKey(QuickFilterHistory.QUICK_FILTER_HISTORY, DSL.name("KEY_quick_filter_history_PRIMARY"), new TableField[] { QuickFilterHistory.QUICK_FILTER_HISTORY.ID }, true);
+    public static final UniqueKey<QuickFilterHistoryRecord> KEY_QUICK_FILTER_HISTORY_QUICK_FILTER_HISTORY_USER_CTX_DS_TEXT_IDX = Internal.createUniqueKey(QuickFilterHistory.QUICK_FILTER_HISTORY, DSL.name("KEY_quick_filter_history_quick_filter_history_user_ctx_ds_text_idx"), new TableField[] { QuickFilterHistory.QUICK_FILTER_HISTORY.USER_UUID, QuickFilterHistory.QUICK_FILTER_HISTORY.CONTEXT, QuickFilterHistory.QUICK_FILTER_HISTORY.DATA_SOURCE_UUID, QuickFilterHistory.QUICK_FILTER_HISTORY.FILTER_TEXT }, true);
 }

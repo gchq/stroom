@@ -18,13 +18,11 @@ package stroom.kafka.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.kafka.client.KafkaConfigPlugin;
-import stroom.kafka.client.presenter.KafkaConfigPresenter;
 
 public class KafkaConfigModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(KafkaConfigPlugin.class);
-        bind(KafkaConfigPresenter.class);
     }
 }

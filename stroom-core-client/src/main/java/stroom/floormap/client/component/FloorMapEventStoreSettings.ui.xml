@@ -1,0 +1,64 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:sg="urn:import:stroom.planb.client.component"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!--
+      Deliberately without the Key Schema and Value Schema panels a Plan B store shows here. Those
+      are properties of this document type rather than choices: the Map tab's read seeks to each
+      entity's answer, which is only correct over the prefix-free key encoding the type fixes, and a
+      Plan B schema is immutable once data is written. A control the document would overwrite on save
+      is worse than no control at all.
+    -->
+    <g:FlowPanel styleName="max form floor-map-event-store-settings">
+        <form:SettingsGroup label="Map Display">
+            <form:FormGroup
+                    identity="floorMapEventExpiry"
+                    label="Event Expiry"
+                    controlNames="Amount, Unit"
+                    helpText="How long an entity stays on the map after its last event. Measured from the position of the timeline scrubber rather than from now, so scrubbing back in time shows what was current then. This cannot be turned off - an entity that stopped emitting would otherwise be drawn for ever. It must not be longer than the data retention period below, because the data needed to show the entity would by then have been deleted.">
+                <g:FlowPanel styleName="duration-setting">
+                    <valuespinner:ValueSpinner ui:field="expiryTime" minValue="1" maxValue="9999"/>
+                    <i:SelectionBox ui:field="expiryTimeUnit" addStyleNames="allow-focus"/>
+                </g:FlowPanel>
+            </form:FormGroup>
+        </form:SettingsGroup>
+        <form:SettingsGroup label="General">
+            <sg:GeneralSettingsForm ui:field="generalSettings"/>
+        </form:SettingsGroup>
+        <form:SettingsGroup label="Condense Data">
+            <!-- What turning condense on costs, in the one place a user can turn it on: condense
+                 collapses a run of identical values to the earliest row of the run, so a
+                 stationary entity's latest effective time stops advancing and it expires while
+                 still emitting. That is a surprising interaction, and it is not visible from either
+                 setting alone -->
+            <g:FlowPanel>
+                <tx:Label addStyleNames="floor-map-event-store-settings__condense-warning"
+                         text="This will cause repeating events to disappear from the map."/>
+                <sg:CondenseSettingsForm ui:field="condenseSettings"/>
+            </g:FlowPanel>
+        </form:SettingsGroup>
+        <form:SettingsGroup label="Data Retention">
+            <sg:RetentionSettingsForm ui:field="retentionSettings"/>
+        </form:SettingsGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -19,7 +19,7 @@ package stroom.widget.form.client;
 /**
  * Callback for an asynchronous file upload performed by {@link FileUploadSubmitter}.
  */
-interface FileUploadCallback {
+public interface FileUploadCallback {
 
     /**
      * Called just before the upload request is sent.

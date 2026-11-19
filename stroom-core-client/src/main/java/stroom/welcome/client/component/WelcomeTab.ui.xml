@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max welcome-tab__body">
+        <g:SimplePanel ui:field="html"/>
+            <!-- Each row is a name and its value: the names are row headers, so a screen reader
+                 reads the name with its value -->
+            <g:HTMLPanel tag="table" styleName="welcome-tab__build-info w-100">
+                <tbody>
+                <tr>
+                    <th scope="row">User Unique Identity:</th>
+                    <td><tx:Label ui:field="userIdentity"/></td>
+                </tr>
+                <tr>
+                    <th scope="row">User Display Name:</th>
+                    <td><tx:Label ui:field="displayName"/></td>
+                </tr>
+                <tr>
+                    <th scope="row">User Full Name:</th>
+                    <td><tx:Label ui:field="fullName"/></td>
+                </tr>
+                <tr>
+                    <th scope="row">Build Version:</th>
+                    <td><tx:Label ui:field="buildVersion"/></td>
+                </tr>
+                <tr>
+                    <th scope="row">Build Date:</th>
+                    <td><tx:Label ui:field="buildDate"/></td>
+                </tr>
+                <tr>
+                    <th scope="row">Up Date:</th>
+                    <td><tx:Label ui:field="upDate"/></td>
+                </tr>
+                <tr>
+                    <th scope="row">Node Name:</th>
+                    <td><tx:Label ui:field="nodeName"/></td>
+                </tr>
+                </tbody>
+            </g:HTMLPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

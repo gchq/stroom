@@ -62,7 +62,7 @@ class TestDataSourceProviderRegistry {
         final ArgumentCaptor<FindFieldCriteria> captor = ArgumentCaptor.forClass(FindFieldCriteria.class);
         Mockito.verify(sqlProvider).getFieldInfo(captor.capture());
         assertThat(captor.getValue().getNativeQuery()).isEqualTo("select name from staff");
-        assertThat(captor.getValue().getFilter()).isEqualTo("na");
+        assertThat(captor.getValue().getQuickFilter()).isEqualTo("na");
         assertThat(captor.getValue().getQueryable()).isTrue();
     }
 

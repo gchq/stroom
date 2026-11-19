@@ -18,6 +18,7 @@ package stroom.activity.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,11 +35,18 @@ public class ActivityResultPage extends ResultPage<Activity> {
     @JsonProperty
     private final String qualifiedFilterInput;
 
+    public ActivityResultPage(final List<Activity> values,
+                              final PageResponse pageResponse,
+                              final String qualifiedFilterInput) {
+        this(values, pageResponse, qualifiedFilterInput, null);
+    }
+
     @JsonCreator
     public ActivityResultPage(@JsonProperty("values") final List<Activity> values,
                               @JsonProperty("pageResponse") final PageResponse pageResponse,
-                              @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
-        super(values, pageResponse);
+                              @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput,
+                              @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
         this.qualifiedFilterInput = qualifiedFilterInput;
     }
 

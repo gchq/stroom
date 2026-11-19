@@ -216,7 +216,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                     .filter(classInfo -> !classInfo.hasAnnotation(NotDocumented.class))
                     .filter(Predicate.not(ClassInfo::isInterface))
                     .filter(Predicate.not(ClassInfo::isAbstract))
-                    .map(ClassInfo::loadClass)
+                    .map(classInfo -> loadClass(classInfo.getName()))
                     .flatMap(clazz -> {
                         final XsltFunctionDef anno = clazz.getAnnotation(XsltFunctionDef.class);
                         if (anno == null) {
@@ -272,6 +272,14 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
 
     ///
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, GenerateXsltFunctionDefinitions.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static final class AnnotatedClass {
 
         private final Class<?> clazz;

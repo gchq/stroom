@@ -18,6 +18,7 @@ package stroom.job.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,10 +34,16 @@ public class JobNodeAndInfoListResponse extends ResultPage<JobNodeAndInfo> {
         super(values);
     }
 
+    public JobNodeAndInfoListResponse(final List<JobNodeAndInfo> values,
+                                      final PageResponse pageResponse) {
+        this(values, pageResponse, null);
+    }
+
     @JsonCreator
     public JobNodeAndInfoListResponse(@JsonProperty("values") final List<JobNodeAndInfo> values,
-                                      @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        super(values, pageResponse);
+                                      @JsonProperty("pageResponse") final PageResponse pageResponse,
+                                      @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
     }
 
     /**

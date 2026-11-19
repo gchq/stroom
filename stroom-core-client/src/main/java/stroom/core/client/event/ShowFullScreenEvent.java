@@ -16,23 +16,28 @@
 
 package stroom.core.client.event;
 
+import stroom.widget.component.client.Controller;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final Controller controller;
 
-    private ShowFullScreenEvent(final PresenterWidget<?> presenterWidget) {
-        this.presenterWidget = presenterWidget;
+    private ShowFullScreenEvent(final Controller controller) {
+        this.controller = controller;
     }
 
+    /// Asks the app to show a controller full screen, in place of its shell.
+    ///
+    /// @param handlers   What fires it.
+    /// @param controller What to show, e.g. a document's host.
     public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget) {
-        handlers.fireEvent(new ShowFullScreenEvent(presenterWidget));
+                            final Controller controller) {
+        handlers.fireEvent(new ShowFullScreenEvent(controller));
     }
 
     public static Type<Handler> getType() {
@@ -52,8 +57,9 @@ public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
         handler.onShowFullScreen(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    /// @return What to show full screen, e.g. a document's host.
+    public Controller getController() {
+        return controller;
     }
 
 

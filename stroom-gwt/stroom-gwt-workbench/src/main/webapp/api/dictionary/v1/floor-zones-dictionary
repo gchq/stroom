@@ -1,0 +1,7 @@
+{
+    "type": "Dictionary",
+    "uuid": "floor-zones-dictionary",
+    "name": "Floor zones",
+    "version": "1",
+    "data": "{\"Head Office\": {\"Main Building\": {\"Ground Floor\": [{\"name\": \"Reception\", \"tags\": [\"public\"], \"points\": [{\"x\": 50, \"y\": 1}, {\"x\": 99, \"y\": 1}, {\"x\": 99, \"y\": 25}, {\"x\": 50, \"y\": 25}]}, {\"name\": \"Meeting room\", \"points\": [{\"x\": 40, \"y\": 35}, {\"x\": 70, \"y\": 35}, {\"x\": 70, \"y\": 59}, {\"x\": 40, \"y\": 59}]}]}}}"
+}

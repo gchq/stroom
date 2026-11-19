@@ -198,8 +198,6 @@ public class XmlFormatter {
 
             // Now format and output the character.
             if (elementType == ElementType.CONTENT) {
-//                outputStyle(applyStyle, output);
-
                 // Format and output content.
                 if (elementType != lastElementType) {
                     boolean dataElement = false;
@@ -244,7 +242,6 @@ public class XmlFormatter {
                 nextElementType = null;
                 preserveWhitespace = false;
 
-//                outputStyle(applyStyle, output);
                 if (elementType != ElementType.CONTENT && elementType != ElementType.COMMENT && c == '"') {
                     // Toggle attribute value flag.
                     inAttValue = !inAttValue;
@@ -465,24 +462,7 @@ public class XmlFormatter {
     }
 
     private void escape(final char c) {
-//        switch (c) {
-//            case '\r':
-//                // Ignore carriage returns.
-//                break;
-//            case '<':
-//                output.append(LT);
-//                break;
-//            case '>':
-//                // Convert < to &gt;.
-//                output.append(GT);
-//                break;
-//            case '&':
-//                // Convert & to &amp;.
-//                output.append(AMP);
-//                break;
-//            default:
         output.append(c);
-//        }
     }
 
     /**

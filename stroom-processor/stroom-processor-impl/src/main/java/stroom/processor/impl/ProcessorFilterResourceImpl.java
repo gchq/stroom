@@ -109,11 +109,7 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
         final ProcessorFilterService processorFilterService = processorFilterServiceProvider.get();
         final SecurityContext securityContext = securityContextProvider.get();
         securityContext.secure(PERMISSION, () -> {
-            final ExpressionCriteria criteria = new ExpressionCriteria(
-                    PageRequest.unlimited(),
-                    null,
-                    request.getExpression());
-            final ResultPage<ProcessorFilter> resultPage = processorFilterService.find(criteria);
+            final ResultPage<ProcessorFilter> resultPage = findBulkChangeFilters(request);
             resultPage.forEach(filter -> {
                 switch (request.getChange()) {
                     case ENABLE -> processorFilterService.setEnabled(filter.getId(), true);
@@ -128,5 +124,22 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
         });
 
         return true;
+    }
+
+    @Override
+    public Integer getBulkChangeCount(final BulkProcessorFilterChangeRequest request) {
+        return securityContextProvider.get().secureResult(PERMISSION, () ->
+                findBulkChangeFilters(request).size());
+    }
+
+    // The filters a bulk change applies to. The count and the change share this so that the number
+    // the user confirms is the number that changes: the processor list's own row total also counts
+    // the processors' rows, which a change never touches.
+    private ResultPage<ProcessorFilter> findBulkChangeFilters(final BulkProcessorFilterChangeRequest request) {
+        final ExpressionCriteria criteria = new ExpressionCriteria(
+                PageRequest.unlimited(),
+                null,
+                request.getExpression());
+        return processorFilterServiceProvider.get().find(criteria);
     }
 }

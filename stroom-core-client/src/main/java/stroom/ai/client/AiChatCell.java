@@ -26,6 +26,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class AiChatCell extends AbstractCell<AiChat> {
 
+    private static final String BLOCK = "ai-chat-cell";
+
     private final DateTimeFormatter dateTimeFormatter;
 
     public AiChatCell(final DateTimeFormatter dateTimeFormatter) {
@@ -38,20 +40,16 @@ public class AiChatCell extends AbstractCell<AiChat> {
             final SafeHtmlBuilder row = new SafeHtmlBuilder();
 
             // Add title
-            row.append(Templates.div(getCellClassName() + "-title",
+            row.append(Templates.div(BLOCK + "__title",
                     value.getTitle(),
                     SafeHtmlUtil.from(value.getTitle())));
 
             // Add age
-            row.append(Templates.div(getCellClassName() + "-age",
+            row.append(Templates.div(BLOCK + "__age",
                     SafeHtmlUtil.from(dateTimeFormatter.formatRelative(
                             value.getUpdateTimeMs(), System.currentTimeMillis()))));
 
-            sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
+            sb.append(Templates.div(BLOCK, row.toSafeHtml()));
         }
-    }
-
-    private String getCellClassName() {
-        return "aiChatHistoryCell";
     }
 }

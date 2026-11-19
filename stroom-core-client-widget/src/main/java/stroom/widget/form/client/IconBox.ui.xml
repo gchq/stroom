@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A field with an icon inside the end of its border (icon-box.css). The field takes the slot's
+  place; the icon is a picture, hidden from screen readers.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:HTMLPanel styleName="icon-box">
+        <span ui:field="fieldSlot"></span>
+        <div ui:field="icon" class="icon-box__icon" aria-hidden="true"></div>
+    </g:HTMLPanel>
+</ui:UiBinder>

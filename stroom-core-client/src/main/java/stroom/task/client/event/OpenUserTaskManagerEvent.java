@@ -16,12 +16,13 @@
 
 package stroom.task.client.event;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class OpenUserTaskManagerEvent extends GwtEvent<OpenUserTaskManagerHandler> {
+public class OpenUserTaskManagerEvent extends GwtEvent<OpenUserTaskManagerEvent.Handler> {
 
-    private static Type<OpenUserTaskManagerHandler> TYPE;
+    private static Type<Handler> TYPE;
 
     private OpenUserTaskManagerEvent() {
         // Private constructor.
@@ -31,7 +32,7 @@ public class OpenUserTaskManagerEvent extends GwtEvent<OpenUserTaskManagerHandle
         handlers.fireEvent(new OpenUserTaskManagerEvent());
     }
 
-    public static Type<OpenUserTaskManagerHandler> getType() {
+    public static Type<Handler> getType() {
         if (TYPE == null) {
             TYPE = new Type<>();
         }
@@ -39,12 +40,24 @@ public class OpenUserTaskManagerEvent extends GwtEvent<OpenUserTaskManagerHandle
     }
 
     @Override
-    public Type<OpenUserTaskManagerHandler> getAssociatedType() {
+    public Type<Handler> getAssociatedType() {
         return getType();
     }
 
     @Override
-    protected void dispatch(final OpenUserTaskManagerHandler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onOpen(this);
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Handles a request to open the user's task manager.
+    public interface Handler extends EventHandler {
+
+        /// Called when the user's task manager is to be opened.
+        ///
+        /// @param event The event.
+        void onOpen(OpenUserTaskManagerEvent event);
     }
 }

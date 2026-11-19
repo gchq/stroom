@@ -25,6 +25,8 @@ import jakarta.inject.Provider;
 
 import java.util.Set;
 
+/// Serves the main app at `/dashboard`, so links to the old dashboard-only app keep working.
+/// Given a document's `type` and `uuid` in the URL, the app shows it full screen.
 public class DashboardServlet extends AppServlet implements IsServlet {
 
     static final String PATH_PART = "/dashboard";
@@ -42,7 +44,7 @@ public class DashboardServlet extends AppServlet implements IsServlet {
     }
 
     String getScript() {
-        return "ui/dashboard/dashboard.nocache.js";
+        return "ui/stroom/stroom.nocache.js";
     }
 
     @Override

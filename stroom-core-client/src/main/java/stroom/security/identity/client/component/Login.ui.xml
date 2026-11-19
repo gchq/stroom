@@ -1,0 +1,46 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:svg="urn:import:stroom.svg.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!-- The page is its main content, a landmark screen readers can go to -->
+    <c:AriaPanel styleName="sign-in-page" role="main">
+        <!-- The page's heading, for screen readers (the logo and form say it to sighted users) -->
+        <tx:Html styleName="sr-only"><h1>Sign in to Stroom</h1></tx:Html>
+
+        <g:FlowPanel styleName="sign-in-page__form-panel">
+            <g:FlowPanel styleName="max form-padding form sign-in-page__form">
+
+                <g:SimplePanel styleName="sign-in-page__user-image-container">
+                    <svg:Icon image="INFINITY_LOGO" addStyleNames="sign-in-page__user-image"/>
+                </g:SimplePanel>
+
+                <!-- User Name -->
+                <form:FormGroup addStyleNames="form-group--reserve-feedback" ui:field="userNameGroup" identity="userName" label="User Name" required="true"
+                                helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
+                    <g:FlowPanel addStyleNames="sign-in-page__user-name-outer">
+                        <!-- The fields say what they hold, so that browsers and password managers
+                             can fill them in -->
+                        <form:TextBox ui:field="userName" addStyleNames="sign-in-page__user-name"
+                                      placeholder="Enter User Name" autocomplete="username"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+
+                <!-- Password -->
+                <form:FormGroup addStyleNames="form-group--reserve-feedback" ui:field="passwordGroup" identity="password" label="Password" required="true">
+                    <form:PasswordBox ui:field="password" placeholder="Enter Password"
+                                      autocomplete="current-password"/>
+                </form:FormGroup>
+
+
+                <b:Button ui:field="signInButton" text="Sign In" addStyleNames="sign-in-page__sign-in-button button--contained-primary allow-focus"/>
+
+                <b:LinkButton ui:field="forgotPasswordLink" addStyleNames="sign-in-page__forgot-password">Forgot password?</b:LinkButton>
+
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </c:AriaPanel>
+</ui:UiBinder>

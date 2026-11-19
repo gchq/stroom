@@ -1,0 +1,30 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A processor profile: its name, node group, processing schedules and time zone -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:p="urn:import:stroom.processor.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.widget.selection.client"
+             xmlns:dp="urn:import:stroom.widget.datepicker.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="profileName" label="Profile Name" required="true"
+                        helpText="A unique name for this processing profile. Processor filters refer to the profile by this name."
+                        screenReaderText="Must be unique.">
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="nodeGroup" label="Node Group"
+                        helpText="The node group whose nodes may run tasks for filters using this profile. If the group is disabled, no tasks run."
+                        screenReaderText="Only nodes in this group run tasks for this profile.">
+            <i:SelectionBox ui:field="nodeGroup" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processingSchedules" label="Processing Schedules" addStyleNames="dock-max"
+                        helpText="The periods when filters using this profile may process data, each with optional thread limits. No processing happens outside all of these periods.">
+            <g:SimplePanel styleName="dock-max">
+                <p:ProfilePeriodList ui:field="list"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+        <g:SimplePanel addStyleNames="form-group">
+            <dp:TimeZoneBox ui:field="timeZone"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

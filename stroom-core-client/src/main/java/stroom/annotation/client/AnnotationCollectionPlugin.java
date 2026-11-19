@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.AnnotationTagsController;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
 import stroom.document.client.DocumentPluginRegistry;
@@ -33,12 +34,12 @@ public class AnnotationCollectionPlugin extends AnnotationPlugin {
     @Inject
     AnnotationCollectionPlugin(final EventBus eventBus,
                                final ContentManager contentManager,
-                               final Provider<AnnotationTagPresenter> presenterProvider,
+                               final Provider<AnnotationTagsController> controllerProvider,
                                final DocumentPluginRegistry documentPluginRegistry,
                                final ClientSecurityContext securityContext) {
         super(eventBus,
                 contentManager,
-                presenterProvider,
+                controllerProvider,
                 documentPluginRegistry,
                 securityContext,
                 "Annotation Collections",
@@ -47,6 +48,6 @@ public class AnnotationCollectionPlugin extends AnnotationPlugin {
 
     @Override
     public String getType() {
-        return AnnotationTagPresenter.TAB_TYPE + AnnotationTagType.COLLECTION.getDisplayValue();
+        return AnnotationTagsController.TAB_TYPE + AnnotationTagType.COLLECTION.getDisplayValue();
     }
 }

@@ -29,8 +29,7 @@ import com.google.gwt.dom.client.TextAreaElement;
  *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
- * <li>.gwt-TextArea { primary style }</li>
- * <li>.gwt-TextArea-readonly { dependent style set when the text area is read-only }</li>
+ * <li>.text-field.text-field--multiline { primary style (Stroom's, in text-field.css) }</li>
  * </ul>
  *
  * <p>
@@ -75,7 +74,9 @@ public class TextArea extends TextBoxBase {
      */
     public TextArea() {
         super(Document.get().createTextAreaElement());
-        setStyleName("gwt-TextArea");
+        // Stroom: the text field block with its multiline modifier (text-field.css), in place of
+        // GWT's gwt-TextArea
+        setStyleName("text-field text-field--multiline");
     }
 
     /**

@@ -96,6 +96,8 @@ class TestEntityEventHandlers {
 
     private void doWithEventHandlers(final Consumer<List<ClassInfo>> eventHandlersConsumer) {
         try (final ScanResult result = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .enableAnnotationInfo()

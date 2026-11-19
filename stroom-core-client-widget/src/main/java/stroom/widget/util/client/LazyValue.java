@@ -102,15 +102,4 @@ public class LazyValue<T> {
     public boolean isInitialised() {
         return value != null;
     }
-
-    /**
-     * If the value has been initialised run the valueConsumer with the initialised value.
-     * If it hasn't been initialised, it will remain in that state and valueConsumer will
-     * not be called.
-     */
-    public void consumeIfInitialised(final Consumer<T> valueConsumer) {
-        if (value != null) {
-            valueConsumer.accept(value);
-        }
-    }
 }

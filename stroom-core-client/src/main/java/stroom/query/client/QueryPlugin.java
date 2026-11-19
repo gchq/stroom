@@ -23,12 +23,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocPresenter;
-import stroom.query.client.presenter.QueryDocPresenter;
+import stroom.document.client.editor.DocumentEditorHost;
+import stroom.query.client.component.QueryDocEditor;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,26 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
-    private final Provider<QueryDocPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<QueryDocEditor> editorProvider;
     private final RestFactory restFactory;
 
     @Inject
     public QueryPlugin(final EventBus eventBus,
-                       final Provider<QueryDocPresenter> editorProvider,
+                       final Provider<QueryDocEditor> editorProvider,
                        final RestFactory restFactory,
                        final ContentManager contentManager,
                        final DocumentPluginEventManager entityPluginEventManager,
                        final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
+        this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
     }
 
     @Override
-    protected DocPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+    protected DocumentEditorHost<?> createEditor() {
+        return new DocumentEditorHost<>(eventBus, editorProvider.get(), QueryDoc.TYPE);
     }
 
     @Override

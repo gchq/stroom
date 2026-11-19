@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The character navigator (CharacterNavigator), the BEM block character-navigator
+     (character-navigator.css): the line and character ranges shown, links that open the
+     "Set Source Range" dialog, and the buttons that move the range, hidden until there is one; the
+     refresh button stays -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:btn="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="character-navigator">
+        <g:FlowPanel styleName="character-navigator__labels">
+            <btn:LinkButton ui:field="lblLines" addStyleNames="character-navigator__label"
+                            title="Set Source Range" opensDialog="true"/>
+            <btn:LinkButton ui:field="lblCharacters" addStyleNames="character-navigator__label"
+                            title="Set Source Range" opensDialog="true"/>
+        </g:FlowPanel>
+        <btn:Toolbar name="Character navigation">
+            <btn:ToolbarButton ui:field="showHeadCharactersBtn" svg="FAST_BACKWARD" title="Show Beginning"
+                               visible="false"/>
+            <btn:ToolbarButton ui:field="advanceCharactersBackwardBtn" svg="STEP_BACKWARD"
+                               title="Advance Range Backwards" visible="false"/>
+            <btn:ToolbarButton ui:field="advanceCharactersForwardBtn" svg="STEP_FORWARD"
+                               title="Advance Range Forwards" visible="false"/>
+            <btn:RefreshButton ui:field="refresh" enabled="false"/>
+        </btn:Toolbar>
+    </g:FlowPanel>
+</ui:UiBinder>

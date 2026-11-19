@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:t="urn:import:stroom.task.client.component">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:SimplePanel styleName="dock-min form-padding">
+            <v:QuickFilter accessibleName="Filter server tasks" ui:field="nameFilter"/>
+        </g:SimplePanel>
+        <g:SimplePanel styleName="dock-max">
+            <t:ServerTaskList ui:field="list"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder> 

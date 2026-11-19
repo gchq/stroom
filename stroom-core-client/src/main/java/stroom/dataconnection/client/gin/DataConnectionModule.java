@@ -18,20 +18,12 @@ package stroom.dataconnection.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.dataconnection.client.DataConnectionPlugin;
-import stroom.dataconnection.client.presenter.DataConnectionPresenter;
-import stroom.dataconnection.client.presenter.DataConnectionSettingsPresenter;
-import stroom.dataconnection.client.presenter.DataConnectionSettingsPresenter.DataConnectionSettingsView;
-import stroom.dataconnection.client.view.DataConnectionSettingsViewImpl;
 
-/// GIN bindings for the Data Connection editor.
+/// Adds the Data Connection document type to the UI.
 public class DataConnectionModule extends PluginModule {
 
     @Override
     protected void configure() {
         bindPlugin(DataConnectionPlugin.class);
-        bind(DataConnectionPresenter.class);
-        bindPresenterWidget(DataConnectionSettingsPresenter.class,
-                DataConnectionSettingsView.class,
-                DataConnectionSettingsViewImpl.class);
     }
 }

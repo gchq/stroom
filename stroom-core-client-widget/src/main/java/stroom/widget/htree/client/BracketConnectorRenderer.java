@@ -21,19 +21,74 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
 
+import java.util.function.Predicate;
+
 public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
 
+    // Where no theme token gives the colour
+    private static final String FALLBACK_COLOUR = "grey";
     private static final double RADIUS = 4;
     private static final double HALF_PI = Math.PI * 0.5;
     private static final double ONE_AND_HALF_PI = Math.PI * 1.5;
+    // As faded items are (e.g. those detached to be moved)
+    private static final double FADED_ALPHA = 0.75;
 
-    private final CssColor lineColor;
+    private CssColor lineColor = CssColor.make(FALLBACK_COLOUR);
 
     private final Context2d ctx;
+    private final Predicate<T> faded;
+    // The custom property (a theme token) that gives the brackets' colour, or null for grey
+    private final String colourProperty;
 
     public BracketConnectorRenderer(final Context2d ctx) {
+        this(ctx, item -> false, null);
+    }
+
+    /// @param ctx            Where to draw.
+    /// @param faded          Whether an item is faded, whose bracket (to its children) is too.
+    /// @param colourProperty The custom property (a theme token, e.g. "--expression-tree__bracket")
+    ///                       that gives the brackets' colour, read from the canvas so that it
+    ///                       follows a change of theme; or null for grey.
+    public BracketConnectorRenderer(final Context2d ctx,
+                                    final Predicate<T> faded,
+                                    final String colourProperty) {
         this.ctx = ctx;
-        lineColor = CssColor.make("grey");
+        this.faded = faded;
+        this.colourProperty = colourProperty;
+    }
+
+    @Override
+    public void render(final TreeLayout<T> treeLayout,
+                       final T parent,
+                       final T child,
+                       final double x1,
+                       final double y1,
+                       final double x2,
+                       final double y2,
+                       final boolean firstChild,
+                       final boolean lastChild) {
+        // In forced colours (e.g. Windows High Contrast), which don't change what a canvas draws, the
+        // user's text colour (the canvas's own colour, which they set), not faded, as fading lowers
+        // the contrast the user has chosen
+        final boolean forced = CanvasColours.isForcedColours();
+        lineColor = CssColor.make(forced
+                ? CanvasColours.getTextColour(ctx.getCanvas())
+                : getThemeColour());
+        ctx.setGlobalAlpha(faded.test(parent) && !forced
+                ? FADED_ALPHA
+                : 1);
+        render(treeLayout, x1, y1, x2, y2, firstChild, lastChild);
+        ctx.setGlobalAlpha(1);
+    }
+
+    private String getThemeColour() {
+        if (colourProperty == null) {
+            return FALLBACK_COLOUR;
+        }
+        final String colour = CanvasColours.getProperty(ctx.getCanvas(), colourProperty);
+        return colour.isEmpty()
+                ? FALLBACK_COLOUR
+                : colour;
     }
 
     @Override

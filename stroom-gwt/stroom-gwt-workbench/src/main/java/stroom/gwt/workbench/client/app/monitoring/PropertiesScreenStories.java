@@ -1,0 +1,344 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package stroom.gwt.workbench.client.app.monitoring;
+
+import stroom.config.global.client.component.GlobalPropertyTabController;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
+import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
+import stroom.gwt.workbench.client.app.rest.RecordedRequest;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
+import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.gwt.workbench.framework.client.story.StoryLayout;
+import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
+
+/// Stories of `App/Main/PropertiesScreen`, showing Stroom's real [GlobalPropertyTabController] (the
+/// 'Properties' tab and its property edit dialog) with fake REST replies, for Stroom's
+/// `GlobalConfigResource` and `NodeResource`:
+///
+/// | Stroom endpoint | Used for |
+/// |---|---|
+/// | `POST /config/v1/properties` | the properties |
+/// | `GET /node/v1/enabled` | the enabled nodes |
+/// | `POST /config/v1/nodeProperties/{node}` (nodes the properties request didn't cover) | a node's properties |
+/// | `GET /config/v1/properties/{name}` | a property |
+/// | `GET /config/v1/clusterProperties/{name}/yamlOverrideValue/{node}` | the dialog's per-node YAML values |
+/// | `PUT /config/v1/clusterProperties/{name}` | updating a property |
+///
+/// The update is checked on the request spy.
+public final class PropertiesScreenStories {
+
+    private static final String NODE_PROP = """
+            {"id": 1, "name": {"parentParts": ["stroom"], "leafPart": "node"}, "defaultValue": "node1",
+              "databaseOverrideValue": {"hasOverride": false}, "yamlOverrideValue": YAML,
+              "editable": true, "password": false, "requireRestart": false, "requireUiRestart": false,
+              "description": "The name of this node.", "dataTypeName": "String"}""";
+    private static final String HOME_PROP = """
+            {"id": 2, "name": {"parentParts": ["stroom", "path"], "leafPart": "home"},
+              "defaultValue": "/home/stroom", "databaseOverrideValue": {"hasOverride": false},
+              "yamlOverrideValue": {"hasOverride": false}, "editable": true, "password": false,
+              "requireRestart": false, "requireUiRestart": false, "description": "The home directory.",
+              "dataTypeName": "String"}""";
+    private static final String NO_OVERRIDE = "{\"hasOverride\": false}";
+    // node2 sees a YAML override on stroom.node, so its effective value differs
+    private static final String NODE2_YAML = "{\"hasOverride\": true, \"value\": \"node2-override\"}";
+
+    private static final String HOME_NAME = "stroom.path.home";
+    private static final String NEW_HOME = "/data/stroom";
+    // stroom.path.home once the database value NEW_HOME has been saved
+    private static final String SAVED_HOME_PROP = HOME_PROP.replace(
+            "\"databaseOverrideValue\": {\"hasOverride\": false}",
+            "\"databaseOverrideValue\": {\"hasOverride\": true, \"value\": \"" + NEW_HOME + "\"}");
+
+    private static final String EDIT = "Edit Selected Property";
+    private static final String DIALOG_CAPTION = "Application Property - " + HOME_NAME;
+    private static final String NODE2_REQUEST = "POST /config/v1/nodeProperties/node2";
+
+    private PropertiesScreenStories() {
+        // Static utility
+    }
+
+    /// Adds the stories to the registry.
+    ///
+    /// @param registry The registry to add to.
+    public static void addTo(final StoryRegistry registry) {
+        registry.component("App/Main/PropertiesScreen", PropertiesScreenStories.class)
+                .layout(StoryLayout.FULLSCREEN)
+                // An unreachable cluster node doesn't fail the load: the rows still render from the
+                // nodes that answered, and the node names are shown by a "Show Warnings" button
+                .story("ShowWarnings", context -> render(context, fixtures(true)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("stroom.node");
+                    final Query button = play.findByTitle("Show Warnings");
+                    play.waitFor(() -> play.expect(button).toBeVisible());
+                    play.click(button);
+                    play.waitFor(() -> play.expect(screen.getByText("Unable to get properties from all nodes:"))
+                            .toBeInTheDocument());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            "WARN: Unable to get properties from all nodes:");
+                    play.expect(screen.getByText(TextMatch.containing("node2"))).toBeInTheDocument();
+                    play.expect(screen.getByText(TextMatch.containing("node3"))).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Every node reachable: GWT hides the warnings button
+                .story("NoWarningsWhenAllNodesAnswer", context -> render(context, fixtures(false)))
+                .withPlay(play -> {
+                    play.findByText("stroom.node");
+                    // Wait for the other node's reply to be merged in
+                    play.findByText("[Multiple values]");
+                    play.waitFor(() -> play.expect(play.getByTitle("Show Warnings")).not().toBeVisible());
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // Cluster-wide value disagreement is flagged red; the edit dialog saves a DB override
+                .story("Properties", context -> render(context, fixtures(false)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("stroom.node");
+                    play.findByText(HOME_NAME);
+                    // stroom.node disagrees across the cluster: "[Multiple values]" in the theme's red text
+                    // colour (--text-color--red: red-300 in the dark theme, red-700 in the light). In
+                    // forced colours (e.g. Windows high contrast) status colours follow the system's, the
+                    // text saying what the red does
+                    final Query multiple = play.findByText("[Multiple values]");
+                    if (!ForcedColours.active()) {
+                        play.expect(multiple).toHaveStyle("color", StroomThemeDecorator.isDark()
+                                ? "rgb(229, 115, 115)"
+                                : "rgb(211, 47, 47)");
+                    }
+                    // Double-click stroom.path.home's row: the edit dialog
+                    // GWT's grid handles the events of its cells, so the row's name is pressed rather
+                    // than the row (a <tr> with no role)
+                    play.click(play.getByText(HOME_NAME));
+                    play.dblClick(play.getByText(HOME_NAME));
+                    // The dialog has no role="dialog"; it's found by its caption
+                    screen.findByText("Application Property - " + HOME_NAME);
+                    final Play dialog = screen.within(screen.getByText("Application Property - " + HOME_NAME)
+                            .closest(StroomDom.DIALOG));
+                    // The per-node values are in a separate popup, opened by the icon by Effective
+                    // Value; both nodes agree on this property, so it's the INFO icon
+                    final Query info = dialog.findByTitle(
+                            "Show Cluster Values (all nodes have the same effective value)");
+                    play.waitFor(() -> play.expect(info).toBeVisible());
+                    play.click(info);
+                    final Query clusterCaption = screen.findByText("Cluster values - " + HOME_NAME);
+                    final Play cluster = screen.within(clusterCaption.closest(StroomDom.DIALOG));
+                    for (final String heading : new String[]{"Effective Value", "Count", "Source", "Node"}) {
+                        play.expect(cluster.getByRole("columnheader", TextMatch.startingWith(heading)))
+                                .toBeInTheDocument();
+                    }
+                    // Both nodes agree, so they group under one value with a count of 2
+                    play.waitFor(() -> play.expect(cluster.getByText("2")).toBeInTheDocument());
+                    play.click(cluster.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Cluster values - " + HOME_NAME)).toBeNull());
+                    // Enable the database override, set a value, OK: the property is updated
+                    play.click(dialog.getByLabelText("Set Database value"));
+                    // The 'Database Value' label is for the panel holding the text area (and a password
+                    // box), not the text area itself
+                    final Query dbValue = dialog.within(dialog.getByText("Database Value", "label")
+                            .closest(".form-group")).querySelector("textarea");
+                    play.clear(dbValue);
+                    play.type(dbValue, "/data/stroom");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/config/v1/clusterProperties/" + HOME_NAME)
+                                    .withJsonBodyContaining("{\"databaseOverrideValue\": "
+                                            + "{\"hasOverride\": true, \"value\": \"/data/stroom\"}}")
+                                    .toSpyMatcher()));
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // Application Property left open (the screenshot and the dialog measurement show it)
+                .story("ApplicationPropertyOpen", context -> render(context, fixtures(false)))
+                .withPlay(play -> {
+                    play.click(play.findByText(HOME_NAME));
+                    play.dblClick(play.getByText(HOME_NAME));
+                    final Play dialog = propertyDialog(play);
+                    dialog.findByLabelText("Set Database value");
+                })
+                // Cluster values left open, over the Application Property dialog (the screenshot and the
+                // dialog measurement show it)
+                .story("ClusterValuesOpen", context -> render(context, fixtures(false)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText(HOME_NAME));
+                    play.dblClick(play.getByText(HOME_NAME));
+                    final Play dialog = propertyDialog(play);
+                    final Query info = dialog.findByTitle(
+                            "Show Cluster Values (all nodes have the same effective value)");
+                    play.waitFor(() -> play.expect(info).toBeVisible());
+                    play.click(info);
+                    final Play cluster = screen.within(screen.findByText("Cluster values - " + HOME_NAME)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(cluster.getByText("2")).toBeInTheDocument());
+                })
+                // Saving a property fetches the properties again as new rows (and again as node2's
+                // values are merged in): the property's row stays selected, with its new value, and
+                // Edit, without selecting it again, opens it. The row once showed unselected after
+                // the save, as the new rows weren't the object selected
+                .story("SaveKeepsSelection", context -> render(context, savingFixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
+                    // node2's values have been merged in (rebuilding the rows) once stroom.node
+                    // shows they differ
+                    play.findByText("[Multiple values]");
+                    play.click(play.getByText(HOME_NAME));
+                    play.waitFor(() -> play.expect(homeRow(play)).toHaveAttribute("aria-selected", "true"));
+                    play.click(play.getByTitle(EDIT));
+                    final Play dialog = propertyDialog(play);
+                    play.click(dialog.getByLabelText("Set Database value"));
+                    final Query dbValue = databaseValue(dialog);
+                    play.clear(dbValue);
+                    play.type(dbValue, NEW_HOME);
+                    final Value<Integer> node2Before = play.capture("node2 requests",
+                            () -> countRequests(requests, NODE2_REQUEST));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText(DIALOG_CAPTION)).toBeNull());
+                    // The properties are fetched again, with the new value, then node2's are merged in
+                    play.waitFor(() -> play.expect(homeRow(play)).toHaveTextContent(NEW_HOME));
+                    play.waitFor(3000, () -> play.expect("node2 requests since the save",
+                            () -> countRequests(requests, NODE2_REQUEST) - node2Before.get()).toBeGreaterThan(0));
+                    play.waitFor(() -> play.expect(play.getByText("[Multiple values]")).toBeInTheDocument());
+                    play.expect(homeRow(play)).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    // Edit opens the selected property, as now saved
+                    play.click(play.getByTitle(EDIT));
+                    final Play again = propertyDialog(play);
+                    play.waitFor(() -> play.expect(databaseValue(again)).toHaveValue(NEW_HOME));
+                    play.click(again.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(DIALOG_CAPTION)).toBeNull());
+                    ContentStorySupport.expectNoProblems(play);
+                });
+    }
+
+    // The stroom.path.home row
+    private static Query homeRow(final Play play) {
+        return play.getByText(HOME_NAME).closest(StroomDom.GRID_ROW);
+    }
+
+    // The property's edit dialog, once it is shown (it has no role="dialog"; it's found by its
+    // caption)
+    private static Play propertyDialog(final Play play) {
+        final Play screen = play.screen();
+        return screen.within(screen.findByText(DIALOG_CAPTION).closest(StroomDom.DIALOG));
+    }
+
+    // The 'Database Value' label is for the panel holding the text area (and a password box), not
+    // the text area itself
+    private static Query databaseValue(final Play dialog) {
+        return dialog.within(dialog.getByText("Database Value", "label").closest(".form-group"))
+                .querySelector("textarea");
+    }
+
+    // The number of requests the spy recorded with the method and path given
+    private static int countRequests(final Spy requests, final String methodAndPath) {
+        int count = 0;
+        for (final List<Object> call : requests.getCalls()) {
+            if (String.valueOf(call.get(0)).startsWith(methodAndPath)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Properties as a server keeps them: once stroom.path.home is updated, it is fetched (alone,
+    // in the properties and in node2's) with its new database value. Made for each rendering, so a
+    // rerun starts with the property as it was
+    private static RestFixtures savingFixtures() {
+        final boolean[] saved = {false};
+        return RestFixtures.builder()
+                .post("/config/v1/properties", request -> RestReply.json(list("node1", NO_OVERRIDE,
+                        homeProp(saved[0]))))
+                .get("/node/v1/enabled", RestReply.json("[\"node1\", \"node2\"]"))
+                .post("/config/v1/nodeProperties/node2", request -> RestReply.json(list("node2", NODE2_YAML,
+                        homeProp(saved[0]))))
+                .get("/config/v1/properties/" + HOME_NAME, request -> RestReply.json(homeProp(saved[0])))
+                .get("/config/v1/clusterProperties/" + HOME_NAME + "/yamlOverrideValue/*",
+                        RestReply.json(NO_OVERRIDE))
+                .put("/config/v1/clusterProperties/" + HOME_NAME, request -> {
+                    saved[0] = true;
+                    return echo(request);
+                })
+                .build();
+    }
+
+    private static String homeProp(final boolean saved) {
+        return saved
+                ? SAVED_HOME_PROP
+                : HOME_PROP;
+    }
+
+    private static String list(final String nodeName, final String nodeYaml) {
+        return list(nodeName, nodeYaml, HOME_PROP);
+    }
+
+    private static String list(final String nodeName, final String nodeYaml, final String homeProp) {
+        return "{\"values\": [" + NODE_PROP.replace("YAML", nodeYaml) + ", " + homeProp + "], "
+                + "\"pageResponse\": {\"offset\": 0, \"length\": 2, \"total\": 2, \"exact\": true}, "
+                + "\"nodeName\": \"" + nodeName + "\"}";
+    }
+
+    private static RestFixtures fixtures(final boolean unreachableNodes) {
+        final RestFixtures.Builder builder = RestFixtures.builder()
+                .post("/config/v1/properties", RestReply.json(list("node1", NO_OVERRIDE)));
+        if (unreachableNodes) {
+            builder.get("/node/v1/enabled", RestReply.json("[\"node1\", \"node2\", \"node3\"]"))
+                    .post("/config/v1/nodeProperties/node2", RestReply.error(500, "node2 is unreachable"))
+                    .post("/config/v1/nodeProperties/node3", RestReply.error(500, "node3 is unreachable"));
+        } else {
+            builder.get("/node/v1/enabled", RestReply.json("[\"node1\", \"node2\"]"))
+                    .post("/config/v1/nodeProperties/node2", RestReply.json(list("node2", NODE2_YAML)));
+        }
+        return builder
+                .get("/config/v1/properties/" + HOME_NAME, RestReply.json(HOME_PROP))
+                .get("/config/v1/clusterProperties/" + HOME_NAME + "/yamlOverrideValue/*",
+                        RestReply.json(NO_OVERRIDE))
+                .put("/config/v1/clusterProperties/" + HOME_NAME, PropertiesScreenStories::echo)
+                .build();
+    }
+
+    private static RestReply echo(final RecordedRequest request) {
+        return RestReply.json(request.getBody());
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
+                .injector(injector)
+                // The warnings are shown in Stroom's real alert dialog
+                .realAlerts()
+                .build();
+        harness.afterStartUp(() -> harness.show(injector.getGlobalPropertyTabController()));
+        return harness.asWidget();
+    }
+}

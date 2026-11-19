@@ -21,10 +21,11 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.PredicateUtil;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 /**
@@ -63,7 +65,9 @@ class NodeInclusionChecker {
                     .put(ExplorerTreeFilter.FIELD_DEF_UUID, ExplorerNode::getUuid)
                     .put(ExplorerTreeFilter.FIELD_DEF_TAG, NodeInclusionChecker::nodeToTagsString);
 
-    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(ExplorerTreeFilter.FIELD_DEFINITIONS);
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            ExplorerTreeFilter.DEFAULT_QUERY_FIELDS,
+            ExplorerTreeFilter.QUERY_FIELDS);
 
     private final SecurityContext securityContext;
     private final ExplorerTreeFilter filter;
@@ -76,6 +80,7 @@ class NodeInclusionChecker {
 
     private final Predicate<FilterableNode> combinedPredicate;
     private Predicate<ExplorerNode> fuzzyMatchPredicate = null;
+    private final AtomicReference<TokenException> filterError = new AtomicReference<>();
 
 
     NodeInclusionChecker(final SecurityContext securityContext,
@@ -186,14 +191,26 @@ class NodeInclusionChecker {
 
     Predicate<ExplorerNode> getFuzzyMatchPredicate() {
         if (fuzzyMatchPredicate == null) {
-            // Create the predicate for the current filter value, lazily as there may not be one
+            // Create the predicate for the current filter value, lazily as there may not be one.
+            // ExpressionPredicateFactory swallows a bad filter and matches nothing, which is the
+            // right result on a debounced filter - but capture the reason so ExplorerServiceImpl
+            // can send it back with the empty tree. See FetchExplorerNodeResult.filterError.
             fuzzyMatchPredicate = expressionPredicateFactory.create(
                     filter.getNameFilter(),
                     FIELD_PROVIDER,
                     VALUE_FUNCTION_FACTORIES,
-                    DateTimeSettings.builder().build());
+                    DateTimeSettings.builder().build(),
+                    filterError::set);
         }
         return fuzzyMatchPredicate;
+    }
+
+    /**
+     * Why the current filter was not applied, or null. Only meaningful once
+     * {@link #getFuzzyMatchPredicate()} has been called.
+     */
+    TokenException getFilterError() {
+        return filterError.get();
     }
 
     private boolean hasPermission(final FilterableNode filterableNode) {

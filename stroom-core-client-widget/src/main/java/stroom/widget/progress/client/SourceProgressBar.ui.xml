@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A progress bar (source-progress-bar.css): its track, the whole of the data, holding its window, the
+  section shown, placed and sized in Java.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel styleName="source-progress-bar">
+        <g:FlowPanel ui:field="track" styleName="source-progress-bar__track">
+            <g:FlowPanel ui:field="window" styleName="source-progress-bar__window"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

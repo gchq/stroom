@@ -1,0 +1,93 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A content pack's details in the content store (ContentStoreContentPackDetails): its icon beside
+   its name, description, details and buttons */
+.content-store-content-pack-details {
+    display: flex;
+}
+
+/* The pack's name */
+.content-store-content-pack-details .content-store-content-pack-details__heading {
+    font-size: 120%;
+    font-weight: bold;
+}
+
+.content-store-content-pack-details .content-store-content-pack-details__description {
+    height: 300px;
+}
+
+/* The rendered markdown in the description box (MarkdownConverter's div): it scrolls in the box.
+   Two classes deep, as the markdown's own rules are loaded after this sheet. */
+.content-store-content-pack-details .content-store-content-pack-details__description > div {
+    padding: 5px;
+    height: 300px;
+    overflow: auto;
+}
+
+/* The markdown's headings, a bit smaller */
+.content-store-content-pack-details .content-store-content-pack-details__description h1 {
+    font-size: 1.3em;
+}
+
+/* The pack's icon, its SVG 100x100px */
+.content-store-content-pack-details__icon {
+    padding: 15px;
+    width: 130px;
+}
+
+.content-store-content-pack-details__icon svg {
+    height: 100px;
+    width: 100px;
+}
+
+/* The name, description, details and buttons, one under another, across the rest of the width */
+.content-store-content-pack-details .content-store-content-pack-details__main {
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* The details: each name, then its value beside it */
+.content-store-content-pack-details .content-store-content-pack-details__list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+}
+
+.content-store-content-pack-details .content-store-content-pack-details__list > * {
+    padding: 5px;
+}
+
+/* Its links are underlined, so they are told apart from the URL beside them by more than colour
+   (WCAG 1.4.1) */
+.content-store-content-pack-details .content-store-content-pack-details__list a {
+    text-decoration: underline;
+}
+
+/* The URL shown after a link to it */
+.content-store-content-pack-details .content-store-content-pack-details__url {
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
+}
+
+/* Install and Upgrade */
+.content-store-content-pack-details__buttons {
+    display: flex;
+    gap: var(--control__gap--horizontal);
+}

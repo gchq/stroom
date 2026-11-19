@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The restriction of the selected node's type (xsd-browser.css): a heading naming its kind
+  (Enumeration or Pattern), then its values one above another, added in Java. Hidden when the type
+  has no such restriction.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:SimplePanel>
+        <g:FlowPanel ui:field="restriction" styleName="xsd-browser__padded" visible="false">
+            <tx:Label ui:field="restrictionType" addStyleNames="xsd-browser__restriction-type xsd-browser__one-line"/>
+            <g:FlowPanel ui:field="values"/>
+        </g:FlowPanel>
+    </g:SimplePanel>
+</ui:UiBinder>

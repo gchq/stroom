@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.widget.selection.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Value Size"
+                        helpText="The largest count a single histogram data point can hold, from Max 255 (1 byte) to about 9.2 quintillion (8 bytes). Larger limits need more storage. Default is Max 65,535."
+                        screenReaderText="Largest count per data point; larger limits need more storage.">
+            <i:SelectionBox ui:field="maxValue" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -16,7 +16,7 @@
 
 package stroom.widget.util.client;
 
-import stroom.svg.client.Preset;
+import stroom.cell.client.CellIcon;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
@@ -31,9 +31,9 @@ public class SvgImageUtil {
     private SvgImageUtil() {
     }
 
-    public static SafeHtml toSafeHtml(final Preset preset, final String... classNames) {
-        Objects.requireNonNull(preset);
-        return toSafeHtml(preset.getTitle(), preset.getSvgImage(), classNames);
+    public static SafeHtml toSafeHtml(final CellIcon icon, final String... classNames) {
+        Objects.requireNonNull(icon);
+        return toSafeHtml(icon.getName(), icon.getIcon(), classNames);
     }
 
     public static SafeHtml toSafeHtml(final SvgImage svgImage,
@@ -50,7 +50,6 @@ public class SvgImageUtil {
                                      + NullSafe.join(" ", classNames);
         final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgImage.getSvg());
 
-        //        GWT.log("safeHtml: " + safeHtml.asString());
         return NullSafe.isBlankString(title)
                 ? Templates.div(allClassNames, svgHtml)
                 : Templates.div(allClassNames, title, svgHtml);
@@ -81,10 +80,10 @@ public class SvgImageUtil {
     }
 
     public static void setSvgAsInnerHtml(final Element element,
-                                         final Preset preset,
+                                         final CellIcon cellIcon,
                                          final String... classNames) {
         if (element != null) {
-            final SafeHtml safeHtml = toSafeHtml(preset, classNames);
+            final SafeHtml safeHtml = toSafeHtml(cellIcon, classNames);
             element.setInnerSafeHtml(safeHtml);
         }
     }

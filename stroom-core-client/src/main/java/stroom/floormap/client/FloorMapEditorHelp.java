@@ -16,13 +16,20 @@
 
 package stroom.floormap.client;
 
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.help.client.HelpPopup;
+import stroom.widget.help.client.ShowHelpEvent;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /// Static help content for the Floor Map **Editor** tab.
 ///
 /// Each method returns the HTML body shown in the in-app help popup fired by a
-/// [stroom.widget.help.client.HelpButton] placed on the corresponding panel.
+/// help button (see [#addHelpButton]) placed on the corresponding panel.
 /// The strings are developer-authored constants (no user input), so they are wrapped
 /// with [SafeHtmlUtils#fromTrustedString(String)] — the same mechanism the
 /// Settings tab uses for its `<form:HelpHTML>` content, and rendered with the
@@ -31,11 +38,48 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 /// The help is only wired up by the Editor tab, so it does not appear on the
 /// read-only Map tab (which shares the canvas and timeline widgets).
 ///
-/// @see stroom.floormap.client.presenter.FloorMapEditorPresenter
+/// @see stroom.floormap.client.component.FloorMapEditorTabController
 public final class FloorMapEditorHelp {
 
     private FloorMapEditorHelp() {
         // Utility class.
+    }
+
+    /// Adds a help button to a toolbar, which shows the help in the in-app help popup.
+    ///
+    /// @param toolbar The toolbar to add the button to.
+    /// @param name    The button's name, e.g. "Fact List help".
+    /// @param heading The heading at the top of the help popup.
+    /// @param content The help to show.
+    /// @return The help button.
+    public static ToolbarButton addHelpButton(final Toolbar toolbar,
+                                              final String name,
+                                              final String heading,
+                                              final SafeHtml content) {
+        final ToolbarButton helpButton = toolbar.button(SvgImage.HELP_OUTLINE, name, null);
+        wire(helpButton, heading, content);
+        return helpButton;
+    }
+
+    /// Makes a help button (e.g. one a template declares) show the help in the in-app help popup.
+    ///
+    /// @param helpButton The button.
+    /// @param heading    The heading at the top of the help popup.
+    /// @param content    The help to show.
+    public static void wire(final ToolbarButton helpButton,
+                            final String heading,
+                            final SafeHtml content) {
+        // Showing help leaves the focus where it was
+        helpButton.setFocusOnMouseDown(false);
+        HelpPopup.markOpener(helpButton.getElement());
+        helpButton.setOnClick(() -> ShowHelpEvent.builder(helpButton.getElement())
+                .withContent(new SafeHtmlBuilder()
+                        .appendHtmlConstant("<h4>")
+                        .appendEscaped(heading)
+                        .appendHtmlConstant("</h4>")
+                        .append(content)
+                        .toSafeHtml())
+                .fire());
     }
 
     /// Help for the map canvas — the interaction model: selecting, moving,

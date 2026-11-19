@@ -18,7 +18,7 @@ package stroom.document.client;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasType;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.TabData;
 
 public interface DocumentTabData extends TabData, HasType {
     DocRef getDocRef();

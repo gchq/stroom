@@ -7,6 +7,7 @@ package stroom.config.impl.db.jooq;
 import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
 import stroom.config.impl.db.jooq.tables.Preferences;
+import stroom.config.impl.db.jooq.tables.QuickFilterHistory;
 
 
 /**
@@ -29,4 +30,9 @@ public class Tables {
      * The table <code>stroom.preferences</code>.
      */
     public static final Preferences PREFERENCES = Preferences.PREFERENCES;
+
+    /**
+     * The table <code>stroom.quick_filter_history</code>.
+     */
+    public static final QuickFilterHistory QUICK_FILTER_HISTORY = QuickFilterHistory.QUICK_FILTER_HISTORY;
 }

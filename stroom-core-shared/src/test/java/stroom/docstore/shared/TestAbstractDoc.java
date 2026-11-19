@@ -48,7 +48,7 @@ class TestAbstractDoc {
                     .filter(classInfo -> !classInfo.hasAnnotation(DOCUMENTATION_CLASS))
                     .filter(classInfo -> !classInfo.hasAnnotation(NotDocumented.class))
                     .forEach(classInfo -> {
-                        final Class<?> clazz = classInfo.loadClass();
+                        final Class<?> clazz = loadClass(classInfo.getName());
                         LOGGER.error("Document class {} is missing annotation {}. " +
                                      "It's time to write some documentation.",
                                 clazz.getName(),
@@ -66,9 +66,17 @@ class TestAbstractDoc {
     }
 
     private Stream<ClassInfo> streamAbstractDocSubClasses(final ScanResult scanResult) {
-        return scanResult.getSubclasses(AbstractDoc.class)
+        return scanResult.getAllSubclasses(AbstractDoc.class)
                 .stream()
                 .filter(classInfo -> !classInfo.isInterface())
                 .filter(classInfo -> !classInfo.isAbstract());
+    }
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, TestAbstractDoc.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -1,0 +1,136 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A tab bar's overflow selector (stroom.widget.tab.client.TabSelector), named BEM style: shown
+   when some tabs don't fit, a button showing every tab in a menu, its arrows (tab-selector__arrows)
+   then the number of tabs hidden (tab-selector__count), in line with them. Its bar places it
+   (--tab-selector__left) and hides it while every tab fits (tab-selector--hidden); it looks like the
+   bar's tabs, curved or link: as high, the same hover, and the same focus ring (tab-bar.css).
+*/
+
+.tab-selector {
+    position: absolute;
+    left: var(--tab-selector__left, 0);
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    height: 34px;
+    color: var(--control__text-color);
+}
+
+/* In a document tab bar, in line with its tabs and shaped as one: as high, 4px into the bar, with a
+   tab's background and hover, and room either side as a tab's icon has */
+.tab-bar--curved .tab-selector {
+    top: 4px;
+    box-sizing: border-box;
+    height: 24px;
+    border-radius: 4px;
+    background-color: var(--curve-tab__background-color);
+    padding: 0 8px;
+    align-items: center;
+}
+
+.tab-bar--curved .tab-selector:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+/* In a link bar, as the document bar's: in line with its tabs, as high, the same shape and hover,
+   after a "|" as between its tabs (its separators, tab-bar.css), drawn in its margin, which the bar
+   leaves room for (AbstractTabBar.getSelectorRoom). Its padding is a link tab's, so the "|" is as
+   far from it as from the tab before. The "|" is as wide as a separator, which grows with the text
+   size, so the bar measures one (--tab-selector__separator-width) */
+.tab-bar--link .tab-selector {
+    top: 4px;
+    margin-left: calc(var(--tab-selector__separator-width, 15px) + 2px);
+    box-sizing: border-box;
+    height: 24px;
+    align-items: center;
+    border-radius: 4px;
+    padding: 0 4px;
+    color: var(--link-tab__text-color);
+}
+
+/* Its count 1px lower, as a link tab's label is (its line's room for descenders would leave its
+   digits high) */
+.tab-bar--link .tab-selector__count {
+    padding-top: 2px;
+}
+
+.tab-bar--link .tab-selector:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.tab-bar--link .tab-selector::before {
+    content: "|";
+    position: absolute;
+    right: 100%;
+    width: var(--tab-selector__separator-width, 15px);
+    text-align: center;
+    pointer-events: none;
+}
+
+.tab-selector__arrows {
+    display: flex;
+}
+
+.tab-selector__arrows svg {
+    width: 14px;
+    height: 11px;
+}
+
+/* The number of tabs that don't fit, in line with the arrows, as a tab's label is */
+.tab-selector__count {
+    white-space: nowrap;
+    user-select: none;
+    margin-left: 4px;
+}
+
+/* While every tab fits, out of sight */
+.tab-selector--hidden {
+    visibility: hidden;
+    left: -1000px;
+}
+
+/* Keyboard focus (not a mouse click's), as a tab's (tab-bar.css): a line on its edge and a band
+   outside it, in the bar's room around its tabs */
+.tab-selector:focus-visible {
+    outline: none;
+    z-index: 1;
+}
+
+.tab-selector:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--tab__focus-color);
+    box-shadow: 0 0 0 4px var(--tab__focus-band-color);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* In forced colours (e.g. Windows high contrast) the band isn't drawn; the line is in Highlight */
+@media (forced-colors: active) {
+    .tab-selector:focus-visible::after {
+        border-color: Highlight;
+    }
+
+    /* The line shows its focus, so not the outline base.css gives whatever has the keyboard focus
+       there (important, to win over it) */
+    .tab-selector:focus-visible {
+        outline: none !important;
+    }
+}

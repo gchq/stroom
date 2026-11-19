@@ -1,0 +1,33 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A floor map's Settings tab (FloorMapSettings). */
+
+/* The Value Schema section: the tab mixes simple single-control rows (stores, value format)
+   with a much heavier grid control, so it gets a subtle top divider plus extra breathing room
+   to read as a distinct block rather than just another row. The compound selector
+   out-specifies the default inter-group spacing (.form-group:not(:first-child), specificity
+   0,2,0) so this wins. */
+.form .form-group.floor-map-settings__schema {
+    margin-top: 1em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border-color);
+}
+
+/* The Value Schema's grid, at a fixed height below its toolbar */
+.floor-map-settings__schema-grid {
+    height: 250px;
+}

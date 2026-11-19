@@ -1,0 +1,5 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:ed="urn:import:stroom.editor.client.component">
+    <ed:CodeEditor ui:field="editor"/>
+</ui:UiBinder>

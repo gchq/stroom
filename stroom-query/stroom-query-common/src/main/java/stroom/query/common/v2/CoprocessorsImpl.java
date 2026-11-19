@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
+import stroom.query.api.TableSettings;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -24,15 +25,19 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 
@@ -47,6 +52,19 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     private final LongAdder counter = new LongAdder();
     private final ErrorConsumer errorConsumer;
     private final ExpressionContext expressionContext;
+    // The joins rows go through before the coprocessors, if the query has any.
+    private volatile JoiningCoprocessors joins;
+    // Run once, when the coprocessors are first cleared, to release the joins' tables. Coprocessors
+    // can be cleared more than once, but the tables were only used once.
+    private final AtomicReference<Runnable> onClear = new AtomicReference<>();
+    // True for the coprocessors of the node that built the join tables, not those of a node with a
+    // copy. Only these give a right or full join's unmatched rows when they complete.
+    private volatile boolean ownsJoinTables;
+    // True once the search was stopped or failed, when a right or full join's matches aren't all
+    // known, so its unmatched rows aren't given.
+    private volatile boolean unmatchedJoinedRowsWithheld;
+    // True once a right or full join's unmatched rows have been dealt with, which only happens once.
+    private final AtomicBoolean unmatchedJoinedRowsDone = new AtomicBoolean();
 
     CoprocessorsImpl(final Map<Integer, Coprocessor> coprocessorMap,
                      final Map<String, TableCoprocessor> componentIdCoprocessorMap,
@@ -64,6 +82,8 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
 
     @Override
     public void readPayloads(final Input input) {
+        // Payloads from other nodes are already joined: each node applies a search's joins to its own
+        // rows, with a copy of the join tables (see JoinTableTransfer).
         // If the remote node hasn't started yet it will return 0 results so by default we need to tell the calling
         // process that we still want to keep polling by returning true by default.
         final int length = input.readInt();
@@ -71,6 +91,12 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
             final int coprocessorId = input.readInt();
             final Coprocessor coprocessor = coprocessorMap.get(coprocessorId);
             coprocessor.readPayload(input);
+        }
+        // A right or full join's rows that the other node's rows matched follow, so they aren't given
+        // as unmatched.
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null) {
+            joins.readMatched(input);
         }
     }
 
@@ -83,10 +109,94 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
             output.writeInt(coprocessorId);
             coprocessor.writePayload(output);
         }
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null) {
+            joins.writeMatched(output);
+        }
+    }
+
+    // Gives the rows of a right or full join's table that never matched, as the join's last rows, now
+    // that the first source has been searched on every node and its matches are all known. They are
+    // only given once, and not if the search was stopped or failed.
+    private void giveUnmatchedJoinedRows() {
+        final JoiningCoprocessors joins = this.joins;
+        if (joins == null
+            || !ownsJoinTables
+            || !joins.givesUnmatchedJoinedRows()
+            || !unmatchedJoinedRowsDone.compareAndSet(false, true)) {
+            return;
+        }
+        if (unmatchedJoinedRowsWithheld || hasFailed()) {
+            errorConsumer.add(Severity.WARNING, () -> "The joined rows with no match were left out, as the "
+                                                      + "search didn't finish");
+            return;
+        }
+        try {
+            joins.giveUnmatchedJoinedRows(this::acceptUnjoined);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Error giving unmatched joined rows: " + e.getMessage(), e);
+            errorConsumer.add(e);
+        }
+    }
+
+    private boolean hasFailed() {
+        return errorConsumer.getErrorMessages()
+                .stream()
+                .anyMatch(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR));
+    }
+
+    /// Makes every row go through a query's joins before the coprocessors. Set this before the
+    /// search starts.
+    ///
+    /// @param joins                    The joins, made with [#getUnjoined()] as their coprocessors.
+    /// @param onClear                  Run when these coprocessors are cleared, e.g. to delete the joins'
+    ///                                 tables.
+    /// @param ownsJoinTables           True if these are the coprocessors of the node that built the
+    ///                                 join tables, not a node with a copy, so give a right or full
+    ///                                 join's unmatched rows when they complete.
+    void setJoins(final JoiningCoprocessors joins,
+                  final Runnable onClear,
+                  final boolean ownsJoinTables) {
+        this.joins = joins;
+        this.onClear.set(onClear);
+        this.ownsJoinTables = ownsJoinTables;
+    }
+
+    /// Stops a right or full join's unmatched rows being given when these coprocessors complete, as
+    /// the search was stopped or failed, so not every match is known.
+    void withholdUnmatchedJoinedRows() {
+        unmatchedJoinedRowsWithheld = true;
+    }
+
+    /// Gets the settings of each table these coprocessors fill, as the parsed query made them.
+    ///
+    /// @return The settings.
+    List<TableSettings> getTableSettings() {
+        return componentIdCoprocessorMap.values()
+                .stream()
+                .map(TableCoprocessor::getTableSettings)
+                .toList();
+    }
+
+    /// Gets a view of these coprocessors that takes rows straight to the coprocessors, without the
+    /// joins of [#setJoins(JoiningCoprocessors, Runnable, boolean)].
+    ///
+    /// @return The view.
+    Coprocessors getUnjoined() {
+        return new UnjoinedCoprocessors();
     }
 
     @Override
     public void accept(final Val[] values) {
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null) {
+            joins.accept(values);
+        } else {
+            acceptUnjoined(values);
+        }
+    }
+
+    private void acceptUnjoined(final Val[] values) {
         counter.increment();
         LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
         // Give the data array to each of our coprocessors
@@ -108,6 +218,8 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
         return new CompletionState() {
             @Override
             public void signalComplete() {
+                // A right or full join's unmatched rows are only known once the search is done.
+                giveUnmatchedJoinedRows();
                 for (final Coprocessor coprocessor : coprocessorMap.values()) {
                     getCompletionState(coprocessor).signalComplete();
                 }
@@ -153,6 +265,14 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
                 LOGGER.error(() -> "Error clearing coprocessor: " + e.getMessage(), e);
             }
         }
+        final Runnable onClear = this.onClear.getAndSet(null);
+        if (onClear != null) {
+            try {
+                onClear.run();
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "Error clearing joins: " + e.getMessage(), e);
+            }
+        }
     }
 
     private CompletionState getCompletionState(final Coprocessor coprocessor) {
@@ -189,7 +309,12 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
 
     @Override
     public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
-        extractionPipelineCoprocessorMap.forEach(consumer);
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null) {
+            joins.forEachExtractionCoprocessor(consumer);
+        } else {
+            extractionPipelineCoprocessorMap.forEach(consumer);
+        }
     }
 
     @Override
@@ -199,5 +324,63 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
                 .stream()
                 .map(Coprocessor::getByteSize)
                 .reduce(0L, Long::sum);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // These coprocessors without their joins, for the joins to give joined rows to.
+    private final class UnjoinedCoprocessors implements Coprocessors {
+
+        @Override
+        public void accept(final Val[] values) {
+            acceptUnjoined(values);
+        }
+
+        @Override
+        public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
+            extractionPipelineCoprocessorMap.forEach(consumer);
+        }
+
+        @Override
+        public void readPayloads(final Input input) {
+            CoprocessorsImpl.this.readPayloads(input);
+        }
+
+        @Override
+        public void writePayloads(final Output output) {
+            CoprocessorsImpl.this.writePayloads(output);
+        }
+
+        @Override
+        public ErrorConsumer getErrorConsumer() {
+            return errorConsumer;
+        }
+
+        @Override
+        public ExpressionContext getExpressionContext() {
+            return expressionContext;
+        }
+
+        @Override
+        public Coprocessor get(final int coprocessorId) {
+            return coprocessorMap.get(coprocessorId);
+        }
+
+        @Override
+        public boolean isPresent() {
+            return CoprocessorsImpl.this.isPresent();
+        }
+
+        @Override
+        public FieldIndex getFieldIndex() {
+            return fieldIndex;
+        }
+
+        @Override
+        public long getByteSize() {
+            return CoprocessorsImpl.this.getByteSize();
+        }
     }
 }

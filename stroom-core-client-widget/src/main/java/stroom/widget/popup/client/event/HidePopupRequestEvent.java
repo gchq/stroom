@@ -16,32 +16,32 @@
 
 package stroom.widget.popup.client.event;
 
-import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.component.client.Controller;
+import stroom.widget.popup.client.DialogAction;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final Controller controller;
     private final boolean autoClose;
     private final DialogAction action;
     private final Runnable resetHandler;
 
-    private HidePopupRequestEvent(final PresenterWidget<?> presenterWidget,
+    private HidePopupRequestEvent(final Controller controller,
                                   final boolean autoClose,
                                   final DialogAction action,
                                   final Runnable resetHandler) {
-        this.presenterWidget = presenterWidget;
+        this.controller = controller;
         this.autoClose = autoClose;
         this.action = action;
         this.resetHandler = resetHandler;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
-        return new Builder(presenterWidget);
+    public static Builder builder(final Controller controller) {
+        return new Builder(controller);
     }
 
     public static Type<Handler> getType() {
@@ -61,8 +61,9 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         handler.onHideRequest(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
-        return presenterWidget;
+    /// @return The controller shown as the popup.
+    public Controller getController() {
+        return controller;
     }
 
     public boolean isAutoClose() {
@@ -81,7 +82,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
      * Call to actually hide the popup if the request is handled and accepted.
      */
     public void hide() {
-        HidePopupEvent.builder(presenterWidget).autoClose(autoClose).ok(isOk()).fire();
+        HidePopupEvent.builder(controller).autoClose(autoClose).ok(isOk()).fire();
     }
 
     /**
@@ -108,14 +109,14 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final Controller controller;
 
         private boolean autoClose;
         private DialogAction action = DialogAction.OK;
         private Runnable cancelHandler;
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
-            this.presenterWidget = presenterWidget;
+        public Builder(final Controller controller) {
+            this.controller = controller;
         }
 
         public Builder autoClose(final boolean autoClose) {
@@ -134,8 +135,8 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         }
 
         public void fire() {
-            presenterWidget.fireEvent(new HidePopupRequestEvent(
-                    presenterWidget,
+            controller.fireEvent(new HidePopupRequestEvent(
+                    controller,
                     autoClose,
                     action,
                     cancelHandler));

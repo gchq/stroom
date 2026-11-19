@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A frame showing a page (iframe and iframe__frame, iframe.css) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:SimplePanel styleName="iframe">
+        <tx:Frame ui:field="frame" addStyleNames="iframe__frame"/>
+    </g:SimplePanel>
+</ui:UiBinder>

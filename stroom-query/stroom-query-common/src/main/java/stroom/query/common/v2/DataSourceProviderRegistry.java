@@ -67,7 +67,7 @@ public class DataSourceProviderRegistry {
                     criteria.getPageRequest(),
                     criteria.getSortList(),
                     docRef,
-                    criteria.getFilter(),
+                    criteria.getQuickFilter(),
                     criteria.getQueryable(),
                     criteria.getNativeQuery());
 

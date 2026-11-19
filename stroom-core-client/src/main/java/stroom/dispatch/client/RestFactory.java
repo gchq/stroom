@@ -16,7 +16,8 @@
 
 package stroom.dispatch.client;
 
-import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -46,6 +47,16 @@ public interface RestFactory {
         MethodExecutor<T, R> onSuccess(Consumer<R> resultConsumer);
 
         MethodExecutor<T, R> onFailure(RestErrorHandler errorHandler);
+
+        /// Ties the request to a component: if the component is disposed before the reply
+        /// arrives, neither the success nor the failure handler is called (nor Stroom's default
+        /// failure alert), though the task monitor is still told the request has ended. With no
+        /// task monitor given, the request is shown by the one the component's context provides
+        /// ([stroom.widget.component.client.Contexts#TASK_MONITOR]), if any.
+        ///
+        /// @param owner The component the reply is for.
+        /// @return This executor.
+        MethodExecutor<T, R> owner(HasControllerNode owner);
 
         void exec();
     }

@@ -48,7 +48,7 @@ import java.util.Objects;
 /// is reported as a malformed coordinate rather than as a reference to a desk that does not
 /// exist.
 ///
-/// Kept out of the presenters, and free of GWT types, so the parse and the placement rules are
+/// Kept out of the controllers, and free of GWT types, so the parse and the placement rules are
 /// unit-testable on the JVM.
 public final class FloorMapLocationResolver {
 

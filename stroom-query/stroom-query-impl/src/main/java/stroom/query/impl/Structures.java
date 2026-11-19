@@ -114,6 +114,89 @@ class Structures {
                         query parameter of that name. Values are always bound, never pasted into the SQL.
                         """,
                 "sql \"\"\"\n${1:select * from my_table}\n\"\"\"\n$0");
+        add(list, name(TokenType.JOIN),
+                """
+                        Join another data source to the rows of the query, straight after `from`, e.g.
+                        ```stroomql
+                        from "Windows events"
+                        left join "HR Users" as hr on UserId = hr.Username
+                        select UserId, hr.Department
+                        ```
+
+                        The kinds of join are:
+                        * `join` or `inner join` - one row per match; rows with no match are dropped.
+                        * `left join` or `left outer join` - one row per match; rows with no match are
+                          kept, with blank joined fields.
+                        * `semi join` or `left semi join` - each row with at least one match, once, with
+                          no joined fields.
+                        * `anti join` or `left anti join` - each row with no match, with no joined fields.
+                        * `right join` or `right outer join` - one row per match; rows of the joined source
+                          with no match are given once, with blank fields of the first source.
+                        * `full join` or `full outer join` - one row per match; rows of either source
+                          with no match are given once, with blank fields of the other.
+
+                        A right or full join gives the joined rows with no match once the first source
+                        has been searched, so they come last. It must be the last join line and can't
+                        have a time window. As in SQL, `where` is tested on the joined rows, including
+                        those with blank first-source fields, so it doesn't narrow the first source's
+                        search; use a bracketed query in `from` for that. A warning names any field
+                        `where` tests this way that had no value in any row, such as one the data source
+                        can search but not give.
+
+                        The joined fields are named `<alias>.<field>`. The alias is the name after `as`,
+                        or the data source's name if there is none.
+
+                        The joined source can be a bracketed query, which needs an alias, e.g.
+                        ```stroomql
+                        left join (
+                          from "File events"
+                          group by UserId
+                          select UserId, count() as Exports
+                        ) as ex on UserId = ex.UserId
+                        ```
+
+                        Several joins can follow `from`, and a later join's keys can use an earlier
+                        join's fields. Keys match exactly, as text, so case matters; a blank key never
+                        matches.
+
+                        `where` can name joined fields too. Conditions on the first source's fields
+                        narrow its search; conditions on the joined fields are applied once rows are
+                        joined.
+
+                        The joined source is searched first and held while the first source is searched,
+                        up to 1 million rows or 256 MB (set by administrators). Group or filter it to
+                        join more. A `join` or `semi join` with at most 1,000 keys, on a field the first
+                        source can search, also narrows the first source's search to those keys.
+
+                        Joins can't be used in streaming or table builder analytic rules.
+                        """,
+                "join \"${1:source}\" as ${2:alias} on ${3:field} = ${2:alias}.${4:field}\n$0");
+        add(list, name(TokenType.ON),
+                """
+                        Give the keys of a join, whose values must be equal for rows to join, e.g.
+                        ```stroomql
+                        on lowerCase(UserId) = hr.Username and Host = hr.Host
+                        ```
+
+                        An event-to-event join can also give a time window, e.g.
+                        ```stroomql
+                        from "Windows events" as logon
+                        join "File events" as export
+                          on logon.UserId = export.UserId
+                          within 10m after logon.EventTime
+                        select logon.UserId, logon.EventTime, export.FileName
+                        ```
+
+                        A joined event matches when its time, taken from its data source's time field,
+                        is within the window: from the first source's time to 10 minutes after it, or,
+                        with `before`, from 10 minutes before it to that time.
+
+                        The first source is searched first and held, up to the join limit, so make it
+                        selective. The joined source is then searched only within the first source's
+                        times and the window. The rows appear once both are searched. A query with a
+                        time window can have only one join line, joining a data source to a data source.
+                        """,
+                "on ${1:field} = ${2:alias}.${3:field}$0");
         add(list, name(TokenType.WHERE),
                 """
                         Use where to construct query criteria, e.g.
@@ -132,6 +215,30 @@ class Structures {
                         where user = "bob"
                         and (feed = "my feed" or feed = "other feed")
                         ```
+
+                        Keep only the rows that have a match in another data source with `exists`, or
+                        those with none with `not exists`, as in SQL, e.g.
+                        ```stroomql
+                        from People as p
+                        where exists (from Teams as t where t.team = p.team and t.on_call = true)
+                        ```
+
+                        or compare a field with one field of another data source with `in` or `not in`, e.g.
+                        ```stroomql
+                        from People
+                        where team not in (from Teams select team)
+                        ```
+
+                        These are another way of writing `semi join` and `anti join`, and run as them. The
+                        bracketed query names the first source's fields by its alias, or by its data
+                        source's name if it has none, and can only compare them with `=`. Its other
+                        conditions narrow its own search. It can only have `from`, `sql`, `where` and
+                        `select`. These forms can only be used at the top level of `where`, joined to the
+                        rest by `and`.
+
+                        A blank key never matches, so `not in` keeps a row whose field is blank, and a
+                        blank value in the other data source doesn't stop any row from being kept. This
+                        differs from SQL, where `not in` gives no rows once the other query holds a null.
                         """,
                 "where ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.EVAL),
@@ -417,7 +524,7 @@ class Structures {
                     uiConfig.getHelpUrl() +
                     uiConfig.getHelpSubPathStroomQueryLanguage() +
                     "#" + structureElement.title.toLowerCase().replace(' ', '-'),
-                    "Help Documentation");
+                    structureElement.title + " keyword documentation");
             detail.append(".");
         }
 

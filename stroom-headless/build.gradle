@@ -25,6 +25,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
+    implementation project(':stroom-docstore:stroom-docstore-mock')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
@@ -63,8 +64,9 @@ jar {
 }
 
 shadowJar {
-    // We want to run the tests before we build the fat jar.
-    dependsOn test
+    // If the tests and the fat jar are both requested, run the tests first. Ordering only, so
+    // that assemble (which Shadow wires to shadowJar) does not run the tests.
+    mustRunAfter test
 
     // Allows us to build fat jars with lots of files
     zip64 = true
@@ -73,6 +75,15 @@ shadowJar {
     mergeServiceFiles()
     // Without INCLUDE, it drops any duplicates
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
+//    // other duplicate entries.
+//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    filesMatching('META-INF/services/**') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
+//    filesMatching('META-INF/*.kotlin_module') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
 
     archiveFileName = fatJarName
 }

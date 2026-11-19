@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The "Change Schedule" dialog's content (SchedulePicker) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="scheduleType" label="Schedule Type" addStyleNames="dock-min"
+                        helpText="How the schedule is defined. Instant runs as often as possible. Frequency runs at a fixed interval. Cron runs at set times."
+                        screenReaderText="Instant, Frequency or Cron.">
+            <l:SelectionBox ui:field="scheduleType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="quickSettingsFormGroup" identity="quickSettings" label="Quick Settings" addStyleNames="dock-min"
+                        helpText="Presets that fill in the expression with a common schedule.">
+            <form:QuickSettings ui:field="quickSettings" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="expressionFormGroup" identity="scheduleExpression" label="Expression"
+                        helpText="For Frequency, an interval such as 10m or 1h (units s, m, h, d). For Cron, six fields starting with seconds, e.g. 0 0 2 * * ? for 2am every day."
+                        screenReaderText="Frequency e.g. 10m; Cron has 6 fields starting with seconds.">
+            <form:TextBox ui:field="expression" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="lastExecutedFormGroup" identity="scheduleLastExecuted" label="Last Executed"
+                        helpText="When this last ran, or Never.">
+            <tx:Label ui:field="lastExecuted"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="nextScheduledTimeFormGroup" identity="scheduleNextScheduledTime" label="Next Scheduled Time"
+                        helpText="When this will next run, based on the expression. Shows an error if the expression is not valid. Select Calculate to update it.">
+            <!-- Changes as the expression is calculated, so screen readers are told the new time
+                 (or why the expression isn't valid) -->
+            <c:AriaPanel ariaLive="polite">
+                <tx:Label ui:field="nextScheduledTime"/>
+            </c:AriaPanel>
+        </form:FormGroup>
+        <b:Button ui:field="calculate" addStyleNames="allow-focus w-100" text="Calculate" icon="HISTORY"/>
+    </g:FlowPanel>
+</ui:UiBinder>
