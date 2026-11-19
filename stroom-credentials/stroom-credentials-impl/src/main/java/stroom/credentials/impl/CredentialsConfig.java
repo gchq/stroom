@@ -174,20 +174,24 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
         return keyStoreFilesOwnerType;
     }
 
-    /// @return Whether a credential whose expiry date has passed is refused when its secret is
-    /// retrieved, rather than used with a warning in the log.
+    /// @return Whether a credential that has expired is refused when its secret is retrieved,
+    /// rather than used with a warning in the log.
     @JsonProperty
-    @JsonPropertyDescription("If true, a credential whose expiry date has passed can't be used, and anything "
-                             + "that tries to use it fails with an error. If false (the default), it is still "
-                             + "used and a warning is logged. Credentials with no expiry date never expire.")
+    @JsonPropertyDescription("If true, a credential that has expired can't be used, and anything that tries "
+                             + "to use it fails with an error. If false (the default), it is still used and a "
+                             + "warning is logged. A credential expires at its expiry date or, for a key store, "
+                             + "when its certificates expire if that is sooner. For a key store holding keys "
+                             + "that is when the first certificate in a key's chain expires, and for one "
+                             + "holding only trusted certificates when the last of them expires.")
     public boolean isRefuseExpiredCredentials() {
         return refuseExpiredCredentials;
     }
 
     /// @return How long before a credential's expiry date to start logging warnings when it is used.
     @JsonProperty
-    @JsonPropertyDescription("How long before a credential's expiry date to start logging a warning when it "
-                             + "is used, so it can be replaced in time. Warnings are logged at most once an "
+    @JsonPropertyDescription("How long before a credential expires (see 'refuseExpiredCredentials') to start "
+                             + "logging a warning when it is used, so it can be replaced in time, and to show "
+                             + "it as expiring in the credentials list. Warnings are logged at most once an "
                              + "hour for each credential. Set to zero to only warn once a credential has "
                              + "expired. Default is 14 days.")
     public StroomDuration getExpiryWarningPeriod() {
