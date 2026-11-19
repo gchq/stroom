@@ -16,9 +16,12 @@
 
 package stroom.ai.impl.tools.generation;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,5 +65,23 @@ class TestXPathRegex {
         assertThatThrownBy(() -> XPathRegex.groups(regex))
                 .isInstanceOf(XPathRegex.XPathRegexException.class)
                 .hasMessageNotContaining("null");
+    }
+
+    @Test
+    void aRegexThatBacktracksIsStoppedAtItsDeadline() throws XPathRegex.XPathRegexException {
+        // Matched as Saxon matches it: words and spaces to the end, over a run of letters ending in '!', backtracks
+        // without end.
+        final String value = "a".repeat(27) + "!";
+        final long started = System.nanoTime();
+
+        assertThatThrownBy(() -> XPathRegex.findsWithin("^(\\w+\\s?)*$", value,
+                System.nanoTime() + Duration.ofMillis(50).toNanos()))
+                .isInstanceOf(XPathRegex.TimedOut.class);
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(5));
+        // Within its deadline it matches as finds() does.
+        assertThat(XPathRegex.findsWithin("^Request:", "Request: <a/>", System.nanoTime() + 1_000_000_000L))
+                .isTrue();
+        assertThat(XPathRegex.findsWithin("^Request:", "Response: <a/>", System.nanoTime() + 1_000_000_000L))
+                .isFalse();
     }
 }

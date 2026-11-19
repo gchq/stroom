@@ -589,19 +589,65 @@ public final class LocalCheck {
                                  final Object record,
                                  final Set<String> derived,
                                  final Map<String, String> extracted) {
-        if (c.xpath() != null || c.inDictionary() != null || "record".equals(c.scope())) {
+        if (!evaluable(c)) {
             return null;
         }
-        final List<String> values;
-        if (derived.contains(c.field())) {
-            if (extracted == null || !extracted.containsKey(c.field())) {
-                return null;
-            }
-            values = List.of(extracted.get(c.field()));
-        } else {
-            values = ConditionValues.values(mapping, c.field(), record);
+        final List<String> values = conditionValues(mapping, c.field(), record, derived, extracted);
+        return values == null
+                ? null
+                : ConditionValues.holds(mapping, c, values);
+    }
+
+    /// The values a condition's field has in a record, exactly as [#holds] reads them before testing them: so a
+    /// check of many conditions over few fields (the event type catalogue's) reads each field once a record and
+    /// tests each distinct value once ([#holdsOver]).
+    ///
+    /// @param mapping   The mapping (its input, held fields and extractions).
+    /// @param field     A condition's field.
+    /// @param record    A record, as [#sampleRecords(TranslationMapping, Object, SplitterSpec)] reads them.
+    /// @param extracted The values its extractions give it ([#extractedValues(TranslationMapping, Object)]), or
+    ///                  null.
+    /// @return The field's values in the record (none when it has none); null when they can't be told here (a field
+    /// an extraction produces, its values not given).
+    public static List<String> conditionValues(final TranslationMapping mapping,
+                                               final String field,
+                                               final Object record,
+                                               final Map<String, String> extracted) {
+        return conditionValues(mapping, field, record, derived(mapping), extracted);
+    }
+
+    private static List<String> conditionValues(final TranslationMapping mapping,
+                                                final String field,
+                                                final Object record,
+                                                final Set<String> derived,
+                                                final Map<String, String> extracted) {
+        if (derived.contains(field)) {
+            return extracted == null || !extracted.containsKey(field)
+                    ? null
+                    : List.of(extracted.get(field));
         }
-        return ConditionValues.holds(mapping, c, values);
+        return ConditionValues.values(mapping, field, record);
+    }
+
+    /// Whether a condition holds over its field's values in a record ([#conditionValues]), exactly as [#holds]
+    /// tests them.
+    ///
+    /// @param mapping The mapping (its nil values).
+    /// @param c       The condition.
+    /// @param values  Its field's values in a record.
+    /// @return Whether it holds; null when it can't be told here (an xpath, a dictionary, a record-scope field, or a
+    /// regex that can't be run).
+    public static Boolean holdsOver(final TranslationMapping mapping, final Condition c, final List<String> values) {
+        return evaluable(c)
+                ? ConditionValues.holds(mapping, c, values)
+                : null;
+    }
+
+    /// @param c A condition.
+    /// @return True if it can be told here from its field's values: not an xpath, a dictionary or a record-scope
+    /// field.
+    public static boolean evaluable(final Condition c) {
+        return c.xpath() == null && c.inDictionary() == null && !"record".equals(c.scope());
     }
 
     // A regex compiled, or null if it can't be.

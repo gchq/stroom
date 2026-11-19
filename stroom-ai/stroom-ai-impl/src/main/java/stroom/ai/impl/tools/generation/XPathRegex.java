@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.generation;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.regex.ARegularExpression;
+import net.sf.saxon.regex.UnicodeString;
 import net.sf.saxon.trans.XPathException;
 
 import java.util.ArrayList;
@@ -94,6 +95,28 @@ public final class XPathRegex {
         return compiled.regex().containsMatch(value);
     }
 
+    /// As [#finds(String, String)], stopped once a deadline passes: Saxon's engine backtracks, and one regex over a
+    /// value can take far longer than any check may (the event type catalogue's regex guard times each against the
+    /// sample).
+    ///
+    /// @param regex    A regular expression, compiled as XPath's `matches()` compiles it.
+    /// @param value    A value.
+    /// @param deadline When to stop, as [System#nanoTime()] counts.
+    /// @return True if the regex finds a match in it.
+    /// @throws XPathRegexException if it doesn't compile as XPath compiles it, with Saxon's reason.
+    /// @throws TimedOut            if the deadline passes before it is known.
+    public static boolean findsWithin(final String regex, final String value, final long deadline)
+            throws XPathRegexException {
+        if (COMPILED.size() > CACHED) {
+            COMPILED.clear();
+        }
+        final Compiled compiled = COMPILED.computeIfAbsent(regex, XPathRegex::compiled);
+        if (compiled.regex() == null) {
+            throw new XPathRegexException(compiled.error());
+        }
+        return compiled.regex().containsMatch(new DeadlineString(UnicodeString.makeUnicodeString(value), deadline));
+    }
+
     private static Compiled compiled(final String regex) {
         try {
             return new Compiled(new ARegularExpression(regex, "", HOST_LANGUAGE, new ArrayList<>(), CONFIGURATION),
@@ -143,5 +166,96 @@ public final class XPathRegex {
     // A regex compiled, or why it doesn't compile.
     private record Compiled(ARegularExpression regex, String error) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A regex's matching stopped at its deadline ([#findsWithin(String, String, long)]).
+    public static final class TimedOut extends RuntimeException {
+
+        TimedOut() {
+            super("the regular expression ran past its time", null, false, false);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A value Saxon's matcher reads character by character, the deadline checked as it reads: Saxon takes a
+    // UnicodeString as it is, so its backtracking is stopped where a thread can't be.
+    private static final class DeadlineString extends UnicodeString {
+
+        // How many characters are read between looks at the clock.
+        private static final int READS_A_LOOK = 4096;
+
+        private final UnicodeString text;
+        private final long deadline;
+        private int reads;
+
+        private DeadlineString(final UnicodeString text, final long deadline) {
+            this.text = text;
+            this.deadline = deadline;
+        }
+
+        private void look() {
+            if (++reads >= READS_A_LOOK) {
+                reads = 0;
+                if (System.nanoTime() - deadline > 0) {
+                    throw new TimedOut();
+                }
+            }
+        }
+
+        @Override
+        public UnicodeString uSubstring(final int start, final int end) {
+            return text.uSubstring(start, end);
+        }
+
+        @Override
+        public int uIndexOf(final int search, final int start) {
+            look();
+            return text.uIndexOf(search, start);
+        }
+
+        @Override
+        public int uCharAt(final int pos) {
+            look();
+            return text.uCharAt(pos);
+        }
+
+        @Override
+        public int uLength() {
+            return text.uLength();
+        }
+
+        @Override
+        public boolean isEnd(final int pos) {
+            look();
+            return text.isEnd(pos);
+        }
+
+        @Override
+        public int length() {
+            return text.length();
+        }
+
+        @Override
+        public char charAt(final int index) {
+            look();
+            return text.charAt(index);
+        }
+
+        @Override
+        public CharSequence subSequence(final int start, final int end) {
+            return text.subSequence(start, end);
+        }
+
+        @Override
+        public String toString() {
+            return text.toString();
+        }
     }
 }
