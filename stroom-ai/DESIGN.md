@@ -3209,6 +3209,20 @@ reads them; output JSON):
 * TypeId: `^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters; titles unique
   ignoring case; a regex at most 500 characters.
 
+**Settled with the check and the translation (lanes D, E, 2026-11-19):**
+
+* The catch-all carries its agreement: `catch_all: {"status": ..., "allow_unknown": "<the user's reason>"}`
+  (model and tool); the translation writes it as the catch-all rule's `allow_unknown`.
+* A line format's catch-all (mixed lines, alternatives, a saved converter) is flagged `catch_all: true` with its
+  variant condition as its only condition; the generator logs `Caught by` from the flag. A sole event type of a line
+  format is one whose conditions are all on the variant field.
+* A condition the check can't evaluate (an `xpath`, a dictionary, a record-scope test, a field an extraction gives)
+  is listed as `not_checked` (said, not blocking), never silently skipped.
+* The vendor's code as Data sits under the action element (`EventDetail/<Action>/Data`, Network's own child), named
+  after the field's last segment (a bracketed key's last key as written); the catch-all's TypeId is `Unknown`.
+* No catalogue yet: the draft keeps its own rules and says the source is to be catalogued before building; with
+  proposed event types or an unconfirmed catch-all it refuses.
+
 **Code homes**: model and check in `stroom-ai-impl` `stroom.ai.impl.tools.catalogue`; the evaluator in
 `tools/draft/LocalCheck` (and its helpers); the tool in `stroom-mcp-impl` `tools/CatalogueEventTypesTool`.
 
