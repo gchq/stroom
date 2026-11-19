@@ -3091,6 +3091,90 @@ are confirmed.
   entries too, recognised by conditions; one with no sampled record is said to be not in the sample, and sampled
   records no documented type recognises are reported, as now.
 
+#### Contracts (fixed before the lanes start, 2026-11-19)
+
+Code and tests in every lane are written against these; a change to them is agreed first.
+
+**Conditions** (`generation/Condition`, JSON as today plus):
+
+* `starts_with: "text"`, `contains: "text"`: tests, as exclusive as `equals`, `one_of`, `matches`, `present` and
+  `in_dictionary` (exactly one per condition). Exact, case-sensitive, over the decoded value, as XPath's
+  `starts-with()` and `contains()`.
+* `not: true`: the test must not hold. A field that is missing makes a `not` condition hold (XPath
+  `not(f = 'x')`). Refused with `present` (`present: false` says it).
+* Arrays (several values for the field): `equals`, `one_of`, `starts_with`, `contains`, `matches` hold when any value
+  does (XPath's general comparison); `not` holds when none does.
+* One evaluator: `LocalCheck` holds exactly what the generated XPath tests, for every operator, field spelling and
+  value case in "Fields and values"; the parity suite pins it.
+
+**Rules** (`generation/EventRule`): `catch_all: true` marks the rule for uncatalogued records (last, no conditions);
+the generator logs `Caught by` from it, never by inference.
+
+**The catalogue** (the source notes' JSON block, key `event_types`, replacing `events`, `kind_fields`,
+`whole_kind`, `pending`, `proposed`, `dropped`, `amended`, `rejected`, `shown`, `samples`):
+
+```json
+{
+  "event_types": [
+    {
+      "type_id": "Update-Password",
+      "title": "Password change",
+      "description": "An operator changed another operator's password",
+      "event_detail": "Update", "action": "...", "success": "...",
+      "actor": "event.userid", "affected": "event.target", "affected_as": "User",
+      "recognised_by": [
+        {"when": [{"field": "event.logger_name", "equals": "com.pega...SecurityEventLogger"},
+                  {"field": "event.eventType", "equals": "Password change"}],
+         "names": []}
+      ],
+      "drop": false,
+      "basis": "draft | agent_knowledge | documentation | user_confirmed",
+      "confidence": "high | medium | low",
+      "one_type_because": null,
+      "status": "proposed | confirmed"
+    }
+  ],
+  "catch_all": {"status": "proposed | confirmed"},
+  "scope": {"source_type_field": "event>log_type", "source_types": ["Integration"]}
+}
+```
+
+`recognised_by` empty only for a sole event type (every record). `basis: draft` is the seed's, never confirmed
+as the user's without the user's form. Order in the list is the catalogue's order (the tool keeps it more specific
+first).
+
+**The check** (pure, `tools/catalogue/CatalogueCheck`; input the catalogue and the scope's records as processing
+reads them; output JSON):
+
+```json
+{
+  "counts": {"Update-Password": {"records": 12, "by_way": [12]}},
+  "overlaps": [{"record": 17, "text": "...", "type_ids": ["A", "B"],
+                "telling_fields": [{"field": "event.eventType", "A": ["x"], "B": ["y"]}]}],
+  "uncatalogued": {"records": 9, "shapes": [{"signature": "...", "records": 9, "examples": ["..."]}]},
+  "unparsed": {"records": 2, "why": ["event: Invalid \\uXXXX escape at 99996"]},
+  "several": [{"type_id": "X", "by_field": {"field": "event.eventType", "values": {"a": 3, "b": 4}},
+               "shapes": [], "blocking": true}],
+  "problems": [{"type_id": "X", "way": 0, "problem": "..."}],
+  "order": ["A", "B"]
+}
+```
+
+**The tool** `catalogue_event_types` (replacing `classify_kinds`):
+
+* `build` (required), `stream_ids` (else the build's sample streams), `splitter` (else the build's saved one).
+* No proposals: lists the evidence (`fields`, `shapes`, `examples`, `seed`) and the catalogue so far with its check.
+* `proposals: [{"op": "add | change | remove", "type_id": "...", ...the entry's keys}]`: applied by TypeId, then
+  checked; refused proposals say why; the result is the check (compact; the full listing saved to the workspace).
+* `confirm: true`: puts the next set to the user (high-confidence a source type group at a time, then medium and
+  low in sets of 10), then the catch-all; `status: needs_review` with a `review_id` where no form can be shown.
+* `catch_all: {...}` with confirm: the catch-all's agreement (`allow_unknown` reason).
+* Results: `status` (`listed`, `checked`, `needs_confirmation`, `needs_review`, `confirmed`), `check`,
+  `evidence`, `next`.
+
+**Code homes**: model and check in `stroom-ai-impl` `stroom.ai.impl.tools.catalogue`; the evaluator in
+`tools/draft/LocalCheck` (and its helpers); the tool in `stroom-mcp-impl` `tools/CatalogueEventTypesTool`.
+
 #### Phases (commit per phase)
 
 0. **Test plan** (from a review of the eval cases and e2e suites, 2026-11-19): each later phase starts from tests that
