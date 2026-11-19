@@ -181,7 +181,7 @@ wait_for_elasticsearch() {
 }
 
 generate_ddl_dump() {
-  echo "::group::DDL dump"
+  echo "::group::Prepare for DDL dump"
   mkdir -p "${DDL_DUMP_DIR}"
 
   stop_and_clear_down_stroom_all_dbs
@@ -208,12 +208,9 @@ generate_ddl_dump() {
 }
 
 generate_entity_rel_diagram() {
-
-  echo "::group::ERD generation"
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
-  echo "::endgroup::"
 }
 
 copy_release_artefact() {
@@ -382,7 +379,8 @@ releaseToDockerHub() {
   done
 
   echo "::group::Docker build (${dockerRepo})"
-  echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
+  echo -e "Building a ${GREEN}${dockerRepo}${NC} docker image"
+  echo -e "Tags:        [${GREEN}${allTagArgs[*]}${NC}]"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
   # If we have a BUILD_TAG (git tag) then use that, else use the floating tag
@@ -471,6 +469,14 @@ docker_logout() {
   fi
 }
 
+install_docker_scout() {
+  # Install scout for docker image scanning
+  echo "::group::Docker Scout Install"
+  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
+    | sh -s --
+  echo "::endgroup::"
+}
+
 copy_swagger_ui_content() {
   echo "::group::Copy Swagger content"
   local ghPagesDir=$BUILD_DIR/gh-pages
@@ -511,9 +517,6 @@ copy_swagger_ui_content() {
 }
 
 check_for_out_of_date_puml_svgs() {
-
-  echo "::group::Converting .puml files to .svg"
-
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
@@ -530,6 +533,7 @@ check_for_out_of_date_puml_svgs() {
   # are up to date with their puml file.
   # This is different to stroom-docs which does not check in svg files.
 
+  echo "::group::Check for SVGs not up to date in Git"
   # Example git status --porcelain output:
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
@@ -695,11 +699,7 @@ export BUILD_VERSION
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
-  # Install scout for docker image scanning
-  echo "::group::Docker Scout Install"
-  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
-    | sh -s --
-  echo "::endgroup::"
+  install_docker_scout
 
   # build and release stroom image to dockerhub
   releaseToDockerHub \
