@@ -29,6 +29,9 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueFromMapping;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.generation.RebuiltMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -90,6 +93,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     private final SampleStreams sampleStreams;
     private final Provider<DocFinder> docFinderProvider;
     private final DocumentAccess documentAccess;
+    // The build's catalogue of event types; none in tests that make the tool themselves.
+    private Provider<CatalogueNotes> catalogueNotesProvider;
 
     @Inject
     RebuildMappingTool(final TranslationDocs translationDocs,
@@ -112,6 +117,15 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         this.sampleStreams = sampleStreams;
         this.docFinderProvider = docFinderProvider;
         this.documentAccess = documentAccess;
+    }
+
+    /// Where the build's catalogue of event types is kept (set by injection; none in tests that make the tool
+    /// themselves): the rules read back from a hand-edited XSLT are read back into it.
+    ///
+    /// @param catalogueNotes The build's catalogue.
+    @Inject
+    void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
+        this.catalogueNotesProvider = catalogueNotes;
     }
 
     @Override
@@ -351,6 +365,9 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                     .map(d -> d.get("path"))
                     .toList());
         }
+        final Optional<CatalogueReadBack> catalogue = catalogueReadBack(rebuild);
+        catalogue.filter(read -> !read.fromMapping().said().isEmpty())
+                .ifPresent(read -> details.put("event types", read.fromMapping().said()));
         consent.require(call, context, Consent.Request.confirmation(NAME,
                 "Save the mapping rebuilt from XSLT '" + rebuild.ref().getName() + "' (" + mode + "), and the XSLT "
                 + "regenerated from it: " + (differences.isEmpty()
@@ -364,11 +381,50 @@ class RebuildMappingTool extends AbstractBuiltInTool {
             summary.put(key, saved.get(key));
         }
         result.put("saved", summary);
+        catalogue.ifPresent(read -> result.put("catalogue", catalogueSaved(context, read)));
         result.put("next", "step_sample the pipeline over its sample streams (its code changed to what the mapping "
                            + "generates), then write_documentation again: its Field mapping section comes from the "
                            + "rebuilt mapping. From now on, change the mapping (build_translation_xslt changes=), not "
                            + "the XSLT.");
         return result;
+    }
+
+    // The rules read back into the build's catalogue of event types, so the catalogue stays the source of truth
+    // (DESIGN.md, Event type catalogue, After the first build); empty for an XSLT in no build.
+    private Optional<CatalogueReadBack> catalogueReadBack(final Rebuild rebuild) {
+        if (catalogueNotesProvider == null || rebuild.rebuilt().mapping() == null) {
+            return Optional.empty();
+        }
+        final Optional<String> build = guard.buildOf(rebuild.ref());
+        if (build.isEmpty()) {
+            return Optional.empty();
+        }
+        final Catalogue before = catalogueNotesProvider.get().catalogue(build.get()).orElse(null);
+        return Optional.of(new CatalogueReadBack(build.get(), before, CatalogueFromMapping.read(
+                rebuild.rebuilt().mapping(), before)));
+    }
+
+    // The catalogue read back written into the build's source notes (when it changed), and what it says.
+    private Map<String, Object> catalogueSaved(final ToolCallContext context, final CatalogueReadBack read) {
+        final CatalogueFromMapping.FromMapping from = read.fromMapping();
+        final Map<String, Object> said = new LinkedHashMap<>();
+        final boolean changed = !from.catalogue().equals(read.before());
+        if (changed) {
+            catalogueNotesProvider.get().write(context.session(), read.build(), read.build(), from.catalogue());
+        }
+        said.put("written", changed
+                ? "the catalogue of event types in the build's source notes, read back from the XSLT's rules"
+                : "no change: the catalogue already says what the XSLT's rules do");
+        said.put("event_types", from.catalogue().eventTypes().stream().map(EventType::typeId).toList());
+        if (!from.said().isEmpty()) {
+            said.put("changes", from.said());
+        }
+        if (!from.notRead().isEmpty()) {
+            said.put("not_read", from.notRead());
+            said.put("note", "Edits the catalogue can't express (not_read): the XSLT keeps them, the catalogue "
+                             + "doesn't; a draft from the catalogue would lose them.");
+        }
+        return said;
     }
 
     // Both XSLTs stepped over the streams, and the paths whose values differ, most records first.
@@ -510,6 +566,11 @@ class RebuildMappingTool extends AbstractBuiltInTool {
 
     // The records stepped, and the output paths that differ.
     private record Proof(int records, List<Map<String, Object>> differences) {
+
+    }
+
+    // The rules read back into the build's catalogue: the build, its catalogue before, and what was read.
+    private record CatalogueReadBack(String build, Catalogue before, CatalogueFromMapping.FromMapping fromMapping) {
 
     }
 

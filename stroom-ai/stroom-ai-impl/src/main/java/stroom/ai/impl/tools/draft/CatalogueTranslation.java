@@ -348,24 +348,40 @@ final class CatalogueTranslation {
         return rule;
     }
 
-    // The catch-all's rule: Unknown, every field of the records not read in common kept as Data.
+    // The catch-all's rule: Unknown, every field of the records not read in common kept as Data; or, when the
+    // catalogue's catch-all has its own translation (a hand-written last rule writing a real event, read back by
+    // rebuild_mapping), that event, the fields kept as Data of its action element.
     private Map<String, Object> catchAll(final List<Map<String, Object>> common, final String reason) {
+        final Catalogue.CatchAll.Translation own = catalogue.catchAll().translation();
+        final String detail = own == null || NullSafe.isBlankString(own.eventDetail())
+                ? UNKNOWN
+                : ToolText.strip(own.eventDetail().strip(), "/").split("/")[0];
+        final String data = EVENT_DETAIL + detail + "/Data";
         final Set<String> inCommon = readBy(common);
         final List<Map<String, Object>> fields = new ArrayList<>();
-        fields.add(entry(PATH, TYPE_ID, VALUE, CATCH_ALL_TYPE_ID));
+        fields.add(entry(PATH, TYPE_ID, VALUE, own == null || NullSafe.isBlankString(own.typeId())
+                ? CATCH_ALL_TYPE_ID
+                : own.typeId()));
+        if (own != null && NullSafe.isNonBlankString(own.action())) {
+            fields.add(entry(PATH, EVENT_DETAIL + detail + "/Action", VALUE, own.action()));
+        }
+        if (own != null && NullSafe.isNonBlankString(own.description())) {
+            fields.add(entry(PATH, DESCRIPTION, VALUE, own.description()));
+        }
+        final int fixed = fields.size();
         for (final String name : names) {
             if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name))) {
-                fields.add(entry(PATH, "EventDetail/Unknown/Data", DATA_NAME, name, FIELD, name));
+                fields.add(entry(PATH, data, DATA_NAME, name, FIELD, name));
             }
         }
-        if (fields.size() == 1 && !names.isEmpty()) {
+        if (fields.size() == fixed && !names.isEmpty() && UNKNOWN.equals(detail)) {
             // Every field read in common: an Unknown with no Data has no action element's content.
-            fields.add(entry(PATH, "EventDetail/Unknown/Data", DATA_NAME, names.getFirst(), FIELD, names.getFirst()));
+            fields.add(entry(PATH, data, DATA_NAME, names.getFirst(), FIELD, names.getFirst()));
         }
         final Map<String, Object> rule = new LinkedHashMap<>();
         rule.put(NAME, CATCH_ALL_NAME);
         rule.put(FIELDS, fields);
-        if (reason != null) {
+        if (reason != null && UNKNOWN.equals(detail)) {
             rule.put("allow_unknown", reason);
         }
         rule.put("catch_all", true);

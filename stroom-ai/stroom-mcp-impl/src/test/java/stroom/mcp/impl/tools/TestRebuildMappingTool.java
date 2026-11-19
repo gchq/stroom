@@ -18,8 +18,11 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.XsltDoc;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -113,6 +116,46 @@ class TestRebuildMappingTool {
         assertThat(XsltCode.normalise(saved.getData())).isEqualTo(XsltCode.normalise(generated(kept)));
         assertThat(saved.getData()).contains("<Environment>Test</Environment>");
         assertThat(XsltCode.normalise(before)).isEqualTo(XsltCode.normalise(saved.getData()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aHandEditedRuleIsReadBackIntoTheBuildsCatalogue() {
+        tool.setCatalogueNotes(() -> new CatalogueNotes(world.world.guard(), world.world.documentAccess,
+                new DocumentWrites(world.world.documentAccess)));
+        final Map<String, Object> logon = new LinkedHashMap<>();
+        logon.put("type_id", "Logon");
+        logon.put("title", "User logon");
+        logon.put("event_detail", "Authenticate");
+        logon.put("action", "Logon");
+        logon.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action", "equals", "login")))));
+        logon.put("basis", "user_confirmed");
+        logon.put("status", "confirmed");
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of(logon));
+        block.put("catch_all", Map.of("status", "confirmed"));
+        final String notes = world.inBuild(BUILD, DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\nAcme's VPN.\n\n" + SourceNotes.block(block) + "\n").build());
+        world.editByHand(uuid, code -> code.replace("'login'", "'signin'"));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).containsKey("saved");
+        assertThat(world.shown).singleElement().asString().contains("event types", "changed: event type Logon");
+        final Map<String, Object> said = (Map<String, Object>) done.get("catalogue");
+        assertThat((List<String>) said.get("changes")).singleElement().asString()
+                .startsWith("changed: event type Logon (recognised by action = signin, was action = login)");
+        final String text = ((DocumentationDoc) world.world.docs.get(notes)).getData();
+        assertThat(text).startsWith("# Acme source notes\n\nAcme's VPN.\n");
+        final Catalogue catalogue = SourceNotes.catalogue(SourceNotes.readNotes(text));
+        assertThat(catalogue.eventType("Logon").recognisedBy().getFirst().when().getFirst().equalTo())
+                .isEqualTo("signin");
+        assertThat(SourceNotes.readNotes(text)).containsEntry("source", "Acme");
     }
 
     @Test

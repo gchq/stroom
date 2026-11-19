@@ -103,6 +103,26 @@ class TestCatalogueTranslation extends DraftFixtures {
     }
 
     @Test
+    void aCatchAllWithItsOwnTranslationWritesThatEventNotUnknown() {
+        // Read back by rebuild_mapping from a hand-written last rule taking every remaining record.
+        final Map<String, Object> notes = notes(List.of(
+                type("Authenticate-LogonFailed", "Logon failed", "Authenticate", "Logon", "false",
+                        way(eq("evt", "4625")))), true);
+        notes.put("catch_all", Map.of("status", "confirmed", "translation", Map.of("type_id",
+                "Authenticate-Logon", "event_detail", "Authenticate", "action", "Logon")));
+
+        final Map<String, Object> catchAll = JsonValues.maps(mappingOf(draft(CODES, notes)).get("events"))
+                .getLast();
+
+        assertThat(catchAll).containsEntry("catch_all", true).doesNotContainKey("allow_unknown");
+        assertThat(fields(catchAll).get("EventDetail/TypeId").get("value")).isEqualTo("Authenticate-Logon");
+        assertThat(fields(catchAll).get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
+        assertThat(JsonValues.maps(catchAll.get("fields")))
+                .contains(map("path", "EventDetail/Authenticate/Data", "data_name", "evt", "field", "evt"))
+                .noneMatch(field -> String.valueOf(field.get("path")).contains("Unknown"));
+    }
+
+    @Test
     void aTypeIdNotGivenIsTheDefault() {
         final Map<String, Object> type = type(null, "Explicit logon", "Authenticate", "Logon", null,
                 way(Map.of("field", "evt", "one_of", List.of("4648"))));
