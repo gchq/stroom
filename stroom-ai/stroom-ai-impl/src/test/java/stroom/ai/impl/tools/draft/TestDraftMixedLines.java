@@ -134,7 +134,11 @@ class TestDraftMixedLines {
                 TestCatalogueTranslation.type("Authenticate-Logon", "Gateway logon", "Authenticate", "Logon", null,
                         TestCatalogueTranslation.way(TestCatalogueTranslation.eq("event", "LOGIN"))),
                 TestCatalogueTranslation.type("Process-Sudo", "Sudo command", "Process", "Execute", null,
-                        TestCatalogueTranslation.way(TestCatalogueTranslation.eq("event", "SUDO")))), true);
+                        TestCatalogueTranslation.way(TestCatalogueTranslation.eq("event", "SUDO"))),
+                // A way testing the format itself: its format's, the format's condition once.
+                TestCatalogueTranslation.type("Process-Cron", "Cron job", "Process", "Execute", null,
+                        TestCatalogueTranslation.way(TestCatalogueTranslation.eq("variant", "linux"),
+                                TestCatalogueTranslation.eq("event", "CRON")))), true);
 
         final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
                 notes, null, splitter);
@@ -145,8 +149,9 @@ class TestDraftMixedLines {
                         .toList()
                         .toString())
                 .toList();
-        assertThat(rules).as("%s", rules).contains("[variant=gw, event=LOGIN]", "[variant=linux, event=SUDO]")
-                .doesNotContain("[variant=linux, event=LOGIN]", "[variant=gw, event=SUDO]");
+        assertThat(rules).as("%s", rules).contains("[variant=gw, event=LOGIN]", "[variant=linux, event=SUDO]",
+                        "[variant=linux, event=CRON]")
+                .doesNotContain("[variant=linux, event=LOGIN]", "[variant=gw, event=SUDO]", "[variant=gw, event=CRON]");
         // Each format's uncatalogued records its own: the rule marked catch_all has no conditions, so none is.
         assertThat(JsonValues.maps(mapping(draft).get("events"))).noneMatch(rule -> rule.containsKey("catch_all"))
                 .anyMatch(rule -> "gw_uncatalogued".equals(rule.get("name")))

@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.draft.DraftMapping.Records;
+import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.TimePatterns;
@@ -184,7 +185,7 @@ final class VariantDrafts {
                     ? Map.of("field", field, "present", false)
                     : Map.of("field", field, "equals", drafted.variant());
             for (final Map<String, Object> rule : JsonValues.maps(drafted.mapping().get(EVENTS))) {
-                if (belongsTo(rule, drafted, drafts)) {
+                if (belongsTo(rule, field, drafted, drafts)) {
                     events.add(forVariant(rule, prefix, condition, own));
                 }
             }
@@ -271,45 +272,49 @@ final class VariantDrafts {
         return result;
     }
 
-    // Whether a variant keeps a rule its draft wrote: one telling a kind by a field's value is the variant's whose
-    // records hold that value; a kind no variant's records hold (one the documentation names, say) is the first
-    // variant's whose records have the field. Seen in chat 163: the confirmed kinds, applied to every variant with an
-    // 'event' field, gave a rule for each kind in each variant (linux_icastart, netscaler_history), failing the
-    // schema checks; the agent wrote the mapping by hand.
+    // Whether a variant keeps a rule its draft wrote (a way of recognising an event type, from the catalogue every
+    // variant's draft follows): the variant's whose sampled records it recognises, evaluated as processing tests
+    // them (not guessed from one condition); one no variant's records match (an event type from documentation, not
+    // in the sample) is the first variant's whose records hold the fields it tests, else the first variant's. A rule
+    // with no conditions (the catch-all, or a sole event type) is every variant's. Seen in chat 163: the confirmed
+    // kinds, applied to every variant with an 'event' field, gave a rule for each kind in each variant
+    // (linux_icastart, netscaler_history), failing the schema checks; the agent wrote the mapping by hand.
     private static boolean belongsTo(final Map<String, Object> rule,
+                                     final String field,
                                      final Drafted drafted,
                                      final List<Drafted> drafts) {
-        final List<Map<String, Object>> told = JsonValues.maps(rule.get(WHEN)).stream()
-                .filter(condition -> condition.get("field") != null && !Boolean.TRUE.equals(condition.get("not"))
-                                     && (condition.get("equals") != null || condition.get(SourceNotes.MATCHES) != null))
-                .toList();
-        if (told.isEmpty()) {
+        final List<Condition> when = WayCheck.conditions(rule.get(WHEN));
+        if (when == null || when.isEmpty()) {
             return true;
         }
-        final Map<String, Object> last = told.getLast();
-        final String field = String.valueOf(last.get("field"));
-        if (holds(drafted.records(), last)) {
+        if (recognisesAny(drafted, field, when)) {
             return true;
         }
-        if (drafts.stream().anyMatch(other -> holds(other.records(), last))) {
+        if (drafts.stream().anyMatch(other -> other != drafted && recognisesAny(other, field, when))) {
             return false;
         }
+        final List<String> fields = when.stream()
+                .filter(condition -> condition.field() != null && !condition.not()
+                                     && !condition.field().equals(field))
+                .map(Condition::field)
+                .toList();
         return drafts.stream()
-                .filter(other -> other.records().stream().anyMatch(record -> record.get(field) != null))
+                .filter(other -> other.records().stream()
+                        .anyMatch(record -> fields.stream().allMatch(tested -> record.get(tested) != null)))
                 .findFirst()
-                .map(first -> first == drafted)
-                .orElse(true);
+                .orElse(drafts.getFirst()) == drafted;
     }
 
-    // Whether any of the records meets the condition: its field equal to the value, or matching the pattern.
-    private static boolean holds(final List<Map<String, Object>> records, final Map<String, Object> condition) {
-        final String field = String.valueOf(condition.get("field"));
-        if (condition.get(SourceNotes.MATCHES) != null) {
-            return records.stream().anyMatch(record -> record.get(field) instanceof final String value
-                                                       && SourceNotes.matches(condition, value));
-        }
-        final String value = String.valueOf(condition.get("equals"));
-        return records.stream().anyMatch(record -> value.equals(String.valueOf(record.get(field))));
+    // Whether a variant's records (their variant field given back: a way may test it) are recognised.
+    private static boolean recognisesAny(final Drafted drafted, final String field, final List<Condition> when) {
+        final WayCheck check = WayCheck.of(drafted.mapping());
+        return drafted.records().stream().anyMatch(record -> {
+            final Map<String, Object> whole = new LinkedHashMap<>(record);
+            if (drafted.variant() != null) {
+                whole.put(field, drafted.variant());
+            }
+            return check.recognises(when, whole);
+        });
     }
 
     // The header lines left untranslated; the splitter writes their date on the records after them, read by each
@@ -400,7 +405,8 @@ final class VariantDrafts {
         out.remove("catch_all");
         final List<Object> when = new ArrayList<>(List.of(condition));
         if (rule.get(WHEN) instanceof final List<?> conditions) {
-            when.addAll(conditions);
+            // A way testing the variant itself has it once.
+            conditions.stream().filter(test -> !condition.equals(test)).forEach(when::add);
         }
         out.put(WHEN, when);
         final List<Map<String, Object>> fields = new ArrayList<>(JsonValues.maps(rule.get(FIELDS)));

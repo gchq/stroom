@@ -212,6 +212,32 @@ class TestCatalogueTranslation extends DraftFixtures {
                         "event_type"));
     }
 
+    @Test
+    void aRepeatedGroupsItemsAreRecognisedByTheirOwnFieldsAndTheRecordsWithScopeRecord() {
+        // One object wrapping the records (for_each): the item's fields are the conditions' own, the record's
+        // with scope record.
+        final String wrapped = """
+                {"source": "audit", "Records": [
+                 {"eventTime": "2026-10-01T08:00:00Z", "eventName": "ConsoleLogin", "user": "alice",
+                  "host": "h1"},
+                 {"eventTime": "2026-10-01T08:01:00Z", "eventName": "DeleteBucket", "user": "bob",
+                  "host": "h1"}]}
+                """;
+        final Map<String, Object> login = type("Authenticate-ConsoleLogin", "Console login", "Authenticate", "Logon",
+                null, way(eq("eventName", "ConsoleLogin"), Map.of("field", "source", "equals", "audit", "scope",
+                        "record")));
+        login.put("actor", "user");
+        final Map<String, Object> draft = draft(wrapped, notes(List.of(login), true));
+
+        assertThat(mappingOf(draft).get("for_each")).isEqualTo("Records");
+        final Map<String, Object> rule = JsonValues.maps(mappingOf(draft).get("events")).getFirst();
+        assertThat(rule.get("when")).isEqualTo(List.of(Map.of("field", "eventName", "equals", "ConsoleLogin"),
+                Map.of("field", "source", "equals", "audit", "scope", "record")));
+        // Its own records counted: the delete is uncatalogued.
+        assertThat(notes(draft)).anyMatch(note -> note.startsWith("1 sampled record(s) no event type recognises"));
+        assertThat(generate(mappingOf(draft)).problems()).isEmpty();
+    }
+
     private static Map<String, Object> draft(final String sample, final Map<String, Object> notes) {
         return DraftMapping.draft(List.of(sample), "Acme", "Acme", "Test", notes, CHECK, (SplitterSpec) null);
     }
