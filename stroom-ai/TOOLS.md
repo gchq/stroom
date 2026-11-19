@@ -3543,7 +3543,7 @@ sample streams, else (a build on an existing feed) the streams its survey read; 
 build's saved Data Splitter (`read_with`). They are read as the build's latest mapping reads them (the draft last sent,
 else the mapping kept with the XSLT: its input, held fields, nil values and extractions), and as processing will read
 them: strings cut at the JSONParser's `stringTruncateLength` (10,000 by default), and read whole too, so a condition
-that depends on the cut is found. The reading, in order: the `reading` given; else the build's latest mapping; else a `reading` an earlier call gave (kept in the notes' confirming block, so confirm calls read the same records); else the draft's own. A source with no mapping yet is read as the draft reads it, or as `reading` says
+that depends on the cut is found. The reading, in order: the `reading` given; else a `reading` an earlier call gave (kept in the notes' confirming block, so confirm calls read the same records); else the build's latest mapping; else the draft's own (2026-11-20: an earlier draft reading whole batches no longer overrides a `for_each` given). draft_translation_mapping reads the records the same way. A source with no mapping yet is read as the draft reads it, or as `reading` says
 (`input`, `json_fields`, `xml_fields`, `extract`, `pairs`). Conditions are evaluated by the one evaluator the
 generated XSLT agrees with (`LocalCheck`; parity suites `TestConditionParity`, `TestE2eConditionParityProcessed`).
 
@@ -3599,7 +3599,9 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   nearest names); the **regex guard**, a regex over its time budget (timed in Saxon's engine, as processing runs it),
   and a regex or `contains` over values past 10,000 characters where `starts_with` or `contains` recognises the same
   records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting;
-  an event type recognised by every record of a line format that shares it.
+  an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value one
+  or two records hold, on a field held by at least 20 records whose distinct values are at least 80% of them (a message
+  holding an object's id), refused with `starts_with` or `matches` with a named group suggested (2026-11-20).
 * `order`: the catalogue's.
 
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
@@ -3627,7 +3629,11 @@ confirm before the amendments are proposed is refused, quoting them. The confirm
 2026-11-18): amendments may come from the form's text or the chat, acceptance never from the chat. A form put aside by
 a message is answered as forms are (reply to the message first). Last, the catch-all: the uncatalogued records' count
 and shapes shown, then a form to keep them as Unknown events, their fields kept as Data, with the agreement given as
-`catch_all: {allow_unknown: <why>}` on any confirm call (used at its turn). Once every event type and the catch-all
+`catch_all: {allow_unknown: <why>}` on any confirm call (used at its turn). Declined, the result says the user wants
+something else for those records: the agent asks them in the chat, then proposes event types for them (`op: add`,
+`drop: true` where they say to drop them) or another event for all of them (`catch_all: {translation: {type_id,
+event_detail, action, description}}`), and the catch-all is put to them again in its form; build_translation_xslt
+refuses to save while it is unconfirmed (2026-11-20). Once every event type and the catch-all
 are confirmed, `status: confirmed` with the plan's next step: the build plan's `catalogue` step is done, and
 `draft_translation_mapping` follows the catalogue.
 
@@ -3636,20 +3642,23 @@ and, once the user agrees, calls with `confirm: true reviewed=<review_id>`; amen
 AI's chat with the user away, nothing is confirmed for them (refused).
 
 **A next version** (`since_promoted`): a build of a feed's next version starts from the promoted catalogue (its source
-notes carried in by `copy_pipeline` or `create_pipeline version_of=`, `CatalogueNotes.carryInto`), and every result
-says in words the event types added, changed and removed since (`CatalogueDiff`).
+notes carried in by `copy_pipeline` or `create_pipeline version_of=`, `CatalogueNotes.carryInto`; or, catalogued
+before either, by catalogue_event_types itself from the promoted notes beside the feed the build works from,
+`CatalogueNotes.carryBesideFeeds`, said as `carried`), and every result says in words the event types added, changed
+and removed since (`CatalogueDiff`).
 
 * **Arguments**: `build` (required); `source` (the notes' source, else the build's name); `stream_ids`; `splitter`;
   `reading` (a mapping's reading keys only: `input`, `root`, `record`, `xml_namespace`, `json_layout`,
   `json_fields`, `xml_fields`, `pairs`, `extract`, `nil_values`, `for_each` (each item a record); any other key, or a
   reading that doesn't parse, refused: how a source with no mapping yet is read);
-  `proposals` (`[{op: add | change | remove, type_id, ...}]`); `confirm`; `catch_all` (`{allow_unknown}`, with
-  confirm); `reviewed` (with confirm, for a client without forms).
+  `proposals` (`[{op: add | change | remove, type_id, ...}]`); `confirm`; `catch_all` (`{allow_unknown}` with
+  confirm; `{translation: {type_id, event_detail, action, description}}`, what the uncatalogued records become in the
+  user's words); `reviewed` (with confirm, for a client without forms).
 * **Returns**: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`, `confirmed`);
   `catalogue`; listing: `evidence` (`fields`, `shapes`, `examples`, `seed`), and with a catalogue `check` and
   `listing`; proposals: `recorded`, `source_notes`, `refused`, `check`, `not_in_sample`, `table` (the next set's),
   `listing`; confirmation: `table` (and `review_id`), `confirmed_now`, `amendments` and `amended`, `check`; `read_with`,
-  `scope`, `survey`, `since_promoted`; `hint`; `next` (`step: catalogue`, the call, then).
+  `scope`, `survey`, `since_promoted`, `carried`; `hint`; `next` (`step: catalogue`, the call, then).
 * **Refuses**: no build; no survey for the build (naming the `survey_feed` call); no sample streams; a confirm while the
   check refuses the catalogue, or before the user's amendments are proposed; a confirm in Stroom AI's chat with the user
   away; the form declined.
@@ -4879,8 +4888,11 @@ names, addresses kept), then takes what the catalogue says:
 With variants (mixed lines, alternatives, a saved converter), a way goes into the variants whose sampled records it
 recognises (evaluated, not guessed from its last condition), prefixed with the variant's condition; each variant's
 rule for its uncatalogued records is flagged `catch_all` with its variant condition alone, and a sole event type of a
-line format (its conditions all on the variant field) needs none. Repeated groups' item conditions are allowed. The
-result says each rule, `not_in_sample` (TypeIds no sampled record has), `uncatalogued` (sampled records no event type
+line format (its conditions all on the variant field) needs none. Repeated groups' item conditions are allowed, and
+where the catalogue reads a repeated group's items as its records (`for_each`, as catalogue_event_types reads them),
+the draft does too: each item a record beside its enclosing record's own fields, the mapping's `for_each` set, those
+fields read with `scope: record`, the counts of items (JSON arrays and lines; 2026-11-20). A JSON field holding a list
+of plain values is written one Data a value (`repeat: true`). The result says each rule, `not_in_sample` (TypeIds no sampled record has), `uncatalogued` (sampled records no event type
 recognises), `dropped` and `unread_fields`. A catalogue with event types or the catch-all still to confirm is refused.
 Before any catalogue, the draft keeps its own rules, the guesses the catalogue is seeded from, its last rule (the one
 for the records the others leave) flagged `catch_all`, and it says the source is to be catalogued before building.
@@ -4917,6 +4929,12 @@ generated without them.
   `current_translation` when the build's feed is already translated by a pipeline whose XSLT looks values up; for
   XML fragments, `xml_namespace` set to the namespace of the environment's wrapper; `hint`. Or the version question
   (`needs_guidance`).
+* **A large draft, outside Stroom** (`DraftOutline`, 2026-11-20): for a client outside Stroom (not Stroom AI's chat)
+  a result over 40,000 characters is saved to `/outputs/drafts/<build>.json` and gives `mapping_outline` in place of
+  `mapping`: each rule's TypeId, recognised by (in words), Description, vendor-code Data and what else it writes, and
+  the common entries; `writes` dropped, then rules cut with a count, if it is still too large; `data_placement`
+  compact. The hint says how to read one rule's entries from the file (a workspace read cuts lines at 2,000
+  characters) and to build with `changes=` only, `changes={}` building the draft as it stands.
 * **Refuses**: no samples and no stream_ids; a pattern of the agent's that took too long on the sample
   (`PatternTimeoutException`, returned as the refusal); with `build`, a catalogue whose event types or catch-all are
   still to confirm (`The catalogue's N event type(s) and the catch-all for uncatalogued records are still to confirm:
@@ -5163,11 +5181,18 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
 * **Refuses**: `mapping` and `changes` both given; neither, with no `uuid`; `changes` with nothing to apply to;
   a mapping that doesn't validate (each error with where it is and the value given, a whole example mapping when
   its shape is wrong: `MappingProblems`); `max_records` out of range; a `splitter` that isn't a spec; saving with
-  `build` but no `name`; keeping a rule Unknown with no sample records to show (see below); and every save
-  refusal of save_xslt. With `group`: no source type registry in the build; `source_types` not the registry's, or
+  `build` but no `name`; keeping a rule Unknown with no sample records to show (see below); a catalogued build's
+  save while its catch-all is unconfirmed (declined, say: ask the user in the chat, then catalogue_event_types); and
+  every save refusal of save_xslt. `changes={}` is the mapping as it stands (the session's draft, or the saved
+  mapping); a source type group's first save with no `name` changes the build's draft. With `group`: no source type registry in the build; `source_types` not the registry's, or
   none and no scope; a name whose mode is the common module's; a new group saved with no form and no
   `own_output_feed`; a promoted group's change with no form and no `pipeline`; a module that doesn't generate.
 * **Notes**:
+  * **The vendor's code kept** (`VendorCodeKept`, 2026-11-20): a confirmed event type whose rule no longer writes its
+    vendor-code Data is warned of in `sample_check` (`sample: …`), naming the event type, rule, field and Data; the
+    XSLT is still built. Not for the catch-all, drop rules or event types not confirmed.
+  * **A large result, outside Stroom** (`BuiltRulesTrim`): over 40,000 characters for a client outside Stroom,
+    `events` counts each rule's Data rather than listing it (`events_note`).
   * **Confirmed event types translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with
     the user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
     Logon, unsaid): `needs_review` with a table (`| Event type | Recognised by | You confirmed | Records | Now | Rule

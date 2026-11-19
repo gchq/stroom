@@ -3073,7 +3073,11 @@ event types over thousands of records take about the records' reading), and retu
   against the sample, refused over a budget; a regex or `contains` over long values (past 10,000 characters, those
   processing cuts included) where `starts_with` or `contains` would recognise the same records is refused with that
   suggestion. A condition that depends on processing's string cut. An event type recognised by every record of a line
-  format that shares it. TypeId Verb-Object and unique; the meaning's schema checks.
+  format that shares it. TypeId Verb-Object and unique; the meaning's schema checks. **A value unique to its record**
+  (decided 2026-11-20; the example: "Object <uuid> has been modified"): an `equals` or `one_of` naming a value one or
+  two records hold, on a field held by at least 20 records whose distinct values are at least 80% of them, is refused
+  with `starts_with` (their fixed start) or `matches` with a named group (keeping the part that varies) suggested; a
+  field of few values never trips it, however rare a code, nor a value absent from the sample (a documented type).
 
 #### Confirmation
 
@@ -3090,7 +3094,13 @@ the user's words, taken from the form's text or the chat; the agent proposes the
 and the set is put to the user again; dropping only on the user's word. A form put aside by a message is answered as
 forms are (reply first). A client that can't show forms confirms through `needs_review` and its `review_id`, as now.
 The catch-all is confirmed last, named "uncatalogued records", with their count and shapes, and its agreement
-(`catch_all: {allow_unknown}`, given on any confirm call, used at its turn). Every result carries `catalogue`, compact
+(`catch_all: {allow_unknown}`, given on any confirm call, used at its turn). **Declined** (decided 2026-11-20): the
+user wants something else for those records, so the agent asks them in the chat and calls again with their answer:
+event types that recognise them (`op: add`, `drop: true` for records they say to drop), or another event for all of
+them (`catch_all: {translation: {type_id, event_detail, action, description}}`, checked as an event type's meaning);
+the catch-all is then put to them again in its form, still the only place it is confirmed. build_translation_xslt
+refuses to save a catalogued build while its catch-all is unconfirmed, whatever drafted the mapping. The catch-all is
+never a drop of every uncatalogued record (its rule keeps every field as Data). Every result carries `catalogue`, compact
 (`type_id`, `title`, `status` each, the catch-all's `status`); the full catalogue is the source notes' JSON block. The
 build plan's step, `catalogue` (was `classify`), is done when every event type and the catch-all are confirmed.
 
@@ -3108,7 +3118,21 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   whose sampled records it recognises (evaluated, not guessed from its last condition), prefixed with the variant's
   condition; each variant's catch-all is flagged with its variant condition alone.
 * **Repeated groups** (`for_each`): item-scope conditions are allowed; the check counts items; drift checks that
-  can't evaluate item rules say "not checked" rather than skip silently.
+  can't evaluate item rules say "not checked" rather than skip silently. The draft reads them as the catalogue does
+  (decided 2026-11-20, seen in eval case 69): with the catalogue's `for_each` (the reading a catalogue_event_types call
+  gave, kept in the notes, else the build's latest mapping's; the same order for the catalogue's own check), each item
+  is a record, the mapping reads `for_each`, its rules' conditions and fields relative to the item and the enclosing
+  record's own fields with `scope: record`, and the draft's counts are of items. JSON arrays and lines only.
+* **Lists of values**: a JSON field whose values are arrays of plain values (`tags: ["inbound", "malware"]`) is written
+  one Data a value (`repeat: true`), the vendor's code included, never the values run together (2026-11-20).
+* **Large drafts, outside Stroom** (decided 2026-11-20; seen in Haiku runs over Claude Code: drafts of 70k–168k
+  characters past the client's result limit, the mappings hand-written without Descriptions or the vendor's code): for
+  a client outside Stroom, a draft over 40,000 characters (`DraftOutline.WHOLE_RESULT_CHARS`) is saved to
+  `/outputs/drafts/<build>.json` and the result gives `mapping_outline` instead of `mapping`: each rule's TypeId, how it
+  is recognised (in words), its Description, its vendor-code Data and what else it writes (dropped, then rules cut
+  with a count, if still too large), how to read one rule's entries from the file, and to build with `changes=` alone
+  (`changes={}` builds the draft as it stands). build_translation_xslt's own result, for such a client over the same
+  size, counts each rule's Data instead of listing it (`BuiltRulesTrim`). Stroom AI's chat gets both whole.
 * The generator gained `not`, `starts_with`, `contains` and the explicit `catch_all` flag; nothing else changed
   (choose/when in order, `unmatched` warn, `mcp_log_kind`).
 
@@ -3119,6 +3143,10 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   action element, fixed Action and TypeId; otherwise the confirmed-changed form, as before (`CONFIRMED_CHANGED` kept
   with the XSLT), its table and review id the same from call to call while the mapping is unchanged.
 * **Dropped event types kept dropped.**
+* **The vendor's code kept** (decided 2026-11-20, seen in eval cases 67 and 70): a confirmed event type whose rule no
+  longer writes its vendor-code Data (`VendorCode`, one definition with the draft) is warned of in the result's
+  `sample:` warnings, naming the event type, the rule, the field and the Data to put back; the XSLT is still built.
+  The catch-all, drop rules and event types not confirmed are left out (`VendorCodeKept`).
 * `checkMapping` compares rules with the event types not yet confirmed by the records they take (`CatalogueKept`), not
   by condition text.
 
@@ -3131,7 +3159,10 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
 * **Carried into the next version.** A build of a feed's next version (`copy_pipeline`, `create_pipeline
   version_of`) starts from the promoted catalogue: its source notes are carried in as a working copy, written back at
   promotion (`CatalogueNotes.carryInto`); `catalogue_event_types` says what changed since (`since_promoted`: event
-  types added, changed, removed; `CatalogueDiff`).
+  types added, changed, removed; `CatalogueDiff`). Cataloguing a next version before `copy_pipeline` carries it in
+  too (decided 2026-11-20, seen in eval case 70: the agent started over): the promoted notes beside the feed the build
+  works from are copied in (`CatalogueNotes.carryBesideFeeds`, said as `carried`), and a later copy carries nothing
+  more. A build with notes of its own already carries nothing, as with `carryInto`.
 * **Hand edits reconciled.** A hand-edited XSLT's rules are read back (`rebuild_mapping`, `CatalogueFromMapping`) into
   the catalogue, so the catalogue stays the source of truth; an edit the catalogue can't express (a TypeId from a
   field, a drop rule of no event type) is named (`not_read`), as `... not read` is. A hand-written last rule taking
@@ -3328,6 +3359,14 @@ source type field); nothing migrated; the tool renamed; the draft's rules offere
 first build in scope; eval cases rescored and run on Haiku. A sole event type may be recognised by every record;
 types told apart only by the source type field are told by their records' shape instead; a hand-written catch-all
 writing a real event is read back as the catch-all; the eval user decides the catalogue form.
+
+#### Decided (user, 2026-11-20, after the Haiku runs)
+
+Large drafts outlined for clients outside Stroom; the draft reads per item where the catalogue does; a declined
+catch-all is asked about in the chat and the build waits for it; a lost vendor's code warned of, not refused; a feed
+names its event fields one way (for now: no per-way fields); a promoted catalogue carried in before copy_pipeline; a
+description optional; an `equals` or `one_of` on values unique to their records refused with a pattern suggested; a
+list of values written one Data a value; the reading an earlier call gave wins over the latest mapping's.
 
 ### Generation (built)
 
@@ -4329,6 +4368,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-20 | From the Haiku eval runs of the event type catalogue (decided by the user): draft_translation_mapping outlines a draft over 40,000 characters for a client outside Stroom (saved to `/outputs/drafts/<build>.json`, read a rule at a time, built with `changes=`; `changes={}` builds it as it stands), and build_translation_xslt counts each rule's Data in such a result; the draft reads the items of a repeated group as records where the catalogue does (`for_each`), the reading an earlier catalogue_event_types call gave winning over the latest mapping's; a JSON list of values is one Data a value; a declined catch-all is asked about in the chat (another event, `catch_all.translation`, or event types for those records) and build_translation_xslt refuses while it is unconfirmed; a confirmed event type's lost vendor-code Data is warned of; a promoted catalogue is carried in before copy_pipeline; the check refuses an `equals` or `one_of` on a value unique to its record (a field of 20 or more records, 80% distinct) and suggests `starts_with` or a named group; a description is optional, and eval cases score a Description on every event only where the records say what happened; a feed is taken to name its event fields one way (case 67 kept for the reference run only). | Translation (Event type catalogue) |
 | 2026-11-19 | The event type catalogue replaces classify_kinds and kind fields (seen in user testing: a Pega feed's only telling field was its logger, and one logger writes several event types; one field rarely tells a source's event types apart). `catalogue_event_types`: the tools give evidence (telling fields, shapes, examples, the draft's rules as a seed for the agent to correct, never the user's); the agent proposes event types by TypeId (add, change, remove), each recognised by ANDs of conditions (with `not`, `starts_with` and `contains`; no OR across fields; never the source type field); every proposal is checked against every sampled record read as processing reads it (counts, overlaps refused with telling fields, uncatalogued records by shape, unparsed, may be several, not checked, a regex guard, the string cut); the user confirms a set at a time in short forms (only in the form), then a catch-all for uncatalogued records, always, not an event type. Decided by the user: one set of words (source type, event type, record, recognised by, uncatalogued records), never "kind"; Verb-Object TypeIds for every source with the vendor's code as Data; Description from the record's message, else the documentation, else the agent's fixed text; a sole event type may take every record; nothing migrated; the lifecycle in scope (uncatalogued records become proposals, the catalogue carried into a next version, hand edits read back, a hand-written catch-all writing a real event read back as the catch-all); record_source_notes keeps fields and documents only; eval cases rescored and run on Haiku, the eval user deciding the catalogue form. | Translation (Event type catalogue) |
 | 2026-11-19 | Kind fields by shape, not length (seen in testing: a Pega feed's `event.logger_name`, Java class names past 80 characters, refused as "whole messages", while `source_host`, `nodeId` and `level` were offered, so the user could only choose one kind; a SOAP-only `operation` on a third of the records then settled the choice unasked). (1) A qualified name (three or more identifiers joined by `.`, `::`, `/` or `$`, no whitespace, up to 200 characters) is a code in `KindFields`' value checks and in the draft's; digit-led parts, so addresses and versions, are not. (2) Fields named for where a record was handled (hosts and nodes, severities, a shipper's own fields), by their own and their parent's name, are never offered; the user may still name one. (3) `KindFields.Concern` splits hard reasons (no field, no value, a value a record) from the values' shape (messages, addresses or times, too many values): a `kind_field` with only a shape concern is put to the user in the confirm form, and their answer decides; without forms it is taken as said. (4) A field named like a kind field settles the choice only with a value in most records, else it is a candidate. (5) A certain choice inside a held value is kept in the notes so the draft reads it. Generic only: no product-specific names. An event catalogue of conditions will replace kind fields later. | Translation; Aggregated feeds |
 | 2026-11-19 | From user testing (an OpenWebUI audit stream of 787 newline-free JSON arrays, 67 MB): a sample stream's part is read as a stream of whole events, never cut, characters (not a count) deciding how many in every format: a JSON array's items, an XML document's records written back in its own root (or fragments), or lines; each part up to its share of `ai.sampling.maxCharsPerStream` (2,000,000) characters a stream, never less than one event of `maxEventChars` (100,000), so every chosen part is read; an event over that is read through and left out, said with its length and longest string value, which still feeds the `long_strings` warning. At most 20 parts, chosen spread through the stream from its first to its last, in survey_feed too, whose coverage names the parts read; survey_feed's `max_chars_per_stream` stays each part's own budget (2026-11-08). Text cut at a read limit is said to be cut, never "isn't valid JSON"; a sample cut short by a call's time isn't cached. | Reading Stroom's data; Onboard a feed that already holds data |

@@ -66,7 +66,10 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no
-  lookaround, at most 500 characters; prefer `starts_with` or `contains` over long values), `present`; `not: true` for
+  lookaround, at most 500 characters; prefer `starts_with` or `contains` over long values), `present`. A value that
+varies record by record (an id in a message: "Object 3f2a… has been modified") is never an `equals` or `one_of`:
+recognise what the records share, `starts_with` their fixed start, or `matches` with a named group for the part that
+varies; `not: true` for
   the test not to hold (a missing field makes it hold). `names` names a `matches` regex's capture groups, fields the
   translation may read. Fields as the draft names them (`event.component` inside a held JSON string; a key holding a
   dot in brackets, `['log.level']`). Never the build's source type field: told by the records' other fields or
@@ -86,7 +89,10 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   confirmation is only ever the form's: amendments the user types (in the form or the chat) you propose as changes
   (`op: change`, or add and remove), and the set is put to them again; `drop: true` only where the user said to drop
   one. A client without forms gets `needs_review` and a `review_id`: show the table, and once the user agrees, call
-  with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed.
+  with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed. The user
+  declining the catch-all wants something else for those records: ask them in the chat, then propose event types for
+  them, or give what they become (`catch_all: {translation: {type_id, event_detail, action, description}}`), and
+  confirm again; the XSLT can't be saved until the catch-all is confirmed.
 
 ## The mapping
 
