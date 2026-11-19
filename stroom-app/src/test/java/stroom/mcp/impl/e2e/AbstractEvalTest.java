@@ -49,11 +49,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -669,16 +671,6 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (catalogue == null) {
             return;
         }
-        final List<Map<String, Object>> proposals = new ArrayList<>();
-        for (final Map<String, Object> type : (List<Map<String, Object>>) catalogue.get("event_types")) {
-            final Map<String, Object> proposal = new LinkedHashMap<>(type);
-            proposal.put("op", "add");
-            proposal.remove("status");
-            if ("user_confirmed".equals(proposal.get("basis"))) {
-                proposal.put("basis", "agent_knowledge");
-            }
-            proposals.add(proposal);
-        }
         // The records read as the reference mapping reads them (its extractions, pairs and held fields), as a
         // source with no mapping saved yet gives its reading.
         final Map<String, Object> reading = new LinkedHashMap<>();
@@ -687,10 +679,33 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 reading.put(key, mapping.get(key));
             }
         }
-        final Map<String, Object> checked = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws,
-                "proposals", proposals, "reading", reading.isEmpty()
+        // Listed first, as an agent starts: a next version's build starts from the promoted catalogue (eval case
+        // 70), whose event types are kept as they are, only the reference's others added.
+        final Map<String, Object> listed = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws,
+                "reading", reading.isEmpty()
                         ? null
                         : reading));
+        final Set<Object> kept = new HashSet<>();
+        list(map(listed, "catalogue"), "event_types").forEach(type -> kept.add(type.get("type_id")));
+        final List<Map<String, Object>> proposals = new ArrayList<>();
+        for (final Map<String, Object> type : (List<Map<String, Object>>) catalogue.get("event_types")) {
+            if (kept.contains(type.get("type_id"))) {
+                continue;
+            }
+            final Map<String, Object> proposal = new LinkedHashMap<>(type);
+            proposal.put("op", "add");
+            proposal.remove("status");
+            if ("user_confirmed".equals(proposal.get("basis"))) {
+                proposal.put("basis", "agent_knowledge");
+            }
+            proposals.add(proposal);
+        }
+        final Map<String, Object> checked = proposals.isEmpty()
+                ? Map.of("recorded", true, "check", listed.getOrDefault("check", Map.of()))
+                : json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws, "proposals", proposals,
+                        "reading", reading.isEmpty()
+                                ? null
+                                : reading));
         if (!Boolean.TRUE.equals(checked.get("recorded")) || checked.get("refused") != null) {
             score.problem("catalogue_event_types refused the reference catalogue: " + firstLines(String.valueOf(
                     checked.getOrDefault("refused", checked.get("hint")))));
