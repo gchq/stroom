@@ -191,9 +191,12 @@ final class ConfirmedEventTypes {
                 .toList();
     }
 
-    // The records of the scope's source types (or every record without a scope, or a record not telling its source
-    // type).
-    private static IntPredicate inScope(final TranslationMapping mapping,
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param scope   The build's (or its group's) source type scope, or null for none.
+    /// @return Which records (by index) are of the scope's source types: every record without a scope, and a record
+    /// not telling its source type; null for every record.
+    static IntPredicate inScope(final TranslationMapping mapping,
                                         final List<Object> records,
                                         final SourceTypeScope scope) {
         if (scope == null || scope.names() == null || NullSafe.isBlankString(scope.field())) {

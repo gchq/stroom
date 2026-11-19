@@ -94,7 +94,8 @@ final class MappingSampleCheck {
 
     /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock)], with the build's catalogue
     /// checked too: the confirmed event types the mapping translates otherwise go under [#CONFIRMED_LOST], dropped
-    /// ones a rule still translates are warned of, the event types not yet confirmed that a rule contradicts go under
+    /// ones a rule still translates are warned of, as are confirmed ones whose rules no longer write the vendor's
+    /// code as Data ([VendorCodeKept]), the event types not yet confirmed that a rule contradicts go under
     /// [#CATALOGUE_CONTRADICTIONS], and what couldn't be checked is said under `not_checked`.
     ///
     /// @param mapping   The mapping.
@@ -161,6 +162,8 @@ final class MappingSampleCheck {
         }
         // Event types the user said to drop that a rule still translates.
         warnings.addAll(ConfirmedEventTypes.undropped(mapping, found.records(), catalogue));
+        // Confirmed event types whose rules no longer write the vendor's code as Data (seen in eval cases 67, 70).
+        warnings.addAll(VendorCodeKept.missing(mapping, found.records(), catalogue, scope));
         check.put("problems", problems);
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);

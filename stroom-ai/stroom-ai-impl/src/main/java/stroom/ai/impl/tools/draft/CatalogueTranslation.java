@@ -27,7 +27,6 @@ import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingFacts;
-import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -148,19 +147,7 @@ final class CatalogueTranslation {
     /// `EventID`, `event.logger_name` is `logger_name`, `@id` is `id`; a key in brackets as written). A Data
     /// Splitter's field is named as it is.
     static String vendorCodeName(final String fieldName, final boolean jsonKeys) {
-        String last = fieldName;
-        final int slash = last.lastIndexOf('/');
-        if (slash >= 0 && !last.contains("[")) {
-            last = last.substring(slash + 1);
-        } else if (jsonKeys) {
-            final List<String> keys = JsonFieldNames.keys(last);
-            if (!keys.isEmpty()) {
-                last = keys.getLast();
-            }
-        }
-        return last.startsWith("@")
-                ? last.substring(1)
-                : last;
+        return VendorCode.dataName(fieldName, jsonKeys);
     }
 
     @SuppressWarnings("unchecked")
@@ -507,25 +494,7 @@ final class CatalogueTranslation {
 
     // The fields a way tests for a code (equals, one_of; not a not), but the source type field.
     private List<String> vendorCodeFields(final Way way) {
-        final Set<String> out = new LinkedHashSet<>();
-        for (final Condition condition : way.when()) {
-            if (condition.field() != null && !condition.not() && condition.xpath() == null
-                && (condition.equalTo() != null || condition.oneOf() != null)
-                && !isSourceTypeField(condition.field())) {
-                out.add(condition.field());
-            }
-        }
-        return new ArrayList<>(out);
-    }
-
-    // The build's source type field, as its reading names it (`event>log_type`) or as a field (`event.log_type`).
-    private boolean isSourceTypeField(final String fieldName) {
-        final String reading = catalogue.scope().sourceTypeField();
-        if (reading == null || reading.isBlank()) {
-            return false;
-        }
-        return fieldName.equals(reading) || fieldName.equals(reading.replace('>', '.'))
-               || fieldName.equals(reading.replace('>', '/'));
+        return VendorCode.fields(way, catalogue);
     }
 
     // The fields pattern conditions' capture groups name: an extract entry each (once), so the rules can read them.

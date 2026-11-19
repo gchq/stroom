@@ -45,6 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestE2eCatalogueLifecycle extends AbstractE2eTest {
 
     private static final String HEADER = "time,user,host,action,resource\n";
+    // What build_translation_xslt warns of a confirmed event type's rule that lost the vendor's code.
+    private static final String VENDOR_CODE_LOST = "no longer writes the vendor's code";
     private static final String SAMPLE = HEADER + "2026-10-01T10:00:00,alice,ws01,login,\n"
                                          + "2026-10-01T10:05:00,bob,ws02,logout,\n"
                                          + "2026-10-01T10:06:00,alice,ws01,login,\n"
@@ -269,6 +271,29 @@ class TestE2eCatalogueLifecycle extends AbstractE2eTest {
                 .containsExactly("Authenticate-FailedLogon");
         assertThat(jsonOf(catalogue.get("catch_all"))).as("the catch-all, with its own translation")
                 .contains("Authenticate-Logon", "Authenticate");
+    }
+
+    // ### A confirmed event type whose rule no longer writes the vendor's code as Data: still built, and warned of,
+    // naming the event type and the field (seen in eval cases 67 and 70 on Haiku); none while it is kept, and none
+    // for the catch-all.
+    @Test
+    void aConfirmedEventTypeWhoseRuleLostTheVendorsCodeIsWarnedOf() {
+        final Translated built = translated("cat-life-code", "CAT-LIFE-CODE");
+        final Map<String, Object> kept = agreed("build_translation_xslt", args("uuid", built.xslt(), "build",
+                built.build(), "stream_ids", List.of(built.raw()), "schema_version", VERSION, "changes", Map.of()));
+        assertThat(kept.get("ok")).as("rebuilt: %s", kept.get("problems")).isEqualTo(true);
+        assertThat(jsonOf(kept.get("warnings"))).as("the vendor's code kept").doesNotContain(VENDOR_CODE_LOST);
+
+        // The logoffs' rule (named after its TypeId) loses the Data the draft wrote for their code, `action`.
+        final Map<String, Object> lost = agreed("build_translation_xslt", args("uuid", built.xslt(), "build",
+                built.build(), "stream_ids", List.of(built.raw()), "schema_version", VERSION, "changes",
+                Map.of("events", List.of(Map.of("name", "authenticate_logoff", "fields", List.of(Map.of("path",
+                        "EventDetail/Authenticate/Data", "data_name", "action", "remove", true)))))));
+        dump("lost the vendor's code", lost);
+        assertThat(lost.get("ok")).as("still built: %s", lost.get("problems")).isEqualTo(true);
+        assertThat(jsonOf(lost.get("warnings"))).contains(VENDOR_CODE_LOST)
+                .contains("confirmed event type Authenticate-Logoff", "action (as Data named 'action')")
+                .doesNotContain("confirmed event type Authenticate-Logon:", "'uncatalogued' no longer");
     }
 
     // A feed and build translated from the catalogue (logons and logoffs confirmed), its pipeline stepped clean.
