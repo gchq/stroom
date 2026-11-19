@@ -68,8 +68,9 @@ the pipeline's `JSONParser`.
 
 Start with `draft_translation_mapping` on the sample files: it returns a valid mapping with the input kind, the
 obvious homes for fields by name (time and its pattern, host, client and server addresses and ports, user, event
-type, message), a rule per kind of event and every other field as `Data`, with notes on what is still to decide
-(the action element per kind, System Name and Environment, a time zone). Edit that; never send the field
+type, message), a rule per way of recognising each event type of the catalogue (catalogue_event_types; before
+there is one, the draft's own rules) and every other field as `Data`, with notes on what is still to decide
+(System Name and Environment, a time zone). Edit that; never send the field
 inventory as the mapping. `build_translation_xslt` then writes the translation from the mapping, so the XSLT
 itself need not be written by hand:
 
@@ -211,10 +212,10 @@ what they agreed to, and saving it again asks only about a rule not agreed yet, 
 rule for the rest, often): there the generator falls back to the rule's name and warns. Give TypeId a `default` to
 choose another value.
 
-TypeId names the kind of event, so each kind gets its own: a TypeId the sample shows to be the same for events of
+TypeId names the event type, so each event type gets its own: a TypeId the sample shows to be the same for events of
 different rules (a category alone, `User` for logons and logoffs alike) is refused. Write it in the format the standing
 instructions (AGENTS docs) set for TypeIds, where they set one (`<Category>-<Action>`, say, or the vendor's event
-code); otherwise join the fields that tell the kinds apart, `{"path": "EventDetail/TypeId", "join": ["event",
+code); otherwise join the fields that tell the event types apart, `{"path": "EventDetail/TypeId", "join": ["event",
 "action"]}` (`User-Login`, `User-Logout`), or give each rule a value of its own.
 
 A field no element of the schema means (a rule id, a byte count, a vendor's key) is carried as `Data` (a path ending

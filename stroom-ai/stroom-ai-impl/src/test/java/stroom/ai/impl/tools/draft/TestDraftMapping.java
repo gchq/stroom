@@ -430,7 +430,7 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(fields.get("EventDetail/Process/Action").get("value")).isEqualTo("Execute");
         assertThat(notes(draft)).anyMatch(n -> n.startsWith("Every record runs a command ('command')")
                                                && n.contains("RunAs"))
-                .noneMatch(n -> n.startsWith("No field names the kind"));
+                .noneMatch(n -> n.startsWith("No field tells the event types apart"));
         assertThat(generate(m, SCHEMA, "4.1.0").problems()).isEmpty();
         assertThat(generate(m, SCHEMA_352, "3.5.2").problems()).isEmpty();
     }

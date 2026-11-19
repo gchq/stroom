@@ -2357,18 +2357,19 @@ public final class DraftMapping {
                           + "element takes.");
             } else if (!kinds.kinds().isEmpty()) {
                 notes.add("One rule per value of '" + naming + "' (" + values + "): replace each EventDetail/Unknown "
-                          + "left by the action element that describes the kind (Authenticate, Network, Process, "
+                          + "left by the action element that describes its records (Authenticate, Network, Process, "
                           + "View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into "
                           + "that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the "
                           + "schema problems build_translation_xslt reports: each names what the element takes. "
                           + "Unknown is for records no action element describes, not a way round a schema error; "
                           + "build_translation_xslt refuses it where the values show an action.");
             } else if (command == null) {
-                notes.add("No field names the kind of event: every record is one 'other' event with Unknown/Data. "
-                          + "If the records are all one kind of event (the request or the sample says what), "
+                notes.add("No field tells the event types apart: every record is one 'other' event with Unknown/Data. "
+                          + "If the records are all one event type (the request or the sample says what), "
                           + "replace Unknown with the action element that describes it (a command run is Process, a "
                           + "logon Authenticate, a file read View...) and move its Data entries into that element; "
-                          + "otherwise add rules with conditions once you know how kinds are told apart.");
+                          + "otherwise catalogue the event types (catalogue_event_types) once you know how they are "
+                          + "told apart.");
             }
         }
 

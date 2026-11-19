@@ -299,7 +299,7 @@ class SampleStreamTexts {
                          + scope.field() + "') are in the sample; the others were left out as they were read"
                          + (scope.byPart()
                 ? " (each part kept or left out whole, by its stream meta attribute)"
-                : "") + ", so the kinds and rules here are the scope's.");
+                : "") + ", so the event types and rules here are the scope's.");
         final List<Cut> cut = texts.cut().stream().filter(part -> kept.containsKey(part.name())).toList();
         return new Scoped(new Texts(kept, notes, cut, texts.skipped()), said);
     }

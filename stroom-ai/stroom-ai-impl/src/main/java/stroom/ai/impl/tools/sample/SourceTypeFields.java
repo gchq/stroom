@@ -114,7 +114,7 @@ public final class SourceTypeFields {
     /// way ([HeldCandidates]). Where a held field's formats name the source differently (`logger_name` in JSON and
     /// key=value, `@logger` in XML), a reading trying each in turn is offered first (`event>logger_name |
     /// event>xml:@logger`), for the user to confirm. Never a field named for kinds of event (an event type, action
-    /// or operation: classify_kinds' to tell apart within a source type), nor a held value's format alone (the
+    /// or operation: catalogue_event_types' to tell apart within a source type), nor a held value's format alone (the
     /// user's choice only, as a last resort).
     ///
     /// @param records The records read, parsed (flattened to dotted names).
@@ -316,10 +316,10 @@ public final class SourceTypeFields {
     }
 
     /// Whether a field may say which source a record came from: not one whose name gives it a home that says who,
-    /// where or when (a host, a user, an address), not a message, not one named for kinds of event (an event type,
-    /// action or operation: telling those apart within a source type is classify_kinds' and the rules' job, never a
-    /// source type's), and its values short names, not sentences, addresses or times (a path may hold a date: a log
-    /// file rotated daily).
+    /// where or when (a host, a user, an address), not a message, not one named for event types (an event type,
+    /// action or operation: telling those apart within a source type is catalogue_event_types' and the rules' job,
+    /// never a source type's), and its values short names, not sentences, addresses or times (a path may hold a
+    /// date: a log file rotated daily).
     ///
     /// @param field  A field, dotted, or a reading's path into a held value (judged by its last name).
     /// @param values Its values.

@@ -126,7 +126,7 @@ aggregated feed: each source type group reads only its own messages, in its own 
 
 When the sample's records come in different shapes (one file flat, another with the event as JSON in a field), an
 element reads every shape's field in turn with `any_of`, e.g. `{"path": "EventDetail/TypeId", "any_of":
-["event_type", "message.event_type"]}`, and each shape's kinds get rules.
+["event_type", "message.event_type"]}`, and each shape's event types get rules.
 
 There is no `stroom:json-parse()` or similar: `json-to-xml()` is the function, with no prefix. By hand (guard it:
 `if (normalize-space(x)) then json-to-xml(x) else ()`, inside `xsl:try` for text that isn't JSON), after a prefix:

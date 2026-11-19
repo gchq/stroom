@@ -46,7 +46,7 @@ Terms:
 ## How it starts
 
 * **On evidence**: when `survey_feed` finds a candidate source type field (several values whose records differ in
-  their fields or message formats), it asks the user to confirm it, as it confirms a kind field. Candidates inside
+  their fields or message formats), it asks the user to confirm it. Candidates inside
   held values come with the formats they read and the records they give no value; a reading joining the held
   formats is offered first. Where a format has no reading yet, propose one to the user and pass it as
   `source_type_field=` as they confirm it. The plan then adds
@@ -102,7 +102,7 @@ is a later build's, after this one is promoted.
   no threshold, namespaces and all (stroom://guide/json-input).
 * A group's XSLT is the XSLT of a pipeline of its own: it writes the Events, translates its source types' records
   (the registry's rows tried in order) and passes over every other record, counted.
-* A group's XSLT translates each of its source types; its rules tell them apart, as kinds.
+* A group's XSLT translates each of its source types; within them, its rules tell the event types apart.
 * The first group of a feed makes `<feed> common` (the wrapper's or record's shared Event parts: time, System,
   Generator, Device, and the site's shared calls) and `<feed> helpers`; later groups reuse them and keep only what
   differs, said in `group.notes` (a shared call of a later group's is added to the common module). A group writes
@@ -163,7 +163,7 @@ the survey saw (or the registry's rows, where record_source_types wrote one) are
 outside them: `New source type 'X' in <field>, not seen when this feed was surveyed: survey the feed again to cover
 it` (INFO). Its records are translated by the rules as any other, so it is triaged benign; `review_coverage` reports
 the values (`source_types.unseen_source_types`). Suggest to the user that they survey the feed again, in a build on
-it, so the new source's kinds are classified and translated. Nothing is written to a registry. A feed without a
+it, so the new source's event types are catalogued and translated. Nothing is written to a registry. A feed without a
 source type field gets none of this.
 
 ## Indexes

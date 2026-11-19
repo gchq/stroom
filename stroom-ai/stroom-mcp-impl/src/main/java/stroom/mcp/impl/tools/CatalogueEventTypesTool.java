@@ -86,7 +86,7 @@ import java.util.regex.Pattern;
 ///   in its form (decided 2026-11-18): amendments come back for the agent to propose (`op: change`), and the set is
 ///   put to the user again. A client that can't show forms confirms through `needs_review` and its `review_id`.
 ///
-/// The survey comes first (it alone finds an aggregated feed's source type field), as for classify_kinds.
+/// The survey comes first: it alone finds an aggregated feed's source type field.
 class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CatalogueEventTypesTool.class);

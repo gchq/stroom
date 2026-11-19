@@ -45,9 +45,9 @@ import java.util.TreeSet;
 /// * **Each part splits the other**: the second's values change record shape within some value of the first, and the
 ///   first's within some value of the second (where the second's values each sit within one of the first's, the
 ///   second alone tells the sources, and no pair is needed).
-/// * Neither part is named for kinds of event (an event type, action, operation) or a level (a severity says how bad,
-///   never which source), nor free text, a time or an address ([SourceTypeFields#mayName]): kinds within a source are
-///   classify_kinds' and the translation rules' job.
+/// * Neither part is named for event types (an event type, action, operation) or a level (a severity says how bad,
+///   never which source), nor free text, a time or an address ([SourceTypeFields#mayName]): event types within a
+///   source are catalogue_event_types' and the translation rules' job.
 /// * The feed looks aggregated already: some single reading was offered (each split), or the user said it is;
 ///   otherwise two fields of a single source's records (a component and its error records) could pass for a pair.
 ///
