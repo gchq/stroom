@@ -612,9 +612,8 @@ public final class SampleProfiler {
     private static void flatten(final Object value, final String prefix, final int depth,
                                 final Map<String, Object> out) {
         if (value instanceof final Map<?, ?> map && depth < 4) {
-            map.forEach((key, inner) -> flatten(inner, prefix.isEmpty()
-                    ? String.valueOf(key)
-                    : prefix + "." + key, depth + 1, out));
+            map.forEach((key, inner) -> flatten(inner, JsonFieldNames.child(prefix, String.valueOf(key)), depth + 1,
+                    out));
             return;
         }
         out.put(prefix.isEmpty()

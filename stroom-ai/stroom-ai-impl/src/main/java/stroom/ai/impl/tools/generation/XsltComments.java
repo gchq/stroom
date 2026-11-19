@@ -51,7 +51,9 @@ public final class XsltComments {
     /// @param width The width to wrap it to.
     /// @return The comment's text: dashes runs made one, trailing dashes dropped, wrapped, with a space either side.
     public static String comment(final String text, final int width) {
-        final String single = ToolText.rstrip(DASHES.matcher(text).replaceAll("-"), "-");
+        // Without the characters XML 1.0 can't hold, as a literal is (seen: a condition's NUL made the XSLT not
+        // well-formed, found by the condition parity tests, 2026-11-19).
+        final String single = ToolText.rstrip(DASHES.matcher(XPathText.literalText(text)).replaceAll("-"), "-");
         return String.join("\n", wrap(single, width, FIRST_INDENT, LATER_INDENT)) + " ";
     }
 

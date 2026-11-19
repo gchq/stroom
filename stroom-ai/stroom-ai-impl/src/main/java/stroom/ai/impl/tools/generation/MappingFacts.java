@@ -17,10 +17,12 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -346,6 +348,33 @@ public final class MappingFacts {
             steps.set(at + 2, "*");
         }
         return String.join("/", steps);
+    }
+
+    /// @param jsonFields The mapping's json_fields.
+    /// @param fieldName  A field's name.
+    /// @return The longest of the json_fields the field is a key of (its name below it, as [JsonFieldNames]
+    /// spells it), or null.
+    public static String heldJsonField(final List<String> jsonFields, final String fieldName) {
+        if (fieldName == null || jsonFields == null) {
+            return null;
+        }
+        return jsonFields.stream()
+                .filter(field -> JsonFieldNames.below(field, fieldName) != null)
+                .max(Comparator.comparingInt(String::length))
+                .orElse(null);
+    }
+
+    /// @param xmlFields The mapping's xml_fields.
+    /// @param fieldName A field's name.
+    /// @return The longest of the xml_fields the field is a path into (the field, then `/`), or null.
+    public static String heldXmlField(final List<String> xmlFields, final String fieldName) {
+        if (fieldName == null || xmlFields == null) {
+            return null;
+        }
+        return xmlFields.stream()
+                .filter(field -> fieldName.startsWith(field + "/"))
+                .max(Comparator.comparingInt(String::length))
+                .orElse(null);
     }
 
     /// @param condition A condition.

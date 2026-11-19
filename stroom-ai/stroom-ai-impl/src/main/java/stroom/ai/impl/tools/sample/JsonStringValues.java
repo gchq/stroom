@@ -181,9 +181,8 @@ public final class JsonStringValues {
             return;
         }
         if (value instanceof final Map<?, ?> map) {
-            map.forEach((key, inner) -> walk(inner, path.isEmpty()
-                    ? String.valueOf(key)
-                    : path + "." + key, depth + 1, visitor));
+            map.forEach((key, inner) -> walk(inner, JsonFieldNames.child(path, String.valueOf(key)), depth + 1,
+                    visitor));
         } else if (value instanceof final List<?> list) {
             final String items = (path.isEmpty()
                     ? "(value)"

@@ -21,7 +21,9 @@ import net.sf.saxon.regex.ARegularExpression;
 import net.sf.saxon.trans.XPathException;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /// An extraction's regular expression read as the generated XSLT runs it: in XPath's dialect, compiled by Saxon's
@@ -39,6 +41,10 @@ public final class XPathRegex {
     // Named groups and lookaround, which XPath has not.
     private static final Pattern LOOKAROUND = Pattern.compile(
             "\\(\\?(P?<[A-Za-z_]|<?[=!])");
+
+    // The regexes finds() has compiled, kept as a sample's records are tested one by one.
+    private static final int CACHED = 512;
+    private static final Map<String, Compiled> COMPILED = new ConcurrentHashMap<>();
 
     private XPathRegex() {
         // Static only.
@@ -78,11 +84,22 @@ public final class XPathRegex {
     /// anchored).
     /// @throws XPathRegexException if it doesn't compile as XPath compiles it, with Saxon's reason.
     public static boolean finds(final String regex, final String value) throws XPathRegexException {
+        if (COMPILED.size() > CACHED) {
+            COMPILED.clear();
+        }
+        final Compiled compiled = COMPILED.computeIfAbsent(regex, XPathRegex::compiled);
+        if (compiled.regex() == null) {
+            throw new XPathRegexException(compiled.error());
+        }
+        return compiled.regex().containsMatch(value);
+    }
+
+    private static Compiled compiled(final String regex) {
         try {
-            return new ARegularExpression(regex, "", HOST_LANGUAGE, new ArrayList<>(), CONFIGURATION)
-                    .containsMatch(value);
+            return new Compiled(new ARegularExpression(regex, "", HOST_LANGUAGE, new ArrayList<>(), CONFIGURATION),
+                    null);
         } catch (final XPathException e) {
-            throw new XPathRegexException(e.getMessage());
+            return new Compiled(null, e.getMessage());
         }
     }
 
@@ -117,5 +134,14 @@ public final class XPathRegex {
         XPathRegexException(final String message) {
             super(message);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A regex compiled, or why it doesn't compile.
+    private record Compiled(ARegularExpression regex, String error) {
+
     }
 }

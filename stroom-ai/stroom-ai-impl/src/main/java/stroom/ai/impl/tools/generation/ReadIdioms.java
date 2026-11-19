@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -114,7 +115,9 @@ final class ReadIdioms {
                 for (int n = 1; n <= depth; n++) {
                     names.add(match.string(n));
                 }
-                return String.join(ReadShapes.SEPARATOR.get(kind), names);
+                return "json".equals(kind)
+                        ? JsonFieldNames.of(names)
+                        : String.join(ReadShapes.SEPARATOR.get(kind), names);
             }
         }
         if (fields.isEmpty() && XML_ITEM_PATH.matcher(node.text()).matches()) {

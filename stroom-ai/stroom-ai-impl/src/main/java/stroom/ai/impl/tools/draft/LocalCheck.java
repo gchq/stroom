@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.ZoneSource;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -68,6 +69,9 @@ import java.util.stream.Collectors;
 /// inputs). Regular expressions written for the mapping (a condition's `matches`, an extraction's regex) are run
 /// with Java's regex engine, as Stroom's XSLT runs them in its own.
 public final class LocalCheck {
+
+    /// The characters of a string Stroom's JSONParser keeps by default (its `stringTruncateLength`).
+    public static final int JSON_PARSER_CUT = 10_000;
 
     private static final Pattern STEP = ToolText.re("^(?:@(?<attr>[\\w.-]+)|(?<name>[\\w.-]+|\\*)(?:\\[@(?<pattr>"
                                                   + "[\\w.-]+)=(?<q>['\"])(?<pval>.*?)\\k<q>\\])?)$");
@@ -212,7 +216,7 @@ public final class LocalCheck {
                 final Object held = parsedJson(record.get(field));
                 if (held instanceof Map) {
                     SampleProfiler.flatten(held).forEach((key, value) ->
-                            record.putIfAbsent(field + "." + key, JsonValues.jsonText(value)));
+                            record.putIfAbsent(JsonFieldNames.join(field, key), JsonValues.jsonText(value)));
                 }
             }
         }
@@ -314,7 +318,23 @@ public final class LocalCheck {
     /// why nothing could be read, or null.
     public static SampleRecords sampleRecords(final TranslationMapping mapping, final Object sample,
                                               final SplitterSpec splitter) {
-        final SampleRecords found = rawRecords(mapping, sample, splitter);
+        return sampleRecords(mapping, sample, splitter, 0);
+    }
+
+    /// [#sampleRecords(TranslationMapping, Object, SplitterSpec)] as processing reads them: a JSON input's string
+    /// values longer than Stroom's JSONParser keeps (its `stringTruncateLength`) cut before anything reads them, a
+    /// held JSON string among them, as the JSONParser cuts them (logging a warning): its first that many characters
+    /// (UTF-16 units, as Java counts them). Other inputs are read as they are.
+    ///
+    /// @param mapping              The mapping.
+    /// @param sample               The sample's text, or a list of texts (one a file).
+    /// @param splitter             The Data Splitter spec a data_splitter input is read with, or null.
+    /// @param stringTruncateLength The JSONParser's stringTruncateLength ([#JSON_PARSER_CUT] by default); 0 or less
+    ///                             to read every string whole.
+    /// @return The records, read as processing reads them, and a note saying why nothing could be read, or null.
+    public static SampleRecords sampleRecords(final TranslationMapping mapping, final Object sample,
+                                              final SplitterSpec splitter, final int stringTruncateLength) {
+        final SampleRecords found = rawRecords(mapping, sample, splitter, stringTruncateLength);
         final List<Object> records = withXmlFields(withJsonFields(found.records(), mapping.jsonFields()),
                 mapping.xmlFields());
         return new SampleRecords(withExtractedXml(mapping, records), found.note());
@@ -355,12 +375,12 @@ public final class LocalCheck {
     }
 
     private static SampleRecords rawRecords(final TranslationMapping mapping, final Object sample,
-                                            final SplitterSpec splitter) {
+                                            final SplitterSpec splitter, final int cut) {
         if (sample instanceof final List<?> texts) {
             final List<Object> records = new ArrayList<>();
             final List<String> notes = new ArrayList<>();
             for (final Object text : texts) {
-                final SampleRecords found = rawRecords(mapping, text, splitter);
+                final SampleRecords found = rawRecords(mapping, text, splitter, cut);
                 records.addAll(found.records());
                 if (found.note() != null && !notes.contains(found.note())) {
                     notes.add(found.note());
@@ -381,12 +401,12 @@ public final class LocalCheck {
             return new SampleRecords(records, null);
         }
         if ("json".equals(mapping.input())) {
-            return jsonRecords(text);
+            return jsonRecords(text, cut);
         }
         return xmlRecords(mapping, text);
     }
 
-    private static SampleRecords jsonRecords(final String text) {
+    private static SampleRecords jsonRecords(final String text, final int cut) {
         final List<Object> values = new ArrayList<>();
         if (text.startsWith("{") && SampleProfiler.wrappedRecords(text) != null) {
             // One object wrapping the records (CloudTrail): the parser's one record; for_each reads its items.
@@ -416,8 +436,27 @@ public final class LocalCheck {
             }
         }
         final List<Object> records = new ArrayList<>();
-        values.forEach(value -> records.add(SampleProfiler.flatten(value)));
+        values.forEach(value -> records.add(SampleProfiler.flatten(cut > 0
+                ? cutStrings(value, cut)
+                : value)));
         return new SampleRecords(records, null);
+    }
+
+    // A JSON value with each string longer than the cut cut to it, as Stroom's JSONParser cuts them.
+    private static Object cutStrings(final Object value, final int cut) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            map.forEach((key, inner) -> out.put(String.valueOf(key), cutStrings(inner, cut)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            final List<Object> out = new ArrayList<>();
+            list.forEach(inner -> out.add(cutStrings(inner, cut)));
+            return out;
+        }
+        return value instanceof final String text && text.length() > cut
+                ? text.substring(0, cut)
+                : value;
     }
 
     private static SampleRecords xmlRecords(final TranslationMapping mapping, final String text) {
@@ -511,49 +550,43 @@ public final class LocalCheck {
         return items;
     }
 
-    // Whether a field condition holds for a record, as the XSLT would test it; null when it cannot be told here
-    // (an xpath, a dictionary, or a field an extraction produces, unless its values are given).
-    private static Boolean holds(final Condition c, final Object record, final Set<String> derived,
+    /// Whether a condition holds for a record exactly as the generated XSLT tests it: the one evaluator of the
+    /// conditions, every operator, field spelling and value case as processing reads them.
+    ///
+    /// @param mapping   The mapping the condition is of (its input, held fields and nil values).
+    /// @param c         The condition.
+    /// @param record    A record, as [#sampleRecords(TranslationMapping, Object, SplitterSpec)] reads them.
+    /// @param extracted The values its extractions give it ([#extractedValues(TranslationMapping, Object)]), or
+    ///                  null.
+    /// @return Whether it holds; null when it can't be told here (an xpath, a dictionary, a record-scope field, or a
+    /// field an extraction produces when its values aren't given).
+    public static Boolean holds(final TranslationMapping mapping,
+                                final Condition c,
+                                final Object record,
+                                final Map<String, String> extracted) {
+        return holds(mapping, c, record, derived(mapping), extracted);
+    }
+
+    // Whether a field condition holds for a record, as the XSLT tests it; null when it cannot be told here (an xpath,
+    // a dictionary, or a field an extraction produces, unless its values are given).
+    private static Boolean holds(final TranslationMapping mapping,
+                                 final Condition c,
+                                 final Object record,
+                                 final Set<String> derived,
                                  final Map<String, String> extracted) {
         if (c.xpath() != null || c.inDictionary() != null || "record".equals(c.scope())) {
             return null;
         }
-        if (derived.contains(c.field()) && (extracted == null || !extracted.containsKey(c.field()))) {
-            return null;
+        final List<String> values;
+        if (derived.contains(c.field())) {
+            if (extracted == null || !extracted.containsKey(c.field())) {
+                return null;
+            }
+            values = List.of(extracted.get(c.field()));
+        } else {
+            values = ConditionValues.values(mapping, c.field(), record);
         }
-        final String value = derived.contains(c.field())
-                ? extracted.get(c.field())
-                : valueOf(record, c.field());
-        if (c.present() != null) {
-            return (value != null && !ToolText.strip(value).isEmpty()) == c.present();
-        }
-        final Boolean test = valueTest(c, value);
-        return test == null
-                ? null
-                : c.not() != test;
-    }
-
-    // Whether a condition's test of the value (all but present) holds, before any not; null when it can't be told.
-    private static Boolean valueTest(final Condition c, final String value) {
-        if (value == null) {
-            return false;
-        }
-        if (c.equalTo() != null) {
-            return value.equals(c.equalTo());
-        }
-        if (c.oneOf() != null) {
-            return c.oneOf().contains(value);
-        }
-        if (c.startsWith() != null) {
-            return value.startsWith(c.startsWith());
-        }
-        if (c.contains() != null) {
-            return value.contains(c.contains());
-        }
-        final Pattern pattern = compiled(c.matches(), 0);
-        return pattern == null
-                ? null
-                : SafePattern.matcher(pattern, value).find();
+        return ConditionValues.holds(mapping, c, values);
     }
 
     // A regex compiled, or null if it can't be.
@@ -703,7 +736,7 @@ public final class LocalCheck {
         }
         for (final Map.Entry<String, List<Condition>> candidate : candidates) {
             final List<Boolean> tests = new ArrayList<>();
-            candidate.getValue().forEach(c -> tests.add(holds(c, record, derived, extracted)));
+            candidate.getValue().forEach(c -> tests.add(holds(mapping, c, record, derived, extracted)));
             if (tests.contains(null)) {
                 return null;
             }

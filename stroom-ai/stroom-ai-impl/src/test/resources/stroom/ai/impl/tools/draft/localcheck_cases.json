@@ -6942,7 +6942,9 @@
    "records": 5,
    "check": {
     "records": 5,
-    "problems": [],
+    "problems": [
+     "[other] (the rule for records no other rule matches) writes EventDetail/Unknown for 1 of the 5 sample records: host: wf02; app: webfilter; user: alice; action: allow; user_2: alice; action_2: allow; e.g. message: \"user=alice src=10.2.0.5 dst=192.0.2.15 url=https://intranet.example.org/ categor\". Give them rules with the action elements these values describe; only if none fits, set allow_unknown on this rule to the reason, which the user confirms."
+    ],
     "warnings": [],
     "fields_seen": [
      "pri",
@@ -23038,7 +23040,7 @@
    "check": {
     "records": 6,
     "problems": [
-     "[file] keeps EventDetail/Unknown for 3 of the 6 sample records: host.name: ws01; user.name: alice, bob; event.action: file-delete; event.outcome: success; file.name: q3.xlsx, q4.xlsx, q2.xlsx. Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
+     "[other] (the rule for records no other rule matches) writes EventDetail/Unknown for 6 of the 6 sample records: host.name: fs01, ws01; user.name: bob, alice; event.action: user-login, file-delete; event.outcome: failure, success; file.name: q3.xlsx, q4.xlsx, q2.xlsx. Give them rules with the action elements these values describe; only if none fits, set allow_unknown on this rule to the reason, which the user confirms."
     ],
     "warnings": [],
     "fields_seen": [
@@ -23235,7 +23237,7 @@
    "check": {
     "records": 150,
     "problems": [
-     "[file] keeps EventDetail/Unknown for 54 of the 150 sample records: host.name: ws01, fs01; user.name: alice, bob; event.action: file-delete; event.outcome: success; file.name: q3.xlsx, q4.xlsx, q2.xlsx, q1.xlsx. Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
+     "[other] (the rule for records no other rule matches) writes EventDetail/Unknown for 150 of the 150 sample records: host.name: fs01, ws01; user.name: bob, alice; event.action: user-login, file-delete; event.outcome: failure, success; file.name: q3.xlsx, q4.xlsx, q2.xlsx, q1.xlsx. Give them rules with the action elements these values describe; only if none fits, set allow_unknown on this rule to the reason, which the user confirms."
     ],
     "warnings": [],
     "fields_seen": [

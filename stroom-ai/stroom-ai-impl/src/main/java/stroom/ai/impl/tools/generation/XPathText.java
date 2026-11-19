@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,14 @@ public final class XPathText {
     /// XML 1.0 can't hold (all but tab, new line and CR), which the XSLT can't hold either (found testing awkward
     /// values, 2026-11-18: a source type's value holding a form feed made its group's XSLT not well-formed).
     public static String literal(final String text) {
-        return "'" + XML_10_FORBIDDEN.matcher(text).replaceAll("").replace("'", "''") + "'";
+        return "'" + literalText(text).replace("'", "''") + "'";
+    }
+
+    /// @param text Text.
+    /// @return The text an XPath literal of it ([#literal(String)]) holds: without the control characters XML 1.0
+    /// can't hold.
+    public static String literalText(final String text) {
+        return XML_10_FORBIDDEN.matcher(text).replaceAll("");
     }
 
     /// @param kind      The mapping's input: `data_splitter`, `json`, `xml` or `xml_fragments`.
@@ -64,7 +72,7 @@ public final class XPathText {
                            .collect(Collectors.joining("/")) + "/@value";
         }
         if ("json".equals(kind)) {
-            return ToolText.split(fieldName, ".").stream()
+            return JsonFieldNames.keys(fieldName).stream()
                     .map(part -> "*[@key=" + literal(part) + "]")
                     .collect(Collectors.joining("/"));
         }

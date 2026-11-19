@@ -219,8 +219,6 @@ final class LongestJsonString {
                     ? null
                     : base;
         }
-        return base.isEmpty()
-                ? valueKey
-                : base + "." + valueKey;
+        return JsonFieldNames.child(base, valueKey);
     }
 }

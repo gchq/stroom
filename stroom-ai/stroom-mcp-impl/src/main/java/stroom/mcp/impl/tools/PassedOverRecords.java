@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
@@ -249,11 +250,14 @@ final class PassedOverRecords {
         final String name = element.get("key") != null
                 ? element.get("key")
                 : element.get("name");
+        // A JSON key spelt as the tools spell JSON fields; a Data Splitter name dotted under its parent.
         final String at = name == null
                 ? path
-                : path.isEmpty()
-                        ? name
-                        : path + "." + name;
+                : element.get("key") != null
+                        ? JsonFieldNames.child(path, name)
+                        : path.isEmpty()
+                                ? name
+                                : path + "." + name;
         final List<XmlElement> children = element.childElements();
         if (name != null && element.get("value") != null) {
             fields.putIfAbsent(at, element.get("value"));

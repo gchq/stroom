@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.HeldText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeReading;
@@ -701,13 +702,13 @@ public final class XsltGenerator {
             return "mcp:parse-xml((" + base + ")[1])" + XPathText.xmlSteps(fieldName.substring(xmlHeld.length()));
         }
         final String held = xpath == null
-                ? longestPrefix(m.jsonFields(), fieldName, ".")
+                ? MappingFacts.heldJsonField(m.jsonFields(), fieldName)
                 : null;
         if (held != null) {
             // A key of the JSON a field holds: read through the guarded helper, so an empty field, or one that isn't
             // JSON, gives nothing (seen: a whole JSON line written into TypeId, and fatal "empty sequence" errors).
             final String base = source(held, null, inputScope);
-            final List<String> jsonKeys = ToolText.split(fieldName.substring(held.length() + 1), ".");
+            final List<String> jsonKeys = JsonFieldNames.keys(JsonFieldNames.below(held, fieldName));
             return "mcp:json-to-xml((" + base + ")[1])/*" + jsonKeys.stream()
                     .map(key -> "/*[@key=" + XPathText.literal(key) + "]")
                     .collect(Collectors.joining());

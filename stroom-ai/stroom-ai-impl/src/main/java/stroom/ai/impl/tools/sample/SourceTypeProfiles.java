@@ -182,7 +182,7 @@ public final class SourceTypeProfiles {
         }
         final Map<String, Object> all = new LinkedHashMap<>(fieldsOf);
         final String messageField = SourceTypeFields.messageField(fieldsOf);
-        held.fields().forEach((name, inner) -> all.put(messageField + "." + name, inner));
+        held.fields().forEach((name, inner) -> all.put(JsonFieldNames.join(messageField, name), inner));
         all.keySet().stream().filter(name -> !name.equals(field))
                 .forEach(name -> count(profile, "fields", name, 1, MAX_FIELDS));
         count(profile, "shapes", SourceTypeFields.shapeKey(fieldsOf, field), 1, MAX_SHAPES);
