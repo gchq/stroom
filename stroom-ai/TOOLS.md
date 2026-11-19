@@ -221,6 +221,7 @@ document in a build folder also needs Create there.
 | `build_reference_xslt` | Writes the XSLT of a reference data pipeline from a mapping | content | yes | build | | | View | |
 | `build_status` | A build's plan, step by step, and the next step | content | yes | build | | Manage Processors, View Data | View | |
 | `build_translation_xslt` | Writes an event-logging translation XSLT from a field mapping; saves it with `build` and `name`, or `uuid` | content | no | build | | View Data | View, Edit | slot, build, ro calls |
+| `catalogue_event_types` | The source's event types: evidence, the agent's proposals checked against every sampled record, confirmed by the user a set at a time, then the catch-all | content | no | build | View Data | | View, Edit | build |
 | `check_events` | Validates Events against the event-logging schema, with quality checks | content | yes | build | | View Data | View | slot |
 | `check_index_template` | Checks an Elasticsearch index template against what the indexing pipeline writes | indexing | no | indexing | Stepping | | View, Edit | slot, confirms |
 | `check_xslt` | Static checks of an XSLT, then compiles it as Stroom does | content | yes | build | | | View | |
@@ -248,9 +249,8 @@ document in a build folder also needs Create there.
 | `propose_context_lookup` | On the user's request: how records are enriched from their parts' context data (the key, its match rate, a preview), then the pieces that build it | content | no | build | View Data | | | confirms |
 | `propose_index_template` | Builds the final Elasticsearch index template for the cluster admin to apply | indexing | no | indexing | Stepping | | View, Edit | slot, confirms |
 | `rebuild_mapping` | Rebuilds a translation's kept mapping from its XSLT | content | no | build | | Stepping | View, Edit | slot, confirms |
-| `record_source_notes` | Keeps vendor reference documentation, and notes made from it, in the build | content | no | build | | | View, Edit | build |
+| `record_source_notes` | Keeps vendor reference documentation, and the field dictionary made from it, in the build (event types go through `catalogue_event_types`) | content | no | build | | | View, Edit | build |
 | `record_source_types` | Profiles an aggregated feed's source types and writes its registry, with the build's scope | processing | no | build | | | View, Edit | build, confirms |
-| `classify_kinds` | The agent classifies each kind of event the documentation doesn't cover; the user confirms in one form | content | no | build | View Data | | View, Edit | build |
 | `rename_index` | Changes the Elasticsearch index name the build's Elastic Index and pipelines use | indexing | no | indexing | | | View, Edit | confirms |
 | `reprocess_streams` | Processes streams again through a build's pipeline | processing | no | processing | Manage Processors | View Data | View, Edit | confirms |
 | `review_coverage` | Finds the records across a feed that no rule of its translation matched | content | no | build | View Data | Stepping | View, Edit | build, slot |
@@ -2804,11 +2804,11 @@ Where each document goes (`plan`):
   helpers too), from a build opened before new versions became the only way, is refused (`refuseCodeWorkingCopies`:
   `Not promoted: XSLT '...' is a working copy of a promoted pipeline's code, which changes only by a new version ...
   Nothing was changed.`; for a shared module, that build_translation_xslt of the build's group makes the new
-  version the group imports); an unchanged one is only discarded. A working copy of Documentation is
-  **written back**: the original is copied into
-  `<workspace>/backups` as `<name> backup <yyyyMMddHHmmss>` (UTC, tagged `mcp-generated`), then the copy's `data`,
-  `converterType`, `documentation` and `description` are written over it, and the copy deleted. No backup made (the
-  explorer copy gives back no document), nothing is written over the original: the promotion stops there, saying
+  version the group imports); an unchanged one is only discarded. A working copy of Documentation (the promoted
+  source notes a next version's build carried in, with its catalogue of event types) is **written back**: the original
+  is copied into `<workspace>/backups` as `<name> backup <yyyyMMddHHmmss>` (UTC, tagged `mcp-generated`), then the
+  copy's `data`, `converterType`, `documentation` and `description` are written over it, and the copy deleted. No
+  backup made (the explorer copy gives back no document), nothing is written over the original: the promotion stops there, saying
   what was done before it. An unchanged copy is just deleted. A copy whose original was changed since it was taken is
   written back all the same, the approval saying so (below).
 * `keep` for a document UUID leaves it in the workspace (seen: a test feed made while fixing had nowhere to go but
@@ -2818,12 +2818,12 @@ Where each document goes (`plan`):
   destinations say (`PromotionTidyUp.testDocs`): seen in chat 177, the test feed listed under Events and the agent
   asked the user whether to promote it. The layout ends with the tidy-up (below), or, for a test feed not tidied up,
   saying it stays in the workspace.
-* Otherwise a destination by document UUID (exactly that folder), else by type. Source notes and reference docs go
-  beside the build's only feed; a pipeline's (or index's) documentation, unless given a destination by its own UUID,
-  goes wherever that document's step goes (`besideWhatItDocuments`); a verification dashboard goes where the index it
-  searches goes (`withWhatItSearches`), or with the build's indexing pipeline when the index is from outside the
-  build (seen in VS Code: promotion stopped for want of the dashboard's destination); the documentation of a
-  production pipeline or existing index goes beside it.
+* Otherwise a destination by document UUID (exactly that folder), else by type. Source notes (with the catalogue of
+  event types) and reference docs go beside the build's only feed; a pipeline's (or index's) documentation, unless
+  given a destination by its own UUID, goes wherever that document's step goes (`besideWhatItDocuments`); a
+  verification dashboard goes where the index it searches goes (`withWhatItSearches`), or with the build's indexing
+  pipeline when the index is from outside the build (seen in VS Code: promotion stopped for want of the dashboard's
+  destination); the documentation of a production pipeline or existing index goes beside it.
 * **Role first, then version** (`layOut`, `PromotionLayout.rolePath`; decided by the user 2026-11-17): a document of
   a role (its build role subfolder, or a pipeline's stage: a CEF flattener, Events in and CEF to Kafka, is the
   forwarding stage, `CEF`; a reference loader `Reference`) goes in `<source's own folder>/<Role>/<version>` where its
@@ -3057,8 +3057,10 @@ slot · chat group build · Classes: `SurveyFeedTool`, `FeedSampling`, `RecordSp
 Samples an existing feed's streams spread over its lifetime and groups their records into shapes (kinds of event),
 saying plainly whether the feed is covered yet.
 
-**Kind fields.** For structured records (delimited, JSON, key=value) the fields that tell the kinds apart are chosen
-once for the survey (`KindFields`), from the first stream's head, and kept in the survey state as `kind_fields`
+**Kind fields.** A hint for the survey's own coverage only (its shapes, saturation and depth): the source's event
+types are catalogued by `catalogue_event_types`, which never takes them as its conditions, and the draft no longer
+makes its rules by them. For structured records (delimited, JSON, key=value) the fields that tell the shapes apart are
+chosen once for the survey (`KindFields`), from the first stream's head, and kept in the survey state as `kind_fields`
 (`fields`, `by`: `user` or `tool`); every part is then signed by them, rather than by the columns each part's names or
 values suggest (seen in testing: a CSV mail log's `msg_act`, chosen afresh in each part, 16 kinds from 3, never
 covered). A field named like a kind field (`type`, `action`, `event_id`...) whose values aren't one a record, nor
@@ -3074,8 +3076,8 @@ survey afresh (`kind_field_changed`). The head read to choose is the one the sur
 feed (a source type field of any reading: a field, a held value, a combination, a meta attribute) is asked no kind
 field and has none chosen over its records together (2026-11-18: 65 source types, a held reading, and only the epoch
 times they shared put to the user): `kind_fields` is `{fields: [], by: "source_types", within: <field>}`, the survey
-doc says the kinds are told apart within each source type, and classify_kinds chooses the kind field over the
-build's scope. A `kind_field` the user names is still kept (`by: user`). `KindFields` never offers a field named as a
+doc says the event types are told apart within each source type, by catalogue_event_types over the build's
+scope. A `kind_field` the user names is still kept (`by: user`). `KindFields` never offers a field named as a
 time (`time`, `timestamp`, `ts`, `date`, `*_time`, `*_ts`, `*_rt`, `eventTime`...) nor one whose values are all
 epoch times (seconds to nanoseconds, 1990 to 2100, as `TimePatterns` reads them; refused as a given kind field too).
 
@@ -3254,9 +3256,9 @@ its records under the field's name (`Shapes.usePartFields`, never in their signa
 `find=`, `record_source_types` and the registry work on meta values unchanged; a part without the attribute is of no
 source type. A feed's registry has one field: all meta or all a record's. A scope by a meta field keeps or leaves out
 a whole part by its value, whatever its format, XML too (`SourceTypeScope.filter(text, partFields)`;
-`SampleStreamTexts.scoped` for classify_kinds, draft_translation_mapping and build_translation_xslt's sample check);
-`review_coverage` tells a kind's source type by the meta of the raw stream's first part of the pipeline's source
-types (a record's part isn't logged).
+`SampleStreamTexts.scoped` for catalogue_event_types, draft_translation_mapping and build_translation_xslt's sample
+check); `review_coverage` tells a kind's source type by the meta of the raw stream's first part of the pipeline's
+source types (a record's part isn't logged).
 
 **A build's scope.** Once the build's scope is chosen (`source_types.scope`, kept by `record_source_types` with the
 rows it was chosen by: `SourceTypeScope`), only the scope's records make shapes (`Shapes.scope`): a record is the
@@ -3361,9 +3363,10 @@ scope's saying so, naming its group; none is `translated` until its group is bui
 else "left for a later build"), `dropped` only by `dropped` with `drop_reason`; the scope (`build`, `group`,
 `source_types`, `by`, `at`) is kept in the registry and the survey state, the survey's with the
 rows it was chosen by (`SourceTypeScope`), and the build's tools then read the feed through it (survey_feed,
-classify_kinds, draft_translation_mapping, build_translation_xslt's sample check, review_coverage). A scope that adds
-source types some stream the survey read wasn't read for makes the survey not covered again (`coverage_restarted`):
-survey_feed reads those streams again for them. An assessment writes the registry at once, every source type
+catalogue_event_types, draft_translation_mapping, build_translation_xslt's sample check, review_coverage). A scope
+that adds source types some stream the survey read wasn't read for makes the survey not covered again
+(`coverage_restarted`): survey_feed reads those streams again for them. An assessment writes the registry at once,
+every source type
 parked, with no review or form. The registry, `<feed> source types` (`SourceTypeRegistry`), has an account
 of the feed, a table a row a source type, and a machine block `<!-- stroom-mcp source types {...} -->` holding the
 field, the feed's Environment and default System Name (as given, else the registry's, else the build record's
@@ -3515,104 +3518,142 @@ file's 985 records).
   such a command three times from its own terminal). Each file post is logged on the node that takes it (who, file,
   feed, stream).
 
-### `classify_kinds`
+### `catalogue_event_types`
 
 Content · write (the build's source notes doc) · checks View and Edit; reads the sample streams (View Data) · changes
-only its build · chat group build · Classes: `ClassifyKindsTool`, `RecordSourceNotesTool`, `Consent.answer`,
-`DraftMapping`, `LocalCheck`
+only its build · chat group build · Classes: `CatalogueEventTypesTool`, `CatalogueEvidence`, `CatalogueProposals`,
+`CatalogueTables`, `CatalogueNotes`, `RecordSourceNotesTool`, `Consent`, and the core in
+`stroom.ai.impl.tools.catalogue` (`Catalogue`, `EventType`, `Way`, `CatalogueCheck`, `CatalogueValidation`,
+`CatalogueSample`, `CatalogueSeed`, `CatalogueOrder`, `TellingFields`, `TypeIds`, `CatalogueDiff`)
 
-Work package E8, every decision the user's: before the translation is drafted, the agent classifies each kind of
-event the user's documentation doesn't cover and the user confirms the classifications in one form. Called without
-proposals, it finds the kinds as the draft does (each rule's last field = value condition), leaves out those the
-source notes settle (an event with that field and value, from the documentation or confirmed by the user), and lists
-the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examples` whose values differ), keeping
-them in the notes block as `pending`. The kinds are told apart by the kind fields the user chose (`kind_field` now,
-`kind_fields` in the notes, or the survey's): where the records are structured, no field is named like a kind field
-and `KindFields` finds candidates, the user is asked which (as survey_feed asks; without forms `status:
-needs_kind_field`), and the answer is kept in the notes as `kind_fields`, which the draft follows
-(`SourceNotes.KIND_FIELDS`; `TranslationBuilds.notesInBuild` adds the survey's when the notes have none). The draft
-itself never takes a field by its values alone. A field named like a kind field inside a held value, chosen without
-asking, is kept in the notes too, so the draft reads it. A `kind_field` is refused only for a hard reason (the records
-lack it, it holds no value, each record has a value of its own); one whose values only look wrong (whole messages,
-addresses or times, too many values) is put to the user in the confirm form with the concern and an example, and
-their answer decides (`KindFields.Concern`); without forms it is taken as their chat answer. The candidates are judged over the build's scope's records with
-the fields inside their held values as the draft reads them (`HeldKindRecords`: a JSON string's keys as
-`event.logger_name`, XML text's elements as `event/Header/Op`, the pairs the draft extracts), so a kind field inside
-a held value can be chosen and the draft's rules read it; one given as a source type reading writes it
-(`event>logger_name`) is spelt as the draft reads it. The records are read as the draft reads them, inner messages unpacked (the
-keys of JSON text, the elements of XML text, the values the draft's extractions take from text), so a kind told apart
-inside a message field has its records, sample and actor; records a JSON or XML parser reads need no splitter. A kind
-told apart by its format alone is marked `catch_all` when it is a format's leftovers (its `other` rule, listed with
-only the records its own rules leave, and not at all when they leave none) or its records say what happened in free
-text (a variant the splitter reads into one event's fields is a kind); a high
-proposal for one is rated medium (`rated_medium`), a proposal of one as Unknown is refused (seen: catch-alls
-proposed as Unknown, their events never put to the user), and the hint says to refine the splitter when its records
-name their event. The build keeps one notes doc: the one named for the source, else the
-one it has. Records not told apart into kinds whose text says what happened (a field of varied free text) aren't "nothing to
-classify": the agent is told to refine the splitter so a field names each event, and nothing is recorded, so the
-plan's step stays to do; with `one_kind: true` the user confirms in a form that they are one kind of event (or
-says what kinds they hold). One kind is listed and classified like any other (asked for by the user: one kind was
-"nothing to classify", and its events were left Unknown); none told apart, the records are listed as one kind told
-by the first field every record has the same short value of (`singleKind`), and when that is the only
-classification and the draft has no rule of its own, the draft makes its rule the rule for every record (no
-condition: `SourceNotes.applyToDraft`), so another value of that field isn't left out. With no such field, or
-none left, nothing is pending and the plan's `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
-`description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
-is checked as a catalogue event (an `action` or `success` its action element has no Action or Outcome for is
-refused, and so is an `action` its Action's enumeration doesn't hold, naming the values it allows, e.g. Authorise's
-Request and Modify: seen in the agent eval, "Add member to role" confirmed as an Authorise Action, the draft's Modify
-then refused as not confirmed; one differing only in case is corrected to the schema's spelling) and kept in the notes block (`proposed`, with its `title` and `product` and the
-kind's sample record kept from the listing, and its place among those of its confidence); the reply's `table`
-(Markdown, which the chat renders, where a form's fields are plain text: asked for by the user, no Markdown in a
-form) comes with status `needs_showing`: Stroom AI's chat shows it itself, after the call, and the agent is told not
-to repeat it; another client's agent is told to show it as it is: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
-title, and action element, Action and outcome, e.g. `Authenticate: Logon (Failure)`); medium- and low-confidence ones
-in detail (a kind told by a value with rows `Told by` and `Reads`, the fields its records hold beyond those every
-record of its format has, as a split's kind has `Matches` and `Reads`: asked for by the user after chat 171),
-each a numbered heading `[product] title`, its record as the sample has it, whole (the sample's line
-holding most of its values; else its fields but its format and time), preformatted, and what the proposal says, a table of
-Element and Value (Schema action, the action element, then Action, Outcome, Type id, Who acted, Acted on, a row
-only where it has one). A listing takes 18 kinds a
-round (`round` says how many are left); kinds rejected earlier (`rejected` in the notes) are left out of later
-rounds. The draft treats a kinds field (named for kinds) as one with up to 200 values. The proposals are put to the user a set at a time (asked for by the user): up to ten of one
-confidence, high first, then medium, then low, each set numbered from 1 under a heading saying which of that
-confidence it shows (`## Medium-confidence classifications (1-10 of 21)`). `confirm: true` sent with proposals is not
-taken: the user sees the table first. Called then with `confirm: true`, a short plain form (`Consent.answer`) asks one
-question of the set shown, answered one way or the other (asked for by the user: a checkbox beside a text box let
-them both accept and amend): an `Accept all N` button, or amendments in the user's own words. Accepted, the set is
-recorded `basis: user_confirmed` and the next set's table comes back; amended (`amendments`, nothing recorded), the
-agent sends the set again as `from_user: true` proposals, recorded without another form (any kind the draft found,
-pending or not; an amended set leaves the proposals at once, so a kind the agent leaves out isn't put to the user
-again, and stays still to classify), leaving out any the user rejects and asking what it is. Until it comes back the
-set is `amended` in the notes: a listing says `awaiting_amendments` (no plan step) and lists nothing, and a proposal of
-it without `from_user` is refused; those of it not sent back are recorded `rejected` (as are any left when the next
-`confirm` comes). A declined form is taken as amended (the agent asks in the chat, no second form); one closed
-unanswered is not a refusal and changes nothing. A listing keeps proposals still to confirm. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
-plan's `classify` step (after the converter, before the translation) is done when the notes say nothing is pending,
-not recorded once the translation is written.
+Replaces classify_kinds (DESIGN.md, Event type catalogue, built 2026-11-19). Before the translation is drafted, the
+source's **event types** are catalogued: what types of event it writes, what each means, and how a **record** of each
+is **recognised**. The agent proposes them from the evidence and what it knows of the product; the tool checks every
+proposal mechanically against every sampled record of the build's scope; the user confirms them. The tool holds no
+product knowledge: what a product writes is the agent's, kept as data in the source notes.
 
-A build with a scope over an aggregated feed's source types (`TranslationBuilds.scope`, from its survey) reads the
-sample streams through it (`SampleStreamTexts.inScope`): each text split into its records, those of other source
-types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
-pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
-out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
-result's `scope` says what was kept and left out (`build`, `source_types`, `field`, `records_in_scope`,
-`records_left_out` by source type, `note`). So the kinds listed and classified are the scope's.
+**Survey first.** A build catalogues only once `survey_feed` has run for it (the survey alone finds an aggregated
+feed's source type field): refused until then, naming the `survey_feed` call (its feed, or the build's own sample
+streams). A survey refused for nothing readable lets cataloguing go on from the sample streams alone, and the result's
+`survey` says so, for the agent to tell the user.
 
-* **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
-  (the build's newest five raw sample streams when left out); `splitter` (the build's saved Data Splitter when left
-  out, `read_with` naming it); `proposals` (each may carry `drop: true` with `from_user`: a kind the user said to
-  leave untranslated, kept as settled in the notes' `dropped` and left out of later rounds; an Action or outcome its
-  action element has no place for is refused); `confirm`; `one_kind`. A catch-all kind's table has a Covers row: every
-  record of its format no other kind takes, with their count.
-* **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `record_fields` (kept in the notes:
-  proposals' `actor` and `affected` must be among them), `user_fields` (fields named for a user or account whose
-  values aren't addresses, else a note to leave `actor` out), `source_notes`, `hint`, `next`; proposals:
-  `table` (and `recorded` for any from the user), `source_notes`, `hint`, `next`; confirm: `recorded`, `rejected`,
-  `corrections`, `still_to_classify`, `source_notes`, `hint`, `next`, or `asked: false` without forms.
-* **Refuses**: no build; no source and no source notes; no sample streams; proposals before a listing; a proposal
-  for a kind not pending (unless from the user), without a confidence or an action element, or one the catalogue
-  checks refuse; the form declined.
+**The records.** The build's scope's records (its source type group: `SampleStreamTexts.scoped`, `scope` in the
+result), from `stream_ids`, else the streams the catalogue was last checked against, else the build's newest five raw
+sample streams, else (a build on an existing feed) the streams its survey read; with the `splitter` given, else the
+build's saved Data Splitter (`read_with`). They are read as the build's latest mapping reads them (the draft last sent,
+else the mapping kept with the XSLT: its input, held fields, nil values and extractions), and as processing will read
+them: strings cut at the JSONParser's `stringTruncateLength` (10,000 by default), and read whole too, so a condition
+that depends on the cut is found. A source with no mapping yet is read as the draft reads it, or as `reading` says
+(`input`, `json_fields`, `xml_fields`, `extract`, `pairs`). Conditions are evaluated by the one evaluator the
+generated XSLT agrees with (`LocalCheck`; parity suites `TestConditionParity`, `TestE2eConditionParityProcessed`).
+
+**Evidence** (called without proposals, `status: listed`): `fields` that would tell records apart (`KindFields`' value
+checks, with their exclusions: hosts, nodes, severities, shippers, times; never the build's source type field), each
+with its values and counts (`more_values` past those shown); record `shapes` (the fields present together, `Shapes`'
+signatures, with counts); `examples` per shape, those that differ most, rare records always among them; and the
+`seed`: the draft's own rules as proposed event types (`basis: draft`), for the agent to correct rather than start
+from nothing. The seed is evidence only: nothing enters the catalogue unless the agent adds it. A draft of one rule
+alone seeds a sole event type recognised by every record; within a source type group the seed is never told by the
+source type field (it is derived instead from the field naming what happened among the records' other fields). With a
+catalogue already, its `check` and `listing` come too.
+
+**Proposals** (`proposals=`, `status: checked`) add, change or remove event types by TypeId (compared ignoring case);
+the catalogue is never sent whole. `change` gives only the keys that change. An event type has `type_id`, `title`,
+`description`, `event_detail`, `action`, `success`, `actor`, `affected`, `affected_as` (written out to its leaf,
+`User` as `User/Id`), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
+when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`, `documentation`), `confidence`
+(high, medium, low) and `one_type_because`. A proposal with no TypeId gets the default (`TypeIds.defaultTypeId`: the
+event detail as the verb, `affected_as`, else the first `equals` value's last segment, else the title's first word;
+e.g. `Process-SOAPService`). A proposed or changed event type is `proposed` whatever the proposal says, until the user
+confirms it; a change of any event type puts a confirmed catch-all back to the user. `basis: user_confirmed` is
+refused (only the user's form gives it), but for `drop: true`, the user's word relayed by the agent, which is still
+put to them in the form. Each proposal that can't be applied is in `refused` (its place, TypeId and why: not
+Verb-Object, an add of a TypeId there already, a change or remove of one not there); the rest are applied. The event
+types are kept more specific first (more conditions before fewer, `CatalogueOrder`), the catch-all last. Then the
+whole catalogue is checked; problems the proposals bring (not those it had already) record nothing
+(`recorded: false`), and the hint says to correct and send again.
+
+**The check** (`CatalogueCheck`, `check` in the result, compact; the full listing, the catalogue and its whole check,
+saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
+
+* `counts`: records per event type and per way of recognising it (`by_way`); `not_in_sample` names a type no sampled
+  record has (one from documentation, kept and said in the review).
+* `overlaps`: a record two event types recognise, refused: the record, its text, both TypeIds and `telling_fields`,
+  the fields whose values tell their other records apart (`TellingFields`), so one can be tightened. Two ways of one
+  type may overlap.
+* `uncatalogued`: records no event type recognises, by shape with examples; not refused (the catch-all translates
+  them as Unknown), but counted and shown in the review.
+* `unparsed`: records whose held values, read by a condition, don't parse (a bad escape, a value cut short): counted
+  with why, not called uncatalogued.
+* `several`: an event type whose records split by a field of their own (its conditions' fields aside) or come in
+  clearly different shapes; blocking for the seed's (`basis: draft`) until it is split or says `one_type_because`.
+* `not_checked`: conditions the check can't evaluate here (an `xpath`, a dictionary, a record-scope test, a field an
+  extraction gives): said, not refused, never skipped silently.
+* `problems`: the catalogue's own (`CatalogueValidation`): a TypeId not Verb-Object
+  (`^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters) or given twice; a title
+  given twice, ignoring case; a way with no conditions, but for a sole event type of its source type or line format; a
+  condition on the build's source type field, in any spelling; capture `names` not unique in the build or not as many
+  as the regex's groups; a regex not in XPath's dialect (`XPathRegex.problem`: no lookaround) or over 500 characters;
+  what the type means against the event-logging schema (an action element taking Data, its Action enumeration naming
+  the values allowed, its outcome); a drop not the user's; and what the records show: a field no record has (with the
+  nearest names); the **regex guard**, a regex over its time budget (timed in Saxon's engine, as processing runs it),
+  and a regex or `contains` over values past 10,000 characters where `starts_with` or `contains` recognises the same
+  records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting;
+  an event type recognised by every record of a line format that shares it.
+* `order`: the catalogue's.
+
+**Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
+`allow_unknown`, `scope` with the source type field and source types), with the confirmation in progress (the set last
+shown and when, a set the user amended, the streams it was checked against), and the notes doc's "Event types" table
+(`| TypeId | Title | Recognised by | Translated as | Basis |`, conditions in words, the catch-all's `Unknown` row
+last), written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
+field dictionary, documents and references stay as record_source_notes keeps them. The build's one notes doc is
+used, else `<source> source notes` is made. Every result carries `catalogue`, compact (each `type_id`, `title`,
+`status`, the catch-all's `status`).
+
+**Confirmation** (`confirm: true`, again after each answer). Refused while the check has overlaps, a blocking
+`several` or problems, saying which. The sets, in the catalogue's order: every high-confidence event type in one, then
+the medium and then the low in sets of up to ten, then the catch-all. Each set's table
+(`| Event type | Recognised by | Records | Translated as |`, recognised by in words: `logger_name is
+…SecurityEventLogger and eventType is "Password change"`) comes first with `status: needs_showing`: Stroom AI's chat
+shows it itself, as it is, and the agent is told not to repeat it; another client's agent is told to show it whole.
+The next call (within 90 seconds of the table, or the same call made again with the answer) asks one short plain form
+bound to that table: "Accept all N event types, or type your amendments". A table shown longer ago is shown again
+before its form. Accepted, the set is `confirmed` (the seed's basis becoming `user_confirmed`; documentation's and the
+agent's kept) and the next set's table comes back (`confirmed_now`). Amended, nothing of the set is confirmed:
+`status: needs_confirmation` with the user's `amendments` and the `amended` TypeIds; the agent proposes them
+(`op: change`, or add and remove; `drop: true` only where the user said so), and the set is put to the user again; a
+confirm before the amendments are proposed is refused, quoting them. The confirmation is only ever the form's (decided
+2026-11-18): amendments may come from the form's text or the chat, acceptance never from the chat. A form put aside by
+a message is answered as forms are (reply to the message first). Last, the catch-all: the uncatalogued records' count
+and shapes shown, then a form to keep them as Unknown events, their fields kept as Data, with the agreement given as
+`catch_all: {allow_unknown: <why>}` on any confirm call (used at its turn). Once every event type and the catch-all
+are confirmed, `status: confirmed` with the plan's next step: the build plan's `catalogue` step is done, and
+`draft_translation_mapping` follows the catalogue.
+
+**Clients without forms**: `status: needs_review` with the set's `table` and a `review_id`; the agent shows the table
+and, once the user agrees, calls with `confirm: true reviewed=<review_id>`; amendments go back as proposals. In Stroom
+AI's chat with the user away, nothing is confirmed for them (refused).
+
+**A next version** (`since_promoted`): a build of a feed's next version starts from the promoted catalogue (its source
+notes carried in by `copy_pipeline` or `create_pipeline version_of=`, `CatalogueNotes.carryInto`), and every result
+says in words the event types added, changed and removed since (`CatalogueDiff`).
+
+* **Arguments**: `build` (required); `source` (the notes' source, else the build's name); `stream_ids`; `splitter`;
+  `reading` (`input`, `json_fields`, `xml_fields`, `extract`, `pairs`: how a source with no mapping yet is read);
+  `proposals` (`[{op: add | change | remove, type_id, ...}]`); `confirm`; `catch_all` (`{allow_unknown}`, with
+  confirm); `reviewed` (with confirm, for a client without forms).
+* **Returns**: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`, `confirmed`);
+  `catalogue`; listing: `evidence` (`fields`, `shapes`, `examples`, `seed`), and with a catalogue `check` and
+  `listing`; proposals: `recorded`, `source_notes`, `refused`, `check`, `not_in_sample`, `table` (the next set's),
+  `listing`; confirmation: `table` (and `review_id`), `confirmed_now`, `amendments` and `amended`, `check`; `read_with`,
+  `scope`, `survey`, `since_promoted`; `hint`; `next` (`step: catalogue`, the call, then).
+* **Refuses**: no build; no survey for the build (naming the `survey_feed` call); no sample streams; a confirm while the
+  check refuses the catalogue, or before the user's amendments are proposed; a confirm in Stroom AI's chat with the user
+  away; the form declined.
+* **Notes**: a Data Splitter part is a line format, not an event type: event types within a format are told by
+  conditions, never by a splitter part each (chat 166; the hint and the guide say so). The description stays short;
+  the conditions, evidence and checks are in the mapping guide (stroom://guide/mapping, Event type catalogue).
 
 ### `record_source_notes`
 
@@ -3624,45 +3665,33 @@ document given by uuid is read as the user · changes only its build · chat gro
 Keeps vendor or event reference documentation the user gave in Stroom, and the notes condensed from it, as
 Documentation docs in the build: each document verbatim as `<source> reference - <title>` (or, given a `uuid`, the
 document already in Stroom is named, not copied), and `<source> source notes` holding a markdown field dictionary,
-event catalogue and sources, then the notes as a JSON block (an HTML comment) the tools read back. The notes feed
-`draft_translation_mapping build=` (fields where the dictionary puts them, a rule per catalogued event that gives the
-field and value showing it), `build_translation_xslt build=` (a mapping checked against the catalogue) and
-`write_documentation` (source fields with their meanings). Promotion puts them beside the feed. Called again for the
-same source (a long manual a part at a time), the docs are updated, not made twice: earlier fields and events stay
-unless given again.
+the "Event types" table and the sources, then the notes as a JSON block (an HTML comment) the tools read back. It
+keeps **fields and documents only**: the event types, documented ones among them, are proposed through
+`catalogue_event_types` (`basis: documentation`), which checks them against the records and keeps the catalogue in the
+same notes doc (its "Event types" table and the JSON block's `event_types`, `catch_all` and `scope`, written together).
+A call giving `events` is refused, nothing recorded, pointing at `catalogue_event_types` with the proposal's shape.
+The notes feed `draft_translation_mapping build=` (fields where the dictionary puts them) and `write_documentation`
+(source fields with their meanings). Promotion puts them beside the feed. Called again for the same source (a long
+manual a part at a time), the docs are updated, not made twice: earlier fields stay unless given again, and the
+catalogue is kept as it is.
 
-For documentation the user gave, for classifications the user confirmed (`basis: user_confirmed`, written by
-`classify_kinds`, which also keeps the kinds still to classify as `pending`; events may name their `actor` and
-`affected` fields, and `affected_as`, what the affected field names as the action element's object, checked against
-the schema and written out to its leaf, `User` as `User/Id`; the draft writes the actor as the rule's
-EventSource/User/Id and the affected field at `EventDetail/<element>/<affected_as>`), and for the agent's own knowledge of a source, each such note `basis:
-agent_knowledge` with a `confidence` (high, medium or low, required); the notes doc shows each note's basis, the
+For documentation the user gave, and for the agent's own knowledge of a source (each such note `basis:
+agent_knowledge` with a `confidence`, high, medium or low, required): the notes doc shows each note's basis, the
 result's `to_review` lists the low-confidence ones for the user first, and field documentation says a meaning is the
 agent's knowledge. Never notes guessed from the sample's values: the draft would follow them over the sample's own.
+A field's `event_logging_path` the build's schema doesn't have is left out of its note (`path_problems` says what is
+allowed where each stops).
 
 * **Arguments**: `build`, `source`, `summary` (required); `fields` (each `field` and `meaning` required, then `type`,
-  `example`, `event_logging_path`, `values`, `basis`, `confidence`); `events` (each `event` and `description` required,
-  then `event_detail`, `type_id`, `field`, `value`, `action`, `success`, `basis`, `confidence`); `references`; `documents` (each `title` and its
+  `example`, `event_logging_path`, `values`, `basis`, `confidence`); `references`; `documents` (each `title` and its
   `text`, or a `uuid`; `source` optional). Lists may be one object, or JSON text.
-* **Returns**: `type`, `uuid`, `name` of the notes doc, `fields` and `events` counts, `documents_kept`, a `hint`
-  (events without a field and value can't become rules), and `next`.
-* **Refuses**: a missing required argument; a note missing a required key (`fields[0].meaning is required`), not an
-  object, or a list given as text that isn't JSON; a document without `title`, or without text or uuid; a uuid not in
-  this Stroom; an event catalogue that can't be drafted from (`SourceNotes.catalogueProblems`): an `event_detail` the
-  event-logging schema lacks as an action element taking Data (e.g. `Allow`; Network needs its action,
-  `Network/Permit`), or two events with the same field and value. The schema is the build's chosen version, else the
-  newest held (`EventVersions.chosenOrLatest`); when it can't be read, only the twins are checked.
-* **Notes** (chat 166): kinds said in free text are told apart by patterns. A proposal may give `matches` (an XPath
-  regex its `field` matches) in place of `value`, `within` (the listed kind it splits, `*` for every record where none
-  is told apart) and `names` (its capture groups' fields, each once in the build). Before anything is kept, each is
-  checked against the kind's records (`Patterned`): within a listed kind, compiling in XPath's dialect, matching some
-  of its records, overlapping no other; what they leave is said (`patterns_leave`). Confirmed, they are recorded with
-  `matches`, `names` and `within`; the kind they split is listed again with what they leave, settled once they leave
-  none. The table shows each pattern's records and what it reads. Its hints never send the agent to make a splitter
-  part for each wording.
-* **Notes** (chat 165): read with the build's saved Data Splitter, its formats are found from the converter's XML
-  (`SplitterSpec.converterVariants`: the field each part writes with a value of its own), so each format is drafted
-  and listed as from a spec; records in no kind listed are said (`unlisted_records`, also in the hint).
+* **Returns**: `type`, `uuid`, `name` of the notes doc, `fields` count, `documents_kept`, `to_review`,
+  `path_problems`, a `hint` (event types go through `catalogue_event_types`), and `next`.
+* **Refuses**: `events` given (`Nothing recorded: record_source_notes keeps fields and documents only. Propose the
+  event types ... through catalogue_event_types ...`); a missing required argument; a note missing a required key
+  (`fields[0].meaning is required`), not an object, or a list given as text that isn't JSON; a `basis` other than
+  `documentation` or `agent_knowledge`, or the agent's note without a confidence; a document without `title`, or
+  without text or uuid; a uuid not in this Stroom.
 * **Notes**: an existing notes or reference doc is changed only when it is the tools' own and in the build
   (`WriteGuard.checkInBuild`). Names are cut to 200 characters.
 
@@ -4541,7 +4570,11 @@ again with keep_references=true or false`); kept ones are carried (`PipelineWrit
 previous version sets that the new one doesn't is shown in the form and the result (`notCarried`). The new pipeline
 is recorded as the next version of the old, and each build document it runs in place of one the old runs
 (`CreatePipelineTool.recordVersion`), so promotion puts them beside their predecessors. A previous version that
-inherits from no template is refused (copy it instead).
+inherits from no template is refused (copy it instead). The promoted source notes (beside the pipeline, in its folder
+or one above) are carried into the build as a working
+copy, written back at promotion, unless the build has notes of its own (`CatalogueNotes.carryInto`), so the next
+version's catalogue of event types starts from the promoted one (`source_notes` says so; catalogue_event_types'
+`since_promoted` then says what changed).
 
 **Standalone pipelines** (`standalone`), last resorts that inherit from no template, confirmed with their chain:
 
@@ -4581,7 +4614,9 @@ parent template, the same element changes (removed or re-linked steps, extra XSL
 property values, and its description. The XSLTs and text converters its own layer names
 (`PipelineWrites.OWNED_TYPES`) are copied too, with `rename` applied to their names, and the copy is rewired to
 them; other documents (shared libraries, indexes, clusters) stay shared. The user confirms the names in a form
-first. It is the route for a new version that keeps the XSLT and changes parts.
+first. It is the route for a new version that keeps the XSLT and changes parts. A copy of a promoted pipeline carries
+its source notes into the build the same way (`CatalogueNotes.carryInto`, said in `note`), so the new version starts
+from the promoted catalogue.
 
 A copy is always a new version (decided by the user, 2026-11-17: a promoted pipeline and the code it runs are never
 changed in place): nothing is asked but its names, recorded `version_of` its source, and `working_copy=true` is
@@ -4732,28 +4767,29 @@ by its own name, or the chat by the model it runs on.
 ### `draft_translation_mapping`
 
 content · read-only · unlocked by View Data (sample streams are read as the user); checks View on the source notes
-and streams it reads · Classes: `DraftTranslationMappingTool`, `DraftMapping`, `SiblingSharedCalls`,
-`CurrentTranslations`, `EventVersions`, `SentMappings`, `MappingCompaction`
+and streams it reads · Classes: `DraftTranslationMappingTool`, `DraftMapping`, `SourceNotes`, `CatalogueTranslation`,
+`SiblingSharedCalls`, `CurrentTranslations`, `EventVersions`, `SentMappings`, `MappingCompaction`
 
 A starting translation mapping drafted from the sample, so the agent edits a valid mapping rather than writing one
 from nothing (a model asked to write one tends to send back the field inventory). `DraftMapping.draft` gives the
 input kind and layout from the profile, the obvious event-logging homes for fields by name (time with its pattern,
-host, client and server addresses and ports, user, event type, message: `FieldHomes`), one rule per kind of event
-the naming field shows, a text field's key/value pairs read as one extract entry a key, every other field carried
-as Data, and notes on what is left to decide (the action element per kind, System Name and Environment, a time
-zone). A quoted value's escapes that Stroom's Data Splitter keeps are undone by the field's transform: a CSV's
-doubled quote by `unescape_quotes`, a key=value quote or backslash escaped with a backslash by
-`unescape_backslashes` (`EscapedQuotes`; found testing awkward values, 2026-11-18, the events holding
+host, client and server addresses and ports, user, event type, message: `FieldHomes`), its own rules (before the
+source is catalogued, one per value of the naming field: the catalogue's seed), a text field's key/value pairs read
+as one extract entry a key, every other field carried as Data, and notes on what is left to decide (the action element
+per rule, System Name and Environment, a time zone). A quoted value's escapes that Stroom's Data Splitter keeps are
+undone by the field's transform: a CSV's doubled quote by `unescape_quotes`, a key=value quote or backslash escaped
+with a backslash by `unescape_backslashes` (`EscapedQuotes`; found testing awkward values, 2026-11-18, the events
+holding
 `say \"hi\"`), wherever the splitter spec holds the quoted delimited or key_value spec: its own, a syslog (or other)
 header's `body`, an alternatives part or a part's body (seen in the agent eval, case 25: a syslog body's escapes
 kept; the delimited spec's doubled quotes likewise since 2026-11-19), never the header's fields or the body's text it
-was read from. `ActionRules` reads each kind's own records for its action: connections allowed or denied become
+was read from. `ActionRules` reads each rule's own records for its action: connections allowed or denied become
 Network/Permit or Deny, logons and logoffs Authenticate, configuration changes Update, a service started or
-stopped Process, health and state records Alert. With `build`, the build's source notes (record_source_notes) are
-followed: catalogued events become rules with their action element, checked against the schema
-(`SourceNotes.detailProblem`; unchecked rather than ignored when the schema can't be read). Records read by an
+stopped Process, health and state records Alert. With `build`, the build's source notes are followed: the field
+dictionary's fields go where it puts them (record_source_notes), and the catalogue of event types
+(catalogue_event_types) gives the rules (below). Records read by an
 `alternatives` splitter (`VariantDrafts`): each variant's records are drafted on their own, as a stream of that one
-format would be (its own time field and format, homes and kinds), then put together: what every variant writes alike
+format would be (its own time field and format, homes and rules), then put together: what every variant writes alike
 is common, the rest of a variant's common entries go into its rules, and each rule is `when` its variant equals it
 (the records no part read, `when` it is absent), named `<variant>_<rule>`; notes are each variant's, prefixed. Records with a `continuation` (a stack trace):
 the exception it starts with and its message are extract fields (`exception`, `exception_message`), not a kind of
@@ -4799,9 +4835,9 @@ may be, such as `created_at`, `start`, `end`, `date`; one whose name says nothin
 (a syslog header before CEF, JSON or pairs, by the spec's structure), a container time without a year (RFC 3164)
 after any of the record's own. The container's time is the fallback record by record: `any_of [own..., container]`
 with one `time_format` reading both (`[A][B]`, `TimePatterns.combined`, checked on the values); where none can (an
-epoch number beside a pattern) the container's for every record, with a note. A kind whose records lack the common
-time gets its own in its rule. Where two times are alike (same rank and side, each in 90% of the records, different
-values) the draft keeps the first and adds `time_candidates` (`rule` when a kind's, `fields`: each with `share`,
+epoch number beside a pattern) the container's for every record, with a note. A rule whose records lack the common
+time gets its own. Where two times are alike (same rank and side, each in 90% of the records, different
+values) the draft keeps the first and adds `time_candidates` (`rule` when a rule's, `fields`: each with `share`,
 `time_format`, `rank`, `from_others`, the median seconds from each other over records holding both) for the agent
 to choose from, the time entry marked `choose_from` (the fields), which a mapping may not carry
 (`FieldMapping.read` refuses it, so build_translation_xslt does, until the agent chooses; the draft's own
@@ -4812,11 +4848,40 @@ place each in the element that means it before building (asked for by the user: 
 method and status code stayed Data until the user asked); the mapping guide says the same, for EventSource as well
 as the action element. No field names are matched in code: the agent decides.
 Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
-(1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Kinds: a
-naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values, each with a
-rule. Several user fields in one record (`users()`) are noted with their roles by generic prefixes, the actor's
-drafted as `EventSource/User/Id`; a correlation id shared by records (`correlated()`) is noted, each record mapped
-alone.
+(1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Before
+cataloguing, a naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values,
+each with a rule. Several user fields in one record (`users()`) are noted with their roles by generic prefixes, the
+actor's drafted as `EventSource/User/Id`; a correlation id shared by records (`correlated()`) is noted, each record
+mapped alone.
+
+**From the catalogue** (`SourceNotes.applyToDraft`, `CatalogueTranslation`; DESIGN.md, Event type catalogue): once
+catalogue_event_types has confirmed every event type and the catch-all, the draft's own rules give way to one rule per
+(event type, way of recognising it), in the catalogue's order (more specific first), its `when` the way's conditions,
+then the catch-all's rule for uncatalogued records (`uncatalogued`, TypeId `Unknown`, their fields kept as Data,
+flagged `catch_all: true` with the user's agreement as its `allow_unknown`), left out after a sole event type, which
+takes every record; an event type the user dropped is a `drop_when` rule per way. The catalogue comes first and the
+XSLT follows from it. Each rule starts from the draft's rule that took the way's records in the sample (severity,
+names, addresses kept), then takes what the catalogue says:
+
+* **TypeId** fixed: the event type's (Verb-Object), else the default (`TypeIds.defaultTypeId`).
+* **The vendor's code as Data**: every `equals`/`one_of` field of the way but the source type field, named after the
+  field's last segment (`System/EventID` is `EventID`; a bracketed key's last key as written), under the action
+  element (`EventDetail/<Action>/Data`, Network's own child), so searching by the code still works. A field another
+  event type tests for its code is still Data of this one's records.
+* **Description**: the record's own message, alone, where the records carry one; else the event type's description
+  (the vendor documentation's text, or the agent's) as fixed text.
+* The action element's Action and outcome, who acted (a field naming a person, not an address), what was acted on
+  (`affected_as`), the user authenticating for Authenticate; then the fields left over that the way's own records
+  hold, as Data of the action element.
+
+With variants (mixed lines, alternatives, a saved converter), a way goes into the variants whose sampled records it
+recognises (evaluated, not guessed from its last condition), prefixed with the variant's condition; each variant's
+rule for its uncatalogued records is flagged `catch_all` with its variant condition alone, and a sole event type of a
+line format (its conditions all on the variant field) needs none. Repeated groups' item conditions are allowed. The
+result says each rule, `not_in_sample` (TypeIds no sampled record has), `uncatalogued` (sampled records no event type
+recognises), `dropped` and `unread_fields`. A catalogue with event types or the catch-all still to confirm is refused.
+Before any catalogue, the draft keeps its own rules, the guesses the catalogue is seeded from, its last rule (the one
+for the records the others leave) flagged `catch_all`, and it says the source is to be catalogued before building.
 
 A build with a scope over an aggregated feed's source types (`TranslationBuilds.scope`, from its survey) reads the
 sample streams through it (`SampleStreamTexts.inScope`): each text split into its records, those of other source
@@ -4851,7 +4916,9 @@ generated without them.
   XML fragments, `xml_namespace` set to the namespace of the environment's wrapper; `hint`. Or the version question
   (`needs_guidance`).
 * **Refuses**: no samples and no stream_ids; a pattern of the agent's that took too long on the sample
-  (`PatternTimeoutException`, returned as the refusal).
+  (`PatternTimeoutException`, returned as the refusal); with `build`, a catalogue whose event types or catch-all are
+  still to confirm (`The catalogue's N event type(s) and the catch-all for uncatalogued records are still to confirm:
+  call catalogue_event_types build=... confirm=true ...`).
 * **Notes**:
   * The draft is kept for the session (`SentMappings`, as `draft:<build>` and, with a build, `draft:`), so the
     first save sends `changes=` only: a 50 KB draft written out whole in one call never reached the tool in
@@ -4862,15 +4929,6 @@ generated without them.
   * It stays read-only although it records the chosen version, System Name and Environment in the build's record
     (`BuildRecords.rememberSystem`): that record is the tools' own bookkeeping. The System Name and Environment are
     kept there because, in the chat 163 review, the user answered Test and a later draft was sent Prod.
-  * With variants, a kind the user confirmed by field=value goes only into the rules of the variants whose records
-    hold that value (`VariantDrafts.belongsTo`; one no variant holds, to the first whose records have the field):
-    before, every variant got a rule for every confirmed kind (`linux_icastart`).
-  * A catalogue event told by a pattern (`matches`, from classify_kinds) is a rule testing its field with the pattern
-    (`matches`), before the rules of value kinds (the rest of the kind it splits); its capture groups (`names`) are an
-    extract entry, the fields its actor and affected may name; its TypeId is its own name. Its `within` (app=sshd) is
-    the rule's first condition, so it takes only that kind's records, as confirmed; a format's own field (`variant`),
-    which a format's draft leaves out, isn't repeated: the format's condition is added with its rules. With variants,
-    it goes to the variants whose records match it.
   * Bodies of `Key value` parts separated by ` - ` (`DraftMapping.pairsIn`, Pairs style `dashed`, keys such as
     `Group(s)` with their brackets escaped) are read as pairs where a text holds at least two spaced dashes and more
     such keys than `Key: value` keys (Secret Server's colon pairs hold a dash in a value: `Secret: Firewall - Edge
@@ -4893,7 +4951,7 @@ content · write; read-only when neither `build` nor `uuid` is given (the code c
 in the build folder (Create) or changed (Edit) · changes only its build · takes a run slot · Classes:
 `BuildTranslationXsltTool`, `TranslationBuilds`, `TranslationDocs`, `MappingSampleCheck`, `MappingProblems`,
 `DomainSplits`, `PlaceholderChoices`, `UnsavedChoices`, `SentMappings`, `RequiredImports`, `CurrentTranslations`,
-`Consent`, `XsltGenerator`, `MappingChanges`, `ConfirmedKinds`
+`Consent`, `XsltGenerator`, `MappingChanges`, `ConfirmedEventTypes`, `CatalogueKept`
 
 `domain_split` (Split / Keep as is) is the user's latest answer to splitting the domain off users' Ids, and wins over
 one recorded earlier; Keep also removes a split the mapping already has, as does a change removing the Domain a split
@@ -4935,8 +4993,8 @@ through the model. A call runs in this order:
    `sample`. A save whose check read no record is a problem (`no sample record was checked`, with the reader's
    note), so nothing is saved: a check over no records says nothing of the mapping. Seen in the agent eval (case 36
    on Haiku): saved with `"sample": []` and no `stream_ids`, 0 records were checked, the save returned ok, and every
-   form the check drives (domain split, placeholders, confirmed kinds, rules kept as Unknown) was skipped. An XSLT in
-   no build is never saved (WriteGuard refuses it), so it takes no fallback.
+   form the check drives (domain split, placeholders, confirmed event types, rules kept as Unknown) was skipped. An
+   XSLT in no build is never saved (WriteGuard refuses it), so it takes no fallback.
 5. **The user's choices** (only when saving): a user's Id whose values carry a domain (`DomainSplits`: split into
    Id and Domain, or keep whole; one question for all fields not answered before), and values that stand for none
    (`PlaceholderChoices`: leave each out, as `nil_values`, or keep as written; one form, at most 20 questions, 19
@@ -4944,12 +5002,16 @@ through the model. A call runs in this order:
    Each answer is kept at once (`UnsavedChoices`), then with the saved XSLT (`TranslationBuilds.rememberAgreed`),
    so it is asked once: before, a later form failing lost the earlier answer and the user was asked on every call.
    Warnings the user has answered are dropped, including those the second check brings back.
-6. **Checks against the build**: rules contradicting the source notes' event catalogue (`source_notes_check`);
-   a mapping that keeps none of the current translation's lookups (warning); kinds the user confirmed
-   (classify_kinds, `user_confirmed`) that the mapping translates otherwise (`ConfirmedKinds`: the sample records
-   holding the kind's field=value taken by no rule, dropped, or by a rule writing another action element, Unknown
-   among them, or another Action; not another Action the schema allows where the confirmed one is not, since that
-   can't be written), a warning each, and on saving put to the user (below).
+6. **Checks against the build**: rules contradicting the catalogue's event types not yet confirmed
+   (`source_notes_check`, warnings `catalogue: ...`); a mapping that keeps none of the current translation's lookups
+   (warning); **confirmed event types kept** (catalogue_event_types, `status: confirmed`): every sampled record a
+   confirmed event type recognises must be translated by that type's rules, with its action element, fixed Action and
+   TypeId (`ConfirmedEventTypes`, rules compared with event types by the records they take, `CatalogueKept` with
+   `LocalCheck.ruleOf`, never by condition text); records taken by no rule, dropped, or by a rule writing another
+   action element (Unknown among them), Action or TypeId are lost; not another Action the schema allows where the
+   confirmed one is not, since that can't be written. Event types the user dropped must have their records dropped. A
+   mapping of repeated groups (`for_each`), whose item rules this can't follow, is said to be not checked. Within a
+   source type scope, only the scope's records are compared. A warning each, and on saving put to the user (below).
 7. **The field-mapping preview** (`field_mapping=true` with `pipeline_uuid` and `stream_ids`): the pipeline is
    stepped with a marked copy of the XSLT (up to `max_records`) and the section rendered by `EventFieldDocs`.
    Without it `field_mapping` is null and `field_mapping_needs` says why: a table from the mapping alone showed how
@@ -5104,13 +5166,14 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   none and no scope; a name whose mode is the common module's; a new group saved with no form and no
   `own_output_feed`; a promoted group's change with no form and no `pipeline`; a module that doesn't generate.
 * **Notes**:
-  * **Confirmed kinds translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with the
-    user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
-    Logon, unsaid): `needs_review` with a table (kind, what the user confirmed, records, what it is now, rule), then
+  * **Confirmed event types translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with
+    the user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
+    Logon, unsaid): `needs_review` with a table (`| Event type | Recognised by | You confirmed | Records | Now | Rule
+    |`), the same table and `review_id` from call to call while the mapping is unchanged, then
     a form: "Keep the mapping's change" (kept with the XSLT, `TranslationBuilds.CONFIRMED_CHANGED`, so asked once,
     its warnings dropped) or "Follow what I confirmed" (nothing saved: `ok: false`, `confirmed`, `hint`), or the
     user's own words (`user_says`). Without forms the warnings are left for the agent. The Unknown review lists,
-    under a rule, the confirmed kinds among its records.
+    under a rule, the confirmed event types among its records.
   * **After a failed build**, `next_changes_apply_to` says what the next `changes=` start from: this call's mapping,
     kept for its uuid or build and name, not the draft or the saved XSLT; or nothing, without either.
   * **Unknown agreed per rule** (`agreeUnknown`). A rule kept as Unknown (`allow_unknown`) is put to the user with
@@ -5147,7 +5210,7 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
 content · write · unlocked by Stepping; checks View and Edit (the XSLT, its pipeline and the XSLTs it imports are
 read as the user; the save is the user's Edit) · confirms itself · takes a run slot · Classes:
 `RebuildMappingTool`, `XsltReader`, `MappingRebuild`, `RebuiltMapping`, `SampleStreams`, `PipelineStepping`,
-`TranslationDocs`, `Consent`
+`TranslationDocs`, `Consent`, `CatalogueFromMapping`, `CatalogueNotes`
 
 Rebuilds the mapping kept with a translation XSLT from the XSLT itself: when it was lost (the Documentation tab
 cleared; build_status says so) or no longer matches the XSLT (edited by hand in Stroom). The XSLT is read back as
@@ -5162,6 +5225,16 @@ each way, `PROVE_RECORDS`) and the outputs compared path by path (`EventXml.fiel
 output is the same (or the user accepts the differences) and the user confirms in a form are the mapping and the
 regenerated XSLT saved.
 
+**The catalogue read back** (an XSLT in a build): the rebuilt mapping's rules are read back into the build's catalogue
+of event types (`CatalogueFromMapping`), so the catalogue stays the source of truth: each rule a way of recognising an
+event type (its `when`), the rules of one fixed TypeId one event type, its meaning from what the rule writes (action
+element, Action, outcome, who acted, Description); the rule flagged `catch_all`, or a hand-written last rule taking
+every remaining record, is the catch-all, with its own translation when it writes a real event, not Unknown; drop
+rules are the dropped event types they name. The changes are shown in the form (`event types`) and, saved, written
+into the source notes (`CatalogueNotes.write`, the JSON block and the "Event types" table together) when they change
+it. What the catalogue can't express (a rule writing its TypeId from a field, a drop rule of no event type) is named
+(`not_read`), the catalogue's entry left as it was: the XSLT keeps it, and a draft from the catalogue would lose it.
+
 * **Arguments**: `uuid` (required); `stream_ids` (else `SampleStreams`: the stream ids of the sample processor
   filters the tools made, those still there, else the feed's newest raw streams; the reply says which);
   `pipeline_uuid` (else the one pipeline whose own layer runs the XSLT); `change`; `accept_differences`;
@@ -5169,8 +5242,8 @@ regenerated XSLT saved.
 * **Returns**: `xslt`; `status: in_step` when the XSLT is already what its kept mapping generates; else `mode`
   (`written by an earlier generator`, `out of step with the kept mapping`, `mapping lost`), `rebuilt` (the summary:
   kept, new, removed, kept as xpath, calling imported functions), `proven_on` (`records`, `streams`, `which`),
-  `differences` (at most 20 paths, most records first, each with an example record), `unread`, `problems`, `saved`
-  and `next`.
+  `differences` (at most 20 paths, most records first, each with an example record), `unread`, `problems`, `saved`,
+  `catalogue` (`written`, `event_types`, `changes`, `not_read` and `note`) and `next`.
 * **Refuses**: no `uuid`; an XSLT that isn't the tools' own; one keeping a CEF or index plan (rebuild is for
   translations); no pipeline found or several (`pipeline_uuid` needed); a `pipeline_uuid` that doesn't run the
   XSLT; no Stepping permission.
@@ -5707,18 +5780,28 @@ precedence, as do a topic, vendor and pipeline template the instructions name (`
 content · write in a build only (an aggregated feed's registry; read-only outside a build) · requires View Data;
 unlocked by Stepping (records are stepped); checks View (only streams of feeds the user may view) and Edit (the
 build's registry) · takes a run slot · Classes: `ReviewCoverageTool`, `CoverageReads`, `ProcessorFilters`,
-`IndexTemplateAgreements`, `CefDraft`, `PipelineStepping`, `EventStreams`, `SourceTypeCoverage`, `SourceTypeScope`
+`IndexTemplateAgreements`, `CefDraft`, `PipelineStepping`, `EventStreams`, `SourceTypeCoverage`, `SourceTypeScope`,
+`CaughtShapes`
 
 Whole-feed coverage of an events pipeline once its feed is processed: the kinds of event the sample missed. The
 generated translation logs, into the Error stream of the raw stream a record came from, each record no rule
 matched (`No event mapping matched record N (...)`, WARN, `XsltGenerator.UNMATCHED`) and, once a stream for each
 kind (the rule and the values the rules test; `mcp_log_kind`), the first record a rule keeps as Unknown (`Kept as
 Unknown by rule 'r': record N (...)`, INFO, benign in triage), with the values its rules test (up to 4,
-`LOGGED_FIELDS`); and so too, once a stream for each kind, the first record a catch-all rule takes (a rule taking
-what earlier rules leave: `Caught by rule 'r': record N (...)`, the same template, `mcp_log_kind`). A kept-Unknown or
-caught kind's streams are counted (`streams`), not its records, and told apart in `tell_user`: a caught kind is for the
-agent to check against the kinds classified, and a new one is the user's to classify. So the kinds are grouped from the Error streams alone, however large the feed, with a
-few raw records read only for examples (`CoverageReads.example`).
+`LOGGED_FIELDS`); and so too, once a stream for each kind, the first record the catch-all takes (the rule flagged
+`catch_all`, never inferred: `Caught by rule 'r': record N (...)`, the same template, `mcp_log_kind`). A kept-Unknown or
+caught kind's streams are counted (`streams`), not its records, and told apart in `tell_user`. So the kinds are
+grouped from the Error streams alone, however large the feed, with a few raw records read only for examples
+(`CoverageReads.example`).
+
+**Uncatalogued records become proposals** (DESIGN.md, Event type catalogue, After the first build): the records the
+catch-all caught are grouped by shape (`CaughtShapes`: `Shapes`' signatures over the values each line logged, the
+fields the rules test) into `uncatalogued.shapes` (each `signature`, `logged_by`, `values`, `raw_streams`,
+`examples`), each likely an event type the sample didn't have. `next` names `catalogue_event_types` (`step:
+catalogue`) with the build and these raw streams as `stream_ids`: the agent proposes an event type per shape
+(`op: add`), checked against the sample and the records caught, the user confirms them, and draft_translation_mapping
+and build_translation_xslt apply them in a new version (a production pipeline is first copied into a build with
+copy_pipeline).
 
 **Aggregated feeds** (`SourceTypeCoverage`): where the feed has a source type field (the build's survey, its
 registry, the pipeline's kept mapping, or the lines it logged), each kind's first example record (up to 60 kinds) is
@@ -5776,7 +5859,8 @@ is reported with its error, not allowed to hide the others.
 * **Arguments**: `pipeline_uuid` (required); `continue_from`; `max_streams` (1 to 5,000; default 500);
   `events_stream_ids`; `follow_on`; `changed_pipeline_uuid`; `raw_stream_ids`.
 * **Returns**: `pipeline`; `progress` (`error_streams_read`, `after`, `continue_from`, `done`, `note`,
-  `stopped_early`); `missed` (groups, most records first: `found_as`, `kind` (the logged values), `records`,
+  `stopped_early`); `uncatalogued` (the catch-all's records by shape, above); `missed` (groups, most records first:
+  `found_as`, `kind` (the logged values), `records`,
   `raw_streams`, `examples` with `raw_stream`, `record` and `holds`); `affected_raw_streams` (`count`, `first_id`,
   `last_id`, `from`, `to`) and `affected_raw_stream_ids` (at most 200); `tell_user`; `next` (show the kinds, add
   rules with build_translation_xslt `changes=`, write_documentation with affected streams, how to reprocess; when
@@ -6515,9 +6599,11 @@ the user is away from (nothing needing agreement is done unattended).
 
 **`BuildPlan`** and `BuildMemory`: the onboarding plan with its state read from the build.
 
-* The checklist's stages: `1 events` (feed, samples, converter, translation, pipeline, stepped, covered, processed,
-  validated, documented), `1 reference` (reference_pipeline, reference_stepped, reference_processed,
-  reference_documented, between the converter and the translation, as a lookup made before its Reference stream exists
+* The checklist's stages: `1 events` (feed, samples, converter, surveyed, source_types, catalogue, translation,
+  pipeline, stepped, covered, processed, unmapped, validated, documented; `catalogue` done once every event type and
+  the catch-all are confirmed, catalogue_event_types' `next` naming it), `1 reference` (reference_pipeline,
+  reference_stepped, reference_processed, reference_documented, between the converter and the translation, as a lookup
+  made before its Reference stream exists
   is remembered for 10 minutes), `2 indexing` (index, indexing_pipeline, index_template, indexed, index_documented),
   `3 output` (cef_mapping, cef_pipeline, cef_stepped, cef_documented) and `finish` (promoted). `status` marks each step
   `done`, `to do` or `not needed` from what the build holds (`BuildFacts`, read by `StroomBuildFacts`): its kind,
@@ -6653,7 +6739,7 @@ what was replaced, which the tools pass on (`undecodable_bytes`, with advice). `
 (`StreamCharsets.ReportingReader`), so a part of any size is read through.
 
 **Sample streams' sampling** (`SampleStreamTexts.read`, `StreamReader.samplePart`, `PartSampler`; settings
-`ai.sampling`, `AiSamplingConfig`). The tools given `stream_ids` (profile_sample, classify_kinds, the drafts and
+`ai.sampling`, `AiSamplingConfig`). The tools given `stream_ids` (profile_sample, catalogue_event_types, the drafts and
 checks) read each stream's parts as their own texts, at most 20 parts, chosen spread through a stream of more from
 its first to its last (`PartSampler.spread`: deterministic, evenly spaced), each up to its share of the stream's
 `maxCharsPerStream` (2,000,000) characters (`PartSampler.share`: what is left over the parts left, never less than
@@ -6856,7 +6942,7 @@ pipeline would, in `stroom-ai-impl`:
   eval, case 36: a SecretServer export's folder and permission keys, first held after the 200th of 1,000
   records, refused, and the agent then saved with an empty sample to get past them). It also
   reports:
-  * a TypeId the same for events of different kinds (`sharedTypeIds`), as a problem, not a warning (seen as a
+  * a TypeId the same for different event types (`sharedTypeIds`), as a problem, not a warning (seen as a
     warning: two runs left TypeId the category alone, 'User' for logons, logoffs and lockouts, the warning one among
     many);
   * required elements a rule writes only when their inputs have a value, whose inputs are empty in its records
@@ -6876,17 +6962,19 @@ pipeline would, in `stroom-ai-impl`:
   `upper`) rather than only saying to map the values that fit.
 * **`ActionRules`**: the action elements a sample's own values show, as rules (`actionRules`, `described`, `read`,
   `severityFields`, `networkFields`). An agent left with Unknown placeholders kept marking firewall traffic and
-  administrator logons Unknown; for kinds plain from their values, the draft writes the rule, and a rule that keeps
+  administrator logons Unknown; for events plain from their values, the draft writes the rule, and a rule that keeps
   them Unknown is given the rules to use instead.
 * **`SplitterXml`**: a `SplitterSpec` written as Data Splitter XML (`converter`, `generateSplitter`, `recordRegex`,
   `recordEndRegex`, `bufferSizeFor`, `withBufferSize`, `longestLine`, `EXAMPLES`). It writes the subset of the
   Data Splitter language the dry run (`SplitterDryRun`) follows. `SplitterSpec.fromMap` reads a spec's JSON.
-* **`SourceNotes`**: the user's vendor documentation condensed into a field dictionary and an event catalogue,
-  kept as a block in the notes doc: drafted from (`applyToDraft`), checked against (`checkMapping`, `merged`,
-  `detailProblem`), and listed in the documentation.
-
-The values the source notes' catalogue doesn't list (`not_in_catalogue`) are in the catalogue's field order, so the
-result is the same from run to run.
+* **`SourceNotes`**: the source notes block (the field dictionary record_source_notes keeps, and the catalogue of
+  event types catalogue_event_types keeps: `event_types`, `catch_all`, `scope`, read by `catalogue`): drafted from
+  (`applyToDraft`: the dictionary's fields, then the catalogue's rules through `CatalogueTranslation`), checked
+  against (`checkMapping`: the event types not yet confirmed, compared by the records rules take, `CatalogueKept`;
+  `merged`, `detailProblem`), and listed in the documentation.
+* **`CatalogueTranslation`**: the translation's rules from the catalogue (see draft_translation_mapping, From the
+  catalogue). **`LocalCheck.holds`** and **`ruleOf`** are the one evaluator of conditions the catalogue's check, the
+  build-time checks and the generated XSLT agree on (`TestConditionParity`, `TestE2eConditionParityProcessed`).
 
 ## The translation generator, the reader and mapping changes (`stroom.ai.impl.tools.generation`)
 
@@ -6902,6 +6990,20 @@ reads. Reading also normalises: `pairs` become extract entries, a rule's `data` 
 xpath reading it, Data Names the style's `data_names`. `toJson(DumpMode)` writes `ALL`, `WITHOUT_NONE` or `COMPACT`
 (no nulls, no defaults: the form kept in a document's description), keys in the models' field order. Style numbers
 (`variable_min_reads` and the like) are longs, and a number past that is refused.
+
+**Conditions and the catch-all** (`Condition`, `EventRule`; DESIGN.md, Event type catalogue, Contracts). A rule's
+`when` is an AND of conditions, each a `field` (or `xpath`) and exactly one test: `equals`, `one_of`, `matches`,
+`present`, `in_dictionary`, and since 2026-11-19 `starts_with` and `contains` (exact, case-sensitive, over the decoded
+value, written as XPath's `starts-with()` and `contains()`, cheap on long values); `not: true` for the test not to
+hold (a missing field makes it hold, as XPath's `not(f = 'x')`; refused with `present`, which says it with
+`present: false`). Over a JSON array field `equals`, `one_of`, `starts_with`, `contains` and `matches` hold when any
+item does, `not` when none does (Stroom's JSON as XML runs an array's items together as its text, so the generator
+compares them one by one). A Data Splitter field's condition compares the value as its mapping decodes it (CSV `""`,
+key=value `\"`). A key holding `.` or `/` (or starting `[`) is spelt in brackets: `['log.level']`,
+`labels['app.kubernetes.io/name']`. Each test is generated, read back by the reader and said in words
+(`is`, `starts with`, `isn't`). `catch_all: true` marks the rule for uncatalogued records: no conditions (a line
+format's: only conditions on the variant field), never a drop; the generator logs `Caught by` from the flag, never by
+inference, and the reader reads it back.
 
 A `MappingError`'s type and message come from a fixed vocabulary (`missing` / `Field required`, `string_type`,
 `literal_error`, `value_error` / `Value error, ...`), located with dots in a message (`events.0.name`) and with
@@ -7241,7 +7343,9 @@ The tools' working knowledge is bundled with Stroom in `stroom-mcp-impl`
 * **Working guides** (`guides/<name>.md`): `agent-instructions`, `cef`, `data-splitter`, `documentation`,
   `aggregated-feeds` (source types, the registry, scopes, source type groups and their pipelines, indexes and
   promotion), `event-logging`, `indexing`, `json-input`, `mapping` (a compact reference of a translation mapping's keys, time
-  formats and how `changes=` merges, which the draft's hint names), `reference-data`, `visualisation` and `xslt`.
+  formats and how `changes=` merges, which the draft's hint names, and the event type catalogue: evidence, event
+  types, conditions with `not`, `starts_with` and `contains`, proposals, the check and confirmation, which
+  catalogue_event_types' description points to), `reference-data`, `visualisation` and `xslt`.
   Short, hand-written
   summaries of the Stroom documentation for the work the tools do. The chat reads them with `get_instructions
   guide=<name>` (`guide=guides` lists them); `/mcp` serves them as resources.
