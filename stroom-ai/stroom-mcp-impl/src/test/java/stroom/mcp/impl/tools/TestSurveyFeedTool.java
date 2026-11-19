@@ -17,6 +17,8 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.AiSamplingConfig;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -80,7 +82,7 @@ class TestSurveyFeedTool {
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
-            world.documentAccess, auditLog, registries, world::records, () -> plan);
+            world.documentAccess, auditLog, registries, world::records, () -> plan, AiConfig::new);
 
     TestSurveyFeedTool() {
         Mockito.when(plan.withNext(any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(2));
@@ -272,7 +274,7 @@ class TestSurveyFeedTool {
         final Map<String, Object> result = json(call("{\"feed\": \"SecretServer\"}"));
 
         // The feed's last stream: read whole where it can be.
-        Mockito.verify(streamReader).readHead(15911122L, 0, FeedSampling.SAMPLE_CHARS);
+        Mockito.verify(streamReader).readHead(15911122L, 0, AiSamplingConfig.DEFAULT_MAX_CHARS_PER_STREAM);
         assertThat(result.get("saturated")).isEqualTo(false);
         assertThat(((Map<?, ?>) ((List<?>) result.get("per_stream")).getFirst()).get("head_only")).isEqualTo(true);
         assertThat(String.valueOf(result.get("coverage")))
@@ -706,7 +708,7 @@ class TestSurveyFeedTool {
         final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
                 consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed(),
-                world::records, () -> plan);
+                world::records, () -> plan, AiConfig::new);
         final ToolResult again = restarted.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
                 BuildToolCalls.context());
         assertThat(again.text()).doesNotContain("Not done: Survey feed 'ACME-VPN' only 3 stream(s)");
@@ -775,7 +777,7 @@ class TestSurveyFeedTool {
         final SurveyFeedTool withRegistry = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
                 consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, world::records,
-                () -> plan);
+                () -> plan, AiConfig::new);
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
 
         final Map<String, Object> surveyed = json(withRegistry.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
@@ -1173,7 +1175,7 @@ class TestSurveyFeedTool {
         return new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
                 consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, world::records,
-                () -> plan);
+                () -> plan, AiConfig::new);
     }
 
     private static Map<String, Object> registry(final String field, final List<Map<String, Object>> rows) {
@@ -1515,10 +1517,12 @@ class TestSurveyFeedTool {
 
         final Map<String, Object> asked = json(call(args + "}"));
         // Said plainly: how much was read, and why no more can be (seen: "records read: per_stream").
-        assertThat((String) asked.get("coverage")).startsWith("NOT COVERED: The survey read only the start of stream "
-                                                             + "7, too big to read whole in one go, and can't read "
-                                                             + "further into it. Stream 7: 60 records from its "
-                                                             + "start; it has 25 parts, more than a call reads (");
+        // The parts read named (seen in user testing: "can't read further into it" of a stream of 787 parts).
+        assertThat((String) asked.get("coverage")).startsWith("NOT COVERED: The survey read only part of stream 7, "
+                                                             + "too big to read whole in one go. Stream 7: 60 "
+                                                             + "records from parts 0, 1, 2, 3, 5, 6, …, 18, 20, 21, "
+                                                             + "22 and 24; it has 25 parts, more than a call reads "
+                                                             + "(20), so 20 were read, spread through it");
         assertThat((String) asked.get("hint")).contains("stop and accept", "Don't raise max_chars_per_stream");
 
         final Map<String, Object> stopped = json(call(args + ", \"read_deeper\": \"stop\"}"));

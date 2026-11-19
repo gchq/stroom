@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -89,7 +90,7 @@ public final class RecordSplitter {
                 ? ""
                 : trimmed.substring(0, 1);
         if ("[".equals(head)) {
-            return jsonArray(trimmed, maxRecords);
+            return jsonArray(trimmed, maxRecords, truncated);
         }
         if ("{".equals(head)) {
             final Map.Entry<String, List<Object>> wrapped = SampleProfiler.wrappedRecords(ToolText.rstrip(trimmed));
@@ -277,8 +278,10 @@ public final class RecordSplitter {
         return new ArrayList<>(Collections.nCopies(size, null));
     }
 
-    // Elements of a JSON array one at a time, stopping at the first that does not parse (a cut-off end).
-    private static Chunk jsonArray(final String text, final int maxRecords) {
+    // Elements of a JSON array one at a time, stopping at the first that does not parse: said in the chunk's note,
+    // as a cut at the read limit or as JSON that isn't valid where it is (seen in user testing: a one-line array
+    // cut inside a \\u escape stopped the split silently, its part said to hold no records).
+    private static Chunk jsonArray(final String text, final int maxRecords, final boolean truncated) {
         final List<String> records = new ArrayList<>();
         final List<Map<String, Object>> parsed = new ArrayList<>();
         int i = 1;
@@ -293,7 +296,15 @@ public final class RecordSplitter {
             try {
                 decoded = ToolJson.rawDecode(text, i);
             } catch (final ToolJson.JsonDecodeException e) {
-                break;
+                final boolean cut = JsonCut.cutShort(text, e.pos())
+                                    || (truncated && JsonCut.scan(text).badEscapeAt() < 0);
+                final String note = cut
+                        ? "the array is cut at the read limit (" + String.format(Locale.ROOT, "%,d", text.length())
+                          + " characters) inside record " + (records.size() + 1) + ": the " + records.size()
+                          + " whole records before it are read"
+                        : "record " + (records.size() + 1) + " isn't valid JSON (" + e.msg() + " at character "
+                          + e.pos() + "): the " + records.size() + " records before it are read";
+                return new Chunk(JSON_ARRAY, records, parsed, null, null, List.of(), note);
             }
             i = decoded.end();
             if (decoded.value() instanceof Map) {
@@ -407,12 +418,32 @@ public final class RecordSplitter {
     /// @param root          For an XML document, its root element's opening and closing tags round `{records}`;
     ///                      else null.
     /// @param namingColumns For delimited records, the columns that name the kind of event.
+    /// @param note          What stopped the split early (a JSON array cut at the read limit, or not valid JSON
+    ///                      where it is), or null.
     public record Chunk(String format,
                         List<String> records,
                         List<Map<String, Object>> parsed,
                         String header,
                         String root,
-                        List<String> namingColumns) {
+                        List<String> namingColumns,
+                        String note) {
+
+        /// A chunk split with nothing to say of it.
+        ///
+        /// @param format        How it was read.
+        /// @param records       Each record's text.
+        /// @param parsed        Each record's structured view, or null.
+        /// @param header        For delimited text, the header line; else null.
+        /// @param root          For an XML document, its root element's tags round `{records}`; else null.
+        /// @param namingColumns For delimited records, the columns that name the kind of event.
+        public Chunk(final String format,
+                     final List<String> records,
+                     final List<Map<String, Object>> parsed,
+                     final String header,
+                     final String root,
+                     final List<String> namingColumns) {
+            this(format, records, parsed, header, root, namingColumns, null);
+        }
 
         /// @param index A record's index.
         /// @return Its structured view, or null if it has none.

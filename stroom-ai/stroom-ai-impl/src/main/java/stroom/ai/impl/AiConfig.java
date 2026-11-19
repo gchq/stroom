@@ -72,6 +72,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final AiBuildsConfig builds;
     private final AiSampleUploadsConfig sampleUploads;
     private final AiInstructionSuggestionsConfig instructionSuggestions;
+    private final AiSamplingConfig sampling;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -103,6 +104,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         builds = new AiBuildsConfig();
         sampleUploads = new AiSampleUploadsConfig();
         instructionSuggestions = new AiInstructionSuggestionsConfig();
+        sampling = new AiSamplingConfig();
     }
 
     /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
@@ -128,7 +130,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
     }
 
     @SuppressWarnings("unused")
@@ -160,7 +162,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("builds") final AiBuildsConfig builds,
                     @JsonProperty("sampleUploads") final AiSampleUploadsConfig sampleUploads,
                     @JsonProperty("instructionSuggestions")
-                    final AiInstructionSuggestionsConfig instructionSuggestions) {
+                    final AiInstructionSuggestionsConfig instructionSuggestions,
+                    @JsonProperty("sampling") final AiSamplingConfig sampling) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -194,6 +197,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.sampleUploads = Objects.requireNonNullElseGet(sampleUploads, AiSampleUploadsConfig::new);
         this.instructionSuggestions = Objects.requireNonNullElseGet(instructionSuggestions,
                 AiInstructionSuggestionsConfig::new);
+        this.sampling = Objects.requireNonNullElseGet(sampling, AiSamplingConfig::new);
     }
 
     /// As the constructor that reads the config, with the default instruction suggestions.
@@ -227,7 +231,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
                 shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, errorTriage, pipelineStages, builds, sampleUploads,
-                null);
+                null, null);
     }
 
     /// As the constructor that reads the config, with the default error triage, pipeline stages, builds and sample
@@ -257,7 +261,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
-                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null, null, null);
+                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null, null, null, null);
     }
 
     /// @return Sample files sent from the user's machine by the commands upload_sample gives: how large, and for
@@ -265,6 +269,13 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     @JsonProperty("sampleUploads")
     public AiSampleUploadsConfig getSampleUploads() {
         return sampleUploads;
+    }
+
+    /// @return How much of a stream the tools read as its sample: the most characters of a stream, the longest
+    /// event kept, and the most events of a part.
+    @JsonProperty("sampling")
+    public AiSamplingConfig getSampling() {
+        return sampling;
     }
 
     /// @return Standing instructions the agent suggests from the user's own sessions: how far back it reads them,
@@ -489,6 +500,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", builds=" + builds +
                ", sampleUploads=" + sampleUploads +
                ", instructionSuggestions=" + instructionSuggestions +
+               ", sampling=" + sampling +
                '}';
     }
 }

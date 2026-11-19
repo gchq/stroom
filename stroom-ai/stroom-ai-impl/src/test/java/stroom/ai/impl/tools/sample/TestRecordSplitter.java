@@ -279,6 +279,34 @@ class TestRecordSplitter {
         return TestSampleProfiler.allSamples();
     }
 
+    @Test
+    void aJsonArrayCutAtTheReadLimitSaysSoRatherThanStoppingSilently() {
+        // Seen in user testing: a one-line array cut inside a \\u escape stopped the split, its part said to hold no
+        // records and nothing said why.
+        final String part = OpenWebUiParts.part(150_000, OpenWebUiParts.ESCAPE_AT);
+
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(part.substring(0, OpenWebUiParts.PART_READ), 100,
+                true);
+
+        assertThat(chunk.records()).isEmpty();
+        assertThat(chunk.note()).isEqualTo("the array is cut at the read limit (100,000 characters) inside record 1: "
+                                           + "the 0 whole records before it are read");
+    }
+
+    @Test
+    void aJsonArrayRecordThatIsntValidIsSaidWhere() {
+        final RecordSplitter.Chunk chunk = RecordSplitter.split("[{\"a\": 1}, {\"a\": \"x\\+y\"}, {\"a\": 3}]",
+                100, false);
+
+        assertThat(chunk.records()).hasSize(1);
+        assertThat(chunk.note()).startsWith("record 2 isn't valid JSON (").endsWith("the 1 records before it are read");
+    }
+
+    @Test
+    void aWholeJsonArrayHasNoNote() {
+        assertThat(RecordSplitter.split("[{\"a\": 1}]").note()).isNull();
+    }
+
     @ParameterizedTest
     @MethodSource("allSamples")
     void everySampleSourcesSendSplitsIntoRecords(final String name) {

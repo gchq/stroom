@@ -32,6 +32,8 @@ import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.JsonStringValues;
+import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -247,14 +249,16 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final String version = target.version();
         // Sample streams of an aggregated feed's build with a scope: read through it, so the rules drafted are the
         // scope's (records of other source types left out as they are read).
-        final SampleStreamTexts.Scoped scoped = given == null
-                ? builds.scope(build).map(scope -> sampleStreamTexts.scoped(sampleStreamTexts.read(streamIds), scope))
-                        .orElse(null)
+        final SampleStreamTexts.Texts read = given == null
+                ? sampleStreamTexts.read(streamIds)
+                : null;
+        final SampleStreamTexts.Scoped scoped = read != null
+                ? builds.scope(build).map(scope -> sampleStreamTexts.scoped(read, scope)).orElse(null)
                 : null;
         final Map<String, String> samples = scoped != null
                 ? scoped.texts().texts()
-                : given == null
-                        ? sampleStreamTexts.read(streamIds).texts()
+                : read != null
+                        ? read.texts()
                         : SampleTexts.asNamedSamples(given, null);
         if (samples.isEmpty()) {
             throw new ToolRefusal("Give the samples' text, or stream_ids of the uploaded sample streams");
@@ -302,6 +306,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             result.put("notes", notes);
         }
         traceLines(call, context, result, mapping);
+        if (read != null) {
+            skippedLongStrings(result, mapping, read.skipped());
+        }
         // Records with no time, or times with no date: where they come from is the user's to say.
         final List<Map<String, String>> headers = streamIds.stream().map(sampleStreamTexts::receiptHeaders).toList();
         TimeSources.apply(call, context, consent, NAME, result, mapping, headerValues(headers, "RemoteFile"),
@@ -379,6 +386,26 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     }
 
     // A receipt header's values across the sample streams, those they carry.
+    // A value the JSONParser would cut in an event too long to sample, said as the draft's own long values are
+    // (the draft reads only the events sampled).
+    private static void skippedLongStrings(final Map<String, Object> result,
+                                           final Map<String, Object> mapping,
+                                           final List<SampleStreamTexts.Skipped> skipped) {
+        if (skipped.isEmpty() || !"json".equals(mapping.get("input"))) {
+            return;
+        }
+        final Map<String, Object> left = new LinkedHashMap<>(Map.of("format", SampleProfiler.JSON_ARRAY));
+        skipped.forEach(part -> JsonStringValues.addSkipped(left, part.name(), part.events()));
+        if (!(left.get(JsonStringValues.LONG_STRINGS_NOTE) instanceof final String note)) {
+            return;
+        }
+        final List<Object> notes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
+        if (notes.stream().noneMatch(said -> String.valueOf(said).contains("stringTruncateLength"))) {
+            notes.add(note);
+            result.put("notes", notes);
+        }
+    }
+
     private static List<String> headerValues(final List<Map<String, String>> headers, final String name) {
         return headers.stream()
                 .map(header -> header.get(name))

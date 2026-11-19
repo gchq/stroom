@@ -18,7 +18,9 @@ package stroom.ai.impl.tools;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -95,6 +97,40 @@ class TestStreamCharsets {
                 .startsWith("stream 7: Stroom can't show it as text, because 3 byte(s) aren't UTF-8 (bytes 93, 94, "
                             + "E9)")
                 .contains("mixes character sets");
+    }
+
+    @Test
+    void aReaderDecodesAndReportsAsDecodeDoesHoweverItIsReadInChunks() throws IOException {
+        // Repeated past the reader's 64 KB chunks, so replaced bytes and their contexts fall across chunk ends.
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        for (int i = 0; i < 200; i++) {
+            out.writeBytes(MIXED);
+        }
+        final byte[] bytes = out.toByteArray();
+        final StreamCharsets.ReportingReader reader = StreamCharsets.reader(new ByteArrayInputStream(bytes),
+                "UTF-8");
+        final StringBuilder text = new StringBuilder();
+        final char[] buffer = new char[777];
+        int read;
+        while ((read = reader.read(buffer, 0, buffer.length)) >= 0) {
+            text.append(buffer, 0, read);
+        }
+
+        final StreamCharsets.Decoded decoded = StreamCharsets.decode(bytes, "UTF-8", true);
+        assertThat(text.toString()).isEqualTo(decoded.text());
+        assertThat(reader.report()).isEqualTo(decoded.report());
+    }
+
+    @Test
+    void aReaderOfTextThatDecodesHasNoReport() throws IOException {
+        final StreamCharsets.ReportingReader reader = StreamCharsets.reader(new ByteArrayInputStream(
+                "café 👀".getBytes(StandardCharsets.UTF_8)), null);
+        final char[] buffer = new char[100];
+        final int read = reader.read(buffer, 0, buffer.length);
+
+        assertThat(new String(buffer, 0, read)).isEqualTo("café 👀");
+        assertThat(reader.read(buffer, 0, buffer.length)).isEqualTo(-1);
+        assertThat(reader.report()).isNull();
     }
 
     private static byte[] mixed() {

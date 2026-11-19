@@ -42,10 +42,9 @@ public final class FeedSampling {
 
     /// Streams a survey call reads unless the user says otherwise.
     public static final int SURVEY_STREAMS = 10;
-    /// The characters of a part's head read, for a feed's streams (any size).
+    /// The characters of a feed's stream read (any size), shared by the heads of its parts. A sample stream
+    /// (stream_ids) is read up to the most a stream's sample holds (`ai.sampling.maxCharsPerStream`).
     public static final int FEED_CHARS = 250_000;
-    /// The characters of a sample stream read (stream_ids), whole when it is a sample's size.
-    public static final int SAMPLE_CHARS = 2_000_000;
     /// The most records read from a feed's stream.
     public static final int FEED_RECORDS = 1000;
     /// The most records read from a sample stream, or a feed's last streams.

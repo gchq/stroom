@@ -16,6 +16,10 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.sample.OpenWebUiParts;
+import stroom.ai.impl.tools.sample.PartSampler;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.data.shared.StreamTypeNames;
 import stroom.security.shared.AppPermission;
 
@@ -27,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -242,6 +247,83 @@ class TestStreamReader {
         world.bytes.put(14L, "a,b\n1,2\n".repeat(100).getBytes(StandardCharsets.UTF_16LE));
         world.encodings.put(StreamWorld.FEED, "UTF-16LE");
         assertThat(reader.readWindows(14, 0, 10, 4, 100)).isEmpty();
+    }
+
+    @Test
+    void aNewlineFreePartIsSampledAsWholeEventsNeverCutInsideAnEscape() {
+        // Seen in user testing (OpenWebUI audit log): a part one JSON array on one line has no line end to cut back
+        // to, so its sample was cut at exactly the limit, inside a \\uXXXX escape, and every sampling tool refused
+        // it as "isn't valid JSON: Invalid \\uXXXX escape at character 99996". Sampled as a stream of events, the
+        // event too long to sample is left out whole and the events after it are kept whole.
+        final String big = OpenWebUiParts.part(150_000, OpenWebUiParts.ESCAPE_AT);
+        final String small = OpenWebUiParts.part(2_000, -1);
+        final String part = big.substring(0, big.length() - 1) + "," + small.substring(1, small.length() - 1) + ","
+                            + small.substring(1);
+        world.addRaw(9, part);
+
+        final PartSampler.Sample sample = reader.samplePart(9, 0, new PartSampler.Limits(100_000,
+                OpenWebUiParts.PART_READ));
+
+        assertThat(ToolJson.loads(sample.text())).asList().hasSize(2);
+        assertThat(sample.skipped().count()).isEqualTo(1);
+        assertThat(sample.skipped().largest()).isEqualTo(big.length() - 2);
+        assertThat(sample.skipped().path()).isEqualTo("message");
+        assertThat(sample.whole()).isFalse();
+    }
+
+    @Test
+    void aPartsHeadMayStillBeCutAtItsLimitAndSaysSo() {
+        // readHead reads a part's first characters as they are (survey_feed's heads, read in windows further in):
+        // a newline-free part is cut at the limit, and said to be, so its readers keep only the whole records
+        // before the cut. A sample is read with samplePart, which never cuts an event.
+        world.addRaw(9, OpenWebUiParts.part(150_000, OpenWebUiParts.ESCAPE_AT));
+
+        final StreamReader.RawHead head = reader.readHead(9, 0, OpenWebUiParts.PART_READ);
+
+        assertThat(head.truncated()).isTrue();
+        assertThat(head.text()).hasSize(OpenWebUiParts.PART_READ);
+    }
+
+    @Test
+    void aSampleReadThroughItsBytesSaysWhatWasReplaced() {
+        world.addRaw(7, "");
+        world.bytes.put(7L, TestStreamCharsets.MIXED);
+
+        final PartSampler.Sample sample = reader.samplePart(7, 0, new PartSampler.Limits(100_000, 1_000_000));
+
+        assertThat(sample.text()).contains("latin1 caf�").contains("cp1252 �q�");
+        assertThat(reader.charsetReport(7)).isEqualTo(StreamCharsets.decode(TestStreamCharsets.MIXED, "UTF-8",
+                true).report());
+    }
+
+    @Test
+    void aSampleCutShortByTheCallsTimeIsNotKept() {
+        // Kept, a later call would be given only what one call had time to read.
+        world.addRaw(7, "a=1\n".repeat(100_000));
+        final PartSampler.Limits limits = new PartSampler.Limits(100_000, 1_000_000);
+
+        final PartSampler.Sample first = ToolDeadline.run(Duration.ZERO, () -> reader.samplePart(7, 0, limits));
+
+        assertThat(first.timedOut()).isTrue();
+        assertThat(first.text().length()).isLessThan(400_000);
+        final PartSampler.Sample again = reader.samplePart(7, 0, limits);
+        assertThat(again).isNotSameAs(first);
+        assertThat(again.timedOut()).isFalse();
+        assertThat(again.text()).hasSize(400_000);
+        assertThat(reader.samplePart(7, 0, limits)).as("kept, once read whole").isSameAs(again);
+    }
+
+    @Test
+    void aSampleIsKeptAWhileForTheUser() {
+        world.addRaw(7, "a=1\n");
+        final PartSampler.Limits limits = new PartSampler.Limits(100_000, 1_000_000);
+
+        final PartSampler.Sample first = reader.samplePart(7, 0, limits);
+        world.bytes.put(7L, "a=2\n".getBytes(StandardCharsets.UTF_8));
+
+        assertThat(reader.samplePart(7, 0, limits)).isSameAs(first);
+        assertThat(reader.samplePart(7, 0, new PartSampler.Limits(100_000, 900_000)).text())
+                .isEqualTo("a=2\n");
     }
 
     @Test

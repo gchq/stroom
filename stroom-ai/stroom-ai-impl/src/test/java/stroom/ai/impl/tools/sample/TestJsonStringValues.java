@@ -152,6 +152,65 @@ class TestJsonStringValues {
         assertThat(String.valueOf(draft.get("notes"))).contains("stringTruncateLength").contains("'body'");
     }
 
+    @Test
+    void aOneLineArrayOfOneEventWhoseMessageIsLongIsReported() {
+        // OpenWebUI audit log (user testing 2026-11-19): a part one newline-free JSON array of one filebeat event,
+        // 59,002 characters, its message a JSON string holding the request: the JSONParser would cut the message.
+        final String part = OpenWebUiParts.part(59_002, -1);
+
+        final Map<String, Object> profile = SampleProfiler.profile(part);
+
+        assertThat(profile).containsEntry("format", SampleProfiler.JSON_ARRAY).containsEntry("records", 1);
+        assertThat((List<?>) profile.get(JsonStringValues.LONG_STRINGS)).singleElement().satisfies(found -> {
+            final Map<?, ?> longest = (Map<?, ?>) found;
+            assertThat(longest.get("field")).isEqualTo("message");
+            assertThat((int) longest.get("length")).isGreaterThan(50_000);
+        });
+        assertThat((String) profile.get(JsonStringValues.LONG_STRINGS_NOTE)).contains("'message'")
+                .contains("stringTruncateLength");
+    }
+
+    @Test
+    void aLongValueInAnEventLeftOutOfTheSampleIsStillReported() {
+        // Seen in user testing: OpenWebUI events too long to sample; the warning that the JSONParser would cut
+        // their message is not lost because they were left out.
+        final Map<String, Object> profile = SampleProfiler.profile("[{\"a\": \"short\"}]");
+
+        JsonStringValues.addSkipped(profile, "stream 9 part 3", new PartSampler.SkippedEvents(4, 412_118, 398_002,
+                "message"));
+
+        assertThat((List<?>) profile.get(JsonStringValues.LONG_STRINGS)).singleElement().satisfies(found -> {
+            final Map<?, ?> longest = (Map<?, ?>) found;
+            assertThat(longest.get("field")).isEqualTo("message");
+            assertThat(longest.get("length")).isEqualTo(398_002);
+            assertThat(longest.get("record")).isEqualTo("an event left out of the sample (stream 9 part 3)");
+        });
+        assertThat((String) profile.get(JsonStringValues.LONG_STRINGS_NOTE)).contains("'message', 398002 characters")
+                .contains("stringTruncateLength");
+    }
+
+    @Test
+    void aLeftOutEventsValueIsAddedToThoseOfTheSampleLongestFirst() {
+        final String body = "b".repeat(20_000);
+        final Map<String, Object> profile = SampleProfiler.profile("[{\"body\": \"" + body + "\"}]");
+
+        JsonStringValues.addSkipped(profile, "stream 9", new PartSampler.SkippedEvents(1, 150_000, 140_000, null));
+
+        assertThat((List<?>) profile.get(JsonStringValues.LONG_STRINGS)).hasSize(2).first().satisfies(found ->
+                assertThat(((Map<?, ?>) found).get("field")).isEqualTo("an event left out of the sample"));
+    }
+
+    @Test
+    void aLeftOutEventsShortValuesOrAnotherFormatAddNothing() {
+        final Map<String, Object> json = SampleProfiler.profile("[{\"a\": \"short\"}]");
+        JsonStringValues.addSkipped(json, "stream 9", new PartSampler.SkippedEvents(1, 150_000, 9_000, "a"));
+        final Map<String, Object> text = SampleProfiler.profile("a=1 b=2\na=3 b=4\n");
+        JsonStringValues.addSkipped(text, "stream 9", new PartSampler.SkippedEvents(1, 150_000, 140_000, "a"));
+
+        assertThat(json).doesNotContainKey(JsonStringValues.LONG_STRINGS);
+        assertThat(text).doesNotContainKey(JsonStringValues.LONG_STRINGS);
+    }
+
     private static String line(final Object record) {
         return ToolJson.dumps(record);
     }

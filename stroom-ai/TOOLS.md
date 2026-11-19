@@ -2628,8 +2628,9 @@ given. It has two paths:
   because a slow local model writing sample text into tool calls (seen: Gemma 4 31B at about 22 tokens a second took
   77 s per call, and 100 lines would have taken over ten minutes) is the bottleneck; files never pass through the
   model.
-* **Profile now** (`samples` text, or `stream_ids`): sample streams are read whole up to 1,000,000 characters each
-  (`StreamReader.MAX_SAMPLE_CHARS`) through `SampleStreamTexts`; text is read with `SampleTexts.asNamedSamples`. All
+* **Profile now** (`samples` text, or `stream_ids`): sample streams are read as whole events through
+  `SampleStreamTexts` (see "Sample streams' sampling" under "Sample analysis"); text is read with
+  `SampleTexts.asNamedSamples`. All
   samples are profiled together (`SampleProfiling.profileAll`, XML fragments with the environment's own wrapper).
   The result gives the format's parser (`BuildPlan.PARSER_FOR_FORMAT`), which templates here read it
   (`templatesReading`: the environment's own translation templates with that parser by name, else one whose parser
@@ -3085,7 +3086,12 @@ asked for it again, for ever), and the state is covered as far as they chose (`a
 stream_ids the survey read whole (or stopped at) go ahead uncovered, and a build on an existing feed with no survey
 record has its `covered` step still to do (seen: the agent deleted the record to get past the gate). Streams are picked in bisection order (newest, oldest, middle,
 quarters ...) by `FeedSampling.pickSpread`, skipping those already read; with `stream_ids` exactly those streams are
-read. For each stream up to `max_parts_per_stream` parts are read with `StreamReader.readHead`, split into records by
+read. For each stream up to `max_parts_per_stream` parts are read with `StreamReader.readHead` (a stream of more parts
+has them chosen spread through it, its first and last among them, `PartSampler.spread`; seen in user testing: an
+OpenWebUI audit stream of 787 parts read through its first 20 only), every part chosen read to
+`max_chars_per_stream`, its own budget (never shared by a stream's parts: different parts can carry different
+sources, read breadth first); a head that is one JSON array cut by the read is read again as its whole events up to
+the same budget (`StreamReader.samplePart`), one too long to sample left out and said in `per_stream`. Each part is split into records by
 `RecordSplitter` (same detection as the profile), and added to `Shapes` (see "Sample analysis" for how a shape is
 signed). Where a part is longer than its head and its format is one record a line (delimited, JSON lines, key=value,
 CEF, CRI, unknown text, and mixed lines whose records are each one line), up to 8 windows of 250,000 characters spread to the part's end are read too
@@ -3094,8 +3100,9 @@ found. A part in a different format from the first is skipped and said.
 
 **Coverage.** A call is `saturated` when a call with known shapes reads a full `max_streams` with nothing new, when
 fewer streams were left to pick than asked (the feed's last ones), or when the given `stream_ids` were all read. The
-feed's last streams and given streams are read whole up to 2,000,000 characters and 10,000 records; a feed's other
-streams up to 250,000 characters and 1,000 records a part. A given stream, or a last stream, read only in part leaves
+feed's last streams and given streams are read whole up to `ai.sampling.maxCharsPerStream` (2,000,000 characters)
+and 10,000 records a part; a feed's other streams up to 250,000 characters and 1,000 records a part. A stream read only in part is said with the parts read (`per_stream` `parts_read`), not "can't read further
+into it". A given stream, or a last stream, read only in part leaves
 the result `NOT COVERED`, never "covered" (seen in Ask Stroom AI: 334 of a stream's 1,000 records read, reported
 covered; in production a 750 KB sample read to its 108th record hid most of its kinds of event). When the cap was
 already the maximum (5,000,000), the advice is to step records further in and rely on `review_coverage` once
@@ -3140,17 +3147,17 @@ locations carry `expect: none`. The doc's format is stored data, so it changes o
 kept still reads (see `SurveyDoc` under "Sample analysis").
 
 * **Arguments**: `feed` (or `stream_ids`), `stream_type` (default Raw Events), `stream_ids`, `max_streams` (1 to 100,
-  default 10), `skip_stream_ids`, `known_signatures`, `max_chars_per_stream` (1,000 to 5,000,000),
-  `max_parts_per_stream` (1 to 20; default every part, up to 20, for `stream_ids` and a feed's last streams, which
-  are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
-  surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
+  default 10), `skip_stream_ids`, `known_signatures`, `max_chars_per_stream` (1,000 to 5,000,000; each part's
+  head, its own), `max_parts_per_stream` (1 to 20; default every part, up to 20 spread through the stream, for
+  `stream_ids` and a feed's last streams, which are read whole, else 3: seen in testing, a feed's latest streams
+  uploaded again as one stream of five parts was surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
   default 2), `build`; as the user said: `kind_field`, `read_deeper` (no forms), `accept_as_is`,
   `source_type_field` (`none` for one source; `meta:<Attribute>` for a stream meta attribute, below; a reading into
   held values, below), `aggregated`
   (below); `find` (a registry row's name, below).
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
-  parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
+  parts, `parts_read` (a stream of several), `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
   naming the kind of event, up to 6, with how many records hold each of its values, up to 25, over every shape;
   seen: a 790 KB survey regrouped by x-type and x-action with jq), `shapes` (up to 60:
   `signature`, `new`, `count`, `share_percent`, `streams`, `example` up to 500 characters, `more_examples` (up to
@@ -4902,7 +4909,8 @@ through the model. A call runs in this order:
    declared"). Problems come back at once, before the sample is read, with the rules' `events` left out so the
    whole list fits one reply (seen: 20-70 KB results each round, fixed a part at a time).
 4. **The sample check** (`MappingSampleCheck.check`, below), over `sample` or the `stream_ids` streams' text. Where
-   a stream's part is read only to the most a sample is read to (`SampleStreamTexts.Cut`), the records the build's
+   a stream's part isn't read whole (read only to the most a sample holds, or events left out:
+   `SampleStreamTexts.Cut`), the records the build's
    survey found further into that part (its kinds' examples, by location) are checked too, after the part's header
    line where its records follow one (`SurveyExamples`), and a warning says how many; only for records a line each,
    not XML or a JSON array, whose records can't stand apart from their text. Seen in testing: a sample read to its
@@ -6612,9 +6620,41 @@ fragment wrapper (`FragmentWrappers`).
   which refused every document holding it. Used by the translation draft's local check and by `draft_index_mapping`
   (its stand-in questions, through `PlaceholderChoices`), not by the tools above.
 
-Raw stream text is read through the stream store (`StreamReader.readHead`, `readWindows`, `cachedRawText`), decoded as
-a pipeline decodes it: undecodable bytes are replaced and `StreamReader.charsetReport` says what was replaced, which
-the tools pass on (`undecodable_bytes`, with advice).
+Raw stream text is read through the stream store (`StreamReader.readHead`, `readWindows`, `cachedRawText`,
+`samplePart`), decoded as a pipeline decodes it: undecodable bytes are replaced and `StreamReader.charsetReport` says
+what was replaced, which the tools pass on (`undecodable_bytes`, with advice). `samplePart` decodes a chunk at a time
+(`StreamCharsets.ReportingReader`), so a part of any size is read through.
+
+**Sample streams' sampling** (`SampleStreamTexts.read`, `StreamReader.samplePart`, `PartSampler`; settings
+`ai.sampling`, `AiSamplingConfig`). The tools given `stream_ids` (profile_sample, classify_kinds, the drafts and
+checks) read each stream's parts as their own texts, at most 20 parts, chosen spread through a stream of more from
+its first to its last (`PartSampler.spread`: deterministic, evenly spaced), each up to its share of the stream's
+`maxCharsPerStream` (2,000,000) characters (`PartSampler.share`: what is left over the parts left, never less than
+`maxEventChars`, so every chosen part is read however small the stream's characters: they bound only the depth beyond
+that). Characters decide how much of a part is kept, whatever its format: whole events up to its share, never a count.
+A part is read as a stream of events, never cut, told by its first character: `[` is one JSON array
+(`JsonArrayStream`: nesting, strings and escapes tracked a character at a time, nothing parsed), its events rejoined
+as `[e1,e2,...]` (an array followed by more text, JSON lines of arrays, is read a line at a time); `<` (not a syslog
+priority) is XML (`XmlRecordStream`: markup and nesting tracked, nothing parsed), its records the root's children, or
+the top-level elements of fragments (a second top-level element after the first), as `SampleProfiler` and `XmlTree`
+take them, kept records written back in the document's own prolog and root start tag (namespace declarations and
+attributes as they are) and closed by the root's name, so the profile, draft and checks read the same document
+shape; XML that can't be read so (no root, a root holding no record, markup not well-formed before a record) is read
+from its start to its share and cut back to a line end, and said; anything else is read a line at a time to its
+share, each line kept as it is (`LineStream`). An event (or
+line) over `maxEventChars` (100,000) is read through without being held and left out, and said in the notes with its
+length and its longest string value (e.g. "stream 9 part 3: 4 events over 100,000 characters left out of the sample
+(largest 412,118 characters; longest string value 398,002, in 'message'); 20 events sampled"; an XML record's
+longest text is given, its field not); that value still
+reaches profile_sample's and the draft's `long_strings` warning (`JsonStringValues.addSkipped`), so the JSONParser's
+cut of it isn't lost. A part ending inside its last event drops it and says so; a sample cut short by the call's
+time isn't kept in `StreamReader`'s cache, so a later call reads the part again; a part whose every line is too long
+is read from its start instead (a one-line object wrapping its records). Seen in user testing: an OpenWebUI audit
+stream of 787 newline-free JSON arrays (67 MB), its parts read to 100,000 characters, cut inside a `\u` escape, and
+every sampling tool refused the sample as "isn't valid JSON". Text still cut at a read limit (a client's, or a head)
+is said to be cut, never invalid: `SampleProfiler` tells a cut from invalid JSON (`JsonCut`: it ends open, no wrong
+escape before the end, the parse failing in its last record), "cut at the read limit (N characters) inside its first
+record" when no record is whole, and `RecordSplitter.Chunk.note` says where a JSON array's split stopped.
 
 ## The validation core (`stroom.ai.impl.tools.validation`)
 
