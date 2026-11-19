@@ -455,16 +455,13 @@ final class CatalogueTranslation {
         return rest.stream().filter(name -> own.stream().anyMatch(record -> hasText(record.get(name)))).toList();
     }
 
-    // The fields no common entry nor the notes' action element entries read, with values, but those the ways test
-    // for a code (written as the vendor's code).
+    // The fields no common entry nor the notes' action element entries read, with values (a way's own code fields
+    // are written as the vendor's code, and not again).
     private List<String> rest(final List<Map<String, Object>> common) {
         final Set<String> taken = readBy(common);
         detailFields.forEach(entry -> taken.add(ToolText.str(entry.get(FIELD))));
-        final Set<String> codes = new LinkedHashSet<>();
-        catalogue.eventTypes().forEach(type -> type.recognisedBy().forEach(way -> codes.addAll(vendorCodeFields(way))));
         return names.stream()
-                .filter(name -> !taken.contains(name) && !codes.contains(name)
-                                && !NullSafe.isEmptyCollection(values.get(name)))
+                .filter(name -> !taken.contains(name) && !NullSafe.isEmptyCollection(values.get(name)))
                 .toList();
     }
 

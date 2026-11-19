@@ -177,6 +177,26 @@ class TestCatalogueTranslation extends DraftFixtures {
     }
 
     @Test
+    void aFieldAnotherEventTypeTestsIsStillDataOfThisOnesRecords() {
+        final String sample = """
+                ts,host,a,b,usr
+                2026-10-01T08:00:00Z,dc01,login,7,alice
+                2026-10-01T08:01:00Z,dc01,save,7,alice
+                """;
+        final Map<String, Object> draft = draft(sample, notes(List.of(
+                type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null, way(eq("a", "login"))),
+                type("Update-Code", "Code saved", "Update", "Modify", null, way(eq("b", "7"), eq("a", "save")))),
+                true));
+
+        final Map<String, Object> logon = JsonValues.maps(mappingOf(draft).get("events")).stream()
+                .filter(rule -> "authenticate_logon".equals(rule.get("name")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(JsonValues.maps(logon.get("fields")))
+                .contains(map("path", "EventDetail/Authenticate/Data", "data_name", "b", "field", "b"));
+    }
+
+    @Test
     void theVendorCodesDataNameIsItsFieldsLastSegment() {
         assertThat(CatalogueTranslation.vendorCodeName("System/EventID", false)).isEqualTo("EventID");
         assertThat(CatalogueTranslation.vendorCodeName("event.logger_name", true)).isEqualTo("logger_name");
