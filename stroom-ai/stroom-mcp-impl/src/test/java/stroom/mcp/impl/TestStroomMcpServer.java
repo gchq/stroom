@@ -456,6 +456,36 @@ class TestStroomMcpServer {
     }
 
     @Test
+    void aSessionIsKeptWhenTheAnswerToOneOfItsCallsCantBeSent() throws Exception {
+        // Seen in eval case 36 on Haiku over Claude Code: a build_translation_xslt call ran past the client's time
+        // limit ("The operation timed out."), so the client gave up on that request, and the answer sent later
+        // failed. The transport (MCP SDK 2.0.1) then drops the whole session, though only that request's stream had
+        // gone; the client started a new session, with an empty workspace, and the next changes= was refused:
+        // "changes needs a mapping to apply to", the session's draft gone with the old one.
+        final TransportSessions transportSessions = new TransportSessions(server.transport());
+        final String sessionId = rawSession();
+        behaviours.put("slow_thing", context -> {
+            // As the transport does when the answer to a request can't be sent to the client.
+            transportSessions.remove(sessionId);
+            return ToolResult.text("done");
+        });
+
+        rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":"
+                           + "\"slow_thing\",\"arguments\":{}}}");
+
+        assertThat(transportSessions.has(sessionId)).isTrue();
+        // The session goes on: its next call is answered in it, not refused as a session not found.
+        final HttpResponse<String> next = rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":"
+                                                             + "\"tools/call\",\"params\":{\"name\":\"read_thing\","
+                                                             + "\"arguments\":{}}}");
+        assertThat(next.statusCode()).isEqualTo(200);
+        assertThat(next.body()).contains("ran read_thing");
+        server.endDroppedSessions(System.currentTimeMillis() + StroomMcpServer.DROPPED_AFTER.toMillis() + 1);
+        assertThat(server.isOpenFor(sessionId, ALICE)).isTrue();
+        Mockito.verify(workspaces, Mockito.never()).delete(Mockito.any());
+    }
+
+    @Test
     void aUsersOldestIdleSessionIsEndedToMakeRoom() {
         aiConfig = Mockito.mock(AiConfig.class);
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null,

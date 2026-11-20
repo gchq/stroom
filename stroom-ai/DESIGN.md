@@ -3156,6 +3156,12 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   by the user): the first records whole while they fit, the rest by their keys, read again a few at a time. A result
   nothing in which can be shortened is given whole, its `whole_result` note saying so: the client shows only the
   start of a result past its limit, and the note is there.
+* **An MCP session outlives a request the client gave up on** (2026-11-20; seen in eval case 36: changes= refused
+  after each build_translation_xslt call the client timed out): MCP SDK 2.0.1's transport drops the whole session
+  when the answer to one request can't be sent, so the client's next request was answered 404 and the client started
+  a new session with an empty workspace, its draft and sent mappings gone. `StroomMcpServer` puts a session still
+  open back in the transport after each answer (`TransportSessions.restore`). changes= with neither uuid nor build
+  applies to the session's latest draft; a refusal with nothing to apply to names the calls that give one.
 * The generator gained `not`, `starts_with`, `contains` and the explicit `catch_all` flag; nothing else changed
   (choose/when in order, `unmatched` warn, `mcp_log_kind`).
 

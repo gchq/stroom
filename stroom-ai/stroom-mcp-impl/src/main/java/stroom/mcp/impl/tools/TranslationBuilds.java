@@ -144,6 +144,14 @@ class TranslationBuilds {
                     return new Base(draft.get(), ON_THE_DRAFT, null);
                 }
             }
+        } else if (found == null && NullSafe.isBlankString(target)) {
+            // Neither uuid nor build: the session's latest draft (seen in eval case 36 on Haiku: changes= right
+            // after draft_translation_mapping build=, given no build, was refused, and the draft, outlined for a
+            // client outside Stroom, couldn't be sent whole instead).
+            final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT);
+            if (draft.isPresent()) {
+                return new Base(draft.get(), ON_THE_DRAFT, null);
+            }
         }
         if (found != null) {
             return new Base(keptOrRefuse(found, "XSLT " + found + " keeps no translation mapping to change: give the "
@@ -151,10 +159,37 @@ class TranslationBuilds {
                     ? copy(m)
                     : Map.of(), null, null);
         }
-        throw new ToolRefusal("changes needs a mapping to apply to: uuid= the saved XSLT, the same build and name as "
-                              + "a mapping sent or saved before, or a draft from draft_translation_mapping this "
-                              + "session (build= the same build). None was found for those: draft one, or give the "
-                              + "whole mapping.");
+        throw new ToolRefusal(noMappingToChange(target, build, name));
+    }
+
+    /// @param target The XSLT's uuid or `build/name`, or "".
+    /// @param build  The build, or null.
+    /// @param name   The XSLT's name in the build (or its source type group's), or null.
+    /// @return Why changes= has no mapping to apply to, and the calls that give one.
+    static String noMappingToChange(final String target, final String build, final String name) {
+        final boolean hasBuild = NullSafe.isNonBlankString(build);
+        final String b = hasBuild
+                ? build
+                : "<build>";
+        final String n = NullSafe.isNonBlankString(name)
+                ? name
+                : "<XSLT name>";
+        final String none;
+        if (hasBuild) {
+            none = "this session has no draft for build " + build
+                   + (NullSafe.isNonBlankString(name)
+                    ? ", no mapping was sent for '" + name + "' in it this session, and the build has no XSLT "
+                      + "named '" + name + "'"
+                    : "");
+        } else if (NullSafe.isNonBlankString(target)) {
+            none = "this session has no draft, and no mapping was sent for " + target + " this session";
+        } else {
+            none = "this session has no draft";
+        }
+        return "changes needs a mapping to apply to, and there is none: " + none + " (a new session starts with "
+               + "none). Call draft_translation_mapping build=" + b + " first (the server keeps the draft for this "
+               + "session), then build_translation_xslt build=" + b + " name=" + n + " changes=...; or give uuid= "
+               + "a saved XSLT, or the whole mapping.";
     }
 
     // The mapping from before the changes the last sent one holds: the one kept with the XSLT (uuid, or the build's

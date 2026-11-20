@@ -1916,16 +1916,20 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             b.result.put("changes_applied_to", b.basedOn);
         }
         if (!Boolean.TRUE.equals(b.result.get("ok"))) {
-            b.result.put("next_changes_apply_to", nextChangesBase(b.request));
+            b.result.put("next_changes_apply_to", nextChangesBase(b.request,
+                    TranslationBuilds.ON_THE_DRAFT.equals(b.basedOn)));
         }
     }
 
     // What the next changes= start from after a build that failed: this call's mapping, kept for its XSLT, not the
     // draft or the saved XSLT (seen in the chat 163 review: the agent couldn't tell, and re-sent whole mappings).
-    private static String nextChangesBase(final Request request) {
+    private static String nextChangesBase(final Request request, final boolean onTheDraft) {
         if (request.target().isEmpty()) {
-            return "nothing: without uuid, or build and name, this call's mapping isn't kept. Give the whole mapping "
-                   + "again, or build and name.";
+            return onTheDraft
+                    ? "the session's draft again, as drafted: without uuid, or build and name, this call's changes "
+                      + "aren't kept. Give build and name to keep them."
+                    : "nothing: without uuid, or build and name, this call's mapping isn't kept. Give the whole "
+                      + "mapping again, or build and name.";
         }
         return "this call's mapping (with any changes it applied), kept for " + (request.uuid() != null
                 ? "XSLT " + request.uuid() + ": the next changes= with the same uuid"

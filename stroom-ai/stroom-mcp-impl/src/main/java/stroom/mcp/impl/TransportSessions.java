@@ -73,6 +73,19 @@ final class TransportSessions {
         }
     }
 
+    /// Puts back a session the transport dropped though it is still open: the transport drops a whole session
+    /// when the answer to one of its requests can't be sent (the client gave up on that request), though each
+    /// request has a stream of its own, and the session's other requests go on.
+    ///
+    /// @param sessionId A session's id.
+    /// @param session   The transport's session of that id.
+    @SuppressWarnings("unchecked")
+    void restore(final String sessionId, final Object session) {
+        if (sessions != null) {
+            ((Map<String, Object>) sessions).putIfAbsent(sessionId, session);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private static Map<String, ?> sessionsOf(final HttpServletStreamableServerTransportProvider transport) {
         try {

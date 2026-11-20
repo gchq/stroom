@@ -1367,7 +1367,48 @@ class TestBuildTranslationXsltTool {
     void withNoDraftOrMappingTheRefusalSaysWhatToDo() {
         assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "build", "fg-v1", "name",
                 "FG-Events", "sample", fortigate())).get("error")).asString()
-                .contains("draft one, or give the whole mapping");
+                .contains("this session has no draft for build fg-v1")
+                .contains("draft_translation_mapping build=fg-v1")
+                .contains("build_translation_xslt build=fg-v1 name=FG-Events changes=");
+        assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "sample", fortigate()))
+                .get("error")).asString()
+                .contains("this session has no draft")
+                .contains("draft_translation_mapping build=<build>");
+    }
+
+    @Test
+    void changesWithoutBuildOrNameApplyToTheSessionsLatestDraft() {
+        // Seen in eval case 36 on Haiku over Claude Code: right after draft_translation_mapping build=, changes= with
+        // neither build nor name was refused, "changes needs a mapping to apply to"; the draft, outlined for a
+        // client outside Stroom, can't be sent whole instead.
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",
+                "build", "fg-v1"));
+
+        final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("common", SYSTEM),
+                "sample", fortigate()));
+
+        assertThat(result).as(String.valueOf(result)).doesNotContainKey("error");
+        assertThat(result.get("changes_applied_to")).isEqualTo("the draft draft_translation_mapping made");
+        if (!Boolean.TRUE.equals(result.get("ok"))) {
+            assertThat((String) result.get("next_changes_apply_to")).contains("the session's draft");
+        }
+    }
+
+    @Test
+    void changesAfterAFailedBuildOfTheDraftApplyToThatBuildsMapping() {
+        // From the same eval: changes= with build and name right after an ok:false build of the draft.
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",
+                "build", "fg-v1"));
+        final Map<String, Object> broken = world.call(tool, Map.of("changes", Map.of("common",
+                List.of(Map.of("path", "EventSource/Nonsense", "value", "x"))), "build", "fg-v1", "name",
+                "FG-Events", "sample", fortigate()));
+        assertThat(broken.get("ok")).as(String.valueOf(broken)).isEqualTo(false);
+
+        final Map<String, Object> fixed = world.call(tool, Map.of("changes", Map.of("common", SYSTEM),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+
+        assertThat(fixed).as(String.valueOf(fixed)).doesNotContainKey("error");
+        assertThat(systemName(sent("fg-v1/FG-Events"))).isEqualTo("FortiOS");
     }
 
     // --- A fix sends only what changes. ---
@@ -1509,7 +1550,8 @@ class TestBuildTranslationXsltTool {
     @Test
     void changesNeedAMappingToChange() {
         assertThat(world.call(tool, Map.of("changes", Map.of("unmatched", "warn"), "build", "acme-v1", "name", "new"))
-                .get("error")).asString().contains("None was found for those: draft one, or give the whole mapping");
+                .get("error")).asString().contains("there is none: this session has no draft for build acme-v1",
+                        "or give uuid= a saved XSLT, or the whole mapping");
         assertThat(world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "changes", Map.of("unmatched",
                 "warn"))).get("error")).asString().contains("not both");
         assertThat(world.call(tool, Map.of()).get("error")).asString().contains("Give mapping");
