@@ -355,9 +355,37 @@ class TestSequenceQueryTool {
         Mockito.doThrow(new Refusal(Reason.TIMEOUT, "The search took longer than 120 seconds, so it was stopped"))
                 .when(elasticEql).search(Mockito.any());
 
+        // Seen in the benchmark: with 63,000 distinct join values EQL timed out where far fewer ran in seconds.
         assertThat(run(chat(UserQuestions.NONE), args("2m"))).isEqualTo("Error: The search took longer than 120 "
                                                                           + "seconds, so it was stopped: narrow the "
-                                                                          + "window or the first step.");
+                                                                          + "window or the first step. "
+                                                                          + SequenceQueryTool.MANY_KEYS_NOTE);
+        assertThat(SequenceQueryTool.MANY_KEYS_NOTE).contains("distinct join values")
+                .contains("fewer entities");
+    }
+
+    @Test
+    void aLimitTheEventsFetchCantHoldIsCappedSayingSo() {
+        // Seen in the benchmark: 10,000 two-step sequences made Elasticsearch fetch 20,000 events by id, and it
+        // refused the search ("Too many ids specified, allowed max result window is [10000]").
+        final Map<String, Object> many = new LinkedHashMap<>(args("2m"));
+        many.put("limit", 10_000);
+
+        final String output = run(chat(UserQuestions.NONE), many);
+
+        assertThat(request().size()).isEqualTo(5_000);
+        assertThat(output).contains("The limit was lowered to 5000: Elasticsearch fetches at most 10000 events of "
+                                    + "a search's sequences, and each sequence here has 2 events.");
+    }
+
+    @Test
+    void theEventsCapCountsEachRunAndLeavesOutMissingSteps() {
+        assertThat(SequenceQueryTool.mostSequences(List.of(stepOf(false, 1), stepOf(false, 1)))).isEqualTo(5_000);
+        assertThat(SequenceQueryTool.mostSequences(List.of(stepOf(false, 3), stepOf(false, 1)))).isEqualTo(2_500);
+        assertThat(SequenceQueryTool.mostSequences(List.of(stepOf(false, 1), stepOf(true, 1), stepOf(false, 1))))
+                .isEqualTo(5_000);
+        // One event per sequence can't be given, but the most is never over the tool's own.
+        assertThat(SequenceQueryTool.mostSequences(List.of(stepOf(false, 1)))).isEqualTo(ElasticEql.MAX_SEQUENCES);
     }
 
     @Test
@@ -766,7 +794,8 @@ class TestSequenceQueryTool {
         final Map<String, Object> tooMany = new LinkedHashMap<>(args("2m"));
         tooMany.put("limit", 20_000);
         assertThat(run(chat(UserQuestions.NONE), tooMany)).contains("The limit asked for was over 10000, the most "
-                                                                    + "allowed, so it was lowered.");
+                                                                    + "allowed, so it was lowered to 5000: "
+                                                                    + "Elasticsearch fetches at most 10000 events");
 
         assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(
                 Map.of("index", "Devices", "by", List.of("user"), "runs", 101), step(SYSMON, "SubjectUserName")))))

@@ -304,7 +304,8 @@ class TestAgentModeTools {
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
         final ChatRequest withoutIndex = firstRequest(2, systemPrompt);
 
-        assertThat(offered(withIndex)).contains(ACTIVATE_SEQUENCE_HUNTING, "esql_query").doesNotContain("sequence_query");
+        assertThat(offered(withIndex)).contains(ACTIVATE_SEQUENCE_HUNTING, "esql_query")
+                .doesNotContain("sequence_query");
         assertThat(systemPrompt(withIndex)).isEqualTo(systemPrompt)
                 .contains(ContextAssembler.SEQUENCE_GUIDANCE);
         assertThat(offered(withoutIndex)).doesNotContain("sequence_query", ACTIVATE_SEQUENCE_HUNTING)

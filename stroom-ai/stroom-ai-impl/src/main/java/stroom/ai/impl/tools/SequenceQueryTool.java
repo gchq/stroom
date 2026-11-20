@@ -139,6 +139,17 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     static final String CAVEAT = "The sequences come straight from Elasticsearch, as esql_query's counts do: they "
                                  + "may include events of streams the user can't see or that have been deleted, so "
                                  + "a Stroom search may find fewer.";
+    /// What a sequence that timed out adds: EQL keeps a partial sequence per distinct join value, so very many of
+    /// them make it slow. Measured on 1 million synthetic events on one node (2026-11-20, `TestBenchSequenceJoins`):
+    /// 100,000 first-step events by 63,000 distinct users timed out at 119 seconds, where by 100 users they took 6.
+    static final String MANY_KEYS_NOTE = "EQL is slowest with very many distinct join values (it keeps a partial "
+                                         + "sequence for each): narrow the first step to fewer entities, or use a "
+                                         + "shorter time range.";
+    /// The most events Elasticsearch fetches by id for one search's sequences (`index.max_result_window`, 10,000 by
+    /// default): asking for more sequences than fit is refused ("Too many ids specified, allowed max result window
+    /// is [10000]", seen in the benchmark of 2026-11-20 with 10,000 two-step sequences), so the limit is lowered to
+    /// what fits ([#mostSequences]).
+    static final int MAX_FETCHED_EVENTS = 10_000;
     private static final List<Duration> OTHER_WINDOWS = List.of(Duration.ofMinutes(1), Duration.ofMinutes(15),
             Duration.ofHours(1));
     private static final int[] ESQL_VERSION = {8, 14};
@@ -389,11 +400,20 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 ? null
                 : new TimeRange(null, timeFrom, timeTo);
         final Integer givenLimit = intArg(request, LIMIT_ARG);
-        final int limit = Math.clamp(Objects.requireNonNullElse(givenLimit, DEFAULT_LIMIT), 1,
-                ElasticEql.MAX_SEQUENCES);
-        final String limitNote = givenLimit != null && givenLimit > ElasticEql.MAX_SEQUENCES
-                ? "The limit asked for was over " + ElasticEql.MAX_SEQUENCES + ", the most allowed, so it was lowered."
-                : null;
+        final int most = mostSequences(steps);
+        final int asked = Objects.requireNonNullElse(givenLimit, DEFAULT_LIMIT);
+        final int limit = Math.clamp(asked, 1, most);
+        final String limitNote;
+        if (givenLimit != null && givenLimit > ElasticEql.MAX_SEQUENCES) {
+            limitNote = "The limit asked for was over " + ElasticEql.MAX_SEQUENCES + ", the most allowed, so it was "
+                        + "lowered" + (most < ElasticEql.MAX_SEQUENCES
+                    ? " to " + most + ": " + fetchedNote(steps)
+                    : ".");
+        } else if (asked > most) {
+            limitNote = "The limit was lowered to " + most + ": " + fetchedNote(steps);
+        } else {
+            limitNote = null;
+        }
         final String eql = EqlQueryWriter.eql(steps, untilStep, maxspan, docs.size());
 
         final Preflight preflight = preflight(steps, docs, timeRange, target.version(), deadline, timeLimit,
@@ -1202,7 +1222,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     static String refusal(final Refusal refusal, final Map<DocRef, List<QueryField>> fieldsByDoc) {
         final String message = sentence(refusal.getMessage());
         return switch (refusal.reason()) {
-            case TIMEOUT -> sentence(NullSafe.trim(refusal.getMessage()).replaceAll("\\.$", "") + ": " + NARROW);
+            case TIMEOUT -> sentence(NullSafe.trim(refusal.getMessage()).replaceAll("\\.$", "") + ": " + NARROW)
+                            + " " + MANY_KEYS_NOTE;
             case DIFFERENT_CLUSTERS -> message + " Run a sequence per cluster, or search the other with "
                                        + "search_events.";
             case DIFFERENT_TIME_FIELDS -> message + " Use docs whose time field is the same, or run a sequence "
@@ -1217,6 +1238,31 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             case NOT_FOUND -> DataSourceAccess.NOT_FOUND;
             default -> message;
         };
+    }
+
+    /// The most sequences one search can return: as many as fit [#MAX_FETCHED_EVENTS] events, counting each run
+    /// of a step and no missing step, and never more than [ElasticEql#MAX_SEQUENCES].
+    ///
+    /// @param steps The steps.
+    /// @return The most sequences.
+    static int mostSequences(final List<Step> steps) {
+        final int events = steps.stream()
+                .filter(step -> !step.missing())
+                .mapToInt(Step::runs)
+                .sum();
+        return events <= 1
+                ? ElasticEql.MAX_SEQUENCES
+                : Math.min(ElasticEql.MAX_SEQUENCES, MAX_FETCHED_EVENTS / events);
+    }
+
+    // Why the most sequences is lower than the tool's own most.
+    private static String fetchedNote(final List<Step> steps) {
+        final int events = steps.stream()
+                .filter(step -> !step.missing())
+                .mapToInt(Step::runs)
+                .sum();
+        return "Elasticsearch fetches at most " + MAX_FETCHED_EVENTS + " events of a search's sequences, and each "
+               + "sequence here has " + events + " events.";
     }
 
     private static String notUsable(final List<DocRef> docs, final PermissionException e) {
@@ -1425,7 +1471,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             sb.append(" They reached the limit (").append(outcome.limit()).append("), so they are cut short: these "
                                                                                 + "are the latest ")
                     .append(outcome.limit()).append(", and there may be more. Narrow the window or the steps, or "
-                                                    + "raise limit (at most " + ElasticEql.MAX_SEQUENCES + "), and "
+                                                    + "raise limit (at most " + outcome.mostSequences() + "), and "
                                                     + "don't present them as all.");
         }
         return sb.toString();
@@ -1643,5 +1689,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                    WorkspacePath out,
                    List<String> fieldNotes) {
 
+        /// @return The most sequences these steps can return ([#mostSequences(List)]).
+        int mostSequences() {
+            return SequenceQueryTool.mostSequences(steps);
+        }
     }
 }
