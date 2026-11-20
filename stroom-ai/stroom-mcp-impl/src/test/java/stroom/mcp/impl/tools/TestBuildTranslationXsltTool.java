@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
@@ -1251,6 +1252,38 @@ class TestBuildTranslationXsltTool {
         // Without each rule's summary, so the problems come back whole (seen: 20-70 KB results, read in parts).
         assertThat(result).containsKey("problems").doesNotContainKey("events");
         Mockito.verifyNoInteractions(world.sampleStreamTexts);
+    }
+
+    @Test
+    void theSameSchemaProblemInManyRulesComesBackOnceNamingThem() {
+        // Seen in eval case 68 on Haiku (300 event types, one rule each): EventSource/Device left out, every rule's
+        // "is required by the schema" problem came back on its own line, 511 problems, a 48,000-character result
+        // (the client's limit is 40,000). Problems are never outlined, so the same problem is said once, naming its
+        // rules, as the draft's are.
+        final Map<String, Object> mapping = good();
+        mapping.put("common", list(mapping.get("common")).stream()
+                .filter(entry -> !"EventSource/Device/HostName".equals(map(entry).get("path")))
+                .toList());
+        final List<Object> events = new ArrayList<>();
+        for (int i = 0; i < 300; i++) {
+            final Map<String, Object> rule = new LinkedHashMap<>(map(list(mapping.get("events")).getFirst()));
+            rule.put("name", "logon_" + i);
+            events.add(rule);
+        }
+        mapping.put("events", events);
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping, "stream_ids", List.of(5)));
+
+        assertThat(result.get("ok")).isEqualTo(false);
+        // (The rules have no conditions, which is a problem of its own, said once.)
+        final List<String> device = list(result.get("problems")).stream()
+                .map(String::valueOf)
+                .filter(problem -> problem.contains("EventSource/Device"))
+                .toList();
+        assertThat(device).hasSize(1);
+        assertThat(device.getFirst()).startsWith("[logon_0, logon_1, ")
+                .contains("logon_299] Event/EventSource/Device is required by the schema; map it");
+        assertThat(ToolJson.dumps(result).length()).isLessThan(LargeResults.WHOLE_RESULT_CHARS);
     }
 
     @Test

@@ -509,6 +509,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // Fast: what the schema says is wrong comes back before the sample is read and checked (seen: minutes
             // a call on a large sample, for a mapping that could not have generated anyway).
             b.result.put("warnings", MappingCompaction.grouped(TranslationBuilds.warnings(b.result)));
+            // The same problem in many rules said once, naming them, as the draft's are: problems are never
+            // outlined (seen in eval case 68: 300 rules without EventSource/Device, 511 problems, 48,000 characters).
+            b.result.put("problems", MappingCompaction.grouped(TranslationBuilds.problems(b.result)));
             // Without what each rule writes, which is for a mapping that generates, so the problems come back whole
             // rather than in a file read in parts (seen in testing: 20-70 KB results each round, and their problems
             // fixed a part at a time: 18 rules, then 10, then 1).
@@ -549,6 +552,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                  + "most specific last).");
         }
         b.result.put("warnings", MappingCompaction.grouped(TranslationBuilds.warnings(b.result)));
+        b.result.put("problems", MappingCompaction.grouped(TranslationBuilds.problems(b.result)));
         BuiltRulesTrim.trimIfLarge(context.caller(), b.result, LargeResults.WHOLE_RESULT_CHARS);
         return b.result;
     }
