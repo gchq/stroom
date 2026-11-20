@@ -24,16 +24,23 @@ import java.util.List;
 import java.util.Set;
 
 /// Hints for a StroomQL query Stroom refused, for SQL habits StroomQL doesn't share: group by, sort by or limit
-/// after select (StroomQL puts them before it), and order by (StroomQL's is sort by). Stroom's parser names only
-/// the token it stopped at, e.g. "Unexpected token GROUP after SELECT" or "Syntax exception, expected AS" (seen
-/// with Haiku in eval cases 71 to 73). The query is read with Stroom's own tokeniser, so text in quotes never
-/// counts, and only the query's own clauses do, not a bracketed query's.
+/// after select (StroomQL puts them before it), order by (StroomQL's is sort by), and a join line after another
+/// clause (join lines go straight after from). Stroom's parser names only the token it stopped at, e.g.
+/// "Unexpected token GROUP after SELECT", "Syntax exception, expected AS" or "Unexpected token JOIN after WHERE"
+/// (seen with Haiku in eval cases 71 to 73, and Sonnet in 71). The query is read with Stroom's own tokeniser, so
+/// text in quotes never counts, and only the query's own clauses do, not a bracketed query's.
 final class StroomQlErrorHints {
 
     static final String CLAUSE_ORDER = " In StroomQL, group by, sort by and limit go before select.";
     static final String ORDER_BY = " StroomQL uses sort by, not order by.";
+    static final String JOIN_AFTER_FROM = " Join lines go straight after from.";
 
     private static final Set<TokenType> BEFORE_SELECT = Set.of(TokenType.GROUP, TokenType.SORT, TokenType.LIMIT);
+    // The clauses a join line may follow: the first source (and its sql), and another join line with its keys.
+    private static final Set<TokenType> BEFORE_JOIN = Set.of(TokenType.FROM, TokenType.SQL, TokenType.JOIN,
+            TokenType.ON);
+    // Keywords inside a clause (a condition's, or keys' and), not clauses of their own.
+    private static final Set<TokenType> INSIDE_A_CLAUSE = Set.of(TokenType.AND, TokenType.OR, TokenType.NOT);
 
     private StroomQlErrorHints() {
         // Static methods only.
@@ -54,6 +61,8 @@ final class StroomQlErrorHints {
         boolean afterSelect = false;
         boolean clauseAfterSelect = false;
         boolean orderBy = false;
+        boolean joinLate = false;
+        TokenType lastClause = null;
         int depth = 0;
         for (int i = 0; i < tokens.size(); i++) {
             final TokenType type = tokens.get(i).getTokenType();
@@ -67,6 +76,12 @@ final class StroomQlErrorHints {
                 } else if (afterSelect && BEFORE_SELECT.contains(type)) {
                     clauseAfterSelect = true;
                 }
+                if (TokenType.JOIN.equals(type) && lastClause != null && !BEFORE_JOIN.contains(lastClause)) {
+                    joinLate = true;
+                }
+                if (TokenType.isKeyword(type) && !INSIDE_A_CLAUSE.contains(type)) {
+                    lastClause = type;
+                }
                 if (isOrderBy(tokens, i)) {
                     orderBy = true;
                 }
@@ -76,6 +91,8 @@ final class StroomQlErrorHints {
                 ? CLAUSE_ORDER
                 : "") + (orderBy
                 ? ORDER_BY
+                : "") + (joinLate
+                ? JOIN_AFTER_FROM
                 : "");
     }
 

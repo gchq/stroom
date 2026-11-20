@@ -58,6 +58,19 @@ class TestStroomQlErrorHints {
     }
 
     @Test
+    void aJoinLineAfterAnotherClauseIsNamed() {
+        // Seen with Sonnet in eval case 71: "Unexpected token JOIN after WHERE".
+        assertThat(StroomQlErrorHints.of("from E where Action = Export join \"HR\" as hr on UserId = hr.Username "
+                                         + "select hr.Department"))
+                .isEqualTo(" Join lines go straight after from.");
+        assertThat(StroomQlErrorHints.of("from E eval x = 1 left join H as h on x = h.x select x"))
+                .isEqualTo(" Join lines go straight after from.");
+        // Join lines one after another, with keys joined by and, and a bracketed query's own, are where they go.
+        assertThat(StroomQlErrorHints.of("from E join H as h on a = h.a and b = h.b semi join (from G where x = 1 "
+                                         + "select y) as g on c = g.y where Action = Export select a")).isEmpty();
+    }
+
+    @Test
     void aQueryWithoutThoseHabitsGetsNoHint() {
         assertThat(StroomQlErrorHints.of("from E where Name = 'order by' group by UserId sort by UserId limit 5 "
                                          + "select UserId")).isEmpty();

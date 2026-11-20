@@ -143,6 +143,20 @@ class TestE2eStroomQlJoins extends AbstractE2eTest {
     }
 
     @Test
+    void aJoinLineAfterWhereIsToldJoinLinesGoStraightAfterFrom() {
+        // Seen with Sonnet in eval case 71: Stroom's error names only the token it stopped at.
+        final String query = "from \"" + events + "\" where Bytes > 100 join \"" + hr + "\" as hr on UserId = "
+                             + "hr.Username select UserId, hr.Department";
+
+        assertThat(replyText("run_stroomql", args("query", query)))
+                .startsWith("Error: The query failed: Unexpected token JOIN after WHERE")
+                .endsWith(" Join lines go straight after from.");
+        assertThat(replyText("validate_stroomql", args("query", query)))
+                .startsWith("The query is not valid: Unexpected token JOIN after WHERE")
+                .contains(" Join lines go straight after from.");
+    }
+
+    @Test
     void aJoinedDataSourceThatDoesNotExistIsTheParsersError() {
         final String query = "from \"" + events + "\" join \"No such HR\" as hr on UserId = hr.Username "
                              + "select UserId";

@@ -1211,7 +1211,9 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
   for the query as written (`validateQuery`), not one naming the limit the agent never wrote. A failed query, and
   validate_stroomql's "not valid", get `StroomQlErrorHints`: "In StroomQL, group by, sort by and limit go before
   select." when one of them follows the query's own `select`, and "StroomQL uses sort by, not order by." for an
-  unquoted `order by` (both seen with Haiku in eval cases 71 to 73, where Stroom's error named neither).
+  unquoted `order by` (both seen with Haiku in eval cases 71 to 73, where Stroom's error named neither), and "Join
+  lines go straight after from." for a join line after another clause, e.g. `where` (seen with Sonnet in case 71:
+  "Unexpected token JOIN after WHERE").
 * **Joins hint** (`ToolCallGuard`, `QueriedSources`): a successful run_stroomql, esql_query or search_events of a data
   source other than one queried before (in the chat, in the current question; over `/mcp`, in the session within
   the last 10 minutes) ends with one line, "Joining these rows with those of an earlier query (<sources>)?
