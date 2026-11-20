@@ -18,14 +18,21 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.Condition;
+import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /// Whether a draft's records are recognised by conditions, by the one evaluator ([LocalCheck#holds]) over the
 /// records as the draft reads them: for placing the catalogue's ways of recognising event types (which variant's
@@ -41,11 +48,18 @@ final class WayCheck {
     private final TranslationMapping mapping;
     private final MappingConditions conditions;
     private final boolean json;
+    // The fields the extractions read from the record (not those an earlier one produces), in order.
+    private final List<String> sources;
+    // The extracted values by the texts they are read from: each record's worked out once however many ways test
+    // it (seen in eval case 36 on Haiku: 60 extract entries run again for each of 33 ways over 1,000 records, 30 s
+    // of a draft), and never another text's.
+    private final Map<List<String>, Optional<Map<String, String>>> extracted = new HashMap<>();
 
     private WayCheck(final TranslationMapping mapping) {
         this.mapping = mapping;
         this.conditions = MappingConditions.of(mapping);
         this.json = "json".equals(mapping.input());
+        this.sources = sources(mapping);
     }
 
     /// @param draftMapping The draft's mapping, as JSON-like values: how its records are read (input, held fields,
@@ -89,15 +103,39 @@ final class WayCheck {
     /// @return Whether they all hold for it (one that can't be told here taken as holding).
     boolean recognises(final List<Condition> when, final Map<String, Object> record) {
         final Object read = asRead(record);
-        final Map<String, String> extracted = mapping.extract().isEmpty()
-                ? null
-                : LocalCheck.extractedValues(mapping, read);
+        final Map<String, String> values = extractedValues(read);
         for (final Condition condition : when) {
-            if (Boolean.FALSE.equals(conditions.holds(condition, read, extracted))) {
+            if (Boolean.FALSE.equals(conditions.holds(condition, read, values))) {
                 return false;
             }
         }
         return true;
+    }
+
+    // A record's extracted values, as LocalCheck.extractedValues gives them (not to be changed); null without
+    // extract entries.
+    private Map<String, String> extractedValues(final Object read) {
+        if (mapping.extract().isEmpty()) {
+            return null;
+        }
+        final List<String> texts = new ArrayList<>(sources.size());
+        sources.forEach(field -> texts.add(LocalCheck.valueOf(read, field)));
+        return extracted.computeIfAbsent(texts, key -> Optional.ofNullable(LocalCheck.extractedValues(mapping, read))
+                .map(Collections::unmodifiableMap)).orElse(null);
+    }
+
+    // The fields the extractions read from a record, as LocalCheck.extractedValues reads them: each extraction's
+    // field, unless an earlier one produces it.
+    private static List<String> sources(final TranslationMapping mapping) {
+        final Set<String> produced = new HashSet<>();
+        final Set<String> read = new LinkedHashSet<>();
+        for (final Extraction ex : mapping.extract()) {
+            if (ex.field() != null && !produced.contains(ex.field())) {
+                read.add(ex.field());
+            }
+            ex.names().stream().filter(name -> name != null && !name.isEmpty()).forEach(produced::add);
+        }
+        return List.copyOf(read);
     }
 
     /// @param when    Conditions (all must hold).
