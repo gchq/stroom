@@ -82,31 +82,53 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
                 "[.. | objects | .type_id? // empty] | unique | length"))))
                 .as("every event type in the saved listing").isEqualTo(String.valueOf(TYPES));
 
-        // ### Confirmed: the high-confidence ones in one form, summarised; the medium ones in one, the low in one.
+        // ### Asked about one of them (decided by the user 2026-11-20): explained, nothing changed.
+        final String notesBefore = notesDocText(build);
+        final Map<String, Object> given = client.jsonAsGiven(CATALOGUE, args("build", build, "explain",
+                List.of("process-code150")));
+        replies.put("explain", jsonOf(given).length());
+        final Map<String, Object> explained = WholeResults.of(client, given);
+        assertThat(explained).containsEntry("status", "explained");
+        assertThat(list(explained, "event_types")).singleElement().satisfies(one -> {
+            assertThat(one).containsEntry("type_id", "Process-Code150").containsEntry("records", 2)
+                    .containsEntry("recognised_by", "code is E150");
+            assertThat(list(one, "examples")).hasSize(2).allSatisfy(example -> assertThat(String.valueOf(
+                    example.get("text"))).contains("E150"));
+        });
+        assertThat(notesDocText(build)).as("explain changes nothing").isEqualTo(notesBefore);
+
+        // ### Confirmed: the high-confidence ones in one form, the medium ones in one, the low in one, each
+        // summarised.
         final int formsBefore = client.forms().size();
         Map<String, Object> step = Map.of();
-        String summary = null;
+        final List<String> summaries = new ArrayList<>();
         for (int round = 0; round < 40 && !"confirmed".equals(step.get("status")); round++) {
-            final Map<String, Object> given = client.jsonAsGiven(CATALOGUE, args("build", build, "confirm", true,
-                    "catch_all", Map.of("allow_unknown", "E2E: kept as Unknown")));
-            replies.put("confirm " + round, jsonOf(given).length());
-            step = WholeResults.of(client, given);
-            if (summary == null && step.get("table") != null) {
-                summary = String.valueOf(step.get("table"));
+            final Map<String, Object> confirmed = client.jsonAsGiven(CATALOGUE, args("build", build, "confirm",
+                    true, "catch_all", Map.of("allow_unknown", "E2E: kept as Unknown")));
+            replies.put("confirm " + round, jsonOf(confirmed).length());
+            step = WholeResults.of(client, confirmed);
+            if (step.get("table") instanceof final String table && table.contains("-confidence event type")
+                && !summaries.contains(table)) {
+                summaries.add(table);
             }
         }
         assertThat(step).containsEntry("status", "confirmed");
-        dump("the high-confidence summary", summary);
-        assertThat(summary).as("the high-confidence ones summarised, not a row each")
+        dump("the summaries", summaries);
+        assertThat(summaries).as("three summaries: high, medium and low").hasSize(3);
+        assertThat(summaries.getFirst()).as("the high-confidence ones summarised, not a row each")
                 .startsWith("**100 high-confidence event types**, by what happened")
                 .contains("- Process: 100 event types, 200 records; e.g. Process-Code000 (2)",
-                        "in the Event types table of the source notes '")
+                        "row by row, is in the source notes [", "ask about any of them in the chat")
                 .doesNotContain("| `Process-Code0");
-        assertThat(summary.length()).isLessThan(2_000);
+        assertThat(summaries.get(1)).startsWith("**100 medium-confidence event types**")
+                .contains("| `Process-Code100` ", "medium confidence", "And 90 more worth a look");
+        assertThat(summaries.get(2)).startsWith("**100 low-confidence event types**")
+                .contains("| `Process-Code200` ", "low confidence", "And 90 more worth a look");
+        assertThat(summaries).allSatisfy(summary -> assertThat(summary.length()).isLessThan(4_000));
         final List<Integer> sets = eventTypesPutInEachForm(formsSince(formsBefore));
         assertThat(sets).as("high, medium and low: a form each").containsExactly(TYPES / 3, TYPES / 3, TYPES / 3);
         // The source notes hold every row, each with its records: the full table the summary refers to.
-        assertThat(notesDocText(build).lines().filter(line -> line.startsWith("| Process-Code")))
+        assertThat(notesDocText(build).lines().filter(line -> line.startsWith("| `Process-Code")))
                 .hasSize(TYPES)
                 .allSatisfy(line -> assertThat(line).contains(" | 2 | "));
 

@@ -92,7 +92,8 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(map(checkOf(checked), "uncatalogued")).containsEntry("records", 0);
         assertThat(String.valueOf(checked.get("table"))).startsWith("**2 high-confidence event types**")
                 .contains("Authenticate: 2 event types, 16 records").doesNotContain(TABLE_HEADER);
-        assertThat(notesDocText(build)).contains("| Authenticate-Logon | Authenticate Logon | action is login | 8 |");
+        assertThat(notesDocText(build)).contains("### Authenticate", "| `Authenticate-Logon` Authenticate Logon | "
+                                                 + "E2E: Authenticate-Logon | action is login | 8 |");
 
         // ### Confirmed: the high-confidence ones in one form, then the medium and the low a set each; the form's
         // text plain, referring to the table in the chat. The low one amended in words: nothing confirmed of it,

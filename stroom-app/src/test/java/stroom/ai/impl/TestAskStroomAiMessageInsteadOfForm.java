@@ -72,6 +72,7 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
     private static final String CATALOGUE_FORM = "event types";
     private static final String CATALOGUE = "catalogue_event_types";
     private static final String AMENDMENT = "The logouts are session timeouts, not logoffs";
+    private static final String QUESTION = "What does a logon record look like?";
 
     @Inject
     private AskStroomAIService askStroomAIService;
@@ -200,6 +201,66 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
         final String listed = JsonUtil.writeValueAsString(client.json(CATALOGUE, Map.of("build", build)), false);
         assertThat(listed).contains("Session timeout", "\"status\":\"proposed\"")
                 .doesNotContain("\"status\":\"confirmed\"");
+    }
+
+    // Decided by the user 2026-11-20: the user may ask about any item put to them. A question typed instead of
+    // answering the catalogue form is answered in the chat (explain=, which changes nothing), the set is put to them
+    // again, and they accept it in the form; no amendment is recorded, and nothing is accepted from the chat.
+    @Test
+    void aQuestionTypedInsteadOfAnsweringTheCatalogueFormIsAnsweredAndTheSetPutAgain() {
+        typedInsteadOf = CATALOGUE_FORM;
+        typedMessage = QUESTION;
+        final String build = logonsCatalogued();
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        final String confirm = JsonUtil.writeValueAsString(Map.of("build", build, "confirm", true), false);
+        final String explain = JsonUtil.writeValueAsString(Map.of("build", build, "explain",
+                List.of("Authenticate-Logon")), false);
+        // Shown, its form put aside by the question, explained, then put to the user again (once more in case the
+        // table has to be shown again first), and the catch-all after it.
+        model.callTool(CATALOGUE, confirm)
+                .callTool(CATALOGUE, confirm)
+                .callTool(CATALOGUE, explain)
+                .callTool(CATALOGUE, confirm)
+                .callTool(CATALOGUE, confirm)
+                .answer("A logon record has action=login. Both event types are confirmed.");
+
+        ask(chat, modelRef, "Confirm the event types.");
+
+        final List<String> results = toolResults(QUESTION);
+        assertThat(results).as("the catalogue_event_types results after the user's question").isNotEmpty();
+        assertThat(results.getFirst()).as("what the re-made call tells the agent")
+                .containsIgnoringCase("sent a message instead")
+                .contains(QUESTION, "explain=", "never take their message as acceptance")
+                .doesNotContain("\"status\":\"confirmed\"");
+        assertThat(results).as("explain's result").anySatisfy(result -> assertThat(result)
+                .contains("\"status\":\"explained\"", "Nothing was changed", "\"examples\""));
+        // Put to the user again, and accepted in the form: the first set is confirmed as it was.
+        assertThat(sourceFormsShown).as("the catalogue form shown again after the question").isEqualTo(2);
+        final String listed = JsonUtil.writeValueAsString(client.json(CATALOGUE, Map.of("build", build)), false);
+        assertThat(listed).contains("\"type_id\":\"Authenticate-Logon\",\"title\":\"Authenticate-Logon\","
+                                    + "\"status\":\"confirmed\"")
+                .contains("\"type_id\":\"Authenticate-Logoff\",\"title\":\"Authenticate-Logoff\","
+                          + "\"status\":\"confirmed\"");
+    }
+
+    // The results of the tool calls the model was given after the user's message, distinct, in order.
+    private List<String> toolResults(final String typed) {
+        final List<String> out = new ArrayList<>();
+        for (final Map<String, Object> request : model.agentRequests()) {
+            final List<Map<String, Object>> messages = messages(request);
+            if (!JsonUtil.writeValueAsString(messages, false).contains(typed)) {
+                continue;
+            }
+            final int lastTool = lastIndexOf(messages, "tool");
+            final String result = lastTool < 0
+                    ? null
+                    : String.valueOf(messages.get(lastTool).get("content"));
+            if (result != null && !out.contains(result)) {
+                out.add(result);
+            }
+        }
+        return out;
     }
 
     // A build of logons and logoffs, surveyed, its two event types proposed (high confidence) through the real
