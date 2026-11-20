@@ -39,9 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// A case that starts from another (`setup`, [AbstractEvalTest#setUp]) has that case's reference run and promoted
 /// first, then its own reference build on top, scored with what it changed of the setup's build.
 ///
-/// A question (`kind: question`, cases 62 to 64) builds nothing: its events are indexed into Elasticsearch and its
-/// reference ES|QL is run with esql_query ([AbstractEvalTest#runQuestionReference]), its answer scored against the
-/// one the case gives, worked out by `esql/proxy-uploads-generator.py`. Skipped without an Elasticsearch node.
+/// A question (`kind: question`, cases 62 to 64 and 71 to 74) builds nothing: its data is put in Stroom (an
+/// Elasticsearch index, a Lucene index, Data Connections) and its reference tool calls are made, e.g. ES|QL with
+/// esql_query, a join with run_stroomql, a sequence with sequence_query ([AbstractEvalTest#runQuestionReference]),
+/// the answer scored against the one the case gives, worked out by `esql/proxy-uploads-generator.py` or by brute
+/// force ([TestEvalCases]). A question on Elasticsearch is skipped without an Elasticsearch node.
 ///
 /// `create_index_doc` adds the fields of the plan drafted for the index in the session, so nothing else sets them;
 /// the processor filters aren't deleted after each case, as each case starts from an empty Stroom.

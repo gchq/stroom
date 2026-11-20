@@ -1,0 +1,42 @@
+name: Leavers who still logged on, a Lucene index checked against an HR Data Connection (a question, nothing built)
+kind: question
+capabilities: [stroomql, join, semi_join, data_connection, aggregation]
+# A semi join: the week's logons in the Lucene index "Staff activity" (questions/staff-activity.csv) kept only for
+# users the HR Data Connection "HR" (questions/hr-users.csv) marks as leavers, e.g. `where UserId in (from "HR"
+# where Status = Leaver select Username)`, `semi join` or a join to HR's leavers. The traps: the leavers read from HR
+# first and their names written into the query or the logons matched by hand (a join done outside the query, which
+# the answer's query check fails); `not in` the active users, which wrongly keeps svc-backup, a service account HR
+# doesn't hold; frank's and ivan's logons, in the week before, and frank's export, which is not a logon. Worked out
+# by brute force over the two files (TestEvalCases).
+lucene_index:
+  name: Staff activity
+  events: questions/staff-activity.csv
+  fields: {EventTime: date, UserId: text, Action: text, Files: long}
+data_connections:
+  - name: HR
+    csv: questions/hr-users.csv
+    columns: {Username: text, Department: text, Status: text}
+request: >
+  Did anyone who has left still log on in the week starting Monday 5 January 2026? The "Staff activity" index has
+  our staff's logons and the "HR" Data Connection marks leavers. Name each one with how many times they logged on
+  that week.
+user_knows: >
+  UserId in "Staff activity" is the Username in "HR"; a leaver has Status Leaver. A logon is Action Logon. The week is
+  5 January 2026 00:00 UTC up to, not including, 12 January 2026.
+expected:
+  tools_used: [run_stroomql]
+  answer:
+    tool: run_stroomql
+    ordered: false
+    query: '\bjoin\b|\(\s*from\b'
+    rows:
+      - [dave, 3]
+      - [gina, 1]
+reference:
+  run_stroomql:
+    query: >-
+      from "Staff activity"
+      where Action = Logon and EventTime >= 2026-01-05T00:00:00.000Z and EventTime < 2026-01-12T00:00:00.000Z
+      and UserId in (from "HR" where Status = Leaver select Username)
+      group by UserId
+      select UserId, count() as Logons

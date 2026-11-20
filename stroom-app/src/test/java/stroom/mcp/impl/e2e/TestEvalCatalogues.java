@@ -85,7 +85,7 @@ class TestEvalCatalogues {
                 }
             }
         }
-        assertThat(built).isEqualTo(EvalCases.IDS.size() - 3);
+        assertThat(built).isEqualTo(EvalCases.IDS.size() - 7);
     }
 
     @Test

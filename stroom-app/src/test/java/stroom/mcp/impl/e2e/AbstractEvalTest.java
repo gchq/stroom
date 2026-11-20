@@ -21,20 +21,39 @@ import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.data.shared.StreamTypeNames;
+import stroom.dataconnection.impl.DataConnectionStore;
+import stroom.dataconnection.shared.CsvSettings;
+import stroom.dataconnection.shared.DataColumn;
+import stroom.dataconnection.shared.DataColumnType;
+import stroom.dataconnection.shared.DataConnectionDoc;
+import stroom.dataconnection.shared.DataConnectionType;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFieldService;
+import stroom.index.impl.IndexStore;
+import stroom.index.impl.Indexer;
+import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.mcp.impl.McpTerminal;
 import stroom.mcp.impl.McpTestClient;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
+import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.Field;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
 import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.ElasticTestNode;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.extraction.FieldValue;
+import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.PageRequest;
 
@@ -43,11 +62,14 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -57,6 +79,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -123,8 +146,13 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace",
             "json_layout", "json_fields", "xml_fields", "pairs", "extract", "nil_values", "for_each");
 
-    // The streams a question's events are in.
+    // The streams a question's proxy uploads are in.
     private static final int QUESTION_STREAMS = 10;
+    // The fields that say which event a question's record is.
+    private static final String STREAM_ID = "StreamId";
+    private static final String EVENT_ID = "EventId";
+    // Where run_stroomql says it wrote its results.
+    private static final Pattern STROOMQL_RESULTS = Pattern.compile("The results are in (\\S+\\.md)\\.");
 
     // The forms the user answered in the case's own build: each its message and the answer's content.
     private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
@@ -137,6 +165,14 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private MetaService metaService;
     @Inject
     private ElasticIndexStore elasticIndexStore;
+    @Inject
+    private IndexStore indexStore;
+    @Inject
+    private Indexer indexer;
+    @Inject
+    private SecurityContext securityContext;
+    @Inject
+    private DataConnectionStore dataConnectionStore;
 
     // A filter made disabled (a reference pipeline's) is enabled, as the user would in Stroom.
     @Override
@@ -219,28 +255,51 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         build(evalCase, score, build, feed, setup, null);
     }
 
-    /// A question's data, indexed before the user asks (`elastic_index`): its events ([EvalProxyUploads]) in an
-    /// Elasticsearch index of their own, in streams in Stroom, behind an Elastic Index doc of the case's name beside
-    /// the standard templates. Skips the case without an Elasticsearch node ([ElasticTestNode#getOrSkip]).
+    /// A question's data, in Stroom before the user asks: any of an Elasticsearch index ([#questionIndex]), a Lucene
+    /// index of the case's records (`lucene_index`: `name`, `events`, `fields`, [EvalCases#table]), and data
+    /// connections of the case's CSV records (`data_connections`: each its `name`, `csv` and `columns`), each
+    /// document beside the standard templates.
+    ///
+    /// @param evalCase The case.
+    /// @return What to remove once the case is done.
+    QuestionData questionData(final Map<String, Object> evalCase) {
+        final QuestionIndex elastic = evalCase.get("elastic_index") != null
+                ? questionIndex(evalCase)
+                : null;
+        if (evalCase.get("lucene_index") instanceof final Map<?, ?> spec) {
+            questionLuceneIndex(EvalCases.table((Map<String, Object>) spec));
+        }
+        for (final Map<String, Object> spec : (List<Map<String, Object>>) evalCase.getOrDefault("data_connections",
+                List.of())) {
+            questionDataConnection(EvalCases.table(spec));
+        }
+        return new QuestionData(elastic);
+    }
+
+    /// A question's Elasticsearch data, indexed before the user asks (`elastic_index`): the case's records
+    /// (`events` and `fields`, [EvalCases#table]), else the proxy uploads ([EvalProxyUploads]), in an Elasticsearch
+    /// index of their own, in streams in Stroom, behind an Elastic Index doc of the case's name beside the standard
+    /// templates. Skips the case without an Elasticsearch node ([ElasticTestNode#getOrSkip]).
     ///
     /// @param evalCase The case.
     /// @return The Elastic Index doc, and the index to remove once the case is done.
     QuestionIndex questionIndex(final Map<String, Object> evalCase) {
         final ElasticTestNode node = ElasticTestNode.getOrSkip();
         final Map<String, Object> spec = (Map<String, Object>) evalCase.get("elastic_index");
+        final EvalCases.QuestionTable table = EvalCases.table(spec);
         final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
                 .split("_", 2)[0]);
-        final List<Long> streams = new ArrayList<>();
-        asUser(admin, () -> {
-            for (int i = 0; i < QUESTION_STREAMS; i++) {
-                streams.add(metaService.create(MetaProperties.builder()
-                        .feedName("EVAL-PROXY-" + indexName.toUpperCase(Locale.ROOT))
-                        .typeName(StreamTypeNames.EVENTS)
-                        .createMs(System.currentTimeMillis())
-                        .build(), Status.UNLOCKED).getId());
-            }
-        });
-        EvalProxyUploads.seed(node, indexName, streams);
+        final List<Long> streams = questionStreams(indexName, table == null
+                ? QUESTION_STREAMS
+                : 1);
+        final String timeField;
+        if (table == null) {
+            EvalProxyUploads.seed(node, indexName, streams);
+            timeField = "@timestamp";
+        } else {
+            seedElastic(node, indexName, table, streams.getFirst());
+            timeField = table.timeField();
+        }
         final DocRef cluster = liveElasticCluster(node, "Eval cluster " + indexName);
         final ExplorerNode created = create(ElasticIndexDoc.TYPE, String.valueOf(spec.get("name")),
                 templateFolder());
@@ -248,35 +307,59 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 .copy()
                 .clusterRef(cluster)
                 .indexName(indexName)
-                .timeField("@timestamp")
+                .timeField(timeField)
                 .build()));
         return new QuestionIndex(node, indexName, created.getDocRef());
     }
 
-    /// A question's reference answer: its `reference.esql_query` (`pipeline`, and any `timeFrom`, `timeTo`,
-    /// `where` and `limit`) run with esql_query on the question's index, and scored as an agent's answer is
-    /// ([EvalScore#scoreQuestion]).
+    /// A question's reference answer: each tool call of its `reference` (a tool's name, its arguments; e.g.
+    /// `esql_query` with `pipeline`, given the question's Elastic Index if no `index` is), made in order on the
+    /// question's data ([#questionData]), and scored as an agent's calls are ([EvalScore#scoreQuestion]).
     ///
     /// @param evalCase The case.
     /// @param score    Its score.
     void runQuestionReference(final Map<String, Object> evalCase, final EvalScore score) {
-        final QuestionIndex index = questionIndex(evalCase);
+        final QuestionData data = questionData(evalCase);
         try {
-            final Map<String, Object> reference = (Map<String, Object>) ((Map<String, Object>) evalCase
-                    .get("reference")).get("esql_query");
-            final Map<String, Object> arguments = new LinkedHashMap<>(reference);
-            arguments.put("index", index.doc().getUuid());
-            final CallToolResult result = client.call("esql_query", arguments);
-            final String text = McpTestClient.text(result);
-            final boolean refused = Boolean.TRUE.equals(result.isError()) || text.startsWith("Error:");
-            final Map<String, Object> json = !refused && result.structuredContent() instanceof final Map<?, ?> map
-                    ? (Map<String, Object>) map
-                    : Map.of();
-            dump("esql_query", json);
-            score.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", refused, json, text)));
+            final List<EvalScore.ToolUse> calls = new ArrayList<>();
+            for (final Map.Entry<String, Object> call : ((Map<String, Object>) evalCase.get("reference"))
+                    .entrySet()) {
+                final Map<String, Object> arguments = new LinkedHashMap<>((Map<String, Object>) call.getValue());
+                if ("esql_query".equals(call.getKey()) && data.elastic() != null) {
+                    arguments.putIfAbsent("index", data.elastic().doc().getUuid());
+                }
+                final EvalScore.ToolUse used = toolUse(call.getKey(), arguments, client.call(call.getKey(),
+                        arguments));
+                dump(call.getKey(), used.result());
+                calls.add(used);
+            }
+            score.scoreQuestion(evalCase, calls);
         } finally {
-            index.node().deleteIndices(index.indexName());
+            data.remove();
         }
+    }
+
+    /// A tool call of a question's answer, as [EvalScore#scoreQuestion] reads it: its JSON; for run_stroomql, which
+    /// answers with the path of the table it wrote, the query run and that table's `columns` and `rows`.
+    ///
+    /// @param tool      The tool.
+    /// @param arguments Its arguments.
+    /// @param result    Its result.
+    /// @return The call.
+    EvalScore.ToolUse toolUse(final String tool, final Map<String, Object> arguments, final CallToolResult result) {
+        final String text = McpTestClient.text(result);
+        final boolean refused = Boolean.TRUE.equals(result.isError()) || text.startsWith("Error:");
+        if (refused) {
+            return new EvalScore.ToolUse(tool, true, Map.of(), text);
+        }
+        if ("run_stroomql".equals(tool)) {
+            final Map<String, Object> json = new LinkedHashMap<>(stroomQlTable(text));
+            json.put("query", arguments.get("query"));
+            return new EvalScore.ToolUse(tool, false, json, text);
+        }
+        return new EvalScore.ToolUse(tool, false, result.structuredContent() instanceof final Map<?, ?> map
+                ? (Map<String, Object>) map
+                : Map.of(), text);
     }
 
     /// The setup group's pipeline, XSLT and index, as they are now: each as text, to compare with what the setup
@@ -1064,6 +1147,177 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         return number(posted.body().get("stream_id"));
     }
 
+    // So many streams for a question's events, in a feed of the index's name.
+    private List<Long> questionStreams(final String indexName, final int count) {
+        final List<Long> streams = new ArrayList<>();
+        asUser(admin, () -> {
+            for (int i = 0; i < count; i++) {
+                streams.add(metaService.create(MetaProperties.builder()
+                        .feedName("EVAL-QUESTION-" + indexName.toUpperCase(Locale.ROOT))
+                        .typeName(StreamTypeNames.EVENTS)
+                        .createMs(System.currentTimeMillis())
+                        .build(), Status.UNLOCKED).getId());
+            }
+        });
+        return streams;
+    }
+
+    // A question's records indexed into Elasticsearch, a keyword, long or date field a column, each record an event
+    // of the stream.
+    private static void seedElastic(final ElasticTestNode node,
+                                    final String indexName,
+                                    final EvalCases.QuestionTable table,
+                                    final long stream) {
+        final ObjectNode body = JsonUtil.getMapper().createObjectNode();
+        body.putObject("settings").put("number_of_shards", 1).put("number_of_replicas", 0);
+        final ObjectNode properties = body.putObject("mappings").putObject("properties");
+        table.types().forEach((column, type) -> properties.putObject(column).put("type", "text".equals(type)
+                ? "keyword"
+                : type));
+        properties.putObject(STREAM_ID).put("type", "long");
+        properties.putObject(EVENT_ID).put("type", "long");
+        node.createIndex(indexName, JsonUtil.writeValueAsString(body, false));
+        final ArrayNode documents = JsonUtil.getMapper().createArrayNode();
+        for (int i = 0; i < table.records().size(); i++) {
+            final ObjectNode document = documents.addObject();
+            document.put("_id", String.valueOf(i + 1));
+            table.records().get(i).forEach((column, value) -> {
+                if ("long".equals(table.types().get(column))) {
+                    document.put(column, Long.parseLong(value));
+                } else {
+                    document.put(column, value);
+                }
+            });
+            document.put(STREAM_ID, stream);
+            document.put(EVENT_ID, i + 1);
+        }
+        node.bulkIndex(indexName, documents);
+    }
+
+    // A question's records in a Lucene index of the table's name, a field a column (text as keywords), each record
+    // an event of one stream, flushed so searches see them.
+    private void questionLuceneIndex(final EvalCases.QuestionTable table) {
+        final ExplorerNode created = create(LuceneIndexDoc.TYPE, table.name(), templateFolder());
+        final LuceneIndexField streamId = LuceneIndexField.createIdField(STREAM_ID);
+        final LuceneIndexField eventId = LuceneIndexField.createIdField(EVENT_ID);
+        final Map<String, LuceneIndexField> fields = new LinkedHashMap<>();
+        table.types().forEach((column, type) -> fields.put(column, LuceneIndexField.builder()
+                .fldName(column)
+                .fldType(luceneType(type))
+                .analyzerType("text".equals(type)
+                        ? AnalyzerType.KEYWORD
+                        : AnalyzerType.ALPHA_NUMERIC)
+                .caseSensitive("text".equals(type))
+                .indexed(true)
+                .stored(true)
+                .build()));
+        final List<LuceneIndexField> all = new ArrayList<>(List.of(streamId, eventId));
+        all.addAll(fields.values());
+        final LuceneIndexDoc doc = asUser(admin, () -> {
+            indexStore.writeDocument(indexStore.readDocument(created.getDocRef()).copy()
+                    .fields(all)
+                    .timeField(table.timeField())
+                    .volumeGroupName("Default Volume Group")
+                    .build());
+            return indexStore.readDocument(created.getDocRef());
+        });
+        final long stream = questionStreams(table.name().replaceAll("\\W+", "-"), 1).getFirst();
+        final IndexShardKey key = IndexShardKey.createKey(doc);
+        securityContext.asProcessingUser(() -> {
+            for (int i = 0; i < table.records().size(); i++) {
+                final IndexDocument document = new IndexDocument();
+                document.add(new FieldValue(streamId, ValLong.create(stream)));
+                document.add(new FieldValue(eventId, ValLong.create(i + 1)));
+                table.records().get(i).forEach((column, value) -> {
+                    final LuceneIndexField field = fields.get(column);
+                    document.add(new FieldValue(field, luceneValue(table.types().get(column), value)));
+                });
+                indexer.addDocument(key, document);
+            }
+        });
+        flushIndexShards();
+    }
+
+    // A question's CSV records in a data connection of the table's name, a column each with its type.
+    private void questionDataConnection(final EvalCases.QuestionTable table) {
+        final ExplorerNode created = create(DataConnectionDoc.TYPE, table.name(), templateFolder());
+        final List<DataColumn> columns = new ArrayList<>();
+        table.types().forEach((column, type) -> columns.add(new DataColumn(column, columnType(type))));
+        final StringBuilder csv = new StringBuilder(String.join(",", table.types().keySet())).append('\n');
+        table.records().forEach(record -> csv.append(String.join(",", record.values())).append('\n'));
+        asUser(admin, () -> dataConnectionStore.writeDocument(dataConnectionStore.readDocument(created.getDocRef())
+                .copy()
+                .sourceType(DataConnectionType.CSV)
+                .csv(CsvSettings.builder()
+                        .columns(columns)
+                        .data(csv.toString())
+                        .build())
+                .build()));
+    }
+
+    // A question's column type as a Lucene field's.
+    private static FieldType luceneType(final String type) {
+        return switch (type) {
+            case "long" -> FieldType.LONG;
+            case "date" -> FieldType.DATE;
+            default -> FieldType.TEXT;
+        };
+    }
+
+    // A question's value as a Lucene field holds it.
+    private static Val luceneValue(final String type, final String value) {
+        return switch (type) {
+            case "long" -> ValLong.create(Long.parseLong(value));
+            case "date" -> ValDate.create(Instant.parse(value).toEpochMilli());
+            default -> ValString.create(value);
+        };
+    }
+
+    // A question's column type as a data connection's.
+    private static DataColumnType columnType(final String type) {
+        return switch (type) {
+            case "long" -> DataColumnType.LONG;
+            case "date" -> DataColumnType.DATE;
+            default -> DataColumnType.TEXT;
+        };
+    }
+
+    // The table run_stroomql wrote (its result names the file): its `columns` and `rows`, each cell as text.
+    private Map<String, Object> stroomQlTable(final String result) {
+        final Matcher matcher = STROOMQL_RESULTS.matcher(result);
+        if (!matcher.find()) {
+            return Map.of();
+        }
+        final String file = McpTestClient.text(client.call("read_file", args("path", matcher.group(1),
+                "count", 1_000)));
+        List<String> header = null;
+        final List<List<String>> rows = new ArrayList<>();
+        for (final String line : file.split("\n")) {
+            final int tab = line.indexOf('\t');
+            final String row = tab < 0
+                    ? line
+                    : line.substring(tab + 1);
+            if (!row.startsWith("|") || row.startsWith("| ---") || row.startsWith("|---")) {
+                continue;
+            }
+            final List<String> cells = new ArrayList<>();
+            for (final String cell : row.substring(1, row.lastIndexOf('|')).split("\\|", -1)) {
+                cells.add(cell.strip());
+            }
+            if (header == null) {
+                header = cells;
+            } else {
+                rows.add(cells);
+            }
+        }
+        final Map<String, Object> table = new LinkedHashMap<>();
+        table.put("columns", header == null
+                ? List.of()
+                : header);
+        table.put("rows", rows);
+        return table;
+    }
+
     private List<String> luceneFields(final DocRef index) {
         return asUser(admin, () -> indexFieldService.findFields(new FindFieldCriteria(new PageRequest(0, 500),
                 FindFieldCriteria.DEFAULT_SORT_LIST, index)).getValues().stream().map(Field::getFldName).toList());
@@ -1132,5 +1386,18 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param doc       Its Elastic Index doc.
     record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc) {
 
+    }
+
+    /// A question's data in Stroom ([#questionData]).
+    ///
+    /// @param elastic Its Elasticsearch index, or null if it has none.
+    record QuestionData(QuestionIndex elastic) {
+
+        /// Removes what Stroom doesn't remove between cases: the Elasticsearch index.
+        void remove() {
+            if (elastic != null) {
+                elastic.node().deleteIndices(elastic.indexName());
+            }
+        }
     }
 }

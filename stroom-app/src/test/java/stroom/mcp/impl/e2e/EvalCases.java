@@ -61,8 +61,12 @@ final class EvalCases {
             "61_jsonl_azure_audit_join_group", "62_esql_top_uploaders_by_domain", "63_esql_daily_uploads_by_domain",
             "64_esql_unsanctioned_uploads_mb", "65_jsonl_held_loggers_many", "66_jsonl_pega_loggers_event_types",
             "67_jsonl_flat_and_nested_keys", "68_csv_documented_codes_many", "69_json_array_membership_alerts",
-            "70_jsonl_uncatalogued_records_proposals");
+            "70_jsonl_uncatalogued_records_proposals", "71_stroomql_join_exports_by_department",
+            "72_stroomql_leavers_still_logging_on", "73_sequence_logon_then_export_lucene",
+            "74_sequence_logon_then_export_elastic");
 
+    // The types of a question's columns ([#table]).
+    private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");
     // What a case whose data is in the feed already shows of it: the first stream's first parts, each part's first
     // lines.
     private static final int SHOWN_PARTS = 3;
@@ -91,8 +95,8 @@ final class EvalCases {
     }
 
     /// Whether a case is a question about data already in Stroom (`kind: question`): answered, not built, with its
-    /// data indexed into Elasticsearch before the user asks (`elastic_index`), and scored on the tools used and the
-    /// answer ([EvalScore#scoreQuestion]).
+    /// data put in Stroom before the user asks (`elastic_index`, `lucene_index`, `data_connections`: [#table]), and
+    /// scored on the tools used and the answer ([EvalScore#scoreQuestion]).
     ///
     /// @param evalCase The case.
     /// @return True for a question.
@@ -223,6 +227,62 @@ final class EvalCases {
         return streams;
     }
 
+    /// The records of a question's data (`events` of its `lucene_index` or `elastic_index`, `csv` of a
+    /// `data_connections` entry): a CSV test resource next to the e2e tests, its first line the column names, with
+    /// no quoted values.
+    ///
+    /// @param resource The resource, e.g. `questions/staff-activity.csv`.
+    /// @return Each record's values, by column, in the order of the columns.
+    static List<Map<String, String>> records(final String resource) {
+        final List<String> lines = slice(resource, 0, Integer.MAX_VALUE).lines()
+                .filter(line -> !line.isBlank())
+                .toList();
+        final List<String> columns = List.of(lines.getFirst().split(",", -1));
+        final List<Map<String, String>> records = new ArrayList<>();
+        for (final String line : lines.subList(1, lines.size())) {
+            final String[] values = line.split(",", -1);
+            if (values.length != columns.size()) {
+                throw new IllegalStateException(resource + ": " + values.length + " values where there are "
+                                                + columns.size() + " columns: " + line);
+            }
+            final Map<String, String> record = new LinkedHashMap<>();
+            for (int i = 0; i < values.length; i++) {
+                record.put(columns.get(i), values[i]);
+            }
+            records.add(record);
+        }
+        return records;
+    }
+
+    /// The question's data that isn't the proxy uploads ([EvalProxyUploads]): a table of records the case gives
+    /// (`events` of its `lucene_index` or `elastic_index`, `csv` of a `data_connections` entry), with each column's
+    /// type (`fields`, or a data connection's `columns`): `text`, `long` or `date` (ISO 8601).
+    ///
+    /// @param spec The `lucene_index`, `elastic_index` or `data_connections` entry.
+    /// @return Its records, or null for an `elastic_index` of the proxy uploads, which has no `events`.
+    static QuestionTable table(final Map<String, Object> spec) {
+        final Object resource = spec.containsKey("events")
+                ? spec.get("events")
+                : spec.get("csv");
+        if (resource == null) {
+            return null;
+        }
+        final Map<String, String> types = new LinkedHashMap<>();
+        ((Map<String, Object>) spec.getOrDefault("fields", spec.getOrDefault("columns", Map.of())))
+                .forEach((column, type) -> types.put(column, String.valueOf(type)));
+        final List<Map<String, String>> records = records(String.valueOf(resource));
+        for (final String column : records.isEmpty()
+                ? List.<String>of()
+                : records.getFirst().keySet()) {
+            final String type = types.get(column);
+            if (type == null || !QUESTION_TYPES.contains(type)) {
+                throw new IllegalStateException(resource + ": column " + column + " has type " + type
+                                                + ", not one of " + QUESTION_TYPES);
+            }
+        }
+        return new QuestionTable(String.valueOf(spec.get("name")), types, records);
+    }
+
     // So many lines of a test resource next to the e2e tests, from a line, each ending in a new line.
     private static String slice(final String resource, final int from, final int lines) {
         try (final InputStream in = EvalCases.class.getResourceAsStream(resource)) {
@@ -243,6 +303,23 @@ final class EvalCases {
     /// @param charset Its encoding.
     record SampleFile(String name, byte[] data, Charset charset) {
 
+    }
+
+    /// A question's table of records ([#table]).
+    ///
+    /// @param name    The data source's name: its index's or data connection's.
+    /// @param types   Each column's type: `text`, `long` or `date`.
+    /// @param records Each record's values, by column.
+    record QuestionTable(String name, Map<String, String> types, List<Map<String, String>> records) {
+
+        /// @return The first `date` column, the data source's time field; null if there is none.
+        String timeField() {
+            return types.entrySet().stream()
+                    .filter(entry -> "date".equals(entry.getValue()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     /// A part of a stream in the feed.
