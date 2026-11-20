@@ -265,7 +265,11 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
-            final Map<String, Object> result = document(call, context);
+            final Map<String, Object> result = new LinkedHashMap<>(document(call, context));
+            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
+            DocumentationOutline.outlineIfLarge(context.caller(), context.workspace(), NullSafe.nonBlankStringElse(
+                    stringArg(call, BUILD_ARG), NullSafe.nonBlankStringElse(stringArg(call, PIPELINE_UUID_ARG),
+                            stringArg(call, INDEX_UUID_ARG))), result, LargeResults.WHOLE_RESULT_CHARS);
             return UserActionEntries.withActions(JsonResults.of(result), result);
         } catch (final ToolRefusal | PipelineUnreadableException e) {
             return JsonResults.refused(e.getMessage());
