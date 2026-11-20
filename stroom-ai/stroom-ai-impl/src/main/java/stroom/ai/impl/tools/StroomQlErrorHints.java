@@ -23,19 +23,22 @@ import stroom.query.language.token.Tokeniser;
 import java.util.List;
 import java.util.Set;
 
-/// Hints for a StroomQL query Stroom refused, for SQL habits StroomQL doesn't share: group by, sort by or limit
-/// after select (StroomQL puts them before it), order by (StroomQL's is sort by), and a join line after another
+/// Hints for a StroomQL query Stroom refused, for SQL habits StroomQL doesn't share: a clause after select (StroomQL
+/// puts every clause but show before it; Sonnet wrote where after select in eval case 72), order by (StroomQL's is sort by), and a join line after another
 /// clause (join lines go straight after from). Stroom's parser names only the token it stopped at, e.g.
 /// "Unexpected token GROUP after SELECT", "Syntax exception, expected AS" or "Unexpected token JOIN after WHERE"
 /// (seen with Haiku in eval cases 71 to 73, and Sonnet in 71). The query is read with Stroom's own tokeniser, so
 /// text in quotes never counts, and only the query's own clauses do, not a bracketed query's.
 final class StroomQlErrorHints {
 
-    static final String CLAUSE_ORDER = " In StroomQL, group by, sort by and limit go before select.";
+    static final String CLAUSE_ORDER = " In StroomQL, every clause but show goes before select: from, join lines, "
+                                       + "where, eval, window, filter, sort by, group by, having, limit, select, show.";
     static final String ORDER_BY = " StroomQL uses sort by, not order by.";
     static final String JOIN_AFTER_FROM = " Join lines go straight after from.";
 
-    private static final Set<TokenType> BEFORE_SELECT = Set.of(TokenType.GROUP, TokenType.SORT, TokenType.LIMIT);
+    // The clauses that go before select (join lines have a hint of their own).
+    private static final Set<TokenType> BEFORE_SELECT = Set.of(TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW,
+            TokenType.FILTER, TokenType.SORT, TokenType.GROUP, TokenType.HAVING, TokenType.LIMIT);
     // The clauses a join line may follow: the first source (and its sql), and another join line with its keys.
     private static final Set<TokenType> BEFORE_JOIN = Set.of(TokenType.FROM, TokenType.SQL, TokenType.JOIN,
             TokenType.ON);

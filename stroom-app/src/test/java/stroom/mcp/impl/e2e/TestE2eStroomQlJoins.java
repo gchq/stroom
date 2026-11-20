@@ -122,11 +122,13 @@ class TestE2eStroomQlJoins extends AbstractE2eTest {
         final String query = "from \"" + events + "\" select UserId, count() as N group by UserId";
 
         assertThat(replyText("run_stroomql", args("query", query)))
-                .isEqualTo("Error: The query failed: Unexpected token GROUP after SELECT. In StroomQL, group by, "
-                           + "sort by and limit go before select.");
+                .isEqualTo("Error: The query failed: Unexpected token GROUP after SELECT. In StroomQL, every clause "
+                           + "but show goes before select: from, join lines, where, eval, window, filter, sort by, "
+                           + "group by, having, limit, select, show.");
         assertThat(replyText("validate_stroomql", args("query", query)))
-                .startsWith("The query is not valid: Unexpected token GROUP after SELECT. In StroomQL, group by, "
-                            + "sort by and limit go before select.");
+                .startsWith("The query is not valid: Unexpected token GROUP after SELECT. In StroomQL, every clause "
+                            + "but show goes before select: from, join lines, where, eval, window, filter, sort by, "
+                            + "group by, having, limit, select, show.");
     }
 
     @Test

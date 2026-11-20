@@ -27,11 +27,23 @@ class TestStroomQlErrorHints {
     @Test
     void aClauseAfterSelectThatGoesBeforeItIsNamed() {
         assertThat(StroomQlErrorHints.of("from E select UserId, count() as N group by UserId"))
-                .isEqualTo(" In StroomQL, group by, sort by and limit go before select.");
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER);
         assertThat(StroomQlErrorHints.of("from E select UserId sort by UserId"))
-                .isEqualTo(" In StroomQL, group by, sort by and limit go before select.");
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER);
         assertThat(StroomQlErrorHints.of("from E select UserId limit 5"))
-                .isEqualTo(" In StroomQL, group by, sort by and limit go before select.");
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER);
+        // Every clause but show, as Sonnet wrote where after select in eval case 72.
+        assertThat(StroomQlErrorHints.of("from E select UserId where Action = Logon"))
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER);
+        assertThat(StroomQlErrorHints.of("from E select UserId eval x = 1"))
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER);
+        assertThat(StroomQlErrorHints.of("from E select UserId having x > 1"))
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER);
+        assertThat(StroomQlErrorHints.CLAUSE_ORDER)
+                .isEqualTo(" In StroomQL, every clause but show goes before select: from, join lines, where, eval, "
+                           + "window, filter, sort by, group by, having, limit, select, show.");
+        // Show is the one clause after select.
+        assertThat(StroomQlErrorHints.of("from E select UserId show table")).isEmpty();
     }
 
     @Test
@@ -42,15 +54,13 @@ class TestStroomQlErrorHints {
                 .isEqualTo(" StroomQL uses sort by, not order by.");
         // Both.
         assertThat(StroomQlErrorHints.of("from E select UserId group by UserId order by UserId"))
-                .isEqualTo(" In StroomQL, group by, sort by and limit go before select. StroomQL uses sort by, "
-                           + "not order by.");
+                .isEqualTo(StroomQlErrorHints.CLAUSE_ORDER + " StroomQL uses sort by, not order by.");
     }
 
     @Test
     void theHintsFollowTheErrorAsASentence() {
         assertThat(StroomQlErrorHints.appendTo("Unexpected token GROUP after SELECT", "from E select a group by a"))
-                .isEqualTo("Unexpected token GROUP after SELECT. In StroomQL, group by, sort by and limit go before "
-                           + "select.");
+                .isEqualTo("Unexpected token GROUP after SELECT." + StroomQlErrorHints.CLAUSE_ORDER);
         assertThat(StroomQlErrorHints.appendTo("Bad. ", "from E select a order by a"))
                 .isEqualTo("Bad. StroomQL uses sort by, not order by.");
         assertThat(StroomQlErrorHints.appendTo("Unknown field 'Hst'", "from E select Hst"))

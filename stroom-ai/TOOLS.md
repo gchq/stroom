@@ -1209,8 +1209,9 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
   given as "The query failed: ..." or, once it had started, "The query started, but failed while it ran: ...".
   When the query failed before it started and the tool had added or lowered its limit, the error is the parser's
   for the query as written (`validateQuery`), not one naming the limit the agent never wrote. A failed query, and
-  validate_stroomql's "not valid", get `StroomQlErrorHints`: "In StroomQL, group by, sort by and limit go before
-  select." when one of them follows the query's own `select`, and "StroomQL uses sort by, not order by." for an
+  validate_stroomql's "not valid", get `StroomQlErrorHints`: "In StroomQL, every clause but show goes before
+  select: …" (with the clause order) when one follows the query's own `select` (Sonnet wrote `where` after it in
+  case 72), and "StroomQL uses sort by, not order by." for an
   unquoted `order by` (both seen with Haiku in eval cases 71 to 73, where Stroom's error named neither), and "Join
   lines go straight after from." for a join line after another clause, e.g. `where` (seen with Sonnet in case 71:
   "Unexpected token JOIN after WHERE").
