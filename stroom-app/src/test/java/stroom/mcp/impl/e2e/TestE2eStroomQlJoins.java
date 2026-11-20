@@ -116,6 +116,18 @@ class TestE2eStroomQlJoins extends AbstractE2eTest {
     }
 
     @Test
+    void anInvalidQueryIsRefusedWithTheParsersErrorForTheQueryAsWritten() {
+        // Group by after select, as Haiku wrote it in eval case 71: the limit run_stroomql adds before select must
+        // not be the token the error names, which the agent never wrote.
+        final String query = "from \"" + events + "\" select UserId, count() as N group by UserId";
+
+        assertThat(replyText("run_stroomql", args("query", query)))
+                .startsWith("Error: The query failed: ")
+                .contains("Unexpected token GROUP after SELECT")
+                .doesNotContainIgnoringCase("limit");
+    }
+
+    @Test
     void aJoinedDataSourceThatDoesNotExistIsTheParsersError() {
         final String query = "from \"" + events + "\" join \"No such HR\" as hr on UserId = hr.Username "
                              + "select UserId";

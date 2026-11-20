@@ -30,6 +30,7 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
@@ -242,8 +243,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 pause();
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
-            return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, limited,
-                    maxRows) + esqlHint(queryService, dataSource, given, context));
+            return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, given,
+                    limited, maxRows) + esqlHint(queryService, dataSource, given, context));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
@@ -370,6 +371,21 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                + translation.get().pipeline() + "'.";
     }
 
+    // The parser's error for the query as the agent wrote it, when the limit this tool changed is in the one that
+    // failed: a query with group by after select fails at the limit added before select, a token the agent never
+    // wrote (seen with Haiku in eval case 71). Empty if the limit is the agent's own, or the query as written parses.
+    private static Optional<String> errorAsWritten(final QueryService queryService,
+                                                   final String given,
+                                                   final StroomQlLimit.Limited limited) {
+        if (limited.change() == StroomQlLimit.Change.NONE) {
+            return Optional.empty();
+        }
+        final ValidateExpressionResult result = queryService.validateQuery(given);
+        return result == null || result.isOk()
+                ? Optional.empty()
+                : Optional.ofNullable(NullSafe.nonBlankStringElse(result.getString(), null));
+    }
+
     // Writes the results of a search that has finished to the workspace, and says what they hold.
     private String results(final SessionWorkspace workspace,
                            final QuerySearchRequest searchRequest,
@@ -377,6 +393,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                            final boolean started,
                            final WorkspacePath out,
                            final String sourceDocUuid,
+                           final String given,
                            final StroomQlLimit.Limited limited,
                            final int maxRows) {
         final QueryService queryService = queryServiceProvider.get();
@@ -387,9 +404,10 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         }
         final List<String> errors = SearchProblems.errors(response);
         if (!errors.isEmpty()) {
-            throw new WorkspaceException((started
-                    ? "The query started, but failed while it ran: "
-                    : "The query failed: ") + String.join("; ", errors));
+            throw new WorkspaceException(started
+                    ? "The query started, but failed while it ran: " + String.join("; ", errors)
+                    : "The query failed: " + errorAsWritten(queryService, given, limited).orElse(String.join("; ",
+                            errors)));
         }
         // Warnings don't stop the results being used, but say what to make of them (e.g. a join's row matching
         // very many rows).
