@@ -126,8 +126,9 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
                                     : "."));
         }
         return ToolResult.text("The query is not valid: "
-                               + NullSafe.nonBlankStringElse(NullSafe.get(result, ValidateExpressionResult::getString),
-                                "the parser gave no reason") + "\nFix it and validate it again.");
+                               + StroomQlErrorHints.appendTo(NullSafe.nonBlankStringElse(NullSafe.get(result,
+                                ValidateExpressionResult::getString), "the parser gave no reason"), query)
+                               + "\nFix it and validate it again.");
     }
 
     @Override

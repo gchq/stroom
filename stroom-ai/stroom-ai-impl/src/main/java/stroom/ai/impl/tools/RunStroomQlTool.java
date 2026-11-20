@@ -406,8 +406,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         if (!errors.isEmpty()) {
             throw new WorkspaceException(started
                     ? "The query started, but failed while it ran: " + String.join("; ", errors)
-                    : "The query failed: " + errorAsWritten(queryService, given, limited).orElse(String.join("; ",
-                            errors)));
+                    : "The query failed: " + StroomQlErrorHints.appendTo(errorAsWritten(queryService, given,
+                            limited).orElse(String.join("; ", errors)), given));
         }
         // Warnings don't stop the results being used, but say what to make of them (e.g. a join's row matching
         // very many rows).

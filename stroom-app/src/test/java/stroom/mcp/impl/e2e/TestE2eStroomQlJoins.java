@@ -122,9 +122,24 @@ class TestE2eStroomQlJoins extends AbstractE2eTest {
         final String query = "from \"" + events + "\" select UserId, count() as N group by UserId";
 
         assertThat(replyText("run_stroomql", args("query", query)))
+                .isEqualTo("Error: The query failed: Unexpected token GROUP after SELECT. In StroomQL, group by, "
+                           + "sort by and limit go before select.");
+        assertThat(replyText("validate_stroomql", args("query", query)))
+                .startsWith("The query is not valid: Unexpected token GROUP after SELECT. In StroomQL, group by, "
+                            + "sort by and limit go before select.");
+    }
+
+    @Test
+    void aQueryWithOrderByIsToldStroomQlUsesSortBy() {
+        // Seen with Haiku in eval cases 72 and 73: Stroom's own error names neither order nor sort.
+        final String query = "from \"" + events + "\" select UserId, Bytes order by Bytes";
+
+        assertThat(replyText("run_stroomql", args("query", query)))
                 .startsWith("Error: The query failed: ")
-                .contains("Unexpected token GROUP after SELECT")
-                .doesNotContainIgnoringCase("limit");
+                .endsWith(" StroomQL uses sort by, not order by.");
+        assertThat(replyText("validate_stroomql", args("query", query)))
+                .startsWith("The query is not valid: ")
+                .contains("StroomQL uses sort by, not order by.");
     }
 
     @Test

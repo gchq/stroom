@@ -719,13 +719,13 @@ class TestToolOutputReferences {
         final ToolRunner run = arguments -> tool.execute(request(RunStroomQlTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, fixture.workspace)).text();
 
-        assertOutput("run_stroomql-result", "{\"query\":\"from \\\"Firewall events\\\" select Host, count() as N "
-                                            + "group by Host\",\"out\":\"/outputs/hosts.md\"}", run,
+        assertOutput("run_stroomql-result", "{\"query\":\"from \\\"Firewall events\\\" group by Host select Host, "
+                                            + "count() as N\",\"out\":\"/outputs/hosts.md\"}", run,
                 fixture.written);
         Mockito.when(queryService.search(Mockito.any()))
                 .thenReturn(new DashboardSearchResponse(null, queryKey, null, List.of("Unknown field 'Hst'"), null,
                         true, null, null));
-        assertOutput("run_stroomql-error", "{\"query\":\"from \\\"Firewall events\\\" select Hst limit 10\","
+        assertOutput("run_stroomql-error", "{\"query\":\"from \\\"Firewall events\\\" limit 10 select Hst\","
                                            + "\"out\":\"/outputs/hosts-2.md\"}", run, new HashMap<>());
     }
 

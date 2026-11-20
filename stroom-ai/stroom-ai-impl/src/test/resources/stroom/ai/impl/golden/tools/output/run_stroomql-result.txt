@@ -1,4 +1,4 @@
-Arguments: {"query":"from \"Firewall events\" select Host, count() as N group by Host","out":"/outputs/hosts.md"}
+Arguments: {"query":"from \"Firewall events\" group by Host select Host, count() as N","out":"/outputs/hosts.md"}
 
 === Output ===
 Ran the query. The results are in /outputs/hosts.md. The query had no limit, so 'limit 10000' (the most rows a query may return here) was added.
