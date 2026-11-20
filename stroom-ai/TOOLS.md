@@ -967,7 +967,8 @@ category, and its examples are checked to work.
   rows whose `on` cells are the same text (an empty cell matches nothing), optionally only where the other table's
   time is within `seconds` (at or after this one's with `after`; times ISO 8601, UTC without a zone, or epoch
   milliseconds); the other table's columns follow, bar its key columns, one this table has too named
-  `right.<name>`; `keep: unmatched` gives this table's rows nothing matches. Seen: a chat matching mail items read
+  `right.<name>`; `keep: unmatched` gives this table's rows nothing matches. The description, in the chat and over
+  `/mcp`, says a StroomQL join is better for two Stroom data sources. Seen: a chat matching mail items read
   then deleted by user and message id took some 15 calls of `grep`, `jq` and `table`, the `jq` join failing. Its
   rows are held in memory, at most 1,000,000 a table and joined. Loose shapes are taken as meant: a list given as JSON text (surrounding whitespace and
   one stray trailing comma ignored) is read as that list, a single object where a list of objects is expected is a
@@ -1202,9 +1203,20 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
 * **Arguments**: `query` (required), `out` (optional; a `.md` file in `/outputs/`).
 * **Returns**: text: "Ran the query. The results are in <path>.", any limit note, Stroom's warnings ("Stroom warned:
   …", a join's included, e.g. a joined source's own warnings or a row matching over 1,000 joined rows), and the
-  table's profile. Joins (join lines, `where` subqueries) run in Stroom, as the Query pane runs them.
+  table's profile. Joins (join lines, `where` subqueries) run in Stroom, as the Query pane runs them. The
+  description names the joins guide (`stroom://guide/joins`; in the chat, `get_instructions guide=joins`).
 * **Refuses**: a blank or over-long query (`maxQueryLength`); a misleading search, as above. Errors from Stroom are
   given as "The query failed: ..." or, once it had started, "The query started, but failed while it ran: ...".
+  When the query failed before it started and the tool had added or lowered its limit, the error is the parser's
+  for the query as written (`validateQuery`), not one naming the limit the agent never wrote. A failed query, and
+  validate_stroomql's "not valid", get `StroomQlErrorHints`: "In StroomQL, group by, sort by and limit go before
+  select." when one of them follows the query's own `select`, and "StroomQL uses sort by, not order by." for an
+  unquoted `order by` (both seen with Haiku in eval cases 71 to 73, where Stroom's error named neither).
+* **Joins hint** (`ToolCallGuard`, `QueriedSources`): a successful run_stroomql, esql_query or search_events of a data
+  source other than one queried before (in the chat, in the current question; over `/mcp`, in the session within
+  the last 10 minutes) ends with one line, "Joining these rows with those of an earlier query (<sources>)? See
+  stroom://guide/joins." (`get_instructions guide=joins` in the chat; `join_hint` inside a JSON result), once for each
+  pair of sources.
 * **Notes**: the time limit is the session's query time limit (`stroom.ai.workspace.queryTimeLimit`, default 2
   minutes), not the tool time limit. The search is always destroyed when the call ends (`AgentSearches.destroy`),
   including on a timeout, so it never runs on after the call.
@@ -7504,7 +7516,9 @@ The tools' working knowledge is bundled with Stroom in `stroom-mcp-impl`
 
 * **Working guides** (`guides/<name>.md`): `agent-instructions`, `cef`, `data-splitter`, `documentation`,
   `aggregated-feeds` (source types, the registry, scopes, source type groups and their pipelines, indexes and
-  promotion), `event-logging`, `indexing`, `json-input`, `mapping` (a compact reference of a translation mapping's keys, time
+  promotion), `event-logging`, `indexing`, `joins` (facts only: StroomQL's join kinds with examples, keys and
+  limits, sequence_query's engines and guards, the table tool's join, and what fetched rows are; every example run by
+  `TestE2eJoinsGuide`), `json-input`, `mapping` (a compact reference of a translation mapping's keys, time
   formats and how `changes=` merges, which the draft's hint names, and the event type catalogue: evidence, event
   types, conditions with `not`, `starts_with` and `contains`, proposals, the check and confirmation, which
   catalogue_event_types' description points to), `reference-data`, `visualisation` and `xslt`.
