@@ -863,7 +863,10 @@ final class EvalScore {
     ///   default 0.001), or 0.05 for one given with decimals, as an answer rounded to one place is. The rows must be
     ///   the query's: a value worked out in the agent's reply (a conversion, a cut-off) doesn't count;
     /// * `expected.answer.total_groups`: the `total_groups` of any accepted call that gives it, or the answer
-    ///   call's row count, if it wasn't cut short.
+    ///   call's row count, if it wasn't cut short;
+    /// * `expected.answer.query`: a regular expression (any case) found in the answer call's `query`, e.g. that it
+    ///   joins in Stroom rather than naming values read by an earlier call, a join done by hand;
+    /// * `expected.answer.result`: values the answer call's result holds, by key, e.g. a sequence's `engine`.
     ///
     /// @param evalCase The case.
     /// @param calls    The tool calls made, in order.
@@ -919,6 +922,18 @@ final class EvalScore {
             questionCheck("total groups", given.stream().anyMatch(value -> value instanceof final Number number
                                                                          && number.longValue() == total.longValue()),
                     "the total groups were " + said + ", expected " + total);
+        }
+        if (answer.get("query") instanceof final String query) {
+            final Object given = answerCall.result().get("query");
+            questionCheck("answer query", given != null && Pattern.compile(query, Pattern.CASE_INSENSITIVE
+                                                                                   | Pattern.DOTALL)
+                    .matcher(String.valueOf(given)).find(), "the answer's query doesn't match /" + query + "/: "
+                                                             + given);
+        }
+        for (final Map.Entry<String, Object> value : maps(answer.get("result")).entrySet()) {
+            final Object given = answerCall.result().get(value.getKey());
+            questionCheck("answer " + value.getKey(), String.valueOf(value.getValue()).equals(String.valueOf(given)),
+                    "the answer's " + value.getKey() + " was " + given + ", expected " + value.getValue());
         }
     }
 

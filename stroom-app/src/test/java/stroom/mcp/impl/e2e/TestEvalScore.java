@@ -825,6 +825,55 @@ class TestEvalScore {
                 .startsWith("were 2, expected 1");
     }
 
+    @Test
+    void aJoinDoneByHandAndNotInTheQueryFails() {
+        // As a by-hand anti-join: the leavers read from HR first, then their names written into the query.
+        final Map<String, Object> leavers = Map.of("kind", "question", "expected", Map.of(
+                "tools_used", List.of("run_stroomql"),
+                "answer", Map.of("tool", "run_stroomql", "query", "\\bjoin\\b|\\(\\s*from\\b",
+                        "rows", List.of(List.of("dave", 3), List.of("gina", 1)))));
+        final List<List<Object>> rows = List.of(List.of("dave", "3"), List.of("gina", "1"));
+
+        final EvalScore byHand = new EvalScore("q");
+        byHand.scoreQuestion(leavers, List.of(
+                new EvalScore.ToolUse("run_stroomql", false, Map.of("query", "from HR where Status = Leaver "
+                                                                             + "select Username",
+                        "rows", List.of(List.of("dave"), List.of("frank"), List.of("gina"), List.of("ivan"))), "ok"),
+                new EvalScore.ToolUse("run_stroomql", false, Map.of("query", "from \"Staff activity\" "
+                                                                             + "where UserId in (dave, gina) "
+                                                                             + "group by UserId select UserId, "
+                                                                             + "count()", "rows", rows), "ok")));
+        assertThat(byHand.passed()).isFalse();
+        assertThat(byHand.summary()).contains("the answer's query doesn't match /\\bjoin\\b|\\(\\s*from\\b/: "
+                                              + "from \"Staff activity\" where UserId in (dave, gina)");
+
+        // The same rows from a subquery pass, whatever the case of its words.
+        final EvalScore inQuery = new EvalScore("q");
+        inQuery.scoreQuestion(leavers, List.of(new EvalScore.ToolUse("run_stroomql", false, Map.of("query",
+                "from \"Staff activity\" where UserId in (FROM HR where Status = Leaver select Username) "
+                + "group by UserId select UserId, count()", "rows", rows), "ok")));
+        assertThat(inQuery.passed()).as(inQuery.summary()).isTrue();
+    }
+
+    @Test
+    void theAnswerCallMustHoldTheValuesTheCaseGives() {
+        // A sequence on a Lucene index runs in Stroom as a windowed join, not EQL.
+        final Map<String, Object> sequence = Map.of("kind", "question", "expected", Map.of("answer", Map.of(
+                "tool", "sequence_query", "result", Map.of("engine", "StroomQL"),
+                "rows", List.of(List.of("alice")))));
+
+        final EvalScore eql = new EvalScore("q");
+        eql.scoreQuestion(sequence, List.of(new EvalScore.ToolUse("sequence_query", false, Map.of("engine", "EQL",
+                "rows", List.of(List.of("alice", "2026-01-06T09:00:00.000Z"))), "ok")));
+        assertThat(eql.passed()).isFalse();
+        assertThat(eql.summary()).contains("the answer's engine was EQL, expected StroomQL");
+
+        final EvalScore windowed = new EvalScore("q");
+        windowed.scoreQuestion(sequence, List.of(new EvalScore.ToolUse("sequence_query", false, Map.of("engine",
+                "StroomQL", "rows", List.of(List.of("alice", "2026-01-06T09:00:00.000Z"))), "ok")));
+        assertThat(windowed.passed()).as(windowed.summary()).isTrue();
+    }
+
     private static Map<String, Object> question(final boolean ordered) {
         return Map.of("kind", "question", "expected", Map.of("tools_used", List.of("esql_query"), "answer",
                 Map.of("ordered", ordered, "total_groups", 12, "rows", List.of(
