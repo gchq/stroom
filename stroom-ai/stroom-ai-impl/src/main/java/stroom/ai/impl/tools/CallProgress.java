@@ -30,6 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -46,10 +47,13 @@ public final class CallProgress {
 
     /// The time between a loop's messages ([#nowAndThen(String)]).
     public static final Duration EVERY = Duration.ofSeconds(5);
+    // The most a call's end waits for a message being sent as it ends.
+    private static final Duration SENT_WAIT = Duration.ofMillis(200);
 
     private static final Map<ToolCallContext, CallProgress> CALLS = Collections.synchronizedMap(new WeakHashMap<>());
-    // Says that long work is still going on (see whileWorking), on one daemon thread for every call: each message is
-    // short, and one that can't be sent is dropped.
+    // Times the messages saying long work is still going on (see whileWorking), on one daemon thread for every
+    // call; each message is sent on a virtual thread of its own, so a client slow to take one holds up no other
+    // call's (seen in a review: one shared thread sent them all, so one slow client stalled every session's).
     private static final ScheduledExecutorService STILL_WORKING = Executors.newSingleThreadScheduledExecutor(
             runnable -> {
                 final Thread thread = new Thread(runnable, "Tool call progress");
@@ -77,8 +81,15 @@ public final class CallProgress {
     /// Tells the client what the call is doing now.
     ///
     /// @param message What the call is doing, e.g. "Stepping stream 7 (1 of 3) through ACME".
-    public synchronized void say(final String message) {
-        saidMs = clock.getAsLong();
+    public void say(final String message) {
+        synchronized (this) {
+            saidMs = clock.getAsLong();
+        }
+        send(message);
+    }
+
+    // Sent without the lock held: a client slow to take it holds up nothing else of the call's.
+    private void send(final String message) {
         try {
             progress.report(message);
         } catch (final RuntimeException e) {
@@ -98,10 +109,15 @@ public final class CallProgress {
     ///
     /// @param message Where the loop is.
     /// @param every   The least time between messages.
-    public synchronized void nowAndThen(final String message, final Duration every) {
-        if (saidMs == Long.MIN_VALUE || clock.getAsLong() - saidMs >= every.toMillis()) {
-            say(message);
+    public void nowAndThen(final String message, final Duration every) {
+        synchronized (this) {
+            final long nowMs = clock.getAsLong();
+            if (saidMs != Long.MIN_VALUE && nowMs - saidMs < every.toMillis()) {
+                return;
+            }
+            saidMs = nowMs;
         }
+        send(message);
     }
 
     /// Does long work that says nothing as it goes (e.g. a check of a large sample), saying the message first and
@@ -128,13 +144,13 @@ public final class CallProgress {
         say(message);
         final long startMs = clock.getAsLong();
         final AtomicBoolean ended = new AtomicBoolean();
+        // The message being sent: the next is not started while it is, rather than piling up behind a slow client.
+        final AtomicReference<Thread> sending = new AtomicReference<>();
         final ScheduledFuture<?> stillWorking = STILL_WORKING.scheduleAtFixedRate(() -> {
-            // Under this one's lock, as the end is marked: nothing is said once the work has ended.
-            synchronized (this) {
-                if (!ended.get()) {
-                    say(message + ": still working (" + Duration.ofMillis(clock.getAsLong() - startMs)
-                            .toSeconds() + " s)");
-                }
+            final Thread last = sending.get();
+            if (last == null || !last.isAlive()) {
+                sending.set(Thread.ofVirtual().name("Tool call progress")
+                        .start(() -> stillWorking(message, startMs, ended)));
             }
         }, every.toMillis(), every.toMillis(), TimeUnit.MILLISECONDS);
         try {
@@ -144,6 +160,35 @@ public final class CallProgress {
                 ended.set(true);
             }
             stillWorking.cancel(false);
+            awaitSent(sending.get());
         }
+    }
+
+    // Waits a little for a message being sent as the work ends, so the call's answer comes after it as a rule; no
+    // longer than SENT_WAIT, so a client slow to take it doesn't hold up the call's end.
+    private static void awaitSent(final Thread sending) {
+        if (sending == null) {
+            return;
+        }
+        try {
+            sending.join(SENT_WAIT);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // Says the work is still going on, unless it has ended: checked under the lock the end is marked under, so none
+    // is started once the work has ended (one being sent as it ends may still reach the client), and sent without
+    // it.
+    private void stillWorking(final String message, final long startMs, final AtomicBoolean ended) {
+        final long nowMs;
+        synchronized (this) {
+            if (ended.get()) {
+                return;
+            }
+            nowMs = clock.getAsLong();
+            saidMs = nowMs;
+        }
+        send(message + ": still working (" + Duration.ofMillis(nowMs - startMs).toSeconds() + " s)");
     }
 }

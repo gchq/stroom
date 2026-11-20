@@ -24,6 +24,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -103,6 +106,51 @@ class TestCallProgress {
         final int said = sent.size();
         ThreadUtil.sleepIgnoringInterrupts(200);
         assertThat(sent).hasSize(said);
+    }
+
+    @Test
+    void aClientSlowToTakeProgressHoldsUpNoOtherCallAndNotItsOwnCallsEnd() throws Exception {
+        // From a review: one timer thread sent every call's "still working", holding the call's lock as it sent, so
+        // a client slow to take one held up every other session's progress, and its own call's end waited on it.
+        final CountDownLatch stuck = new CountDownLatch(1);
+        final CountDownLatch release = new CountDownLatch(1);
+        final ToolCallContext slow = ToolCallContext.builder(SESSION).progress(message -> {
+            if (message.contains("still working")) {
+                stuck.countDown();
+                try {
+                    release.await(10, TimeUnit.SECONDS);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }).build();
+        final CompletableFuture<Long> slowEndedMs = CompletableFuture.supplyAsync(() -> {
+            CallProgress.of(slow).whileWorking("Slow client", Duration.ofMillis(20), () -> {
+                try {
+                    assertThat(stuck.await(10, TimeUnit.SECONDS)).isTrue();
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return "done";
+            });
+            return System.currentTimeMillis();
+        });
+        try {
+            assertThat(stuck.await(10, TimeUnit.SECONDS)).isTrue();
+            // The slow call's work ends while its client is still taking the message.
+            final long endedMs = slowEndedMs.get(2, TimeUnit.SECONDS);
+            assertThat(endedMs).isPositive();
+
+            final List<String> sent = Collections.synchronizedList(new ArrayList<>());
+            final ToolCallContext other = ToolCallContext.builder(SESSION).progress(sent::add).build();
+            CallProgress.of(other).whileWorking("Other call", Duration.ofMillis(20), () -> {
+                ThreadUtil.sleepIgnoringInterrupts(300);
+                return "done";
+            });
+            assertThat(sent).anyMatch(message -> message.startsWith("Other call: still working"));
+        } finally {
+            release.countDown();
+        }
     }
 
     @Test
