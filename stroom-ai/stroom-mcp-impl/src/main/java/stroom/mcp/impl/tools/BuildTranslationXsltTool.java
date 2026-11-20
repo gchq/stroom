@@ -438,7 +438,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
-            return JsonResults.of(build(call, context));
+            final Map<String, Object> result = new LinkedHashMap<>(build(call, context));
+            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
+            BuiltRulesTrim.outlineIfLarge(context.caller(), context.workspace(), NullSafe.nonBlankStringElse(
+                    stringArg(call, BUILD_ARG), stringArg(call, NAME_ARG)), result, LargeResults.WHOLE_RESULT_CHARS);
+            return JsonResults.of(result);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final PatternTimeoutException e) {
