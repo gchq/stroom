@@ -45,7 +45,9 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -284,6 +286,18 @@ class TestCurrentResultsTool {
         assertThat(run("{\"refresh\":true}")).contains("The results couldn't be read");
 
         Mockito.verify(agentSearches).terminate(NEW_KEY);
+    }
+
+    @Test
+    void aSearchRunAgainThatStroomSaysFailedIsSaidToHaveFailed() {
+        // Stroom reports a failed search in errorMessages, not the deprecated errors list.
+        tab(RAN, RAN + ", Host");
+        Mockito.doReturn(new DashboardSearchResponse("node1", NEW_KEY, null, null, null, true, null,
+                List.of(new ErrorMessage(Severity.ERROR, "Unknown field 'Host'")))).when(queryService)
+                .search(Mockito.any());
+
+        assertThat(run("{\"refresh\":true}")).contains("The search failed when run again: Unknown field 'Host'");
+        Mockito.verifyNoInteractions(tableDownloader);
     }
 
     @Test

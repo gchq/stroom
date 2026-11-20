@@ -49,8 +49,10 @@ import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.Severity;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
@@ -421,6 +423,54 @@ class TestDataPipelineTools {
     }
 
     @Test
+    void aQueryFailureStroomReportsAsAnErrorMessageIsSaidToHaveFailed() {
+        // Stroom's query service reports errors in errorMessages, never the deprecated errors list (its
+        // SearchResponseMapper gives that null), so a failed query was taken for one that ran with no rows.
+        final QueryService queryService = Mockito.mock(QueryService.class);
+        Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.empty());
+        Mockito.when(queryService.search(Mockito.any()))
+                .thenReturn(reported(new QueryKey("q"), true, Severity.ERROR, "Unknown field 'Hst'"));
+        final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
+                () -> Mockito.mock(ResourceStore.class), agentSearches);
+
+        assertThat(run(tool, "{\"query\":\"from x select Hst\"}"))
+                .isEqualTo("Error: The query failed: Unknown field 'Hst'");
+        Mockito.verify(queryService, Mockito.never()).downloadSearchResults(Mockito.any());
+
+        // One that fails after it started stops the polling at once.
+        Mockito.when(queryService.search(Mockito.any()))
+                .thenReturn(reported(new QueryKey("q"), false, null, null),
+                        reported(new QueryKey("q"), false, Severity.FATAL_ERROR, "The join table is full"));
+        assertThat(run(tool, "{\"query\":\"from x\"}"))
+                .isEqualTo("Error: The query started, but failed while it ran: The join table is full");
+    }
+
+    @Test
+    void aWarningStroomReportsIsGivenWithTheResults() throws Exception {
+        final QueryService queryService = Mockito.mock(QueryService.class);
+        final ResourceStore resourceStore = Mockito.mock(ResourceStore.class);
+        final QueryKey queryKey = new QueryKey("q2");
+        Mockito.when(queryService.getReferencedDataSource(Mockito.anyString()))
+                .thenReturn(Optional.of(new DocRef("View", "view-uuid")));
+        Mockito.when(queryService.search(Mockito.any()))
+                .thenReturn(reported(queryKey, true, Severity.WARNING, "One row matched more than 1,000 rows"));
+        final Path results = tempDir.resolve("warned.md");
+        Files.writeString(results, "| Host |\n| --- |\n| fw1 |\n");
+        final ResourceKey resourceKey = new ResourceKey("k2", "warned.md");
+        Mockito.when(queryService.downloadSearchResults(Mockito.any()))
+                .thenReturn(new ResourceGeneration(resourceKey, List.of()));
+        Mockito.when(resourceStore.getTempFile(resourceKey)).thenReturn(results);
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> resourceStore,
+                Mockito.mock(AgentSearches.class));
+        Mockito.when(injectorSecurityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(true);
+
+        assertThat(run(tool, "{\"query\":\"from \\\"My View\\\" select Host\",\"out\":\"/outputs/w.md\"}"))
+                .startsWith("Ran the query.")
+                .contains("Stroom warned: One row matched more than 1,000 rows");
+    }
+
+    @Test
     void theModelIsToldWhenTheRowLimitApplies() {
         final StroomQlLimit.Limited kept = new StroomQlLimit.Limited("q", StroomQlLimit.Change.NONE);
 
@@ -509,6 +559,16 @@ class TestDataPipelineTools {
 
     private ColumnSummariser columnSummariser() {
         return new ColumnSummariser(tableSummariser, () -> null);
+    }
+
+    // A response as Stroom's query service gives one: its errors in errorMessages.
+    private static DashboardSearchResponse reported(final QueryKey queryKey,
+                                                    final boolean complete,
+                                                    final Severity severity,
+                                                    final String message) {
+        return new DashboardSearchResponse(null, queryKey, null, null, null, complete, null, message == null
+                ? null
+                : List.of(new ErrorMessage(severity, message)));
     }
 
     private static DashboardSearchResponse response(final QueryKey queryKey,

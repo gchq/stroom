@@ -746,7 +746,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         DashboardSearchResponse response = search(live, null);
         try {
             while (response != null
-                   && NullSafe.isEmptyCollection(response.getErrors())
+                   && SearchProblems.errors(response).isEmpty()
                    && !response.isComplete()
                    && System.nanoTime() < waitUntilNanos) {
                 pause();
@@ -760,8 +760,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         if (response == null) {
             return new Ran(null, null, "it did not run");
         }
-        if (!NullSafe.isEmptyCollection(response.getErrors())) {
-            return new Ran(null, null, String.join("; ", response.getErrors()));
+        final List<String> errors = SearchProblems.errors(response);
+        if (!errors.isEmpty()) {
+            return new Ran(null, null, String.join("; ", errors));
         }
         return new Ran(withQueryKey(live, response.getQueryKey(), response.getNode()),
                 status(response, componentId(live)), null);

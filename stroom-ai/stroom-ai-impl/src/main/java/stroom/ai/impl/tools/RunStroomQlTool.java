@@ -229,7 +229,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             queryKey = NullSafe.get(response, DashboardSearchResponse::getQueryKey);
             // Whether the search started, so a failure says if it failed part way rather than before it began.
             boolean started = false;
-            while (response != null && NullSafe.isEmptyCollection(response.getErrors()) && !response.isComplete()) {
+            while (response != null && SearchProblems.errors(response).isEmpty() && !response.isComplete()) {
                 started = true;
                 pause();
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
@@ -354,11 +354,15 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                     ? "The query started, but Stroom's query service then gave no response."
                     : "The query did not run: Stroom's query service gave no response.");
         }
-        if (!NullSafe.isEmptyCollection(response.getErrors())) {
+        final List<String> errors = SearchProblems.errors(response);
+        if (!errors.isEmpty()) {
             throw new WorkspaceException((started
                     ? "The query started, but failed while it ran: "
-                    : "The query failed: ") + String.join("; ", response.getErrors()));
+                    : "The query failed: ") + String.join("; ", errors));
         }
+        // Warnings don't stop the results being used, but say what to make of them (e.g. a join's row matching
+        // very many rows).
+        final List<String> warnings = SearchProblems.warnings(response);
 
         // The download takes the rows the request asks for, so it asks for all those the limit allows, not the few
         // the search was polled for.
@@ -385,8 +389,11 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 StandardCharsets.UTF_8)) {
             final String profile = TableProfiler.profile(reader, out.path());
             final long rows = MarkdownTables.countRows(workspace.localFile(out));
-            return "Ran the query. The results are in " + out + "." + limitNote(limited, maxRows, rows) + "\n\n"
-                   + profile;
+            return "Ran the query. The results are in " + out + "." + limitNote(limited, maxRows, rows)
+                   + (warnings.isEmpty()
+                    ? ""
+                    : " Stroom warned: " + String.join("; ", warnings))
+                   + "\n\n" + profile;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
