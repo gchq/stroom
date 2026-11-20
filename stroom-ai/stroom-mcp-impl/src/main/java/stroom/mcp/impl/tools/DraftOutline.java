@@ -48,6 +48,11 @@ final class DraftOutline {
 
     // The most characters of a fixed value (a Description's text) said in the outline.
     private static final int VALUE_CHARS = 80;
+    // A list in the source notes longer than this is counted; so many characters of it listed.
+    private static final int LISTED = 20;
+    private static final int LISTED_CHARS = 1_500;
+    // The most characters of a note said once the result is still too large.
+    private static final int NOTE_CHARS = 600;
     private static final String MAPPING = "mapping";
     private static final String SAVED = "mapping_saved";
     private static final String OUTLINE = "mapping_outline";
@@ -111,9 +116,23 @@ final class DraftOutline {
             result.put(PLACEMENT, DataPlacements.compact(JsonValues.map(placement)));
         }
         if (length(result) > limit) {
-            result.put(OUTLINE, outline(mapping, false));
+            // Still too large (seen in eval case 68, 300 event types: 58,000 characters outlined, the source
+            // notes, the notes and data_placement each some 15,000 listing every event type): the rest outlined.
+            LargeResults.of(DraftTranslationMappingTool.NAME, build)
+                    .keep(SAVED, OUTLINE, "schema_version", "schema_version_settled", "splitter", "read_with",
+                            "format", "records", "source_notes.fields", "source_notes.unread_fields")
+                    .outline("source_notes", (value, room) -> sourceNotes(value))
+                    .outline("notes", (value, room) -> notes(value))
+                    .outline("schema_check", (value, room) -> schemaCheck(value))
+                    .outline(PLACEMENT, (value, room) -> placementGrouped(value))
+                    .step(OUTLINE, (outlined, room) -> {
+                        outlined.put(OUTLINE, outline(mapping, false));
+                        return true;
+                    })
+                    .cutTheRest()
+                    .step(OUTLINE, (outlined, room) -> fitRules(outlined, room.target()))
+                    .apply(caller, workspace, result, limit);
         }
-        fitRules(result, limit);
     }
 
     /// @param build The build, or null.
@@ -124,17 +143,89 @@ final class DraftOutline {
                 : build) + ".json";
     }
 
-    // The outline's rules cut to those that fit the limit, the rest counted: read from the saved file.
-    private static void fitRules(final Map<String, Object> result, final int limit) {
-        final Map<String, Object> outline = JsonValues.map(result.get(OUTLINE));
+    // The outline's rules cut to those that fit the limit, the rest counted: read from the saved file. True if any
+    // were cut.
+    private static boolean fitRules(final Map<String, Object> result, final int limit) {
+        final Map<String, Object> outline = new LinkedHashMap<>(JsonValues.mapOrEmpty(result.get(OUTLINE)));
         final List<Map<String, Object>> rules = new ArrayList<>(JsonValues.maps(outline.get(EVENTS)));
         final int all = rules.size();
         while (length(result) > limit && rules.size() > 1) {
             rules.subList(Math.max(1, rules.size() - Math.max(1, rules.size() / 10)), rules.size()).clear();
-            outline.put(EVENTS, rules);
+            outline.put(EVENTS, new ArrayList<>(rules));
             outline.put("rules_not_listed", (all - rules.size()) + " more rules after these: read them from "
                                             + result.get(SAVED));
+            result.put(OUTLINE, outline);
         }
+        return rules.size() < all;
+    }
+
+    // The source notes, their event types and those not in the sample counted, so far as they fit listed.
+    private static Object sourceNotes(final Object value) {
+        final Map<String, Object> notes = JsonValues.map(value);
+        if (notes == null) {
+            return value;
+        }
+        final Map<String, Object> outlined = new LinkedHashMap<>(notes);
+        for (final String key : List.of(EVENTS, "not_in_sample")) {
+            if (notes.get(key) instanceof final List<?> listed && listed.size() > LISTED) {
+                final List<String> said = JsonValues.strings(listed);
+                outlined.put(key, said.size() + ": " + LargeResults.head(String.join("; ", said), LISTED_CHARS));
+            }
+        }
+        return outlined;
+    }
+
+    // Each note cut to its start, which says what it asks; the rest in the saved result.
+    private static Object notes(final Object value) {
+        final List<Object> notes = new ArrayList<>();
+        for (final Object note : JsonValues.listOrEmpty(value)) {
+            final String text = ToolText.str(note);
+            notes.add(text.length() <= NOTE_CHARS
+                    ? note
+                    : text.substring(0, NOTE_CHARS) + "... (the rest of this note in the saved result)");
+        }
+        return notes;
+    }
+
+    // The schema check, its warnings in brief (the rules each names counted past the first few).
+    private static Object schemaCheck(final Object value) {
+        final Map<String, Object> check = JsonValues.map(value);
+        if (check == null || !(check.get("warnings") instanceof List<?>)) {
+            return value;
+        }
+        final Map<String, Object> outlined = new LinkedHashMap<>(check);
+        outlined.put("warnings", BuiltRulesTrim.withoutExamples(check.get("warnings")));
+        return outlined;
+    }
+
+    // data_placement with its rules grouped by the Data they carry and their action: each group's rules counted,
+    // the first named.
+    private static Object placementGrouped(final Object value) {
+        final Map<String, Object> placement = JsonValues.map(value);
+        if (placement == null || !(placement.get("rules") instanceof List<?>)) {
+            return value;
+        }
+        final Map<List<Object>, Map<String, Object>> groups = new LinkedHashMap<>();
+        for (final Map<String, Object> rule : JsonValues.maps(placement.get("rules"))) {
+            final List<Object> key = List.of(JsonValues.listOrEmpty(rule.get("data")),
+                    ToolText.str(rule.get("action")));
+            final Map<String, Object> group = groups.computeIfAbsent(key, k -> {
+                final Map<String, Object> made = new LinkedHashMap<>();
+                made.put("data", rule.get("data"));
+                if (rule.get("action") != null) {
+                    made.put("action", rule.get("action"));
+                }
+                made.put("rules", 0);
+                made.put("e_g", rule.get("rule"));
+                return made;
+            });
+            group.merge("rules", 1, (a, b) -> (Integer) a + (Integer) b);
+        }
+        final Map<String, Object> outlined = new LinkedHashMap<>(placement);
+        outlined.put("rules", List.copyOf(groups.values()));
+        outlined.put("rules_note", "Rules grouped by the Data they carry and their action (rules: how many; e_g: "
+                                   + "one of them); each rule's own in the saved result.");
+        return outlined;
     }
 
     // The mapping's input, common entries, and each rule in brief.

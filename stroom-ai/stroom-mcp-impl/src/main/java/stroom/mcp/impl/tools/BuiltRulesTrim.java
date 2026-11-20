@@ -139,10 +139,13 @@ final class BuiltRulesTrim {
         return rules;
     }
 
-    // Each warning without its example (from " E.g. "), and the rules it names, when many, counted past the first:
-    // the gist kept. Seen in eval cases 35 and 36, the sample check's warnings for an extraction that leaves fields
-    // empty, most of each an example of the text; in case 68, a warning naming all 300 rules.
-    private static Object withoutExamples(final Object value) {
+    /// Each warning without its example (from " E.g. "), and the rules it names, when many, counted past the first:
+    /// the gist kept. Seen in eval cases 35 and 36, the sample check's warnings for an extraction that leaves fields
+    /// empty, most of each an example of the text; in case 68, a warning naming all 300 rules.
+    ///
+    /// @param value A list of warnings.
+    /// @return Them in brief.
+    static Object withoutExamples(final Object value) {
         final List<Object> warnings = new ArrayList<>();
         for (final Object entry : JsonValues.listOrEmpty(value)) {
             final String warning = rulesCounted(ToolText.str(entry));

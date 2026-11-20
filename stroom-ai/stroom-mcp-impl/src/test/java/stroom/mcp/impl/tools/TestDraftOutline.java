@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
@@ -155,6 +156,57 @@ class TestDraftOutline {
                 "action_elements", Map.of("Export", elements),
                 "rules", List.of(Map.of("rule", "a", "data", List.of("x"), "action", "Export"),
                         Map.of("rule", "b", "data", List.of("y"), "action", "Export"))));
+    }
+
+    @Test
+    void aDraftStillTooLargeOnceOutlinedHasItsOtherPartsOutlinedAndSavedWhole() {
+        // Seen in eval case 68 (300 event types): 58,000 characters outlined, the source notes, the notes and
+        // data_placement each some 15,000, listing every event type.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = new LinkedHashMap<>();
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        final List<String> events = new ArrayList<>();
+        final List<Map<String, Object>> placed = new ArrayList<>();
+        for (int i = 0; i < 300; i++) {
+            rules.add(Map.of("name", "process_code" + i,
+                    "when", List.of(Map.of("field", "code", "equals", "EV" + i)),
+                    "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Process-Code" + i))));
+            events.add("Process-Code" + i + " (code = EV" + i + ") -> Process");
+            placed.add(Map.of("rule", "process_code" + i, "data", List.of("code"), "action", "Process"));
+        }
+        result.put("mapping", Map.of("input", "data_splitter", "events", rules));
+        result.put("source_notes", Map.of("fields", List.of("code -> EventDetail/TypeId"), "catalogued", true,
+                "events", events, "not_in_sample", events.subList(0, 180)));
+        result.put("notes", List.of("Ask the user for EventSource/System/Name and Environment.",
+                "Drafted from the catalogue of event types: " + String.join("; ", events)));
+        result.put("data_placement", Map.of("event_source", List.of("Device/HostName"), "rules", placed));
+        result.put("schema_check", Map.of("valid", true, "warnings", List.of("[" + String.join(", ",
+                events.stream().map(e -> e.substring(0, e.indexOf(' '))).toList()) + "] required ['EventTime'] "
+                + "are left out when their input fields are empty.")));
+        result.put("schema_version", "4.1.0");
+        result.put("hint", "Build it as drafted.");
+        final Map<String, Object> before = new LinkedHashMap<>(result);
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "eval-68",
+                LargeResults.WHOLE_RESULT_CHARS);
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LargeResults.WHOLE_RESULT_CHARS);
+        assertThat(result).containsEntry("mapping_saved", "/outputs/drafts/eval-68.json")
+                .containsEntry("schema_version", "4.1.0")
+                .containsKeys("mapping_outline", "whole_result");
+        assertThat((String) result.get("hint")).startsWith("The draft is too large to show whole here");
+        assertThat(JsonValues.strings(result.get("notes"))).first().isEqualTo("Ask the user for "
+                                                                             + "EventSource/System/Name and "
+                                                                             + "Environment.");
+        assertThat((String) ((Map<?, ?>) result.get("source_notes")).get("events")).startsWith("300: ");
+        assertThat(JsonValues.maps(((Map<?, ?>) result.get("data_placement")).get("rules"))).containsExactly(
+                Map.of("data", List.of("code"), "action", "Process", "rules", 300, "e_g", "process_code0"));
+        final Map<?, ?> saved = JsonUtil.readValue(TestLargeResults.written(chats,
+                "/outputs/draft_translation_mapping/eval-68.json"), Map.class);
+        assertThat(saved.get("source_notes")).isEqualTo(before.get("source_notes"));
+        assertThat(saved.get("notes")).isEqualTo(before.get("notes"));
+        assertThat(JsonValues.map(JsonUtil.readValue(TestLargeResults.written(chats, "/outputs/drafts/eval-68.json"),
+                Map.class)).get("events")).isEqualTo(rules);
     }
 
     @Test
