@@ -3087,11 +3087,16 @@ event types over thousands of records take about the records' reading), and retu
 Refused while the check refuses the catalogue (overlaps, a blocking several, problems). At most three sets, then the
 catch-all (decided by the user 2026-11-20: 300 doubtful types in sets of 10 were 30 forms, and the high set's table
 for 300 types some 38k characters): every high-confidence event type in one set (a build is one source type group),
-shown as a summary by what happened (action element, counts, a few TypeIds with records) and the event types worth a
-look row by row (`CatalogueSummary`: no record in the sample, no event written, a lone action element in a set of 10
-or more, no description of its own, dropped); every medium in one, every low in one, their tables whole (cut past
-20,000 characters); every row in the source notes' Event types table (with Records), which the summary, a cut table
-and the form name. The table goes in the chat and the form refers to it (forms are short plain
+every medium in one, every low in one, each shown as a summary by what happened (action element, counts, a few
+TypeIds with records) and the event types worth a look row by row, at most 10, the rest counted (`CatalogueSummary`:
+amended since the set was shown, no record in the sample, no event written, a lone action element in a set of 10 or
+more, no description of its own, dropped, a `doubt` given; in a medium or low set every one, with its `doubt` where
+the agent gave one, the optional proposal key added 2026-11-20); every row in the source notes' Event types part (a
+section per action element, with Records and Status), which the summary links and the form names. The user may ask
+about any item (decided 2026-11-20): a message typed instead of the form, or a question in its text, is the agent's to
+read; a question it answers from `explain=` (an event type's meaning, recognition, translation, records and three
+example records; a group's members; changing nothing) and puts the set again; only a change is proposed; acceptance
+stays the form's. The table goes in the chat and the form refers to it (forms are short plain
 text): the set's table is shown first (`needs_showing`; Stroom AI's chat shows it itself, other clients' agents show
 it whole), then a form bound to that table, "Accept all N event types, or type your amendments"; a table shown more
 than 90 seconds before its form is shown again. Columns: `| Event type | Recognised by | Records | Translated as |`:
@@ -3206,8 +3211,10 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
 
 * `catalogue_event_types`' description stays short (no tool bloat); the conditions, evidence and checks are in
   `guides/mapping.md`.
-* The source notes' Markdown table is "Event types" (`| TypeId | Title | Recognised by | Translated as | Basis |`,
-  recognised by in words) with the catch-all row last: the readable form of the catalogue, written with the JSON block
+* The source notes' Markdown part is "Event types", for people (2026-11-20): a section per action element
+  (`### Authenticate`, the chat summaries' groups and order), each `| Event type | What happened | Recognised by |
+  Records | Status |` (recognised by in words; status `confirmed`/`proposed`, the confidence, where it came from),
+  the uncatalogued records last in a section of their own; the JSON block unchanged: the readable form of the catalogue, written with the JSON block
   in one place (`RecordSourceNotesTool.textWithCatalogue`), so it never goes stale.
 * `record_source_notes` keeps fields and documents only; a call giving `events` is refused and pointed at
   `catalogue_event_types`, through which documentation's event types are proposed (`basis: documentation`).
@@ -3308,8 +3315,13 @@ reads them; output JSON):
 * `proposals: [{"op": "add | change | remove", "type_id": "...", ...the entry's keys}]`: applied by TypeId, then
   checked; refused proposals say why (`refused`); the result is the check (compact; the full listing saved to the
   workspace, `listing`) with the next set's `table`.
-* `confirm: true`: puts the next set to the user (shown first, then its form; the high-confidence as a summary, then
-  the medium, then the low, a set each), then the catch-all; `status: needs_review` with a `review_id` where no form can be
+* `confirm: true`: puts the next set to the user (shown first, then its form; the high-confidence, then the medium,
+  then the low, a set each, each a summary), then the catch-all; `answered: true` with it puts a set the user wrote a
+  question in the form of to them again as it is.
+* `explain: [TypeIds or action elements]` (2026-11-20), alone: what the user asked about, for the agent to answer in
+  the chat (`status: explained`, `event_types`, `groups`, `uncatalogued_records`); changes nothing.
+* An event type's optional `doubt` (2026-11-20): why the agent is unsure of it, said among those worth a look; left
+  out of the JSON when not given. `status: needs_review` with a `review_id` where no form can be
   shown, confirmed by `reviewed=<review_id>`.
 * `catch_all: {"allow_unknown": "..."}` with confirm: the catch-all's agreement.
 * Results: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`, `confirmed`),

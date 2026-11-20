@@ -62,7 +62,7 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   of the TypeId), `title`, `description` (fixed text, no record values: the record's own message is used where it
   has one), `event_detail` (`Authenticate`, `Update`, `Network/Permit`...), `action`, `success`, `actor` and
   `affected` (fields), `affected_as` (User, File, Document, Group...), `basis` (`agent_knowledge`, `documentation`,
-  or `draft` for the seed's), `confidence` (high, medium, low).
+  or `draft` for the seed's), `confidence` (high, medium, low), optionally `doubt` (why you are unsure of it).
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no
@@ -84,13 +84,18 @@ varies; `not: true` for
   no sampled record is kept and said to be not in the sample. The full listing is saved to the workspace (`listing`).
 - **Confirmation** (`confirm: true`, again after each answer): at most three sets, the high-confidence event types,
   then the medium, then the low, then the catch-all for the uncatalogued records (give
-  `catch_all: {allow_unknown: why}`). The high set is a summary by what happened with the event types worth a look
-  row by row; the medium and low sets are their tables; every row is in the source notes' Event types table. Each is
-  shown first (in Stroom AI's chat, by the chat itself; else show it in your reply as it is), then a short form: "Accept all N event types, or type your amendments". The
-  confirmation is only ever the form's: amendments the user types (in the form or the chat) you propose as changes
-  (`op: change`, or add and remove), and the set is put to them again; `drop: true` only where the user said to drop
-  one. A client without forms gets `needs_review` and a `review_id`: show the table, and once the user agrees, call
-  with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed. The user
+  `catch_all: {allow_unknown: why}`). Each set is a summary by what happened with the event types worth a look row by
+  row (in a medium or low set every one; give `doubt: why` in a proposal you are unsure of, and it is said there);
+  every row is in the source notes, which the summary links. Each is shown first (in Stroom AI's chat, by the chat
+  itself; else show it in your reply as it is), then a short form: "Accept all N event types, or type your
+  amendments, or ask about any of them". The confirmation is only ever the form's. A message the user types instead
+  of answering, or words in the form's text, are yours to read: a question about an item (examples, what it means,
+  how it is recognised, why it is grouped so) you answer in the chat from `explain: [TypeIds or action elements]`
+  (changes nothing), then put the set again with `confirm: true` (`answered: true` too after words in the form); a
+  change they ask for you propose (`op: change`, or add and remove), and the set is put to them again, its amended
+  event types listed; if you can't tell which, ask them; never accept for them. `drop: true` only where the user said
+  to drop one. A client without forms gets `needs_review` and a `review_id`: show the table, and once the user agrees,
+  call with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed. The user
   declining the catch-all wants something else for those records: ask them in the chat, then propose event types for
   them, or give what they become (`catch_all: {translation: {type_id, event_detail, action, description}}`), and
   confirm again; the XSLT can't be saved until the catch-all is confirmed.

@@ -52,6 +52,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestCatalogueEventTypesTool {
 
     private static final String BUILD = "acme";
+    // The source notes doc, linked as the chat opens it (no section: the doc opens at its top).
+    private static final String NOTES_LINK = "[acme source notes](?action=open-doc&docType=Documentation&docUuid=";
     private static final String TABLE_HEADER = "| Event type | Recognised by | Records | Translated as |";
 
     private final BuildWorld world = new BuildWorld();
@@ -148,13 +150,15 @@ class TestCatalogueEventTypesTool {
         assertThat(kept.catchAll().confirmed()).isFalse();
         final String doc = notesText();
         // Every row, how each is recognised in words and its records: the full table the summary refers to.
-        assertThat(doc).contains("## Event types", CatalogueTables.NOTES_HEADER,
-                "| Authenticate-Logon | Authenticate Logon | action is login | 8 | Authenticate Logon, who acted: user "
-                + "| agent knowledge (high), proposed |",
-                "| Delete-Records | Delete Records | action is purge | 1 | Delete | agent knowledge (low), proposed |");
+        assertThat(doc).contains("## Event types", "### Authenticate", "### Delete", CatalogueTables.NOTES_HEADER,
+                "| `Authenticate-Logon` Authenticate Logon | Test: Authenticate-Logon | action is login | 8 | "
+                + "proposed; "
+                + "high; from the agent's knowledge |",
+                "| `Delete-Records` Delete Records | Test: Delete-Records | action is purge | 1 | proposed; low; from "
+                + "the agent's knowledge |");
         final List<String> rows = doc.lines().filter(line -> line.startsWith("| ")).toList();
-        assertThat(rows.getLast()).startsWith("| Unknown | Uncatalogued records | records no event type recognises "
-                                              + "| 0 |");
+        assertThat(rows.getLast()).startsWith("| `Unknown` Uncatalogued records | Translated as Unknown events, "
+                                              + "their fields kept as Data | records no event type recognises | 0 |");
     }
 
     @Test
@@ -340,7 +344,7 @@ class TestCatalogueEventTypesTool {
         assertThat(shown).containsEntry("status", "needs_showing");
         // The high-confidence ones summarised, whatever their number; every row in the source notes.
         assertThat(String.valueOf(shown.get("table"))).startsWith("**2 high-confidence event types**")
-                .contains("Authenticate-Logon", "Authenticate-Logoff", "'acme source notes'")
+                .contains("Authenticate-Logon", "Authenticate-Logoff", NOTES_LINK)
                 .doesNotContain("Export-Report", TABLE_HEADER);
         assertThat(map(map(shown.get("next")).get("call"))).containsEntry("tool", "catalogue_event_types");
         assertThat(user.shown()).isEmpty();
@@ -442,9 +446,9 @@ class TestCatalogueEventTypesTool {
         assertThat(again).containsEntry("status", "needs_showing");
         // The amended event type is worth a look, saying what changed, so the user can check it landed; every row
         // is in the source notes, which the summary refers to.
-        assertThat(String.valueOf(again.get("table"))).contains("'acme source notes'",
+        assertThat(String.valueOf(again.get("table"))).contains(NOTES_LINK,
                 "| `Authenticate-Logoff` Session timeout | action is logout | 8 | Authenticate | amended: title |");
-        assertThat(notesText()).contains("| Authenticate-Logoff | Session timeout |");
+        assertThat(notesText()).contains("| `Authenticate-Logoff` Session timeout |");
     }
 
     @Test
@@ -504,6 +508,8 @@ class TestCatalogueEventTypesTool {
         assertThat(list(explained.get("event_types")).getLast()).containsEntry("doubt", "seen once")
                 .containsEntry("records", 1);
         assertThat(String.valueOf(explained.get("hint"))).contains("Nothing was changed", "confirm=true");
+        // Where every row is, linked for the answer.
+        assertThat(String.valueOf(explained.get("every_row"))).contains(NOTES_LINK);
         assertThat(map(map(explained.get("next")).get("call")).get("arguments")).isEqualTo(Map.of("build", BUILD,
                 "confirm", true));
         // No side effect: the notes (catalogue, the set shown and its marks) as they were, and the form follows.
@@ -541,7 +547,8 @@ class TestCatalogueEventTypesTool {
         final String notesBefore = notesText();
 
         assertThat(text(Map.of("build", BUILD, "explain", List.of("Authenticate-Logout")), plain()))
-                .contains("No event type or group 'Authenticate-Logout'", "nearest: Authenticate-Logon, Authenticate-Logoff",
+                .contains("No event type or group 'Authenticate-Logout'",
+                        "nearest: Authenticate-Logon, Authenticate-Logoff",
                         "Nothing was changed");
         assertThat(text(Map.of("build", BUILD, "explain", "Authenticate-Logon", "confirm", true), plain()))
                 .contains("given alone");

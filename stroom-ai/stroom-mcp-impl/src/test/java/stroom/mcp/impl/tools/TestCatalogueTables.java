@@ -35,21 +35,65 @@ class TestCatalogueTables {
     private static final String DOC = "'acme source notes'";
 
     @Test
-    void theNotesTableHoldsEveryEventTypeWithItsRecords() {
+    void theNotesHoldEveryEventTypeWithItsRecordsASectionPerActionElement() {
         final List<EventType> set = types(300);
         final Catalogue catalogue = new Catalogue(set, Catalogue.CatchAll.PROPOSED, Catalogue.Scope.NONE);
 
         final List<String> table = CatalogueTables.notesTable(catalogue, CatalogueTables.recordsOf(check(set)));
 
-        assertThat(table).contains(CatalogueTables.NOTES_HEADER);
-        assertThat(table.stream().filter(line -> line.startsWith("| Process-Code"))).hasSize(300)
+        assertThat(table).startsWith("## Event types").contains("### Process", CatalogueTables.NOTES_HEADER,
+                "### Uncatalogued records");
+        assertThat(table.stream().filter(line -> line.startsWith("| `Process-Code"))).hasSize(300)
                 .allSatisfy(line -> assertThat(line).contains(" | 2 | "));
-        assertThat(table.stream().filter(line -> line.startsWith("| Unknown |")).findFirst().orElseThrow())
-                .contains("| records no event type recognises | 0 |");
+        // The catch-all last, in a section of its own.
+        assertThat(table.stream().filter(line -> line.startsWith("| ")).toList().getLast())
+                .startsWith("| `Unknown` Uncatalogued records | Translated as Unknown events, their fields kept as "
+                            + "Data | records no event type recognises | 0 | proposed |");
         // Unchecked (a hand edit read back): the records left blank.
-        assertThat(CatalogueTables.notesTable(catalogue, Map.of())).contains("| Process-Code000 | Process Code000 | "
-                                                                             + "every record |  | Process | agent "
-                                                                             + "knowledge (medium), proposed |");
+        assertThat(CatalogueTables.notesTable(catalogue, Map.of())).contains("| `Process-Code000` Process Code000 | "
+                                                                             + "Test | every record |  | proposed; "
+                                                                             + "medium; from the agent's knowledge |");
+    }
+
+    @Test
+    void theNotesGroupEventTypesAsTheSummariesDoInTheirOrderWithStatusInShortWords() {
+        final EventType logon = type("Authenticate-Logon", "Authenticate", "high", EventType.DOCUMENTATION)
+                .confirmedByUser();
+        final EventType export = type("Export-Report", "Export", "low", EventType.DRAFT);
+        final EventType logoff = withoutDescription(type("Authenticate-Logoff", "Authenticate", "medium",
+                EventType.AGENT_KNOWLEDGE));
+        final Catalogue catalogue = new Catalogue(List.of(logon, export, logoff), new Catalogue.CatchAll(
+                EventType.CONFIRMED, "the rest kept", null), Catalogue.Scope.NONE);
+
+        final List<String> table = CatalogueTables.notesTable(catalogue, Map.of("Authenticate-Logon", 4,
+                "Unknown", 3));
+
+        assertThat(table.stream().filter(line -> line.startsWith("### ")).toList()).containsExactly(
+                "### Authenticate", "### Export", "### Uncatalogued records");
+        assertThat(table).contains("| `Authenticate-Logon` Authenticate Logon | Test | every record | 4 | confirmed; "
+                                   + "high; from the documentation |",
+                "| `Authenticate-Logoff` Authenticate Logoff | - | every record |  | proposed; medium; from the "
+                + "agent's knowledge |",
+                "| `Export-Report` Export Report | Test | every record |  | proposed; low; from the draft's seed |",
+                "| `Unknown` Uncatalogued records | Translated as Unknown events, their fields kept as Data | records "
+                + "no event type recognises | 3 | confirmed by the user: the rest kept |");
+        assertThat(table.indexOf("### Export")).isGreaterThan(table.indexOf(
+                "| `Authenticate-Logoff` Authenticate Logoff | - | every record |  | proposed; medium; from the "
+                + "agent's "
+                + "knowledge |"));
+    }
+
+    private static EventType type(final String typeId,
+                                  final String eventDetail,
+                                  final String confidence,
+                                  final String basis) {
+        return new EventType(typeId, typeId.replace('-', ' '), "Test", eventDetail, null, null, null, null, null,
+                List.of(), false, basis, confidence, null, EventType.PROPOSED);
+    }
+
+    private static EventType withoutDescription(final EventType type) {
+        return new EventType(type.typeId(), type.title(), null, type.eventDetail(), null, null, null, null, null,
+                List.of(), false, type.basis(), type.confidence(), null, type.status());
     }
 
     private static List<EventType> types(final int count) {

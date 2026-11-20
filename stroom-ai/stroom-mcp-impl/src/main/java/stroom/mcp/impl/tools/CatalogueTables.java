@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
 import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -29,15 +30,16 @@ import java.util.Map;
 
 /// The catalogue of event types as the user reads it, in the design's words (source type, event type, record,
 /// recognised by, uncatalogued records): the table a set of event types is confirmed by, shown in the chat (the
-/// form refers to it: forms are short plain text), and the source notes' "Event types" table, the catch-all's row
-/// last. How a record of an event type is recognised is said in words (`logger_name is …SecurityEventLogger and
-/// eventType is "Password change"`), never as the conditions' JSON.
+/// form refers to it: forms are short plain text), and the source notes' "Event types" part, a section per action
+/// element, the uncatalogued records last. How a record of an event type is recognised is said in words
+/// (`logger_name is …SecurityEventLogger and eventType is "Password change"`), never as the conditions' JSON.
 final class CatalogueTables {
 
     /// The table a set of event types is confirmed by.
     static final String SET_HEADER = "| Event type | Recognised by | Records | Translated as |";
     /// The source notes' table of the catalogue.
-    static final String NOTES_HEADER = "| TypeId | Title | Recognised by | Records | Translated as | Basis |";
+    static final String NOTES_HEADER = "| Event type | What happened | Recognised by | Records | Status |";
+    private static final String NOTES_SEPARATOR = "| --- | --- | --- | --- | --- |";
     /// The catch-all's row's TypeId (the uncatalogued records' events).
     static final String UNKNOWN = "Unknown";
 
@@ -62,31 +64,70 @@ final class CatalogueTables {
         return String.join("\n", lines);
     }
 
+    /// The source notes' "Event types" part, for people (decided by the user 2026-11-20): a section per action
+    /// element, as the chat's summaries group them and in their order, each a table of its event types (TypeId and
+    /// title, what happened, how a record is recognised in words, records, and the status in short words), then the
+    /// uncatalogued records in a section of their own. It holds every event type, so the chat need show only a
+    /// summary of a large set. Descriptions are never cut.
+    ///
     /// @param catalogue A catalogue.
     /// @param records   The records of the sample each event type recognises, by TypeId, as last checked (empty
     ///                  when unknown: a hand edit read back).
-    /// @return Its "Event types" table for the source notes: an event type a row, in the catalogue's order, then
-    /// the catch-all's. It holds every event type, so the chat need show only a summary of a large set.
+    /// @return The part's lines.
     static List<String> notesTable(final Catalogue catalogue, final Map<String, ?> records) {
-        final List<String> lines = new ArrayList<>(List.of("## Event types", "", NOTES_HEADER,
-                "| --- | --- | --- | --- | --- | --- |"));
-        for (final EventType type : catalogue.eventTypes()) {
-            lines.add("| " + cell(nonNull(type.typeId())) + " | " + cell(nonNull(type.title())) + " | "
-                      + cell(recognisedBy(type)) + " | " + recordsKept(records.get(type.typeId())) + " | "
-                      + cell(translatedAs(type)) + " | " + cell(basis(type)) + " |");
+        final List<String> lines = new ArrayList<>(List.of("## Event types", ""));
+        for (final CatalogueSummary.Group group : CatalogueSummary.groups(catalogue.eventTypes(), null)) {
+            lines.addAll(List.of("### " + heading(group.whatHappened()), "", NOTES_HEADER, NOTES_SEPARATOR));
+            for (final EventType type : group.types()) {
+                lines.add("| " + cell("`" + nonNull(type.typeId()) + "` " + nonNull(type.title())) + " | "
+                          + cell(NullSafe.isBlankString(type.description())
+                        ? "-"
+                        : type.description()) + " | " + cell(recognisedBy(type)) + " | "
+                          + recordsKept(records.get(type.typeId())) + " | " + cell(status(type)) + " |");
+            }
+            lines.add("");
         }
         final Catalogue.CatchAll catchAll = catalogue.catchAll();
-        lines.add("| " + UNKNOWN + " | Uncatalogued records | records no event type recognises | "
+        lines.addAll(List.of("### Uncatalogued records", "", NOTES_HEADER, NOTES_SEPARATOR));
+        lines.add("| `" + UNKNOWN + "` Uncatalogued records | Translated as " + uncataloguedAs(catchAll)
+                  + ", their fields kept as Data | records no event type recognises | "
                   + (records.get(UNKNOWN) instanceof final Number count
                 ? String.valueOf(count.longValue())
-                : "") + " | Unknown, their "
-                  + "fields kept as Data | " + cell(catchAll.confirmed()
+                : "") + " | " + cell(catchAll.confirmed()
                 ? "confirmed by the user" + (catchAll.allowUnknown() == null
                         ? ""
                         : ": " + catchAll.allowUnknown())
                 : "proposed") + " |");
         lines.add("");
         return lines;
+    }
+
+    // A group's heading: its action element as it is, the others' words with a capital.
+    private static String heading(final String whatHappened) {
+        return whatHappened.isEmpty()
+                ? whatHappened
+                : Character.toUpperCase(whatHappened.charAt(0)) + whatHappened.substring(1);
+    }
+
+    // What the uncatalogued records are written as: Unknown events, or the event the user said.
+    private static String uncataloguedAs(final Catalogue.CatchAll catchAll) {
+        final Catalogue.CatchAll.Translation own = catchAll.translation();
+        return own == null || NullSafe.isBlankString(own.eventDetail())
+                ? "Unknown events"
+                : cell(own.typeId() + " events (" + own.eventDetail() + ")");
+    }
+
+    // An event type's status in short words: confirmed or proposed, its confidence, where it came from.
+    private static String status(final EventType type) {
+        final String from = switch (nonNull(type.basis())) {
+            case EventType.USER_CONFIRMED -> "the user's";
+            case EventType.DOCUMENTATION -> "from the documentation";
+            case EventType.DRAFT -> "from the draft's seed";
+            default -> "from the agent's knowledge";
+        };
+        return (type.confirmed()
+                ? "confirmed"
+                : "proposed") + "; " + nonNull(type.confidence()) + "; " + from;
     }
 
     /// @param type An event type.
@@ -214,20 +255,6 @@ final class CatalogueTables {
         return count.records() == 0
                 ? "0 (not in the sample)"
                 : String.valueOf(count.records());
-    }
-
-    private static String basis(final EventType type) {
-        final String basis = switch (nonNull(type.basis())) {
-            case EventType.USER_CONFIRMED -> "the agent's proposal, confirmed by the user";
-            case EventType.DOCUMENTATION -> "documentation";
-            case EventType.DRAFT -> "the draft's seed";
-            default -> "agent knowledge (" + type.confidence() + ")";
-        };
-        return type.confirmed() && !EventType.USER_CONFIRMED.equals(type.basis())
-                ? basis + ", confirmed by the user"
-                : type.confirmed()
-                        ? basis
-                        : basis + ", proposed";
     }
 
     // A value said: short ones as they are (quoted when they hold spaces), a long qualified name by its last part.

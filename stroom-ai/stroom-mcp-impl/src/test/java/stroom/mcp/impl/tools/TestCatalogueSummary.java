@@ -52,7 +52,7 @@ class TestCatalogueSummary {
         assertThat(groups.getFirst().records()).isEqualTo(13);
         assertThat(CatalogueSummary.summary(set, check, DOC))
                 .startsWith("**3 high-confidence event types**, by what happened. Each one, row by row, is in the "
-                            + "Event types table of the source notes 'acme source notes'.")
+                            + "source notes 'acme source notes'; ask about any of them in the chat.")
                 .contains("- Authenticate: 2 event types, 13 records; Authenticate-Logon (8), Authenticate-Logoff (5)")
                 .contains("- Process: 1 event type, 3 records; Process-Request (3)")
                 .contains("Worth a look: none.")
@@ -223,7 +223,8 @@ class TestCatalogueSummary {
 
         assertThat(summary).contains("Removed, as amended: Authenticate-Timeout.",
                 "**Worth a look** (1 event type):",
-                "| `Authenticate-Logoff` Authenticate Logoff | every record | 2 | Authenticate Logoff | amended: title, "
+                "| `Authenticate-Logoff` Authenticate Logoff | every record | 2 | Authenticate Logoff | amended: "
+                + "title, "
                 + "recognised by |");
         // Kept in the confirmation's marks between calls.
         assertThat(CatalogueSummary.Amendments.fromJson(amendments.toJson())).isEqualTo(amendments);

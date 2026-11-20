@@ -3587,7 +3587,8 @@ the catalogue is never sent whole. `change` gives only the keys that change. An 
 `description`, `event_detail`, `action`, `success`, `actor`, `affected`, `affected_as` (written out to its leaf,
 `User` as `User/Id`), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
 when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`, `documentation`), `confidence`
-(high, medium, low) and `one_type_because`. A proposal with no TypeId gets the default (`TypeIds.defaultTypeId`: the
+(high, medium, low), `one_type_because` and, optionally, `doubt` (why the agent is unsure of it: said to the user
+among those worth a look; 2026-11-20). A proposal with no TypeId gets the default (`TypeIds.defaultTypeId`: the
 event detail as the verb, `affected_as`, else the first `equals` value's last segment, else the title's first word;
 e.g. `Process-SOAPService`). A proposed or changed event type is `proposed` whatever the proposal says, until the user
 confirms it; a change of any event type puts a confirmed catch-all back to the user. `basis: user_confirmed` is
@@ -3632,10 +3633,12 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
 
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
 `allow_unknown`, `scope` with the source type field and source types), with the confirmation in progress (the set last
-shown and when, a set the user amended, the streams it was checked against), and the notes doc's "Event types" table
-(`| TypeId | Title | Recognised by | Records | Translated as | Basis |`, every event type, conditions in words, the
-records as last checked (kept in the confirmation, left blank after a hand edit read back), the catch-all's `Unknown`
-row last), written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
+shown and when, a set the user amended, what proposals changed since the set was shown, the streams it was checked
+against), and the notes doc's "Event types" part, for people (2026-11-20): a section per action element (`### Authenticate`,
+the summaries' groups in their order), each a table `| Event type | What happened | Recognised by | Records | Status |`
+(TypeId and title; the description, or `-`; conditions in words; the records as last checked, kept in the
+confirmation, left blank after a hand edit read back; `confirmed` or `proposed`, the confidence and where it came
+from), the uncatalogued records (the catch-all) last in a section of their own; written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
 field dictionary, documents and references stay as record_source_notes keeps them. The build's one notes doc is
 used, else `<source> source notes` is made. Every result carries `catalogue`, compact (each `type_id`, `title`,
 `status`, the catch-all's `status`).
@@ -3643,18 +3646,20 @@ used, else `<source> source notes` is made. Every result carries `catalogue`, co
 **Confirmation** (`confirm: true`, again after each answer). Refused while the check has overlaps, a blocking
 `several` or problems, saying which. The sets, in the catalogue's order, at most three (decided by the user 2026-11-20:
 never many forms; 300 doubtful types were 30 forms): every high-confidence event type in one, every medium in one,
-every low in one, a confidence with none passed over, then the catch-all. The high set is shown as a summary
-(`CatalogueSummary`), whatever its size: grouped by action element, each group's count, records and commonest three
-TypeIds, then the event types worth a look in a table with why (no record in the sample; no action element, an
-action of Other or Unknown, or an Unknown verb; the only one under its element in a set of 10 or more; no
-description of its own; dropped), up to 25 rows, the rest counted. The medium and low sets are their table
-(`| Event type | Recognised by | Records | Translated as |`, recognised by in words: `logger_name is
-…SecurityEventLogger and eventType is "Password change"`), cut past 20,000 characters to its first rows and where the
-rest are. Both name the source notes, whose Event types table holds every row; the form links it (`every row`).
+every low in one, a confidence with none passed over, then the catch-all. Each set is shown as a summary
+(`CatalogueSummary`), whatever its size and confidence: grouped by action element, each group's count, records and
+commonest three TypeIds, then the event types worth a look in a table with why, up to 10 rows, the rest counted
+(decided by the user 2026-11-20). Worth a look: those amended since the set was shown (`amended: title, recognised
+by`, so the user can check their amendment landed; those removed are named), no record in the sample, no action
+element, an action of Other or Unknown, or an Unknown verb, the only one under its element in a set of 10 or more, no
+description of its own, dropped, or a `doubt` given; in a medium or low set every one (each is doubtful by its
+confidence), with its `doubt` and `one_type_because` where given; listed amended first, then those a rule or a doubt
+picks out, then the rest. The summary links the source notes (its Event types part holds every row), says the user
+can ask about any of them in the chat, and the form links the notes too (`every row`).
 Each comes first with `status: needs_showing`: Stroom AI's chat
 shows it itself, as it is, and the agent is told not to repeat it; another client's agent is told to show it whole.
 The next call (within 90 seconds of the table, or the same call made again with the answer) asks one short plain form
-bound to that table: "Accept all N event types, or type your amendments". A table shown longer ago is shown again
+bound to that table: "Accept all N event types, or type your amendments, or ask about any of them". A table shown longer ago is shown again
 before its form. Accepted, the set is `confirmed` (the seed's basis becoming `user_confirmed`; documentation's and the
 agent's kept) and the next set's table comes back (`confirmed_now`). Amended, nothing of the set is confirmed:
 `status: needs_confirmation` with the user's `amendments` and the `amended` TypeIds; the agent proposes them
@@ -3663,8 +3668,12 @@ confirm before the amendments are proposed is refused, quoting them. Proposals t
 amendment the check refuses, the user then choosing the rule as it was; eval case 61, 2026-11-20, where every confirm
 replayed the amendment) take the amendments as sent: the set is put to the user again. The confirmation is only ever the
 form's (decided
-2026-11-18): amendments may come from the form's text or the chat, acceptance never from the chat. A form put aside by
-a message is answered as forms are (reply to the message first). Last, the catch-all: the uncatalogued records' count
+2026-11-18): amendments may come from the form's text or the chat, acceptance never from the chat. **Questions**
+(decided by the user 2026-11-20): a message the user types instead of answering the form (the form put aside,
+`Consent.SentInstead`), or words in the form's text, are the agent's to read: a question about an item (examples, what
+it means, how it is recognised, why it is grouped so) it answers in the chat from `explain=` and puts the set to the
+user again (`confirm: true`; after words in the form, `confirm: true answered: true`, which only shows the set again,
+never accepts it); only a change asked for is proposed; if it can't tell, it asks the user. Last, the catch-all: the uncatalogued records' count
 and shapes shown, then a form to keep them as Unknown events, their fields kept as Data, with the agreement given as
 `catch_all: {allow_unknown: <why>}` on any confirm call (used at its turn). Declined, the result says the user wants
 something else for those records: the agent asks them in the chat, then proposes event types for them (`op: add`,
@@ -3673,6 +3682,18 @@ event_detail, action, description}}`), and the catch-all is put to them again in
 refuses to save while it is unconfirmed (2026-11-20). Once every event type and the catch-all
 are confirmed, `status: confirmed` with the plan's next step: the build plan's `catalogue` step is done, and
 `draft_translation_mapping` follows the catalogue.
+
+**Explain** (`explain=`, alone: with proposals or confirm it is refused; `status: explained`): TypeIds (ignoring
+case), action elements (a group of the summary: the set put to the user's, else the catalogue's) or `Unknown` (the
+uncatalogued records). Each event type (at most 20 a call, the rest named): title, description, recognised by in
+words, translated as, records, confidence, `doubt`, `one_type_because`, status, and three of its records from the
+sample (`CatalogueCheck.examples`: the text shortened, the values its conditions test as read); a group: its members
+(TypeId, title, recognised by, records); the uncatalogued records: what they become and their shapes; `every_row`,
+the source notes doc linked as the caller opens documents (the chat's open-doc link, or Stroom's URL outside it; the
+doc opens at its top, no section). A large result
+is outlined for clients outside Stroom (`LargeResults`). It changes nothing (catalogue, confirmation marks, listing);
+a name it doesn't know is refused with the three nearest TypeIds or groups. The hint says to answer in the chat, then
+`confirm: true` (with `answered: true` after words in the form).
 
 **Clients without forms**: `status: needs_review` with the set's `table` and a `review_id`; the agent shows the table
 and, once the user agrees, calls with `confirm: true reviewed=<review_id>`; amendments go back as proposals. In Stroom

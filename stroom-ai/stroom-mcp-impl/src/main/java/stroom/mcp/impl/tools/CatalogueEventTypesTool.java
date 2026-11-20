@@ -1175,9 +1175,18 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                             final List<EventType> set,
                             final CatalogueCheckResult check,
                             final Map<String, Object> confirming) {
-        final String notesDoc = "'" + notes.notesDoc(calling.build(), calling.source()).getName() + "'";
+        final String notesDoc = notesLink(calling);
         return CatalogueSummary.summary(set, check, notesDoc, CatalogueSummary.Amendments.fromJson(
                 JsonValues.map(confirming.get(CHANGES))));
+    }
+
+    // The source notes doc, where every row is: linked as the caller opens documents (Stroom AI's chat, or Stroom's
+    // URL for a client outside it), at its top; its name quoted before it exists.
+    private String notesLink(final Calling calling) {
+        final DocRef notesDoc = notes.notesDoc(calling.build(), calling.source());
+        return notesDoc.getUuid() == null
+                ? "'" + notesDoc.getName() + "'"
+                : calling.context().links().document(notesDoc);
     }
 
     // The confirmation's marks with what the proposals changed, while a set is shown or amended (the user's
@@ -1294,6 +1303,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             rest.putAll(JsonValues.mapOrEmpty(check.toJson().get("uncatalogued")));
             result.put("uncatalogued_records", rest);
         }
+        result.put("every_row", "the source notes " + notesLink(calling) + ", a section per action element");
         result.put("catalogue", compact(catalogue));
         final boolean wroteInForm = amendedDigest(confirming(calling.notesNow())) != null;
         final Map<String, Object> then = new LinkedHashMap<>();

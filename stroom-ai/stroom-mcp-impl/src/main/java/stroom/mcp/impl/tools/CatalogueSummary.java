@@ -85,7 +85,7 @@ final class CatalogueSummary {
     ///
     /// @param set      The event types put to the user, of one confidence, in the catalogue's order.
     /// @param check    The check of their catalogue (for their records), or null.
-    /// @param notesDoc Where every row is: the source notes doc's name, quoted, or words naming it.
+    /// @param notesDoc Where every row is: a link to the source notes doc, or its name quoted.
     /// @return The summary, Markdown.
     static String summary(final List<EventType> set, final CatalogueCheckResult check, final String notesDoc) {
         return summary(set, check, notesDoc, Amendments.NONE);
@@ -95,7 +95,7 @@ final class CatalogueSummary {
     ///
     /// @param set        The event types put to the user, of one confidence, in the catalogue's order.
     /// @param check      The check of their catalogue (for their records), or null.
-    /// @param notesDoc   Where every row is: the source notes doc's name, quoted, or words naming it.
+    /// @param notesDoc   Where every row is: a link to the source notes doc, or its name quoted (before it exists).
     /// @param amendments What the user's amendments to this set changed, so far ([Amendments#NONE] before any).
     /// @return The summary, Markdown.
     static String summary(final List<EventType> set,
@@ -108,7 +108,8 @@ final class CatalogueSummary {
         lines.add("**" + set.size() + " " + confidence + "-confidence event type" + plural(set.size()) + "**, by "
                   + "what happened" + (doubtful
                 ? ": each is doubtful, so each is worth a look below"
-                : "") + ". Each one, row by row, is in the Event types table of the source notes " + notesDoc + ".");
+                : "") + ". Each one, row by row, is in the source notes " + notesDoc + "; ask about any of them in "
+                  + "the chat.");
         lines.add("");
         for (final Group group : groups(set, check)) {
             lines.add("- " + said(group, check));
