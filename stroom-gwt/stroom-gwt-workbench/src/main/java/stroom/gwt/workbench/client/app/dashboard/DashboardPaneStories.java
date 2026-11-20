@@ -547,6 +547,32 @@ public final class DashboardPaneStories {
                             splitter.element().get(), exclude.element().get())).toBe(true);
                     DashboardPlays.expectNoProblems(play);
                 })
+                // A dashboard table's Filter dialog focuses the field of the tab it opens on: the Filter
+                // tab's editor at first, as the query editor's does (the editor wasn't focused). The
+                // dialog is kept for the table, so it opens again on the tab it was left on, here
+                // Include Exclude, whose Include box is focused
+                .story("TableFilterFocusesItsEditor", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(DashboardPlays.menuItem(screen, "Filter"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Filter 'Name'");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toHaveFocus());
+
+                    play.click(dialog.getByText("Include Exclude", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Name'")).toBeNull());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(DashboardPlays.menuItem(screen, "Filter"));
+                    final Play again = DashboardPlays.dialog(screen, "Filter 'Name'");
+                    play.waitFor(() -> play.expect(again.querySelector("textarea#filterInclude")).toHaveFocus());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // The column values filter's whitelist is sent with the table's next search
                 .story("TableColumnValuesFilter", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         routes -> routes.route(COLUMN_VALUES_REQUEST, RestReply.json(COLUMN_VALUES))))

@@ -25,15 +25,17 @@ import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /// A table column's filter ([ColumnFilterEditor]): shown as a dialog of its own, or as the Filter
-/// tab of a dashboard table's filter dialog.
-public class ColumnFilterEditorController extends Controller {
+/// tab of a dashboard table's filter dialog, which focuses it as a [Focus] when it opens.
+public class ColumnFilterEditorController extends Controller implements Focus {
 
     private final CodeEditorController editor;
 
@@ -51,6 +53,13 @@ public class ColumnFilterEditorController extends Controller {
         editor = make(codeEditorControllerProvider).attach(view.getEditor());
     }
 
+    /// Focuses the filter's editor, e.g. as its own dialog opens, or as the Filter tab of a
+    /// dashboard table's filter dialog does.
+    @Override
+    public void focus() {
+        editor.focus();
+    }
+
     /// Shows the editor as a dialog for a column's filter, owned by `opener` until it is closed.
     /// OK gives the column, and a copy with the filter entered, to `onChange` if the filter has
     /// changed.
@@ -66,12 +75,11 @@ public class ColumnFilterEditorController extends Controller {
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(600, 300))
                 .caption("Filter '" + column.getName() + "'")
-                .onShow(e -> editor.focus())
+                .onShow(e -> focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ColumnFilter filter = getColumnFilter(column);
-                        if ((filter == null && column.getFilter() != null)
-                            || (filter != null && !filter.equals(column.getColumnFilter()))) {
+                        if (!Objects.equals(filter, column.getColumnFilter())) {
                             onChange.accept(column, column.copy().columnFilter(filter).build());
                         }
                     }

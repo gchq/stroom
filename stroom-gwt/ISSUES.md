@@ -1640,14 +1640,25 @@ to delete them by hand.~~
   (`ElasticIndexSettings.ui.xml`).~~ **Gone** (checked 19 November 2026): the rerank settings moved
   to each field's settings (#5976, `ElasticFieldSettings.ui.xml`), whose help has no braces.
 * Found in wave 8's audit (26 October 2026; master has each):
-  * A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
+  * ~~A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
     `TableFilterPresenter.focus()` focused the selected tab's layer, which wasn't a `Focus`. Its
     replacement, `ColumnFilterTabsController.focus()`, shows its tabs through `ControllerLayer`,
-    which is a `Focus` now: to check whether that fixed it.
-  * `ColumnFilterEditorController` decides whether the filter changed with `filter == null &&
+    which is a `Focus` now: to check whether that fixed it.~~ **Fixed** (19 November 2026): it
+    hadn't. `ControllerLayer` passes the focus on to its controller only if that is a `Focus`, and
+    `ColumnFilterEditorController` wasn't, so the tab's first tab stop took it, not the Ace editor.
+    It is a `Focus` now, focusing its editor (as its own dialog, the query editor's, always did).
+    Play: `App/Editors/DashboardEditor` `TableFilterFocusesItsEditor` (failed before; it also
+    reopens the dialog, which is kept for the table and opens on the tab it was left on, here
+    Include Exclude, whose Include box is focused). Left: `ContentFocus`, which `ControllerLayer`
+    uses for content that isn't a `Focus`, focuses the first tab stop, which an Ace editor's input
+    isn't; any other tab whose main field is a code editor needs its controller to be a `Focus`
+    too, or `ContentFocus` to find the editor.
+  * ~~`ColumnFilterEditorController` decides whether the filter changed with `filter == null &&
     column.getFilter() != null`, which can't be true (`getColumnFilter` never gives null) and
     compares the wrong filter (the include/exclude one); it works only because the other branch
-    covers it.
+    covers it.~~ **Fixed** (19 November 2026): `!Objects.equals(filter, column.getColumnFilter())`,
+    as `ColumnFilterTabsController` has; the same result as the branch that worked, so no story
+    can show a difference (`App/Editors/QueryEditor` `ColumnFilterMenu` still sets a filter).
   * ~~The time preferences don't make the dialog changed when the time zone Id, the offset or the
     Custom Format text is edited (`TimePreferences`, lines 101-112).~~ **Re-scoped and fixed**
     (19 November 2026). The dialog has no changed state of its own: OK always saved these fields (it
