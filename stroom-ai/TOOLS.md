@@ -101,19 +101,19 @@ Where a tool is offered:
   is given one `activate_<group>` tool per group naming the group's tools, and once it calls it, the group's tools
   are offered from its next step. The 103 tools' definitions took about 51k tokens of a 131k context window
   before the question, so a long question had its steps shortened at every step. The groups are `build`,
-  `processing`, `indexing`, `dashboards`, `administration` and `sequence_hunting` (the tables below give each
+  `processing`, `indexing`, `dashboards`, `administration` and `sequences` (the tables below give each
   tool's). A group's name may hold `_`: it is only MCP tool names that are split at the first `_`, and an MCP
   group of the same name as a built-in one is `mcp_<name>`. A tool in no
   group is always offered. A dashboard tab's guidance turns on `dashboards` from the start
   (`BuiltInToolGroups.neededBy`). A group none of whose tools the user may use, or that are usable (see
-  "Usable"), isn't offered: `activate_sequence_hunting` only to a user who can Use a data source. `activate_*` are
+  "Usable"), isn't offered: `activate_sequences` only to a user who can Use a data source. `activate_*` are
   not tools of their own: they are made by `ToolGroups` and are not in the tables.
 * **Usable**: a tool can say it has nothing to work on for the user (`StroomTool.isUsable`), and the chat then
   doesn't offer it, nor the guidance that names it (`ContextAssembler.withoutGuidanceForToolsNotOffered`). Asked as
   the user when a run starts; a yes is kept for the rest of the chat (`BuiltInTools.isUsableInChat`), so its tools
   stay the same from question to question, and a no is asked again at the next run. Only `sequence_query` uses it:
   offered to a user who can Use at least one data source (Elastic and Lucene indexes looked at first, then the
-  whole list; the stores' lists and the permission check, no cluster call), and so its group, `sequence_hunting`,
+  whole list; the stores' lists and the permission check, no cluster call), and so its group, `sequences`,
   is too. Over `/mcp` it is offered whatever it says, as the
   server instructions are the same for everyone, and `/mcp` has no groups: a client hides tools itself.
 * **Over `/mcp`** (`McpTools`): a session is offered the tools its user's policies grant, except the chat-only
@@ -189,7 +189,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `run_stroomql` | Runs a StroomQL query into a workspace table, refusing a search on an index whose answer would mislead | search | yes | | | | | slot |
 | `search_events` | XPath, text or jq search over fetched events into a table; or, given an index, finds events as a dashboard would | search | yes | | | | Use | slot |
 | `search_history` | Searches the chat's history for text | search | yes | | | | | chat |
-| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until); a StroomQL windowed join of two steps on other data sources | search | yes | sequence_hunting | | | Use | slot |
+| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until); a StroomQL windowed join of two steps on other data sources | search | yes | sequences | | | Use | slot |
 | `server_tasks` | The tasks running on every node now (Monitoring > Server Tasks) | administration | yes | administration | Manage Tasks | | | |
 | `str_replace` | Replaces text in a workspace file | core | no | | | | | trusted |
 | `stream_meta` | Finds streams and their meta, grouped and aggregated if asked; describes one stream's family | processing | yes | | | View Data | View | |
@@ -1293,10 +1293,10 @@ Finds ordered sequences of events across one or more Elastic Index docs on one c
 Elasticsearch: "a device plugged in, then a file copied to it", "a clipboard copy then PowerShell within 2 minutes
 by the same user on the same host", "20 failed logons then a success". Structured steps only, never raw EQL.
 
-* **Offered** in the chat in the `sequence_hunting` group, and only to a user who can Use a data source (see
-  "Usable" above): the chat sends `activate_sequence_hunting` (about 290 characters) until the model turns it on,
+* **Offered** in the chat in the `sequences` group, and only to a user who can Use a data source (see
+  "Usable" above): the chat sends `activate_sequences` (about 290 characters) until the model turns it on,
   and the full definition (about 8,400 characters as sent) only from then, while the chat's latest two questions
-  use it. The guidance bullet names it "in the sequence_hunting group". The definition carries the rules and
+  use it. The guidance bullet names it "in the sequences group". The definition carries the rules and
   examples, and `until` and the `any_of` items list their properties (a condition's, a step's index, where, any_of
   and by), as strict providers may refuse an object schema with none. What a call can get wrong is also said by
   the refusal or result that meets it (a `?` in a pattern, nested and text fields, the versions for missing and

@@ -793,7 +793,7 @@ other data source, as a StroomQL windowed join. Decided with the user:
   steps, until, missing, runs; caseInsensitive, length, is null, regex) is refused saying it needs Elastic Indexes.
   The result says which engine ran and why. Review output: for EQL the review queries plus, where a join can say
   it, the same sequence as StroomQL (`stroomql`); for the join, the join itself, which the user can save as a Query.
-  The group is `sequence_hunting` (was `elastic_hunting`), offered to a user who can Use any data source.
+  The group is `sequences` (was `elastic_hunting`, then `sequence_hunting`), offered to a user who can Use any data source.
 * **Guards from the benchmark (2026-11-20).** Measured on 1 million synthetic events on one node: a Lucene windowed
   join costs about 11 µs per joined row read plus 0.37 µs per joined row read per first-step event of the same key;
   under 5 s up to 10,000 first-step events with a filtered second step; 100,000 by 100 users 37 s; an unfiltered
@@ -840,8 +840,8 @@ other data source, as a StroomQL windowed join. Decided with the user:
   per chat once true, and leaves out the chat guidance bullet that names it when it isn't offered. Over `/mcp` it
   is always offered, as the server instructions name it for everyone. The definition was cut to about 2,800
   characters: the rarely needed detail is in the refusals and results that meet it.
-* **Behind a group (2026-11-16).** Then put in its own built-in group, `elastic_hunting` (`sequence_hunting` since
-  2026-11-20; `BuiltInToolGroups`), so
+* **Behind a group (2026-11-16).** Then put in its own built-in group, `elastic_hunting` (`sequence_hunting` from
+  2026-11-20, `sequences` from 2026-11-21; `BuiltInToolGroups`), so
   a chat sends only its activator (about 290 characters: "hunt across Elastic Indexes for ordered sequences of
   events ...") until the model turns it on, and the definition was restored in full (about 8,400 characters: the
   examples and rules, and `until` and the `any_of` items with their properties listed, not empty objects, which
@@ -1121,7 +1121,7 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
 ### Tool registry, groups and server instructions
 
 * **Groups** (`BuiltInToolGroups`, `ToolGroups`): build, processing, indexing, dashboards and administration tools,
-  and `sequence_query` (sequence_hunting, offered only to a user who can Use a data source), are offered behind
+  and `sequence_query` (sequences, offered only to a user who can Use a data source), are offered behind
   `activate_<group>` tools, each saying what the group is for. Core, search and file tools are always offered. All definitions together came to about 51k tokens; a question now starts at about 14k
   (2026-10-29). A group stays on while either of the latest two questions uses it, and calling a tool from a group
   that is off turns it on. Activations are rebuilt from the chat's stored calls at each run start, so they survive

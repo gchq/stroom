@@ -797,7 +797,7 @@ class TestSequenceQueryTool {
 
     @Test
     void theDefinitionIsFullNowItIsOfferedOnlyWhenItsGroupIsOn() {
-        // Offered only once the model turns on sequence_hunting, so the rules and examples are back in it; they are
+        // Offered only once the model turns on sequences, so the rules and examples are back in it; they are
         // also said by the refusal or result that meets them (see theRulesAreAlsoSaidWhereACallMeetsThem).
         final String description = tool.definition().description();
 

@@ -231,7 +231,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         return AiToolCategory.SEARCH;
     }
 
-    // The definition is full, as it is offered only once the model turns on its group (sequence_hunting, see
+    // The definition is full, as it is offered only once the model turns on its group (sequences, see
     // BuiltInToolGroups). The rules a call can break are also said by the refusal or result that meets them.
     @Override
     public ToolDefinition definition() {

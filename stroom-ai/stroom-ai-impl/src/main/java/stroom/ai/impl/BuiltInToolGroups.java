@@ -37,7 +37,7 @@ public final class BuiltInToolGroups {
     static final String INDEXING = "indexing";
     static final String DASHBOARDS = "dashboards";
     static final String ADMINISTRATION = "administration";
-    static final String SEQUENCE_HUNTING = "sequence_hunting";
+    static final String SEQUENCES = "sequences";
 
     /// What each group is for, as the tool that turns it on says, in the order the groups are offered.
     static final Map<String, String> PURPOSES = purposes();
@@ -117,7 +117,7 @@ public final class BuiltInToolGroups {
                     "volumes"),
             // Its definition is large and most chats never hunt sequences. Offered only to a user who can use a
             // data source (StroomTool#isUsable), so a group with none of its tools offered isn't either.
-            SEQUENCE_HUNTING, List.of(
+            SEQUENCES, List.of(
                     "sequence_query")));
 
     private BuiltInToolGroups() {
@@ -151,13 +151,15 @@ public final class BuiltInToolGroups {
                             + "promoting a build, and suggesting standing instructions (AGENTS docs) from the "
                             + "user's chats");
         purposes.put(PROCESSING, "step pipelines and records, create or change processor filters, reprocess "
-                                 + "streams, see processor tasks, and find out why processing isn't happening");
+                                 + "streams, see processor tasks, find out why processing isn't happening, and "
+                                 + "why data is, or will be, deleted");
         purposes.put(INDEXING, "plan, make and check search indexes (Lucene or Elasticsearch), their index "
                                + "templates and their indexing pipelines");
         purposes.put(DASHBOARDS, "make or change dashboards, their charts and visualisations, and the search "
                                  + "extractions their tables use");
-        purposes.put(ADMINISTRATION, "read Stroom's configuration properties, and the tasks running on its nodes");
-        purposes.put(SEQUENCE_HUNTING, "hunt for ordered sequences of events in any data source (X, then Y, by the "
+        purposes.put(ADMINISTRATION, "read Stroom's configuration properties, the tasks running on its nodes, "
+                                     + "and its data and index volumes");
+        purposes.put(SEQUENCES, "hunt for ordered sequences of events in any data source (X, then Y, by the "
                                        + "same user or host, within N; on Elastic Indexes also N in a row, and X "
                                        + "and then not Y)");
         return Collections.unmodifiableMap(purposes);

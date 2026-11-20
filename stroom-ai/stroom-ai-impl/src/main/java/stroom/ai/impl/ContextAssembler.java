@@ -80,7 +80,7 @@ public class ContextAssembler {
     static final String SEQUENCE_GUIDANCE = """
             - For "X, then Y" questions (by the same user or host, within N; on Elastic Indexes also N in a row, \
             and X and then not Y), in one data source or across several, use sequence_query (in the \
-            sequence_hunting group): never join query or search results by hand.
+            sequences group): never join query or search results by hand.
             """;
     // The guidance bullets about one built-in tool alone, by the tool's name.
     private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(SEQUENCE_TOOL, SEQUENCE_GUIDANCE);

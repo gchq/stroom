@@ -193,8 +193,8 @@ class TestAgentModeTools {
             Map.entry("elastic_index_templates", false)));
 
     private static final DocRef ELASTIC_INDEX = new DocRef(ElasticIndexDoc.TYPE, "elastic-uuid", "Events");
-    private static final String ACTIVATE_SEQUENCE_HUNTING = ToolGroups.ACTIVATE_PREFIX
-                                                           + BuiltInToolGroups.SEQUENCE_HUNTING;
+    private static final String ACTIVATE_SEQUENCES = ToolGroups.ACTIVATE_PREFIX
+                                                           + BuiltInToolGroups.SEQUENCES;
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -304,13 +304,13 @@ class TestAgentModeTools {
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
         final ChatRequest withoutIndex = firstRequest(2, systemPrompt);
 
-        assertThat(offered(withIndex)).contains(ACTIVATE_SEQUENCE_HUNTING, "esql_query")
+        assertThat(offered(withIndex)).contains(ACTIVATE_SEQUENCES, "esql_query")
                 .doesNotContain("sequence_query");
         assertThat(systemPrompt(withIndex)).isEqualTo(systemPrompt)
                 .contains(ContextAssembler.SEQUENCE_GUIDANCE);
-        assertThat(offered(withoutIndex)).doesNotContain("sequence_query", ACTIVATE_SEQUENCE_HUNTING)
+        assertThat(offered(withoutIndex)).doesNotContain("sequence_query", ACTIVATE_SEQUENCES)
                 .contains("esql_query");
-        assertThat(systemPrompt(withoutIndex)).doesNotContain("sequence_query").doesNotContain("sequence_hunting")
+        assertThat(systemPrompt(withoutIndex)).doesNotContain("sequence_query").doesNotContain("sequences")
                 .contains("For totals, top N and grouped questions on an Elastic Index, use esql_query")
                 .contains("- \"Query\" can mean two things.");
     }
@@ -318,11 +318,11 @@ class TestAgentModeTools {
     @Test
     void theSequenceHuntingActivatorSaysWhatItIsForAndNamesSequenceQuery() {
         final ToolSpecification activator = firstRequest(1, "system").toolSpecifications().stream()
-                .filter(specification -> specification.name().equals(ACTIVATE_SEQUENCE_HUNTING))
+                .filter(specification -> specification.name().equals(ACTIVATE_SEQUENCES))
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(activator.description()).isEqualTo("Turns on the 'sequence_hunting' group of 1 tool, to hunt "
+        assertThat(activator.description()).isEqualTo("Turns on the 'sequences' group of 1 tool, to hunt "
                                                        + "for ordered sequences of events in any data source (X, "
                                                        + "then Y, by the same user or host, within N; on Elastic "
                                                        + "Indexes also N in a row, and X and then not Y), so you can "
@@ -336,14 +336,14 @@ class TestAgentModeTools {
         final List<ChatRequest> requests = requests(1, "system",
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
-                        .name(ACTIVATE_SEQUENCE_HUNTING)
+                        .name(ACTIVATE_SEQUENCES)
                         .arguments("{}")
                         .build())),
                 AiMessage.from("an answer"));
 
         assertThat(requests).hasSize(2);
-        assertThat(offered(requests.get(0))).contains(ACTIVATE_SEQUENCE_HUNTING).doesNotContain("sequence_query");
-        assertThat(offered(requests.get(1))).contains("sequence_query").doesNotContain(ACTIVATE_SEQUENCE_HUNTING);
+        assertThat(offered(requests.get(0))).contains(ACTIVATE_SEQUENCES).doesNotContain("sequence_query");
+        assertThat(offered(requests.get(1))).contains("sequence_query").doesNotContain(ACTIVATE_SEQUENCES);
     }
 
     @Test
@@ -355,7 +355,7 @@ class TestAgentModeTools {
                         "{\"callId\":\"a\",\"tool\":\"sequence_query\"}", 10, 0)));
 
         assertThat(offered(firstRequest(1, "system"))).contains("sequence_query")
-                .doesNotContain(ACTIVATE_SEQUENCE_HUNTING);
+                .doesNotContain(ACTIVATE_SEQUENCES);
         // Three questions on, it is off again.
         Mockito.when(aiDao.getMessages(1)).thenReturn(List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 10, 0),
@@ -364,7 +364,7 @@ class TestAgentModeTools {
                 new AiChatMessage(3, 1, 0L, AiMessageType.USER_MESSAGE, null, "q2", 11, 0),
                 new AiChatMessage(4, 1, 0L, AiMessageType.USER_MESSAGE, null, "q3", 12, 0)));
 
-        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_SEQUENCE_HUNTING)
+        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_SEQUENCES)
                 .doesNotContain("sequence_query");
     }
 
@@ -372,21 +372,21 @@ class TestAgentModeTools {
     void aChatKeepsElasticHuntingOnceOfferedAndOffersItOnceTheUserHasAnElasticIndex() {
         // Kept, so the tools (and the start of every request) stay the same from question to question; the call
         // itself checks Use on each doc.
-        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_SEQUENCE_HUNTING);
+        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_SEQUENCES);
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
-        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_SEQUENCE_HUNTING);
+        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_SEQUENCES);
 
         // Not found usable, it is looked for again as each run starts: e.g. once an index is made in the chat.
-        assertThat(offered(firstRequest(2, "system"))).doesNotContain(ACTIVATE_SEQUENCE_HUNTING);
+        assertThat(offered(firstRequest(2, "system"))).doesNotContain(ACTIVATE_SEQUENCES);
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(true);
-        assertThat(offered(firstRequest(2, "system"))).contains(ACTIVATE_SEQUENCE_HUNTING);
+        assertThat(offered(firstRequest(2, "system"))).contains(ACTIVATE_SEQUENCES);
     }
 
     @Test
     void aUserWithNoElasticIndexStoreIsntOfferedEqlSequence() {
         Mockito.when(dataSourceRegistry.getDataSourceProvider(ElasticIndexDoc.TYPE)).thenReturn(Optional.empty());
 
-        assertThat(offered(firstRequest(1, "system"))).doesNotContain("sequence_query", ACTIVATE_SEQUENCE_HUNTING);
+        assertThat(offered(firstRequest(1, "system"))).doesNotContain("sequence_query", ACTIVATE_SEQUENCES);
     }
 
     // The first request a run of the chat makes of the model, with the system prompt given.
