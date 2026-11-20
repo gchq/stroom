@@ -77,14 +77,16 @@ class TestStroomQlGuidance {
     @Test
     void theJoinExamplesInTheGuidanceAreValidStroomQl() {
         final String leftJoin = "from \"Windows events\" left join \"HR Users\" as hr on UserId = hr.Username "
-                                + "where EventTime > day() - 7d select EventTime, UserId, hr.Department";
+                                + "select EventTime, UserId, hr.Department";
         final String inSubquery = "from \"Windows events\" where UserId in (from \"HR Users\" where Status = "
                                   + "\"Leaver\" select Username) select EventTime, UserId";
+        // The subquery form is named in the guidance and shown in the joins guide.
         // The guidance's text is wrapped where its lines end, so compare it with spaces for line breaks.
         final String guidance = ContextAssembler.TOOL_GUIDANCE.replace("\n", " ");
         assertThat(guidance)
                 .contains("`" + leftJoin + "`")
-                .contains("`" + inSubquery + "`")
+                .contains("where X in (from ...) subquery")
+                .contains("get_instructions guide=joins")
                 .contains("from (with an alias: from \"X\" as x), join lines, where");
 
         final Query joined = parse(leftJoin).getQuery();
