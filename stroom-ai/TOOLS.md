@@ -101,19 +101,20 @@ Where a tool is offered:
   is given one `activate_<group>` tool per group naming the group's tools, and once it calls it, the group's tools
   are offered from its next step. The 103 tools' definitions took about 51k tokens of a 131k context window
   before the question, so a long question had its steps shortened at every step. The groups are `build`,
-  `processing`, `indexing`, `dashboards`, `administration` and `elastic_hunting` (the tables below give each
+  `processing`, `indexing`, `dashboards`, `administration` and `sequence_hunting` (the tables below give each
   tool's). A group's name may hold `_`: it is only MCP tool names that are split at the first `_`, and an MCP
   group of the same name as a built-in one is `mcp_<name>`. A tool in no
   group is always offered. A dashboard tab's guidance turns on `dashboards` from the start
   (`BuiltInToolGroups.neededBy`). A group none of whose tools the user may use, or that are usable (see
-  "Usable"), isn't offered: `activate_elastic_hunting` only to a user who can Use an Elastic Index. `activate_*` are
+  "Usable"), isn't offered: `activate_sequence_hunting` only to a user who can Use a data source. `activate_*` are
   not tools of their own: they are made by `ToolGroups` and are not in the tables.
 * **Usable**: a tool can say it has nothing to work on for the user (`StroomTool.isUsable`), and the chat then
   doesn't offer it, nor the guidance that names it (`ContextAssembler.withoutGuidanceForToolsNotOffered`). Asked as
   the user when a run starts; a yes is kept for the rest of the chat (`BuiltInTools.isUsableInChat`), so its tools
-  stay the same from question to question, and a no is asked again at the next run. Only `eql_sequence` uses it:
-  offered to a user who can Use at least one Elastic Index doc (the store's list and the permission check, no
-  cluster call), and so its group, `elastic_hunting`, is too. Over `/mcp` it is offered whatever it says, as the
+  stay the same from question to question, and a no is asked again at the next run. Only `sequence_query` uses it:
+  offered to a user who can Use at least one data source (Elastic and Lucene indexes looked at first, then the
+  whole list; the stores' lists and the permission check, no cluster call), and so its group, `sequence_hunting`,
+  is too. Over `/mcp` it is offered whatever it says, as the
   server instructions are the same for everyone, and `/mcp` has no groups: a client hides tools itself.
 * **Over `/mcp`** (`McpTools`): a session is offered the tools its user's policies grant, except the chat-only
   ones. A call that changes something needs a client that can show forms (MCP elicitation) and is refused
@@ -311,7 +312,8 @@ Several tools cover neighbouring ground. Which does what:
 * **Events in an index**: `search_events` with `index` searches an index as a dashboard does and gives
   StreamId/EventId hits and the streams holding them; `run_stroomql` runs any StroomQL into a table;
   `esql_query` answers totals, top N and grouped questions on an Elastic Index with ES|QL, in Elasticsearch;
-  `eql_sequence` finds ordered "X then Y" sequences across Elastic Indexes on one cluster with EQL;
+  `sequence_query` finds ordered "X then Y" sequences: with EQL across Elastic Indexes on one cluster, and as a
+  StroomQL windowed join of two steps on any other data source;
   `describe_data_source` says which searches on an index would mislead. There is no `find_events` tool.
 * **Reference data**: `find_reference_data` lists every map in the environment; `xslt_lookups` starts from given
   XSLTs or pipelines and analyses their lookups.
@@ -1262,7 +1264,7 @@ written from the doc, so a query never names another index.
   short of memory or overloaded, try again shortly (transient to the tool call guard); a permanent breaker, or the
   request breaker, says the query needs too much memory and what to ask for less of. Elasticsearch's own reason
   follows "Elasticsearch said:".
-* **Steered away**: its description says ordered sequences (X then Y within N) are for `eql_sequence`, not joins of
+* **Steered away**: its description says ordered sequences (X then Y within N) are for `sequence_query`, not joins of
   STATS results.
 
 * **Hints** (`EsqlQueryTool.refusal`, checked on 9.5.3): a keyword as a column name ("no viable alternative at
@@ -1274,20 +1276,27 @@ written from the doc, so a query never names another index.
   what the refusals and warnings say (a Lucene index or a cluster older than 8.14; a comparison on a multi-valued
   field giving null).
 
-### `eql_sequence`
+### `sequence_query`
 
-search · read-only · Use on every Elastic Index doc (`DataSourceAccess`, and again by `ElasticEqlService`) · takes a
-run slot · Classes: `EqlSequenceTool`, `EqlQueryWriter`, `EqlSequenceResults`, `stroom.ai.api.ElasticEql`,
-`ElasticEqlService`
+search · read-only · Use on every data source (`DataSourceAccess`, and again by `ElasticEqlService` for EQL or the
+query service for StroomQL) · takes a run slot · Classes: `SequenceQueryTool`, `EqlQueryWriter`,
+`EqlSequenceResults`, `StroomQlSequence`, `SequenceStroomQl`, `stroom.ai.api.ElasticEql`, `ElasticEqlService`
+
+One tool for ordered sequences (it was `eql_sequence` until 2026-11-20). The model gives structured steps once; the
+engine follows the data sources, and the result says which ran and why (`engine`, `engine_reason`):
+
+* **Every step on an Elastic Index** (on one cluster): one EQL sequence in Elasticsearch, with everything below.
+* **Any step on another data source** (a Lucene index, a view, any Stroom data source): a StroomQL windowed join
+  run in Stroom (see "StroomQL windowed join" below), which takes two steps joined by their `by` fields only.
 
 Finds ordered sequences of events across one or more Elastic Index docs on one cluster, as one EQL sequence in
 Elasticsearch: "a device plugged in, then a file copied to it", "a clipboard copy then PowerShell within 2 minutes
 by the same user on the same host", "20 failed logons then a success". Structured steps only, never raw EQL.
 
-* **Offered** in the chat in the `elastic_hunting` group, and only to a user who can Use an Elastic Index doc (see
-  "Usable" above): the chat sends `activate_elastic_hunting` (about 290 characters) until the model turns it on,
+* **Offered** in the chat in the `sequence_hunting` group, and only to a user who can Use a data source (see
+  "Usable" above): the chat sends `activate_sequence_hunting` (about 290 characters) until the model turns it on,
   and the full definition (about 8,400 characters as sent) only from then, while the chat's latest two questions
-  use it. The guidance bullet names it "in the elastic_hunting group". The definition carries the rules and
+  use it. The guidance bullet names it "in the sequence_hunting group". The definition carries the rules and
   examples, and `until` and the `any_of` items list their properties (a condition's, a step's index, where, any_of
   and by), as strict providers may refuse an object schema with none. What a call can get wrong is also said by
   the refusal or result that meets it (a `?` in a pattern, nested and text fields, the versions for missing and
@@ -1298,7 +1307,8 @@ by the same user on the same host", "20 failed logons then a success". Structure
   optional `any_of` group (2 or more plain conditions, at least one must hold), its own join fields (same number and
   order in every step), `missing=true` for "and then NOT", `runs=N` (1 to 100), and up to 5 fields to show;
   `until` (`{index, where, any_of, by}`); `maxspan` (at most 24h); `timeFrom`/`timeTo`; `limit` (default 1,000, at most
-  10,000); `runAnyway`; `out` (chat).
+  10,000, and for EQL at most as many sequences as fit 10,000 fetched events: 5,000 two-step ones, said in the
+  result, as Elasticsearch refuses more ids than its max result window, seen in the 2026-11-20 benchmark); `runAnyway`; `out` (chat).
 * **EQL** (`EqlQueryWriter`): `sequence with maxspan=2m [any where stroom_eql_doc == "1" and ...] by a, b ...`,
   `![...]` for missing, `with runs=N`, `until [...]`. EQUALS is `==` (`:` case-insensitive), `like`/`like~` with
   `*`, `cidrMatch` for a CIDR on an IP field; IN `in`/`in~` or `cidrMatch`; CONTAINS/STARTS_WITH/ENDS_WITH like
@@ -1317,10 +1327,10 @@ by the same user on the same host", "20 failed logons then a success". Structure
   with the closest names; a `text` field searched or joined on is swapped for its keyword subfield found in the
   mapping (not assumed `.keyword`; one without a normaliser first; the result's `field_notes` say so), or refused
   with its subfields and their types when it has none; a field in a `nested` field; a value its field can't take (a number field); join lists of different lengths; missing with runs;
-  a Lucene or other doc (use `run_stroomql`); a doc the user can't use, named; docs on different clusters or with
+  a doc the user can't use, named; docs on different clusters or with
   different time fields, naming each doc's (`ElasticEqlService.target`); a cluster older than 7.10, or than 8.8 for a
   missing step or 8.7 for runs.
-* **Pre-flight** (`EqlSequenceTool.assess`): each step that must happen is counted with ES|QL up to 1,000,000
+* **Pre-flight** (`SequenceQueryTool.assess`): each step that must happen is counted with ES|QL up to 1,000,000
   (`| WHERE ... | LIMIT 1000001 | STATS n = COUNT(*)`) on 8.14 or later, else skipped saying so; skipped when the
   time range is 1 hour or less. A first step past the cap is refused before it runs ("narrow the window or the
   first step", or `runAnyway`); a later one past it is noted; a first step of 1,000 or more events and 10 times a
@@ -1331,7 +1341,9 @@ by the same user on the same host", "20 failed logons then a success". Structure
   each event's doc comes from its `_index`.
 * **Running**: async in Elasticsearch within the query time limit: submitted with a 250 ms
   `wait_for_completion_timeout` (`keep_on_completion=false`), then polled in 250 ms slices; still running at the
-  limit, it is deleted and refused with "narrow the window or the first step"; a stop of the chat's run deletes it
+  limit, it is deleted and refused with "narrow the window or the first step", adding that EQL is slowest with very
+  many distinct join values (benchmark: 100,000 first-step events by 63,000 users timed out at 119 s, where a
+  StroomQL windowed join of the same took 13 s; the engine isn't switched on Elastic); a stop of the chat's run deletes it
   and ends the run stopped (a stop during the counts doesn't run it). Cluster errors as `esql_query`'s: busy or
   overloaded, try again shortly; the sequence breaker or a permanent breaker, needs too much memory (narrow the
   window, shorten maxspan, put the more selective step first). `filter_path` keeps only the ids, `missing` and the fields fetched.
@@ -1350,7 +1362,25 @@ by the same user on the same host", "20 failed logons then a success". Structure
   instead only when that won't fit 100 characters inside `maxQueryLength`, or the doc's index has no
   StreamId/EventId (filled from outside Stroom), saying which and that it shows those entities' events in the
   window, not only the hits. With several docs the model asks the user which to review (`ask_user`), then offers
-  that one with `propose_query` or `propose_dashboard` (its event preview).
+  that one with `propose_query` or `propose_dashboard` (its event preview). For two steps with no until, missing,
+  runs or conditions StroomQL can't write, the result also gives the same sequence as a StroomQL windowed join
+  (`stroomql`, validated: `stroomql_valid`), which the user can save as a Query.
+* **StroomQL windowed join** (`StroomQlSequence`, `SequenceStroomQl`): `from S as a join T as e on a.k = e.k
+  [and ...] within <maxspan> after a.<time field> where <step 1 on a.> and <step 2 on e.> [and the time range on
+  both] limit N select a.k, each step's time, StreamId, EventId and fields`, one row per pair (a step 1 event
+  followed by several step 2 events gives a pair for each). Run through the query service as `run_stroomql` runs a
+  query (`SourceType.API`, polled, `SearchProblems` for errors and warnings, each search removed by
+  `AgentSearches`). Refused before anything runs, saying it needs Elastic Indexes: 3 or more steps, `until`,
+  `missing`, `runs`; also `caseInsensitive`, `length`, IS_NULL/IS_NOT_NULL and MATCHES_REGEX (no exact StroomQL
+  form), unknown fields, a data source with no time field, and a second step with no condition of its own (it would
+  read every event in the windows: 14 to 400 s over 1 million events). Then one grouped count of the first step
+  (`eval Sequence = 'all' group by Sequence select Sequence, count() as Anchors, countUnique(k) as Keys`): no events, the join
+  isn't run; more than `MAX_ANCHORS` (100,000) first-step events, or more than `DENSE_MAX_ANCHORS` (10,000) when
+  they have more than `DENSE_ANCHORS_PER_KEY` (100) per distinct join value, refused ("narrow the first step")
+  with the join it would have run. The thresholds come from the 2026-11-20 benchmark (1 million synthetic events,
+  one node): about 11 µs per joined row read plus 0.37 µs per joined row read per first-step event of the same
+  entity. The result is as EQL's (per entity, the pairs table in `/outputs/sequences/`), with `step_counts` and
+  `first_step_keys`, and the join itself is the review query, validated, to offer with `propose_query`.
 
 ### `current_results`
 
