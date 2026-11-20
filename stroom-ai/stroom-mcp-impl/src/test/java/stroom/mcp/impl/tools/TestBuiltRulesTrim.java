@@ -21,9 +21,11 @@ import stroom.ai.impl.tools.ToolCaller;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,6 +48,26 @@ class TestBuiltRulesTrim {
                 "fields", List.of("EventDetail/TypeId", "EventSource/User/Id"),
                 "data", 3));
         assertThat((String) result.get("events_note")).contains("Data");
+    }
+
+    @Test
+    void aLargeResultForAClientOutsideStroomSaysTheSampleChecksWarningsOnce() {
+        // Seen in eval cases 35 and 36 (2026-11-20): results of 69,000 and 100,000 characters still, a third of each
+        // the sample check's warnings, which the result's warnings repeat (each starting "sample: ").
+        final Map<String, Object> result = built(1);
+        final Map<String, Object> check = new LinkedHashMap<>();
+        check.put("records", 33);
+        check.put("problems", List.of());
+        check.put("warnings", List.of("x".repeat(6_000)));
+        check.put("fields_seen", List.of("code"));
+        result.put("sample_check", check);
+        result.put("warnings", List.of("sample: " + "x".repeat(6_000)));
+
+        BuiltRulesTrim.trimIfLarge(CLIENT, result, 10_000);
+
+        final Set<Object> kept = new HashSet<>(((Map<?, ?>) result.get("sample_check")).keySet());
+        assertThat(kept).containsExactlyInAnyOrder("records", "problems", "fields_seen", "warnings_note");
+        assertThat((List<?>) result.get("warnings")).hasSize(1);
     }
 
     @Test

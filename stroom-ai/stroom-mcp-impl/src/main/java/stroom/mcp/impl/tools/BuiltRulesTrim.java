@@ -29,18 +29,22 @@ import java.util.Map;
 /// A build_translation_xslt result too large for a client outside Stroom to take whole: each rule's Data entries
 /// (`<action element>/Data[<field>]`) counted in its `events` summary rather than listed. Seen in eval cases 35 and 36
 /// over Claude Code: results of about 50 KB saved to files by the client, most of them the rules' Data (in the Pega
-/// sample, 19,000 of 32,000 characters for 13 rules). The mapping, kept by the server, still lists them.
+/// sample, 19,000 of 32,000 characters for 13 rules). The mapping, kept by the server, still lists them. The
+/// sample check's warnings, which the result's warnings repeat, are said once.
 final class BuiltRulesTrim {
 
     private static final String EVENTS = "events";
     private static final String DATA = "/Data[";
+    private static final String SAMPLE_CHECK = "sample_check";
+    private static final String WARNINGS = "warnings";
 
     private BuiltRulesTrim() {
         // Static only.
     }
 
-    /// Counts each rule's Data in the result's `events` when the caller is a client outside Stroom and the result is
-    /// past the limit; Stroom AI's own chat, which keeps a large result in its workspace itself, gets it whole.
+    /// Counts each rule's Data in the result's `events`, and leaves out the sample check's warnings the result's
+    /// warnings repeat, when the caller is a client outside Stroom and the result is past the limit; Stroom AI's own
+    /// chat, which keeps a large result in its workspace itself, gets it whole.
     ///
     /// @param caller Who called the tool.
     /// @param result The build's result, changed in place.
@@ -71,5 +75,22 @@ final class BuiltRulesTrim {
         result.put("events_note", "Each rule's Data are counted here, not listed (this result is too large to "
                                   + "show whole): the mapping lists them, the fields each rule carries as Data of "
                                   + "its action element.");
+        sampleWarningsOnce(result);
+    }
+
+    // The sample check's warnings are the result's own warnings that start "sample: ": seen in eval cases 35 and 36,
+    // a third of results of 69,000 and 100,000 characters, said twice.
+    private static void sampleWarningsOnce(final Map<String, Object> result) {
+        if (result.get(SAMPLE_CHECK) instanceof final Map<?, ?> check && check.containsKey(WARNINGS)) {
+            final Map<String, Object> kept = new LinkedHashMap<>();
+            check.forEach((key, value) -> {
+                if (!WARNINGS.equals(key)) {
+                    kept.put(String.valueOf(key), value);
+                }
+            });
+            kept.put("warnings_note", "The sample check's warnings are in the result's warnings, each starting "
+                                      + "'sample: '.");
+            result.put(SAMPLE_CHECK, kept);
+        }
     }
 }

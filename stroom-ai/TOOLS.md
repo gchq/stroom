@@ -5194,7 +5194,9 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
     vendor-code Data is warned of in `sample_check` (`sample: …`), naming the event type, rule, field and Data; the
     XSLT is still built. Not for the catch-all, drop rules or event types not confirmed.
   * **A large result, outside Stroom** (`BuiltRulesTrim`): over 40,000 characters for a client outside Stroom,
-    `events` counts each rule's Data rather than listing it (`events_note`).
+    `events` counts each rule's Data rather than listing it (`events_note`), and `sample_check` leaves out its
+    `warnings`, which the result's `warnings` repeat (each starting `sample: `; `warnings_note`). Seen in eval cases 35
+    and 36 (2026-11-20): a third of results of 69,000 and 100,000 characters said twice.
   * **Confirmed event types translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with
     the user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
     Logon, unsaid): `needs_review` with a table (`| Event type | Recognised by | You confirmed | Records | Now | Rule
