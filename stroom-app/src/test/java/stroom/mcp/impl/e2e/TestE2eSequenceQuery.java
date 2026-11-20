@@ -55,7 +55,8 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// `sequence_query` over `/mcp` on a real Stroom and Elasticsearch: two Elastic Index docs with different field names
+/// `sequence_query` over `/mcp` on a real Stroom and Elasticsearch, where it runs as EQL (on other data sources it
+/// runs as a StroomQL windowed join: `TestE2eSequenceQueryLucene`): two Elastic Index docs with different field names
 /// for the same things (a devices index's `user`/`host`, a Sysmon-like index's `SubjectUserName`/`Computer`), seeded
 /// with a few users' events, so the hunts have exact answers: a clipboard copy then PowerShell within 2 minutes by
 /// the same user on the same host; the same with "and then not cancelled" (a missing step); 3 failed logons then a
@@ -374,6 +375,11 @@ class TestE2eSequenceQuery extends AbstractE2eTest {
                       [any where stroom_eql_doc == "1" and action == "Login"] by user
                       [any where stroom_eql_doc == "2" and action == "Login"] by user""");
             assertThat(keys(result)).containsExactly(List.of("alice"));
+            // Elastic Indexes run as EQL, and the same two steps are also given as a windowed join, which Stroom's
+            // own parser takes.
+            assertThat(result).containsEntry("engine", "EQL").containsEntry("stroomql_valid", true);
+            assertThat((String) result.get("stroomql")).contains("join \"E2E app " + appIndex + "\" as e on "
+                                                                 + "a.user = e.user within 2m after a.@timestamp");
         } finally {
             node.deleteIndices(vpnIndex);
             node.deleteIndices(appIndex);

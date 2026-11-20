@@ -868,18 +868,19 @@ class TestContextAssembler {
     }
 
     @Test
-    void theModelIsToldToAnswerOrderedQuestionsWithEqlSequenceNotJoins() {
+    void theModelIsToldToAnswerOrderedQuestionsWithSequenceQueryNotJoins() {
         // Seen in acceptance runs on a small model: "a USB device connected, then a file copied to it within 10
         // minutes" answered by joining esql_query results by hand, and wrongly.
         assertThat(ContextAssembler.TOOL_GUIDANCE)
-                .contains("For \"X, then Y\" questions on Elastic Indexes (by the same user or host, within N; N in a "
-                          + "row; X and then not Y), in one index or across several, use sequence_query")
-                .contains("never join esql_query or search results by hand");
+                .contains("For \"X, then Y\" questions (by the same user or host, within N; on Elastic Indexes also N "
+                          + "in a row, and X and then not Y), in one data source or across several, use "
+                          + "sequence_query")
+                .contains("never join query or search results by hand");
     }
 
     @Test
     void theGuidanceOnAToolTheChatIsntOfferedIsLeftOut() {
-        // Seen as a risk: without an Elastic Index the chat isn't offered sequence_query, and the guidance mustn't send
+        // Seen as a risk: without a data source the chat isn't offered sequence_query, and the guidance mustn't send
         // the model to it.
         final String prompt = "system\n\n" + ContextAssembler.TOOL_GUIDANCE;
 

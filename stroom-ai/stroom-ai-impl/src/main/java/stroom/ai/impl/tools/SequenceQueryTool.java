@@ -37,6 +37,7 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FieldType;
@@ -72,8 +73,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
-/// `sequence_query` - an ordered hunt across sources at volume, run in Elasticsearch as one EQL sequence over one or
-/// more Elastic Index docs on one cluster ([ElasticEql]): e.g. a device plugged in and then a file copied to it, a
+/// `sequence_query` - an ordered hunt across sources at volume. The engine follows the data sources: over one or
+/// more Elastic Index docs on one cluster, one EQL sequence in Elasticsearch ([ElasticEql]); over any other data
+/// source, a StroomQL windowed join of two steps run in Stroom ([StroomQlSequence]), with what it can't do refused
+/// and the result saying which engine ran and why. E.g. a device plugged in and then a file copied to it, a
 /// clipboard copy then PowerShell within 2 minutes by the same user on the same host, 20 failed logons then a
 /// success. The model gives structured steps, never EQL: each with its doc, conditions (the `search_events` `where`
 /// form, plus case-insensitive matching), its own join fields, and whether it must not happen (`missing`) or must
@@ -142,6 +145,14 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     /// What a sequence that timed out adds: EQL keeps a partial sequence per distinct join value, so very many of
     /// them make it slow. Measured on 1 million synthetic events on one node (2026-11-20, `TestBenchSequenceJoins`):
     /// 100,000 first-step events by 63,000 distinct users timed out at 119 seconds, where by 100 users they took 6.
+    /// Why a sequence of Elastic Index steps runs as EQL.
+    static final String EQL_REASON = "Every step's data source is an Elastic Index, so the sequence ran in "
+                                     + "Elasticsearch as one EQL sequence.";
+    /// What the result says of the same sequence as a StroomQL windowed join.
+    static final String STROOMQL_NOTE = "The same sequence as StroomQL, a windowed join that Stroom runs itself "
+                                        + "(valid StroomQL, to save as a Query with propose_query; it gives a row "
+                                        + "per step 1 and step 2 pair within the window, where EQL gives each "
+                                        + "match once):";
     static final String MANY_KEYS_NOTE = "EQL is slowest with very many distinct join values (it keeps a partial "
                                          + "sequence for each): narrow the first step to fewer entities, or use a "
                                          + "shorter time range.";
@@ -166,39 +177,47 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
     private final AiAuditLog auditLog;
+    private final StroomQlSequence stroomQlSequence;
 
     @Inject
     SequenceQueryTool(final ChatWorkspace workspace,
-                    final Provider<ElasticEql> elasticEqlProvider,
-                    final Provider<ElasticEsql> elasticEsqlProvider,
-                    final DataSourceAccess dataSourceAccess,
-                    final Provider<QueryService> queryServiceProvider,
-                    final AiAuditLog auditLog) {
+                      final Provider<ElasticEql> elasticEqlProvider,
+                      final Provider<ElasticEsql> elasticEsqlProvider,
+                      final DataSourceAccess dataSourceAccess,
+                      final Provider<QueryService> queryServiceProvider,
+                      final AiAuditLog auditLog,
+                      final AgentSearches agentSearches) {
         super(workspace);
         this.elasticEqlProvider = elasticEqlProvider;
         this.elasticEsqlProvider = elasticEsqlProvider;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.auditLog = auditLog;
+        this.stroomQlSequence = new StroomQlSequence(queryServiceProvider, agentSearches, dataSourceAccess);
     }
 
     @Override
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.USE)
-                .note("Use on every Elastic Index doc is checked, as for any search, and again by Stroom's "
-                      + "Elasticsearch module when the sequence runs.")
+                .note("Use on every data source is checked, as for any search: for Elastic Indexes again by "
+                      + "Stroom's Elasticsearch module when the EQL runs, and for other data sources by Stroom's "
+                      + "query service when the StroomQL windowed join runs, as for run_stroomql.")
                 .build();
     }
 
-    /// Offered in the chat only to a user who can use an Elastic Index. No cluster's version is looked up, so no
-    /// cluster is called as a chat starts: EQL sequences work from Elasticsearch 7.10, older than the clusters
-    /// Stroom's Elasticsearch client works with, and a call on an older one is still refused as it runs.
+    /// Offered in the chat to a user who can use a data source: an Elastic Index (EQL) or any other (a StroomQL
+    /// windowed join), the two index types looked at first as listing every data source is slower. No cluster's
+    /// version is looked up, so no cluster is called as a chat starts: EQL sequences work from Elasticsearch 7.10,
+    /// older than the clusters Stroom's Elasticsearch client works with, and a call on an older one is still refused
+    /// as it runs.
     ///
-    /// @return True if the user can use at least one Elastic Index doc.
+    /// @return True if the user can use at least one data source.
     @Override
     public boolean isUsable() {
-        return dataSourceAccess.canUseAny(ElasticIndexDoc.TYPE);
+        return dataSourceAccess.canUseAny(ElasticIndexDoc.TYPE)
+               || dataSourceAccess.canUseAny(LuceneIndexDoc.TYPE)
+               || !dataSourceAccess.listUsable().isEmpty();
     }
 
     @Override
@@ -237,7 +256,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 .build();
         final ObjectSchema step = ObjectSchema.builder()
                 .description("One step.")
-                .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
+                .addStringProperty(INDEX_KEY, "The data source's uuid or name: an Elastic Index doc, or any other "
+                                              + "(a Lucene index, a view).")
                 .addProperty(WHERE_KEY, ArraySchema.builder().items(condition)
                         .description("Conditions its events meet, all of them.").build())
                 .addProperty(ANY_OF_KEY, anyOf)
@@ -254,7 +274,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         final ObjectSchema until = ObjectSchema.builder()
                 .description("Optional: a step that ends a sequence before it is complete: its doc, conditions and "
                              + "join fields, as a step's (no missing, runs or fields).")
-                .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
+                .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name (Elastic Indexes only).")
                 .addProperty(WHERE_KEY, ArraySchema.builder().items(condition)
                         .description("Conditions its events meet, all of them.").build())
                 .addProperty(ANY_OF_KEY, anyOf)
@@ -265,12 +285,16 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Use for any 'X, then Y, by the same user/host, within N' question on Elastic "
-                                 + "Indexes, in one doc or across several, rather than joining the results of "
-                                 + "separate queries")
-                        .chatOnly(" (esql_query, search_events)")
-                        .general(" by hand. Finds ordered sequences of events across one or more Elastic Index "
-                                 + "docs on one cluster, matched in Elasticsearch as one EQL sequence: e.g. a USB "
+                        .general("Use for any 'X, then Y, by the same user/host, within N' question, in one data "
+                                 + "source or across several, rather than joining the results of separate queries")
+                        .chatOnly(" (esql_query, search_events, run_stroomql)")
+                        .general(" by hand. The engine follows the data sources: on Elastic Index docs on one "
+                                 + "cluster, one EQL sequence in Elasticsearch, with everything below; on any other "
+                                 + "(a Lucene index, a view), a StroomQL windowed join run in Stroom, which takes 2 "
+                                 + "steps joined by by (no until, missing or runs; no caseInsensitive, length, "
+                                 + "IS_NULL or regex; step 2 needs a condition) and refuses a first step with too "
+                                 + "many events; the result says which ran and why. Finds ordered sequences of "
+                                 + "events: e.g. a USB "
                                  + "device plugged in then a file copied to it; a clipboard copy then PowerShell "
                                  + "within 2 minutes by the same user on the same host; 20 failed logons then a "
                                  + "success. Give steps (2 or more, in order), each with its doc, its where "
@@ -294,11 +318,10 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                         .general(". Each reads one doc: when the hunt spans several, ask the user which doc to "
                                  + "review")
                         .chatOnly(" (ask_user, the docs as options)")
-                        .general(", then offer that doc's. Sequences come straight from Elasticsearch, as ES|QL "
-                                 + "counts do, and may include streams the user can't see or deleted ones. Refused "
-                                 + "for a Lucene index")
-                        .chatOnly(" (use run_stroomql)")
-                        .general(", docs on different clusters or with different time fields, and nested fields. "
+                        .general(", then offer that doc's; on other data sources the windowed join itself is the "
+                                 + "review query. EQL sequences come straight from Elasticsearch, as ES|QL counts "
+                                 + "do, and may include streams the user can't see or deleted ones. EQL is refused "
+                                 + "for docs on different clusters or with different time fields, and nested fields. "
                                  + "A text field is searched as its keyword subfield (the result says so). A literal "
                                  + "? can't be in a pattern (EQL reads it as any one character).")
                         .build())
@@ -351,12 +374,16 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         }
         for (final GivenStep step : all) {
             byGiven.computeIfAbsent(step.index(), name -> {
-                final DocRef doc = EsqlQueryTool.elasticIndex(dataSourceAccess, name, "EQL");
+                final DocRef doc = dataSource(name);
                 if (!docs.contains(doc)) {
                     docs.add(doc);
                 }
                 return doc;
             });
+        }
+        final Optional<DocRef> notElastic = docs.stream().filter(doc -> !isElastic(doc)).findFirst();
+        if (notElastic.isPresent()) {
+            return runInStroom(request, context, given, givenUntil, byGiven, notElastic.get());
         }
         final Map<DocRef, List<QueryField>> fieldsByDoc = new LinkedHashMap<>();
         for (final DocRef doc : docs) {
@@ -385,20 +412,11 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 : until.withRestricted(needsRestriction(until, docs, fieldsByDoc));
 
         final String givenMaxspan = stringArg(request, MAXSPAN_ARG);
-        final Duration maxspan;
-        final String maxspanSource;
-        if (givenMaxspan != null) {
-            maxspan = EqlQueryWriter.maxspan(givenMaxspan);
-            maxspanSource = "as asked";
-        } else {
-            maxspan = askMaxspan(request, context);
-            maxspanSource = "the user's answer";
-        }
-        final String timeFrom = stringArg(request, TIME_FROM_ARG);
-        final String timeTo = stringArg(request, TIME_TO_ARG);
-        final TimeRange timeRange = timeFrom == null && timeTo == null
-                ? null
-                : new TimeRange(null, timeFrom, timeTo);
+        final Duration maxspan = givenMaxspan != null
+                ? EqlQueryWriter.maxspan(givenMaxspan)
+                : askMaxspan(request, context);
+        final String maxspanSource = maxspanSource(givenMaxspan);
+        final TimeRange timeRange = timeRange(request);
         final Integer givenLimit = intArg(request, LIMIT_ARG);
         final int most = mostSequences(steps);
         final int asked = Objects.requireNonNullElse(givenLimit, DEFAULT_LIMIT);
@@ -459,13 +477,80 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         final List<ReviewNote> reviews = reviews(docs, fieldsByDoc, result.timeField(), rows, steps,
                 limits(context).getMaxQueryLength());
         final boolean truncated = result.sequences().size() >= limit;
+        final String stroomQl = equivalentStroomQl(steps, untilStep, docs, fieldsByDoc, result.timeField(), maxspan,
+                timeRange, limit);
         final Outcome outcome = new Outcome(docs, result, maxspan, maxspanSource, timeRange, limit, limitNote,
                 truncated, preflight, steps, columns, cells, entities, EqlSequenceResults.untimed(rows), reviews, out,
-                fieldNotes.stream().distinct().toList());
+                fieldNotes.stream().distinct().toList(), stroomQl, stroomQl == null
+                        ? null
+                        : invalid(stroomQl));
         final Map<String, Object> structured = structured(outcome);
         return context.session().isChat()
                 ? ToolResult.text(markdown(outcome)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // Runs the sequence in Stroom, as a StroomQL windowed join, for steps not all on Elastic Indexes.
+    private ToolResult runInStroom(final ToolCall request,
+                                   final ToolCallContext context,
+                                   final List<GivenStep> given,
+                                   final GivenStep givenUntil,
+                                   final Map<String, DocRef> byGiven,
+                                   final DocRef notElastic) {
+        final String reason = DataSourceAccess.describe(notElastic) + " isn't an Elastic Index, so the sequence ran "
+                              + "in Stroom as a StroomQL windowed join (two steps, joined by their by fields) "
+                              + "rather than in Elasticsearch as EQL.";
+        final StroomQlSequence.Plan plan = stroomQlSequence.plan(given, givenUntil, byGiven, reason);
+        final String givenMaxspan = stringArg(request, MAXSPAN_ARG);
+        final Duration maxspan = givenMaxspan != null
+                ? EqlQueryWriter.maxspan(givenMaxspan)
+                : askMaxspan(request, context);
+        final Integer givenLimit = intArg(request, LIMIT_ARG);
+        final int limit = Math.clamp(Objects.requireNonNullElse(givenLimit, StroomQlSequence.DEFAULT_LIMIT), 1,
+                Math.min(ElasticEql.MAX_SEQUENCES, limits(context).getMaxQueryRows()));
+        final WorkspacePath givenOut = outArg(request);
+        final WorkspacePath out = givenOut != null
+                ? givenOut
+                : WorkspacePath.parse("/outputs/sequences/sequence-"
+                                      + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)) + ".md");
+        return stroomQlSequence.run(plan, new StroomQlSequence.Call(maxspan, maxspanSource(givenMaxspan),
+                timeRange(request), limit, timeLimit(context), limits(context).getMaxQueryLength(),
+                sessionWorkspace(context), out, context.session().isChat(), context.stopped()));
+    }
+
+    private static String maxspanSource(final String givenMaxspan) {
+        return givenMaxspan != null
+                ? "as asked"
+                : "the user's answer";
+    }
+
+    private TimeRange timeRange(final ToolCall request) {
+        final String timeFrom = stringArg(request, TIME_FROM_ARG);
+        final String timeTo = stringArg(request, TIME_TO_ARG);
+        return timeFrom == null && timeTo == null
+                ? null
+                : new TimeRange(null, timeFrom, timeTo);
+    }
+
+    /// @param doc A data source.
+    /// @return True if it is an Elastic Index, which a sequence runs on as EQL.
+    static boolean isElastic(final DocRef doc) {
+        return ElasticIndexDoc.TYPE.equals(doc.getType());
+    }
+
+    // The data source a step names, by uuid or name: any the user can use.
+    private DocRef dataSource(final String given) {
+        final List<DocRef> found = dataSourceAccess.find(given);
+        if (found.size() == 1) {
+            return found.getFirst();
+        } else if (found.size() > 1) {
+            final StringBuilder sb = new StringBuilder("Several data sources you can use are called '")
+                    .append(given).append("'. Give the uuid of the one you mean:");
+            found.forEach(docRef -> sb.append("\n- ").append(DataSourceAccess.describe(docRef)));
+            throw new WorkspaceException(sb.toString());
+        }
+        throw new WorkspaceException("No data source with uuid or name '" + given + "' that you can use. "
+                                     + "list_data_sources gives those you can.");
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -1375,7 +1460,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 .append(String.join(", ", outcome.docs().stream().map(DataSourceAccess::describe).toList()))
                 .append(" (Elasticsearch ").append(result.version()).append(", ").append(result.tookMs())
                 .append(" ms), with maxspan ").append(EqlQueryWriter.maxspanText(outcome.maxspan())).append(" (")
-                .append(outcome.maxspanSource()).append("):\n\n```\n").append(result.query()).append("\n```\n");
+                .append(outcome.maxspanSource()).append("). ").append(EQL_REASON).append("\n\n```\n")
+                .append(result.query()).append("\n```\n");
         outcome.fieldNotes().forEach(note -> sb.append(note).append('\n'));
         if (outcome.timeRange() != null) {
             sb.append("Time: ").append(NullSafe.nonBlankStringElse(outcome.timeRange().getFrom(), "any"))
@@ -1410,7 +1496,57 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 sb.append("\n\n```\n").append(review.review().query()).append("\n```");
             }
         }
+        if (outcome.stroomQl() != null && outcome.stroomQlInvalid() == null) {
+            sb.append("\n\n").append(STROOMQL_NOTE).append("\n\n```\n").append(outcome.stroomQl()).append("\n```");
+        }
         return sb.toString();
+    }
+
+    /// The same two-step sequence as a StroomQL windowed join, which Stroom runs itself, for the user to save as a
+    /// Query: only for what a windowed join can say (two steps, no until, missing or runs, and conditions it can
+    /// write exactly).
+    ///
+    /// @param steps       The steps.
+    /// @param until       The until step, or null.
+    /// @param docs        The docs, in order.
+    /// @param fieldsByDoc Each doc's fields.
+    /// @param timeField   The docs' time field.
+    /// @param maxspan     The window.
+    /// @param timeRange   The time range, or null.
+    /// @param limit       The most rows.
+    /// @return The query, or null if a windowed join can't say the sequence.
+    static String equivalentStroomQl(final List<Step> steps,
+                                     final Step until,
+                                     final List<DocRef> docs,
+                                     final Map<DocRef, List<QueryField>> fieldsByDoc,
+                                     final String timeField,
+                                     final Duration maxspan,
+                                     final TimeRange timeRange,
+                                     final int limit) {
+        if (steps.size() != 2 || until != null || NullSafe.isBlankString(timeField)
+            || steps.stream().anyMatch(step -> step.missing() || step.runs() > 1)) {
+            return null;
+        }
+        final List<SequenceStroomQl.Side> sides = new ArrayList<>();
+        for (int i = 0; i < steps.size(); i++) {
+            final Step step = steps.get(i);
+            final DocRef doc = docs.get(step.doc() - 1);
+            if (SequenceStroomQl.unwritable("Step " + (i + 1), step, doc) != null) {
+                return null;
+            }
+            final Set<String> names = new LinkedHashSet<>();
+            NullSafe.list(fieldsByDoc.get(doc)).forEach(field -> names.add(field.getFldName()));
+            sides.add(new SequenceStroomQl.Side(doc, timeField, step, names.contains(EqlSequenceResults.STREAM_ID)
+                                                                       && names.contains(EqlSequenceResults.EVENT_ID)));
+        }
+        if (sides.getLast().step().filters().isEmpty() && sides.getLast().step().anyOf().isEmpty()) {
+            return null;
+        }
+        try {
+            return SequenceStroomQl.join(sides.getFirst(), sides.getLast(), maxspan, timeRange, limit);
+        } catch (final WorkspaceException e) {
+            return null;
+        }
     }
 
     /// @param reviews How many docs have a review query.
@@ -1494,6 +1630,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     private static Map<String, Object> structured(final Outcome outcome) {
         final Result result = outcome.result();
         final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("engine", "EQL");
+        map.put("engine_reason", EQL_REASON);
         map.put("indexes", outcome.docs().stream().map(doc -> {
             final Map<String, Object> ref = new LinkedHashMap<>();
             ref.put("type", doc.getType());
@@ -1564,6 +1702,14 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         if (!outcome.reviews().isEmpty()) {
             map.put("review_hint", reviewHint(outcome.reviews().size()));
         }
+        if (outcome.stroomQl() != null) {
+            map.put("stroomql", outcome.stroomQl());
+            map.put("stroomql_valid", outcome.stroomQlInvalid() == null);
+            if (outcome.stroomQlInvalid() != null) {
+                map.put("stroomql_invalid", outcome.stroomQlInvalid());
+            }
+            map.put("stroomql_note", STROOMQL_NOTE);
+        }
         return map;
     }
 
@@ -1585,7 +1731,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     /// @param missing True for an event that must not happen.
     /// @param runs    How many times in a row.
     /// @param fields  Fields to show.
-    private record GivenStep(String index,
+    record GivenStep(String index,
                              List<Filter> filters,
                              List<Filter> anyOf,
                              List<String> by,
@@ -1670,7 +1816,10 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     /// @param entities      The summary per entity.
     /// @param untimed       How many sequences have no time on any of their events.
     /// @param reviews       The review queries.
-    /// @param out           The table's file.
+    /// @param out             The table's file.
+    /// @param fieldNotes      What was done to the steps' fields.
+    /// @param stroomQl        The same sequence as a StroomQL windowed join, or null if one can't say it.
+    /// @param stroomQlInvalid Why that isn't valid StroomQL, or null.
     record Outcome(List<DocRef> docs,
                    Result result,
                    Duration maxspan,
@@ -1687,7 +1836,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                    int untimed,
                    List<ReviewNote> reviews,
                    WorkspacePath out,
-                   List<String> fieldNotes) {
+                   List<String> fieldNotes,
+                   String stroomQl,
+                   String stroomQlInvalid) {
 
         /// @return The most sequences these steps can return ([#mostSequences(List)]).
         int mostSequences() {

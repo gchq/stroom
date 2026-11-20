@@ -33,19 +33,28 @@ import stroom.ai.impl.tools.SequenceQueryTool.Preflight;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.api.Column;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Row;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.time.StroomDuration;
 
 import dev.langchain4j.internal.JsonSchemaElementUtils;
@@ -67,6 +76,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -90,7 +100,13 @@ class TestSequenceQueryTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
     private final Map<String, String> written = new HashMap<>();
+    private final List<String> searched = new ArrayList<>();
+    private final List<List<String>> joinRows = new ArrayList<>();
+    private List<String> anchorCount = List.of("40", "3");
+    private String searchError;
+    private String searchWarning;
     private final Map<DocRef, Long> counts = new HashMap<>();
     private final List<Sequence> sequences = new ArrayList<>();
     private AiWorkspaceConfig config = new AiWorkspaceConfig();
@@ -116,6 +132,12 @@ class TestSequenceQueryTool {
         });
         Mockito.when(queryService.findFields(Mockito.any())).thenAnswer(invocation -> {
             final DocRef doc = invocation.<FindFieldCriteria>getArgument(0).getDataSourceRef();
+            if (LUCENE.equals(doc)) {
+                return new ResultPage<>(List.of(QueryField.createDate("EventTime"), QueryField.createKeyword("UserId"),
+                        QueryField.createKeyword("Action"), QueryField.createKeyword("Tier"),
+                        QueryField.createKeyword("Host"), QueryField.createId("StreamId"),
+                        QueryField.createId("EventId")));
+            }
             return new ResultPage<>(DEVICES.equals(doc)
                     ? List.of(QueryField.createDate("@timestamp"), QueryField.createKeyword("user"),
                     QueryField.createKeyword("host"), QueryField.createKeyword("action"),
@@ -140,9 +162,32 @@ class TestSequenceQueryTool {
                     List.of(List.of(counts.getOrDefault(request.index(), 10L))), 1, 1, null, false, false, null,
                     null, "9.5.3", List.of());
         });
+        Mockito.when(dataSourceAccess.timeField(Mockito.any())).thenAnswer(invocation ->
+                Optional.of(QueryField.createDate(LUCENE.equals(invocation.getArgument(0))
+                        ? "EventTime"
+                        : "@timestamp")));
+        Mockito.when(queryService.search(Mockito.any())).thenAnswer(invocation -> {
+            final QuerySearchRequest request = invocation.getArgument(0);
+            searched.add(request.getQuery());
+            if (searchError != null) {
+                return response(List.of(), List.of(), List.of(new ErrorMessage(Severity.ERROR, searchError)));
+            }
+            if (request.getQuery().contains("countUnique")) {
+                return response(List.of(SequenceStroomQl.ANCHORS, SequenceStroomQl.KEYS), anchorCount == null
+                        ? List.of()
+                        : List.of(anchorCount), List.of());
+            }
+            return response(List.of("UserId", "Step 1 time", "Step 1 StreamId", "Step 1 EventId", "Step 2 time",
+                    "Step 2 StreamId", "Step 2 EventId"), joinRows, searchWarning == null
+                    ? List.of()
+                    : List.of(new ErrorMessage(Severity.WARNING, searchWarning)));
+        });
+        joinRows.add(List.of("alice", "2026-01-01T00:00:00.000Z", "7", "1", "2026-01-01T00:01:00.000Z", "7", "2"));
+        joinRows.add(List.of("alice", "2026-01-01T00:00:00.000Z", "7", "1", "2026-01-01T00:03:00.000Z", "7", "3"));
+        joinRows.add(List.of("bob", "2026-01-01T01:00:00.000Z", "7", "5", "2026-01-01T01:00:30.000Z", "8", "1"));
         sequences.add(pair("alice", "H1", T0, 40_000, 1));
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
-                () -> queryService, auditLog);
+                () -> queryService, auditLog, agentSearches);
     }
 
     @Test
@@ -254,9 +299,9 @@ class TestSequenceQueryTool {
     void refusals() {
         assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(DEVICES, "user")))))
                 .contains("Give steps: 2 or more");
-        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(LUCENE, "user"),
-                step(DEVICES, "user"))))).contains("isn't an Elastic Index: EQL runs on Elasticsearch only. Use "
-                                                    + "run_stroomql for a Lucene index.");
+        // A Lucene index's step makes it a StroomQL windowed join, whose second step needs its own condition.
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(LUCENE, "UserId"),
+                step(DEVICES, "user"))))).contains("Step 2 has no conditions");
         assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(DEVICES, "usr"),
                 step(SYSMON, "SubjectUserName"))))).contains("Step 1: not fields of Elastic Index 'Devices': usr "
                                                               + "(like user)");
@@ -280,7 +325,7 @@ class TestSequenceQueryTool {
     void aDocTheUserCantUseIsNamed() {
         assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(DEVICES, "user"),
                 Map.of("index", "Secret", "by", List.of("x"))))))
-                .contains("No Elastic Index doc with uuid or name 'Secret' that you can use");
+                .contains("No data source with uuid or name 'Secret' that you can use");
         Mockito.doThrow(new PermissionException(null, "You are not authorised to search DocRef{type='ElasticIndex', "
                                                       + "uuid='sysmon-uuid', name='Sysmon'}"))
                 .when(elasticEql).target(Mockito.any());
@@ -718,10 +763,11 @@ class TestSequenceQueryTool {
     @Test
     void theDescriptionLeadsWithTheOrderedQuestionsItAnswers() {
         // Seen in acceptance runs on a small model: ordered questions answered by joining esql_query results.
-        final String lead = "Use for any 'X, then Y, by the same user/host, within N' question on Elastic Indexes, "
-                            + "in one doc or across several, rather than joining the results of separate queries";
+        final String lead = "Use for any 'X, then Y, by the same user/host, within N' question, in one data source "
+                            + "or across several, rather than joining the results of separate queries";
 
-        assertThat(tool.definition().description()).startsWith(lead + " (esql_query, search_events) by hand.");
+        assertThat(tool.definition().description()).startsWith(lead + " (esql_query, search_events, run_stroomql) "
+                                                               + "by hand.");
         // Over MCP, without the chat's tool names.
         assertThat(tool.definition().general().description()).startsWith(lead + " by hand.");
     }
@@ -759,7 +805,9 @@ class TestSequenceQueryTool {
                 .contains("A literal ? can't be in a pattern")
                 .contains("nested fields")
                 .contains("keyword subfield")
-                .contains("Refused for a Lucene index (use run_stroomql)")
+                .contains("on any other (a Lucene index, a view), a StroomQL windowed join run in Stroom, which "
+                          + "takes 2 steps")
+                .contains("the result says which ran and why")
                 .contains("runAnyway=true")
                 .contains("ask the user which doc to review (ask_user, the docs as options)")
                 .contains("can't see");
@@ -813,11 +861,19 @@ class TestSequenceQueryTool {
     }
 
     @Test
-    void itIsUsableOnlyByAUserWhoCanUseAnElasticIndex() {
+    void itIsUsableByAUserWhoCanUseAnyDataSource() {
         Mockito.when(dataSourceAccess.canUseAny(ElasticIndexDoc.TYPE)).thenReturn(true);
         assertThat(tool.isUsable()).isTrue();
 
         Mockito.when(dataSourceAccess.canUseAny(ElasticIndexDoc.TYPE)).thenReturn(false);
+        Mockito.when(dataSourceAccess.canUseAny(LuceneIndexDoc.TYPE)).thenReturn(true);
+        assertThat(tool.isUsable()).isTrue();
+
+        Mockito.when(dataSourceAccess.canUseAny(LuceneIndexDoc.TYPE)).thenReturn(false);
+        Mockito.when(dataSourceAccess.listUsable()).thenReturn(List.of(new DocRef("View", "v", "A view")));
+        assertThat(tool.isUsable()).isTrue();
+
+        Mockito.when(dataSourceAccess.listUsable()).thenReturn(List.of());
         assertThat(tool.isUsable()).isFalse();
         // No cluster is called to tell.
         Mockito.verifyNoInteractions(elasticEql, elasticEsql);
@@ -890,6 +946,215 @@ class TestSequenceQueryTool {
         assertThat(SequenceQueryTool.isShort(new TimeRange(null, "now() - 30m", "now()"))).isTrue();
         assertThat(SequenceQueryTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", null))).isFalse();
         assertThat(SequenceQueryTool.isShort(null)).isFalse();
+    }
+
+    // --------------------------------------------------------------------------------
+    // On other data sources: a StroomQL windowed join
+
+    @Test
+    void aSequenceOnALuceneIndexRunsInStroomAsAWindowedJoin() {
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), luceneArgs()), Map.class);
+
+        assertThat(json).containsEntry("engine", "StroomQL").containsEntry("sequence_count", 3)
+                .containsEntry("entity_count", 2).containsEntry("truncated", false);
+        assertThat((String) json.get("engine_reason")).contains("Lucene events").contains("isn't an Elastic Index")
+                .contains("windowed join");
+        final String query = (String) json.get("query");
+        assertThat(query).isEqualTo("""
+                from "Lucene events" as a
+                join "Lucene events" as e on a.UserId = e.UserId within 5m after a.EventTime
+                where a.Action = "Logon"
+                  and e.Action = "Export"
+                  and a.EventTime >= 2026-01-01T00:00:00.000Z
+                  and e.EventTime >= 2026-01-01T00:00:00.000Z
+                limit 1000
+                select a.UserId as "UserId", a.EventTime as "Step 1 time", a.StreamId as "Step 1 StreamId", \
+                a.EventId as "Step 1 EventId", e.EventTime as "Step 2 time", e.StreamId as "Step 2 StreamId", \
+                e.EventId as "Step 2 EventId\"""");
+        // The first step is counted first, then the join runs; each search is the agent's own, and removed.
+        assertThat(searched).hasSize(2);
+        assertThat(searched.getFirst()).contains("countUnique(UserId) as Keys").contains("where Action = \"Logon\"");
+        assertThat(searched.getLast()).isEqualTo(query);
+        Mockito.verify(agentSearches, Mockito.times(2)).destroy(Mockito.any());
+        assertThat(json).containsEntry("step_counts", List.of(40)).containsEntry("first_step_keys", 3);
+        assertThat((List<Map<String, Object>>) json.get("entities")).extracting(entity -> entity.get("keys"))
+                .containsExactly(List.of("alice"), List.of("bob"));
+        final List<String> columns = (List<String>) json.get("columns");
+        final List<String> first = ((List<List<String>>) json.get("rows")).getFirst();
+        assertThat(first.get(columns.indexOf("s1_time"))).isEqualTo("2026-01-01T00:00:00.000Z");
+        assertThat(first.get(columns.indexOf("gap_1_2_s"))).isEqualTo("60");
+        assertThat(first.get(columns.indexOf("s2_EventId"))).isEqualTo("2");
+        // The query itself is the review query: the user can save it as a Query.
+        assertThat((List<Map<String, Object>>) json.get("review_queries")).singleElement()
+                .satisfies(review -> assertThat(review).containsEntry("query", query).containsEntry("valid", true));
+        assertThat((String) json.get("note")).contains("3 pairs found, for 2 entities")
+                .contains("a pair for each");
+        Mockito.verifyNoInteractions(elasticEql, elasticEsql);
+    }
+
+    @Test
+    void inTheChatTheResultSaysWhichEngineRanAndWhy() {
+        final String output = run(chat(UserQuestions.NONE), luceneArgs());
+
+        assertThat(output).startsWith("Ran the sequence in Stroom as a StroomQL windowed join")
+                .contains("isn't an Elastic Index")
+                .contains("Counted first: step 1 matches 40 events, with 3 distinct join values.")
+                .contains("3 pairs found, for 2 entities.")
+                .contains("| alice | 2 |")
+                .contains("propose_query");
+        assertThat(written.values()).singleElement().asString().contains("| UserId | s1_time |");
+    }
+
+    @Test
+    void onOtherDataSourcesWhatAWindowedJoinCantDoIsRefusedSayingWhatItCan() {
+        final Map<String, Object> logon = luceneStep("Logon");
+        final Map<String, Object> export = luceneStep("Export");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(logon, export, export))))
+                .contains("takes 2 steps").contains("this has 3").contains("Elastic Index");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(logon, export),
+                "until", luceneStep("Logoff")))).contains("until").contains("Elastic Index");
+        final Map<String, Object> missing = new LinkedHashMap<>(export);
+        missing.put("missing", true);
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(logon, missing))))
+                .contains("missing").contains("Elastic Index");
+        final Map<String, Object> runs = new LinkedHashMap<>(logon);
+        runs.put("runs", 3);
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(runs, export))))
+                .contains("runs").contains("Elastic Index");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(logon,
+                Map.of("index", LUCENE.getName(), "by", List.of("UserId"), "where", List.of(Map.of("field",
+                        "Action", "value", "export", "caseInsensitive", true)))))))
+                .contains("caseInsensitive=true");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(logon,
+                Map.of("index", LUCENE.getName(), "by", List.of("User"), "where", List.of(Map.of("field",
+                        "Action", "value", "Export")))))))
+                .contains("Step 2: not fields of Index 'Lucene events'").contains("User (like UserId");
+        assertThat(searched).isEmpty();
+        Mockito.verifyNoInteractions(elasticEql);
+    }
+
+    @Test
+    void aSecondStepWithNoConditionOfItsOwnIsRefusedSayingWhy() {
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "5m", "steps", List.of(luceneStep("Logon"),
+                Map.of("index", LUCENE.getName(), "by", List.of("UserId"))))))
+                .contains("Step 2 has no conditions")
+                .contains("every event of")
+                .contains("Give step 2 a where or any_of condition");
+        assertThat(searched).isEmpty();
+    }
+
+    @Test
+    void aFirstStepTooBroadForAWindowedJoinIsRefusedBeforeTheJoinRuns() {
+        anchorCount = List.of("100001", "90000");
+        assertThat(run(chat(UserQuestions.NONE), luceneArgs()))
+                .contains("Not run: step 1 matches 100001 events")
+                .contains("Narrow the first step")
+                .contains("at most " + StroomQlSequence.MAX_ANCHORS);
+        assertThat(searched).hasSize(1);
+
+        // Many events per entity: the lower cap.
+        searched.clear();
+        anchorCount = List.of("20000", "100");
+        assertThat(run(chat(UserQuestions.NONE), luceneArgs()))
+                .contains("Not run: step 1 matches 20000 events, with 100 distinct join values (200 each)")
+                .contains("at most " + StroomQlSequence.DENSE_MAX_ANCHORS);
+        assertThat(searched).hasSize(1);
+
+        searched.clear();
+        anchorCount = List.of("20000", "10000");
+        assertThat(run(chat(UserQuestions.NONE), luceneArgs())).doesNotContain("Not run");
+        assertThat(searched).hasSize(2);
+    }
+
+    @Test
+    void theGuardsThresholds() {
+        assertThat(StroomQlSequence.tooBroad(StroomQlSequence.MAX_ANCHORS, 1_000)).isNull();
+        assertThat(StroomQlSequence.tooBroad(StroomQlSequence.MAX_ANCHORS + 1, 100_000)).isNotNull();
+        assertThat(StroomQlSequence.tooBroad(StroomQlSequence.DENSE_MAX_ANCHORS, 1)).isNull();
+        assertThat(StroomQlSequence.tooBroad(StroomQlSequence.DENSE_MAX_ANCHORS + 1, 100)).isNotNull();
+        // Exactly 100 per entity is not dense.
+        assertThat(StroomQlSequence.tooBroad(50_000, 500)).isNull();
+        assertThat(StroomQlSequence.tooBroad(50_000, 499)).isNotNull();
+    }
+
+    @Test
+    void aFirstStepWithNoEventsDoesntRunTheJoin() {
+        anchorCount = null;
+        final String output = run(chat(UserQuestions.NONE), luceneArgs());
+
+        assertThat(output).contains("Step 1 matches no events").contains("0 pairs found");
+        assertThat(searched).hasSize(1);
+    }
+
+    @Test
+    void aFailedSearchSaysSoAndAWarningIsPassedOn() {
+        searchWarning = "One row matched more than 1000 rows";
+        assertThat(run(chat(UserQuestions.NONE), luceneArgs())).contains("Stroom warned: One row matched more than "
+                                                                          + "1000 rows");
+        searchError = "Join table full";
+        assertThat(run(chat(UserQuestions.NONE), luceneArgs())).startsWith("Error:").contains("failed")
+                .contains("Join table full");
+    }
+
+    @Test
+    void aDataSourceWithNoTimeFieldIsRefused() {
+        Mockito.when(dataSourceAccess.timeField(LUCENE)).thenReturn(Optional.empty());
+
+        assertThat(run(chat(UserQuestions.NONE), luceneArgs())).contains("has no time field");
+        assertThat(searched).isEmpty();
+    }
+
+    @Test
+    void anElasticSequenceAlsoGivesTheSameSequenceAsAStroomQlWindowedJoin() {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        args.put("maxspan", "2m");
+        args.put("steps", List.of(
+                Map.of("index", "Devices", "by", List.of("user"), "where", List.of(Map.of("field", "action",
+                        "value", "Copy"))),
+                Map.of("index", "Devices", "by", List.of("user"), "where", List.of(Map.of("field", "action",
+                        "value", "Paste")))));
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
+
+        assertThat(json).containsEntry("engine", "EQL");
+        assertThat((String) json.get("engine_reason")).contains("Elastic Index");
+        assertThat((String) json.get("stroomql")).startsWith("from \"Devices\" as a\njoin \"Devices\" as e on "
+                                                             + "a.user = e.user within 2m after a.@timestamp");
+        assertThat(json).containsEntry("stroomql_valid", true);
+
+        // A sequence a windowed join can't say has none.
+        final Map<String, Object> withMissing = JsonUtil.readValue(run(mcp(), Map.of("maxspan", "2m", "steps",
+                List.of(Map.of("index", "Devices", "by", List.of("user"), "where", List.of(Map.of("field", "action",
+                                "value", "Copy"))),
+                        Map.of("index", "Devices", "by", List.of("user"), "missing", true, "where",
+                                List.of(Map.of("field", "action", "value", "Cancel"))),
+                        Map.of("index", "Devices", "by", List.of("user"), "where", List.of(Map.of("field",
+                                "action", "value", "Paste")))))), Map.class);
+        assertThat(withMissing).doesNotContainKey("stroomql");
+    }
+
+    private static Map<String, Object> luceneArgs() {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        args.put("steps", List.of(luceneStep("Logon"), luceneStep("Export")));
+        args.put("maxspan", "5m");
+        args.put("timeFrom", "2026-01-01T00:00:00.000Z");
+        return args;
+    }
+
+    private static Map<String, Object> luceneStep(final String action) {
+        return Map.of("index", LUCENE.getUuid(), "by", List.of("UserId"), "where", List.of(Map.of("field", "Action",
+                "value", action)));
+    }
+
+    private static DashboardSearchResponse response(final List<String> columns,
+                                                    final List<List<String>> rows,
+                                                    final List<ErrorMessage> messages) {
+        final TableResultBuilder table = TableResult.builder()
+                .componentId("table")
+                .columns(columns.stream().map(name -> Column.builder().id(name).name(name).build()).toList())
+                .totalResults((long) rows.size());
+        rows.forEach(values -> table.addRow(Row.builder().values(values).depth(0).build()));
+        return new DashboardSearchResponse(null, new QueryKey("key-" + rows.size()), null, null, null, true,
+                List.of(table.build()), messages);
     }
 
     private static Step stepOf(final boolean missing, final int runs) {

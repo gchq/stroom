@@ -78,9 +78,9 @@ public class ContextAssembler {
     /// chat's system prompt when the chat isn't offered the tool (see [#withoutGuidanceForToolsNotOffered]).
     static final String SEQUENCE_TOOL = "sequence_query";
     static final String SEQUENCE_GUIDANCE = """
-            - For "X, then Y" questions on Elastic Indexes (by the same user or host, within N; N in a row; X \
-            and then not Y), in one index or across several, use sequence_query (in the sequence_hunting group): never \
-            join esql_query or search results by hand.
+            - For "X, then Y" questions (by the same user or host, within N; on Elastic Indexes also N in a row, \
+            and X and then not Y), in one data source or across several, use sequence_query (in the \
+            sequence_hunting group): never join query or search results by hand.
             """;
     // The guidance bullets about one built-in tool alone, by the tool's name.
     private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(SEQUENCE_TOOL, SEQUENCE_GUIDANCE);
@@ -510,7 +510,7 @@ public class ContextAssembler {
     }
 
     /// Leaves out the tool guidance about a built-in tool the chat isn't offered, so the prompt never points the
-    /// model at a tool it doesn't have (e.g. sequence_query for a user who can use no Elastic Index, or whose tool
+    /// model at a tool it doesn't have (e.g. sequence_query for a user who can use no data source, or whose tool
     /// policies don't grant it).
     ///
     /// @param systemPrompt A chat's system prompt, or null.

@@ -115,8 +115,8 @@ public final class BuiltInToolGroups {
                     "config_properties",
                     "server_tasks",
                     "volumes"),
-            // Its definition is large and most chats never hunt sequences. Offered only to a user who can use an
-            // Elastic Index (StroomTool#isUsable), so a group with none of its tools offered isn't either.
+            // Its definition is large and most chats never hunt sequences. Offered only to a user who can use a
+            // data source (StroomTool#isUsable), so a group with none of its tools offered isn't either.
             SEQUENCE_HUNTING, List.of(
                     "sequence_query")));
 
@@ -157,8 +157,9 @@ public final class BuiltInToolGroups {
         purposes.put(DASHBOARDS, "make or change dashboards, their charts and visualisations, and the search "
                                  + "extractions their tables use");
         purposes.put(ADMINISTRATION, "read Stroom's configuration properties, and the tasks running on its nodes");
-        purposes.put(SEQUENCE_HUNTING, "hunt across Elastic Indexes for ordered sequences of events (X, then Y, by "
-                                      + "the same user or host, within N; N in a row; X and then not Y)");
+        purposes.put(SEQUENCE_HUNTING, "hunt for ordered sequences of events in any data source (X, then Y, by the "
+                                       + "same user or host, within N; on Elastic Indexes also N in a row, and X "
+                                       + "and then not Y)");
         return Collections.unmodifiableMap(purposes);
     }
 

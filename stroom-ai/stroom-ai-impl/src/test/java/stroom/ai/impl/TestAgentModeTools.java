@@ -296,9 +296,9 @@ class TestAgentModeTools {
     }
 
     @Test
-    void eqlSequenceAndItsGuidanceAreOnlyForAUserWhoCanUseAnElasticIndex() {
-        // Its definition is large, and most users of most chats have no Elastic Index to hunt sequences in: its
-        // group's activator isn't offered without one, and the guidance on it is left out.
+    void sequenceQueryAndItsGuidanceAreOnlyForAUserWhoCanUseADataSource() {
+        // Its definition is large: its group's activator isn't offered to a user with no data source to hunt
+        // sequences in (here the world's only one is an Elastic Index), and the guidance on it is left out.
         final String systemPrompt = "system\n\n" + ContextAssembler.TOOL_GUIDANCE;
         final ChatRequest withIndex = firstRequest(1, systemPrompt);
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
@@ -316,16 +316,17 @@ class TestAgentModeTools {
     }
 
     @Test
-    void theElasticHuntingActivatorSaysWhatItIsForAndNamesEqlSequence() {
+    void theSequenceHuntingActivatorSaysWhatItIsForAndNamesSequenceQuery() {
         final ToolSpecification activator = firstRequest(1, "system").toolSpecifications().stream()
                 .filter(specification -> specification.name().equals(ACTIVATE_SEQUENCE_HUNTING))
                 .findFirst()
                 .orElseThrow();
 
         assertThat(activator.description()).isEqualTo("Turns on the 'sequence_hunting' group of 1 tool, to hunt "
-                                                       + "across Elastic Indexes for ordered sequences of events (X, "
-                                                       + "then Y, by the same user or host, within N; N in a row; X "
-                                                       + "and then not Y), so you can call it from your next step: "
+                                                       + "for ordered sequences of events in any data source (X, "
+                                                       + "then Y, by the same user or host, within N; on Elastic "
+                                                       + "Indexes also N in a row, and X and then not Y), so you can "
+                                                       + "call it from your next step: "
                                                        + "sequence_query. Turn on a group only when you need its "
                                                        + "tools.");
     }

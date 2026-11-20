@@ -126,13 +126,13 @@ class TestBundledKnowledge {
     }
 
     @Test
-    void orderedQuestionsAreSteeredToEqlSequenceNotJoins() {
+    void orderedQuestionsAreSteeredToSequenceQueryNotJoins() {
         // Seen in acceptance runs on a small model: "a USB device connected, then a file copied to it within 10
         // minutes" answered by joining esql_query results by hand, and wrongly.
         final String text = String.join(" ", BundledKnowledge.serverInstructions().split("\\s+"));
 
-        assertThat(text).contains("\"X, then Y, by the same user/host, within N\" (N in a row, then NOT Y), in one "
-                                  + "Elasticsearch index or across several: sequence_query")
+        assertThat(text).contains("\"X, then Y, by the same user/host, within N\", in any data source or across "
+                                  + "several (N in a row, then NOT Y: Elasticsearch only): sequence_query.")
                 // Rows of two data sources matched by a key: a StroomQL join first, never one made by hand.
                 .contains("a StroomQL join in run_stroomql")
                 .contains("Never a join of esql_query or search results by hand.");

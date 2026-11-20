@@ -248,9 +248,9 @@ Needs: Use (document)
 
 ## sequence_query {"maxspan":"2m","steps":[{"index":"elastic-index-uuid","by":["UserId"],"where":[{"field":"UserId","value":"alice"}]},{"index":"elastic-index-uuid","by":["UserId"]}]}
 Needs: Use (document)
-- everything: runs: Ran the EQL sequence on ElasticIndex 'Test elastic index' (uuid elastic-index-uuid) (Elasticsearch 9.5.3, 3 ms), with maxspan 2m (as asked):
-- without Use (document): REFUSED or limited: Error: No Elastic Index doc with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
-- nothing: REFUSED or limited: Error: No Elastic Index doc with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
+- everything: runs: Ran the EQL sequence on ElasticIndex 'Test elastic index' (uuid elastic-index-uuid) (Elasticsearch 9.5.3, 3 ms), with maxspan 2m (as asked). Every step's data source is an Elastic Index, so the sequen…
+- without Use (document): REFUSED or limited: Error: No data source with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
+- nothing: REFUSED or limited: Error: No data source with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
 - admin: runs (the same as with everything)
 
 ## search_events {"index":"index-uuid","where":[{"field":"UserId","value":"alice"}]}
