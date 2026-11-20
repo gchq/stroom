@@ -621,6 +621,68 @@ class TestStroomMcpServer {
     }
 
     @Test
+    void aCallTheClientCancelsIsNotAnsweredAndTheNextCallSaysWhatItDid() throws Exception {
+        // As the MCP spec says: a request the client cancelled gets no response. What the call did stays done (here
+        // it doesn't stop when told to, as a tool part way through a save may not), and the session's next call
+        // says what it completed, so the agent learns it.
+        final CountDownLatch started = new CountDownLatch(1);
+        behaviours.put("slow_thing", context -> {
+            started.countDown();
+            try {
+                Thread.sleep(10_000);
+            } catch (final InterruptedException e) {
+                // Done anyway.
+            }
+            return ToolResult.text("Saved XSLT 'Thing' (uuid 1234).\nMore detail.");
+        });
+        final String sessionId = rawSession();
+        final CompletableFuture<HttpResponse<String>> call = http.sendAsync(rawRequest(sessionId,
+                "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"slow_thing\","
+                + "\"arguments\":{}}}"), HttpResponse.BodyHandlers.ofString());
+        assertThat(started.await(10, TimeUnit.SECONDS)).isTrue();
+
+        assertThat(rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/cancelled\",\"params\":"
+                                      + "{\"requestId\":7,\"reason\":\"user\"}}").statusCode()).isEqualTo(202);
+
+        final HttpResponse<String> cancelled = call.get(10, TimeUnit.SECONDS);
+        assertThat(cancelled.body())
+                .doesNotContain("\"id\":7")
+                .doesNotContain("Saved XSLT");
+        // The session goes on, and its next call says what the cancelled one did, once.
+        final HttpResponse<String> next = rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":"
+                                                             + "\"tools/call\",\"params\":{\"name\":\"read_thing\","
+                                                             + "\"arguments\":{}}}");
+        assertThat(next.statusCode()).isEqualTo(200);
+        assertThat(next.body())
+                .contains("\"id\":8")
+                .contains("ran read_thing")
+                .contains("slow_thing")
+                .contains("Saved XSLT 'Thing' (uuid 1234).")
+                .doesNotContain("More detail.");
+        final HttpResponse<String> after = rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":"
+                                                              + "\"tools/call\",\"params\":{\"name\":\"read_thing\","
+                                                              + "\"arguments\":{}}}");
+        assertThat(after.body())
+                .contains("ran read_thing")
+                .doesNotContain("slow_thing");
+        assertThat(server.isOpenFor(sessionId, ALICE)).isTrue();
+    }
+
+    @Test
+    void aCallNotCancelledIsAnsweredWithoutANote() throws Exception {
+        final String sessionId = rawSession();
+
+        final HttpResponse<String> answer = rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":"
+                                                               + "\"tools/call\",\"params\":{\"name\":"
+                                                               + "\"read_thing\",\"arguments\":{}}}");
+
+        assertThat(answer.body())
+                .contains("\"id\":7")
+                .contains("ran read_thing")
+                .doesNotContain("cancelled");
+    }
+
+    @Test
     void aCallIsStoppedWhenItsSessionEnds() throws Exception {
         final CountDownLatch started = new CountDownLatch(1);
         final CompletableFuture<Boolean> interrupted = new CompletableFuture<>();

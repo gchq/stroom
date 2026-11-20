@@ -55,4 +55,68 @@ class TestSentMappings {
 
         assertThat(SentMappings.sent(BuildToolCalls.context(), "x-1")).isEmpty();
     }
+
+    @Test
+    void aBuildsDraftIsPickedUpByANewSessionOfTheSameUser() {
+        // Seen in eval case 36: the client gave up on a call, started a new session, and changes= right after the
+        // draft was refused, the draft gone with the old session's workspace.
+        SentMappings.remember(world.context(), SentMappings.DRAFT + "acme-v1", Map.of("input", "json"));
+        assertThat(SentMappings.earlierSession(world.context(), SentMappings.DRAFT + "acme-v1")).isEmpty();
+
+        world.newSession("mcp-session-2");
+
+        assertThat(SentMappings.sent(world.context(), SentMappings.DRAFT + "acme-v1"))
+                .contains(Map.of("input", "json"));
+        assertThat(SentMappings.earlierSession(world.context(), SentMappings.DRAFT + "acme-v1")).isPresent();
+    }
+
+    @Test
+    void aMappingSentForABuildsXsltIsPickedUpByANewSessionStillUnsaved() {
+        SentMappings.rememberUnsaved(world.context(), "acme-v1/ACME Events", Map.of("input", "json"));
+
+        world.newSession("mcp-session-2");
+
+        assertThat(SentMappings.unsaved(world.context(), "acme-v1/ACME Events")).contains(Map.of("input", "json"));
+        SentMappings.remember(world.context(), "acme-v1/ACME Events", Map.of("input", "xml"));
+        assertThat(SentMappings.unsaved(world.context(), "acme-v1/ACME Events")).isEmpty();
+        assertThat(SentMappings.sent(world.context(), "acme-v1/ACME Events")).contains(Map.of("input", "xml"));
+        // Sent in this session now.
+        assertThat(SentMappings.earlierSession(world.context(), "acme-v1/ACME Events")).isEmpty();
+    }
+
+    @Test
+    void theNewestDraftOfABuildWinsWhicheverSessionMadeIt() {
+        SentMappings.remember(world.context(), SentMappings.DRAFT + "acme-v1", Map.of("input", "json"));
+        world.newSession("mcp-session-2");
+        SentMappings.remember(world.context(), SentMappings.DRAFT + "acme-v1", Map.of("input", "xml"));
+
+        // Back in the first session, whose own workspace still holds its older draft.
+        world.sessionId = "mcp-session-1";
+        world.files().put(SentMappings.path(SentMappings.DRAFT + "acme-v1").toString(), "{\"input\":\"json\"}");
+
+        assertThat(SentMappings.sent(world.context(), SentMappings.DRAFT + "acme-v1"))
+                .contains(Map.of("input", "xml"));
+        assertThat(SentMappings.earlierSession(world.context(), SentMappings.DRAFT + "acme-v1")).isPresent();
+    }
+
+    @Test
+    void aDraftWithNoBuildStaysWithItsSession() {
+        SentMappings.remember(world.context(), SentMappings.DRAFT, Map.of("input", "json"));
+
+        assertThat(world.userFiles()).isEmpty();
+        world.newSession("mcp-session-2");
+        assertThat(SentMappings.sent(world.context(), SentMappings.DRAFT)).isEmpty();
+    }
+
+    @Test
+    void aSessionWithNoUserWorkspaceKeepsItsOwn() {
+        world.userWorkspace = false;
+        SentMappings.remember(world.context(), SentMappings.DRAFT + "acme-v1", Map.of("input", "json"));
+
+        assertThat(SentMappings.sent(world.context(), SentMappings.DRAFT + "acme-v1"))
+                .contains(Map.of("input", "json"));
+        assertThat(SentMappings.earlierSession(world.context(), SentMappings.DRAFT + "acme-v1")).isEmpty();
+        world.newSession("mcp-session-2");
+        assertThat(SentMappings.sent(world.context(), SentMappings.DRAFT + "acme-v1")).isEmpty();
+    }
 }

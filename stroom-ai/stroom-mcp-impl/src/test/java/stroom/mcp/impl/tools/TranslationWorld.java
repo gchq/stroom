@@ -58,6 +58,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -148,6 +149,17 @@ final class TranslationWorld {
     private final Set<String> waited = new HashSet<>();
     private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
     private final Map<String, String> files = new LinkedHashMap<>();
+    // The user's own workspace (chat USER_CHAT), which outlasts the session: what is kept with their builds.
+    private final Map<String, String> userFiles = new LinkedHashMap<>();
+    /// The session the calls are made in: another stands for a new session of the same user (its own workspace,
+    /// the same user's workspace).
+    String sessionId = "mcp-session-1";
+    /// False for a session with no user's workspace (e.g. a chat in Stroom).
+    boolean userWorkspace = true;
+    /// The clock build_translation_xslt's sample check reads (when it starts, so a test can tell).
+    Clock clock = Clock.systemUTC();
+    /// What the calls told the client of how they were getting on, in order.
+    final List<String> progress = Collections.synchronizedList(new ArrayList<>());
 
     TranslationWorld() {
         Mockito.when(heldSchemas.eventVersions()).thenAnswer(inv -> {
@@ -186,7 +198,7 @@ final class TranslationWorld {
     BuildTranslationXsltTool buildTool() {
         return new BuildTranslationXsltTool(docs, builds, eventVersions, requiredImports, consent,
                 sampleStreamTexts, stepping, agentInstructions, () -> auditLog, currentTranslations, groups,
-                Mockito.mock(LookupKeyCounts.class), plan, Clock.systemUTC());
+                Mockito.mock(LookupKeyCounts.class), plan, clock);
     }
 
     /// @return draft_translation_mapping, wired on the world.
@@ -211,7 +223,7 @@ final class TranslationWorld {
     /// @return The context of a call from an MCP client, with a workspace, that shows forms only when [#forms]
     /// is set (answering each from [#answers], by the start of its question).
     ToolCallContext context() {
-        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, sessionId,
                         new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
                 .userQuestions(new UserQuestions() {
                     @Override
@@ -253,6 +265,10 @@ final class TranslationWorld {
                     }
                 })
                 .workspace(new SessionWorkspace(chatWorkspace, 1))
+                .progress(progress::add)
+                .userWorkspace(userWorkspace
+                        ? () -> new SessionWorkspace(chatWorkspace, USER_CHAT)
+                        : null)
                 .build();
     }
 
@@ -301,6 +317,19 @@ final class TranslationWorld {
         return files;
     }
 
+    /// @return The files the user's own workspace holds, by path.
+    Map<String, String> userFiles() {
+        return userFiles;
+    }
+
+    /// Starts a new session of the same user: its workspace is empty; the user's own is kept.
+    ///
+    /// @param id The new session's id.
+    void newSession(final String id) {
+        sessionId = id;
+        files.clear();
+    }
+
     /// @return A mapping: a Data Splitter's records, logons and the rest.
     static Map<String, Object> mapping() {
         return JsonUtil.readValue(MAPPING, Map.class);
@@ -315,6 +344,9 @@ final class TranslationWorld {
     static Map<String, Object> kept(final TranslationMapping mapping) {
         return mapping.toJson(DumpMode.COMPACT);
     }
+
+    /// The hidden chat holding the user's own workspace.
+    static final int USER_CHAT = 99;
 
     /// The mapping: common fields, logons and a rule for the rest.
     static final String MAPPING = """
@@ -337,22 +369,30 @@ final class TranslationWorld {
                                                      {"path": "EventDetail/Unknown/Data", "data_name": "action",
                                                       "field": "action"}]}]}""";
 
-    // The session's workspace, as files kept in memory.
+    // The session's workspace and the user's, as files kept in memory.
     private void wireWorkspace() {
         Mockito.when(chatWorkspace.write(Mockito.anyInt(), any(WorkspacePath.class), anyString(), any()))
                 .thenAnswer(inv -> {
-                    files.put(String.valueOf((Object) inv.getArgument(1)), inv.getArgument(2));
-                    return files.size();
+                    final Map<String, String> in = filesOf(inv.getArgument(0));
+                    in.put(String.valueOf((Object) inv.getArgument(1)), inv.getArgument(2));
+                    return in.size();
                 });
         Mockito.when(chatWorkspace.find(Mockito.anyInt(), any(WorkspacePath.class))).thenAnswer(inv ->
-                files.containsKey(String.valueOf((Object) inv.getArgument(1)))
+                filesOf(inv.getArgument(0)).containsKey(String.valueOf((Object) inv.getArgument(1)))
                         ? Optional.of(1)
                         : Optional.empty());
-        Mockito.doAnswer(inv -> files.remove(String.valueOf((Object) inv.getArgument(1))))
+        Mockito.doAnswer(inv -> filesOf(inv.getArgument(0)).remove(String.valueOf((Object) inv.getArgument(1))))
                 .when(chatWorkspace).delete(Mockito.anyInt(), any(WorkspacePath.class));
         Mockito.when(chatWorkspace.readLines(Mockito.anyInt(), any(WorkspacePath.class), Mockito.anyLong(),
                 Mockito.anyInt())).thenAnswer(inv ->
-                List.of(files.get(String.valueOf((Object) inv.getArgument(1))).split("\n", -1)));
+                List.of(filesOf(inv.getArgument(0)).get(String.valueOf((Object) inv.getArgument(1)))
+                        .split("\n", -1)));
+    }
+
+    private Map<String, String> filesOf(final int chatId) {
+        return chatId == USER_CHAT
+                ? userFiles
+                : files;
     }
 
     // Whether a form asks several questions (Consent.chooseEach): fields q1, q2, ...

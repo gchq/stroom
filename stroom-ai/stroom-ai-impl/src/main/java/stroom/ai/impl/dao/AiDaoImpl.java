@@ -134,6 +134,10 @@ public class AiDaoImpl implements AiDao {
                 .select(AI_CHAT.ID)
                 .from(AI_CHAT)
                 .where(AI_CHAT.MCP_SESSION_ID.eq(mcpSessionId))
+                // The oldest, should two nodes each have made one at once (a user's own workspace, see
+                // McpWorkspaces).
+                .orderBy(AI_CHAT.ID)
+                .limit(1)
                 .fetchOptional(AI_CHAT.ID));
     }
 

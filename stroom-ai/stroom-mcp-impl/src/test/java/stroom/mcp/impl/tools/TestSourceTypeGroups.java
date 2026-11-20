@@ -42,6 +42,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -570,6 +574,52 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aNewGroupIsAskedWhereItsEventsGoBeforeTheSampleIsChecked() {
+        // Decided by the user (2026-11-20), seen in eval case 36 on Haiku over Claude Code: on a 1,000-record sample
+        // the check ran ~61 s before the call's first form, and the client, which gives up on a call after 60 s with
+        // nothing sent on it (a form resets its clock), gave up. A question that doesn't depend on the check is
+        // asked before it.
+        world.forms = true;
+        world.answers.put("Source type group 'PEGA security'", "To an output feed of its own (made next)");
+        final List<Integer> formsAtTheCheck = new ArrayList<>();
+        world.clock = clockNoting(() -> formsAtTheCheck.add(placementForms().size()));
+        final Map<String, Object> asked = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        asked.remove("own_output_feed");
+
+        final Map<String, Object> saved = world.call(world.buildTool(), asked);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(formsAtTheCheck).as("forms asked when the check started").isNotEmpty().first().isEqualTo(1);
+        assertThat(placementForms()).hasSize(1);
+        // The client is told the check is going on, so one that would give up on a silent call waits.
+        assertThat(world.progress).anySatisfy(message -> assertThat(message).startsWith("Checking the mapping"));
+    }
+
+    @Test
+    void whereANewGroupsEventsGoIsNotAskedAgainAfterACallThatSavedNothing() {
+        // Asked before the check, the answer is kept for the next call when this one saves nothing (here its check
+        // fails).
+        world.forms = true;
+        world.answers.put("Source type group 'PEGA security'", "To an output feed of its own (made next)");
+        world.clock = clockNoting(() -> {
+            throw new ToolRefusal("the check failed");
+        });
+        final Map<String, Object> asked = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        asked.remove("own_output_feed");
+        assertThat(world.call(world.buildTool(), asked).get("error")).asString().contains("the check failed");
+        assertThat(placementForms()).hasSize(1);
+
+        world.clock = Clock.systemUTC();
+        final Map<String, Object> saved = world.call(world.buildTool(), asked);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(placementForms()).as("not asked again").hasSize(1);
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("output_feed", "");
+    }
+
+    @Test
     void whereANewGroupsEventsGoIsTakenAsTheUserSaidOnceItsFormCouldntBeShown() {
         // Seen over /mcp: the client answered the placement form with an error, and as own_output_feed was read
         // only after asking, every call was refused the same way.
@@ -1071,5 +1121,26 @@ class TestSourceTypeGroups {
     private static TranslationMapping keptMapping(final XsltDoc xslt) {
         return TranslationMapping.parse(KeptMapping.readMapping(xslt.getDescription()).orElseThrow().payload()
                 .get("mapping"));
+    }
+
+    // A clock that does something first each time it is read: the sample check reads it as it starts.
+    private static Clock clockNoting(final Runnable first) {
+        return new Clock() {
+            @Override
+            public ZoneId getZone() {
+                return ZoneOffset.UTC;
+            }
+
+            @Override
+            public Clock withZone(final ZoneId zone) {
+                return this;
+            }
+
+            @Override
+            public Instant instant() {
+                first.run();
+                return Instant.now();
+            }
+        };
     }
 }

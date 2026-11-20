@@ -24,6 +24,8 @@ import stroom.util.shared.UserRef;
 import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -41,6 +43,8 @@ final class McpSession {
     private final long startedMs = System.currentTimeMillis();
     private final AtomicLong lastUsedMs = new AtomicLong(startedMs);
     private final TransportKeeper transportKeeper;
+    // What the session's cancelled calls did, for the next answer to say (guarded by itself).
+    private final List<String> cancelledCalls = new ArrayList<>();
 
     /// @param id              The session's id, as the client sends it in its `Mcp-Session-Id` header.
     /// @param owner           The user who started it, the only one who may use it.
@@ -109,6 +113,25 @@ final class McpSession {
     /// @return When the session was last used.
     long lastUsedMs() {
         return lastUsedMs.get();
+    }
+
+    /// Keeps what a call the client cancelled did, for the session's next answered tool call to say: a cancelled
+    /// call gets no answer, as the MCP spec says, though what it did stays done.
+    ///
+    /// @param note One line: the tool, and what came of the call.
+    void cancelledCall(final String note) {
+        synchronized (cancelledCalls) {
+            cancelledCalls.add(note);
+        }
+    }
+
+    /// @return What the session's cancelled calls did since this was last asked, oldest first; then forgotten.
+    List<String> takeCancelledCalls() {
+        synchronized (cancelledCalls) {
+            final List<String> taken = List.copyOf(cancelledCalls);
+            cancelledCalls.clear();
+            return taken;
+        }
     }
 
     /// Puts the session back in the transport if the transport dropped it: it does when a send on one of the

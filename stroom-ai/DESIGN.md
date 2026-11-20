@@ -1191,7 +1191,7 @@ says so, but nothing enforces it.
 | Chats, runs, messages, approvals | Database (`stroom-ai-impl-db`) | Any node; survives restarts. |
 | Workspace files | Database, zstd chunks (`WorkspaceStore`), cached locally | Any node. |
 | MCP sessions | Memory, one node | The SDK's sessions are in memory; affinity by client IP. |
-| A session's draft mapping | Session workspace, `/outputs/mappings/` (`SentMappings`) | A fix sends only its changes. |
+| A session's draft mapping | Session workspace, `/outputs/mappings/` (`SentMappings`); a build's also the user's own workspace | A fix sends only its changes; a new session of the user picks up a build's. |
 | Choices made in forms | Session workspace, `/outputs/choices/` (`UnsavedChoices`) | A call that fails before saving doesn't ask again. |
 | Lookup agreements | Session, by document and function (`LookupAgreements`) | Not asked twice for the same XSLT. |
 | The build a session works on | Node memory, per session (`BuildPlan.rememberBuild`): set by `start_onboarding`, `start_build` and any call naming a build | Calls that name no build work on it. |
@@ -1549,8 +1549,13 @@ A failed task's reason stays in the operator's own log system: the tools give it
   (`maxFormsPerNode` 50, one user at most half), separate from the chat's limit for other servers' forms.
 * **Run slots.** A heavy call (survey, StroomQL, stepping) takes one of the user's run slots (`McpCallSlot`), so
   `/mcp` calls and chat runs count together.
-* **Long calls** send progress notifications (when the client sent a progress token), and a client's cancellation,
-  or the end of the HTTP request, stops the work (`RunningCalls`). The tools say what they are doing as they go
+* **Long calls** send progress notifications (when the client sent a progress token; Claude Code sends one and
+  gives up on a call after 60 s with neither a response nor a progress notification, its idle timeout, so work
+  that says nothing as it goes says it is still working every 5 s: `CallProgress.whileWorking`), and a client's cancellation,
+  or the end of the HTTP request, stops the work (`RunningCalls`). A call so cancelled gets no answer, as the MCP
+  spec says (2026-11-20, decided by the user; MCP SDK 2.0.1 sent one anyway): its work completes empty, for which
+  the SDK sends nothing. What it did stays done (an XSLT saved, say), and the session's next answered tool call
+  starts with one line per cancelled call: the tool, and the first line of its result (`ToolCallAnswers`). The tools say what they are doing as they go
   (`CallProgress`: surveys, index checks, stepping, waits for processing), at most every 5 seconds in a loop; a
   message that can't be sent is dropped, never failing the call. Asked for by the user: a survey of an index ran
   for minutes with nothing to show what it was doing.
@@ -2874,6 +2879,14 @@ entries.
   out in one call). If none is held, the mapping kept with the XSLT is used. **Any save with a mapping**, from
   whichever tool (`rebuild_mapping` included), records that mapping as what the next `changes=` start from
   (2026-10-31). Before this, a hand edit carried into the mapping was lost on the next change.
+* **A build's draft is kept with the build, for the user** (2026-11-20, decided; seen in eval case 36: a client that
+  started a new session lost the draft): every mapping `SentMappings` keeps but the draft made with no build is also
+  written to the user's own workspace (`ToolCallContext.userWorkspace`, a hidden chat keyed `user:<uuid>` that only
+  that user's MCP sessions are given, `McpWorkspaces.userChatIdFor`; deleted once unused for the session retention
+  time), with the session and time it was sent. The newest wins: it is read first, as each session's save replaces
+  it. One from an earlier session is used only while the user can still see the build (`TranslationBuilds`), and the
+  result says so (`changes_applied_to_one`: when it was drafted). Another user never gets it. A chat in Stroom keeps
+  its own, in its workspace, as before.
 * `draft_translation_mapping` drafts from the samples and the build's confirmed catalogue. The schema version is
   settled in a form. The current translation's lookups are carried into a next version; a save that keeps none of
   them warns.
@@ -4413,6 +4426,9 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-20 | build_translation_xslt asks its forms before the sample check where they don't depend on it (decided by the user; seen in eval case 36 on Haiku over Claude Code: the check of a 1,000-record sample ran 61 s before the first form, and Claude Code gives up on a call after 60 s with no response or progress notification on it): where a new source type group's Events go is asked before the check (kept for the next call should this one save nothing); the forms on what the check found (domain split, stand-ins for none, confirmed event types translated otherwise, rules kept as Unknown) follow it; while the check runs the client is told it is still going every 5 s (`CallProgress.whileWorking`), which resets Claude Code's idle clock. | Translation |
+| 2026-11-20 | A call the client cancelled over `/mcp` gets no answer, as the MCP spec says (decided by the user; MCP SDK 2.0.1 sent one): what it did stays done, and the session's next tool call result says, one line a call, what it completed. | The /mcp endpoint |
+| 2026-11-20 | A build's draft translation mapping (and every mapping sent for a build's XSLT) is kept with the build, for the user, in the user's own workspace, so a new MCP session of the same user picks it up (decided; seen in eval case 36: a client that started a new session lost its draft); the newest wins, a result built on one from an earlier session says when it was drafted, and another user never gets it. A draft made with no build stays with its session. | Translation |
 | 2026-11-20 | Large results for a client outside Stroom (decided by the user: "outline + saved file, all"; seen in the Haiku evals, results of 50k–110k characters saved by Claude Code where the agent can't read them): one mechanism (`LargeResults`) saves the whole to the workspace and outlines the large parts of survey_feed, catalogue_event_types, draft_translation_mapping, build_translation_xslt and write_documentation; step_records takes `locations_from`. | Translation (Large results, outside Stroom) |
 | 2026-11-20 | From the Haiku eval runs of the event type catalogue (decided by the user): draft_translation_mapping outlines a draft over 40,000 characters for a client outside Stroom (saved to `/outputs/drafts/<build>.json`, read a rule at a time, built with `changes=`; `changes={}` builds it as it stands), and build_translation_xslt counts each rule's Data in such a result; the draft reads the items of a repeated group as records where the catalogue does (`for_each`), the reading an earlier catalogue_event_types call gave winning over the latest mapping's; a JSON list of values is one Data a value; a declined catch-all is asked about in the chat (another event, `catch_all.translation`, or event types for those records) and build_translation_xslt refuses while it is unconfirmed; a confirmed event type's lost vendor-code Data is warned of; a promoted catalogue is carried in before copy_pipeline; the check refuses an `equals` or `one_of` on a value that differs from 3 or more of its field's values only in a part that varies, and suggests `starts_with` or a named group (a code is never refused); a description is optional, and eval cases score a Description on every event only where the records say what happened; a feed is taken to name its event fields one way (case 67 kept for the reference run only). | Translation (Event type catalogue) |
 | 2026-11-19 | The event type catalogue replaces classify_kinds and kind fields (seen in user testing: a Pega feed's only telling field was its logger, and one logger writes several event types; one field rarely tells a source's event types apart). `catalogue_event_types`: the tools give evidence (telling fields, shapes, examples, the draft's rules as a seed for the agent to correct, never the user's); the agent proposes event types by TypeId (add, change, remove), each recognised by ANDs of conditions (with `not`, `starts_with` and `contains`; no OR across fields; never the source type field); every proposal is checked against every sampled record read as processing reads it (counts, overlaps refused with telling fields, uncatalogued records by shape, unparsed, may be several, not checked, a regex guard, the string cut); the user confirms a set at a time in short forms (only in the form), then a catch-all for uncatalogued records, always, not an event type. Decided by the user: one set of words (source type, event type, record, recognised by, uncatalogued records), never "kind"; Verb-Object TypeIds for every source with the vendor's code as Data; Description from the record's message, else the documentation, else the agent's fixed text; a sole event type may take every record; nothing migrated; the lifecycle in scope (uncatalogued records become proposals, the catalogue carried into a next version, hand edits read back, a hand-written catch-all writing a real event read back as the catch-all); record_source_notes keeps fields and documents only; eval cases rescored and run on Haiku, the eval user deciding the catalogue form. | Translation (Event type catalogue) |

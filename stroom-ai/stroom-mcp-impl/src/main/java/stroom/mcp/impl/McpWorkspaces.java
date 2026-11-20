@@ -22,6 +22,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -44,6 +45,10 @@ class McpWorkspaces {
     /// How often a session's hidden chat is marked as used, at most, so it isn't taken for idle.
     static final Duration TOUCH_INTERVAL = Duration.ofMinutes(1);
 
+    /// What the key of a user's own workspace starts with, before the user's UUID.
+    static final String USER_WORKSPACE_PREFIX = "user:";
+
+    private final Object userWorkspaceLock = new Object();
     private final Provider<AiDao> aiDaoProvider;
     private final Provider<AiRetention> aiRetentionProvider;
     private final SecurityContext securityContext;
@@ -74,6 +79,24 @@ class McpWorkspaces {
                         .orElseGet(() -> aiDao.createSessionChat(session.owner(), session.id()).getId());
             }
             chatId = state.chatId;
+        }
+        aiDao.touchChat(chatId, TOUCH_INTERVAL.toMillis());
+        return chatId;
+    }
+
+    /// @param owner A user.
+    /// @return The id of the hidden chat holding the user's own workspace, made now if they have none yet: what is
+    /// kept with their builds between their sessions (e.g. a build's draft translation mapping), so a session their
+    /// client starts again picks it up. Its key is the user's, never a session's (those are UUIDs), and only their
+    /// sessions are given it. Like a session's, it is deleted once unused for the session retention time.
+    int userChatIdFor(final UserRef owner) {
+        final AiDao aiDao = aiDaoProvider.get();
+        final String key = USER_WORKSPACE_PREFIX + owner.getUuid();
+        final int chatId;
+        // Found or made under one lock on this node, so sessions of the user calling at once don't each make one.
+        synchronized (userWorkspaceLock) {
+            chatId = aiDao.findSessionChat(key)
+                    .orElseGet(() -> aiDao.createSessionChat(owner, key).getId());
         }
         aiDao.touchChat(chatId, TOUCH_INTERVAL.toMillis());
         return chatId;

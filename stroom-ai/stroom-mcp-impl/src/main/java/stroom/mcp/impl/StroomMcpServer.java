@@ -43,7 +43,9 @@ import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTrans
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
+import io.modelcontextprotocol.spec.McpSchema.Content;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 import io.modelcontextprotocol.spec.McpSchema.InitializeRequest;
 import io.modelcontextprotocol.spec.McpSchema.InitializeResult;
@@ -51,6 +53,7 @@ import io.modelcontextprotocol.spec.McpSchema.JSONRPCRequest;
 import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpStreamableServerSession;
 import io.modelcontextprotocol.spec.McpStreamableServerSession.McpStreamableServerSessionInit;
 import io.modelcontextprotocol.spec.McpStreamableServerTransport;
@@ -63,6 +66,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -323,8 +327,10 @@ class StroomMcpServer {
                 McpSchema.METHOD_PING, (exchange, params) -> Mono.just(Map.of()),
                 McpSchema.METHOD_TOOLS_LIST, (exchange, params) -> asUser(exchange, session ->
                         new ListToolsResult(tools.list(session), null, null)),
-                McpSchema.METHOD_TOOLS_CALL, (exchange, params) -> asUser(exchange, session ->
-                        tools.call(session, exchange, toCallToolRequest(params))),
+                McpSchema.METHOD_TOOLS_CALL, (McpRequestHandler<CallToolResult>) (exchange, params) -> asUser(
+                        exchange,
+                        session -> tools.call(session, exchange, toCallToolRequest(params)),
+                        new ToolCallAnswers(params)),
                 // The guides and convention profiles bundled for agents, the same for every user.
                 McpSchema.METHOD_RESOURCES_LIST, (exchange, params) -> asUser(exchange, session ->
                         resources.list()),
@@ -371,6 +377,14 @@ class StroomMcpServer {
     // The work is cancelled (its thread interrupted, so a tool that checks stops) when the client cancels the
     // request, its HTTP request ends, or the session ends.
     private <T> Mono<T> asUser(final McpAsyncServerExchange exchange, final SessionWork<T> work) {
+        return asUser(exchange, work, new Answers<>() {
+        });
+    }
+
+    // As above, the answer given by answers: what a cancelled call did is kept for the session's next answer.
+    private <T> Mono<T> asUser(final McpAsyncServerExchange exchange,
+                               final SessionWork<T> work,
+                               final Answers<T> answers) {
         final UserIdentity identity = (UserIdentity) exchange.transportContext().get(USER_IDENTITY_KEY);
         final McpRequestEnd requestEnd = (McpRequestEnd) exchange.transportContext().get(REQUEST_END_KEY);
         final McpSession session = NullSafe.get(sessions.get(exchange.sessionId()), OpenSession::session);
@@ -382,8 +396,11 @@ class StroomMcpServer {
                 sink.error(sessionEnded());
                 return;
             }
-            final T result;
-            try (final RunningCall call = session.runningCalls().start(context.getOrDefault(REQUEST_ID_KEY, null))) {
+            final Object requestId = context.getOrDefault(REQUEST_ID_KEY, null);
+            T result = null;
+            RuntimeException failure = null;
+            final RunningCall call = session.runningCalls().start(requestId);
+            try (call) {
                 sink.onCancel(call::cancel);
                 NullSafe.consume(requestEnd, end -> end.onEnd(call::cancel));
                 result = securityContext.asUserResult(identity, () -> {
@@ -397,14 +414,23 @@ class StroomMcpServer {
                     return work.apply(session);
                 });
             } catch (final RuntimeException e) {
-                workspaces.callEnded(session);
-                sink.error(e);
-                keepInTransport(session.id());
-                return;
+                failure = e;
             }
             // Answered once the call can no longer be cancelled, so no interrupt reaches the thread as it answers.
             workspaces.callEnded(session);
-            sink.success(result);
+            if (call.isCancelled()) {
+                // As the MCP spec says, a request the client cancelled (or gave up on, ending its HTTP request) is
+                // not answered: the SDK (2.0.1) sends nothing for work that gives no result, and ends the request's
+                // stream. What the call did stays done, so the session's next answer says what it was.
+                LOGGER.debug("Not answering request {} of MCP session {}, which was cancelled", requestId,
+                        session.id());
+                NullSafe.consume(answers.cancelled(requestId, result, failure), session::cancelledCall);
+                sink.success();
+            } else if (failure != null) {
+                sink.error(failure);
+            } else {
+                sink.success(answers.answer(session, result));
+            }
             keepInTransport(session.id());
         }));
     }
@@ -493,6 +519,99 @@ class StroomMcpServer {
     private interface SessionWork<T> {
 
         T apply(McpSession session);
+    }
+
+    /// How a request's work is answered: as it gave, and nothing said of a cancelled one.
+    private interface Answers<T> {
+
+        /// @param session The session.
+        /// @param result  What the work gave.
+        /// @return The answer to send.
+        default T answer(final McpSession session, final T result) {
+            return result;
+        }
+
+        /// @param requestId The id of the client's request, or null.
+        /// @param result    What the work gave, or null if it failed.
+        /// @param failure   Why it failed, or null.
+        /// @return What the cancelled call did, in one line, for the session's next answer; null for nothing.
+        default String cancelled(final Object requestId, final T result, final RuntimeException failure) {
+            return null;
+        }
+    }
+
+    /// The answers to tool calls: one cancelled says, in the session's next answer, what it completed, so the agent
+    /// learns of what it did (e.g. an XSLT saved), though it got no answer.
+    static final class ToolCallAnswers implements Answers<CallToolResult> {
+
+        /// How much of a cancelled call's result the next answer gives.
+        static final int MAX_OUTCOME_CHARS = 300;
+
+        private final String toolName;
+
+        /// @param params The request's params.
+        ToolCallAnswers(final Object params) {
+            this.toolName = params instanceof final Map<?, ?> map && map.get("name") instanceof final String name
+                    ? name
+                    : "a tool";
+        }
+
+        @Override
+        public CallToolResult answer(final McpSession session, final CallToolResult result) {
+            final List<String> cancelled = session.takeCancelledCalls();
+            if (cancelled.isEmpty() || result == null) {
+                return result;
+            }
+            final List<Content> content = new ArrayList<>();
+            content.add(new TextContent(cancelledNote(cancelled)));
+            content.addAll(NullSafe.list(result.content()));
+            return new CallToolResult(content, result.isError(), result.structuredContent(), result.meta());
+        }
+
+        @Override
+        public String cancelled(final Object requestId, final CallToolResult result, final RuntimeException failure) {
+            final String outcome;
+            if (failure != null) {
+                outcome = "stopped: " + NullSafe.nonBlankStringElse(failure.getMessage(), failure.toString());
+            } else {
+                final String firstLine = firstLine(result);
+                outcome = result != null && Boolean.TRUE.equals(result.isError())
+                        ? "failed: " + firstLine
+                        : firstLine;
+            }
+            return toolName
+                   + (requestId == null
+                    ? ""
+                    : " (request " + requestId + ")")
+                   + ": " + cut(outcome);
+        }
+
+        /// @param cancelled What each cancelled call did, one line each.
+        /// @return What the next answer says of them.
+        static String cancelledNote(final List<String> cancelled) {
+            return "Calls you cancelled (no answer was sent) finished as follows before stopping; what they did "
+                   + "stays done:\n- " + String.join("\n- ", cancelled);
+        }
+
+        // The first line of the result's text: what it did, as the tools put it first.
+        private static String firstLine(final CallToolResult result) {
+            if (result == null || result.content() == null) {
+                return "no result";
+            }
+            return result.content().stream()
+                    .filter(TextContent.class::isInstance)
+                    .map(one -> ((TextContent) one).text())
+                    .filter(NullSafe::isNonBlankString)
+                    .findFirst()
+                    .flatMap(text -> text.strip().lines().findFirst())
+                    .orElse("no result");
+        }
+
+        private static String cut(final String text) {
+            return text.length() <= MAX_OUTCOME_CHARS
+                    ? text
+                    : text.substring(0, MAX_OUTCOME_CHARS) + "...";
+        }
     }
 
     /// The MCP SDK's session, telling the work on each request the id of the client's request (in the Reactor

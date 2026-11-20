@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.JsonValues;
@@ -129,6 +130,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String GROUP_ARG = "group";
     static final String SOURCE_TYPES_ARG = "source_types";
     static final String OWN_OUTPUT_FEED_ARG = "own_output_feed";
+    // The block of UnsavedChoices that keeps where a new group's Events go, by group.
+    private static final String PLACEMENT_CHOSEN = "placement chosen";
     static final String REFERENCES_ARG = "references";
     static final String DOMAIN_SPLIT_ARG = "domain_split";
 
@@ -386,11 +389,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                         .addProperty(CHANGES_ARG, TranslationArgs.object(
                                 "Instead of mapping, to fix one: only what changes, merged into the mapping last "
                                 + "sent for this XSLT (the same uuid, or build and name; else the one saved with "
-                                + "it; else, for a build and name not saved yet, the draft "
-                                + "draft_translation_mapping made this session). events: rules by name, a new one "
-                                + "added whole; for a rule already there, each key given replaces its own, and its "
-                                + "fields change entry by entry: each entry replaces the rule's entry with that path "
-                                + "(and data_name), or is added; \"replace\": true replaces the rule whole. common: "
+                                + "it; else, for a build and name not saved yet, the build's latest draft from "
+                                + "draft_translation_mapping, in any session of yours). events: rules by name, a "
+                                + "new one added whole; for a rule already there, each key given replaces its own, "
+                                + "and its fields change entry by entry: each entry replaces the rule's entry with "
+                                + "that path (and data_name), or is added; \"replace\": true replaces the rule "
+                                + "whole. common: "
                                 + "entries, each replacing the one with that path (and data_name). {name or path, "
                                 + "\"remove\": true} removes a rule or an entry; any other key replaces it. Send "
                                 + "only the entries that change, never the whole rule again."))
@@ -487,6 +491,20 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
     }
 
+    // The forms come before the sample check where they can: the check of a large sample takes a minute or more
+    // (seen in eval case 36 on Haiku over Claude Code: 61 s on 1,000 records), and a client may give up on a call
+    // after a time with nothing sent on it (Claude Code: 60 s, the clock reset by a form or by progress). So,
+    // decided by the user (2026-11-20):
+    // - before the check: the event-logging version (settleVersion) and, for a save of a new source type group to a
+    //   client that shows forms, where its Events go (placement; kept for the next call should this one save
+    //   nothing);
+    // - after it, as they ask about what it found: the domain split of Ids (splitDomains: the domain-qualified Ids
+    //   the sample holds), the stand-ins for none (leavePlaceholdersOut: the values found), the confirmed event
+    //   types translated otherwise (agreeConfirmedChanged: the check's lost ones) and the rules kept as Unknown
+    //   (agreeUnknown: the records the check found they catch); and those of the save itself (a hand edit's
+    //   fields, DNS lookups), on the code as the answers above leave it;
+    // - while the check runs, the client is told it is still going, every few seconds (CallProgress.whileWorking),
+    //   so nothing is silent for long.
     private Map<String, Object> built(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
         if (request.build() != null || request.uuid() != null) {
@@ -522,6 +540,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             withChanges(b);
             return b.result;
         }
+        askBeforeTheCheck(call, context, b);
         checkSample(context, b);
         final boolean split = splitDomains(call, context, b);
         final boolean leftOut = leavePlaceholdersOut(call, context, b);
@@ -583,6 +602,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), keptFrom(request),
                     request.build(), named);
             b.basedOn = base.basedOn();
+            b.fromAnEarlierSession = base.fromAnEarlierSession();
             if (changes instanceof final Map<?, ?> none && none.isEmpty()) {
                 // Nothing to change: the mapping as it stands (a draft too large for a client outside Stroom to
                 // take whole is built so, as drafted).
@@ -978,8 +998,14 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Map<String, Object> notes = request.build() == null
                 ? Map.of()
                 : builds.notesInBuild(request.build());
-        final Map<String, Object> check = MappingSampleCheck.check(mapping, samples, splitter, b.schema, inferred,
-                clock, SourceNotes.catalogue(notes), scope.orElse(null));
+        final List<String> texts = samples;
+        final SplitterSpec spec = splitter;
+        final boolean guessed = inferred;
+        // Told as it goes, as it may take a minute or more (see built).
+        final Map<String, Object> check = CallProgress.of(context).whileWorking("Checking the mapping against the "
+                                                                                + "sample records", () ->
+                MappingSampleCheck.check(mapping, texts, spec, b.schema, guessed, clock, SourceNotes.catalogue(notes),
+                        scope.orElse(null)));
         b.lost = (List<ConfirmedEventTypes.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
         b.contradictions = (List<String>) check.remove(MappingSampleCheck.CATALOGUE_CONTRADICTIONS);
         b.lost.forEach(one -> warnings.add(lostWarning(one)));
@@ -1176,7 +1202,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (b.group != null) {
             // Where a new group's Events go is the user's choice, asked before anything is saved; a change to a
             // promoted pipeline makes a new version of it.
-            placement = placement(call, context, b);
+            placement = b.placementAsked
+                    ? b.placement
+                    : placement(call, context, b);
             choice = pipelineChoice(b);
             imports = groups.saveImports(context, b.build, b.group.withGroupMapping(b.mapping), b.schema, b.version);
             b.mapping = imports.group();
@@ -1281,6 +1309,16 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return Optional.empty();
     }
 
+    // What a save asks that doesn't depend on the sample check, asked before it (see built): where a new group's
+    // Events go, when the client can show the form (one that can't is told to ask in the chat at the save, as
+    // before).
+    private void askBeforeTheCheck(final ToolCall call, final ToolCallContext context, final Build b) {
+        if (saves(b.request) && b.group != null && context.userQuestions().canAsk()) {
+            b.placement = placement(call, context, b);
+            b.placementAsked = true;
+        }
+    }
+
     // Where a new group's Events go: asked in a form whenever a build makes a group (decided 2026-11-13), the same
     // feed the default (its index is its own either way, decided 2026-11-14); every group has a pipeline of its own.
     // Where no form can be shown, the agent asks in the chat and passes the answer (own_output_feed). Null for a
@@ -1293,6 +1331,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                      + "placed already, and source types added to it join its output feed.");
             }
             return null;
+        }
+        // Answered in an earlier call that saved nothing (asked before its sample check, see built).
+        final String chosenBefore = UnsavedChoices.recalled(context, placementTarget(b), PLACEMENT_CHOSEN)
+                .get(b.group.group());
+        if (chosenBefore != null) {
+            return new SourceTypeGroups.Placement(Boolean.parseBoolean(chosenBefore));
         }
         final String pipeline = SourceTypeGroups.pipelineName(b.group.feed(), b.group.group());
         final List<String> feeds = List.of("Into the same feed (" + b.group.feed() + ")",
@@ -1318,7 +1362,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                             + "Events go.",
                 feeds, question);
         if (chosen.isPresent()) {
-            return new SourceTypeGroups.Placement(feeds.get(1).equals(chosen.get()));
+            final boolean own = feeds.get(1).equals(chosen.get());
+            UnsavedChoices.remember(context, placementTarget(b), PLACEMENT_CHOSEN, Map.of(b.group.group(),
+                    String.valueOf(own)));
+            return new SourceTypeGroups.Placement(own);
         }
         if (request.ownOutputFeed() == null || !consent.takesChatAnswer(context, NAME, question)) {
             throw new ToolRefusal(consent.whyInChat(context, NAME, question) + ". Group '" + b.group.group()
@@ -1328,6 +1375,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                   + "own), as they said. Nothing was saved.");
         }
         return new SourceTypeGroups.Placement(request.ownOutputFeed());
+    }
+
+    // What the user's choice of where a new group's Events go is kept under until it is saved.
+    private static String placementTarget(final Build b) {
+        return "group:" + b.build + "/" + b.group.group();
     }
 
     // What a change to a group whose pipeline is promoted makes: always a new version of it (decided by the user,
@@ -1919,6 +1971,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (b.basedOn != null) {
             b.result.put("changes_applied_to", b.basedOn);
         }
+        if (b.fromAnEarlierSession != null) {
+            b.result.put("changes_applied_to_one", b.fromAnEarlierSession);
+        }
         if (!Boolean.TRUE.equals(b.result.get("ok"))) {
             b.result.put("next_changes_apply_to", nextChangesBase(b.request,
                     TranslationBuilds.ON_THE_DRAFT.equals(b.basedOn)));
@@ -2182,6 +2237,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private final Map<String, String> placeholderChoices = new LinkedHashMap<>();
         private List<String> applied;
         private String basedOn;
+        // Where a new group's Events go, when asked before the sample check (placementAsked).
+        private SourceTypeGroups.Placement placement;
+        private boolean placementAsked;
+        // When the mapping changes= applied to came from an earlier session of the user's, kept with the build.
+        private String fromAnEarlierSession;
         private String version;
         private String change;
         private EventSchema schema;

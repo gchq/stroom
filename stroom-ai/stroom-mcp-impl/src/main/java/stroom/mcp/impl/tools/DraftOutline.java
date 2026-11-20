@@ -107,8 +107,9 @@ final class DraftOutline {
                            + "vendor's code it writes as Data and the other paths it writes. It is saved whole at "
                            + path + ": read a rule's entries with jq (path=" + path + ", query='.events[] | "
                            + "select(.name == \"<rule>\") | .fields[]', one a line), or find its lines with grep "
-                           + "and read them with read_file. The server keeps the draft for this "
-                           + "session, so build_translation_xslt build= (name=, or group= for a source type group) "
+                           + "and read them with read_file. The server keeps the draft (with the build, for "
+                           + "your later sessions too), so build_translation_xslt build= (name=, or group= for a "
+                           + "source type group) "
                            + "changes= sends only the rules and entries you change (changes={} builds it as "
                            + "drafted). Never write the mapping out yourself: its Descriptions and vendor-code Data "
                            + "would be lost. " + ToolText.str(result.getOrDefault("hint", "")));

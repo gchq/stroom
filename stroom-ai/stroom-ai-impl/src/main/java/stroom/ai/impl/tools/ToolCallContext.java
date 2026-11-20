@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 /// What a [StroomTool] is given with each call, in place of the chat it used to be given: the session it is made
 /// in (and so who for), the session's workspace if it has one, how to ask the user, where to report progress, the
@@ -34,6 +35,7 @@ public final class ToolCallContext {
 
     private final ToolSession session;
     private final SessionWorkspace workspace;
+    private final Supplier<SessionWorkspace> userWorkspace;
     private final UserQuestions userQuestions;
     private final ToolProgress progress;
     private final Duration timeLimit;
@@ -44,6 +46,7 @@ public final class ToolCallContext {
     private ToolCallContext(final Builder builder) {
         this.session = Objects.requireNonNull(builder.session, "session");
         this.workspace = builder.workspace;
+        this.userWorkspace = builder.userWorkspace;
         this.userQuestions = Objects.requireNonNullElse(builder.userQuestions, UserQuestions.NONE);
         this.progress = Objects.requireNonNullElse(builder.progress, ToolProgress.NONE);
         this.timeLimit = builder.timeLimit;
@@ -71,6 +74,13 @@ public final class ToolCallContext {
     /// @return The session's workspace, or empty if it has none. A chat has one.
     public Optional<SessionWorkspace> workspace() {
         return Optional.ofNullable(workspace);
+    }
+
+    /// @return The user's own workspace, which outlasts the session: what is kept with the user's builds between
+    /// their sessions (e.g. a build's draft translation mapping, so a session the client starts again picks it up).
+    /// Only the user reaches it. Empty if the session has none (made when first asked for).
+    public Optional<SessionWorkspace> userWorkspace() {
+        return Optional.ofNullable(userWorkspace).map(Supplier::get);
     }
 
     /// @param toolName The tool that needs the workspace, to say so if there is none.
@@ -155,6 +165,7 @@ public final class ToolCallContext {
 
         private final ToolSession session;
         private SessionWorkspace workspace;
+        private Supplier<SessionWorkspace> userWorkspace;
         private UserQuestions userQuestions;
         private ToolProgress progress;
         private Duration timeLimit;
@@ -170,6 +181,14 @@ public final class ToolCallContext {
         /// @return This builder.
         public Builder workspace(final SessionWorkspace workspace) {
             this.workspace = workspace;
+            return this;
+        }
+
+        /// @param userWorkspace Gives the user's own workspace (see [ToolCallContext#userWorkspace()]) when first
+        ///                      asked for, or null if the session has none.
+        /// @return This builder.
+        public Builder userWorkspace(final Supplier<SessionWorkspace> userWorkspace) {
+            this.userWorkspace = userWorkspace;
             return this;
         }
 

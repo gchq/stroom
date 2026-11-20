@@ -4830,7 +4830,8 @@ What they share, all in `stroom-mcp-impl`:
 * **`SentMappings`** and **`UnsavedChoices`**: the mapping last sent for an XSLT (by uuid, or `build/name`) and the
   session's draft, under `/outputs/mappings/` in the session's workspace (where the agent can read them too), and
   the user's form answers for an XSLT not yet saved with them, under `/outputs/choices/`. A session without a
-  workspace keeps neither.
+  workspace keeps neither. The mappings of a build (all but the draft made with no build) are also kept in the
+  user's own workspace (`ToolCallContext.userWorkspace`, over MCP), read first, with the session and time sent.
 * **`MappingSampleCheck`**, **`MappingProblems`**, **`DomainSplits`**, **`PlaceholderChoices`**,
   **`CurrentTranslations`**, **`LookupAgreements`**, **`XsltHistory`**, **`TranslationArgs`** (the shared argument
   descriptions and parsers): see the tools below.
@@ -5010,7 +5011,9 @@ generated without them.
 * **Notes**:
   * The draft is kept for the session (`SentMappings`, as `draft:<build>` and, with a build, `draft:`), so the
     first save sends `changes=` only: a 50 KB draft written out whole in one call never reached the tool in
-    testing.
+    testing. With a build it is also kept with the build in the user's own workspace, so a new MCP session of the
+    same user picks it up (the newest wins); build_translation_xslt says so in `changes_applied_to_one` (when it was
+    drafted, in an earlier session). Another user never gets it.
   * `current_translation` lists what the current XSLT looks up (its `stroom:lookup()` maps, the imported functions
     and named templates it calls, the reference data the pipeline loads) with a note asking whether the next version
     keeps them: in testing a V1.3 drafted from the sample lost V1.2's IP lookups.
@@ -5052,7 +5055,8 @@ through the model. A call runs in this order:
 
 1. **The mapping**: given whole (`mapping`), or `changes` merged (`MappingChanges.applyChanges`) into the mapping
    last sent for this XSLT (`SentMappings`), else the one kept with it (by uuid, or the build's XSLT of that name),
-   else, for a build and name not saved yet, the session's draft (`changes_applied_to` says so); or neither, with
+   else, for a build and name not saved yet, the build's latest draft, from this session or an earlier one of the
+   user's (`changes_applied_to` says so, and `changes_applied_to_one` when it was drafted earlier); or neither, with
    `uuid`, to regenerate from the kept mapping as the generator writes it now (an agent asked to restyle an XSLT
    once sent its 1,400-line kept mapping back whole). Text that is JSON is parsed, its error located with the text
    around it. A list of fields given as the mapping with a sample comes back as a draft (`needs_mapping`) rather
@@ -5067,7 +5071,13 @@ through the model. A call runs in this order:
    and is not returned or saved (seen: an XSLT saved `ok` whose every record failed with "Variable kv has not been
    declared"). Problems come back at once, before the sample is read, with the rules' `events` left out so the
    whole list fits one reply (seen: 20-70 KB results each round, fixed a part at a time).
-4. **The sample check** (`MappingSampleCheck.check`, below), over `sample` or the `stream_ids` streams' text. Where
+4. **The sample check** (`MappingSampleCheck.check`, below), over `sample` or the `stream_ids` streams' text. The
+   forms that don't depend on it are asked first (decided by the user, 2026-11-20; seen in eval case 36: the check
+   of a 1,000-record sample ran 61 s before the first form, and Claude Code gives up on a call after 60 s with
+   nothing sent on it): where a new source type group's Events go, to a client that shows forms (kept in
+   `UnsavedChoices` for the next call should this one save nothing). While it runs the client is told it is still
+   going every 5 s (`CallProgress.whileWorking`). The forms on what it found follow it (step 5, and the reviews
+   of confirmed event types translated otherwise and rules kept as Unknown). Where
    a stream's part isn't read whole (read only to the most a sample holds, or events left out:
    `SampleStreamTexts.Cut`), the records the build's
    survey found further into that part (its kinds' examples, by location) are checked too, after the part's header
@@ -5241,7 +5251,7 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   `schema_version` (and `schema_version_settled`), `required_imports`, `sample_check` (`records`, `problems`,
   `warnings`, `fields_seen`, `not_checked`, `kept_unknown`, `note`; an XML 1.1 sample, as Stroom writes XML, is read as
   XML 1.1: read as 1.0, one holding `&#xc;` was "not XML a parser could read"), `changes_applied`, `changes_applied_to`,
-  `source_notes_check`, `set_properties` and `set_properties_note` (JSON input: the JSON parser's `addRootObject`,
+  `changes_applied_to_one`, `source_notes_check`, `set_properties` and `set_properties_note` (JSON input: the JSON parser's `addRootObject`,
   true for JSON lines, for create_pipeline), `field_mapping` / `field_mapping_sample`, `saved` (`type`, `uuid`,
   `name`, `version`) with `next`, `follow_on` (on a replace: review_coverage reviews the pipelines reading its
   Events), `standing_instructions`, `hint`. Or `needs_review`, `needs_guidance` (version, hand edit) or

@@ -332,8 +332,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Optional<String> settled = eventVersions.settled(context, build, version);
         settled.ifPresent(text -> result.put("schema_version_settled", text));
         currentTranslation(build, result);
-        // Kept for this session, so the first save sends only what changes (seen in testing: a 50 KB draft, written
-        // out whole in one call, never reached the server).
+        // Kept (with the build, for the user's later sessions too), so the first save sends only what changes (seen
+        // in testing: a 50 KB draft, written out whole in one call, never reached the server).
         SentMappings.remember(context, SentMappings.DRAFT + NullSafe.string(build), mapping);
         if (build != null) {
             SentMappings.remember(context, SentMappings.DRAFT, mapping);
@@ -343,7 +343,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "Environment, the time zone), then build_translation_xslt(build=, name= to save it, "
                            + "changes= only the rules and entries you change, schema_version=this schema_version, "
                            + "stream_ids=the sample streams (or sample=the texts), splitter=this splitter): the "
-                           + "server keeps this draft for the session, so it needn't be sent whole. A rule's data "
+                           + "server keeps this draft (with the build, for your later sessions too), so it needn't "
+                           + "be sent whole. A rule's data "
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
                            + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
                            + "the time formats, and how changes= merges.");

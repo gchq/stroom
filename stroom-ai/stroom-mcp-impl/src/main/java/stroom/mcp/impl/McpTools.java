@@ -59,6 +59,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /// The tools Stroom's MCP endpoint offers a session, and the calls of them: Stroom's own tools, as the chat has
@@ -245,11 +246,21 @@ class McpTools {
                                     final ChatWorkspace chatWorkspace) {
         return ToolCallContext.builder(session.toolSession())
                 .workspace(new SessionWorkspace(chatWorkspace, workspaces.chatIdFor(session)))
+                .userWorkspace(userWorkspace(session, chatWorkspace))
                 .userQuestions(new McpUserQuestions(session, exchange, forms, slot))
                 .progress(progress(session, exchange, request.progressToken()))
                 .limits(SessionLimits.lookedUp(chatWorkspace::limits))
                 .links(StroomLinks.absolute(uriFactoryProvider.get().uiUri("").toString()))
                 .build();
+    }
+
+    // The user's own workspace, which outlasts the session (see McpWorkspaces#userChatIdFor), found or made when a
+    // tool first asks for it in the call, then the same for the rest of the call.
+    private Supplier<SessionWorkspace> userWorkspace(final McpSession session, final ChatWorkspace chatWorkspace) {
+        final AtomicReference<SessionWorkspace> found = new AtomicReference<>();
+        return () -> found.updateAndGet(existing -> existing != null
+                ? existing
+                : new SessionWorkspace(chatWorkspace, workspaces.userChatIdFor(session.owner())));
     }
 
     // Tells the client how the call is getting on, if it asked to be told. Each message is sent as it is reported, on

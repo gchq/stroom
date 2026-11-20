@@ -16,15 +16,19 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.util.concurrent.ThreadUtil;
+
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// What a long tool call tells the client as it goes (asked for by the user: describe_document on an index ran for
 /// minutes with nothing to show what it was doing).
@@ -76,5 +80,41 @@ class TestCallProgress {
         final List<String> first = new ArrayList<>();
         new CallProgress(first::add, now::get).nowAndThen("Finding streams", Duration.ofSeconds(5));
         assertThat(first).containsExactly("Finding streams");
+    }
+
+    @Test
+    void longWorkSaysItIsStillWorkingUntilItEnds() throws Exception {
+        // Seen in eval case 36 on Haiku over Claude Code: build_translation_xslt checked a 1,000-record sample for
+        // about 61 s with nothing sent on the call, and the client, which gives up on a call after 60 s of silence
+        // (progress resets its clock), gave up on it.
+        final List<String> sent = Collections.synchronizedList(new ArrayList<>());
+        final ToolCallContext context = ToolCallContext.builder(SESSION).progress(sent::add).build();
+
+        final String done = CallProgress.of(context).whileWorking("Checking the sample", Duration.ofMillis(50),
+                () -> {
+                    ThreadUtil.sleepIgnoringInterrupts(400);
+                    return "done";
+                });
+
+        assertThat(done).isEqualTo("done");
+        assertThat(sent.getFirst()).isEqualTo("Checking the sample");
+        assertThat(sent).hasSizeGreaterThan(2);
+        // Nothing is said once the work has ended.
+        final int said = sent.size();
+        ThreadUtil.sleepIgnoringInterrupts(200);
+        assertThat(sent).hasSize(said);
+    }
+
+    @Test
+    void longWorkThatFailsStopsSaying() {
+        final List<String> sent = Collections.synchronizedList(new ArrayList<>());
+        final ToolCallContext context = ToolCallContext.builder(SESSION).progress(sent::add).build();
+
+        assertThatThrownBy(() -> CallProgress.of(context).whileWorking("Checking", Duration.ofMillis(20), () -> {
+            throw new IllegalStateException("broken");
+        })).hasMessage("broken");
+        final int said = sent.size();
+        ThreadUtil.sleepIgnoringInterrupts(100);
+        assertThat(sent).hasSize(said);
     }
 }

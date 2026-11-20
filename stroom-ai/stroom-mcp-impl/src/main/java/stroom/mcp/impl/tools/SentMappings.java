@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -25,7 +26,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -36,6 +40,13 @@ import java.util.regex.Pattern;
 /// Each is kept in the session's workspace (the chat's, or the MCP session's), under `/outputs/mappings/`, where
 /// the agent can read it too; a call that finds none falls back to the mapping saved with the XSLT. A session
 /// without a workspace remembers nothing.
+///
+/// Those of a build (all but the draft made with no build) are also kept with the build in the user's own workspace
+/// ([ToolCallContext#userWorkspace()]), which outlasts the session, so a new session of the same user picks them up
+/// (seen in eval case 36: the client gave up on a call and started a new session, and changes= right after a draft
+/// was refused, the draft gone with the old session). Only that user reaches it. The newest wins: each session's
+/// save replaces it, so one found there is the latest of all the user's sessions; [#earlierSession] says when one
+/// came from an earlier session.
 final class SentMappings {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SentMappings.class);
@@ -44,6 +55,13 @@ final class SentMappings {
     static final String FOLDER = "/outputs/mappings/";
     /// What the draft's target starts with: `draft:<build>` (or `draft:` for the draft made with no build).
     static final String DRAFT = "draft:";
+
+    // What a mapping kept with its build holds.
+    private static final String TARGET = "target";
+    private static final String SESSION = "session";
+    private static final String SENT_MS = "sent_ms";
+    private static final String UNSAVED = "unsaved";
+    private static final String MAPPING = "mapping";
 
     private static final Pattern PLAIN = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9._-]{0,99}");
 
@@ -80,6 +98,12 @@ final class SentMappings {
         if (NullSafe.isBlankString(target)) {
             return Optional.empty();
         }
+        final Optional<Kept> kept = keptWithTheBuild(context, target);
+        if (kept.isPresent()) {
+            return kept.get().unsaved()
+                    ? Optional.of(kept.get().mapping())
+                    : Optional.empty();
+        }
         final boolean marked = context.workspace()
                 .map(workspace -> {
                     try {
@@ -103,6 +127,7 @@ final class SentMappings {
         if (NullSafe.isBlankString(target) || mapping == null) {
             return;
         }
+        keepWithTheBuild(context, target, mapping, unsaved);
         final Optional<SessionWorkspace> workspace = context.workspace();
         if (workspace.isEmpty()) {
             return;
@@ -129,11 +154,16 @@ final class SentMappings {
 
     /// @param context The call's context.
     /// @param target  The XSLT's uuid, `build/name`, or a draft's target.
-    /// @return The mapping last sent for it in this session, if any.
+    /// @return The mapping last sent for it: the latest of the user's sessions for one of a build, else this
+    /// session's; if any.
     @SuppressWarnings("unchecked")
     static Optional<Map<String, Object>> sent(final ToolCallContext context, final String target) {
         if (NullSafe.isBlankString(target)) {
             return Optional.empty();
+        }
+        final Optional<Kept> kept = keptWithTheBuild(context, target);
+        if (kept.isPresent()) {
+            return Optional.of(kept.get().mapping());
         }
         final Optional<SessionWorkspace> workspace = context.workspace();
         if (workspace.isEmpty()) {
@@ -151,6 +181,92 @@ final class SentMappings {
                     : Optional.empty();
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No mapping sent for {}: {}", target, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param context The call's context.
+    /// @param target  The XSLT's uuid, `build/name`, or a draft's target.
+    /// @return When the mapping [#sent] gives for it was sent (or drafted), if that was in an earlier session of the
+    /// user's: the call building on it says so.
+    static Optional<Instant> earlierSession(final ToolCallContext context, final String target) {
+        if (NullSafe.isBlankString(target)) {
+            return Optional.empty();
+        }
+        return keptWithTheBuild(context, target)
+                .filter(kept -> !Objects.equals(kept.session(), context.session().id()))
+                .map(kept -> Instant.ofEpochMilli(kept.sentMs()));
+    }
+
+    // Only the draft made with no build stays with the session alone.
+    private static boolean isOfABuild(final String target) {
+        return !DRAFT.equals(target);
+    }
+
+    private static void keepWithTheBuild(final ToolCallContext context,
+                                         final String target,
+                                         final Map<String, Object> mapping,
+                                         final boolean unsaved) {
+        if (!isOfABuild(target)) {
+            return;
+        }
+        Optional<SessionWorkspace> userWorkspace = Optional.empty();
+        try {
+            userWorkspace = context.userWorkspace();
+            if (userWorkspace.isPresent()) {
+                final Map<String, Object> kept = new LinkedHashMap<>();
+                kept.put(TARGET, target);
+                kept.put(SESSION, context.session().id());
+                kept.put(SENT_MS, System.currentTimeMillis());
+                kept.put(UNSAVED, unsaved);
+                kept.put(MAPPING, mapping);
+                userWorkspace.get().write(path(target), JsonUtil.writeValueAsString(kept, false), null);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Couldn't keep the mapping sent for {} with its build: {}", target,
+                    e.getMessage()), e);
+            // One left from before would be taken for the newest, over this session's own.
+            userWorkspace.ifPresent(workspace -> forget(workspace, target));
+        }
+    }
+
+    private static void forget(final SessionWorkspace workspace, final String target) {
+        try {
+            if (workspace.find(path(target)).isPresent()) {
+                workspace.delete(path(target));
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Couldn't forget the mapping kept for {}: {}", target,
+                    e.getMessage()), e);
+        }
+    }
+
+    private static Optional<Kept> keptWithTheBuild(final ToolCallContext context, final String target) {
+        if (!isOfABuild(target)) {
+            return Optional.empty();
+        }
+        try {
+            final Optional<SessionWorkspace> userWorkspace = context.userWorkspace();
+            if (userWorkspace.isEmpty() || userWorkspace.get().find(path(target)).isEmpty()) {
+                return Optional.empty();
+            }
+            final String text = String.join("\n", userWorkspace.get().readLines(path(target), 0,
+                    Integer.MAX_VALUE));
+            final Map<String, Object> kept = JsonValues.map(JsonUtil.readValue(text, Map.class));
+            // Two targets may share a file (by digest): only this one's.
+            if (!target.equals(kept.get(TARGET)) || !(kept.get(MAPPING) instanceof Map<?, ?>)) {
+                return Optional.empty();
+            }
+            return Optional.of(new Kept(
+                    JsonValues.map(kept.get(MAPPING)),
+                    Objects.toString(kept.get(SESSION), null),
+                    kept.get(SENT_MS) instanceof final Number ms
+                            ? ms.longValue()
+                            : 0L,
+                    Boolean.TRUE.equals(kept.get(UNSAVED))));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No mapping kept with its build for {}: {}", target,
+                    e.getMessage()), e);
             return Optional.empty();
         }
     }
@@ -174,5 +290,14 @@ final class SentMappings {
         return PLAIN.matcher(text).matches()
                 ? text
                 : XsltCode.sha256(text).substring(0, 16);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A mapping kept with its build: the mapping, the session that sent it, when, and whether that call saved it.
+    private record Kept(Map<String, Object> mapping, String session, long sentMs, boolean unsaved) {
+
     }
 }

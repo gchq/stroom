@@ -41,6 +41,7 @@ import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -109,8 +110,9 @@ class TranslationBuilds {
     }
 
     /// The mapping changes= apply to: the one last sent for the XSLT, else the one kept with it (uuid, or the
-    /// build's XSLT of that name, a source type group's named after the group), else the draft
-    /// draft_translation_mapping made for the build this session (with or without a name). Seen
+    /// build's XSLT of that name, a source type group's named after the group), else the latest draft
+    /// draft_translation_mapping made for the build, in this session or an earlier one of the user's (with or without
+    /// a name; see [SentMappings]). Seen
     /// in testing: a first save from a 50 KB draft had to send it whole, which the agent couldn't write out in one
     /// call.
     ///
@@ -127,8 +129,9 @@ class TranslationBuilds {
                          final String build,
                          final String name) {
         final Optional<Map<String, Object>> sent = SentMappings.sent(context, target);
-        if (sent.isPresent()) {
-            return new Base(sent.get(), null, earlierMapping(context, uuid, build, name));
+        final String sentEarlier = fromAnEarlierSession(context, target, build);
+        if (sent.isPresent() && (sentEarlier == null || canStillUse(build))) {
+            return new Base(sent.get(), null, earlierMapping(context, uuid, build, name), sentEarlier);
         }
         String found = uuid;
         if (found == null && NullSafe.isNonBlankString(build)) {
@@ -138,10 +141,15 @@ class TranslationBuilds {
             if (found == null) {
                 // Also for a source type group's first save naming only its feeds (seen in TestE2ePegaEventTypes,
                 // a draft too large for a client outside Stroom: changes= alone was refused).
-                final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT + build)
-                        .or(() -> SentMappings.sent(context, SentMappings.DRAFT));
+                final Optional<Map<String, Object>> buildDraft = SentMappings.sent(context,
+                        SentMappings.DRAFT + build);
+                final String draftedEarlier = fromAnEarlierSession(context, SentMappings.DRAFT + build, build);
+                if (buildDraft.isPresent() && (draftedEarlier == null || canStillUse(build))) {
+                    return new Base(buildDraft.get(), ON_THE_DRAFT, null, draftedEarlier);
+                }
+                final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT);
                 if (draft.isPresent()) {
-                    return new Base(draft.get(), ON_THE_DRAFT, null);
+                    return new Base(draft.get(), ON_THE_DRAFT, null, null);
                 }
             }
         } else if (found == null && NullSafe.isBlankString(target)) {
@@ -150,16 +158,47 @@ class TranslationBuilds {
             // client outside Stroom, couldn't be sent whole instead).
             final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT);
             if (draft.isPresent()) {
-                return new Base(draft.get(), ON_THE_DRAFT, null);
+                return new Base(draft.get(), ON_THE_DRAFT, null, null);
             }
         }
         if (found != null) {
             return new Base(keptOrRefuse(found, "XSLT " + found + " keeps no translation mapping to change: give the "
                                                 + "whole mapping").payload().get("mapping") instanceof final Map<?, ?> m
                     ? copy(m)
-                    : Map.of(), null, null);
+                    : Map.of(), null, null, null);
         }
         throw new ToolRefusal(noMappingToChange(target, build, name));
+    }
+
+    // A mapping kept with a build from an earlier session is used only while the user can still see the build, as
+    // for its other documents.
+    private boolean canStillUse(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return true;
+        }
+        try {
+            return guard.buildFolder(build, false).isPresent();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Build {} not found: {}", build, e.getMessage()), e);
+            return false;
+        }
+    }
+
+    // What a call building on a mapping kept with the build from an earlier session of the user's says of it (seen
+    // in eval case 36: the client started a new session after giving up on a call); null when it is this session's.
+    private static String fromAnEarlierSession(final ToolCallContext context,
+                                               final String target,
+                                               final String build) {
+        return SentMappings.earlierSession(context, target)
+                .map(when -> (target.startsWith(SentMappings.DRAFT)
+                        ? "drafted"
+                        : "sent")
+                             + " " + DateUtil.createNormalDateTimeString(when)
+                             + " in an earlier session of yours, the latest for "
+                             + (NullSafe.isNonBlankString(build)
+                        ? "build " + build
+                        : target))
+                .orElse(null);
     }
 
     /// @param target The XSLT's uuid or `build/name`, or "".
@@ -176,20 +215,20 @@ class TranslationBuilds {
                 : "<XSLT name>";
         final String none;
         if (hasBuild) {
-            none = "this session has no draft for build " + build
+            none = "you have no draft for build " + build
                    + (NullSafe.isNonBlankString(name)
-                    ? ", no mapping was sent for '" + name + "' in it this session, and the build has no XSLT "
-                      + "named '" + name + "'"
+                    ? ", no mapping was sent for '" + name + "' in it, and the build has no XSLT named '" + name
+                      + "'"
                     : "");
         } else if (NullSafe.isNonBlankString(target)) {
             none = "this session has no draft, and no mapping was sent for " + target + " this session";
         } else {
             none = "this session has no draft";
         }
-        return "changes needs a mapping to apply to, and there is none: " + none + " (a new session starts with "
-               + "none). Call draft_translation_mapping build=" + b + " first (the server keeps the draft for this "
-               + "session), then build_translation_xslt build=" + b + " name=" + n + " changes=...; or give uuid= "
-               + "a saved XSLT, or the whole mapping.";
+        return "changes needs a mapping to apply to, and there is none: " + none + ". Call "
+               + "draft_translation_mapping build=" + b + " first (the server keeps the draft with the build, for "
+               + "your later sessions too), then build_translation_xslt build=" + b + " name=" + n + " "
+               + "changes=...; or give uuid= a saved XSLT, or the whole mapping.";
     }
 
     // The mapping from before the changes the last sent one holds: the one kept with the XSLT (uuid, or the build's
@@ -820,7 +859,12 @@ class TranslationBuilds {
     /// @param mapping The mapping, as JSON maps and lists.
     /// @param basedOn What it was, when it was the session's draft ([#ON_THE_DRAFT]), else null.
     /// @param earlier The mapping from before the changes it holds (the saved XSLT's, else the draft), or null.
-    record Base(Map<String, Object> mapping, String basedOn, Map<String, Object> earlier) {
+    /// @param fromAnEarlierSession When it was drafted (or sent) in an earlier session of the user's, kept with the
+    ///                             build, as the call's result says; null when it is this session's (or the XSLT's).
+    record Base(Map<String, Object> mapping,
+                String basedOn,
+                Map<String, Object> earlier,
+                String fromAnEarlierSession) {
 
     }
 

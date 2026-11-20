@@ -62,6 +62,33 @@ class TestMcpWorkspaces {
     }
 
     @Test
+    void eachUserHasAWorkspaceOfTheirOwnThatOutlastsTheirSessions() {
+        final UserRef other = UserRef.builder().uuid("user2").build();
+        final AiChat mine = Mockito.mock(AiChat.class);
+        Mockito.when(mine.getId()).thenReturn(50);
+        final AiChat theirs = Mockito.mock(AiChat.class);
+        Mockito.when(theirs.getId()).thenReturn(51);
+        Mockito.when(aiDao.findSessionChat(Mockito.anyString())).thenReturn(Optional.empty());
+        Mockito.when(aiDao.createSessionChat(USER, "user:user1")).thenReturn(mine);
+        Mockito.when(aiDao.createSessionChat(other, "user:user2")).thenReturn(theirs);
+
+        assertThat(workspaces.userChatIdFor(USER)).isEqualTo(50);
+        assertThat(workspaces.userChatIdFor(other)).isEqualTo(51);
+        // Found again, by any session of the user's (on any node).
+        Mockito.when(aiDao.findSessionChat("user:user1")).thenReturn(Optional.of(50));
+        assertThat(workspaces.userChatIdFor(USER)).isEqualTo(50);
+        Mockito.verify(aiDao, Mockito.times(1)).createSessionChat(USER, "user:user1");
+
+        // A session ending deletes its own workspace, not the user's.
+        Mockito.doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(0).run();
+            return null;
+        }).when(securityContext).asProcessingUser(Mockito.any(Runnable.class));
+        workspaces.delete(session);
+        Mockito.verify(retention, Mockito.never()).deleteChatAndFiles(50);
+    }
+
+    @Test
     void aSessionOnAnotherNodeFindsItsWorkspace() {
         Mockito.when(aiDao.findSessionChat("s1")).thenReturn(Optional.of(7));
 

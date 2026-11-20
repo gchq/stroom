@@ -1400,7 +1400,7 @@ class TestBuildTranslationXsltTool {
     void withNoDraftOrMappingTheRefusalSaysWhatToDo() {
         assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "build", "fg-v1", "name",
                 "FG-Events", "sample", fortigate())).get("error")).asString()
-                .contains("this session has no draft for build fg-v1")
+                .contains("you have no draft for build fg-v1")
                 .contains("draft_translation_mapping build=fg-v1")
                 .contains("build_translation_xslt build=fg-v1 name=FG-Events changes=");
         assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "sample", fortigate()))
@@ -1425,6 +1425,55 @@ class TestBuildTranslationXsltTool {
         if (!Boolean.TRUE.equals(result.get("ok"))) {
             assertThat((String) result.get("next_changes_apply_to")).contains("the session's draft");
         }
+    }
+
+    @Test
+    void changesInANewSessionApplyToTheBuildsDraftFromAnEarlierOne() {
+        // Seen in eval case 36 on Haiku over Claude Code: the client gave up on a call and started a new session;
+        // changes= right after the draft was refused, the draft gone with the old session.
+        world.world.guard().buildFolder("fg-v1");
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",
+                "build", "fg-v1"));
+        world.newSession("mcp-session-2");
+
+        final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("common", SYSTEM),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+
+        assertThat(result).as(String.valueOf(result)).doesNotContainKey("error");
+        assertThat(result.get("changes_applied_to")).isEqualTo("the draft draft_translation_mapping made");
+        assertThat((String) result.get("changes_applied_to_one"))
+                .startsWith("drafted ")
+                .endsWith(" in an earlier session of yours, the latest for build fg-v1");
+        assertThat(systemName(sent("fg-v1/FG-Events"))).isEqualTo("FortiOS");
+        // Sent in this session since: the next changes= say nothing of an earlier one.
+        final Map<String, Object> next = world.call(tool, Map.of("changes", Map.of("description", "again"),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+        assertThat(next).doesNotContainKey("changes_applied_to_one");
+    }
+
+    @Test
+    void aDraftFromAnEarlierSessionIsntUsedOnceTheUserCantSeeTheBuild() {
+        final String folder = world.world.guard().buildFolder("fg-v1").docRef().getUuid();
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",
+                "build", "fg-v1"));
+        world.newSession("mcp-session-2");
+        world.world.hidden.add(folder);
+
+        assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "build", "fg-v1", "name",
+                "FG-Events", "sample", fortigate())).get("error")).asString()
+                .contains("changes needs a mapping to apply to");
+    }
+
+    @Test
+    void aSessionWithNoUserWorkspaceDoesntGetAnotherSessionsDraft() {
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",
+                "build", "fg-v1"));
+        world.newSession("mcp-session-2");
+        world.userWorkspace = false;
+
+        assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "build", "fg-v1", "name",
+                "FG-Events", "sample", fortigate())).get("error")).asString()
+                .contains("you have no draft for build fg-v1");
     }
 
     @Test
@@ -1583,7 +1632,7 @@ class TestBuildTranslationXsltTool {
     @Test
     void changesNeedAMappingToChange() {
         assertThat(world.call(tool, Map.of("changes", Map.of("unmatched", "warn"), "build", "acme-v1", "name", "new"))
-                .get("error")).asString().contains("there is none: this session has no draft for build acme-v1",
+                .get("error")).asString().contains("there is none: you have no draft for build acme-v1",
                         "or give uuid= a saved XSLT, or the whole mapping");
         assertThat(world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "changes", Map.of("unmatched",
                 "warn"))).get("error")).asString().contains("not both");
