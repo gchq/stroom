@@ -418,6 +418,32 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void anAmendmentTheProposalsCannotMakeLeavesTheSetToBePutAgain() {
+        // Seen in eval case 61 on Haiku (2026-11-20): the user amended a rule to a condition the check refuses; the
+        // agent asked them in the chat, they chose the rule as it was, and the agent proposed it. The set unchanged,
+        // every confirm=true replayed the amendment, about ten times, and the build stopped.
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout")));
+        final String amendment = "logout only where the source is the portal";
+        final Answering user = new Answering(form -> form.contains("event types")
+                ? Map.of("amendments", amendment)
+                : Map.of("value", true));
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("amendments",
+                amendment);
+
+        // The user's answer in the chat: the rule as it was.
+        final Map<String, Object> proposed = propose(List.of(Map.of("op", "change", "type_id",
+                "Authenticate-Logoff", "recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action",
+                        "equals", "logout")), "names", List.of())))));
+        assertThat(proposed).containsEntry("recorded", false);
+        assertThat(String.valueOf(proposed.get("hint"))).contains("puts the set to the user again");
+
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("status",
+                "needs_showing");
+    }
+
+    @Test
     void aFormShownLongAfterItsTableShowsTheTableAgainFirst() {
         propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
         final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);

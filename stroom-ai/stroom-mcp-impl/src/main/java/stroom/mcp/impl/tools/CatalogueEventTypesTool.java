@@ -518,6 +518,16 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             result.put("source_notes", notes.recordCatalogue(calling.context(), calling.build(), calling.source(),
                     kept, withStreams(confirming(calling.notesNow()), read)));
         }
+        final boolean amendmentSent = !changed && brought.isEmpty() && applied.refused().isEmpty()
+                                      && confirming(calling.notesNow()).containsKey(AMENDED);
+        if (amendmentSent) {
+            // The user's amendments sent, leaving the set as it was (one the check refuses, the user then choosing
+            // the rule as it was): the set is put to them again. Seen in eval case 61: kept as amended, every
+            // confirm=true replayed the amendment, and the build stopped.
+            final Map<String, Object> marks = withStreams(confirming(calling.notesNow()), read);
+            marks.remove(AMENDED);
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), kept, marks);
+        }
         if (!applied.refused().isEmpty()) {
             result.put("refused", applied.refused().stream().map(CatalogueProposals.Refused::toJson).toList());
         }
@@ -535,8 +545,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         result.put("catalogue", compact(kept));
         saved(calling, applied.catalogue(), check).ifPresent(path -> result.put("listing", path));
-        result.put(HINT, proposedHint(recorded, brought, applied, check));
-        result.put("next", recorded && !check.refused()
+        result.put(HINT, amendmentSent
+                ? "These proposals leave the catalogue as it was. The user's amendments are taken as sent: "
+                  + NAME + " confirm=true puts the set to the user again."
+                : proposedHint(recorded, brought, applied, check));
+        result.put("next", (recorded || amendmentSent) && !check.refused()
                 ? next(calling.build(), Map.of(CONFIRM_ARG, true), "puts the next set of event types to the user: "
                                                                    + "its table shown in the chat, then a short form")
                 : next(calling.build(), Map.of(PROPOSALS_ARG, "<corrections>"), "checks the catalogue again"));

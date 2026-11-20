@@ -3626,7 +3626,10 @@ before its form. Accepted, the set is `confirmed` (the seed's basis becoming `us
 agent's kept) and the next set's table comes back (`confirmed_now`). Amended, nothing of the set is confirmed:
 `status: needs_confirmation` with the user's `amendments` and the `amended` TypeIds; the agent proposes them
 (`op: change`, or add and remove; `drop: true` only where the user said so), and the set is put to the user again; a
-confirm before the amendments are proposed is refused, quoting them. The confirmation is only ever the form's (decided
+confirm before the amendments are proposed is refused, quoting them. Proposals that leave the catalogue as it was (an
+amendment the check refuses, the user then choosing the rule as it was; eval case 61, 2026-11-20, where every confirm
+replayed the amendment) take the amendments as sent: the set is put to the user again. The confirmation is only ever the
+form's (decided
 2026-11-18): amendments may come from the form's text or the chat, acceptance never from the chat. A form put aside by
 a message is answered as forms are (reply to the message first). Last, the catch-all: the uncatalogued records' count
 and shapes shown, then a form to keep them as Unknown events, their fields kept as Data, with the agreement given as
