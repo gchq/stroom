@@ -3152,7 +3152,10 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   next, problems, refusals, review ids, forms, saved docs); a table the user must see is cut last, saying so and how to
   read the rest. Follow-on calls never need an outlined part: confirmation by `confirm=true`/`review_id`, builds by
   `changes=`, survey locations by `step_records locations_from=<saved>`. Stroom AI's chat, no workspace or a failed
-  write: whole, as before.
+  write: whole, as before. `LargeResults` lives in stroom-ai-impl so `fetch_events` uses it too (2026-11-20, decided
+  by the user): the first records whole while they fit, the rest by their keys, read again a few at a time. A result
+  nothing in which can be shortened is given whole, its `whole_result` note saying so: the client shows only the
+  start of a result past its limit, and the note is there.
 * The generator gained `not`, `starts_with`, `contains` and the explicit `catch_all` flag; nothing else changed
   (choose/when in order, `unmatched` warn, `mcp_log_kind`).
 

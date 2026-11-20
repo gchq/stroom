@@ -282,13 +282,16 @@ needs Use MCP Tools.
 **Large results, outside Stroom** (`LargeResults`, 2026-11-20; seen in the Haiku evals: results of 50k–110k
 characters that Claude Code saved to files of its own, which the agent can't read through Stroom's tools). For a client
 outside Stroom with a session workspace, a result of `survey_feed`, `catalogue_event_types`,
-`draft_translation_mapping`, `build_translation_xslt` or `write_documentation` over 40,000 characters is saved whole
+`draft_translation_mapping`, `build_translation_xslt`, `write_documentation` or `fetch_events` over 40,000 characters is saved whole
 to `/outputs/<tool>/<build, else a stable key>.json` (a list's entries one a line, a long text a line a list entry)
 and given with its large parts outlined, each tool's own steps in order while it is still too large, then the parts
 not kept cut (a list says how many more, `(N more in the saved file ...)`). `whole_result` says where (`saved`), what
 was `outlined` or `cut`, `text_lines`, and how to read a part with jq. Never outlined: status, hint, next, problems
 and refusals, review ids and forms, saved documents. Stroom AI's chat, a result within the limit, no workspace or a
 failed write: the result whole, as before. Test clients read an outlined result back whole (`WholeResults`).
+`fetch_events` reads of a stream are outlined the same way (`FetchEventsOutline`). A result nothing in which can be
+shortened (all of it what the agent acts on) is given whole, still with `whole_result` first, saying plainly so: it
+is past the client's limit, so the client shows only its start, and the note there says where Stroom saved it.
 
 ## Choosing between tools that overlap
 
@@ -1454,6 +1457,14 @@ a child type, text) is written one record after another.
   `stream_id`, `feed`, `type`, `first_record`, `total_records`, `available_child_types`, and `records` (or
   `records_read`, `out` and `note` when written to a file). It may also include `undecodable_bytes`, `truncated`,
   `next_first_record`, `hint`, the split's `header` and `records_are`, and `parts` and `part` for a stream of several.
+  For a client outside Stroom, a read past 40,000 characters is given in outline (`FetchEventsOutline`, 2026-11-20;
+  seen in eval case 36: reads of 60k–127k characters): saved whole to
+  `/outputs/fetch_events/stream-<id>[-part-<p>][-<childType>]-from-<first>.json` (a record a JSON string a line,
+  `LargeResults.wholeTexts`), `records` the first records whole while they fit, `records_not_given` each of the rest
+  by its keys (`stream`, `part` of a stream of several, `record`, and `event_id` = record + 1 for Events; a child read
+  a record a part, `part`), and `read_the_rest` the `fetch_events` call that reads them again (`recordCount` = the
+  records shown) or the jq slice of the saved file. Everything else is kept whole. A record too large to show alone
+  is read from the saved file a slice at a time.
 * **Refuses**: neither `path` nor `streamId`; no View Data ("You don't have permission to view data, ..."); a table
   without `StreamId` and `EventId` columns ("A grouped table has none; ask for the table without grouping."); a
   stream id that isn't a whole number; a stream that can't be read (`StreamReader.StreamReadException`).

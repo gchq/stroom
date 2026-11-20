@@ -412,7 +412,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
     }
 
     /// @param context The call's context.
-    /// @param path    A survey_feed result saved to the session's workspace ([LargeResults]).
+    /// @param path    A survey_feed result saved to the session's workspace ([stroom.ai.impl.tools.LargeResults]).
     /// @return The locations it lists.
     /// @throws ToolRefusal if there is no such file, or it lists no locations.
     static List<Location> savedLocations(final ToolCallContext context, final String path) {

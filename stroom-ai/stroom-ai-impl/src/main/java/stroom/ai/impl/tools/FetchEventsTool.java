@@ -309,6 +309,11 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             writeRecords(workspace, out, result, segmented
                     ? streamId
                     : null, firstRecord);
+        } else {
+            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
+            FetchEventsOutline.outlineIfLarge(context.caller(), context.workspace(),
+                    new FetchEventsOutline.Read(streamId, part, childType, segmented), result,
+                    LargeResults.WHOLE_RESULT_CHARS);
         }
         return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
     }

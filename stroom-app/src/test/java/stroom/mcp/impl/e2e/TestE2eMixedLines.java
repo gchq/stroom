@@ -16,6 +16,9 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.mcp.impl.WholeResults;
+import stroom.util.json.JsonUtil;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -152,6 +155,35 @@ class TestE2eMixedLines extends AbstractE2eTest {
         assertThat(times).hasSize(120).isSorted();
         assertThat(times.getFirst()).isEqualTo("2026-10-11T23:50:09.000Z");
         assertThat(times.getLast()).isEqualTo("2026-10-12T00:14:59.833Z");
+        aReadTooLargeToGiveWholeIsReadOnAsAnAgentReadsIt(eventsId, times);
+    }
+
+    // fetch_events' read past what a client outside Stroom takes whole (seen in eval case 36 on Haiku over Claude
+    // Code: 60,000 to 127,000 characters, saved by the client where the agent couldn't read it): the first records
+    // whole, the rest by their keys, the whole saved to the workspace, and read on as the result says.
+    private void aReadTooLargeToGiveWholeIsReadOnAsAnAgentReadsIt(final long eventsId, final List<String> times) {
+        final Map<String, Object> given = client.jsonAsGiven("fetch_events", args("streamId", eventsId,
+                "firstRecord", 0, "recordCount", 100, "maxChars", 200_000));
+        assertThat(WholeResults.outlined(given)).as("given in outline: %s", given).isTrue();
+        assertThat(JsonUtil.writeValueAsString(given, false).length()).isLessThanOrEqualTo(40_000);
+        final List<?> shown = (List<?>) given.get("records");
+        final List<?> notGiven = (List<?>) given.get("records_not_given");
+        assertThat(shown.size() + notGiven.size()).isEqualTo(100);
+        assertThat(((Map<?, ?>) notGiven.getFirst()).get("event_id")).isEqualTo(shown.size() + 1);
+        // The rest from the saved file, as the agent reads it with jq.
+        final String saved = String.valueOf(((Map<?, ?>) given.get("whole_result")).get("saved"));
+        final List<?> whole = (List<?>) WholeResults.read(client, saved, ".records");
+        assertThat(whole.stream().map(String::valueOf).map(TestE2eMixedLines::timeOf).toList())
+                .as("the saved records, by their times")
+                .isEqualTo(times.subList(0, 100));
+        assertThat(whole.subList(0, shown.size())).isEqualTo(shown);
+        // Or again from the stream, as many at a time as were shown: given whole.
+        final String readTheRest = String.valueOf(given.get("read_the_rest"));
+        assertThat(readTheRest).contains("firstRecord=" + shown.size(), "recordCount=" + shown.size());
+        final Map<String, Object> next = client.jsonAsGiven("fetch_events", args("streamId", eventsId,
+                "firstRecord", shown.size(), "recordCount", shown.size(), "maxChars", 200_000));
+        assertThat(next).doesNotContainKey("whole_result");
+        assertThat(next.get("records")).isEqualTo(whole.subList(shown.size(), 2 * shown.size()));
     }
 
     // ### One event type written in two line formats: one way of recognising it a format, each placed in the

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.mcp.impl.tools;
+package stroom.ai.impl.tools;
 
-import stroom.ai.impl.tools.AbstractWorkspaceTool;
-import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.json.JsonUtil;
@@ -49,14 +47,14 @@ import java.util.regex.Pattern;
 /// result is still past the limit, and the parts the agent must act on, never cut ([#keep]): status, hint, next,
 /// problems and refusals, forms and review ids, the documents saved. Past its steps, the parts not kept are cut
 /// ([#cutTheRest]), each list and long text saying how much more the saved file holds.
-final class LargeResults {
+public final class LargeResults {
 
     /// The most characters a result is given whole in to a client outside Stroom.
-    static final int WHOLE_RESULT_CHARS = 40_000;
+    public static final int WHOLE_RESULT_CHARS = 40_000;
     /// The key of a result given in outline that says where it is saved whole and how to read it.
-    static final String WHOLE_RESULT = "whole_result";
+    public static final String WHOLE_RESULT = "whole_result";
     /// The folder results too large to give whole are saved in, a folder a tool.
-    static final String FOLDER = "/outputs/";
+    public static final String FOLDER = "/outputs/";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LargeResults.class);
 
@@ -79,6 +77,7 @@ final class LargeResults {
     private final List<Step> steps = new ArrayList<>();
     private final Set<String> kept = new LinkedHashSet<>(ALWAYS_KEPT);
     private boolean cutsTheRest;
+    private boolean textsAsLines = true;
 
     private LargeResults(final String tool, final String key) {
         this.tool = tool;
@@ -88,14 +87,14 @@ final class LargeResults {
     /// @param tool The tool whose result it is.
     /// @param key  What the result is of (its build, else a stable key such as the feed): its file's name.
     /// @return How a result of the tool is made small enough, its steps still to add.
-    static LargeResults of(final String tool, final String key) {
+    public static LargeResults of(final String tool, final String key) {
         return new LargeResults(tool, key);
     }
 
     /// @param keys The result's parts never cut: those the agent must act on (a part within a part by its dotted
     ///             path, `check.problems`).
     /// @return This.
-    LargeResults keep(final String... keys) {
+    public LargeResults keep(final String... keys) {
         kept.addAll(List.of(keys));
         return this;
     }
@@ -103,7 +102,7 @@ final class LargeResults {
     /// @param part     A part of the result.
     /// @param outliner Gives the part in outline.
     /// @return This, the part outlined next while the result is past the limit.
-    LargeResults outline(final String part, final Outliner outliner) {
+    public LargeResults outline(final String part, final Outliner outliner) {
         steps.add(new Step(part, (result, room) -> {
             final Object value = result.get(part);
             if (value == null) {
@@ -122,13 +121,20 @@ final class LargeResults {
     /// @param part What the step changes, said in the result's note.
     /// @param step Changes the result in place.
     /// @return This, the step run next while the result is past the limit.
-    LargeResults step(final String part, final ResultStep step) {
+    public LargeResults step(final String part, final ResultStep step) {
         steps.add(new Step(part, step));
         return this;
     }
 
+    /// @return This, a long text saved whole as one JSON string, not as the list of its lines: for a result whose
+    ///         texts are records to give back as they are (fetch_events'), not documents to read a line at a time.
+    public LargeResults wholeTexts() {
+        textsAsLines = false;
+        return this;
+    }
+
     /// @return This, the parts not kept cut next while the result is past the limit (else after the last step).
-    LargeResults cutTheRest() {
+    public LargeResults cutTheRest() {
         cutsTheRest = true;
         steps.add(new Step(null, this::cut));
         return this;
@@ -145,7 +151,7 @@ final class LargeResults {
     /// @param result    The tool's result, changed in place.
     /// @param limit     The most characters the result is given whole in.
     /// @return True if the result was given in outline.
-    boolean apply(final ToolCaller caller,
+    public boolean apply(final ToolCaller caller,
                   final Optional<SessionWorkspace> workspace,
                   final Map<String, Object> result,
                   final int limit) {
@@ -153,7 +159,7 @@ final class LargeResults {
             return false;
         }
         final String path = savedPath(tool, key);
-        if (!save(workspace, path, result, true)) {
+        if (!save(workspace, path, result, textsAsLines)) {
             return false;
         }
         final Map<String, Object> whole = new LinkedHashMap<>(result);
@@ -180,7 +186,7 @@ final class LargeResults {
                 });
             }
         }
-        final Map<String, Object> said = note(path, characters, whole, outlined, cut);
+        final Map<String, Object> said = note(path, characters, limit, whole, outlined, cut, textsAsLines);
         final Map<String, Object> rest = new LinkedHashMap<>(result);
         result.clear();
         result.put(WHOLE_RESULT, said);
@@ -193,7 +199,7 @@ final class LargeResults {
     /// @param result    The tool's result.
     /// @param limit     The most characters it is given whole in.
     /// @return True if the result is past the limit for a client outside Stroom, with a workspace to save it in.
-    static boolean tooLarge(final ToolCaller caller,
+    public static boolean tooLarge(final ToolCaller caller,
                             final Optional<SessionWorkspace> workspace,
                             final Map<String, Object> result,
                             final int limit) {
@@ -203,13 +209,13 @@ final class LargeResults {
     /// @param tool The tool.
     /// @param key  What the result is of.
     /// @return Where a result of the tool too large to give whole is saved.
-    static String savedPath(final String tool, final String key) {
+    public static String savedPath(final String tool, final String key) {
         return FOLDER + tool + "/" + plain(key) + ".json";
     }
 
     /// @param candidates What a result may be of, the first that isn't blank chosen (a build, then a name).
     /// @return The first not blank, or null if none is.
-    static String keyOf(final String... candidates) {
+    public static String keyOf(final String... candidates) {
         for (final String candidate : candidates) {
             if (candidate != null && !candidate.isBlank()) {
                 return candidate;
@@ -220,7 +226,7 @@ final class LargeResults {
 
     /// @param name A name.
     /// @return It as a file name: only letters, digits, '.', '_' and '-' (others become '_'); `result` if blank.
-    static String plain(final String name) {
+    public static String plain(final String name) {
         return name == null || name.isBlank()
                 ? "result"
                 : PLAIN.matcher(name).replaceAll("_");
@@ -233,7 +239,7 @@ final class LargeResults {
     /// @param value         What.
     /// @param textsAsLines  True to save a long text of several lines as a list of its lines.
     /// @return True if it was saved; false without a workspace, or when it couldn't be written.
-    static boolean save(final Optional<SessionWorkspace> workspace,
+    public static boolean save(final Optional<SessionWorkspace> workspace,
                         final String path,
                         final Object value,
                         final boolean textsAsLines) {
@@ -254,7 +260,7 @@ final class LargeResults {
     /// @return It as JSON read a line at a time: a value that fits a line on one line, else (a map, or a list) a
     ///         line a key or entry, so a workspace read (which cuts lines past 2,000 characters) and grep both see
     ///         an entry whole.
-    static String readable(final Object value, final boolean textsAsLines) {
+    public static String readable(final Object value, final boolean textsAsLines) {
         final StringBuilder sb = new StringBuilder();
         write(sb, value, 0, textsAsLines);
         return sb.append('\n').toString();
@@ -262,7 +268,7 @@ final class LargeResults {
 
     /// @param value A JSON value.
     /// @return Its length as compact JSON.
-    static int length(final Object value) {
+    public static int length(final Object value) {
         return value == null
                 ? "null".length()
                 : JsonUtil.writeValueAsString(value, false).length();
@@ -271,7 +277,7 @@ final class LargeResults {
     /// @param text A text.
     /// @param max  The most characters to give.
     /// @return The text, cut to the most characters with `...` if longer.
-    static String head(final String text, final int max) {
+    public static String head(final String text, final int max) {
         return text.length() <= max
                 ? text
                 : text.substring(0, max) + "...";
@@ -376,12 +382,16 @@ final class LargeResults {
         return value;
     }
 
-    // Where the whole result is, what of it was outlined or cut, and how to read a part.
+    // Where the whole result is, what of it was outlined or cut, and how to read a part. When nothing could be
+    // shortened (all of it what the agent acts on), it is given whole, still past the limit: the client then shows
+    // only its start, which this note, first, is in, so it says plainly why the result was saved too.
     private static Map<String, Object> note(final String path,
                                             final int characters,
+                                            final int limit,
                                             final Map<String, Object> whole,
                                             final Set<String> outlined,
-                                            final Set<String> cut) {
+                                            final Set<String> cut,
+                                            final boolean textsAsLines) {
         final Map<String, Object> said = new LinkedHashMap<>();
         said.put("saved", path);
         said.put("characters", characters);
@@ -394,20 +404,26 @@ final class LargeResults {
         final Set<String> parts = new LinkedHashSet<>(outlined);
         parts.addAll(cut);
         final List<String> textLines = parts.stream()
-                .filter(part -> whole.get(part) instanceof String && asLines(whole.get(part)) instanceof List<?>)
+                .filter(part -> textsAsLines && whole.get(part) instanceof String
+                                && asLines(whole.get(part)) instanceof List<?>)
                 .toList();
         if (!textLines.isEmpty()) {
             // Saved as a list of their lines: read with raw=true.
             said.put("text_lines", textLines);
         }
-        final String example = parts.isEmpty()
-                ? null
-                : parts.iterator().next();
-        final String query = example == null
-                ? "."
-                : "." + example + (asLines(whole.get(example)) instanceof List<?>
-                        ? "[]"
-                        : "");
+        if (parts.isEmpty()) {
+            said.put("read", "This result is past the " + limit + " characters a client outside Stroom takes "
+                             + "whole, but nothing in it could be shortened: all of it is what you must act "
+                             + "on, so it is given whole here. It is also saved whole at " + path + ", in case your "
+                             + "client shows only its start: read a part with jq (path=" + path + ", query='.<part>'; "
+                             + "'.<part>[0:50][]' for a list's first 50 entries), or find a line with grep (path="
+                             + path + ").");
+            return said;
+        }
+        final String example = parts.iterator().next();
+        final String query = "." + example + (textsAsLines && asLines(whole.get(example)) instanceof List<?>
+                ? "[]"
+                : "");
         said.put("read", "This result is too large to show whole here, so the parts named are given in outline "
                          + "(or cut, saying how many more): it is saved whole at " + path + ", a list's entries "
                          + "one a line and a long text a line an entry. Read a part with jq (path=" + path
@@ -423,7 +439,7 @@ final class LargeResults {
 
     /// Gives a part of a result in outline.
     @FunctionalInterface
-    interface Outliner {
+    public interface Outliner {
 
         /// @param value The part.
         /// @param room  The room the result has for it.
@@ -433,7 +449,7 @@ final class LargeResults {
 
     /// Changes a result in place to make it smaller.
     @FunctionalInterface
-    interface ResultStep {
+    public interface ResultStep {
 
         /// @param result The result.
         /// @param room   The room it has.
@@ -446,11 +462,11 @@ final class LargeResults {
     /// @param target The most characters the result should take, leaving room for its note.
     /// @param now    The characters it takes now.
     /// @param saved  Where the whole result is saved.
-    record Room(int target, int now, String saved) {
+    public record Room(int target, int now, String saved) {
 
         /// @param partNow The characters a part of the result takes now.
         /// @return The room the part has: the most characters it may take for the result to fit.
-        Room forPart(final int partNow) {
+        public Room forPart(final int partNow) {
             return new Room(target - (now - partNow), partNow, saved);
         }
     }

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.data.shared.StreamTypeNames;
 import stroom.security.shared.AppPermission;
@@ -310,6 +311,126 @@ class TestFetchEventsTool {
         assertThatThrownBy(() -> tool.run(ToolTestFixture.request(FetchEventsTool.NAME, "{}"),
                 ToolCalls.inChat(1, fixture.workspace)))
                 .hasMessageContaining("Give path");
+    }
+
+    @Test
+    void aReadTooLargeForAClientOutsideStroomIsSavedWholeAndGivesTheFirstRecordsAndTheRestsKeys() {
+        // Seen in eval case 36 on Haiku over Claude Code: reads of 100 Events records, 60,000 to 127,000
+        // characters, which the client saved to a file of its own that the agent couldn't read through Stroom.
+        final List<String> events = largeEvents(100);
+        world.addSegmented(7, StreamTypeNames.EVENTS, null, null, events);
+
+        final Map<String, Object> result = runJson(external(), "{\"streamId\":7,\"recordCount\":100,"
+                                                               + "\"maxChars\":200000}");
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LargeResults.WHOLE_RESULT_CHARS);
+        assertThat(result.keySet()).first().isEqualTo(LargeResults.WHOLE_RESULT);
+        final Map<?, ?> note = (Map<?, ?>) result.get(LargeResults.WHOLE_RESULT);
+        final String saved = "/outputs/fetch_events/stream-7-from-0.json";
+        assertThat(note.get("saved")).isEqualTo(saved);
+        assertThat(note.get("outlined")).isEqualTo(List.of("records"));
+        // Saved whole, a record a line, so a jq slice reads a few at a time.
+        final Map<?, ?> whole = JsonUtil.readValue(fixture.written.get(saved), Map.class);
+        assertThat(whole.get("records")).isEqualTo(events);
+        // The first records whole while they fit, the rest each by its keys.
+        final List<String> given = records(result);
+        assertThat(given).isNotEmpty().isEqualTo(events.subList(0, given.size()));
+        final List<?> rest = (List<?>) result.get("records_not_given");
+        assertThat(rest).hasSize(100 - given.size());
+        assertThat(JsonValues.map(rest.getFirst()))
+                .containsEntry("stream", 7)
+                .containsEntry("record", given.size())
+                .containsEntry("event_id", given.size() + 1);
+        assertThat((String) result.get("read_the_rest"))
+                .contains("firstRecord=" + given.size())
+                .contains("recordCount=" + given.size())
+                .contains("path=" + saved)
+                .contains("'.records[" + given.size() + ":");
+        // What the agent acts on is kept whole.
+        assertThat(result).containsEntry("stream_id", 7).containsEntry("total_records", 100)
+                .containsEntry("first_record", 0);
+    }
+
+    @Test
+    void aRawPartsRecordsAreKeyedByStreamPartAndRecord() {
+        final List<String> lines = IntStream.range(0, 100)
+                .mapToObj(n -> "<Event xmlns=\"urn:win\"><Id>" + n + "</Id><Data>" + "d".repeat(1_000)
+                               + "</Data></Event>")
+                .toList();
+        world.addRaw(7, "");
+        world.parts.put(7L, List.of("<Event/>\n".getBytes(StandardCharsets.UTF_8),
+                (String.join("\n", lines) + "\n").getBytes(StandardCharsets.UTF_8)));
+
+        final Map<String, Object> result = runJson(external(), "{\"streamId\":7,\"part\":1,\"firstRecord\":0,"
+                                                               + "\"recordCount\":100,\"maxChars\":200000}");
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LargeResults.WHOLE_RESULT_CHARS);
+        assertThat(((Map<?, ?>) result.get(LargeResults.WHOLE_RESULT)).get("saved"))
+                .isEqualTo("/outputs/fetch_events/stream-7-part-1-from-0.json");
+        final Map<String, Object> key = JsonValues.map(((List<?>) result.get("records_not_given")).getFirst());
+        assertThat(key).containsEntry("stream", 7).containsEntry("part", 1).doesNotContainKey("event_id");
+        assertThat((String) result.get("read_the_rest")).contains("part=1");
+    }
+
+    @Test
+    void aRecordTooLargeToShowAloneIsReadFromTheSavedFile() {
+        world.addSegmented(7, StreamTypeNames.EVENTS, null, null, List.of(largeEvent(0, 60_000), largeEvent(1, 10)));
+
+        final Map<String, Object> result = runJson(external(), "{\"streamId\":7,\"recordCount\":2,"
+                                                               + "\"maxChars\":200000}");
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LargeResults.WHOLE_RESULT_CHARS);
+        assertThat(records(result)).isEmpty();
+        assertThat((List<?>) result.get("records_not_given")).hasSize(2);
+        assertThat((String) result.get("read_the_rest")).contains("too large to show here");
+    }
+
+    @Test
+    void aReadWithinTheLimitOrForStroomAisChatOrWithoutAWorkspaceIsGivenWhole() {
+        final List<String> events = largeEvents(100);
+        world.addSegmented(7, StreamTypeNames.EVENTS, null, null, events);
+        final String args = "{\"streamId\":7,\"recordCount\":100,\"maxChars\":200000}";
+
+        // Within the limit.
+        final Map<String, Object> small = runJson(external(), "{\"streamId\":7,\"recordCount\":3}");
+        assertThat(small).doesNotContainKey(LargeResults.WHOLE_RESULT);
+        assertThat(records(small)).isEqualTo(events.subList(0, 3));
+        // Stroom AI's own chat keeps a large result in its workspace itself.
+        final Map<String, Object> chat = runJson(ToolCalls.inChat(1, fixture.workspace), args);
+        assertThat(chat).doesNotContainKey(LargeResults.WHOLE_RESULT);
+        assertThat(records(chat)).isEqualTo(events);
+        // A client outside Stroom without a workspace.
+        final Map<String, Object> noWorkspace = runJson(ToolCalls.outsideChat(), args);
+        assertThat(noWorkspace).doesNotContainKey(LargeResults.WHOLE_RESULT);
+        assertThat(records(noWorkspace)).isEqualTo(events);
+        assertThat(fixture.written).isEmpty();
+    }
+
+    // A client outside Stroom with a workspace.
+    private ToolCallContext external() {
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "claude-code")))
+                .userQuestions(UserQuestions.NONE)
+                .workspace(new SessionWorkspace(fixture.workspace, 1))
+                .build();
+    }
+
+    private static List<String> largeEvents(final int count) {
+        return IntStream.range(0, count)
+                .mapToObj(n -> largeEvent(n, 1_200))
+                .toList();
+    }
+
+    private static String largeEvent(final int n, final int descriptionChars) {
+        return "<?xml version=\"1.1\" encoding=\"UTF-8\"?><Events xmlns=\"event-logging:3\"><Event><EventDetail>"
+               + "<TypeId>t" + n + "</TypeId><Description>" + "d".repeat(descriptionChars) + "</Description>"
+               + "</EventDetail></Event></Events>";
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> runJson(final ToolCallContext context, final String arguments) {
+        return JsonUtil.readValue(tool.run(ToolTestFixture.request(FetchEventsTool.NAME, arguments), context).text(),
+                Map.class);
     }
 
     @SuppressWarnings("unchecked")

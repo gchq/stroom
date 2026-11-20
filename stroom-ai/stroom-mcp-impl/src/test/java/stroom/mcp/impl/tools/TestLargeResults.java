@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
@@ -153,6 +155,33 @@ class TestLargeResults {
         assertThat(JsonUtil.readValue(written(chats, "/outputs/a_tool/acme_v1.json"), Map.class))
                 .containsEntry("field_mapping", null);
         assertThat(result).containsEntry("field_mapping", null);
+    }
+
+    @Test
+    void aResultNothingCanShortenIsGivenWholeSayingPlainlyWhyItIsAlsoSaved() {
+        // All of it what the agent must act on: no step shortens it, so nothing is outlined or cut. It is still
+        // past the client's limit, so the client shows only its start: the note, first, says where Stroom saved it.
+        final ChatWorkspace chats = writable();
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "refused");
+        result.put("problems", lines("a problem the agent must fix", 400));
+        result.put("hint", "Fix the problems.");
+        final Map<String, Object> before = new LinkedHashMap<>(result);
+
+        final boolean given = plan().apply(CLIENT, Optional.of(new SessionWorkspace(chats, 1)), result, LIMIT);
+
+        assertThat(given).isTrue();
+        assertThat(result.keySet()).first().isEqualTo(LargeResults.WHOLE_RESULT);
+        final Map<String, Object> rest = new LinkedHashMap<>(result);
+        rest.remove(LargeResults.WHOLE_RESULT);
+        assertThat(rest).as("given whole").isEqualTo(before);
+        final Map<String, Object> note = JsonValues.map(result.get(LargeResults.WHOLE_RESULT));
+        assertThat(note).doesNotContainKeys("outlined", "cut");
+        assertThat((String) note.get("read"))
+                .doesNotContain("given in outline")
+                .contains("nothing in it could be shortened")
+                .contains("given whole")
+                .contains("saved whole at /outputs/a_tool/acme_v1.json");
     }
 
     @Test

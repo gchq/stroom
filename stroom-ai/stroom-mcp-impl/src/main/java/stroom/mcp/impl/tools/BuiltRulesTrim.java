@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.SessionWorkspace;
