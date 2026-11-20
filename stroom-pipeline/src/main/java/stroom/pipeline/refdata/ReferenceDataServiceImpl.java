@@ -72,6 +72,8 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
+import stroom.util.xml.SaxonPolicy;
+import stroom.util.xml.SaxonSecurity;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
@@ -597,7 +599,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                             referenceDataResult)),
                     "Ensuring data availability");
 
-            final Configuration configuration = Configuration.newConfiguration();
+            final Configuration configuration = SaxonSecurity.newConfiguration(SaxonPolicy.LOCKED);
             final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
             final StringWriter stringWriter = new StringWriter();
             final Receiver stringReceiver = refDataValueConverter.buildStringReceiver(

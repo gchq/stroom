@@ -17,6 +17,8 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
+import stroom.util.xml.SaxonPolicy;
+import stroom.util.xml.SaxonSecurity;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -55,7 +57,7 @@ public class RefDataValueConverter {
 
     private String convertToString(final FastInfosetValue fastInfosetValue) {
 
-        final Configuration configuration = Configuration.newConfiguration();
+        final Configuration configuration = SaxonSecurity.newConfiguration(SaxonPolicy.LOCKED);
         final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
         final StringWriter stringWriter = new StringWriter();
         final Receiver xmlEmitterReceiver = buildStringReceiver(stringWriter, pipelineConfiguration);

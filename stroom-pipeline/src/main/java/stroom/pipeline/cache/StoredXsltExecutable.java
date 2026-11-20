@@ -26,12 +26,15 @@ public class StoredXsltExecutable {
     private final XsltExecutable xsltExecutable;
     private final StroomXsltFunctionLibrary functionLibrary;
     private final StoredErrorReceiver errorReceiver;
+    private final XsltSecuritySettings securitySettings;
 
     public StoredXsltExecutable(final XsltExecutable xsltExecutable, final StroomXsltFunctionLibrary functionLibrary,
-                                final StoredErrorReceiver errorReceiver) {
+                                final StoredErrorReceiver errorReceiver,
+                                final XsltSecuritySettings securitySettings) {
         this.xsltExecutable = xsltExecutable;
         this.functionLibrary = functionLibrary;
         this.errorReceiver = errorReceiver;
+        this.securitySettings = securitySettings;
     }
 
     public XsltExecutable getXsltExecutable() {
@@ -44,5 +47,10 @@ public class StoredXsltExecutable {
 
     public StoredErrorReceiver getErrorReceiver() {
         return errorReceiver;
+    }
+
+    /// @return The XSLT security settings this XSLT was compiled with.
+    XsltSecuritySettings getSecuritySettings() {
+        return securitySettings;
     }
 }

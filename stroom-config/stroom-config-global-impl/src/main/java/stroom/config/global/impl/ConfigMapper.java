@@ -589,10 +589,22 @@ public class ConfigMapper {
                 final Optional<String> effectiveValueBefore = globalConfigProperty.getEffectiveValue();
                 final SourceType sourceBefore = globalConfigProperty.getSource();
 
+                // A read-only property can only be set in the configuration file, so any database value for
+                // one is ignored.
+                final OverrideValue<String> databaseOverrideValue;
+                if (prop.hasAnnotation(ReadOnly.class)) {
+                    if (dbConfigProperty.hasDatabaseOverride()) {
+                        LOGGER.warn("Ignoring the database value for read-only property {}", fullPath);
+                    }
+                    databaseOverrideValue = globalConfigProperty.getDatabaseOverrideValue();
+                } else {
+                    databaseOverrideValue = dbConfigProperty.getDatabaseOverrideValue();
+                }
+
                 // Update all the DB related values from the passed DB config prop
                 final ConfigProperty updated = globalConfigProperty.copy()
                         .id(dbConfigProperty.getId())
-                        .databaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue())
+                        .databaseOverrideValue(databaseOverrideValue)
                         .version(dbConfigProperty.getVersion())
                         .createTimeMs(dbConfigProperty.getCreateTimeMs())
                         .createUser(dbConfigProperty.getCreateUser())
