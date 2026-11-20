@@ -42,8 +42,8 @@ import java.util.Objects;
 /// @param confidence     `high`, `medium` or `low`.
 /// @param oneTypeBecause `one_type_because`: why records that look like several event types are one, or null.
 /// @param status         `proposed` or `confirmed`.
-/// @param doubt          Optional: why the agent is unsure of it (a medium or low confidence's reason), said to the user
-///                       where the event type is worth a look; null when none was given.
+/// @param doubt          Optional: why the agent is unsure of it (a medium or low confidence's reason), said to the
+///                       user where the event type is worth a look; null when none was given.
 public record EventType(String typeId,
                         String title,
                         String description,

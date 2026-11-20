@@ -241,7 +241,7 @@ class TestDraftTranslationMappingTool {
         // The one version this Stroom holds was settled without the agent: the hint says so first.
         assertThat((String) draft.get("hint")).startsWith(TranslationWorld.VERSION + " is the only event-logging "
                                                           + "version this Stroom holds")
-                .contains("the server keeps this draft (with the build, for your later sessions too)");
+                .contains("The server keeps the draft with the build, for your later sessions too");
         // A change sent for the build and an XSLT name not saved yet starts from it.
         final TranslationBuilds.Base base = world.builds.mappingToChange(world.context(), "acme-v1/ACME-Events",
                 null, "acme-v1", "ACME-Events");

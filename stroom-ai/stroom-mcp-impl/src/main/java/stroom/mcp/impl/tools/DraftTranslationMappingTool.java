@@ -342,15 +342,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "Decide what the notes ask (the action element per event type, System Name and "
                            + "Environment, the time zone), then build_translation_xslt(build=, name= to save it, "
                            + "changes= only the rules and entries you change, schema_version=this schema_version, "
-                           + "stream_ids=the sample streams (or sample=the texts), splitter=this splitter): the "
-                           + "server keeps this draft (with the build, for your later sessions too), so it needn't "
-                           + "be sent whole. A rule's data "
+                           + "stream_ids=the sample streams (or sample=the texts), splitter=this splitter). "
+                           + DraftOutline.keptFor(build) + ", so it needn't be sent whole. A rule's data "
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
                            + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
                            + "the time formats, and how changes= merges.");
         // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
         DraftOutline.outlineIfLarge(context.caller(), result, context.workspace(), build,
-                LargeResults.WHOLE_RESULT_CHARS);
+                SourceNotes.catalogue(sourceNotes), LargeResults.WHOLE_RESULT_CHARS);
         return result;
     }
 

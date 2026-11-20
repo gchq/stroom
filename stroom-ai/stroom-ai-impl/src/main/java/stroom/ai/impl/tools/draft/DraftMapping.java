@@ -276,7 +276,9 @@ public final class DraftMapping {
     /// @param detailCheck Why a catalogued event's `event_detail` can't be an action element, or null.
     /// @param splitter    The Data Splitter the text is read with, or null to infer it.
     /// @param forEach     The field of a JSON record holding its items (an array of objects), or null to read the
-    ///                    records as they are; records holding no items under it are read as they are too.
+    ///                    records as they are; a record holding no items under it gives no record (as for_each in
+    ///                    processing gives it no event), unless no record of the sample holds any, when the
+    ///                    records are read as they are.
     /// @return What [#draft(Object, String, String, String, Map, Function, SplitterSpec)] returns.
     @SuppressWarnings("checkstyle:ParameterNumber")
     public static Map<String, Object> draft(final Object samples,

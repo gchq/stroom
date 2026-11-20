@@ -20,6 +20,9 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.Way;
+import stroom.ai.impl.tools.draft.VendorCode;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.MappingValidationException;
@@ -27,6 +30,7 @@ import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -91,6 +95,24 @@ final class DraftOutline {
                                final Optional<SessionWorkspace> workspace,
                                final String build,
                                final int limit) {
+        outlineIfLarge(caller, result, workspace, build, null, limit);
+    }
+
+    /// As [#outlineIfLarge(ToolCaller, Map, Optional, String, int)], the vendor's code each rule writes read as the
+    /// draft writes it for the build's catalogue ([VendorCode#fields]).
+    ///
+    /// @param caller    Who called the tool.
+    /// @param result    The draft's result, changed in place.
+    /// @param workspace The session's workspace, if it has one.
+    /// @param build     The build, or null.
+    /// @param catalogue The build's catalogue (its scope names the source type field), or null.
+    /// @param limit     The most characters a result is given whole in ([LargeResults#WHOLE_RESULT_CHARS]).
+    static void outlineIfLarge(final ToolCaller caller,
+                               final Map<String, Object> result,
+                               final Optional<SessionWorkspace> workspace,
+                               final String build,
+                               final Catalogue catalogue,
+                               final int limit) {
         final Map<String, Object> mapping = JsonValues.map(result.get(MAPPING));
         if (caller.kind() != ToolCaller.Kind.EXTERNAL_CLIENT || mapping == null || workspace.isEmpty()
             || length(result) <= limit) {
@@ -104,16 +126,15 @@ final class DraftOutline {
         result.put(SAVED, path);
         result.put("hint", "The draft is too large to show whole here, so mapping_outline outlines it: each event "
                            + "type's rule with its TypeId, how its records are recognised, its Description, the "
-                           + "vendor's code it writes as Data and the other paths it writes. It is saved whole at "
-                           + path + ": read a rule's entries with jq (path=" + path + ", query='.events[] | "
-                           + "select(.name == \"<rule>\") | .fields[]', one a line), or find its lines with grep "
-                           + "and read them with read_file. The server keeps the draft (with the build, for "
-                           + "your later sessions too), so build_translation_xslt build= (name=, or group= for a "
-                           + "source type group) "
-                           + "changes= sends only the rules and entries you change (changes={} builds it as "
-                           + "drafted). Never write the mapping out yourself: its Descriptions and vendor-code Data "
-                           + "would be lost. " + ToolText.str(result.getOrDefault("hint", "")));
-        result.put(OUTLINE, outline(mapping, true));
+                           + "vendor's code it writes as Data and the other paths it writes. It is saved whole, for "
+                           + "this session, at " + path + ": read a rule's entries with jq (path=" + path
+                           + ", query='.events[] | select(.name == \"<rule>\") | .fields[]', one a line), or find "
+                           + "its lines with grep and read them with read_file. " + keptFor(build) + ", so "
+                           + "build_translation_xslt build= (name=, or group= for a source type group) changes= "
+                           + "sends only the rules and entries you change (changes={} builds it as drafted). Never "
+                           + "write the mapping out yourself: its Descriptions and vendor-code Data would be lost. "
+                           + ToolText.str(result.getOrDefault("hint", "")));
+        result.put(OUTLINE, outline(mapping, true, catalogue));
         if (result.get(PLACEMENT) instanceof final Map<?, ?> placement) {
             result.put(PLACEMENT, DataPlacements.compact(JsonValues.map(placement)));
         }
@@ -128,7 +149,7 @@ final class DraftOutline {
                     .outline("schema_check", (value, room) -> schemaCheck(value))
                     .outline(PLACEMENT, (value, room) -> placementGrouped(value))
                     .step(OUTLINE, (said, room) -> {
-                        said.put(OUTLINE, outline(mapping, false));
+                        said.put(OUTLINE, outline(mapping, false, catalogue));
                         return true;
                     })
                     .cutTheRest()
@@ -136,7 +157,7 @@ final class DraftOutline {
                     .apply(caller, workspace, result, limit);
             if (!outlined) {
                 // The rest not saved: the mapping's outline alone made to fit, as before.
-                result.put(OUTLINE, outline(mapping, false));
+                result.put(OUTLINE, outline(mapping, false, catalogue));
                 fitRules(result, limit);
             }
         }
@@ -235,8 +256,20 @@ final class DraftOutline {
         return outlined;
     }
 
+    /// @param build The build the draft is of, or null.
+    /// @return Where the server keeps the draft, as a hint says it: with the build, for the user's later sessions
+    /// too, or (with no build) for this session only ([SentMappings]).
+    static String keptFor(final String build) {
+        return NullSafe.isNonBlankString(build)
+                ? "The server keeps the draft with the build, for your later sessions too"
+                : "The server keeps the draft for this session only (draft with build= to keep it for your later "
+                  + "sessions)";
+    }
+
     // The mapping's input, common entries, and each rule in brief.
-    private static Map<String, Object> outline(final Map<String, Object> mapping, final boolean withPaths) {
+    private static Map<String, Object> outline(final Map<String, Object> mapping,
+                                               final boolean withPaths,
+                                               final Catalogue catalogue) {
         final Map<String, Object> outline = new LinkedHashMap<>();
         if (mapping.get("input") != null) {
             outline.put("input", mapping.get("input"));
@@ -251,7 +284,7 @@ final class DraftOutline {
                 .orElse(null);
         final List<Map<String, Object>> rules = new ArrayList<>();
         for (final Map<String, Object> rule : JsonValues.maps(mapping.get(EVENTS))) {
-            rules.add(ruleOutline(rule, commonDescription, withPaths));
+            rules.add(ruleOutline(rule, commonDescription, withPaths, catalogue));
         }
         outline.put(EVENTS, rules);
         return outline;
@@ -260,7 +293,8 @@ final class DraftOutline {
     // One rule in brief: its name, TypeId, recognised by, Description, vendor-code Data, other paths and Data count.
     private static Map<String, Object> ruleOutline(final Map<String, Object> rule,
                                                    final String commonDescription,
-                                                   final boolean withPaths) {
+                                                   final boolean withPaths,
+                                                   final Catalogue catalogue) {
         final Map<String, Object> said = new LinkedHashMap<>();
         said.put("name", rule.get("name"));
         final List<Map<String, Object>> fields = JsonValues.maps(rule.get("fields"));
@@ -285,7 +319,8 @@ final class DraftOutline {
         if (!said.containsKey("description") && commonDescription != null) {
             said.put("description", "(common's) " + commonDescription);
         }
-        final Set<String> codeFields = vendorCodeFields(when);
+        // As the draft writes it (not the build's source type field).
+        final Set<String> codeFields = new LinkedHashSet<>(VendorCode.fields(new Way(when, List.of()), catalogue));
         final List<String> vendorCode = new ArrayList<>();
         final List<String> writes = new ArrayList<>();
         int otherData = JsonValues.listOrEmpty(rule.get("data")).size();
@@ -329,18 +364,6 @@ final class DraftOutline {
 
     private static List<String> words(final List<Condition> conditions) {
         return conditions.stream().map(MappingFacts::conditionWords).toList();
-    }
-
-    // The fields the conditions test for a code (equals, one_of; not a not): written as the vendor's code.
-    private static Set<String> vendorCodeFields(final List<Condition> conditions) {
-        final Set<String> fields = new LinkedHashSet<>();
-        for (final Condition condition : conditions) {
-            if (condition.field() != null && !condition.not()
-                && (condition.equalTo() != null || condition.oneOf() != null)) {
-                fields.add(condition.field());
-            }
-        }
-        return fields;
     }
 
     // A common entry in brief: its path and where its value comes from.

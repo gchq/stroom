@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.util.json.JsonUtil;
@@ -77,30 +78,42 @@ class TestCatalogueOutline {
     }
 
     @Test
-    void aTableTooLargeToGiveWholeSaysSoAndWhereItsOtherRowsAre() {
+    void aSummaryTooLargeToGiveWholeIsCutByLinesSayingWhereTheRestIs() {
+        // From a review: the cut took the set's table for a Markdown table (a header of two lines, "rows"), though
+        // the set is shown as a summary, prose first.
         final ChatWorkspace chats = TestLargeResults.writable();
-        final Map<String, Object> result = checked(600, 0);
-        final String table = (String) result.get("table");
-        assertThat(LargeResults.length(table)).isGreaterThan(LIMIT);
+        final List<EventType> set = new ArrayList<>();
+        for (int k = 0; k < 900; k++) {
+            set.add(new EventType("Process-Code%03d".formatted(k), "Code " + k + " run", "Code " + k + " was run",
+                    "Element%03d".formatted(k), null, null, null, null, null, List.of(), false,
+                    EventType.AGENT_KNOWLEDGE, "high", null, EventType.PROPOSED));
+        }
+        final String summary = CatalogueSummary.summary(set, null, "'Acme source notes'");
+        final Map<String, Object> result = checked(10, 0);
+        result.put("table", summary);
+        assertThat(LargeResults.length(summary)).isGreaterThan(LIMIT);
 
         CatalogueOutline.outlineIfLarge(TestLargeResults.CLIENT, Optional.of(new SessionWorkspace(chats, 1)),
                 "acme-v1", result, LIMIT);
 
         assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LIMIT);
         final String shown = (String) result.get("table");
-        final Matcher said = Pattern.compile("these are the first (\\d+) of its 600 rows. Show the user all of it, "
-                                             + "as it is: these rows, then the other (\\d+), read with jq \\(path="
-                                             + SAVED + ", query='\\.table\\[(\\d+):]\\[]', raw=true\\)")
+        final List<String> lines = summary.lines().toList();
+        final Matcher said = Pattern.compile("these are the first (\\d+) of its " + lines.size() + " lines. Show "
+                                             + "the user all of it, as it is: these lines, then the other (\\d+), "
+                                             + "read with jq \\(path=" + SAVED + ", query='\\.table\\[(\\d+):]"
+                                             + "\\[]', raw=true\\)")
                 .matcher(shown);
         assertThat(said.find()).as(shown.substring(shown.length() - 400)).isTrue();
-        final int rowsShown = Integer.parseInt(said.group(1));
-        assertThat(Integer.parseInt(said.group(2))).isEqualTo(600 - rowsShown);
+        final int linesShown = Integer.parseInt(said.group(1));
+        assertThat(Integer.parseInt(said.group(2))).isEqualTo(lines.size() - linesShown);
+        assertThat(Integer.parseInt(said.group(3))).isEqualTo(linesShown);
+        // The summary's prose first, whole lines.
+        assertThat(shown).startsWith(lines.getFirst() + "\n")
+                .startsWith(String.join("\n", lines.subList(0, linesShown)) + "\n");
         final List<?> savedLines = (List<?>) JsonUtil.readValue(TestLargeResults.written(chats, SAVED), Map.class)
                 .get("table");
-        final List<String> lines = table.lines().toList();
         assertThat(savedLines).isEqualTo(lines);
-        assertThat(shown).startsWith(String.join("\n", lines.subList(0, Integer.parseInt(said.group(3)))));
-        assertThat(savedLines.get(Integer.parseInt(said.group(3)))).isEqualTo(lines.get(2 + rowsShown));
     }
 
     @Test

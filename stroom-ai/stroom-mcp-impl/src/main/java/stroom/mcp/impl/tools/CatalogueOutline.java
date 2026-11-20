@@ -32,7 +32,10 @@ import java.util.Optional;
 /// event types) on Haiku, results of 61,000 to 93,000 characters, the catalogue, its check's counts and the event
 /// types not in the sample listed in full beside the set's table. Outlined: those not in the sample counted, the
 /// check's counts (problems, overlaps, uncatalogued records and the rest kept whole), and the catalogue by status;
-/// the set's table, which the user must be shown whole, is cut last of all, saying so and where the rest is.
+/// the set's summary (`table`, [CatalogueSummary]), which the user must be shown whole, is cut last of all, by lines,
+/// saying so and where the rest is. The summary is bounded in rows (at most [CatalogueSummary#MOST_LISTED]) but not
+/// in lines or characters: a group a line for every action element of the set, the TypeIds removed as amended, and
+/// each row's conditions and doubt, as long as the agent wrote them.
 final class CatalogueOutline {
 
     private static final String TABLE = "table";
@@ -40,9 +43,7 @@ final class CatalogueOutline {
     private static final String STATUS = "status";
     // The most characters of TypeIds listed in an outline.
     private static final int TYPE_ID_CHARS = 1_500;
-    // A table's header and its separator line.
-    private static final int HEADER_LINES = 2;
-    // Room kept beside a cut table for what is said of it.
+    // Room kept beside a cut summary for what is said of it.
     private static final int TABLE_NOTE_ROOM = 600;
 
     private CatalogueOutline() {
@@ -154,18 +155,19 @@ final class CatalogueOutline {
         return outlined;
     }
 
-    // The set's table, which the user must be shown whole: as it is when it fits; else its header and the rows that
-    // fit, then a line saying it is cut, how many rows are left and how to read them for the user.
+    // The set's summary, which the user must be shown whole: as it is when it fits; else its first lines that fit
+    // (its first, which says what the set is, always), then a line saying it is cut, how many lines are left and how
+    // to read them for the user (the saved file holds the summary a line a list entry).
     private static Object table(final Object value, final LargeResults.Room room) {
-        if (!(value instanceof final String table) || LargeResults.length(table) <= room.target()) {
+        if (!(value instanceof final String summary) || LargeResults.length(summary) <= room.target()) {
             return value;
         }
-        final List<String> lines = table.lines().toList();
+        final List<String> lines = summary.lines().toList();
         final StringBuilder sb = new StringBuilder();
         int shown = 0;
         for (final String line : lines) {
             // As JSON, each line its newline escaped.
-            if (shown >= HEADER_LINES && sb.length() + LargeResults.length(line) > room.target() - TABLE_NOTE_ROOM) {
+            if (shown >= 1 && sb.length() + LargeResults.length(line) > room.target() - TABLE_NOTE_ROOM) {
                 break;
             }
             sb.append(line).append('\n');
@@ -174,12 +176,10 @@ final class CatalogueOutline {
         if (shown >= lines.size()) {
             return value;
         }
-        final int rows = lines.size() - HEADER_LINES;
-        final int rowsShown = shown - HEADER_LINES;
         return sb.append('\n')
-                .append("(This table is too large to give whole here: these are the first ").append(rowsShown)
-                .append(" of its ").append(rows).append(" rows. Show the user all of it, as it is: these rows, ")
-                .append("then the other ").append(rows - rowsShown).append(", read with jq (path=")
+                .append("(This summary is too large to give whole here: these are the first ").append(shown)
+                .append(" of its ").append(lines.size()).append(" lines. Show the user all of it, as it is: these ")
+                .append("lines, then the other ").append(lines.size() - shown).append(", read with jq (path=")
                 .append(room.saved()).append(", query='.table[").append(shown).append(":][]', raw=true).)")
                 .toString();
     }

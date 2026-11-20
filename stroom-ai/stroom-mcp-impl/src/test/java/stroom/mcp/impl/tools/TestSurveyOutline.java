@@ -59,7 +59,8 @@ class TestSurveyOutline {
         final Map<?, ?> locations = (Map<?, ?>) result.get("locations");
         assertThat(locations.get("records")).isEqualTo(170);
         assertThat(locations.get("streams")).isEqualTo(List.of(9, 10));
-        assertThat((String) locations.get("step_them")).contains("step_records locations_from='" + SAVED + "'");
+        assertThat((String) locations.get("step_them")).contains("step_records locations_from='" + SAVED + "'",
+                "(a record of each shape)");
         final List<?> shapes = (List<?>) result.get("shapes");
         assertThat(shapes).hasSize(60).allSatisfy(shape -> assertThat(TestCatalogueOutline.<String, Object>asMap(shape))
                 .doesNotContainKeys("locations", "more_examples")

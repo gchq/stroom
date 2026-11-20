@@ -64,8 +64,7 @@ final class SurveyOutline {
                         "scope_read", "read_again", "saturated", "streams_read", "records_read", "new_shapes",
                         "time_range", "quoted_newlines", "survey", "carried")
                 .outline(LOCATIONS, SurveyOutline::locations)
-                .outline(SHAPES, (value, room) -> shapes(value, true))
-                .outline(SHAPES, (value, room) -> shapes(value, false))
+                .outline(SHAPES, SurveyOutline::shapes)
                 .apply(caller, workspace, result, limit);
     }
 
@@ -90,13 +89,21 @@ final class SurveyOutline {
             outlined.put("left_untranslated", untranslated);
         }
         outlined.put("step_them", StepRecordsTool.NAME + " " + StepRecordsTool.LOCATIONS_FROM_ARG + "='"
-                                  + room.saved() + "' steps every one of them (a record of each kind of event), "
+                                  + room.saved() + "' steps every one of them (a record of each shape), "
                                   + "read from the saved survey: no need to list them.");
         return outlined;
     }
 
-    // Each shape without its locations and further examples, its example cut short (or left out).
-    private static Object shapes(final Object value, final boolean withExample) {
+    // Each shape without its locations and further examples, its example cut short; left out too when the shapes
+    // still don't fit their room.
+    private static Object shapes(final Object value, final LargeResults.Room room) {
+        final List<Object> withExamples = shapes(value, true);
+        return LargeResults.length(withExamples) <= room.target()
+                ? withExamples
+                : shapes(value, false);
+    }
+
+    private static List<Object> shapes(final Object value, final boolean withExample) {
         final List<Object> outlined = new ArrayList<>();
         for (final Object entry : JsonValues.listOrEmpty(value)) {
             if (!(entry instanceof final Map<?, ?> shape)) {

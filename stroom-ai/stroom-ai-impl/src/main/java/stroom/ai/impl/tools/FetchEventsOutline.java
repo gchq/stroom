@@ -81,10 +81,23 @@ final class FetchEventsOutline {
         // The room for the records and their keys: the result's, less the rest of it and the note on reading them.
         final int recordsRoom = room.target() - (LargeResults.length(result) - LargeResults.length(records))
                                  - READ_ROOM;
+        // Each part's length once, kept as running totals: the records given, the keys of the rest.
+        int recordsChars = 0;
+        int keysChars = 0;
+        final int[] keyChars = new int[keys.size()];
+        for (int i = 0; i < keys.size(); i++) {
+            keyChars[i] = LargeResults.length(keys.get(i));
+            keysChars += keyChars[i];
+        }
         int given = 0;
-        while (given < records.size()
-               && LargeResults.length(records.subList(0, given + 1))
-                  + LargeResults.length(keys.subList(given + 1, keys.size())) <= recordsRoom) {
+        while (given < records.size()) {
+            final int withNext = recordsChars + LargeResults.length(records.get(given));
+            final int keysLeft = keysChars - keyChars[given];
+            if (listLength(withNext, given + 1) + listLength(keysLeft, keys.size() - given - 1) > recordsRoom) {
+                break;
+            }
+            recordsChars = withNext;
+            keysChars = keysLeft;
             given++;
         }
         if (given == records.size()) {
@@ -95,6 +108,12 @@ final class FetchEventsOutline {
         result.put(NOT_GIVEN, new ArrayList<>(keys.subList(given, keys.size())));
         result.put(READ_THE_REST, readTheRest(read, room.saved(), first, given, records.size(), records.get(given)));
         return true;
+    }
+
+    // A JSON list's length, as LargeResults.length gives it, from its entries' total and count: its brackets and
+    // the commas between them.
+    private static int listLength(final int entriesChars, final int count) {
+        return 2 + entriesChars + Math.max(0, count - 1);
     }
 
     // The keys that find a record again: its stream, its part (of a stream of several), its record and, of an Events

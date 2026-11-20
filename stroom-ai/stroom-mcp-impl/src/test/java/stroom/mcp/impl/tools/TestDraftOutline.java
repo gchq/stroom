@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -106,8 +107,62 @@ class TestDraftOutline {
                                 "description", "(common's) <- msg",
                                 "writes", List.of(), "other_data", 0, "catch_all", true))));
         assertThat((String) result.get("hint")).startsWith("The draft is too large to show whole here")
-                .contains("saved whole at /outputs/drafts/acme_v1.json", "changes=", "jq")
+                .contains("saved whole, for this session, at /outputs/drafts/acme_v1.json", "changes=", "jq")
                 .endsWith("Build it as drafted.");
+    }
+
+    @Test
+    void theHintSaysTheDraftIsKeptForLaterSessionsOnlyWithABuild() {
+        // From a review: it always said "kept with the build, for your later sessions too", and promised the saved
+        // file, in the session's own workspace, to later sessions.
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> withBuild = drafted();
+        DraftOutline.outlineIfLarge(CLIENT, withBuild, Optional.of(new SessionWorkspace(chats, 1)), "acme-v1",
+                LIMIT);
+        final Map<String, Object> noBuild = drafted();
+        DraftOutline.outlineIfLarge(CLIENT, noBuild, Optional.of(new SessionWorkspace(chats, 1)), null, LIMIT);
+
+        assertThat((String) withBuild.get("hint"))
+                .contains("saved whole, for this session, at /outputs/drafts/acme-v1.json",
+                        "The server keeps the draft with the build, for your later sessions too");
+        assertThat((String) noBuild.get("hint"))
+                .contains("saved whole, for this session, at /outputs/drafts/",
+                        "The server keeps the draft for this session only (draft with build= to keep it for your "
+                        + "later sessions)")
+                .doesNotContain("later sessions too");
+    }
+
+    @Test
+    void theVendorsCodeIsReadAsTheDraftWritesItNotFromTheSourceTypeField() {
+        // From a review: the outline had its own copy of the rule, which took the build's source type field for
+        // vendor's code too.
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "json");
+        mapping.put("events", List.of(Map.of("name", "Authenticate-Logon",
+                "when", List.of(Map.of("field", "log_type", "equals", "auth"),
+                        Map.of("field", "action", "equals", "login")),
+                "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Authenticate-Logon"),
+                        Map.of("path", "EventDetail/Authenticate/Data", "data_name", "log_type", "field",
+                                "log_type"),
+                        Map.of("path", "EventDetail/Authenticate/Data", "data_name", "action", "field", "action"),
+                        Map.of("path", "EventDetail/Authenticate/Data", "data_name", "detail", "field",
+                                "detail")))));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", mapping);
+        result.put("hint", LONG_TEXT);
+        final Catalogue catalogue = new Catalogue(List.of(), Catalogue.CatchAll.PROPOSED,
+                new Catalogue.Scope("log_type", List.of("auth")));
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "acme-v1",
+                catalogue, LIMIT);
+
+        final Map<String, Object> outline = JsonValues.map(result.get("mapping_outline"));
+        final Map<String, Object> rule = JsonValues.maps(outline.get("events")).getFirst();
+        assertThat(rule).containsEntry("vendor_code_data", List.of("action <- action"))
+                .containsEntry("other_data", 2);
     }
 
     @Test
