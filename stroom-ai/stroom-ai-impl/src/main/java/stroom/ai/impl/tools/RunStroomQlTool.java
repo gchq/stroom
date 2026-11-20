@@ -161,7 +161,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                                  + "and grouped questions are answered faster by Elasticsearch with ES|QL")
                         .chatOnly(" (esql_query), as a StroomQL query reads every matching document through "
                                   + "Stroom to group them")
-                        .general(". Add a limit to the query for large results. If more than one data source could "
+                        .general(". It can join Stroom data sources (join lines, or where X in (from ...)). Add a "
+                                 + "limit to the query for large results. If more than one data source could "
                                  + "hold what the user asked for, ask them which to use")
                         .chatOnly(" with ask_user")
                         .general(" first; never choose one for them.")
@@ -169,7 +170,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                                   + "(propose_query), ask them which.")
                         .general(" A query on a Lucene or Elastic index whose answer through Stroom would mislead "
                                  + "(e.g. is null on Elasticsearch, which matches every document) is refused, "
-                                 + "saying what to query instead.")
+                                 + "saying what to query instead. Stroom's warnings, a join's too, follow 'Stroom "
+                                 + "warned:' in the result.")
                         .chatOnly(" To find an event the user describes in an index, with each hit's StreamId and "
                                   + "EventId and the streams holding every match, use search_events with index.")
                         .build())

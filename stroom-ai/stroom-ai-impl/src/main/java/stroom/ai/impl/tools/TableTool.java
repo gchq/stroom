@@ -215,6 +215,7 @@ class TableTool extends AbstractWorkspaceTool {
                          + "free text (e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this "
                          + "for any figures; never count rows or work figures out by reading them. Give join to match "
                          + "its rows with another table's first, e.g. on a user and an id, within some seconds.")
+                .chatOnly(" To join two Stroom data sources, a StroomQL join (run_stroomql) is better.")
                 .chatOnly(" Give out to write the result to a file.")
                 .general("\n\n" + expressionsHelp())
                 .build();

@@ -19,7 +19,9 @@ package stroom.ai.impl;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.JoinType;
 import stroom.query.api.Query;
+import stroom.query.api.QueryJoin;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
@@ -70,6 +72,39 @@ class TestStroomQlGuidance {
         // Each condition the guidance names.
         parse("from v where a != 1 and b >= 2 and c <= 3 and d > 4 and e < 5 select a");
         parse("from v where a in (\"x\", \"y\") or b between 1 and 10 select a");
+    }
+
+    @Test
+    void theJoinExamplesInTheGuidanceAreValidStroomQl() {
+        final String leftJoin = "from \"Windows events\" left join \"HR Users\" as hr on UserId = hr.Username "
+                                + "where EventTime > day() - 7d select EventTime, UserId, hr.Department";
+        final String inSubquery = "from \"Windows events\" where UserId in (from \"HR Users\" where Status = "
+                                  + "\"Leaver\" select Username) select EventTime, UserId";
+        // The guidance's text is wrapped where its lines end, so compare it with spaces for line breaks.
+        final String guidance = ContextAssembler.TOOL_GUIDANCE.replace("\n", " ");
+        assertThat(guidance)
+                .contains("`" + leftJoin + "`")
+                .contains("`" + inSubquery + "`")
+                .contains("from (with an alias: from \"X\" as x), join lines, where");
+
+        final Query joined = parse(leftJoin).getQuery();
+        assertThat(joined.getJoins()).singleElement().satisfies(join -> {
+            assertThat(join.getType()).isEqualTo(JoinType.LEFT);
+            assertThat(join.getAlias()).isEqualTo("hr");
+        });
+        assertThat(columnExpressions(parse(leftJoin))).contains("${hr.Department}");
+        // The subquery becomes a semi join.
+        assertThat(parse(inSubquery).getQuery().getJoins()).singleElement()
+                .extracting(QueryJoin::getType)
+                .isEqualTo(JoinType.SEMI);
+        // Each join kind the guidance names, and a bracketed joined query.
+        parse("from v join w as w on a = w.a select a, w.b");
+        parse("from v semi join w as w on a = w.a select a");
+        parse("from v anti join w as w on a = w.a select a");
+        parse("from v left join (from w group by a select a, count() as N) as w on a = w.a select a, w.N");
+        // The forms the /mcp server instructions give.
+        parse("from \"Events\" left join \"HR\" as hr on UserId = hr.Username select UserId, hr.Department");
+        parse("from \"Events\" where UserId in (from \"HR\" select Username) select UserId");
     }
 
     @Test

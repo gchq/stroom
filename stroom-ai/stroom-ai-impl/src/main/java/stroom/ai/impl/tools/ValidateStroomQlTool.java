@@ -84,8 +84,9 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Checks a StroomQL query without running it: OK (and whether it groups rows), or "
-                             + "the parser's error. Validate a query before you show or propose it.")
+                .description("Checks a StroomQL query without running it: OK (with the data sources it reads, "
+                             + "joined ones too, and whether it groups rows), or the parser's error. Validate a "
+                             + "query before you show or propose it.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
                         .required(QUERY_ARG)

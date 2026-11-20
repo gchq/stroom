@@ -132,8 +132,10 @@ class TestBundledKnowledge {
         final String text = String.join(" ", BundledKnowledge.serverInstructions().split("\\s+"));
 
         assertThat(text).contains("\"X, then Y, by the same user/host, within N\" (N in a row, then NOT Y), in one "
-                                  + "Elasticsearch index or across several: eql_sequence, never a join of "
-                                  + "esql_query or search results by hand.");
+                                  + "Elasticsearch index or across several: eql_sequence.")
+                // Rows of two data sources matched by a key: a StroomQL join first, never one made by hand.
+                .contains("a StroomQL join in run_stroomql")
+                .contains("Never a join of esql_query or search results by hand.");
     }
 
     @Test

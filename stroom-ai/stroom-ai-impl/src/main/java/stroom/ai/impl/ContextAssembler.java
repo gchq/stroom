@@ -188,10 +188,22 @@ public class ContextAssembler {
             node, anything stuck), call server_tasks (kind search counts each search once), not processor_tasks.
 
             ## StroomQL
-            - Clauses go in this order: from, where (with and, or, not and brackets), eval, window, filter, \
-            sort by, group by, having, limit, select, show. In code blocks for the user, put each clause on its \
-            own line, and each and/or of a long where on an indented line. limit comes before select, e.g. \
-            `from "My View" where EventTime > day() - 1d limit 100 select EventTime, User`.
+            - Clauses go in this order: from (with an alias: from "X" as x), join lines, where (with and, or, not \
+            and brackets), eval, window, filter, sort by, group by, having, limit, select, show. In code blocks for \
+            the user, put each clause on its own line, and each and/or of a long where on an indented line. limit \
+            comes before select, e.g. `from "My View" where EventTime > day() - 1d limit 100 select EventTime, User`.
+            - A join line is join, left join, semi join (keep rows with a match) or anti join (keep rows without \
+            one), a data source or a bracketed query with an alias, and on keys; its fields are alias.Field, e.g. \
+            `from "Windows events" left join "HR Users" as hr on UserId = hr.Username where EventTime > day() - 7d \
+            select EventTime, UserId, hr.Department`. A where subquery keeps rows with a match too: \
+            `from "Windows events" where UserId in (from "HR Users" where Status = "Leaver" select Username) \
+            select EventTime, UserId`.
+            - Join in StroomQL when both sides are Stroom data sources: it runs in Stroom, narrows the first \
+            search, joins before the row cap (so group by gives true totals), and can be saved as a Query. Use the \
+            table tool's join for tool results (fetch_events, search_events or esql_query files), attachments, \
+            values in no index, or past a join's limits. The joined side is searched in full first: \
+            keep it small (a Data Connection, or filtered or grouped; at most 1,000,000 rows or 256 MiB). Right and \
+            full joins stop the first search being narrowed. Never join to find out what a data source holds.
             - Quote a data source's name in double quotes if it has spaces or punctuation. Never quote a field \
             name in select or eval: a quoted name there is text, so every row would hold the name itself. Write \
             a field with dots as it is (create.document.description, @timestamp), and one with spaces as \

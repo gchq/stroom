@@ -1130,19 +1130,25 @@ silent guess. None gives the closest few by name.
 
 ### `validate_stroomql`
 
-search · read-only · checks Use on the query's data source · Classes: `ValidateStroomQlTool`, `DataSourceAccess`
+search · read-only · checks Use on the query's data sources · Classes: `ValidateStroomQlTool`, `DataSourceAccess`,
+`StroomQlSources`
 
 Checks a StroomQL query with `QueryService.validateQuery`, without running it. First it finds the data source the
-query's `from` names (`QueryService.getReferencedDataSource`) and checks the user can use it. On success it says
-"OK", names the data source, and says whether the query groups rows. Otherwise it gives the parser's error and asks
+query's `from` names (`QueryService.getReferencedDataSource`) and checks the user can use it. Then it reads every
+data source the query joins (`StroomQlSources`: join lines, and the `exists` and `in (from …)` subqueries of
+`where`, which Stroom runs as joins) and checks Use on each; a joined source given by uuid is otherwise found
+without one. On success it says "OK", names the data sources (", joined with …"), and says whether the query groups
+rows. Otherwise it gives the parser's error and asks
 the model to fix the query and validate it again.
 
 * **Arguments**: `query` (required).
 * **Returns**: text, as above.
 * **Refuses**: a blank query; a query over `stroom.ai.workspace.maxQueryLength` characters (default 10,000); a query
   naming no data source the user can use (`NO_DATA_SOURCE`, which tells the model to check `from` against
-  `list_data_sources`).
-* **Notes**: each validation is audit-logged as processed, with its outcome. Reads untrusted content: the data
+  `list_data_sources`); a query joining one the user can't use (`NO_JOINED_DATA_SOURCE`, the same for its join lines
+  and `where` subqueries).
+* **Notes**: each validation is audit-logged as processed, with its outcome, naming the first data source as before
+  and each joined one as a `JoinedDocument` (`AiAuditLog.processedDocuments`). Reads untrusted content: the data
   source's name is a document name, and the parser's errors are not known to quote only what the model wrote.
 
 ### `run_stroomql`
@@ -1157,13 +1163,16 @@ columns, common values).
 
 The search is never unbounded. `StroomQlLimit` reads the query with Stroom's own tokeniser, so text in strings and
 comments is never taken for a keyword. It adds `limit <max>` to a query with none, and lowers a larger limit, where
-max is `stroom.ai.workspace.maxQueryRows` (default 10,000). Without sorting or grouping, Stroom stops a search as
+max is `stroom.ai.workspace.maxQueryRows` (default 10,000). Only the query's own `select` and `limit` count, outside
+brackets: a joined bracketed query or a `where` subquery keeps its own (Stroom refuses a `limit` inside an `in`
+subquery, and a joined query's limit is not the query's). Without sorting or grouping, Stroom stops a search as
 soon as it has that many rows. The result says when the limit was added or lowered. When the rows reach the cap it
 warns that the row count is not a total, and to count with `count()` and `group by`.
 
-Before running, a query on a Lucene or Elastic index is checked by `RunStroomQlTool.misleading`. The check parses
-the query (`QueryService.parseQuery`), takes every enabled term at any depth, and asks `MisleadingSearches.refusal`
-with the index's ip fields, its unqueryable fields and, for a Lucene index, its text fields' analyzers
+Before running, a query searching a Lucene or Elastic index is checked by `RunStroomQlTool.misleading`. The check
+reads the query's data sources with `StroomQlSources` (the first source, then each joined one, each with the
+conditions Stroom pushes down to its own search), takes every enabled term of each at any depth, and asks
+`MisleadingSearches.refusal` with that index's ip fields, its unqueryable fields and, for a Lucene index, its text fields' analyzers
 (`LuceneTextFields`). A query is refused for:
 
 * STARTS_WITH or CONTAINS on Elasticsearch;
@@ -1177,8 +1186,9 @@ with the index's ip fields, its unqueryable fields and, for a Lucene index, its 
 * IN with one value holding a space and no commas, or, on Lucene, any IN value holding a space;
 * a field Stroom lists as not queryable ("the index doc's field isn't indexed" on Lucene).
 
-The refusal starts "These searches would give a misleading answer: ", says what to use instead, and adds "In
-StroomQL, EQUALS is = and NOT_EQUALS is !=". If the check itself fails, the query runs, because its own errors are
+The refusal starts "These searches would give a misleading answer: ", says what to use instead, names a joined data
+source ("They are in the search of the joined data source …"), and adds "In StroomQL, EQUALS is = and NOT_EQUALS is
+!=". Conditions Stroom runs on the joined rows, after the join, are not searches of an index, so are not checked. If the check itself fails, the query runs, because its own errors are
 Stroom's to give.
 
 The search is a non-incremental `QuerySearchRequest` with history not stored. It is polled every 500 ms until
@@ -1187,7 +1197,9 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
 (a data source without streams) are dropped. The workspace file records the data source's uuid as its source.
 
 * **Arguments**: `query` (required), `out` (optional; a `.md` file in `/outputs/`).
-* **Returns**: text: "Ran the query. The results are in <path>.", any limit note, and the table's profile.
+* **Returns**: text: "Ran the query. The results are in <path>.", any limit note, Stroom's warnings ("Stroom warned:
+  …", a join's included, e.g. a joined source's own warnings or a row matching over 1,000 joined rows), and the
+  table's profile. Joins (join lines, `where` subqueries) run in Stroom, as the Query pane runs them.
 * **Refuses**: a blank or over-long query (`maxQueryLength`); a misleading search, as above. Errors from Stroom are
   given as "The query failed: ..." or, once it had started, "The query started, but failed while it ran: ...".
 * **Notes**: the time limit is the session's query time limit (`stroom.ai.workspace.queryTimeLimit`, default 2
