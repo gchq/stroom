@@ -72,6 +72,8 @@ public final class LocalCheck {
 
     /// The characters of a string Stroom's JSONParser keeps by default (its `stringTruncateLength`).
     public static final int JSON_PARSER_CUT = 10_000;
+    // How [#ruleOf] names a drop rule: this, then its reason.
+    static final String DROP = "drop: ";
 
     private static final Pattern STEP = ToolText.re("^(?:@(?<attr>[\\w.-]+)|(?<name>[\\w.-]+|\\*)(?:\\[@(?<pattr>"
                                                   + "[\\w.-]+)=(?<q>['\"])(?<pval>.*?)\\k<q>\\])?)$");
@@ -580,23 +582,7 @@ public final class LocalCheck {
                                 final Condition c,
                                 final Object record,
                                 final Map<String, String> extracted) {
-        return holds(mapping, c, record, derived(mapping), extracted);
-    }
-
-    // Whether a field condition holds for a record, as the XSLT tests it; null when it cannot be told here (an xpath,
-    // a dictionary, or a field an extraction produces, unless its values are given).
-    private static Boolean holds(final TranslationMapping mapping,
-                                 final Condition c,
-                                 final Object record,
-                                 final Set<String> derived,
-                                 final Map<String, String> extracted) {
-        if (!evaluable(c)) {
-            return null;
-        }
-        final List<String> values = conditionValues(mapping, c.field(), record, derived, extracted);
-        return values == null
-                ? null
-                : ConditionValues.holds(mapping, c, values);
+        return MappingConditions.of(mapping).holds(c, record, extracted);
     }
 
     /// The values a condition's field has in a record, exactly as [#holds] reads them before testing them: so a
@@ -614,20 +600,7 @@ public final class LocalCheck {
                                                final String field,
                                                final Object record,
                                                final Map<String, String> extracted) {
-        return conditionValues(mapping, field, record, derived(mapping), extracted);
-    }
-
-    private static List<String> conditionValues(final TranslationMapping mapping,
-                                                final String field,
-                                                final Object record,
-                                                final Set<String> derived,
-                                                final Map<String, String> extracted) {
-        if (derived.contains(field)) {
-            return extracted == null || !extracted.containsKey(field)
-                    ? null
-                    : List.of(extracted.get(field));
-        }
-        return ConditionValues.values(mapping, field, record);
+        return MappingConditions.of(mapping).conditionValues(field, record, extracted);
     }
 
     /// Whether a condition holds over its field's values in a record ([#conditionValues]), exactly as [#holds]
@@ -639,9 +612,7 @@ public final class LocalCheck {
     /// @return Whether it holds; null when it can't be told here (an xpath, a dictionary, a record-scope field, or a
     /// regex that can't be run).
     public static Boolean holdsOver(final TranslationMapping mapping, final Condition c, final List<String> values) {
-        return evaluable(c)
-                ? ConditionValues.holds(mapping, c, values)
-                : null;
+        return MappingConditions.of(mapping).holdsOver(c, values);
     }
 
     /// @param c A condition.
@@ -788,25 +759,7 @@ public final class LocalCheck {
     /// condition on the way cannot be told here.
     public static String ruleOf(final TranslationMapping mapping, final Object record,
                                 final Map<String, String> extracted) {
-        final Set<String> derived = derived(mapping);
-        final List<Map.Entry<String, List<Condition>>> candidates = new ArrayList<>();
-        for (final DropRule drop : mapping.dropWhen()) {
-            candidates.add(Map.entry("drop: " + drop.reason(), drop.when()));
-        }
-        for (final EventRule rule : mapping.events()) {
-            candidates.add(Map.entry(rule.name(), rule.when()));
-        }
-        for (final Map.Entry<String, List<Condition>> candidate : candidates) {
-            final List<Boolean> tests = new ArrayList<>();
-            candidate.getValue().forEach(c -> tests.add(holds(mapping, c, record, derived, extracted)));
-            if (tests.contains(null)) {
-                return null;
-            }
-            if (tests.stream().allMatch(Boolean::booleanValue)) {
-                return candidate.getKey();
-            }
-        }
-        return "";
+        return MappingConditions.of(mapping).ruleOf(record, extracted);
     }
 
     /// What a set of records holds, for a person to judge: each field's distinct short, word-like values (kinds,

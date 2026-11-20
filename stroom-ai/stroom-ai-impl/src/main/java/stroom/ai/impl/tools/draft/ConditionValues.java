@@ -72,15 +72,18 @@ final class ConditionValues {
         // Static only.
     }
 
-    /// @param mapping   The mapping.
-    /// @param c         A field condition (no xpath, no dictionary, not of the record's scope).
-    /// @param values    The field's values ([#values(TranslationMapping, String, Object)]).
+    /// @param unescape The transform the condition's field is decoded with ([MappingFacts#unescapeOf]), or null.
+    /// @param nilTexts The mapping's nil values, as XPath literals give them ([XPathText#literalText(String)]).
+    /// @param c        A field condition (no xpath, no dictionary, not of the record's scope).
+    /// @param values   The field's values ([#values(TranslationMapping, String, Object)]).
     /// @return Whether the condition holds over them; null when its regex can't be run (it doesn't compile as
     /// XPath's, or overflows the stack as it would in processing).
-    static Boolean holds(final TranslationMapping mapping, final Condition c, final List<String> values) {
-        final String unescape = MappingFacts.unescapeOf(mapping, c.field());
+    static Boolean holds(final String unescape,
+                         final List<String> nilTexts,
+                         final Condition c,
+                         final List<String> values) {
         final List<String> counted = values.stream()
-                .filter(value -> counts(mapping, value))
+                .filter(value -> counts(nilTexts, value))
                 .map(value -> unescaped(unescape, value))
                 .toList();
         if (c.present() != null) {
@@ -162,10 +165,9 @@ final class ConditionValues {
     }
 
     // Whether a value counts: it has text, and isn't a nil value.
-    private static boolean counts(final TranslationMapping mapping, final String value) {
+    private static boolean counts(final List<String> nilTexts, final String value) {
         final String normal = normalizeSpace(value);
-        return !normal.isEmpty() && mapping.nilValues().stream()
-                .noneMatch(nil -> XPathText.literalText(nil).equals(normal));
+        return !normal.isEmpty() && !nilTexts.contains(normal);
     }
 
     // A test of one value (all but present), before any not; null when its regex can't be run.

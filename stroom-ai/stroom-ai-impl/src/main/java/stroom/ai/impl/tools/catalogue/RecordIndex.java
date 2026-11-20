@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.catalogue;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.MappingConditions;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -55,6 +56,7 @@ final class RecordIndex {
 
     private final CatalogueSample sample;
     private final TranslationMapping reading;
+    private final MappingConditions conditions;
     private final List<Object> records;
     private final int size;
     private final List<Map<String, String>> extracted;
@@ -75,6 +77,7 @@ final class RecordIndex {
     RecordIndex(final CatalogueSample sample) {
         this.sample = sample;
         this.reading = sample.reading();
+        this.conditions = MappingConditions.of(reading);
         this.records = sample.records();
         this.size = records.size();
         if (reading.extract().isEmpty()) {
@@ -98,7 +101,7 @@ final class RecordIndex {
         return values.computeIfAbsent(field, name -> {
             final List<List<String>> out = new ArrayList<>(size);
             for (int n = 0; n < size; n++) {
-                final List<String> found = LocalCheck.conditionValues(reading, name, records.get(n), extractedAt(n));
+                final List<String> found = conditions.conditionValues(name, records.get(n), extractedAt(n));
                 out.add(found == null
                         ? UNTOLD
                         : found);
@@ -152,7 +155,7 @@ final class RecordIndex {
         for (final Map.Entry<List<String>, int[]> group : candidateGroups(c)) {
             final Boolean verdict = group.getKey() == UNTOLD
                     ? null
-                    : LocalCheck.holdsOver(reading, c, group.getKey());
+                    : conditions.holdsOver(c, group.getKey());
             final BitSet into = verdict == null
                     ? unknown
                     : verdict
@@ -281,7 +284,7 @@ final class RecordIndex {
             return null;
         }
         return memo.computeIfAbsent(c, key -> new HashMap<>())
-                .computeIfAbsent(held, key -> Optional.ofNullable(LocalCheck.holdsOver(reading, c, key)))
+                .computeIfAbsent(held, key -> Optional.ofNullable(conditions.holdsOver(c, key)))
                 .orElse(null);
     }
 
@@ -460,13 +463,13 @@ final class RecordIndex {
             extractedWhole = new ArrayList<>(size);
             sample.whole().forEach(record -> extractedWhole.add(LocalCheck.extractedValues(reading, record)));
         }
-        final List<String> found = LocalCheck.conditionValues(reading, c.field(), sample.whole().get(n),
+        final List<String> found = conditions.conditionValues(c.field(), sample.whole().get(n),
                 extractedWhole == null
                         ? null
                         : extractedWhole.get(n));
         return found == null
                 ? null
-                : LocalCheck.holdsOver(reading, c, found);
+                : conditions.holdsOver(c, found);
     }
 
     // A record's fields as name to value, the fields its held values and extractions give it included, as the draft

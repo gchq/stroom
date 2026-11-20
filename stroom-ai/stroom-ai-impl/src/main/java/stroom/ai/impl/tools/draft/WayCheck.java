@@ -39,10 +39,12 @@ final class WayCheck {
             "nil_values", "xml_namespace", "root", "record", "extract", "for_each");
 
     private final TranslationMapping mapping;
+    private final MappingConditions conditions;
     private final boolean json;
 
     private WayCheck(final TranslationMapping mapping) {
         this.mapping = mapping;
+        this.conditions = MappingConditions.of(mapping);
         this.json = "json".equals(mapping.input());
     }
 
@@ -91,7 +93,7 @@ final class WayCheck {
                 ? null
                 : LocalCheck.extractedValues(mapping, read);
         for (final Condition condition : when) {
-            if (Boolean.FALSE.equals(LocalCheck.holds(mapping, condition, read, extracted))) {
+            if (Boolean.FALSE.equals(conditions.holds(condition, read, extracted))) {
                 return false;
             }
         }

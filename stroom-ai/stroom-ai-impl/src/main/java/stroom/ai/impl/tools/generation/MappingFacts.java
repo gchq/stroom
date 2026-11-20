@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.validation.XmlTrees;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -376,12 +377,21 @@ public final class MappingFacts {
         if (fieldName == null) {
             return null;
         }
-        return mapping.allEntries().stream()
-                .filter(entry -> fieldName.equals(entry.field()) && entry.transform() != null
-                                 && UNESCAPES.contains(entry.transform()))
-                .map(FieldMapping::transform)
-                .findFirst()
-                .orElse(null);
+        return unescapes(mapping).get(fieldName);
+    }
+
+    /// [#unescapeOf] for every field at once, for what tests many conditions of one mapping.
+    ///
+    /// @param mapping The mapping.
+    /// @return Each field an entry decodes ([#UNESCAPES]), with the transform the first entry reading it gives it.
+    public static Map<String, String> unescapes(final TranslationMapping mapping) {
+        final Map<String, String> out = new HashMap<>();
+        for (final FieldMapping entry : mapping.allEntries()) {
+            if (entry.field() != null && entry.transform() != null && UNESCAPES.contains(entry.transform())) {
+                out.putIfAbsent(entry.field(), entry.transform());
+            }
+        }
+        return Map.copyOf(out);
     }
 
     /// @param xmlFields The mapping's xml_fields.
