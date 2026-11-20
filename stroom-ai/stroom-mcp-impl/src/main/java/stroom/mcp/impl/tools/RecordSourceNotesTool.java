@@ -91,9 +91,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// The confirmation's key for the records of the sample each event type recognises, as last checked (by TypeId),
     /// which the notes' "Event types" table shows.
     static final String RECORDS = "records";
+    /// The notes block's key for where the catalogue came from: [#MADE_BY_TOOL] or [#MADE_BY_READ_BACK].
+    static final String MADE_BY = "made_by";
+    /// A catalogue made by catalogue_event_types, which takes the user through it (its catch-all among it): kept
+    /// so when a hand edit is read back into it.
+    static final String MADE_BY_TOOL = "catalogue_event_types";
+    /// A catalogue read back from a hand-written translation (rebuild_mapping), never one the tool made.
+    static final String MADE_BY_READ_BACK = "read back from a hand-written translation";
     // The block keys the catalogue_event_types tool keeps, carried from one write of the notes to the next.
     private static final List<String> CATALOGUE_KEYS = List.of(SourceNotes.EVENT_TYPES, SourceNotes.CATCH_ALL,
-            "scope", CONFIRMING);
+            "scope", CONFIRMING, MADE_BY);
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
     private final DocumentWrites documentWrites;
@@ -316,12 +323,23 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
         final Map<String, Object> kept = new LinkedHashMap<>(catalogue.toJson());
         kept.put(CONFIRMING, NullSafe.map(confirming));
+        kept.put(MADE_BY, MADE_BY_TOOL);
         final DocumentationDoc doc = written(context.session(), contents, build, notesName,
                 textWithCatalogue(source, earlier, kept));
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("uuid", doc.getUuid());
         out.put("name", doc.getName());
         return out;
+    }
+
+    /// @param notes A source notes doc's notes ([SourceNotes#readNotes]).
+    /// @return True if its catalogue was made by catalogue_event_types ([#MADE_BY]); notes written before the origin
+    /// was kept are taken so when they keep the confirmation's state ([#CONFIRMING]), which only that tool writes.
+    static boolean madeByTheTool(final Map<String, Object> notes) {
+        final Object madeBy = NullSafe.map(notes).get(MADE_BY);
+        return madeBy == null
+                ? NullSafe.map(notes).containsKey(CONFIRMING)
+                : MADE_BY_TOOL.equals(madeBy);
     }
 
     /// The build's source notes doc, as [#recordCatalogue] writes it.
@@ -368,7 +386,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                     ? given.get(key)
                     : earlier.get(key);
             if (SourceNotes.EVENT_TYPES.equals(key) && value instanceof List<?>
-                || value instanceof final Map<?, ?> map && !map.isEmpty()) {
+                || value instanceof final Map<?, ?> map && !map.isEmpty()
+                || value instanceof final String text && !text.isBlank()) {
                 out.put(key, value);
             }
         }

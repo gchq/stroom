@@ -198,6 +198,19 @@ final class SentMappings {
                 .map(kept -> Instant.ofEpochMilli(kept.sentMs()));
     }
 
+    /// @param context The call's context.
+    /// @param target  The XSLT's uuid, `build/name`, or a draft's target.
+    /// @return When the mapping [#sent] gives for it was sent (or drafted), in whichever of the user's sessions,
+    /// if known: one kept only in the session's workspace (no user workspace) has no time kept.
+    static Optional<Instant> sentAt(final ToolCallContext context, final String target) {
+        if (NullSafe.isBlankString(target)) {
+            return Optional.empty();
+        }
+        return keptWithTheBuild(context, target)
+                .filter(kept -> kept.sentMs() > 0)
+                .map(kept -> Instant.ofEpochMilli(kept.sentMs()));
+    }
+
     // Only the draft made with no build stays with the session alone.
     private static boolean isOfABuild(final String target) {
         return !DRAFT.equals(target);

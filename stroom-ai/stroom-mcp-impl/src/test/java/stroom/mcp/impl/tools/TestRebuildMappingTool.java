@@ -161,6 +161,93 @@ class TestRebuildMappingTool {
     }
 
     @Test
+    void theCatchAllGuardHoldsAfterACatalogueMadeByTheToolIsReadBack() {
+        // From a review: the user declined the catch-all; rebuild_mapping read the XSLT back into the notes, which
+        // dropped the confirmation's state the guard took for "made by catalogue_event_types", so the next
+        // build_translation_xslt saved with the catch-all unconfirmed.
+        final Map<String, Object> made = new LinkedHashMap<>();
+        made.put(RecordSourceNotesTool.CONFIRMING, Map.of(RecordSourceNotesTool.RECORDS, Map.of("Logon", 1)));
+        final String notes = catalogueNotes("Acme source notes", made);
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+
+        readBackWithAHandEdit();
+
+        assertThat(SourceNotes.readNotes(((DocumentationDoc) world.world.docs.get(notes)).getData()))
+                .containsEntry(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.MADE_BY_TOOL);
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+    }
+
+    @Test
+    void aCatalogueMadeByTheToolSaysSoWithoutItsConfirmationsState() {
+        catalogueNotes("Acme source notes", Map.of(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.MADE_BY_TOOL));
+
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+        readBackWithAHandEdit();
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+    }
+
+    @Test
+    void aCatalogueReadBackFromAHandWrittenTranslationIsNotPutThroughTheGuard() {
+        final String notes = catalogueNotes("Acme source notes", Map.of());
+
+        readBackWithAHandEdit();
+
+        assertThat(SourceNotes.readNotes(((DocumentationDoc) world.world.docs.get(notes)).getData()))
+                .containsEntry(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.MADE_BY_READ_BACK);
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isFalse();
+    }
+
+    @Test
+    void theGuardReadsTheOriginFromTheNotesTheCatalogueIsReadFrom() {
+        // The catalogue in one notes doc (read back from a hand-written translation), the confirmation's state in
+        // another: the catalogue isn't one the tool made.
+        catalogueNotes("Acme source notes", Map.of());
+        final String other = world.inBuild(BUILD, DocumentationDoc.TYPE, "Other source notes").getUuid();
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Other");
+        block.put("fields", List.of());
+        block.put(RecordSourceNotesTool.CONFIRMING, Map.of(RecordSourceNotesTool.RECORDS, Map.of("Logon", 1)));
+        world.world.docs.put(other, DocumentationDoc.builder().uuid(other).name("Other source notes").version("v0")
+                .data("# Other source notes\n\n" + SourceNotes.block(block) + "\n").build());
+
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isFalse();
+    }
+
+    // The build's source notes holding a catalogue of one event type, Logon, its catch-all not confirmed, and the
+    // block's other keys given.
+    private String catalogueNotes(final String name, final Map<String, Object> more) {
+        final Map<String, Object> logon = new LinkedHashMap<>();
+        logon.put("type_id", "Logon");
+        logon.put("title", "User logon");
+        logon.put("event_detail", "Authenticate");
+        logon.put("action", "Logon");
+        logon.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action", "equals", "login")))));
+        logon.put("basis", "user_confirmed");
+        logon.put("status", "confirmed");
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of(logon));
+        block.put("catch_all", Map.of("status", "proposed"));
+        block.putAll(more);
+        final String notes = world.inBuild(BUILD, DocumentationDoc.TYPE, name).getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name(name).version("v0")
+                .data("# Acme source notes\n\nAcme's VPN.\n\n" + SourceNotes.block(block) + "\n").build());
+        return notes;
+    }
+
+    // The XSLT's Logon rule edited by hand, and read back into the catalogue.
+    private void readBackWithAHandEdit() {
+        tool.setCatalogueNotes(() -> new CatalogueNotes(world.world.guard(), world.world.documentAccess,
+                new DocumentWrites(world.world.documentAccess),
+                new FeedNames(() -> Mockito.mock(DocFinder.class), world.world.documentAccess)));
+        world.editByHand(uuid, code -> code.replace("'login'", "'signin'"));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+        assertThat(call(Map.of())).containsKey("saved");
+    }
+
+    @Test
     void anXsltRewrittenOutsideTheGeneratorsLayoutSaysToCarryTheEditWithChanges() {
         // Seen: TWITTER's XSLT, rewritten by hand with a plain template per record, read back as nothing; the agent
         // took that for an empty kept mapping and the edit for one no mapping can express.

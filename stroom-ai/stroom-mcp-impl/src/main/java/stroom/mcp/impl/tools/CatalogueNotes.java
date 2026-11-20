@@ -200,6 +200,11 @@ class CatalogueNotes {
                 notes.get(RecordSourceNotesTool.CONFIRMING))));
         confirming.remove(RecordSourceNotesTool.RECORDS);
         given.put(RecordSourceNotesTool.CONFIRMING, confirming);
+        // A catalogue the tool made stays so (its catch-all still the user's to confirm through it); any other is
+        // read back from a hand-written translation.
+        given.put(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.madeByTheTool(notes)
+                ? RecordSourceNotesTool.MADE_BY_TOOL
+                : RecordSourceNotesTool.MADE_BY_READ_BACK);
         final String written = RecordSourceNotesTool.textWithCatalogue(NullSafe.nonBlankStringElse(
                 ToolText.str(notes.getOrDefault("source", "")), source), notes, given);
         if (there.isPresent()) {

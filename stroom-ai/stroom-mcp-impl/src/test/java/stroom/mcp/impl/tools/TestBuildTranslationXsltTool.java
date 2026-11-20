@@ -1452,6 +1452,54 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aMappingKeptFromAnEarlierSessionDoesntOverrideANewerSaveOfTheXslt() {
+        // From a review: A saves the XSLT on Monday; on Tuesday B (or a hand edit kept by rebuild_mapping) saves it
+        // again; on Wednesday A's changes= applied to A's Monday mapping, kept in A's own workspace, and B's work
+        // was lost.
+        world.world.guard().buildFolder("fg-v1");
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",
+                "build", "fg-v1", "system_name", "FortiOS", "environment", "Test"));
+        final Map<String, Object> saved = world.call(tool, Map.of("changes", Map.of("common", SYSTEM),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        world.newSession("mcp-session-2");
+        savedByAnother(uuid, "Bobs");
+
+        // By uuid.
+        Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("description", "A's"),
+                "uuid", uuid, "sample", fortigate()));
+        assertThat(result).as(String.valueOf(result)).doesNotContainKey("error");
+        assertThat(systemName(map(KeptMapping.readMapping(world.xslt(uuid).getDescription()).orElseThrow()
+                .payload().get("mapping")))).isEqualTo("Bobs");
+        assertThat((String) result.get("changes_applied_to_one")).startsWith("the mapping saved with the XSLT ");
+
+        // By build and name.
+        world.newSession("mcp-session-3");
+        savedByAnother(uuid, "Carols");
+        result = world.call(tool, Map.of("changes", Map.of("description", "A's again"),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+        assertThat(result).as(String.valueOf(result)).doesNotContainKey("error");
+        assertThat(systemName(map(KeptMapping.readMapping(world.xslt(uuid).getDescription()).orElseThrow()
+                .payload().get("mapping")))).isEqualTo("Carols");
+    }
+
+    // The XSLT saved by someone else later, its mapping's System/Name changed.
+    private void savedByAnother(final String uuid, final String systemName) {
+        final XsltDoc xslt = world.xslt(uuid);
+        final KeptMapping.Kept kept = KeptMapping.readMapping(xslt.getDescription()).orElseThrow();
+        final Map<String, Object> payload = new LinkedHashMap<>(kept.payload());
+        final Map<String, Object> mapping = new LinkedHashMap<>(map(payload.get("mapping")));
+        mapping.put("common", List.of(Map.of("path", "EventSource/System/Name", "value", systemName)));
+        payload.put("mapping", mapping);
+        world.world.docs.put(uuid, xslt.copy()
+                .description(KeptMapping.withMapping("Fortigate events", kept.kind(), payload))
+                .updateUser("bob")
+                .updateTimeMs(System.currentTimeMillis() + 60_000L)
+                .build());
+    }
+
+    @Test
     void aDraftFromAnEarlierSessionIsntUsedOnceTheUserCantSeeTheBuild() {
         final String folder = world.world.guard().buildFolder("fg-v1").docRef().getUuid();
         world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "source_name", "Fortigate",

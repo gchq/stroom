@@ -49,6 +49,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -130,8 +131,17 @@ class TranslationBuilds {
                          final String name) {
         final Optional<Map<String, Object>> sent = SentMappings.sent(context, target);
         final String sentEarlier = fromAnEarlierSession(context, target, build);
-        if (sent.isPresent() && (sentEarlier == null || canStillUse(build))) {
+        final String savedSince = sent.flatMap(mapping -> savedSince(context, target, xsltOf(uuid, build, name),
+                mapping)).orElse(null);
+        if (sent.isPresent() && savedSince == null && (sentEarlier == null || canStillUse(build))) {
             return new Base(sent.get(), null, earlierMapping(context, uuid, build, name), sentEarlier);
+        }
+        if (savedSince != null) {
+            final String xslt = xsltOf(uuid, build, name);
+            return new Base(keptOrRefuse(xslt, "XSLT " + xslt + " keeps no translation mapping to change: give the "
+                                               + "whole mapping").payload().get("mapping") instanceof final Map<?, ?> m
+                    ? copy(m)
+                    : Map.of(), null, null, savedSince);
         }
         String found = uuid;
         if (found == null && NullSafe.isNonBlankString(build)) {
@@ -168,6 +178,46 @@ class TranslationBuilds {
                     : Map.of(), null, null, null);
         }
         throw new ToolRefusal(noMappingToChange(target, build, name));
+    }
+
+    // The saved XSLT a call names: its uuid, else the build's XSLT of that name; null for neither.
+    private String xsltOf(final String uuid, final String build, final String name) {
+        if (uuid != null) {
+            return uuid;
+        }
+        return NullSafe.isNonBlankString(build) && NullSafe.isNonBlankString(name)
+                ? xsltNamed(build, name).orElse(null)
+                : null;
+    }
+
+    // What a call says of the mapping it builds on when the XSLT was saved since the mapping was sent (by another
+    // user, a hand edit kept by rebuild_mapping, or another of the user's sessions), its kept mapping another: the
+    // XSLT's then, not the older one sent (seen in a review: A's Monday mapping, kept in A's own workspace, taken
+    // on Wednesday over B's Tuesday save, so B's work was lost). Empty when the mapping sent is the latest, or when
+    // it can't be told (no time kept for it, or the XSLT's update time unknown).
+    private Optional<String> savedSince(final ToolCallContext context,
+                                        final String target,
+                                        final String xslt,
+                                        final Map<String, Object> sent) {
+        if (xslt == null) {
+            return Optional.empty();
+        }
+        final Optional<Instant> sentAt = SentMappings.sentAt(context, target);
+        final Optional<XsltDoc> doc = documentAccess.read(new DocRef(XsltDoc.TYPE, xslt), XsltDoc.class);
+        final Long updatedMs = doc.map(XsltDoc::getUpdateTimeMs).orElse(null);
+        if (sentAt.isEmpty() || updatedMs == null || updatedMs <= sentAt.get().toEpochMilli()) {
+            return Optional.empty();
+        }
+        final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(doc.get().getDescription())
+                .filter(found -> KeptMapping.TRANSLATION.equals(found.kind()));
+        if (kept.isEmpty() || !(kept.get().payload().get("mapping") instanceof final Map<?, ?> saved)
+            || saved.equals(sent)) {
+            return Optional.empty();
+        }
+        return Optional.of("the mapping saved with the XSLT " + DateUtil.createNormalDateTimeString(updatedMs)
+                           + NullSafe.getOrElse(doc.get().getUpdateUser(), user -> " by " + user, "")
+                           + ", newer than the one you sent " + DateUtil.createNormalDateTimeString(
+                                   sentAt.get().toEpochMilli()) + ": your changes are applied to it");
     }
 
     // A mapping kept with a build from an earlier session is used only while the user can still see the build, as
@@ -610,24 +660,28 @@ class TranslationBuilds {
         return SourceNotes.merged(found);
     }
 
-    /// Whether a build's catalogue of event types is one catalogue_event_types takes the user through: a source notes
-    /// doc of the build keeps the confirmation's state (`confirming`), which only that tool writes; a catalogue read
-    /// back from a hand-written translation (rebuild_mapping, a promotion carried in) has none.
+    /// Whether a build's catalogue of event types is one catalogue_event_types takes the user through: the notes
+    /// it is read from ([#notesInBuild]: the first of the build's source notes docs holding one) say it was made by
+    /// that tool ([RecordSourceNotesTool#madeByTheTool]), which a hand edit read back into it keeps; a catalogue read
+    /// back from a hand-written translation (rebuild_mapping) says so.
     ///
     /// @param build The build.
-    /// @return True when one of its source notes docs keeps it.
+    /// @return True when its catalogue was made by catalogue_event_types.
     boolean catalogueConfirmedThroughTool(final String build) {
         if (NullSafe.isBlankString(build)) {
             return false;
         }
         try {
             for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
-                if (DocumentationDoc.TYPE.equals(doc.type()) && doc.name().endsWith(SourceNotes.NOTES_SUFFIX)
-                    && documentAccess.read(doc.docRef(), DocumentationDoc.class)
+                if (DocumentationDoc.TYPE.equals(doc.type()) && doc.name().endsWith(SourceNotes.NOTES_SUFFIX)) {
+                    final Optional<Map<String, Object>> notes = documentAccess.read(doc.docRef(),
+                                    DocumentationDoc.class)
                             .map(read -> SourceNotes.readNotes(BuildRecords.bodyText(read)))
-                            .filter(notes -> notes.containsKey(RecordSourceNotesTool.CONFIRMING))
-                            .isPresent()) {
-                    return true;
+                            .filter(read -> read.get(SourceNotes.EVENT_TYPES) instanceof List);
+                    if (notes.isPresent()) {
+                        // The doc the catalogue is read from, as SourceNotes.merged picks it.
+                        return RecordSourceNotesTool.madeByTheTool(notes.get());
+                    }
                 }
             }
         } catch (final RuntimeException e) {
