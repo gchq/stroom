@@ -487,6 +487,35 @@ class TestStroomMcpServer {
     }
 
     @Test
+    void aSessionEndedWhileACallIsAnsweringIsNotPutBackInTheTransport() throws Exception {
+        // From a review: keepInTransport read the session as open, the session ended (a DELETE, or the upkeep's
+        // end()) before it put the session back, and the transport held an ended session no one would remove.
+        final TransportSessions transportSessions = new TransportSessions(server.transport());
+        final String sessionId = rawSession();
+        final CountDownLatch ended = new CountDownLatch(1);
+        behaviours.put("slow_thing", context -> {
+            // As the transport does when the answer to a request can't be sent to the client.
+            transportSessions.remove(sessionId);
+            return ToolResult.text("done");
+        });
+        server.beforeKeepingInTransport(() -> {
+            // The session ends in between: here as the upkeep ends a session the transport dropped.
+            server.endDroppedSessions(System.currentTimeMillis() + StroomMcpServer.DROPPED_AFTER.toMillis() + 1);
+            ended.countDown();
+        });
+
+        rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":"
+                           + "\"slow_thing\",\"arguments\":{}}}");
+
+        assertThat(ended.await(10, TimeUnit.SECONDS)).isTrue();
+        waitUntil(() -> !transportSessions.has(sessionId));
+        // Still out a moment later: nothing put it back.
+        Thread.sleep(300);
+        assertThat(transportSessions.has(sessionId)).isFalse();
+        assertThat(server.isOpenFor(sessionId, ALICE)).isFalse();
+    }
+
+    @Test
     void aSessionIsKeptWhenAFormCantBeSentToAClientThatGaveUpOnTheCall() throws Exception {
         // Seen in eval case 36 on Haiku over Claude Code, after the fix above: a build_translation_xslt call worked
         // for 61 s, past the client's limit of 60 s ("The operation timed out."), then asked the user a form. The

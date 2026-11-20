@@ -121,6 +121,32 @@ class TestMcpForms {
     }
 
     @Test
+    void aFormIsntGivenUpOnBecauseAnotherRequestsFailedSendDroppedTheSession() {
+        // From a review: the form was taken as unanswered whenever the session was missing from the transport,
+        // also when a concurrent request's failed send had dropped it before this form was sent (and delivered).
+        final AtomicBoolean dropped = new AtomicBoolean(true);
+        Mockito.when(exchange.createElicitation(Mockito.any())).thenReturn(Mono.just(new ElicitResult(
+                Action.ACCEPT, Map.of("q1", "yes"), null)));
+        final McpSession session = session(ALICE, new McpSession.TransportKeeper() {
+            @Override
+            public boolean keep() {
+                return dropped.getAndSet(false);
+            }
+
+            @Override
+            public boolean held() {
+                return !dropped.get();
+            }
+        });
+
+        final ElicitResult result = forms(4).ask(session, exchange, "Allow it?", McpForms.NO_FIELDS);
+
+        assertThat(result.action()).isEqualTo(Action.ACCEPT);
+        // Put back in the transport all the same.
+        assertThat(dropped).isFalse();
+    }
+
+    @Test
     void aFormSentIsAnsweredAsTheUserAnswers() {
         Mockito.when(exchange.createElicitation(Mockito.any())).thenReturn(Mono.just(new ElicitResult(
                 Action.ACCEPT, Map.of("q1", "yes"), null)));

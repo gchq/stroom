@@ -135,6 +135,9 @@ class StroomMcpServer {
     private final Scheduler notifyScheduler;
     // Held while a session is started, so a user's session limit holds for sessions started at once.
     private final Object startLock = new Object();
+    // What runs between a session read as open and its being put back in the transport: nothing, but a test.
+    private volatile Runnable beforeKeeping = () -> {
+    };
 
     @Inject
     StroomMcpServer(final SecurityContext securityContext,
@@ -216,6 +219,14 @@ class StroomMcpServer {
                 .forEach(open -> end(open, "idle since " + Instant.ofEpochMilli(open.session().lastUsedMs())));
     }
 
+    /// For a test: what to run between a session read as open and its being put back in the transport (see
+    /// keepInTransport), e.g. ending the session there.
+    ///
+    /// @param hook What to run.
+    void beforeKeepingInTransport(final Runnable hook) {
+        this.beforeKeeping = hook;
+    }
+
     /// Ends the sessions the transport no longer holds: it drops a session when a send to its client fails.
     ///
     /// @param nowMs The time now.
@@ -262,7 +273,17 @@ class StroomMcpServer {
                     notificationHandlers, () -> closed(id), McpJsonDefaults.getSchemaValidator());
             init = new McpStreamableServerSessionInit(session, initialize(initializeRequest));
             sessions.put(id, new OpenSession(new McpSession(id, owner, initializeRequest.clientInfo(),
-                    initializeRequest.capabilities(), () -> keepInTransport(id)), session));
+                    initializeRequest.capabilities(), new McpSession.TransportKeeper() {
+                        @Override
+                        public boolean keep() {
+                            return keepInTransport(id);
+                        }
+
+                        @Override
+                        public boolean held() {
+                            return transportSessions.has(id);
+                        }
+                    }), session));
         }
         LOGGER.info(() -> LogUtil.message(
                 "MCP session started for {} by {}",
@@ -444,9 +465,16 @@ class StroomMcpServer {
     private boolean keepInTransport(final String sessionId) {
         final OpenSession open = sessions.get(sessionId);
         if (open != null && !transportSessions.has(sessionId)) {
+            beforeKeeping.run();
             LOGGER.debug(() -> LogUtil.message("Keeping MCP session {}, which the transport dropped when a send "
                                                + "on one of its requests failed", sessionId));
             transportSessions.restore(sessionId, open.sdkSession());
+            if (!sessions.containsKey(sessionId)) {
+                // Ended as it was put back (a DELETE, or end()): forget removes it from here before the transport,
+                // so a session gone from here now is one whose end may have missed what was just put back.
+                transportSessions.remove(sessionId);
+                return false;
+            }
             return true;
         }
         return false;
@@ -465,7 +493,8 @@ class StroomMcpServer {
     // Forgets a session that has ended, however it ended: its calls are cancelled, and its workspace deleted once
     // they have stopped.
     private void forget(final String sessionId) {
-        // Forgotten here first, so a call answering now doesn't put it back in the transport (see keepInTransport).
+        // Forgotten here first, so a call answering now doesn't put it back in the transport, or takes it out again
+        // if it was putting it back as this ran (see keepInTransport).
         final OpenSession open = sessions.remove(sessionId);
         transportSessions.remove(sessionId);
         if (open != null) {

@@ -142,6 +142,12 @@ final class McpSession {
         return transportKeeper.keep();
     }
 
+    /// @return True if the transport holds the session now: false once a failed send on one of its requests (this
+    /// call's, or another's) has dropped it, until it is put back ([#keepInTransport]).
+    boolean heldInTransport() {
+        return transportKeeper.held();
+    }
+
     /// Puts a session back in the transport if the transport dropped it (see [StroomMcpServer]).
     @FunctionalInterface
     interface TransportKeeper {
@@ -151,5 +157,10 @@ final class McpSession {
 
         /// @return True if the transport had dropped the session, and it has been put back.
         boolean keep();
+
+        /// @return True if the transport holds the session now (or it isn't held in a transport).
+        default boolean held() {
+            return true;
+        }
     }
 }

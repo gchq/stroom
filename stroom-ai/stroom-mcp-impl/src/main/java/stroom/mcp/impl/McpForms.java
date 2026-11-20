@@ -105,11 +105,15 @@ class McpForms {
             // stream has gone) is never answered, and the transport drops the whole session: the form is given up
             // on at once, and the session put back. Seen in eval case 36 on Haiku over Claude Code: a call worked
             // past the client's time limit, then asked a form, and waited for an answer that couldn't come; the
-            // client's next request started a new session, without the session's draft.
+            // client's next request started a new session, without the session's draft. The send is made as the
+            // form is asked for, so the session dropped from the transport between before and after it is this
+            // send failing; one dropped already (another request's send failed) is put back, and the form, sent on
+            // this request's own stream, is still waited for.
+            final boolean heldBefore = session.heldInTransport();
             final CompletableFuture<ElicitResult> answer = exchange
                     .createElicitation(new ElicitFormRequest(message, schema, null))
                     .toFuture();
-            if (session.keepInTransport()) {
+            if (session.keepInTransport() && heldBefore) {
                 answer.cancel(false);
                 LOGGER.info(() -> LogUtil.message(
                         "A form for {} couldn't be sent: the client had given up on the call asking it",
