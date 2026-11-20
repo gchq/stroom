@@ -328,7 +328,9 @@ expected:
   records: 360
   event_types: [Create, Delete, View, Update]
   forbidden_types: [Unknown]
-  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId, EventDetail/Description]
+  # No EventDetail/Description expected: the records don't say what happened, and an event type's description is
+  # optional (the user, 2026-11-20); the documentation's text is welcome but not scored.
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
   type_ids: {min_distinct: 100}
   unknown_at_most: 0
   # The 180 documented codes not in the sample: event types from the documentation, not dropped.
