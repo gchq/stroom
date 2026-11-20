@@ -868,14 +868,15 @@ class TestContextAssembler {
     }
 
     @Test
-    void theModelIsToldToAnswerOrderedQuestionsWithSequenceQueryNotJoins() {
+    void theModelIsPointedToTheJoinsGuideForJoinsAndOrderedQuestions() {
         // Seen in acceptance runs on a small model: "a USB device connected, then a file copied to it within 10
-        // minutes" answered by joining esql_query results by hand, and wrongly.
+        // minutes" answered by joining esql_query results by hand, and wrongly; and in eval cases 71 to 74. One line
+        // points to the guide, which holds the facts (the user, 2026-11-21).
         assertThat(ContextAssembler.TOOL_GUIDANCE)
-                .contains("For \"X, then Y\" questions (by the same user or host, within N; on Elastic Indexes also N "
-                          + "in a row, and X and then not Y), in one data source or across several, use "
-                          + "sequence_query")
-                .contains("never join query or search results by hand");
+                .contains("- Combining data from two places, or \"X, then Y, within N\": get_instructions "
+                          + "guide=joins (StroomQL joins, sequence_query in the sequences group); let Stroom match "
+                          + "over all the rows, never by reading them.\n")
+                .doesNotContain("For \"X, then Y\" questions");
     }
 
     @Test
@@ -887,9 +888,10 @@ class TestContextAssembler {
         assertThat(ContextAssembler.withoutGuidanceForToolsNotOffered(prompt, name -> true)).isEqualTo(prompt);
         final String without = ContextAssembler.withoutGuidanceForToolsNotOffered(prompt,
                 name -> !ContextAssembler.SEQUENCE_TOOL.equals(name));
-        assertThat(without).doesNotContain("sequence_query")
+        // The pointer to the joins guide stays, without the tool.
+        assertThat(without).doesNotContain("sequence_query").doesNotContain("sequences")
                 .isEqualTo(prompt.replace(ContextAssembler.SEQUENCE_GUIDANCE, ""))
-                .contains("WHERE after STATS for thresholds.\n- \"Query\" can mean two things.");
+                .contains("get_instructions guide=joins (StroomQL joins); let Stroom match");
         assertThat(ContextAssembler.withoutGuidanceForToolsNotOffered(null, name -> false)).isNull();
     }
 

@@ -162,8 +162,10 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                                  + "and grouped questions are answered faster by Elasticsearch with ES|QL")
                         .chatOnly(" (esql_query), as a StroomQL query reads every matching document through "
                                   + "Stroom to group them")
-                        .general(". It can join Stroom data sources (join lines, or where X in (from ...)). Add a "
-                                 + "limit to the query for large results. If more than one data source could "
+                        .general(". It can join Stroom data sources (join lines, or where X in (from ...)); join "
+                                 + "kinds, keys and limits, and sequences: the joins guide (stroom://guide/joins")
+                        .chatOnly(", or get_instructions guide=joins")
+                        .general("). Add a limit to the query for large results. If more than one data source could "
                                  + "hold what the user asked for, ask them which to use")
                         .chatOnly(" with ask_user")
                         .general(" first; never choose one for them.")

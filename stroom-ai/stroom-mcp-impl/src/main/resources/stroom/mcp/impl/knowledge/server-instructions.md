@@ -103,13 +103,9 @@ Questions about the data (what a feed holds, what a field means, how to search i
 from the generated documentation and the indexes' fields. Answer in plain words and give the documentation links.
 Totals, top N or grouped questions on an Elasticsearch index: esql_query, which Elasticsearch answers itself (rows cut
 short are never a full ranking); row-level work, and other data sources: run_stroomql. Compute derived values and
-cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds. "X, then Y, by the
-same user/host, within N", in any data source or across several (N in a row, then NOT Y: Elasticsearch only):
-sequence_query.
-Rows of two Stroom data sources matched by a key (events enriched from a Data Connection, users with or without a
-match): a StroomQL join in run_stroomql (`from "Events" left join "HR" as hr on UserId = hr.Username`, or
-`where UserId in (from "HR" select Username)`), which joins before the row cap; keep the joined side small (a Data
-Connection, or filtered or grouped; at most 1,000,000 rows). Never a join of esql_query or search results by hand.
+cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds.
+Combining data from two places, or "X, then Y, within N": stroom://guide/joins (StroomQL joins, sequence_query); let
+Stroom match over all the rows, never by reading them.
 
 Parsing: profile_sample names the parser and the namespace the XSLT reads its output in (xslt_input): JSON is read by
 the JSON template's JSONParser with no text converter, text (CSV, syslog, key=value) by a Data Splitter written with

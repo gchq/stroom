@@ -74,14 +74,15 @@ public class ContextAssembler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContextAssembler.class);
 
-    /// The guidance bullet that routes ordered questions to sequence_query, part of [#TOOL_GUIDANCE]: left out of a
-    /// chat's system prompt when the chat isn't offered the tool (see [#withoutGuidanceForToolsNotOffered]).
+    /// The part of the joins bullet of [#TOOL_GUIDANCE] that names sequence_query: left out of a chat's system
+    /// prompt when the chat isn't offered the tool (see [#withoutGuidanceForToolsNotOffered]).
     static final String SEQUENCE_TOOL = "sequence_query";
-    static final String SEQUENCE_GUIDANCE = """
-            - For "X, then Y" questions (by the same user or host, within N; on Elastic Indexes also N in a row, \
-            and X and then not Y), in one data source or across several, use sequence_query (in the \
-            sequences group): never join query or search results by hand.
-            """;
+    static final String SEQUENCE_GUIDANCE = ", sequence_query in the sequences group";
+    // The pointer to the joins guide, which holds the facts about joins and sequences (the user, 2026-11-21: facts,
+    // not steps, and one line here).
+    private static final String JOINS_GUIDANCE = "- Combining data from two places, or \"X, then Y, within N\": "
+                                                 + "get_instructions guide=joins (StroomQL joins" + SEQUENCE_GUIDANCE
+                                                 + "); let Stroom match over all the rows, never by reading them.\n";
     // The guidance bullets about one built-in tool alone, by the tool's name.
     private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(SEQUENCE_TOOL, SEQUENCE_GUIDANCE);
 
@@ -140,7 +141,7 @@ public class ContextAssembler {
             ones they can't see or that were deleted). Rows cut short are never a full \
             ranking: say how many groups there are in all. Compute derived values and cut-offs in the query, not \
             in your reply: EVAL for conversions, WHERE after STATS for thresholds.
-            """ + SEQUENCE_GUIDANCE + """
+            """ + JOINS_GUIDANCE + """
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
             them the results (run_stroomql), or to set up a Query document they can run themselves \
             (propose_query), ask them with ask_user before writing it. "Show me", "how many" or "find" mean run \
