@@ -415,7 +415,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     ? surveyed
                     : plan.get().withNext(context, request.build(), surveyed));
             // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-            SurveyOutline.outlineIfLarge(context.caller(), context.workspace(), NullSafe.nonBlankStringElse(
+            SurveyOutline.outlineIfLarge(context.caller(), context.workspace(), LargeResults.keyOf(
                     request.build(), feed), result, LargeResults.WHOLE_RESULT_CHARS);
             return JsonResults.of(result);
         } catch (final ToolRefusal e) {

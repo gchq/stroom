@@ -207,6 +207,17 @@ final class LargeResults {
         return FOLDER + tool + "/" + plain(key) + ".json";
     }
 
+    /// @param candidates What a result may be of, the first that isn't blank chosen (a build, then a name).
+    /// @return The first not blank, or null if none is.
+    static String keyOf(final String... candidates) {
+        for (final String candidate : candidates) {
+            if (candidate != null && !candidate.isBlank()) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
     /// @param name A name.
     /// @return It as a file name: only letters, digits, '.', '_' and '-' (others become '_'); `result` if blank.
     static String plain(final String name) {

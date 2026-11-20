@@ -440,7 +440,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         try {
             final Map<String, Object> result = new LinkedHashMap<>(build(call, context));
             // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-            BuiltRulesTrim.outlineIfLarge(context.caller(), context.workspace(), NullSafe.nonBlankStringElse(
+            BuiltRulesTrim.outlineIfLarge(context.caller(), context.workspace(), LargeResults.keyOf(
                     stringArg(call, BUILD_ARG), stringArg(call, NAME_ARG)), result, LargeResults.WHOLE_RESULT_CHARS);
             return JsonResults.of(result);
         } catch (final ToolRefusal e) {
