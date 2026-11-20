@@ -389,8 +389,8 @@ class TestDataPipelineTools {
                 .thenReturn(new ResourceGeneration(resourceKey, List.of()));
         Mockito.when(resourceStore.getTempFile(resourceKey)).thenReturn(results);
         final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
-        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> resourceStore,
-                agentSearches);
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
+                () -> Mockito.mock(StroomQlSources.class), () -> resourceStore, agentSearches);
         Mockito.when(injectorSecurityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(true);
 
         final String result = run(tool, "{\"query\":\"from \\\"My View\\\" select Host, count() as N group by "
@@ -432,7 +432,7 @@ class TestDataPipelineTools {
                 .thenReturn(reported(new QueryKey("q"), true, Severity.ERROR, "Unknown field 'Hst'"));
         final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
         final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
-                () -> Mockito.mock(ResourceStore.class), agentSearches);
+                () -> Mockito.mock(StroomQlSources.class), () -> Mockito.mock(ResourceStore.class), agentSearches);
 
         assertThat(run(tool, "{\"query\":\"from x select Hst\"}"))
                 .isEqualTo("Error: The query failed: Unknown field 'Hst'");
@@ -461,8 +461,8 @@ class TestDataPipelineTools {
         Mockito.when(queryService.downloadSearchResults(Mockito.any()))
                 .thenReturn(new ResourceGeneration(resourceKey, List.of()));
         Mockito.when(resourceStore.getTempFile(resourceKey)).thenReturn(results);
-        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> resourceStore,
-                Mockito.mock(AgentSearches.class));
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
+                () -> Mockito.mock(StroomQlSources.class), () -> resourceStore, Mockito.mock(AgentSearches.class));
         Mockito.when(injectorSecurityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(true);
 
         assertThat(run(tool, "{\"query\":\"from \\\"My View\\\" select Host\",\"out\":\"/outputs/w.md\"}"))
@@ -492,7 +492,7 @@ class TestDataPipelineTools {
                 .thenReturn(response(new QueryKey("q"), true, List.of("Unknown field 'Hst'")));
         final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
         final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
-                () -> Mockito.mock(ResourceStore.class), agentSearches);
+                () -> Mockito.mock(StroomQlSources.class), () -> Mockito.mock(ResourceStore.class), agentSearches);
 
         assertThat(run(tool, "{\"query\":\"from x select Hst\"}")).isEqualTo("Error: The query failed: Unknown "
                                                                           + "field 'Hst'");

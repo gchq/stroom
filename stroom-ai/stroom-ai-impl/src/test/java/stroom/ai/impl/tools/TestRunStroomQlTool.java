@@ -34,6 +34,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,13 +47,20 @@ class TestRunStroomQlTool {
     private static final DocRef LUCENE = new DocRef("Index", "l", "events");
     private static final DocRef VIEW = new DocRef("View", "v", "Windows events");
 
+    private static final DocRef HR = new DocRef("DataConnection", "h", "HR");
+    private static final Function<DocRef, Map<String, String>> NO_LUCENE_TEXT = dataSource -> Map.of();
+
     private final QueryService queryService = Mockito.mock(QueryService.class);
+    private final StroomQlSources stroomQlSources = Mockito.mock(StroomQlSources.class);
+    // The conditions the parser gives the first source's search.
+    private ExpressionOperator expression;
 
     @Test
     void isNullOnElasticsearchIsRefusedSayingWhatToQueryInstead() {
         query(ExpressionOperator.builder().op(Op.AND).addTerm("tags", Condition.IS_NULL, null).build());
 
-        assertThat(RunStroomQlTool.misleading(queryService, "q", ELASTIC)).contains(MisleadingSearches.REFUSAL
+        assertThat(RunStroomQlTool.misleading(queryService, first(ELASTIC), NO_LUCENE_TEXT))
+                .contains(MisleadingSearches.REFUSAL
                 + "tags IS_NULL: Stroom matches every document with IS_NULL on Elasticsearch; check EQUALS '*' (any "
                 + "document holding the field, an empty string included) with the expected count instead. In "
                 + "StroomQL, EQUALS is = and NOT_EQUALS is !=.");
@@ -64,7 +72,7 @@ class TestRunStroomQlTool {
         Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
                 QueryField.createIpV4Address("source.ip"))));
 
-        assertThat(RunStroomQlTool.misleading(queryService, "q", ELASTIC))
+        assertThat(RunStroomQlTool.misleading(queryService, first(ELASTIC), NO_LUCENE_TEXT))
                 .hasValueSatisfying(refusal -> assertThat(refusal).contains("use EQUALS '192.0.2.0/24'"));
     }
 
@@ -73,7 +81,7 @@ class TestRunStroomQlTool {
         // StroomQL gives IN's values separated by ", ".
         query(ExpressionOperator.builder().addTerm("Door", Condition.IN, "Main entrance, Server room").build());
 
-        assertThat(RunStroomQlTool.misleading(queryService, "q", LUCENE))
+        assertThat(RunStroomQlTool.misleading(queryService, first(LUCENE), NO_LUCENE_TEXT))
                 .hasValueSatisfying(refusal -> assertThat(refusal).contains("Stroom finds nothing with IN on a "
                                                                             + "Lucene index when a value holds a "
                                                                             + "space"));
@@ -83,13 +91,12 @@ class TestRunStroomQlTool {
     void aQueryThatCanBeTrustedOrIsNotOnAnIndexOrCannotBeCheckedRuns() {
         query(ExpressionOperator.builder().addTerm("tags", Condition.IS_NULL, null).build());
         // On Lucene, IS_NULL works.
-        assertThat(RunStroomQlTool.misleading(queryService, "q", LUCENE)).isEmpty();
+        assertThat(RunStroomQlTool.misleading(queryService, first(LUCENE), NO_LUCENE_TEXT)).isEmpty();
         // Not an index.
-        assertThat(RunStroomQlTool.misleading(queryService, "q", VIEW)).isEmpty();
-        assertThat(RunStroomQlTool.misleading(queryService, "q", null)).isEmpty();
-        // A query Stroom can't parse is Stroom's to refuse, when it runs.
-        Mockito.when(queryService.parseQuery(Mockito.anyString())).thenThrow(new RuntimeException("Bad query"));
-        assertThat(RunStroomQlTool.misleading(queryService, "q", ELASTIC)).isEmpty();
+        assertThat(RunStroomQlTool.misleading(queryService, first(VIEW), NO_LUCENE_TEXT)).isEmpty();
+        assertThat(RunStroomQlTool.misleading(queryService, first(null), NO_LUCENE_TEXT)).isEmpty();
+        // A query Stroom can't parse is Stroom's to refuse, when it runs: it has no data sources to check.
+        assertThat(RunStroomQlTool.misleading(queryService, List.of(), NO_LUCENE_TEXT)).isEmpty();
     }
 
     @Test
@@ -100,7 +107,7 @@ class TestRunStroomQlTool {
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(ELASTIC));
         query(ExpressionOperator.builder().addTerm("tags", Condition.IS_NOT_NULL, null).build());
-        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> stroomQlSources,
                 () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
 
         final String result = tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
@@ -120,10 +127,11 @@ class TestRunStroomQlTool {
         Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(LUCENE));
-        query(ExpressionOperator.builder().addTerm("SrcIp", Condition.GREATER_THAN, "10.1.0.0").build());
+        Mockito.when(stroomQlSources.of(Mockito.anyString())).thenReturn(List.of(new StroomQlSources.Source(LUCENE,
+                ExpressionOperator.builder().addTerm("SrcIp", Condition.GREATER_THAN, "10.1.0.0").build(), false)));
         final LuceneTextFields luceneTextFields = Mockito.mock(LuceneTextFields.class);
         Mockito.when(luceneTextFields.of(LUCENE)).thenReturn(Map.of("SrcIp", "KEYWORD"));
-        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> stroomQlSources,
                 () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
         tool.setLuceneTextFields(luceneTextFields);
 
@@ -136,7 +144,58 @@ class TestRunStroomQlTool {
         Mockito.verify(queryService, Mockito.never()).search(Mockito.any());
     }
 
+    @Test
+    void aMisleadingSearchOfAJoinedSourceIsRefusedBeforeItRuns() {
+        // Found reviewing the tools for StroomQL joins: only the first source's search was checked.
+        final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(workspace.limits()).thenReturn(new AiWorkspaceConfig());
+        Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+        Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(HR));
+        Mockito.when(stroomQlSources.of(Mockito.anyString())).thenReturn(List.of(
+                new StroomQlSources.Source(HR, null, false),
+                new StroomQlSources.Source(ELASTIC, ExpressionOperator.builder()
+                        .addTerm("tags", Condition.IS_NULL, null)
+                        .build(), true)));
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> stroomQlSources,
+                () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
+
+        final String result = tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
+                        "{\"query\": \"from HR where Name in (from web where tags is null select user) "
+                        + "select Name\"}"),
+                ToolCalls.inChat(1, workspace)).text();
+
+        assertThat(result).startsWith("Error: " + MisleadingSearches.REFUSAL + "tags IS_NULL")
+                .endsWith("They are in the search of the joined data source ElasticIndex 'web' (uuid e). In "
+                          + "StroomQL, EQUALS is = and NOT_EQUALS is !=.");
+        Mockito.verify(queryService, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void eachSourceIsCheckedWithItsOwnFields() {
+        // A joined Lucene source is checked with its own text fields, not the first source's.
+        final Map<DocRef, Map<String, String>> luceneText = Map.of(LUCENE, Map.of("SrcIp", "KEYWORD"));
+        final List<StroomQlSources.Source> sources = List.of(
+                new StroomQlSources.Source(VIEW, null, false),
+                new StroomQlSources.Source(LUCENE, ExpressionOperator.builder()
+                        .addTerm("SrcIp", Condition.GREATER_THAN, "10.1.0.0")
+                        .build(), true));
+
+        assertThat(RunStroomQlTool.misleading(queryService, sources, dataSource ->
+                luceneText.getOrDefault(dataSource, Map.of())))
+                .hasValueSatisfying(refusal -> assertThat(refusal)
+                        .contains("SrcIp is a text field in Lucene")
+                        .contains("the joined data source Index 'events'"));
+    }
+
     private void query(final ExpressionOperator expression) {
-        Mockito.when(queryService.parseQuery(Mockito.anyString())).thenReturn(expression);
+        this.expression = expression;
+        Mockito.when(stroomQlSources.of(Mockito.anyString()))
+                .thenReturn(List.of(new StroomQlSources.Source(ELASTIC, expression, false)));
+    }
+
+    // The first source only, with the conditions given to query.
+    private List<StroomQlSources.Source> first(final DocRef dataSource) {
+        return List.of(new StroomQlSources.Source(dataSource, expression, false));
     }
 }

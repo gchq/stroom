@@ -32,6 +32,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequestSource;
@@ -70,6 +71,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * {@code run_stroomql} - runs a StroomQL query as the chat's user (so only data they can see), and writes the
@@ -86,6 +88,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private final Provider<QueryService> queryServiceProvider;
+    private final Provider<StroomQlSources> stroomQlSourcesProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
     private final AgentSearches agentSearches;
     private LuceneTextFields luceneTextFields;
@@ -94,10 +97,12 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     @Inject
     RunStroomQlTool(final ChatWorkspace workspace,
                     final Provider<QueryService> queryServiceProvider,
+                    final Provider<StroomQlSources> stroomQlSourcesProvider,
                     final Provider<ResourceStore> resourceStoreProvider,
                     final AgentSearches agentSearches) {
         super(workspace);
         this.queryServiceProvider = queryServiceProvider;
+        this.stroomQlSourcesProvider = stroomQlSourcesProvider;
         this.agentSearches = agentSearches;
         this.resourceStoreProvider = resourceStoreProvider;
     }
@@ -207,9 +212,10 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = queryService.getReferencedDataSource(query).orElse(null);
         final String sourceDocUuid = NullSafe.get(dataSource, DocRef::getUuid);
-        final Optional<String> misleading = misleading(queryService, query, dataSource, luceneTextFields == null
-                ? Map.of()
-                : luceneTextFields.of(dataSource));
+        final Optional<String> misleading = misleading(queryService, sources(query), source ->
+                luceneTextFields == null
+                        ? Map.of()
+                        : luceneTextFields.of(source));
         if (misleading.isPresent()) {
             throw new WorkspaceException(misleading.get());
         }
@@ -242,30 +248,54 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         }
     }
 
-    /// The refusal for a query on a Lucene or Elastic index whose answer through Stroom would mislead (e.g. IS_NULL
-    /// on Elasticsearch matches every document, and a wildcard on an ip field finds nothing): it says what to query
-    /// instead.
-    ///
-    /// @param queryService Parses the query and lists the index's fields.
-    /// @param query        The query.
-    /// @param dataSource   Its data source, or null.
-    /// @return The refusal, or empty if the query can be trusted, isn't on an index, or can't be checked.
-    static Optional<String> misleading(final QueryService queryService,
-                                       final String query,
-                                       final DocRef dataSource) {
-        return misleading(queryService, query, dataSource, Map.of());
+    // Every data source the query searches (the first, then each joined one), with what is pushed down to it; none
+    // if it can't be read, as Stroom then refuses it with its own error when it runs.
+    private List<StroomQlSources.Source> sources(final String query) {
+        try {
+            return stroomQlSourcesProvider.get().of(query);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read the query's data sources: {}", e.getMessage()), e);
+            return List.of();
+        }
     }
 
-    /// As [#misleading(QueryService, String, DocRef)], knowing a Lucene index's text fields' analyzers, so that a
-    /// CONTAINS on a keyword field, or a range on a text field, is refused too.
+    /// The refusal for a query whose search of a Lucene or Elastic index would give a misleading answer through
+    /// Stroom (e.g. IS_NULL on Elasticsearch matches every document, and a wildcard on an ip field finds nothing):
+    /// it says what to query instead. Each data source the query searches is checked, with the conditions pushed
+    /// down to it: the first source's, and each joined source's (a join line's, or a `where` subquery's).
     ///
-    /// @param queryService Parses the query and lists the index's fields.
-    /// @param query        The query.
-    /// @param dataSource   Its data source, or null.
-    /// @param luceneText   A Lucene index's text fields and their analyzers ([LuceneTextFields]), or none.
-    /// @return The refusal, or empty if the query can be trusted, isn't on an index, or can't be checked.
+    /// @param queryService Lists each index's fields.
+    /// @param sources      The data sources the query searches ([StroomQlSources]).
+    /// @param luceneText   A Lucene index's text fields and their analyzers ([LuceneTextFields]), or none, by data
+    ///                     source.
+    /// @return The refusal for the first source whose search would mislead, or empty if each can be trusted, isn't
+    /// on an index, or can't be checked.
     static Optional<String> misleading(final QueryService queryService,
-                                       final String query,
+                                       final List<StroomQlSources.Source> sources,
+                                       final Function<DocRef, Map<String, String>> luceneText) {
+        for (final StroomQlSources.Source source : NullSafe.list(sources)) {
+            final Optional<String> refusal = misleading(queryService, source.expression(), source.dataSource(),
+                    luceneText.apply(source.dataSource()));
+            if (refusal.isPresent()) {
+                return refusal.map(text -> text + (source.joined()
+                        ? ". They are in the search of the joined data source "
+                          + DataSourceAccess.describe(source.dataSource())
+                        : "") + ". In StroomQL, EQUALS is = and NOT_EQUALS is !=.");
+            }
+        }
+        return Optional.empty();
+    }
+
+    /// The refusal for one data source's search, as [#misleading(QueryService, List, Function)] gives it, without
+    /// its closing hint.
+    ///
+    /// @param queryService Lists the index's fields.
+    /// @param expression   The conditions pushed down to the data source's search, or null for none.
+    /// @param dataSource   The data source, or null.
+    /// @param luceneText   A Lucene index's text fields and their analyzers ([LuceneTextFields]), or none.
+    /// @return The refusal, or empty if the search can be trusted, isn't on an index, or can't be checked.
+    static Optional<String> misleading(final QueryService queryService,
+                                       final ExpressionOperator expression,
                                        final DocRef dataSource,
                                        final Map<String, String> luceneText) {
         final Optional<String> backend = MisleadingSearches.backendOf(dataSource);
@@ -275,7 +305,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         final List<MisleadingSearches.Search> searches;
         final List<QueryField> fields;
         try {
-            searches = MisleadingSearches.searches(queryService.parseQuery(query));
+            searches = MisleadingSearches.searches(expression);
             if (searches.isEmpty()) {
                 return Optional.empty();
             }
@@ -288,9 +318,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             return Optional.empty();
         }
         return MisleadingSearches.refusal(backend.get(), searches, MisleadingSearches.ipFields(fields), List.of(),
-                        luceneText, MisleadingSearches.unindexed(dataSource, fields,
-                                searches.stream().map(MisleadingSearches.Search::field).toList()))
-                .map(refusal -> refusal + ". In StroomQL, EQUALS is = and NOT_EQUALS is !=.");
+                luceneText, MisleadingSearches.unindexed(dataSource, fields,
+                        searches.stream().map(MisleadingSearches.Search::field).toList()));
     }
 
     // For an aggregation on an Elastic Index that translates exactly to ES|QL: the esql_query pipeline that gives the

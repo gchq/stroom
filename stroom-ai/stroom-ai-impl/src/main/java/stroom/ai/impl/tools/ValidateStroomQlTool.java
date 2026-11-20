@@ -30,31 +30,41 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /// `validate_stroomql` - checks a StroomQL query without running it, as the query editor does before a rule is made
 /// from a query: OK, or the parser's error. QueryService.validateQuery makes no check of its own, so the tool first
-/// finds the data source the query reads and checks Use on it, and treats one the user can't use as one that
-/// doesn't exist. Logged as a Process (validate) event naming the data source.
+/// finds the data sources the query reads (the from source, and each joined one: join lines and where subqueries) and
+/// checks Use on each, and treats one the user can't use as one that doesn't exist. Logged as a Process (validate)
+/// event naming the data sources.
 class ValidateStroomQlTool extends AbstractWorkspaceTool {
 
     static final String NAME = "validate_stroomql";
     static final String QUERY_ARG = "query";
     static final String NO_DATA_SOURCE = "The query doesn't name a data source you can use: check its 'from' "
                                          + "clause against list_data_sources.";
+    static final String NO_JOINED_DATA_SOURCE = "The query joins a data source you can't use: check its join lines "
+                                                + "and where subqueries (exists, in (from ...)) against "
+                                                + "list_data_sources.";
 
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
+    private final Provider<StroomQlSources> stroomQlSourcesProvider;
     private final AiAuditLog auditLog;
 
     @Inject
     ValidateStroomQlTool(final ChatWorkspace workspace,
                          final DataSourceAccess dataSourceAccess,
                          final Provider<QueryService> queryServiceProvider,
+                         final Provider<StroomQlSources> stroomQlSourcesProvider,
                          final AiAuditLog auditLog) {
         super(workspace);
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
+        this.stroomQlSourcesProvider = stroomQlSourcesProvider;
         this.auditLog = auditLog;
     }
 
@@ -96,18 +106,32 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = usableDataSource(queryService, query).orElse(null);
         if (dataSource == null) {
-            auditLog.processed(context.session(), null, NAME, query, "Not validated: no data source the user can use",
-                    false);
+            auditLog.processedDocuments(context.session(), List.of(), NAME, query,
+                    "Not validated: no data source the user can use", false);
             return ToolResult.text(NO_DATA_SOURCE);
         }
+        final List<DocRef> joined = joinedDataSources(query);
+        if (!joined.stream().allMatch(dataSourceAccess::canUse)) {
+            auditLog.processedDocuments(context.session(), List.of(dataSource), NAME, query,
+                    "Not validated: a joined data source the user can't use", false);
+            return ToolResult.text(NO_JOINED_DATA_SOURCE);
+        }
+        final List<DocRef> read = new ArrayList<>();
+        read.add(dataSource);
+        read.addAll(joined);
         final ValidateExpressionResult result = queryService.validateQuery(query);
         final boolean ok = result != null && result.isOk();
         final String outcome = ok
                 ? "OK"
                 : "Invalid: " + NullSafe.get(result, ValidateExpressionResult::getString);
-        auditLog.processed(context.session(), dataSource, NAME, query, outcome, true);
+        auditLog.processedDocuments(context.session(), read, NAME, query, outcome, true);
         if (ok) {
             return ToolResult.text("OK. The query is valid and reads " + DataSourceAccess.describe(dataSource)
+                                   + (joined.isEmpty()
+                                    ? ""
+                                    : ", joined with " + joined.stream()
+                                            .map(DataSourceAccess::describe)
+                                            .collect(Collectors.joining(", ")))
                                    + (result.isGroupBy()
                                     ? ". It groups rows."
                                     : "."));
@@ -124,6 +148,20 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
                     .filter(dataSourceAccess::canUse);
         } catch (final RuntimeException e) {
             return Optional.empty();
+        }
+    }
+
+    // The data sources the query joins (join lines, and where subqueries, which Stroom runs as joins), each once;
+    // none if it joins none, or can't be read, as validating it then gives the parser's own error.
+    private List<DocRef> joinedDataSources(final String query) {
+        try {
+            return stroomQlSourcesProvider.get().of(query).stream()
+                    .filter(StroomQlSources.Source::joined)
+                    .map(StroomQlSources.Source::dataSource)
+                    .distinct()
+                    .toList();
+        } catch (final RuntimeException e) {
+            return List.of();
         }
     }
 

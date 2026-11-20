@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 
+import event.logging.Data;
 import event.logging.Device;
 import event.logging.Event;
 import event.logging.EventAction;
@@ -52,6 +53,7 @@ import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.tuple;
 
 class TestAiAuditLog {
 
@@ -212,6 +214,28 @@ class TestAiAuditLog {
                 Mockito.eq("Ask Stroom AI ran validate_stroomql in chat 7"), action.capture());
         assertThat(action.getValue().getCommand()).isEqualTo("validate_stroomql");
         assertThat(action.getValue().getOutcome().getDescription()).isEqualTo("OK");
+        assertValid(action.getValue());
+    }
+
+    @Test
+    void testProcessedDocumentsNamesEachJoinedDocument() {
+        auditLog.processedDocuments(ToolSession.chat(7), List.of(new DocRef("View", "v1", "Windows events"),
+                        new DocRef("DataConnection", "d1", "HR")), "validate_stroomql", "from x join y", "OK", true);
+
+        final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.PROCESS_TYPE_ID),
+                Mockito.eq("Ask Stroom AI ran validate_stroomql in chat 7"), action.capture());
+        assertThat(action.getValue().getData())
+                .filteredOn(data -> "DocumentUuid".equals(data.getName()))
+                .extracting(Data::getValue)
+                .containsExactly("v1");
+        assertThat(action.getValue().getData())
+                .filteredOn(data -> "JoinedDocument".equals(data.getName()))
+                .singleElement()
+                .satisfies(joined -> assertThat(joined.getData())
+                        .extracting(Data::getName, Data::getValue)
+                        .contains(tuple("DocumentType", "DataConnection"), tuple("DocumentUuid", "d1"),
+                                tuple("DocumentName", "HR")));
         assertValid(action.getValue());
     }
 

@@ -474,6 +474,26 @@ public class AiAuditLog {
                           final String input,
                           final String outcome,
                           final boolean success) {
+        processedDocuments(session, NullSafe.singletonList(docRef), command, input, outcome, success);
+    }
+
+    /// As [#processed(ToolSession, DocRef, String, String, String, boolean)], for something done with several
+    /// documents, e.g. validating a query that joins data sources. The first is named as a single document is; each
+    /// other (up to [#MAX_LOGGED_DOCUMENTS]) as a `JoinedDocument`.
+    ///
+    /// @param session The session, e.g. the chat.
+    /// @param docRefs The documents, e.g. the data sources, the main one first; none if not known.
+    /// @param command What was done, e.g. "validate_stroomql".
+    /// @param input   What it was done with, e.g. the query, shortened.
+    /// @param outcome What happened.
+    /// @param success False if it failed.
+    public void processedDocuments(final ToolSession session,
+                                   final List<DocRef> docRefs,
+                                   final String command,
+                                   final String input,
+                                   final String outcome,
+                                   final boolean success) {
+        final List<DocRef> documents = NullSafe.list(docRefs);
         final ProcessEventAction.Builder<Void> builder = ProcessEventAction.builder()
                 .withType(ProcessType.APPLICATION)
                 .withAction(ProcessAction.EXECUTE)
@@ -484,11 +504,21 @@ public class AiAuditLog {
                         .withDescription(shorten(outcome))
                         .build())
                 .addData(sessionData(session));
-        if (docRef != null) {
+        if (!documents.isEmpty()) {
+            final DocRef docRef = documents.getFirst();
             builder.addData(data("DocumentType", docRef.getType()))
                     .addData(data("DocumentUuid", docRef.getUuid()))
                     .addData(data("DocumentName", NullSafe.string(docRef.getName())));
         }
+        documents.stream()
+                .skip(1)
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .forEach(docRef -> builder.addData(Data.builder()
+                        .withName("JoinedDocument")
+                        .addData(data("DocumentType", docRef.getType()))
+                        .addData(data("DocumentUuid", docRef.getUuid()))
+                        .addData(data("DocumentName", NullSafe.string(docRef.getName())))
+                        .build()));
         log(PROCESS_TYPE_ID, "Ask Stroom AI ran " + command + " in " + where(session), builder.build());
     }
 

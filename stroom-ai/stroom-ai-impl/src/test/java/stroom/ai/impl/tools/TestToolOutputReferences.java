@@ -715,7 +715,7 @@ class TestToolOutputReferences {
             return results;
         });
         final RunStroomQlTool tool = new RunStroomQlTool(fixture.workspace, () -> queryService,
-                () -> resourceStore, Mockito.mock(AgentSearches.class));
+                () -> Mockito.mock(StroomQlSources.class), () -> resourceStore, Mockito.mock(AgentSearches.class));
         final ToolRunner run = arguments -> tool.execute(request(RunStroomQlTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, fixture.workspace)).text();
 

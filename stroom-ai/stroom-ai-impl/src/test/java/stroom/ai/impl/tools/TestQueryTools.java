@@ -71,6 +71,7 @@ class TestQueryTools {
     private final DataSourceProviderRegistry registry = Mockito.mock(DataSourceProviderRegistry.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
+    private final StroomQlSources stroomQlSources = Mockito.mock(StroomQlSources.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     private final DocFinder docFinder = Mockito.mock(DocFinder.class);
@@ -330,8 +331,8 @@ class TestQueryTools {
 
         assertThat(run(validateTool(), "{\"query\":\"" + QUERY.replace("\"", "\\\"") + "\"}"))
                 .startsWith("OK. The query is valid and reads View 'Windows events'");
-        Mockito.verify(auditLog).processed(ToolSession.chat(CHAT), WINDOWS, ValidateStroomQlTool.NAME, QUERY, "OK",
-                true);
+        Mockito.verify(auditLog).processedDocuments(ToolSession.chat(CHAT), List.of(WINDOWS),
+                ValidateStroomQlTool.NAME, QUERY, "OK", true);
     }
 
     @Test
@@ -353,9 +354,43 @@ class TestQueryTools {
         assertThat(run(validateTool(), "{\"query\":\"" + secret.replace("\"", "\\\"") + "\"}"))
                 .isEqualTo(ValidateStroomQlTool.NO_DATA_SOURCE);
         Mockito.verify(queryService, Mockito.never()).validateQuery(Mockito.anyString());
-        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.isNull(),
-                Mockito.eq(ValidateStroomQlTool.NAME),
+        Mockito.verify(auditLog).processedDocuments(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(List.<DocRef>of()), Mockito.eq(ValidateStroomQlTool.NAME),
                 Mockito.eq(secret), Mockito.anyString(), Mockito.eq(false));
+    }
+
+    @Test
+    void validateStroomQlRefusesAJoinedDataSourceTheUserCantUse() {
+        // Found reviewing the tools for StroomQL joins: only the from source was checked.
+        final String joined = "from \"Windows events\" join \"Secret events\" as s on User = s.User select User";
+        Mockito.when(queryService.getReferencedDataSource(joined)).thenReturn(Optional.of(WINDOWS));
+        Mockito.when(stroomQlSources.of(joined)).thenReturn(List.of(
+                new StroomQlSources.Source(WINDOWS, null, false),
+                new StroomQlSources.Source(SECRET, null, true)));
+
+        assertThat(run(validateTool(), "{\"query\":\"" + joined.replace("\"", "\\\"") + "\"}"))
+                .isEqualTo(ValidateStroomQlTool.NO_JOINED_DATA_SOURCE);
+        Mockito.verify(queryService, Mockito.never()).validateQuery(Mockito.anyString());
+        Mockito.verify(auditLog).processedDocuments(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(List.of(WINDOWS)), Mockito.eq(ValidateStroomQlTool.NAME), Mockito.eq(joined),
+                Mockito.anyString(), Mockito.eq(false));
+    }
+
+    @Test
+    void validateStroomQlLogsEveryDataSourceAJoinReads() {
+        final String joined = "from \"Windows events\" where User in (from \"Linux events\" select User) "
+                              + "select User";
+        Mockito.when(queryService.getReferencedDataSource(joined)).thenReturn(Optional.of(WINDOWS));
+        Mockito.when(stroomQlSources.of(joined)).thenReturn(List.of(
+                new StroomQlSources.Source(WINDOWS, null, false),
+                new StroomQlSources.Source(LINUX, null, true)));
+        Mockito.when(queryService.validateQuery(joined)).thenReturn(new ValidateExpressionResult(true, joined, false));
+
+        assertThat(run(validateTool(), "{\"query\":\"" + joined.replace("\"", "\\\"") + "\"}"))
+                .startsWith("OK. The query is valid and reads View 'Windows events' (uuid windows-uuid), joined "
+                            + "with Index 'Linux events' (uuid linux-uuid).");
+        Mockito.verify(auditLog).processedDocuments(ToolSession.chat(CHAT), List.of(WINDOWS, LINUX),
+                ValidateStroomQlTool.NAME, joined, "OK", true);
     }
 
     @Test
@@ -413,7 +448,8 @@ class TestQueryTools {
     }
 
     private ValidateStroomQlTool validateTool() {
-        return new ValidateStroomQlTool(workspace, dataSourceAccess, () -> queryService, auditLog);
+        return new ValidateStroomQlTool(workspace, dataSourceAccess, () -> queryService, () -> stroomQlSources,
+                auditLog);
     }
 
     private ProposeQueryTool proposeTool() {
