@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.catalogue;
 
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.PairMatches;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -42,13 +43,17 @@ import java.util.Objects;
 /// @param stringTruncateLength The pipeline's stringTruncateLength the records were cut at
 ///                             ([LocalCheck#JSON_PARSER_CUT] by default); 0 when nothing is cut.
 /// @param regexBudget          The longest one condition's regex may take over the sample's records.
+/// @param matches              The call's regex matches, each extraction's first in a text found once for every
+///                             check of these records and the call's other parts that read the same texts; null for
+///                             matches of the sample's own.
 public record CatalogueSample(TranslationMapping reading,
                               List<Object> records,
                               List<Object> whole,
                               List<String> texts,
                               String variantField,
                               int stringTruncateLength,
-                              Duration regexBudget) {
+                              Duration regexBudget,
+                              PairMatches matches) {
 
     /// The longest one condition's regex may take over the sample's records, by default: a way of recognising an
     /// event type tells records by a short pattern, which runs over a sample in a few milliseconds; one that takes
@@ -67,6 +72,7 @@ public record CatalogueSample(TranslationMapping reading,
                 ? null
                 : List.copyOf(texts);
         regexBudget = Objects.requireNonNullElse(regexBudget, REGEX_BUDGET);
+        matches = Objects.requireNonNullElseGet(matches, PairMatches::create);
     }
 
     /// The scope's records read from a sample as processing will read them, and read whole too where processing
@@ -84,13 +90,32 @@ public record CatalogueSample(TranslationMapping reading,
                                        final SplitterSpec splitter,
                                        final int stringTruncateLength,
                                        final String variantField) {
+        return read(reading, sample, splitter, stringTruncateLength, variantField, null);
+    }
+
+    /// [#read(TranslationMapping, Object, SplitterSpec, int, String)] with the regex matches its call has already
+    /// found (the draft's pairs of the same records, say), and those its checks find kept for the rest of the call.
+    ///
+    /// @param reading              The mapping the conditions are evaluated by.
+    /// @param sample               The scope's sample: a text, or a list of texts (one a file).
+    /// @param splitter             The Data Splitter a data_splitter input is read with, or null.
+    /// @param stringTruncateLength The pipeline's stringTruncateLength; 0 or less to read every string whole.
+    /// @param variantField         The field a record's line format is written in, or null.
+    /// @param matches              The call's regex matches, or null for the sample's own.
+    /// @return The sample.
+    public static CatalogueSample read(final TranslationMapping reading,
+                                       final Object sample,
+                                       final SplitterSpec splitter,
+                                       final int stringTruncateLength,
+                                       final String variantField,
+                                       final PairMatches matches) {
         final int cut = Math.max(0, stringTruncateLength);
         final List<Object> records = items(reading, LocalCheck.sampleRecords(reading, sample, splitter, cut)
                 .records());
         final List<Object> whole = cut > 0 && "json".equals(reading.input())
                 ? items(reading, LocalCheck.sampleRecords(reading, sample, splitter, 0).records())
                 : null;
-        return new CatalogueSample(reading, records, whole, null, variantField, cut, null);
+        return new CatalogueSample(reading, records, whole, null, variantField, cut, null, matches);
     }
 
     // A reading of repeated groups (for_each): each record's items, the records the translation's rules take (the
@@ -129,12 +154,14 @@ public record CatalogueSample(TranslationMapping reading,
     /// @param budget The longest one condition's regex may take over the sample's records.
     /// @return It with that budget.
     public CatalogueSample withRegexBudget(final Duration budget) {
-        return new CatalogueSample(reading, records, whole, texts, variantField, stringTruncateLength, budget);
+        return new CatalogueSample(reading, records, whole, texts, variantField, stringTruncateLength, budget,
+                matches);
     }
 
     /// @param texts Each record's text, one for one.
     /// @return It with those texts for excerpts.
     public CatalogueSample withTexts(final List<String> texts) {
-        return new CatalogueSample(reading, records, whole, texts, variantField, stringTruncateLength, regexBudget);
+        return new CatalogueSample(reading, records, whole, texts, variantField, stringTruncateLength, regexBudget,
+                matches);
     }
 }

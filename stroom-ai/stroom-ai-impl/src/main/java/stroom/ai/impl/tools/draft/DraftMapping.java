@@ -289,23 +289,52 @@ public final class DraftMapping {
                                             final Function<String, String> detailCheck,
                                             final SplitterSpec splitter,
                                             final String forEach) {
+        return draft(samples, sourceName, systemName, environment, sourceNotes, detailCheck, splitter, forEach,
+                PairMatches.create());
+    }
+
+    /// [#draft(Object, String, String, String, Map, Function, SplitterSpec, String)] with the regex matches its call
+    /// has already found, and those it finds kept for the rest of the call (the records' pairs, and the catalogue's
+    /// ways placed on them): a call that reads the same records again (`catalogue_event_types`'s record index) finds
+    /// them there.
+    ///
+    /// @param samples     The samples ([SampleTexts#asNamedSamples(Object, String)]).
+    /// @param sourceName  The source's name ("" for none).
+    /// @param systemName  EventSource/System/Name, or null.
+    /// @param environment EventSource/System/Environment, or null.
+    /// @param sourceNotes The source notes, or null.
+    /// @param detailCheck Why a catalogued event's `event_detail` can't be an action element, or null.
+    /// @param splitter    The Data Splitter the text is read with, or null to infer it.
+    /// @param forEach     The field of a JSON record holding its items, or null.
+    /// @param matches     The call's regex matches.
+    /// @return What [#draft(Object, String, String, String, Map, Function, SplitterSpec)] returns.
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    public static Map<String, Object> draft(final Object samples,
+                                            final String sourceName,
+                                            final String systemName,
+                                            final String environment,
+                                            final Map<String, Object> sourceNotes,
+                                            final Function<String, String> detailCheck,
+                                            final SplitterSpec splitter,
+                                            final String forEach,
+                                            final PairMatches matches) {
         final Map<String, String> named = SampleTexts.asNamedSamples(samples, null);
         final Records read = records(named, splitter, forEach);
         final String source = sourceName == null
                 ? ""
                 : sourceName;
         if (read.spec() != null && SplitterSpec.ALTERNATIVES.equals(read.spec().kind())) {
-            return VariantDrafts.draft(read, (variant, records) -> new Drafting(records, source)
+            return VariantDrafts.draft(read, (variant, records) -> new Drafting(records, source, matches)
                     .draft(systemName, environment, sourceNotes, detailCheck));
         }
         final Optional<SplitterSpec.ConverterVariants> formats = read.spec() == null
                 ? Optional.empty()
                 : read.spec().converterVariants();
         if (formats.isPresent()) {
-            return VariantDrafts.draft(read, formats.get(), (variant, records) -> new Drafting(records, source)
+            return VariantDrafts.draft(read, formats.get(), (variant, records) -> new Drafting(records, source, matches)
                     .draft(systemName, environment, sourceNotes, detailCheck));
         }
-        return new Drafting(read, source).draft(systemName, environment, sourceNotes, detailCheck);
+        return new Drafting(read, source, matches).draft(systemName, environment, sourceNotes, detailCheck);
     }
 
     /// The sample's records as the draft reads them.
@@ -727,14 +756,28 @@ public final class DraftMapping {
     /// @param extracts Extract entries (`field`, `regex`, `names`).
     @SuppressWarnings("unchecked")
     public static void withPairs(final List<Map<String, Object>> records, final List<Map<String, Object>> extracts) {
+        withPairs(records, extracts, PairMatches.create());
+    }
+
+    /// [#withPairs(List, List)] with the matches a call has already found kept for it, and those found here kept
+    /// for the rest of the call.
+    ///
+    /// @param records  The records (changed in place).
+    /// @param extracts Extract entries (`field`, `regex`, `names`).
+    /// @param matches  The call's matches.
+    @SuppressWarnings("unchecked")
+    public static void withPairs(final List<Map<String, Object>> records,
+                                 final List<Map<String, Object>> extracts,
+                                 final PairMatches matches) {
         final List<Pattern> patterns = new ArrayList<>();
         extracts.forEach(ex -> patterns.add(ToolText.re((String) ex.get("regex"))));
         for (final Map<String, Object> record : records) {
             for (int i = 0; i < extracts.size(); i++) {
                 final Map<String, Object> ex = extracts.get(i);
-                final Matcher found = patterns.get(i).matcher(JsonValues.text(record.get((String) ex.get(FIELD))));
-                if (found.find() && found.group(1) != null && !ToolText.isBlank(found.group(1))) {
-                    record.put(((List<String>) ex.get(NAMES)).getFirst(), found.group(1));
+                final String[] found = matches.firstMatch(patterns.get(i),
+                        JsonValues.text(record.get((String) ex.get(FIELD))), false);
+                if (found != null && found[0] != null && !ToolText.isBlank(found[0])) {
+                    record.put(((List<String>) ex.get(NAMES)).getFirst(), found[0]);
                 }
             }
         }
@@ -904,6 +947,7 @@ public final class DraftMapping {
         private final List<Map<String, Object>> records;
         private final SplitterSpec spec;
         private final String sourceName;
+        private final PairMatches matches;
         private final String fmt;
         private final List<String> notes = new ArrayList<>();
         private final Map<String, Object> mapping = new LinkedHashMap<>();
@@ -931,7 +975,9 @@ public final class DraftMapping {
 
         /// @param read       The sample as the draft reads it.
         /// @param sourceName The source's name.
-        Drafting(final Records read, final String sourceName) {
+        /// @param matches    The call's regex matches, kept for its other parts.
+        Drafting(final Records read, final String sourceName, final PairMatches matches) {
+            this.matches = matches;
             this.info = read.info();
             this.records = read.records();
             this.spec = read.spec();
@@ -994,7 +1040,8 @@ public final class DraftMapping {
                 && (JsonValues.truthy(sourceNotes.get(FIELDS)) || SourceNotes.catalogue(sourceNotes) != null)) {
                 // The user's documentation says where fields belong, and the catalogue what each event type is and
                 // how its records are recognised: they win over guesses from names.
-                applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck, records);
+                applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck, records,
+                        matches);
                 rest = withNotes(applied, rest);
             }
             if (applied == null || !Boolean.TRUE.equals(applied.get(SourceNotes.CATALOGUED))) {
@@ -1453,7 +1500,7 @@ public final class DraftMapping {
             final Map<String, PairExtracts> paired = pairExtracts(values, skipped);
             paired.forEach((field, pairs) -> {
                 final List<Map<String, Object>> extracts = pairs.extracts();
-                withPairs(records, extracts);
+                withPairs(records, extracts, matches);
                 ((List<Map<String, Object>>) mapping.computeIfAbsent(EXTRACT, k -> new ArrayList<>()))
                         .addAll(extracts);
                 if (pairs.whole()) {

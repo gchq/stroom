@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.PairMatches;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -57,13 +58,14 @@ final class HeldKindRecords {
             return records;
         }
         try {
+            final PairMatches matches = PairMatches.create();
             final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null,
-                    null, null, splitter);
+                    null, null, splitter, null, matches);
             @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(
                     "mapping");
             return mapping == null
                     ? records
-                    : unpacked(DraftMapping.records(samples, splitter).records(), mapping);
+                    : unpacked(DraftMapping.records(samples, splitter).records(), mapping, matches);
         } catch (final RuntimeException e) {
             LOGGER.debug("No held fields read for the kind field: {}", e.getMessage());
             return records;
@@ -80,6 +82,19 @@ final class HeldKindRecords {
     /// @return The records.
     static List<Map<String, Object>> unpacked(final List<Map<String, Object>> records,
                                               final Map<String, Object> mapping) {
+        return unpacked(records, mapping, PairMatches.create());
+    }
+
+    /// [#unpacked(List, Map)] with the regex matches its call has already found (the draft's pairs and the
+    /// catalogue's record index, of the same texts), so the extractions aren't run again.
+    ///
+    /// @param records The records (changed in place).
+    /// @param mapping The draft's mapping.
+    /// @param matches The call's regex matches.
+    /// @return The records.
+    static List<Map<String, Object>> unpacked(final List<Map<String, Object>> records,
+                                              final Map<String, Object> mapping,
+                                              final PairMatches matches) {
         final List<Object> held = new ArrayList<>(records);
         LocalCheck.withJsonFields(held, JsonValues.strings(mapping.get("json_fields")));
         LocalCheck.withXmlFields(held, JsonValues.strings(mapping.get("xml_fields")));
@@ -98,7 +113,7 @@ final class HeldKindRecords {
             return records;
         }
         for (final Map<String, Object> record : records) {
-            final Map<String, String> extracted = LocalCheck.extractedValues(extractions, record);
+            final Map<String, String> extracted = LocalCheck.extractedValues(extractions, record, matches);
             if (extracted != null) {
                 extracted.forEach((name, value) -> {
                     if (!value.isEmpty()) {

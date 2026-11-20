@@ -84,7 +84,8 @@ final class RecordIndex {
             this.extracted = null;
         } else {
             this.extracted = new ArrayList<>(size);
-            records.forEach(record -> extracted.add(LocalCheck.extractedValues(reading, record)));
+            records.forEach(record -> extracted.add(LocalCheck.extractedValues(reading.extract(), record,
+                    sample.matches())));
         }
     }
 
@@ -461,7 +462,8 @@ final class RecordIndex {
     Boolean holdsWhole(final Condition c, final int n) {
         if (extractedWhole == null && extracted != null) {
             extractedWhole = new ArrayList<>(size);
-            sample.whole().forEach(record -> extractedWhole.add(LocalCheck.extractedValues(reading, record)));
+            sample.whole().forEach(record -> extractedWhole.add(LocalCheck.extractedValues(reading.extract(), record,
+                    sample.matches())));
         }
         final List<String> found = conditions.conditionValues(c.field(), sample.whole().get(n),
                 extractedWhole == null

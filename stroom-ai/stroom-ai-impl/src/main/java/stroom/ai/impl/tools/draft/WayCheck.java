@@ -46,6 +46,8 @@ final class WayCheck {
             "nil_values", "xml_namespace", "root", "record", "extract", "for_each");
 
     private final TranslationMapping mapping;
+    // The call's regex matches (the records' pairs the draft found, say).
+    private final PairMatches matches;
     private final MappingConditions conditions;
     private final boolean json;
     // The fields the extractions read from the record (not those an earlier one produces), in order.
@@ -55,8 +57,9 @@ final class WayCheck {
     // of a draft), and never another text's.
     private final Map<List<String>, Optional<Map<String, String>>> extracted = new HashMap<>();
 
-    private WayCheck(final TranslationMapping mapping) {
+    private WayCheck(final TranslationMapping mapping, final PairMatches matches) {
         this.mapping = mapping;
+        this.matches = matches;
         this.conditions = MappingConditions.of(mapping);
         this.json = "json".equals(mapping.input());
         this.sources = sources(mapping);
@@ -66,6 +69,13 @@ final class WayCheck {
     ///                     nil values, extract), and its common entries (the transforms decoding a field).
     /// @return A check over its records.
     static WayCheck of(final Map<String, Object> draftMapping) {
+        return of(draftMapping, PairMatches.none());
+    }
+
+    /// @param draftMapping The draft's mapping, as JSON-like values.
+    /// @param matches      The call's regex matches, each regex's first in a text found once.
+    /// @return A check over its records.
+    static WayCheck of(final Map<String, Object> draftMapping, final PairMatches matches) {
         final Map<String, Object> json = new LinkedHashMap<>();
         READING.forEach(key -> {
             if (draftMapping.get(key) != null) {
@@ -87,7 +97,7 @@ final class WayCheck {
             json.keySet().retainAll(List.of("input", "events"));
             read = parsed(json);
         }
-        return new WayCheck(read);
+        return new WayCheck(read, matches);
     }
 
     private static TranslationMapping parsed(final Map<String, Object> json) {
@@ -120,7 +130,8 @@ final class WayCheck {
         }
         final List<String> texts = new ArrayList<>(sources.size());
         sources.forEach(field -> texts.add(LocalCheck.valueOf(read, field)));
-        return extracted.computeIfAbsent(texts, key -> Optional.ofNullable(LocalCheck.extractedValues(mapping, read))
+        return extracted.computeIfAbsent(texts, key -> Optional.ofNullable(
+                        LocalCheck.extractedValues(mapping.extract(), read, matches))
                 .map(Collections::unmodifiableMap)).orElse(null);
     }
 

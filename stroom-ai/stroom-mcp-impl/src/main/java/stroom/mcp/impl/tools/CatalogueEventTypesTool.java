@@ -41,6 +41,7 @@ import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.PairMatches;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -1486,8 +1487,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             }
         }
         final List<Object> sampleTexts = List.copyOf(samples.values());
+        // The pair regexes run once a text for the whole call: the draft's pairs, the check's records and those
+        // listed with their held fields are each read from the same texts (seen in eval case 36 on Haiku: 60 pair
+        // regexes over 1,000 records three times, some 70% of a call).
+        final PairMatches matches = PairMatches.create();
         final Map<String, Object> draft = DraftMapping.draft(sampleTexts, calling.source(), null, null, null, null,
-                splitter);
+                splitter, null, matches);
         final Map<String, Object> mapping = NullSafe.map(JsonValues.map(draft.get("mapping")));
         final Optional<Map<String, Object>> reading = readingOf(calling, mapping);
         final List<Map<String, Object>> raw = DraftMapping.records(samples, splitter).records();
@@ -1496,13 +1501,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                 .map(CatalogueEventTypesTool::parsedReading)
                 .orElseGet(() -> reading(mapping)), sampleTexts, splitter == null
                 ? inferred(draft)
-                : splitter, LocalCheck.JSON_PARSER_CUT, variantField);
+                : splitter, LocalCheck.JSON_PARSER_CUT, variantField, matches);
         final Map<String, Object> given = argsMap(calling.call()).get(READING_ARG) == null
                 ? null
                 : reading.orElse(null);
         return new Records(streams, readWith, draft, sample, scoped == null
                 ? null
-                : scoped.said(), HeldKindRecords.unpacked(raw, reading.orElse(mapping)), given);
+                : scoped.said(), HeldKindRecords.unpacked(raw, reading.orElse(mapping), matches), given);
     }
 
     // How the records are read for the check, as the build will read them: the reading given (over the draft's own),

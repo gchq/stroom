@@ -101,7 +101,8 @@ final class CatalogueTranslation {
                                  final Catalogue catalogue,
                                  final List<Map<String, Object>> detailFields,
                                  final Function<String, String> detailCheck,
-                                 final List<Map<String, Object>> records) {
+                                 final List<Map<String, Object>> records,
+                                 final PairMatches matches) {
         this.mapping = mapping;
         this.names = new ArrayList<>(names);
         this.values = new LinkedHashMap<>(values);
@@ -109,7 +110,7 @@ final class CatalogueTranslation {
         this.detailFields = detailFields;
         this.detailCheck = detailCheck;
         this.records = NullSafe.list(records);
-        this.check = WayCheck.of(mapping);
+        this.check = WayCheck.of(mapping, matches);
         this.sampled = JsonValues.maps(mapping.get("events")).stream()
                 .filter(rule -> JsonValues.truthy(rule.get(WHEN)))
                 .toList();
@@ -126,6 +127,7 @@ final class CatalogueTranslation {
     /// @param detailFields   The source notes' entries placing fields under an action element.
     /// @param detailCheck    Why an `event_detail` can't be an action element, or null.
     /// @param records        The sample's records, as the draft reads them.
+    /// @param matches        The call's regex matches, each regex's first in a text found once.
     /// @return What was done: `events` (each rule, said), `not_in_sample` (TypeIds no sampled record has),
     /// `uncatalogued` (how many sampled records no event type recognises), `dropped` and `unread_fields`.
     @SuppressWarnings("checkstyle:ParameterNumber")
@@ -136,8 +138,10 @@ final class CatalogueTranslation {
                                      final String catchAllReason,
                                      final List<Map<String, Object>> detailFields,
                                      final Function<String, String> detailCheck,
-                                     final List<Map<String, Object>> records) {
-        return new CatalogueTranslation(mapping, names, values, catalogue, detailFields, detailCheck, records)
+                                     final List<Map<String, Object>> records,
+                                     final PairMatches matches) {
+        return new CatalogueTranslation(mapping, names, values, catalogue, detailFields, detailCheck, records,
+                matches)
                 .apply(catchAllReason);
     }
 

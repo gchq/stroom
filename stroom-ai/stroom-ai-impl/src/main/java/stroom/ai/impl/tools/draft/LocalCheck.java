@@ -646,17 +646,18 @@ public final class LocalCheck {
     /// @return The values by name, or null when one can't be run here (an xpath source, a regex that doesn't
     /// compile).
     public static Map<String, String> extractedValues(final TranslationMapping mapping, final Object record) {
-        return extractedValues(mapping.extract(), record);
+        return extractedValues(mapping.extract(), record, PairMatches.none());
     }
 
     /// [#extractedValues(TranslationMapping, Object)] from the extractions alone, so a mapping still being drafted
-    /// (its time not chosen, its rules unfilled) can have them run.
+    /// (its time not chosen, its rules unfilled) can have them run, with the matches its call has already found.
     ///
     /// @param extractions The extract entries, in order.
     /// @param record      A record.
-    /// @return The values by name, or null when one can't be run here (an xpath source, a regex that doesn't
-    /// compile).
-    public static Map<String, String> extractedValues(final List<Extraction> extractions, final Object record) {
+    /// @param matches     The call's regex matches ([PairMatches#none] to keep none).
+    /// @return The values by name, or null when one can't be run here (an xpath source, an invalid regex).
+    public static Map<String, String> extractedValues(final List<Extraction> extractions, final Object record,
+                                                      final PairMatches matches) {
         final Map<String, String> values = new LinkedHashMap<>();
         for (final Extraction ex : extractions) {
             if (ex.xpath() != null || ex.field() == null || ex.field().isEmpty()) {
@@ -669,15 +670,14 @@ public final class LocalCheck {
             if (pattern == null) {
                 return null;
             }
-            final Matcher found = SafePattern.matcher(pattern, text == null
+            final String[] found = matches.firstMatch(pattern, text == null
                     ? ""
-                    : text);
-            final boolean matched = found.find();
+                    : text, true);
             for (int i = 1; i <= ex.names().size(); i++) {
                 final String name = ex.names().get(i - 1);
                 if (name != null && !name.isEmpty()) {
-                    values.put(name, matched && i <= found.groupCount()
-                            ? nonNull(found.group(i))
+                    values.put(name, found != null && i <= found.length
+                            ? nonNull(found[i - 1])
                             : "");
                 }
             }

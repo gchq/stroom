@@ -336,13 +336,34 @@ public final class SourceNotes {
     /// @param detailCheck Why an event_detail can't be an action element, or null.
     /// @param records     The sample's records, as the draft reads them, or null when not known.
     /// @return What was applied, as [#applyToDraft(Map, List, Map, Map, Function)] returns.
-    @SuppressWarnings("unchecked")
     public static Map<String, Object> applyToDraft(final Map<String, Object> mapping,
                                                    final List<String> names,
                                                    final Map<String, List<String>> values,
                                                    final Map<String, Object> notes,
                                                    final Function<String, String> detailCheck,
                                                    final List<Map<String, Object>> records) {
+        return applyToDraft(mapping, names, values, notes, detailCheck, records, PairMatches.none());
+    }
+
+    /// [#applyToDraft(Map, List, Map, Map, Function, List)] with the regex matches its call has already found (the
+    /// records' pairs, say), so the catalogue's ways are placed on the records without running them again.
+    ///
+    /// @param mapping     The draft's mapping, changed in place.
+    /// @param names       The records' fields.
+    /// @param values      Each field's values.
+    /// @param notes       The source notes.
+    /// @param detailCheck Why an event_detail can't be an action element, or null.
+    /// @param records     The sample's records, as the draft reads them, or null when not known.
+    /// @param matches     The call's regex matches.
+    /// @return What was applied, as [#applyToDraft(Map, List, Map, Map, Function)] returns.
+    @SuppressWarnings({"unchecked", "checkstyle:ParameterNumber"})
+    public static Map<String, Object> applyToDraft(final Map<String, Object> mapping,
+                                                   final List<String> names,
+                                                   final Map<String, List<String>> values,
+                                                   final Map<String, Object> notes,
+                                                   final Function<String, String> detailCheck,
+                                                   final List<Map<String, Object>> records,
+                                                   final PairMatches matches) {
         final List<Map<String, Object>> common = (List<Map<String, Object>>) mapping.get("common");
         final Map<String, Object> applied = new LinkedHashMap<>();
         final List<String> appliedFields = new ArrayList<>();
@@ -398,7 +419,7 @@ public final class SourceNotes {
         }
         applied.put(CATALOGUED, true);
         applied.putAll(CatalogueTranslation.apply(mapping, names, values, catalogue, catchAllReason(notes, catalogue),
-                detailFields, detailCheck, records));
+                detailFields, detailCheck, records, matches));
         return applied;
     }
 
