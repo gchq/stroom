@@ -34,7 +34,9 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolTimeoutException;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -45,6 +47,9 @@ import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,6 +70,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
     static final String NAME = "step_records";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
     static final String LOCATIONS_ARG = "locations";
+    /// The argument naming a saved survey_feed result whose locations are stepped.
+    static final String LOCATIONS_FROM_ARG = "locations_from";
     static final String DRAFT_CODE_ARG = "draft_code";
     static final String EXPECT_NONE = "none";
     static final String EXPECT_EVENT = "event";
@@ -114,12 +121,16 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                 .description("Records to step where they are, e.g. survey_feed's locations: "
                                              + "{stream, part, record}.")
                                 .build())
+                        .addStringProperty(LOCATIONS_FROM_ARG, "Instead of locations: a survey_feed result saved "
+                                                               + "to the workspace (its whole_result.saved, given "
+                                                               + "when it was too large to show whole), every "
+                                                               + "location it lists stepped.")
                         .addProperty(DRAFT_CODE_ARG, ObjectSchema.builder()
                                 .description(PipelineStepping.DRAFT_CODE_DESCRIPTION)
                                 .build())
                         .addEnumProperty(PipelineStepping.CHILD_TYPE_ARG, PipelineStepping.CHILD_TYPES,
                                 PipelineStepping.CHILD_TYPE_DESCRIPTION)
-                        .required(PIPELINE_UUID_ARG, LOCATIONS_ARG)
+                        .required(PIPELINE_UUID_ARG)
                         .build())
                 .build();
     }
@@ -161,10 +172,14 @@ class StepRecordsTool extends AbstractBuiltInTool {
             return JsonResults.refused("Give pipeline_uuid: the pipeline to step.");
         }
         try {
-            final List<Location> locations = locations(call);
+            final List<Location> given = locations(call);
+            final List<Location> locations = given.isEmpty() && stringArg(call, LOCATIONS_FROM_ARG) != null
+                    ? savedLocations(context, stringArg(call, LOCATIONS_FROM_ARG))
+                    : given;
             if (locations.isEmpty()) {
                 return JsonResults.refused("Give locations: the records to step, e.g. survey_feed's locations: "
-                                           + "{stream, part, record}.");
+                                           + "{stream, part, record}; or locations_from= a survey_feed result "
+                                           + "saved to the workspace.");
             }
             final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
             return JsonResults.of(stepRecords(call, context, pipelineUuid, locations, draftCode));
@@ -394,6 +409,37 @@ class StepRecordsTool extends AbstractBuiltInTool {
         return record.get("errors") instanceof final Number number
                 ? number.intValue()
                 : 0;
+    }
+
+    /// @param context The call's context.
+    /// @param path    A survey_feed result saved to the session's workspace ([LargeResults]).
+    /// @return The locations it lists.
+    /// @throws ToolRefusal if there is no such file, or it lists no locations.
+    static List<Location> savedLocations(final ToolCallContext context, final String path) {
+        final SessionWorkspace workspace = context.workspace().orElseThrow(() -> new ToolRefusal(
+                "locations_from reads a file in this session's workspace, which it has none of: give locations"));
+        final Object saved;
+        try {
+            saved = JsonUtil.readValue(Files.readString(workspace.localFile(WorkspacePath.parse(path)),
+                    StandardCharsets.UTF_8), Object.class);
+        } catch (final IOException | RuntimeException e) {
+            throw new ToolRefusal("locations_from='" + path + "' is not a saved survey_feed result that can be read "
+                                  + "(" + e.getMessage() + "): give the whole_result.saved path of a survey_feed "
+                                  + "result, or locations");
+        }
+        final List<?> listed = saved instanceof final Map<?, ?> result && result.get(LOCATIONS_ARG) instanceof
+                final List<?> list
+                ? list
+                : List.of();
+        if (listed.isEmpty()) {
+            throw new ToolRefusal("The saved result at '" + path + "' lists no locations: give the whole_result.saved "
+                                  + "path of a survey_feed result, or locations");
+        }
+        final List<Location> locations = new ArrayList<>();
+        for (int i = 0; i < listed.size(); i++) {
+            locations.add(Location.of(listed.get(i), i));
+        }
+        return locations;
     }
 
     /// @param call A call.

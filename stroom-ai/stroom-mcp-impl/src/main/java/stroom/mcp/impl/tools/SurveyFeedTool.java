@@ -411,9 +411,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final Map<String, Object> surveyed = withinTimeLimit(context, () -> survey(call, context, request, feed,
                     chosen, fewer));
             // A build's survey is a step of its plan (surveyed, then covered for an existing feed): what comes next.
-            return JsonResults.of(request.build() == null || request.find() != null
+            final Map<String, Object> result = new LinkedHashMap<>(request.build() == null || request.find() != null
                     ? surveyed
                     : plan.get().withNext(context, request.build(), surveyed));
+            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
+            SurveyOutline.outlineIfLarge(context.caller(), context.workspace(), NullSafe.nonBlankStringElse(
+                    request.build(), feed), result, LargeResults.WHOLE_RESULT_CHARS);
+            return JsonResults.of(result);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {

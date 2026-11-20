@@ -16,11 +16,19 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,6 +102,34 @@ class TestStepRecordsTool {
         assertThat(result.get("verdict")).isEqualTo("blocking");
         assertThat(String.valueOf(TestStepSampleTool.groups(result).getFirst().get("reason")))
                 .contains("EventDetail/Unknown");
+    }
+
+    @Test
+    void theLocationsOfASurveySavedToTheWorkspaceAreSteppedFromIt(@TempDir final Path dir) throws IOException {
+        // A survey too large for a client outside Stroom is saved whole, its locations only counted in the result
+        // (seen in eval cases 56 and 65 on Haiku: 83 and 169 locations, past the client's limit).
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, at.getPartIndex(), at.getRecordIndex(), AN_EVENT);
+        final Path file = dir.resolve("eval-65.json");
+        Files.writeString(file, "{\"feed\": \"EVAL-65\", \"locations\": [{\"stream\": 7, \"part\": 0, "
+                                + "\"record\": 0, \"shape\": \"a\", \"source_types\": [\"x\"]}, {\"stream\": 8, "
+                                + "\"record\": 5, \"shape\": \"b\"}]}");
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.localFile(1, WorkspacePath.parse("/outputs/survey_feed/eval-65.json"))).thenReturn(file);
+        final ToolCallContext context = world.contextBuilder().workspace(new SessionWorkspace(chats, 1)).build();
+
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations_from\": "
+                                      + "\"/outputs/survey_feed/eval-65.json\"}"), context);
+
+        assertThat(result.isError()).as(result.text()).isFalse();
+        assertThat(BuildToolCalls.json(result.text()).get("records_stepped")).isEqualTo(2);
+        assertThat(world.steps).containsExactly("REFRESH 0:0", "REFRESH 0:5");
+
+        final ToolResult missing = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations_from\": \"/outputs/x.json\"}"),
+                context);
+        assertThat(missing.isError()).isTrue();
+        assertThat(missing.text()).contains("locations_from='/outputs/x.json'");
     }
 
     @Test

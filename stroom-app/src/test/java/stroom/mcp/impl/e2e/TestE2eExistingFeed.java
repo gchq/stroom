@@ -18,6 +18,7 @@ package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
+import stroom.mcp.impl.WholeResults;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.json.JsonUtil;
@@ -511,6 +512,48 @@ class TestE2eExistingFeed extends AbstractE2eTest {
                 "locations", locations));
         assertThat(located).containsEntry("verdict", "clean");
         assertThat(number(located.get("records_stepped"))).isEqualTo(locations.size());
+    }
+
+    @Test
+    void aSurveyTooLargeForTheClientIsReadFromItsSavedFileAndSteppedFromIt() {
+        // Seen in eval cases 36, 56, 61, 65 and 66 on Haiku: surveys of 52,000 to 109,000 characters, saved by Claude
+        // Code to files of its own. Past 40,000 characters a survey is given in outline: its shapes without their
+        // examples' detail, its locations counted, the whole saved to the workspace, its locations stepped from
+        // there.
+        createFeed(SOURCE_BUILD, SOURCE);
+        final List<String> records = new ArrayList<>();
+        for (int i = 0; i < 160; i++) {
+            final StringBuilder record = new StringBuilder("{\"ts\": \"2026-09-28T09:00:00Z\", \"host\": \"app01\", "
+                                                           + "\"user\": \"alice\", \"action\": \"act_" + i % 80 + "\"");
+            for (int f = 0; f < 25; f++) {
+                record.append(", \"detail_").append(i % 80).append('_').append(f).append("\": \"")
+                        .append("value ".repeat(4)).append('"');
+            }
+            records.add(record.append('}').toString());
+        }
+        upload(SOURCE, "[" + String.join(", ", records) + "]");
+
+        final Map<String, Object> given = client.jsonAsGiven("survey_feed", args("feed", SOURCE, "build", BUILD));
+
+        dump("survey given", given);
+        assertThat(jsonOf(given).length()).as("within what the client takes").isLessThanOrEqualTo(40_000);
+        assertThat(WholeResults.outlined(given)).as("given in outline: %s", given).isTrue();
+        final String saved = String.valueOf(map(given, "whole_result").get("saved"));
+        assertThat(saved).isEqualTo("/outputs/survey_feed/" + BUILD + ".json");
+        final Map<String, Object> locations = map(given, "locations");
+        assertThat((String) locations.get("step_them")).contains("locations_from='" + saved + "'");
+        final List<Map<String, Object>> shapes = list(given, "shapes");
+        assertThat(shapes).isNotEmpty().allSatisfy(shape -> assertThat(shape).containsKeys("signature", "count")
+                .doesNotContainKeys("locations", "more_examples"));
+
+        // Read as the agent reads it: a shape's examples and locations, then every location stepped from the file.
+        final List<?> savedShapes = (List<?>) WholeResults.read(client, saved, ".shapes");
+        assertThat(savedShapes).hasSameSizeAs(shapes);
+        assertThat((Map<String, Object>) savedShapes.getFirst()).containsKeys("example", "locations");
+        final String pipelineUuid = jsonPipeline(V1);
+        final Map<String, Object> stepped = json("step_records", args("pipeline_uuid", pipelineUuid,
+                "locations_from", saved));
+        assertThat(number(stepped.get("records_stepped"))).isEqualTo(number(locations.get("records")));
     }
 
     @Test

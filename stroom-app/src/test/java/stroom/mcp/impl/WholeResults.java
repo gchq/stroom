@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /// A tool's result given in outline to a client outside Stroom (too large to give whole: `whole_result` says where
 /// it is saved), read back whole from the workspace as an agent reads it: with jq, a part at a time, a list's entries
@@ -32,6 +33,7 @@ public final class WholeResults {
     // How a workspace read marks a line it cut.
     private static final String CUT = " more characters)";
     private static final int SLICE = 100;
+    private static final Pattern MORE = Pattern.compile("\\(\\d+ results in all; \\d+ not shown\\..*\\)");
 
     private WholeResults() {
         // Static only.
@@ -77,14 +79,22 @@ public final class WholeResults {
         if ("\"array\"".equals(type)) {
             final int length = Integer.parseInt(jq(client, path, at + " | length").strip());
             final List<Object> entries = new ArrayList<>();
-            for (int from = 0; from < length; from += SLICE) {
+            int from = 0;
+            while (from < length) {
                 final String text = jq(client, path, at + "[" + from + ":" + Math.min(length, from + SLICE) + "][]");
-                final List<String> lines = text.lines().toList();
+                // A read gives so many characters, then says how many more there are: read on from there.
+                final List<String> lines = text.lines()
+                        .filter(line -> !MORE.matcher(line).matches())
+                        .toList();
+                if (lines.isEmpty()) {
+                    throw new AssertionError("Nothing read at " + at + "[" + from + "] in " + path + ": " + text);
+                }
                 for (int i = 0; i < lines.size(); i++) {
                     entries.add(lines.get(i).endsWith(CUT)
                             ? read(client, path, at + "[" + (from + i) + "]")
                             : parse(lines.get(i), at));
                 }
+                from += lines.size();
             }
             return entries;
         }
