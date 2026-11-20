@@ -27,7 +27,6 @@ import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
-import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -626,7 +625,7 @@ public class TableBuilderAnalyticExecutor {
                         parentTaskContext);
 
                 // Delete old data from the DB.
-                applyDataRetentionRules(lmdbDataStore, analytic.analyticProcessConfig);
+                applyDataRetentionRules(lmdbDataStore, analytic.analyticProcessConfig, analytic.trackerData);
             }
         }
     }
@@ -758,12 +757,16 @@ public class TableBuilderAnalyticExecutor {
             }
         }
 
+        // A row of a rule with a window clause is judged only when its window is closed, so that it
+        // is judged once, on all of its events.
+        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
+        to = Instant.ofEpochMilli(lmdbDataStore.getClosedWindowTime(to.toEpochMilli()));
+
         if (to.isAfter(from)) {
             // Create a time filter.
             final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
 
             SearchRequest searchRequest = dataStore.searchRequest();
-            final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             final QueryKey queryKey = new QueryKey(analytic.analyticRuleDoc().getUuid() +
                                                    " - " +
                                                    analytic.analyticRuleDoc().getName());
@@ -799,24 +802,32 @@ public class TableBuilderAnalyticExecutor {
     }
 
     private void applyDataRetentionRules(final LmdbDataStore lmdbDataStore,
-                                         final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                                         final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig,
+                                         final TableBuilderAnalyticTrackerData trackerData) {
         final SimpleDuration dataRetention = tableBuilderAnalyticProcessConfig.getDataRetention();
         if (dataRetention != null) {
             final CurrentDbState currentDbState = lmdbDataStore.sync();
 
-            final long to = Optional
+            final long retentionTo = Optional
                     .ofNullable(currentDbState)
                     .map(CurrentDbState::getLastEventTime)
                     .map(ms -> SimpleDurationUtil.minus(Instant.ofEpochMilli(ms), dataRetention).toEpochMilli())
                     .orElse(0L);
+            // A time window is judged only when it is closed, so it is kept until then, and for as
+            // long after as a later window reads it.
+            final long to = Math.min(
+                    retentionTo,
+                    lmdbDataStore.getDeletableWindowTime(trackerData.getLastWindowEndTimeMs()));
 
-            // Create a time filter.
-            final TimeFilter timeFilter = new TimeFilter(
-                    0L,
-                    to);
+            if (to >= 0) {
+                // Create a time filter.
+                final TimeFilter timeFilter = new TimeFilter(
+                        0L,
+                        to);
 
-            // Delete old data from the DB.
-            lmdbDataStore.delete(new DeleteCommand(Key.ROOT_KEY, timeFilter));
+                // Delete old data from the DB.
+                lmdbDataStore.delete(new DeleteCommand(Key.ROOT_KEY, timeFilter));
+            }
         }
     }
 
@@ -887,19 +898,24 @@ public class TableBuilderAnalyticExecutor {
                     if (fieldValue != null) {
                         final String fieldName = column.getDisplayValue();
 
-                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                        // The stream and event of an ungrouped row are in hidden columns that the
+                        // query adds, and are the event that the detection links to.
+                        if (FieldIndex.isStreamIdFieldName(fieldName)) {
                             try {
                                 streamId = Long.parseLong(fieldValue);
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                             }
-                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                        } else if (FieldIndex.isEventIdFieldName(fieldName)) {
                             try {
                                 eventId = Long.parseLong(fieldValue);
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                             }
-                        } else {
+                        } else if (!Boolean.FALSE.equals(column.isVisible())) {
+                            // A hidden column is one the query needs but the select clause does not
+                            // name, such as the key of a time window, so it is not a value of the
+                            // detection.
                             values.add(new DetectionValue(fieldName, fieldValue));
                         }
                     }

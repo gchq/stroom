@@ -29,6 +29,16 @@ public interface Generator {
      */
     void set(Val[] values, StoredValues storedValues);
 
+    /// Sets values from a row that is not in the window being added to, but in another window that
+    /// a function such as `lag` reads from it. The copy is marked with how far away its own window
+    /// is by [StoredValues#getWindowShift()]. Most generators take nothing from such a row, so that
+    /// it is not counted in a window it is not in; a generator with children passes it to them.
+    ///
+    /// @param values       The data values of the row.
+    /// @param storedValues The values being gathered for the window that reads the row.
+    default void setShifted(final Val[] values, final StoredValues storedValues) {
+    }
+
     /**
      * Evaluate this generator by applying the function that this generator
      * performs to the values supplied by set().
