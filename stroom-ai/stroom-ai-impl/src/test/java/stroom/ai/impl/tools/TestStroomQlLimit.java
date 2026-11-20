@@ -66,6 +66,39 @@ class TestStroomQlLimit {
     }
 
     @Test
+    void aLimitIsAddedAtTheTopLevelNotInsideASubquery() {
+        // The where subquery's select isn't the query's: Stroom refuses a limit inside it.
+        final Limited limited = StroomQlLimit.apply(
+                "from Events where UserId in (from People select Name) select UserId", 100);
+
+        assertThat(limited.change()).isEqualTo(Change.ADDED);
+        assertThat(limited.query()).isEqualTo(
+                "from Events where UserId in (from People select Name) limit 100\nselect UserId");
+        // With no top-level select, the limit goes at the end, outside the bracket.
+        assertThat(StroomQlLimit.apply("from Events where UserId in (from People select Name)", 100).query())
+                .isEqualTo("from Events where UserId in (from People select Name)\nlimit 100");
+    }
+
+    @Test
+    void aJoinedQuerysOwnLimitIsNotTakenForTheQuerys() {
+        final String query = "from Events\n"
+                             + "join (from People limit 5000 select Name) as p on UserId = p.Name\n"
+                             + "select UserId";
+        final Limited limited = StroomQlLimit.apply(query, 100);
+
+        // The joined query keeps its own limit; the outer search is capped.
+        assertThat(limited.change()).isEqualTo(Change.ADDED);
+        assertThat(limited.query()).isEqualTo("from Events\n"
+                                              + "join (from People limit 5000 select Name) as p on UserId = p.Name\n"
+                                              + "limit 100\nselect UserId");
+        // A top-level limit after a joined query's is the one lowered.
+        assertThat(StroomQlLimit.apply("from Events join (from People limit 50 select Name) as p "
+                                       + "on UserId = p.Name limit 500 select UserId", 100).query())
+                .isEqualTo("from Events join (from People limit 50 select Name) as p "
+                           + "on UserId = p.Name limit 100 select UserId");
+    }
+
+    @Test
     void aQueryThatCantBeReadIsLeftForStroomToRefuse() {
         assertThat(StroomQlLimit.apply("   ", 100)).isEqualTo(new Limited("   ", Change.NONE));
     }

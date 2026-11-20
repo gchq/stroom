@@ -25,7 +25,8 @@ import java.util.List;
 /// Caps the rows a StroomQL query the agent runs may return, so none of its searches is unbounded: a query with no
 /// `limit` is given one, and a larger limit is lowered. Without sorting or grouping, Stroom stops a search as soon
 /// as it has that many rows. The query is read with Stroom's own tokeniser, so text in strings and comments is
-/// never taken for a keyword.
+/// never taken for a keyword. Only the query's own `select` and `limit` count: a bracketed query inside it, joined
+/// or in `where`, keeps its own.
 final class StroomQlLimit {
 
     private StroomQlLimit() {
@@ -43,13 +44,20 @@ final class StroomQlLimit {
         } catch (final RuntimeException e) {
             return new Limited(query, Change.NONE);
         }
+        // Only the query's own clauses count, not those of a bracketed query inside it (a joined query or a
+        // where subquery), which keeps its own limit.
         int limitIndex = -1;
         int selectIndex = -1;
+        int depth = 0;
         for (int i = 0; i < tokens.size(); i++) {
             final TokenType type = tokens.get(i).getTokenType();
-            if (TokenType.LIMIT.equals(type) && limitIndex == -1) {
+            if (TokenType.OPEN_BRACKET.equals(type)) {
+                depth++;
+            } else if (TokenType.CLOSE_BRACKET.equals(type)) {
+                depth = Math.max(0, depth - 1);
+            } else if (depth == 0 && TokenType.LIMIT.equals(type) && limitIndex == -1) {
                 limitIndex = i;
-            } else if (TokenType.SELECT.equals(type) && selectIndex == -1) {
+            } else if (depth == 0 && TokenType.SELECT.equals(type) && selectIndex == -1) {
                 selectIndex = i;
             }
         }
