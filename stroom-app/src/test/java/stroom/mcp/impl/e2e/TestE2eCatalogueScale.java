@@ -17,6 +17,7 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.mcp.impl.McpTestClient;
+import stroom.mcp.impl.WholeResults;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,12 +34,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Proposals add event types in batches, as an agent sends them, never the catalogue whole; every reply is compact
 /// (counts and problems, within a budget, as TestE2eSourceDocs measures replies), the full listing saved to the
 /// workspace; the high-confidence event types are confirmed in one form for the source type group, the medium and
-/// low ones in sets of up to ten.
+/// low ones in sets of up to ten. A client outside Stroom takes at most 40,000 characters of a reply (seen in eval
+/// case 68 on Haiku: replies of 61,000 to 93,000 characters saved by Claude Code to files of its own): past it, a
+/// reply is given in outline, saved whole to the workspace, and read from there as the agent reads it.
 class TestE2eCatalogueScale extends AbstractE2eTest {
 
     private static final int TYPES = 300;
     private static final int BATCH = 50;
-    private static final int REPLY_BUDGET = 64_000;
+    // The most of a reply a client outside Stroom takes (LargeResults.WHOLE_RESULT_CHARS).
+    private static final int REPLY_BUDGET = 40_000;
     // A workspace file a reply names.
     private static final Pattern SAVED = Pattern.compile("\"(/[^\"]+\\.json)\"");
 
@@ -59,8 +63,13 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
             for (int k = from; k < from + BATCH; k++) {
                 batch.add(eventType(typeId(k), "Process", confidence(k), when("code", "equals", code(k))));
             }
-            checked = proposed(build, raw, batch);
-            replies.put("proposals from " + from, jsonOf(checked).length());
+            final Map<String, Object> given = client.jsonAsGiven(CATALOGUE, args("build", build, "stream_ids", raw,
+                    "proposals", batch));
+            replies.put("proposals from " + from, jsonOf(given).length());
+            checked = WholeResults.of(client, given);
+            if (from + BATCH >= TYPES) {
+                outlinedAsAnAgentReadsIt(given);
+            }
         }
         assertThat(countsOf(checked)).hasSize(TYPES).allSatisfy((typeId, records) -> assertThat(records)
                 .isEqualTo(2L));
@@ -75,9 +84,10 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
         final int formsBefore = client.forms().size();
         Map<String, Object> step = Map.of();
         for (int round = 0; round < 40 && !"confirmed".equals(step.get("status")); round++) {
-            step = json(CATALOGUE, args("build", build, "confirm", true, "catch_all", Map.of("allow_unknown",
-                    "E2E: kept as Unknown")));
-            replies.put("confirm " + round, jsonOf(step).length());
+            final Map<String, Object> given = client.jsonAsGiven(CATALOGUE, args("build", build, "confirm", true,
+                    "catch_all", Map.of("allow_unknown", "E2E: kept as Unknown")));
+            replies.put("confirm " + round, jsonOf(given).length());
+            step = WholeResults.of(client, given);
         }
         assertThat(step).containsEntry("status", "confirmed");
         final List<Integer> sets = eventTypesPutInEachForm(formsSince(formsBefore));
@@ -92,6 +102,21 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
         dump("reply sizes", replies);
         assertThat(worst.getValue()).as("the largest reply is %s's", worst.getKey()).isLessThanOrEqualTo(
                 REPLY_BUDGET);
+    }
+
+    // The check of all 300, given in outline: what the agent acts on whole, the rest read from the saved file.
+    private void outlinedAsAnAgentReadsIt(final Map<String, Object> given) {
+        assertThat(WholeResults.outlined(given)).as("past 40,000 characters, given in outline: %s", given).isTrue();
+        assertThat(given).containsKeys("status", "recorded", "hint", "next", "table");
+        assertThat(map(checkOf(given), "counts")).as("counted").containsEntry("event_types", TYPES);
+        assertThat(checkOf(given)).containsKeys("problems", "overlaps", "uncatalogued", "several");
+        final String saved = String.valueOf(map(given, "whole_result").get("saved"));
+        assertThat(saved).isEqualTo("/outputs/catalogue_event_types/e2e-cat-scale.json");
+        assertThat(McpTestClient.text(client.call("jq", args("path", saved, "query", ".check.counts | length"))))
+                .as("every event type's count in the saved result").isEqualTo(String.valueOf(TYPES));
+        final String rows = McpTestClient.text(client.call("jq", args("path", saved, "query",
+                ".check.counts | to_entries[] | select(.value.records != 2) | .key")));
+        assertThat(rows).as("every event type recognises its two records").isEqualTo("No results.");
     }
 
     private static String typeId(final int k) {

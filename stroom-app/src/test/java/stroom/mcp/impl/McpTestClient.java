@@ -115,13 +115,24 @@ public final class McpTestClient {
         return result;
     }
 
-    /// Calls a tool that answers in JSON, and fails if it refuses or fails.
+    /// Calls a tool that answers in JSON, and fails if it refuses or fails. A result too large to give whole, given
+    /// in outline, is read back whole from the workspace as an agent would ([WholeResults]); [#jsonAsGiven] gives
+    /// it as it came.
     ///
     /// @param tool      The tool's name.
     /// @param arguments Its arguments.
     /// @return Its result, as JSON.
-    @SuppressWarnings("unchecked")
     public Map<String, Object> json(final String tool, final Map<String, Object> arguments) {
+        return WholeResults.of(this, jsonAsGiven(tool, arguments));
+    }
+
+    /// Calls a tool that answers in JSON, and fails if it refuses or fails.
+    ///
+    /// @param tool      The tool's name.
+    /// @param arguments Its arguments.
+    /// @return Its result, as JSON, as the client was given it (in outline, if too large to give whole).
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> jsonAsGiven(final String tool, final Map<String, Object> arguments) {
         final CallToolResult result = call(tool, arguments);
         final String text = text(result);
         if (Boolean.TRUE.equals(result.isError())) {

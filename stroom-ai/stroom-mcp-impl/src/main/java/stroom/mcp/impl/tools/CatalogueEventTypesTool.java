@@ -293,7 +293,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
-            return JsonResults.of(catalogue(call, context));
+            final Map<String, Object> result = catalogue(call, context);
+            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
+            CatalogueOutline.outlineIfLarge(context.caller(), context.workspace(), stringArg(call, BUILD_ARG), result,
+                    LargeResults.WHOLE_RESULT_CHARS);
+            return JsonResults.of(result);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         }

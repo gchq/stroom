@@ -377,14 +377,19 @@ final class LargeResults {
         }
         final Set<String> parts = new LinkedHashSet<>(outlined);
         parts.addAll(cut);
+        final List<String> textLines = parts.stream()
+                .filter(part -> whole.get(part) instanceof String && asLines(whole.get(part)) instanceof List<?>)
+                .toList();
+        if (!textLines.isEmpty()) {
+            // Saved as a list of their lines: read with raw=true.
+            said.put("text_lines", textLines);
+        }
         final String example = parts.isEmpty()
                 ? null
                 : parts.iterator().next();
         final String query = example == null
                 ? "."
-                : "." + example + (whole.get(example) instanceof List<?>
-                                   || whole.get(example) instanceof final String text
-                                      && text.length() > LINE_CHARS && text.indexOf('\n') >= 0
+                : "." + example + (asLines(whole.get(example)) instanceof List<?>
                         ? "[]"
                         : "");
         said.put("read", "This result is too large to show whole here, so the parts named are given in outline "
