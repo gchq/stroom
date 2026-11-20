@@ -33,11 +33,13 @@ import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 
 /// Shows an MCP client's user a form (MCP elicitation) and waits for their answer, for one of Stroom's tools: its
 /// questions (e.g. ask_user's), or a request to approve a call that changes something.
@@ -99,9 +101,22 @@ class McpForms {
         }
         try {
             final Duration timeout = config.getFormTimeout().getDuration();
-            final ElicitResult result = exchange
+            // Sent as it is asked for, on this thread. A send that fails (the client gave up on the request, so its
+            // stream has gone) is never answered, and the transport drops the whole session: the form is given up
+            // on at once, and the session put back. Seen in eval case 36 on Haiku over Claude Code: a call worked
+            // past the client's time limit, then asked a form, and waited for an answer that couldn't come; the
+            // client's next request started a new session, without the session's draft.
+            final CompletableFuture<ElicitResult> answer = exchange
                     .createElicitation(new ElicitFormRequest(message, schema, null))
-                    .block(timeout);
+                    .toFuture();
+            if (session.keepInTransport()) {
+                answer.cancel(false);
+                LOGGER.info(() -> LogUtil.message(
+                        "A form for {} couldn't be sent: the client had given up on the call asking it",
+                        session.owner().toDisplayString()));
+                return new ElicitResult(Action.CANCEL, null, null);
+            }
+            final ElicitResult result = Mono.fromFuture(answer).block(timeout);
             return result == null
                     ? new ElicitResult(Action.CANCEL, null, null)
                     : result;

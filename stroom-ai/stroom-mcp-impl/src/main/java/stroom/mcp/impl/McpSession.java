@@ -40,19 +40,23 @@ final class McpSession {
     private final RunningCalls runningCalls = new RunningCalls();
     private final long startedMs = System.currentTimeMillis();
     private final AtomicLong lastUsedMs = new AtomicLong(startedMs);
+    private final TransportKeeper transportKeeper;
 
-    /// @param id           The session's id, as the client sends it in its `Mcp-Session-Id` header.
-    /// @param owner        The user who started it, the only one who may use it.
-    /// @param clientInfo   The client's name and version, as it gave them, or null.
-    /// @param capabilities What the client said it can do (e.g. show forms), or null.
+    /// @param id              The session's id, as the client sends it in its `Mcp-Session-Id` header.
+    /// @param owner           The user who started it, the only one who may use it.
+    /// @param clientInfo      The client's name and version, as it gave them, or null.
+    /// @param capabilities    What the client said it can do (e.g. show forms), or null.
+    /// @param transportKeeper Puts the session back in the transport if the transport dropped it.
     McpSession(final String id,
                final UserRef owner,
                final Implementation clientInfo,
-               final ClientCapabilities capabilities) {
+               final ClientCapabilities capabilities,
+               final TransportKeeper transportKeeper) {
         this.id = Objects.requireNonNull(id, "id");
         this.owner = Objects.requireNonNull(owner, "owner");
         this.clientInfo = clientInfo;
         this.capabilities = capabilities;
+        this.transportKeeper = Objects.requireNonNull(transportKeeper, "transportKeeper");
     }
 
     /// @return The session's id.
@@ -105,5 +109,24 @@ final class McpSession {
     /// @return When the session was last used.
     long lastUsedMs() {
         return lastUsedMs.get();
+    }
+
+    /// Puts the session back in the transport if the transport dropped it: it does when a send on one of the
+    /// session's requests fails (the client gave up on that request), though the session's other requests go on.
+    ///
+    /// @return True if the transport had dropped it.
+    boolean keepInTransport() {
+        return transportKeeper.keep();
+    }
+
+    /// Puts a session back in the transport if the transport dropped it (see [StroomMcpServer]).
+    @FunctionalInterface
+    interface TransportKeeper {
+
+        /// A session not held in a transport (e.g. in a test): never dropped.
+        TransportKeeper NONE = () -> false;
+
+        /// @return True if the transport had dropped the session, and it has been put back.
+        boolean keep();
     }
 }

@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,6 +95,43 @@ class TestMcpForms {
     }
 
     @Test
+    void aFormThatCantBeSentIsGivenUpOnAtOnceAndItsSessionKept() throws Exception {
+        // Seen in eval case 36 on Haiku over Claude Code: a call asked a form after the client had given up on it.
+        // The send failed, so the transport dropped the session and never answered the form, and the call waited
+        // for an answer that couldn't come. As the transport does: the send is made as the form is asked for.
+        final AtomicBoolean dropped = new AtomicBoolean();
+        final AtomicBoolean sent = new AtomicBoolean();
+        Mockito.when(exchange.createElicitation(Mockito.any())).thenReturn(Mono.<ElicitResult>never()
+                .doOnSubscribe(subscription -> {
+                    sent.set(true);
+                    dropped.set(true);
+                }));
+        final McpForms forms = forms(4);
+        final McpSession session = session(ALICE, () -> dropped.getAndSet(false));
+
+        // At once, not after the form time limit (10 minutes).
+        final ElicitResult result = CompletableFuture.supplyAsync(() -> forms.ask(session, exchange, "Allow it?",
+                McpForms.NO_FIELDS)).get(10, TimeUnit.SECONDS);
+
+        assertThat(result.action()).isEqualTo(Action.CANCEL);
+        assertThat(sent).isTrue();
+        // Put back in the transport.
+        assertThat(dropped).isFalse();
+        assertThat(forms.waitingCount()).isZero();
+    }
+
+    @Test
+    void aFormSentIsAnsweredAsTheUserAnswers() {
+        Mockito.when(exchange.createElicitation(Mockito.any())).thenReturn(Mono.just(new ElicitResult(
+                Action.ACCEPT, Map.of("q1", "yes"), null)));
+
+        final ElicitResult result = forms(4).ask(session(ALICE), exchange, "Allow it?", McpForms.NO_FIELDS);
+
+        assertThat(result.action()).isEqualTo(Action.ACCEPT);
+        assertThat(result.content()).containsEntry("q1", "yes");
+    }
+
+    @Test
     void oneUserMayHaveAtMostHalfTheNodesFormsWaiting() throws Exception {
         final List<Sinks.One<ElicitResult>> answers = new ArrayList<>();
         Mockito.when(exchange.createElicitation(Mockito.any())).thenAnswer(invocation -> {
@@ -140,8 +178,12 @@ class TestMcpForms {
     }
 
     private static McpSession session(final UserRef user) {
+        return session(user, McpSession.TransportKeeper.NONE);
+    }
+
+    private static McpSession session(final UserRef user, final McpSession.TransportKeeper transportKeeper) {
         return new McpSession("s-" + user.getUuid(), user, new Implementation("client", "1"),
-                ClientCapabilities.builder().elicitation().build());
+                ClientCapabilities.builder().elicitation().build(), transportKeeper);
     }
 
     private static void waitFor(final BooleanSupplier condition) throws InterruptedException {

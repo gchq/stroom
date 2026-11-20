@@ -246,22 +246,29 @@ class McpTools {
         return ToolCallContext.builder(session.toolSession())
                 .workspace(new SessionWorkspace(chatWorkspace, workspaces.chatIdFor(session)))
                 .userQuestions(new McpUserQuestions(session, exchange, forms, slot))
-                .progress(progress(exchange, request.progressToken()))
+                .progress(progress(session, exchange, request.progressToken()))
                 .limits(SessionLimits.lookedUp(chatWorkspace::limits))
                 .links(StroomLinks.absolute(uriFactoryProvider.get().uiUri("").toString()))
                 .build();
     }
 
-    // Tells the client how the call is getting on, if it asked to be told.
-    private static ToolProgress progress(final McpAsyncServerExchange exchange, final Object progressToken) {
+    // Tells the client how the call is getting on, if it asked to be told. Each message is sent as it is reported, on
+    // the call's thread; one that can't be sent (the client gave up on the call) makes the transport drop the whole
+    // session, which is put back (see McpSession#keepInTransport).
+    private static ToolProgress progress(final McpSession session,
+                                         final McpAsyncServerExchange exchange,
+                                         final Object progressToken) {
         if (progressToken == null) {
             return ToolProgress.NONE;
         }
         final AtomicInteger step = new AtomicInteger();
-        return message -> exchange.progressNotification(new ProgressNotification(progressToken,
-                        (double) step.incrementAndGet(), null, message, null))
-                .subscribe(ignored -> {
-                }, e -> LOGGER.debug(() -> LogUtil.message("Unable to send progress: {}", e.getMessage()), e));
+        return message -> {
+            exchange.progressNotification(new ProgressNotification(progressToken,
+                            (double) step.incrementAndGet(), null, message, null))
+                    .subscribe(ignored -> {
+                    }, e -> LOGGER.debug(() -> LogUtil.message("Unable to send progress: {}", e.getMessage()), e));
+            session.keepInTransport();
+        };
     }
 
     private static boolean isOffered(final StroomTool tool, final ToolGrants grants) {

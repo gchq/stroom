@@ -97,6 +97,7 @@ class TestMcpApprovals {
         final ClientCapabilities capabilities = showsForms
                 ? ClientCapabilities.builder().elicitation().build()
                 : ClientCapabilities.builder().build();
-        return new McpSession("s1", USER, new Implementation("client", "1"), capabilities);
+        return new McpSession("s1", USER, new Implementation("client", "1"), capabilities,
+                McpSession.TransportKeeper.NONE);
     }
 }

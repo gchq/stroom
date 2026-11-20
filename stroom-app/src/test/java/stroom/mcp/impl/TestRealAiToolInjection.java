@@ -122,7 +122,7 @@ class TestRealAiToolInjection extends AbstractAiIntegrationTest {
         final UserRef admin = administrator();
         toolPolicy("Everything", AiToolAccess.READ_WRITE, admin);
         final McpSession session = new McpSession("session-1", admin, new Implementation("test", "1"),
-                ClientCapabilities.builder().build());
+                ClientCapabilities.builder().build(), McpSession.TransportKeeper.NONE);
 
         final List<Tool> listed = asUser(admin, () -> mcpTools.list(session));
 

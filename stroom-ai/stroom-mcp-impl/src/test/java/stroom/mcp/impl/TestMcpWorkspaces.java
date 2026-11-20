@@ -44,7 +44,7 @@ class TestMcpWorkspaces {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final McpWorkspaces workspaces = new McpWorkspaces(() -> aiDao, () -> retention, securityContext);
     private final McpSession session = new McpSession("s1", USER, new Implementation("client", "1"),
-            ClientCapabilities.builder().build());
+            ClientCapabilities.builder().build(), McpSession.TransportKeeper.NONE);
 
     @Test
     void aSessionsWorkspaceIsMadeWhenFirstNeededThenKept() {

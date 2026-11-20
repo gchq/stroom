@@ -3162,6 +3162,10 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   a new session with an empty workspace, its draft and sent mappings gone. `StroomMcpServer` puts a session still
   open back in the transport after each answer (`TransportSessions.restore`). changes= with neither uuid nor build
   applies to the session's latest draft; a refusal with nothing to apply to names the calls that give one.
+  The same drop happens when a form (or a progress message) a call sends after the client gave up can't be sent,
+  long before the call answers (seen in the eval case 36 re-run: 61 s of work, then a form): the transport never
+  answers that form, so it waited out its time limit. A form or progress message whose send drops the session puts
+  it back at once (`McpSession.keepInTransport`), and the form is taken as unanswered.
 * The generator gained `not`, `starts_with`, `contains` and the explicit `catch_all` flag; nothing else changed
   (choose/when in order, `unmatched` warn, `mcp_log_kind`).
 

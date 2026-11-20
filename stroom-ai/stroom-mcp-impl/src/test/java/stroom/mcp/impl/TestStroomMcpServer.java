@@ -79,6 +79,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -486,6 +487,61 @@ class TestStroomMcpServer {
     }
 
     @Test
+    void aSessionIsKeptWhenAFormCantBeSentToAClientThatGaveUpOnTheCall() throws Exception {
+        // Seen in eval case 36 on Haiku over Claude Code, after the fix above: a build_translation_xslt call worked
+        // for 61 s, past the client's limit of 60 s ("The operation timed out."), then asked the user a form. The
+        // form couldn't be sent on the request's stream, which the client had closed, so the transport (MCP SDK
+        // 2.0.1) dropped the whole session there and then, and never answered the form: the call waited for an
+        // answer that couldn't come, and the client's next request, answered 404, started a new session without
+        // the draft. The form is given up on at once, and the session kept.
+        final TransportSessions transportSessions = new TransportSessions(server.transport());
+        final String sessionId = rawSession("{\"elicitation\":{}}");
+        final CountDownLatch gaveUp = new CountDownLatch(1);
+        final CompletableFuture<ElicitResult> asked = new CompletableFuture<>();
+        behaviours.put("asking_search", context -> {
+            try {
+                assertThat(gaveUp.await(10, TimeUnit.SECONDS)).isTrue();
+                // The first write to a connection the client has closed seems to succeed (the client's reset comes
+                // back after it), so the call reports progress first, as a tool working away does.
+                Thread.sleep(300);
+                context.progress().report("working");
+                Thread.sleep(300);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+            final ElicitResult answer = context.userQuestions().ask("asking_search", "c1", "Which?",
+                    McpForms.NO_FIELDS);
+            asked.complete(answer);
+            return ToolResult.text("answered " + answer.action());
+        });
+
+        final HttpRequest call = HttpRequest.newBuilder(rawRequest(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":7,"
+                                                                              + "\"method\":\"tools/call\","
+                                                                              + "\"params\":{\"name\":"
+                                                                              + "\"asking_search\",\"arguments\":"
+                                                                              + "{},\"_meta\":{\"progressToken\":"
+                                                                              + "\"p1\"}}}"),
+                        (name, value) -> true)
+                .timeout(Duration.ofMillis(500))
+                .build();
+        // The client gives up on the call, as Claude Code did.
+        assertThatThrownBy(() -> http.send(call, HttpResponse.BodyHandlers.ofString()))
+                .isInstanceOf(HttpTimeoutException.class);
+        gaveUp.countDown();
+
+        // The form is taken as unanswered at once, not after the form time limit (10 minutes).
+        assertThat(asked.get(10, TimeUnit.SECONDS).action()).isEqualTo(Action.CANCEL);
+        assertThat(transportSessions.has(sessionId)).isTrue();
+        // The session goes on: its next call is answered in it, not refused as a session not found.
+        final HttpResponse<String> next = rawPost(sessionId, "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":"
+                                                             + "\"tools/call\",\"params\":{\"name\":\"read_thing\","
+                                                             + "\"arguments\":{}}}");
+        assertThat(next.statusCode()).isEqualTo(200);
+        assertThat(next.body()).contains("ran read_thing");
+    }
+
+    @Test
     void aUsersOldestIdleSessionIsEndedToMakeRoom() {
         aiConfig = Mockito.mock(AiConfig.class);
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null,
@@ -837,10 +893,16 @@ class TestStroomMcpServer {
 
     // A session started over plain HTTP, as a client without the SDK would.
     private String rawSession() throws Exception {
+        return rawSession("{}");
+    }
+
+    // A session started over plain HTTP, its client saying it can do what the capabilities (JSON) say.
+    private String rawSession(final String capabilities) throws Exception {
         final HttpResponse<String> response = http.send(rawRequest(null, "{\"jsonrpc\":\"2.0\",\"id\":1,"
                                                                          + "\"method\":\"initialize\",\"params\":"
                                                                          + "{\"protocolVersion\":\"2025-06-18\","
-                                                                         + "\"capabilities\":{},\"clientInfo\":"
+                                                                         + "\"capabilities\":" + capabilities
+                                                                         + ",\"clientInfo\":"
                                                                          + "{\"name\":\"raw\",\"version\":\"1\"}}}"),
                 HttpResponse.BodyHandlers.ofString());
         assertThat(response.statusCode()).isEqualTo(200);

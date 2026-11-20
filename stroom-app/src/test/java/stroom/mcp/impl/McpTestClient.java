@@ -74,7 +74,7 @@ public final class McpTestClient {
             capabilities.elicitation();
         }
         this.session = new McpSession(UUID.randomUUID().toString(), owner, new Implementation("Test client", "1"),
-                capabilities.build());
+                capabilities.build(), McpSession.TransportKeeper.NONE);
         Mockito.when(exchange.createElicitation(Mockito.any())).thenAnswer(invocation -> {
             final ElicitFormRequest form = invocation.getArgument(0);
             forms.add(form);

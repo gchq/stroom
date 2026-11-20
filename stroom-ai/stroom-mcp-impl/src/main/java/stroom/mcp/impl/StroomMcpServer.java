@@ -258,7 +258,7 @@ class StroomMcpServer {
                     notificationHandlers, () -> closed(id), McpJsonDefaults.getSchemaValidator());
             init = new McpStreamableServerSessionInit(session, initialize(initializeRequest));
             sessions.put(id, new OpenSession(new McpSession(id, owner, initializeRequest.clientInfo(),
-                    initializeRequest.capabilities()), session));
+                    initializeRequest.capabilities(), () -> keepInTransport(id)), session));
         }
         LOGGER.info(() -> LogUtil.message(
                 "MCP session started for {} by {}",
@@ -409,19 +409,21 @@ class StroomMcpServer {
         }));
     }
 
-    // The transport (MCP SDK 2.0.1) drops a whole session when the answer to one of its requests can't be sent, which
-    // it tries on this thread as the call's result is given: a session still open here is put back, so its next
-    // request isn't answered 404 and its client doesn't start a new session with an empty workspace. Seen in eval
-    // case 36 on Haiku over Claude Code: a build_translation_xslt call ran past the client's time limit, the client
-    // gave up on that request, the answer failed, and the next changes= was refused, the session's draft lost with
-    // its workspace.
-    private void keepInTransport(final String sessionId) {
+    // The transport (MCP SDK 2.0.1) drops a whole session when a send on one of its requests fails: the call's
+    // answer, given on this thread, or a form the call asks (see McpForms). A session still open here is put back, so
+    // its next request isn't answered 404 and its client doesn't start a new session with an empty workspace. Seen
+    // in eval case 36 on Haiku over Claude Code: a build_translation_xslt call ran past the client's time limit, the
+    // client gave up on that request, the answer (and then a form) couldn't be sent, and the next changes= was
+    // refused, the session's draft lost with its workspace. Returns true if the session had been dropped.
+    private boolean keepInTransport(final String sessionId) {
         final OpenSession open = sessions.get(sessionId);
         if (open != null && !transportSessions.has(sessionId)) {
-            LOGGER.debug(() -> LogUtil.message("Keeping MCP session {}, which the transport dropped when an answer "
-                                               + "couldn't be sent", sessionId));
+            LOGGER.debug(() -> LogUtil.message("Keeping MCP session {}, which the transport dropped when a send "
+                                               + "on one of its requests failed", sessionId));
             transportSessions.restore(sessionId, open.sdkSession());
+            return true;
         }
+        return false;
     }
 
     private static McpError sessionEnded() {
