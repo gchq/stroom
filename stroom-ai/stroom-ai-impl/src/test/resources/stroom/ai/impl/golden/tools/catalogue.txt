@@ -1747,7 +1747,7 @@ Offers the user a 'Create dashboard…' button for a new Dashboard built from yo
       "type" : "string"
     },
     "query_type" : {
-      "description" : "As the user chose: stroomql keeps the query as StroomQL (an Embedded Query, which shows its own table); classic makes an Expression Language query and a separate table. Classic can't hold window, filter, having or show clauses.",
+      "description" : "As the user chose: stroomql keeps the query as StroomQL (an Embedded Query, which shows its own table); classic makes an Expression Language query and a separate table. Classic can't hold joins, window, filter, having or show clauses.",
       "enum" : [ "stroomql", "classic" ],
       "type" : "string"
     }

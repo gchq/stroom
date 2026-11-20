@@ -125,7 +125,7 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
                         .addEnumProperty(QUERY_TYPE_ARG, DashboardBuilder.QUERY_TYPES, "As the user chose: "
                                 + DashboardBuilder.STROOMQL + " keeps the query as StroomQL (an Embedded "
                                 + "Query, which shows its own table); " + DashboardBuilder.CLASSIC + " makes an "
-                                + "Expression Language query and a separate table. Classic can't hold window, "
+                                + "Expression Language query and a separate table. Classic can't hold joins, window, "
                                 + "filter, having or show clauses.")
                         .addBooleanProperty(PREVIEW_ARG, "Whether the user wants a data preview below the table, "
                                                          + "as they answered when asked. It needs ungrouped "

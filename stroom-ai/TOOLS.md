@@ -2128,9 +2128,10 @@ it in one of two forms:
 * `stroomql` keeps the query in an Embedded Query, which shows its own table.
 * `classic` turns the query's `where` clause into an expression Query and its `select` into a separate Table.
 
-A classic dashboard can't hold `window`, `filter`, `having` or `show` clauses. The query is formatted and
-validated as `propose_query`'s is. The button opens Stroom's New Dashboard dialog. The server builds the settings
-again from the query when the button is clicked. The new dashboard then opens, ready to run, attached to the chat.
+A classic dashboard can't hold joins (nor `where` subqueries, bracketed queries or a `from` alias), or `window`,
+`filter`, `having` or `show` clauses. The query is formatted and validated as `propose_query`'s is. The button
+opens Stroom's New Dashboard dialog. The server builds the settings again from the query when the button is
+clicked. The new dashboard then opens, ready to run, attached to the chat.
 
 * **Arguments**: `name` (at most 200 characters, one line), `query`, `query_type` (`stroomql` or `classic`),
   `preview` (boolean, required: the tool tells the model to ask the user with `ask_user` if they haven't said),

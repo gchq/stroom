@@ -65,8 +65,9 @@ import java.util.UUID;
 ///
 /// The query can be kept as StroomQL, in an Embedded Query (which shows its own table), or turned into a classic
 /// dashboard: a Query with the expression its `where` gives, and a Table with its columns, grouping, sorting and
-/// limit. A classic dashboard can't hold StroomQL's window, filter, having or show clauses, so a query with any of
-/// them can only be kept as StroomQL.
+/// limit. A classic dashboard can't hold StroomQL's joins (nor the where subqueries, bracketed queries and aliases
+/// that need join support), window, filter, having or show clauses, so a query with any of them can only be kept as
+/// StroomQL.
 public class DashboardBuilder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DashboardBuilder.class);
@@ -164,7 +165,7 @@ public class DashboardBuilder {
                     .build());
             panes.add(pane(QUERY_ID, 400));
         } else {
-            final List<String> problems = classicProblems(tables, table);
+            final List<String> problems = classicProblems(mapped.getQuery(), tables, table);
             if (!problems.isEmpty()) {
                 throw new IllegalArgumentException("A classic dashboard can't hold " + String.join(", ", problems)
                                                    + ". Keep the query as StroomQL, or leave "
@@ -327,8 +328,15 @@ public class DashboardBuilder {
     }
 
     // What a classic dashboard can't hold, as StroomQL names it.
-    private static List<String> classicProblems(final List<TableSettings> tables, final TableSettings table) {
+    private static List<String> classicProblems(final Query query,
+                                                final List<TableSettings> tables,
+                                                final TableSettings table) {
         final List<String> problems = new ArrayList<>();
+        // The Query component holds one data source's expression only, so the join lines, the where terms run
+        // after them and a bracketed first query would all be dropped. A where subquery is run as a join too.
+        if (query.needsJoinSupport()) {
+            problems.add("a join (or a where subquery, a bracketed query or an alias after from)");
+        }
         if (table.getWindow() != null) {
             problems.add("a window");
         }

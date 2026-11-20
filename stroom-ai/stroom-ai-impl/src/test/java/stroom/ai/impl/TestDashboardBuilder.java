@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestDashboardBuilder {
 
     private static final DocRef VIEW = new DocRef("View", "view-uuid", "My View");
+    private static final DocRef HR = new DocRef("DataConnection", "hr-uuid", "HR");
     private static final DocRef PIPELINE = new DocRef("Pipeline", "pipeline-uuid", "Extraction");
 
     private final QueryService queryService = Mockito.mock(QueryService.class);
@@ -57,7 +58,10 @@ class TestDashboardBuilder {
     @BeforeEach
     void setUp() {
         final DataSourceResolver dataSourceResolver = Mockito.mock(DataSourceResolver.class);
-        Mockito.when(dataSourceResolver.resolveDataSourceRef(Mockito.anyString())).thenReturn(VIEW);
+        Mockito.when(dataSourceResolver.resolveDataSourceRef(Mockito.anyString())).thenAnswer(invocation ->
+                HR.getName().equals(invocation.getArgument(0))
+                        ? HR
+                        : VIEW);
         final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         Mockito.when(securityContext.useAsReadResult(Mockito.any())).thenAnswer(invocation ->
                 invocation.<Supplier<?>>getArgument(0).get());
@@ -164,6 +168,35 @@ class TestDashboardBuilder {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("a having clause")
                 .hasMessageContaining("Keep the query as StroomQL");
+    }
+
+    @Test
+    void testClassicRefusesJoins() {
+        // A classic Query holds only the first data source's expression, so each of these would lose rows' meaning.
+        for (final String query : List.of(
+                "from \"My View\" left join \"HR\" as hr on User = hr.Name select User, hr.Department",
+                "from \"My View\" where User in (from \"HR\" select Name) select User",
+                "from \"My View\" as v where exists (from \"HR\" as hr where hr.Name = v.User) select User",
+                "from (from \"My View\" group by User select User, count() as Count) select User, Count",
+                "from \"My View\" as v select v.User")) {
+            assertThatThrownBy(() -> builder.build("Joined", query, DashboardBuilder.CLASSIC, false))
+                    .as(query)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("a join")
+                    .hasMessageContaining("Keep the query as StroomQL");
+        }
+    }
+
+    @Test
+    void testStroomQlHoldsAJoin() {
+        final String query = "from \"My View\" left join \"HR\" as hr on User = hr.Name select User, hr.Department";
+
+        final Built built = builder.build("Joined", query, DashboardBuilder.STROOMQL, false);
+
+        assertThat(built.columns()).containsExactly("User", "hr.Department");
+        final EmbeddedQueryComponentSettings settings = (EmbeddedQueryComponentSettings) built.config()
+                .getComponents().getFirst().getSettings();
+        assertThat(settings.getEmbeddedQueryDoc().getQuery()).isEqualTo(query);
     }
 
     @Test
