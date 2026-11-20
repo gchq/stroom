@@ -1262,7 +1262,7 @@ shows one), and the app itself.
 | Elastic's rerank suffix tooltip `$\{BaseField.score\}` | Still in the template; what shows needs the app |
 | The dashboard table filter dialog's focus on open | Needs a run; no story checks it (`ColumnFilterTabsController`, was `TableFilterPresenter`) |
 | `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | Still open |
-| Debug logging in `DocumentationTabController` | In part: the `GWT.log` calls are left; the commented code is gone |
+| Debug logging in `DocumentationTabController` | Fixed (20 November 2026): the `GWT.log` calls and the commented code are gone |
 | `XPathFilterEditor`'s default condition | Still so, harmless |
 | `CombinedParser.getMode()`'s guess for a None converter | Still so, and the entry is wrong that it has no effect: `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives a Data Splitter the XML range mode |
 | `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Still open |
@@ -1690,10 +1690,21 @@ to delete them by hand.~~
   * ~~The query result's source pane declares a stepping button that nothing shows
     (`QueryTextPane.ui.xml`, `steppingButton`); it was never shown before either. To go with the
     other removals.~~ **Deleted** (checked 30 October 2026: `QueryTextPane` has no stepping button).
-  * Debug logging and commented-out code carried into the new controllers:
+  * ~~Debug logging and commented-out code carried into the new controllers:
     `DocumentationTabController.updateEditState` (`GWT.log`), `updatePreview` (a comment naming the gone
     `iFramePresenter`). To go with the other removals. (`AnalyticEmailDestinationController`'s old
-    `EditorPresenter` code went in wave 16.)
+    `EditorPresenter` code went in wave 16.)~~ **Fixed** (20 November 2026): the `GWT.log` calls and
+    their import are gone, and `updateEditState`'s comment says what it does; the commented-out code
+    had already gone.
+    Left: other controllers still log plain debug lines to the dev console, e.g.
+    `QueryResultTableController` ("setData", "setDataInternal"), `SearchModel` and `QueryModel`
+    ("SearchModel - stop()" and the like), `DataViewerController` ("Setting active tab to …"),
+    `AnnotationEditorController` ("currentValue: …") and `MessageSupport` ("Received selection from
+    vis"). `GWT.log` does nothing in a production compile, so it costs only noise in development.
+    Also found: `DocumentationTabController.updateEditState` runs on every `setText` and
+    `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
+    and shows the preview, and a blank document opens the editor when it becomes editable. It
+    predates the controller; whether a Save should keep the editor open needs a decision.
 * `XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess

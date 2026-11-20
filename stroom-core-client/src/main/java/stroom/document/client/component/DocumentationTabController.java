@@ -31,7 +31,6 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -211,12 +210,11 @@ public class DocumentationTabController extends Controller implements HasToolbar
 
     private void updateEditState() {
         final String rawMarkdown = editor.getText();
-        // No content do default to edit mode
+        // Run on every read and read-only change: edit if there is no content and it may be changed,
+        // otherwise show the preview, closing any edit in progress
         if (NullSafe.isBlankString(rawMarkdown) && !readOnly) {
-            GWT.log("setText, editMode: true");
             setEditMode(true);
         } else {
-            GWT.log("setText, editMode: false");
             setEditMode(false);
         }
     }
