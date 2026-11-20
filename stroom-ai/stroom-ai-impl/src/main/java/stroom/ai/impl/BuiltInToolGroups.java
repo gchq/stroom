@@ -37,7 +37,7 @@ public final class BuiltInToolGroups {
     static final String INDEXING = "indexing";
     static final String DASHBOARDS = "dashboards";
     static final String ADMINISTRATION = "administration";
-    static final String ELASTIC_HUNTING = "elastic_hunting";
+    static final String SEQUENCE_HUNTING = "sequence_hunting";
 
     /// What each group is for, as the tool that turns it on says, in the order the groups are offered.
     static final Map<String, String> PURPOSES = purposes();
@@ -117,8 +117,8 @@ public final class BuiltInToolGroups {
                     "volumes"),
             // Its definition is large and most chats never hunt sequences. Offered only to a user who can use an
             // Elastic Index (StroomTool#isUsable), so a group with none of its tools offered isn't either.
-            ELASTIC_HUNTING, List.of(
-                    "eql_sequence")));
+            SEQUENCE_HUNTING, List.of(
+                    "sequence_query")));
 
     private BuiltInToolGroups() {
         // Static only.
@@ -157,7 +157,7 @@ public final class BuiltInToolGroups {
         purposes.put(DASHBOARDS, "make or change dashboards, their charts and visualisations, and the search "
                                  + "extractions their tables use");
         purposes.put(ADMINISTRATION, "read Stroom's configuration properties, and the tasks running on its nodes");
-        purposes.put(ELASTIC_HUNTING, "hunt across Elastic Indexes for ordered sequences of events (X, then Y, by "
+        purposes.put(SEQUENCE_HUNTING, "hunt across Elastic Indexes for ordered sequences of events (X, then Y, by "
                                       + "the same user or host, within N; N in a row; X and then not Y)");
         return Collections.unmodifiableMap(purposes);
     }

@@ -75,7 +75,7 @@ class TestToolPermissionMatrix {
             new Case("describe_data_source", null, List.of(Need.VIEW, Need.USE)),
             new Case("validate_stroomql", null, List.of(Need.USE)),
             new Case("esql_query", null, List.of(Need.USE)),
-            new Case("eql_sequence", null, List.of(Need.USE)),
+            new Case("sequence_query", null, List.of(Need.USE)),
             new Case("search_events", "{\"index\":\"index-uuid\",\"where\":[{\"field\":\"UserId\","
                                       + "\"value\":\"alice\"}]}", List.of(Need.USE)),
             new Case("propose_query", null, List.of(Need.USE)),
@@ -175,11 +175,11 @@ class TestToolPermissionMatrix {
 
         // A tool in a group is offered as the tool that turns its group on.
         assertThat(new TreeSet<>(withEverything)).containsExactlyElementsOf(OfferedToolNames.withNoGroupsOn(all));
-        // All but the elastic_hunting group's activator: its one tool, eql_sequence, is only offered to a user who
+        // All but the sequence_hunting group's activator: its one tool, sequence_query, is only offered to a user who
         // can use an Elastic Index (its definition is large, and it has nothing to search without one).
-        assertThat(withEverything).contains("activate_elastic_hunting");
+        assertThat(withEverything).contains("activate_sequence_hunting");
         assertThat(withNothing).containsExactlyElementsOf(withEverything.stream()
-                .filter(name -> !"activate_elastic_hunting".equals(name))
+                .filter(name -> !"activate_sequence_hunting".equals(name))
                 .toList());
     }
 

@@ -104,7 +104,8 @@ from the generated documentation and the indexes' fields. Answer in plain words 
 Totals, top N or grouped questions on an Elasticsearch index: esql_query, which Elasticsearch answers itself (rows cut
 short are never a full ranking); row-level work, and other data sources: run_stroomql. Compute derived values and
 cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds. "X, then Y, by the
-same user/host, within N" (N in a row, then NOT Y), in one Elasticsearch index or across several: eql_sequence.
+same user/host, within N" (N in a row, then NOT Y), in one Elasticsearch index or across several: sequence_query
+(Elastic: EQL; other data sources: two steps, as a StroomQL windowed join).
 Rows of two Stroom data sources matched by a key (events enriched from a Data Connection, users with or without a
 match): a StroomQL join in run_stroomql (`from "Events" left join "HR" as hr on UserId = hr.Username`, or
 `where UserId in (from "HR" select Username)`), which joins before the row cap; keep the joined side small (a Data

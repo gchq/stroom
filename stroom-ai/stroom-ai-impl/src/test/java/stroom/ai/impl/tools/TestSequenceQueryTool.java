@@ -29,7 +29,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.EqlQueryWriter.Filter;
 import stroom.ai.impl.tools.EqlQueryWriter.Step;
-import stroom.ai.impl.tools.EqlSequenceTool.Preflight;
+import stroom.ai.impl.tools.SequenceQueryTool.Preflight;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -74,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("unchecked")
-class TestEqlSequenceTool {
+class TestSequenceQueryTool {
 
     private static final DocRef DEVICES = new DocRef(ElasticIndexDoc.TYPE, "devices-uuid", "Devices");
     private static final DocRef SYSMON = new DocRef(ElasticIndexDoc.TYPE, "sysmon-uuid", "Sysmon");
@@ -94,7 +94,7 @@ class TestEqlSequenceTool {
     private final Map<DocRef, Long> counts = new HashMap<>();
     private final List<Sequence> sequences = new ArrayList<>();
     private AiWorkspaceConfig config = new AiWorkspaceConfig();
-    private EqlSequenceTool tool;
+    private SequenceQueryTool tool;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -141,7 +141,7 @@ class TestEqlSequenceTool {
                     null, "9.5.3", List.of());
         });
         sequences.add(pair("alice", "H1", T0, 40_000, 1));
-        tool = new EqlSequenceTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
+        tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
                 () -> queryService, auditLog);
     }
 
@@ -157,7 +157,7 @@ class TestEqlSequenceTool {
                   [any where Image like~ "*powershell.exe"] by SubjectUserName, Computer""");
         assertThat(request.fields()).containsExactly("StreamId", "EventId", "user", "host", "action",
                 "SubjectUserName", "Computer");
-        assertThat(request.size()).isEqualTo(EqlSequenceTool.DEFAULT_LIMIT);
+        assertThat(request.size()).isEqualTo(SequenceQueryTool.DEFAULT_LIMIT);
         assertThat(request.timeRange().getFrom()).isEqualTo("2026-01-01T00:00:00Z");
         assertThat(output)
                 .contains("with maxspan 2m (as asked)")
@@ -166,7 +166,7 @@ class TestEqlSequenceTool {
                 .contains("| user | host | sequences | first | last | shortest gap (s) |")
                 .contains("| alice | H1 | 1 | 2026-01-01T00:00:00.000Z | 2026-01-01T00:00:40.000Z | 40 |")
                 .contains("The sequences are in /outputs/eql/")
-                .contains(EqlSequenceTool.CAVEAT)
+                .contains(SequenceQueryTool.CAVEAT)
                 .contains("ask the user which doc to review (ask_user, the docs as options)")
                 .contains("from \"Devices\"\nwhere (StreamId = 1 and EventId = 1)")
                 .contains("It finds exactly the 1 hit event of this doc");
@@ -175,7 +175,7 @@ class TestEqlSequenceTool {
         Mockito.verify(auditLog).searched(Mockito.any(), Mockito.eq(DEVICES),
                 Mockito.argThat(query -> query.startsWith("sequence with maxspan=2m")
                                          && query.contains("count of step 1: | WHERE TO_LOWER(action) == \"copy\"")),
-                Mockito.eq(1L), Mockito.eq("EQL sequence by the eql_sequence tool"));
+                Mockito.eq(1L), Mockito.eq("EQL sequence by the sequence_query tool"));
         Mockito.verify(auditLog).searched(Mockito.any(), Mockito.eq(SYSMON), Mockito.anyString(), Mockito.eq(1L),
                 Mockito.anyString());
     }
@@ -186,7 +186,7 @@ class TestEqlSequenceTool {
 
         final Map<String, Object> json = JsonUtil.readValue(output, Map.class);
         assertThat(json).containsEntry("maxspan", "2m").containsEntry("sequence_count", 1)
-                .containsEntry("truncated", false).containsEntry("caveat", EqlSequenceTool.CAVEAT);
+                .containsEntry("truncated", false).containsEntry("caveat", SequenceQueryTool.CAVEAT);
         assertThat((List<Object>) json.get("step_counts")).containsExactly(10, 10);
         assertThat((List<Map<String, Object>>) json.get("review_queries")).hasSize(2)
                 .allSatisfy(review -> assertThat(review).containsEntry("exact", true).containsEntry("valid", true));
@@ -201,12 +201,12 @@ class TestEqlSequenceTool {
         final String output = run(chat(questions), args(null));
 
         assertThat(questions.callId).isEqualTo("call-1#form:maxspan");
-        assertThat(questions.intro).isEqualTo(EqlSequenceTool.MAXSPAN_QUESTION + " " + EqlSequenceTool.WIDER_NOTE)
+        assertThat(questions.intro).isEqualTo(SequenceQueryTool.MAXSPAN_QUESTION + " " + SequenceQueryTool.WIDER_NOTE)
                 .doesNotContain("*", "#", "`");
         final Map<String, Object> field = (Map<String, Object>) ((Map<String, Object>) questions.form
                 .get("properties")).get("maxspan");
         assertThat((List<String>) field.get("examples")).containsExactly("5 minutes (the default)", "1 minute",
-                "15 minutes", "1 hour", EqlSequenceTool.ANOTHER_INTERVAL);
+                "15 minutes", "1 hour", SequenceQueryTool.ANOTHER_INTERVAL);
         assertThat(field).containsEntry("default", "5 minutes (the default)");
         assertThat(request().query()).startsWith("sequence with maxspan=1m");
         assertThat(output).contains("with maxspan 1m (the user's answer)");
@@ -223,14 +223,14 @@ class TestEqlSequenceTool {
         final Map<String, Object> field = (Map<String, Object>) ((Map<String, Object>) questions.form
                 .get("properties")).get("maxspan");
         assertThat((List<String>) field.get("examples")).containsExactly("15 minutes (the default)", "1 minute",
-                "1 hour", EqlSequenceTool.ANOTHER_INTERVAL);
+                "1 hour", SequenceQueryTool.ANOTHER_INTERVAL);
         // Typed in the user's own words.
         assertThat(request().query()).startsWith("sequence with maxspan=10m");
     }
 
     @Test
     void anotherIntervalNotGivenOrADeclineRunsNothing() {
-        assertThat(run(chat(new RecordingQuestions(EqlSequenceTool.ANOTHER_INTERVAL)), args(null)))
+        assertThat(run(chat(new RecordingQuestions(SequenceQueryTool.ANOTHER_INTERVAL)), args(null)))
                 .contains("chose another interval but didn't give it");
         assertThat(run(chat(new RecordingQuestions(null)), args(null)))
                 .contains("The user didn't choose a window");
@@ -244,9 +244,9 @@ class TestEqlSequenceTool {
         final String output = run(mcp(), args(null));
 
         assertThat(output).startsWith("Error: Give maxspan")
-                .contains(EqlSequenceTool.MAXSPAN_QUESTION)
+                .contains(SequenceQueryTool.MAXSPAN_QUESTION)
                 .contains("Suggest 5m (the default), or 1m, 15m, 1h, or another interval.")
-                .contains(EqlSequenceTool.WIDER_NOTE);
+                .contains(SequenceQueryTool.WIDER_NOTE);
         Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
     }
 
@@ -333,7 +333,7 @@ class TestEqlSequenceTool {
     @Test
     void aSequenceTheCountsSayIsTooBigIsRefusedBeforeItRuns() {
         // The count reads at most COUNT_CAP + 1 events: more than the cap.
-        counts.put(DEVICES, EqlSequenceTool.COUNT_CAP + 1);
+        counts.put(DEVICES, SequenceQueryTool.COUNT_CAP + 1);
 
         final String output = run(chat(UserQuestions.NONE), args("2m"));
 
@@ -633,10 +633,10 @@ class TestEqlSequenceTool {
     void theResultSaysTheSequencesAreAtLeastThese() {
         final String output = run(chat(UserQuestions.NONE), args("2m"));
 
-        assertThat(output).contains("1 sequence found, for 1 entity. " + EqlSequenceTool.AT_LEAST)
+        assertThat(output).contains("1 sequence found, for 1 entity. " + SequenceQueryTool.AT_LEAST)
                 .contains("By entity (sequences found, at least these):");
         assertThat(JsonUtil.readValue(run(mcp(), args("2m")), Map.class).get("note").toString())
-                .contains(EqlSequenceTool.AT_LEAST);
+                .contains(SequenceQueryTool.AT_LEAST);
     }
 
     @Test
@@ -676,15 +676,15 @@ class TestEqlSequenceTool {
         sequences.clear();
 
         assertThat(run(chat(UserQuestions.NONE), args("2m"))).contains("0 sequences found, for 0 entities. "
-                                                                       + EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+                                                                       + SequenceQueryTool.NO_MATCH_ACROSS_DOCS);
         assertThat(JsonUtil.readValue(run(mcp(), args("2m")), Map.class).get("note").toString())
-                .contains(EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+                .contains(SequenceQueryTool.NO_MATCH_ACROSS_DOCS);
         // One doc, or sequences found: no hint.
         assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(DEVICES, "user"),
                 step(DEVICES, "user"))))).contains("0 sequences found")
-                .doesNotContain(EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+                .doesNotContain(SequenceQueryTool.NO_MATCH_ACROSS_DOCS);
         sequences.add(pair("alice", "H1", T0, 40_000, 1));
-        assertThat(run(chat(UserQuestions.NONE), args("2m"))).doesNotContain(EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+        assertThat(run(chat(UserQuestions.NONE), args("2m"))).doesNotContain(SequenceQueryTool.NO_MATCH_ACROSS_DOCS);
     }
 
     @Test
@@ -723,7 +723,7 @@ class TestEqlSequenceTool {
 
     @Test
     void theDefinitionIsFullNowItIsOfferedOnlyWhenItsGroupIsOn() {
-        // Offered only once the model turns on elastic_hunting, so the rules and examples are back in it; they are
+        // Offered only once the model turns on sequence_hunting, so the rules and examples are back in it; they are
         // also said by the refusal or result that meets them (see theRulesAreAlsoSaidWhereACallMeetsThem).
         final String description = tool.definition().description();
 
@@ -746,18 +746,18 @@ class TestEqlSequenceTool {
         // (docsOnDifferentClustersOrTimeFieldsAreRefusedSayingWhatDiffers), the counts and runAnyway
         // (aSequenceTheCountsSayIsTooBigIsRefusedBeforeItRuns), and the caveat and which doc to review (the
         // result, aSequenceAcrossTwoDocsRunsAsOneEqlSequence).
-        assertThat(EqlSequenceTool.reviewHint(2)).contains("ask the user which doc to review (ask_user, the docs as "
+        assertThat(SequenceQueryTool.reviewHint(2)).contains("ask the user which doc to review (ask_user, the docs as "
                                                            + "options), then offer that doc's with propose_query, or "
                                                            + "propose_dashboard for a table with the event preview.");
-        assertThat(EqlSequenceTool.reviewHint(1)).contains("offer it with propose_query, or propose_dashboard");
+        assertThat(SequenceQueryTool.reviewHint(1)).contains("offer it with propose_query, or propose_dashboard");
     }
 
     @Test
     void sequencesWithNoTimeAreCounted() {
-        assertThat(EqlSequenceTool.untimedNote(2, 5)).startsWith("2 of the 5 sequences came back with no time on "
+        assertThat(SequenceQueryTool.untimedNote(2, 5)).startsWith("2 of the 5 sequences came back with no time on "
                                                                  + "their events")
                 .contains("their times and gaps are empty");
-        assertThat(EqlSequenceTool.untimedNote(1, 1)).startsWith("1 of the 1 sequence came back with no time on its "
+        assertThat(SequenceQueryTool.untimedNote(1, 1)).startsWith("1 of the 1 sequence came back with no time on its "
                                                                  + "events");
     }
 
@@ -807,7 +807,7 @@ class TestEqlSequenceTool {
     void theCountsSayWhatToDo() {
         final List<Step> steps = List.of(stepOf(false, 1), stepOf(false, 1), stepOf(false, 1));
 
-        final Preflight selective = EqlSequenceTool.assess(steps, List.of(50_000L, 4_000L, 200L),
+        final Preflight selective = SequenceQueryTool.assess(steps, List.of(50_000L, 4_000L, 200L),
                 List.of("a", "b", "c"));
         assertThat(selective.notes()).containsExactly("Step 3 matches far fewer events (200) than step 1 (50000): if "
                                                       + "the order doesn't matter to the question, put step 3 first, "
@@ -815,20 +815,20 @@ class TestEqlSequenceTool {
         assertThat(selective.tooBig()).isFalse();
 
         // Not for a small first step, nor where a missing step or runs fix the order.
-        assertThat(EqlSequenceTool.assess(steps, List.of(900L, 10L, 10L), List.of("a", "b", "c")).notes()).isEmpty();
-        assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(true, 1), stepOf(false, 1)),
+        assertThat(SequenceQueryTool.assess(steps, List.of(900L, 10L, 10L), List.of("a", "b", "c")).notes()).isEmpty();
+        assertThat(SequenceQueryTool.assess(List.of(stepOf(false, 1), stepOf(true, 1), stepOf(false, 1)),
                 Arrays.asList(50_000L, null, 10L), Arrays.asList("a", null, "c")).notes()).isEmpty();
-        assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 20)), List.of(50_000L, 10L),
+        assertThat(SequenceQueryTool.assess(List.of(stepOf(false, 1), stepOf(false, 20)), List.of(50_000L, 10L),
                 List.of("a", "b")).notes()).noneMatch(note -> note.contains("far fewer"));
 
         // A step with too few events to make one.
-        assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 20)), List.of(5L, 10L),
+        assertThat(SequenceQueryTool.assess(List.of(stepOf(false, 1), stepOf(false, 20)), List.of(5L, 10L),
                 List.of("a", "b")).notes()).singleElement().asString()
                 .contains("Step 2 matches 10 events in the window (it needs 20 in a row)");
 
         // Too big: the first step past the cap (a bounded count), whatever the later steps.
-        final long capped = EqlSequenceTool.COUNT_CAP + 1;
-        final Preflight big = EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
+        final long capped = SequenceQueryTool.COUNT_CAP + 1;
+        final Preflight big = SequenceQueryTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
                 List.of(capped, 10L), List.of("a", "b"));
         assertThat(big.tooBig()).isTrue();
         assertThat(big.tooBigNote()).contains("step 1 matches more than 1000000 events");
@@ -836,13 +836,13 @@ class TestEqlSequenceTool {
         assertThat(big.notes()).singleElement().asString().contains("Step 2 matches far fewer events (10) than step "
                                                                      + "1 (more than 1000000)");
         // A first step at the cap is not past it; a later step past it is only noted.
-        final Preflight laterLarge = EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
-                List.of(EqlSequenceTool.COUNT_CAP, capped), List.of("a", "b"));
+        final Preflight laterLarge = SequenceQueryTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
+                List.of(SequenceQueryTool.COUNT_CAP, capped), List.of("a", "b"));
         assertThat(laterLarge.tooBig()).isFalse();
         assertThat(laterLarge.notes()).containsExactly("Step 2 matches more than 1000000 events: if the sequence times "
                                                        + "out, narrow that step.");
         // A missing first step: the first step that must happen is judged.
-        assertThat(EqlSequenceTool.assess(List.of(stepOf(true, 1), stepOf(false, 1)),
+        assertThat(SequenceQueryTool.assess(List.of(stepOf(true, 1), stepOf(false, 1)),
                 Arrays.asList(null, capped), Arrays.asList(null, "b")).tooBig()).isTrue();
     }
 
@@ -856,11 +856,11 @@ class TestEqlSequenceTool {
                           + "cheap enough to just run.");
         Mockito.verifyNoInteractions(elasticEsql);
 
-        assertThat(EqlSequenceTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", "2026-01-01T01:00:01Z")))
+        assertThat(SequenceQueryTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", "2026-01-01T01:00:01Z")))
                 .isFalse();
-        assertThat(EqlSequenceTool.isShort(new TimeRange(null, "now() - 30m", "now()"))).isTrue();
-        assertThat(EqlSequenceTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", null))).isFalse();
-        assertThat(EqlSequenceTool.isShort(null)).isFalse();
+        assertThat(SequenceQueryTool.isShort(new TimeRange(null, "now() - 30m", "now()"))).isTrue();
+        assertThat(SequenceQueryTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", null))).isFalse();
+        assertThat(SequenceQueryTool.isShort(null)).isFalse();
     }
 
     private static Step stepOf(final boolean missing, final int runs) {
@@ -912,7 +912,7 @@ class TestEqlSequenceTool {
     }
 
     private String run(final ToolCallContext context, final Map<String, Object> args) {
-        return tool.execute(new ToolCall("call-1", EqlSequenceTool.NAME, JsonUtil.writeValueAsString(args)), context)
+        return tool.execute(new ToolCall("call-1", SequenceQueryTool.NAME, JsonUtil.writeValueAsString(args)), context)
                 .text();
     }
 

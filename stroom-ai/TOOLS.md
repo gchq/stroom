@@ -152,7 +152,6 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `document_info` | A document's type, path, tags, history, version and dependencies | core | yes | | | | View | |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | core | yes | | | Manage Processors | View | |
 | `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster | indexing | yes | indexing | | | View | |
-| `eql_sequence` | Ordered sequences of events across Elastic Index docs on one cluster (EQL): steps, join fields, missing, runs, until | search | yes | elastic_hunting | | | Use | slot |
 | `esql_query` | Totals, top N and grouped answers on an Elastic Index's index, worked out by Elasticsearch (ESQL) | search | yes | | | | Use | slot |
 | `explain_processing` | Why processing isn't happening, or is slow, link by link from nodes and jobs to each filter's tasks and priority | processing | yes | processing | Manage Processors | Manage Jobs, Manage Nodes, View System Info | View | |
 | `explain_retention` | How long data is kept and why: retention rules in order, the rule keeping a feed or stream, what would go now | processing | yes | processing | | Manage Policies, Manage Jobs | | |
@@ -189,6 +188,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `run_stroomql` | Runs a StroomQL query into a workspace table, refusing a search on an index whose answer would mislead | search | yes | | | | | slot |
 | `search_events` | XPath, text or jq search over fetched events into a table; or, given an index, finds events as a dashboard would | search | yes | | | | Use | slot |
 | `search_history` | Searches the chat's history for text | search | yes | | | | | chat |
+| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until); a StroomQL windowed join of two steps on other data sources | search | yes | sequence_hunting | | | Use | slot |
 | `server_tasks` | The tasks running on every node now (Monitoring > Server Tasks) | administration | yes | administration | Manage Tasks | | | |
 | `str_replace` | Replaces text in a workspace file | core | no | | | | | trusted |
 | `stream_meta` | Finds streams and their meta, grouped and aggregated if asked; describes one stream's family | processing | yes | | | View Data | View | |

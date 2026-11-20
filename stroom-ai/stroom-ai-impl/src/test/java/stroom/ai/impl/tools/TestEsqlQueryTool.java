@@ -393,7 +393,7 @@ class TestEsqlQueryTool {
                     .orElseThrow()
                     .description())
                     .contains("Not for ordered sequences (X then Y within N, in one doc or across several): "
-                              + "joins of STATS results get them wrong; use eql_sequence.");
+                              + "joins of STATS results get them wrong; use sequence_query.");
         }
     }
 

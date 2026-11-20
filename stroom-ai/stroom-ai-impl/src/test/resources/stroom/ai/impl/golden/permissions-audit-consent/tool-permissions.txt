@@ -246,7 +246,7 @@ Needs: Use (document)
 - nothing: REFUSED or limited: Error: No Elastic Index doc with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
 - admin: runs (the same as with everything)
 
-## eql_sequence {"maxspan":"2m","steps":[{"index":"elastic-index-uuid","by":["UserId"],"where":[{"field":"UserId","value":"alice"}]},{"index":"elastic-index-uuid","by":["UserId"]}]}
+## sequence_query {"maxspan":"2m","steps":[{"index":"elastic-index-uuid","by":["UserId"],"where":[{"field":"UserId","value":"alice"}]},{"index":"elastic-index-uuid","by":["UserId"]}]}
 Needs: Use (document)
 - everything: runs: Ran the EQL sequence on ElasticIndex 'Test elastic index' (uuid elastic-index-uuid) (Elasticsearch 9.5.3, 3 ms), with maxspan 2m (as asked):
 - without Use (document): REFUSED or limited: Error: No Elastic Index doc with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.

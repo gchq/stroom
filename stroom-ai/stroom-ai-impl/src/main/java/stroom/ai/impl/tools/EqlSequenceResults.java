@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-/// What an `eql_sequence` call's sequences become: a row each (join keys, each step's time, the gaps between steps,
+/// What an `sequence_query` call's sequences become: a row each (join keys, each step's time, the gaps between steps,
 /// the fields chosen, each step's StreamId/EventId), a summary per entity (the join keys' values), and a StroomQL
 /// review query per document that finds the events again through a Stroom search.
 ///

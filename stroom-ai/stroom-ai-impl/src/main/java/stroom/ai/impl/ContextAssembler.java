@@ -74,16 +74,16 @@ public class ContextAssembler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContextAssembler.class);
 
-    /// The guidance bullet that routes ordered questions to eql_sequence, part of [#TOOL_GUIDANCE]: left out of a
+    /// The guidance bullet that routes ordered questions to sequence_query, part of [#TOOL_GUIDANCE]: left out of a
     /// chat's system prompt when the chat isn't offered the tool (see [#withoutGuidanceForToolsNotOffered]).
-    static final String EQL_SEQUENCE_TOOL = "eql_sequence";
-    static final String EQL_SEQUENCE_GUIDANCE = """
+    static final String SEQUENCE_TOOL = "sequence_query";
+    static final String SEQUENCE_GUIDANCE = """
             - For "X, then Y" questions on Elastic Indexes (by the same user or host, within N; N in a row; X \
-            and then not Y), in one index or across several, use eql_sequence (in the elastic_hunting group): never \
+            and then not Y), in one index or across several, use sequence_query (in the sequence_hunting group): never \
             join esql_query or search results by hand.
             """;
     // The guidance bullets about one built-in tool alone, by the tool's name.
-    private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(EQL_SEQUENCE_TOOL, EQL_SEQUENCE_GUIDANCE);
+    private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(SEQUENCE_TOOL, SEQUENCE_GUIDANCE);
 
     /// What a model with tools is told about using them, after the (configurable) system prompt.
     static final String TOOL_GUIDANCE = """
@@ -140,7 +140,7 @@ public class ContextAssembler {
             ones they can't see or that were deleted). Rows cut short are never a full \
             ranking: say how many groups there are in all. Compute derived values and cut-offs in the query, not \
             in your reply: EVAL for conversions, WHERE after STATS for thresholds.
-            """ + EQL_SEQUENCE_GUIDANCE + """
+            """ + SEQUENCE_GUIDANCE + """
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
             them the results (run_stroomql), or to set up a Query document they can run themselves \
             (propose_query), ask them with ask_user before writing it. "Show me", "how many" or "find" mean run \
@@ -510,7 +510,7 @@ public class ContextAssembler {
     }
 
     /// Leaves out the tool guidance about a built-in tool the chat isn't offered, so the prompt never points the
-    /// model at a tool it doesn't have (e.g. eql_sequence for a user who can use no Elastic Index, or whose tool
+    /// model at a tool it doesn't have (e.g. sequence_query for a user who can use no Elastic Index, or whose tool
     /// policies don't grant it).
     ///
     /// @param systemPrompt A chat's system prompt, or null.

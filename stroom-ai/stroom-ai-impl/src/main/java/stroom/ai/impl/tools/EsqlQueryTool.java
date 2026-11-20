@@ -178,7 +178,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                         .chatOnly("; use run_stroomql for row-level work or any other data source")
                         .general(". Not for ordered sequences (X then Y within N, in one doc or across several): "
                                  + "joins of STATS results get them wrong")
-                        .chatOnly("; use eql_sequence")
+                        .chatOnly("; use sequence_query")
                         .general(". Give pipeline: the commands after FROM (written for you), e.g. '| WHERE "
                                  + "event.action == \"allowed\" | STATS total = SUM(bytes) BY user.name | SORT total "
                                  + "DESC | LIMIT 10'. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, "

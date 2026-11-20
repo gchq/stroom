@@ -12,7 +12,6 @@
 - document_info (read-only, reads untrusted content): RUN in every situation
 - document_links (read-only, reads untrusted content): RUN in every situation
 - elastic_index_templates (read-only, reads untrusted content): RUN in every situation
-- eql_sequence (read-only, reads untrusted content): RUN in every situation
 - esql_query (read-only, reads untrusted content): RUN in every situation
 - explain_processing (read-only, reads untrusted content): RUN in every situation
 - explain_retention (read-only, reads untrusted content): RUN in every situation
@@ -49,6 +48,7 @@
 - run_stroomql (read-only, reads untrusted content): RUN in every situation
 - search_events (read-only, reads untrusted content): RUN in every situation
 - search_history (read-only, reads untrusted content): RUN in every situation
+- sequence_query (read-only, reads untrusted content): RUN in every situation
 - server_tasks (read-only, reads untrusted content): RUN in every situation
 - str_replace (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."}
 - stream_meta (read-only, reads untrusted content): RUN in every situation

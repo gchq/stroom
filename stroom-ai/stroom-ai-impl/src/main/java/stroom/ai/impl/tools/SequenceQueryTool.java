@@ -72,7 +72,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
-/// `eql_sequence` - an ordered hunt across sources at volume, run in Elasticsearch as one EQL sequence over one or
+/// `sequence_query` - an ordered hunt across sources at volume, run in Elasticsearch as one EQL sequence over one or
 /// more Elastic Index docs on one cluster ([ElasticEql]): e.g. a device plugged in and then a file copied to it, a
 /// clipboard copy then PowerShell within 2 minutes by the same user on the same host, 20 failed logons then a
 /// success. The model gives structured steps, never EQL: each with its doc, conditions (the `search_events` `where`
@@ -86,9 +86,9 @@ import java.util.function.BooleanSupplier;
 /// the EQL run, the window used, a summary per entity (join keys), the sequences as a workspace table (each step's
 /// time, the gaps, chosen fields and each step's StreamId/EventId), the caveat that the events come straight from
 /// Elasticsearch, and a validated StroomQL review query per doc ([EqlSequenceResults#review]).
-class EqlSequenceTool extends AbstractWorkspaceTool {
+class SequenceQueryTool extends AbstractWorkspaceTool {
 
-    static final String NAME = "eql_sequence";
+    static final String NAME = "sequence_query";
     static final String STEPS_ARG = "steps";
     static final String UNTIL_ARG = "until";
     static final String MAXSPAN_ARG = "maxspan";
@@ -157,7 +157,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     private final AiAuditLog auditLog;
 
     @Inject
-    EqlSequenceTool(final ChatWorkspace workspace,
+    SequenceQueryTool(final ChatWorkspace workspace,
                     final Provider<ElasticEql> elasticEqlProvider,
                     final Provider<ElasticEsql> elasticEsqlProvider,
                     final DataSourceAccess dataSourceAccess,
@@ -201,7 +201,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         return AiToolCategory.SEARCH;
     }
 
-    // The definition is full, as it is offered only once the model turns on its group (elastic_hunting, see
+    // The definition is full, as it is offered only once the model turns on its group (sequence_hunting, see
     // BuiltInToolGroups). The rules a call can break are also said by the refusal or result that meets them.
     @Override
     public ToolDefinition definition() {
@@ -1344,7 +1344,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         if (!outcome.entities().isEmpty()) {
             final List<String> columns = new ArrayList<>(outcome.steps().getFirst().joinFields());
             columns.addAll(List.of("sequences", "first", "last", "shortest gap (s)"));
-            final List<List<String>> cells = outcome.entities().stream().map(EqlSequenceTool::entityCells).toList();
+            final List<List<String>> cells = outcome.entities().stream().map(SequenceQueryTool::entityCells).toList();
             sb.append("\nBy entity (sequences found, at least these):\n\n")
                     .append(ToolTables.preview(columns, cells, SHOWN_ROWS)).append('\n');
             sb.append("\nSequences:\n\n").append(ToolTables.preview(outcome.columns(), outcome.cells(), SHOWN_ROWS))

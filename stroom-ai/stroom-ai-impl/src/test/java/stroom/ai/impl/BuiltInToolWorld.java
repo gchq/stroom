@@ -243,7 +243,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("run_stroomql", json(Map.of("query", STROOMQL))),
             Map.entry("esql_query", json(Map.of("index", "elastic-index-uuid", "pipeline",
                     "| STATS n = COUNT(*) BY UserId | SORT n DESC | LIMIT 2"))),
-            Map.entry("eql_sequence", "{\"maxspan\":\"2m\",\"steps\":[{\"index\":\"elastic-index-uuid\","
+            Map.entry("sequence_query", "{\"maxspan\":\"2m\",\"steps\":[{\"index\":\"elastic-index-uuid\","
                                       + "\"by\":[\"UserId\"],\"where\":[{\"field\":\"UserId\",\"value\":"
                                       + "\"alice\"}]},{\"index\":\"elastic-index-uuid\",\"by\":[\"UserId\"]}]}"),
             Map.entry("summarise_column", "{\"path\":\"/outputs/a.csv\",\"column\":\"UserId\"}"),
@@ -1004,7 +1004,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
         });
         Mockito.when(dataSourceRegistry.fetchDocumentation(Mockito.any())).thenReturn(Optional.empty());
         Mockito.when(dataSourceRegistry.getDataSourceProvider(Mockito.anyString())).thenReturn(Optional.empty());
-        // The Elastic Index docs, as their store lists them, for the tools offered only with one (eql_sequence).
+        // The Elastic Index docs, as their store lists them, for the tools offered only with one (sequence_query).
         final DataSourceProvider elasticProvider = Mockito.mock(DataSourceProvider.class);
         Mockito.when(elasticProvider.getDataSourceDocRefs()).thenReturn(List.of(ELASTIC_INDEX));
         Mockito.when(dataSourceRegistry.getDataSourceProvider(ElasticIndexDoc.TYPE))

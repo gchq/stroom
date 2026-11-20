@@ -873,21 +873,21 @@ class TestContextAssembler {
         // minutes" answered by joining esql_query results by hand, and wrongly.
         assertThat(ContextAssembler.TOOL_GUIDANCE)
                 .contains("For \"X, then Y\" questions on Elastic Indexes (by the same user or host, within N; N in a "
-                          + "row; X and then not Y), in one index or across several, use eql_sequence")
+                          + "row; X and then not Y), in one index or across several, use sequence_query")
                 .contains("never join esql_query or search results by hand");
     }
 
     @Test
     void theGuidanceOnAToolTheChatIsntOfferedIsLeftOut() {
-        // Seen as a risk: without an Elastic Index the chat isn't offered eql_sequence, and the guidance mustn't send
+        // Seen as a risk: without an Elastic Index the chat isn't offered sequence_query, and the guidance mustn't send
         // the model to it.
         final String prompt = "system\n\n" + ContextAssembler.TOOL_GUIDANCE;
 
         assertThat(ContextAssembler.withoutGuidanceForToolsNotOffered(prompt, name -> true)).isEqualTo(prompt);
         final String without = ContextAssembler.withoutGuidanceForToolsNotOffered(prompt,
-                name -> !ContextAssembler.EQL_SEQUENCE_TOOL.equals(name));
-        assertThat(without).doesNotContain("eql_sequence")
-                .isEqualTo(prompt.replace(ContextAssembler.EQL_SEQUENCE_GUIDANCE, ""))
+                name -> !ContextAssembler.SEQUENCE_TOOL.equals(name));
+        assertThat(without).doesNotContain("sequence_query")
+                .isEqualTo(prompt.replace(ContextAssembler.SEQUENCE_GUIDANCE, ""))
                 .contains("WHERE after STATS for thresholds.\n- \"Query\" can mean two things.");
         assertThat(ContextAssembler.withoutGuidanceForToolsNotOffered(null, name -> false)).isNull();
     }

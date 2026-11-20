@@ -184,40 +184,40 @@ class TestToolGroups {
 
     @Test
     void aGroupWithAnUnderscoreInItsNameIsTurnedOnAndKeptOnByItsWholeName() {
-        // elastic_hunting is the first built-in group whose name has the `_` MCP tool names are split at: its
+        // sequence_hunting is the first built-in group whose name has the `_` MCP tool names are split at: its
         // activator names it whole, and turning it on (or calling it in a recent question) turns on the group.
         final AiDao aiDao = Mockito.mock(AiDao.class);
         Mockito.when(aiDao.getMessages(1)).thenReturn(List.of(
                 message(1, 10, AiMessageType.USER_MESSAGE, "first"),
                 message(2, 10, AiMessageType.TOOL_CALL,
-                        "{\"callId\":\"a\",\"tool\":\"activate_elastic_hunting\"}")));
+                        "{\"callId\":\"a\",\"tool\":\"activate_sequence_hunting\"}")));
         final McpToolset toolset = toolset(null, tool("elastic_search"), tool("elastic_count"), tool("hunting_x"),
                 tool("hunting_y"));
-        final ToolGroups groups = ToolGroups.of(builtIns("ls", "eql_sequence", "config_properties"), toolset.tools(),
+        final ToolGroups groups = ToolGroups.of(builtIns("ls", "sequence_query", "config_properties"), toolset.tools(),
                 toolset, 2);
         final ToolGroups.Activations activations = new ToolGroups.Activations(() -> aiDao);
 
         // An MCP server's tools named elastic_... are their own group, not merged into the built-in one.
-        assertThat(groups.groupNames()).containsExactly("administration", "elastic_hunting", "elastic", "hunting");
-        assertThat(groups.groupOf("eql_sequence")).contains(BuiltInToolGroups.ELASTIC_HUNTING);
+        assertThat(groups.groupNames()).containsExactly("administration", "sequence_hunting", "elastic", "hunting");
+        assertThat(groups.groupOf("sequence_query")).contains(BuiltInToolGroups.SEQUENCE_HUNTING);
         assertThat(groups.groupOf("elastic_search")).contains("elastic");
         final Set<String> turnedOn = new HashSet<>();
         final Map<ToolSpecification, ToolExecutor> offered = groups.offered(Set.of(), turnedOn::add);
-        assertThat(names(offered)).containsExactly("ls", "activate_administration", "activate_elastic_hunting",
+        assertThat(names(offered)).containsExactly("ls", "activate_administration", "activate_sequence_hunting",
                 "activate_elastic", "activate_hunting");
         offered.entrySet().stream()
-                .filter(entry -> entry.getKey().name().equals("activate_elastic_hunting"))
+                .filter(entry -> entry.getKey().name().equals("activate_sequence_hunting"))
                 .findFirst()
                 .orElseThrow()
                 .getValue()
-                .execute(ToolExecutionRequest.builder().id("1").name("activate_elastic_hunting").arguments("{}")
+                .execute(ToolExecutionRequest.builder().id("1").name("activate_sequence_hunting").arguments("{}")
                         .build(), null);
-        assertThat(turnedOn).containsExactly(BuiltInToolGroups.ELASTIC_HUNTING);
+        assertThat(turnedOn).containsExactly(BuiltInToolGroups.SEQUENCE_HUNTING);
         assertThat(names(groups.offered(turnedOn, group -> {
-        }))).contains("eql_sequence").doesNotContain("activate_elastic_hunting");
+        }))).contains("sequence_query").doesNotContain("activate_sequence_hunting");
 
         activations.startRun(1, groups::groupOf, Set.of());
-        assertThat(activations.active(1)).containsExactly(BuiltInToolGroups.ELASTIC_HUNTING);
+        assertThat(activations.active(1)).containsExactly(BuiltInToolGroups.SEQUENCE_HUNTING);
     }
 
     @Test

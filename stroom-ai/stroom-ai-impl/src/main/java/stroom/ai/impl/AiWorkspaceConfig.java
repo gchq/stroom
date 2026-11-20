@@ -230,7 +230,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return maxToolArgumentBytes;
     }
 
-    @JsonPropertyDescription("The window an EQL sequence run by the agent (eql_sequence) suggests when the user "
+    @JsonPropertyDescription("The window an EQL sequence run by the agent (sequence_query) suggests when the user "
                              + "hasn't said how far apart its steps may be: the default answer of the question "
                              + "the user is asked, and the suggestion given over MCP. At most 24 hours.")
     @JsonProperty("eqlDefaultMaxspan")

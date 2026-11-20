@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// `eql_sequence` over `/mcp` on a real Stroom and Elasticsearch: two Elastic Index docs with different field names
+/// `sequence_query` over `/mcp` on a real Stroom and Elasticsearch: two Elastic Index docs with different field names
 /// for the same things (a devices index's `user`/`host`, a Sysmon-like index's `SubjectUserName`/`Computer`), seeded
 /// with a few users' events, so the hunts have exact answers: a clipboard copy then PowerShell within 2 minutes by
 /// the same user on the same host; the same with "and then not cancelled" (a missing step); 3 failed logons then a
@@ -67,7 +67,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// The node is [ElasticTestNode]'s (`STROOM_TEST_ELASTIC_URL`): skipped without one unless
 /// `STROOM_TEST_ELASTIC_REQUIRED=true`. The indexes made there are removed after each test.
 @SuppressWarnings("unchecked")
-class TestE2eEqlSequence extends AbstractE2eTest {
+class TestE2eSequenceQuery extends AbstractE2eTest {
 
     private static final String T0 = "2026-01-01T10:00:";
     private static final String DEVICES_BODY = """
@@ -154,8 +154,8 @@ class TestE2eEqlSequence extends AbstractE2eTest {
 
     @Test
     void aCopyThenPowerShellAcrossTwoDocsFindsExactlyItsSequences() {
-        final Map<String, Object> result = json("eql_sequence", copyThenPowerShell(false));
-        dump("eql_sequence", result);
+        final Map<String, Object> result = json("sequence_query", copyThenPowerShell(false));
+        dump("sequence_query", result);
 
         assertThat(result).containsEntry("maxspan", "2m").containsEntry("sequence_count", 2)
                 .containsEntry("truncated", false);
@@ -183,7 +183,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
 
     @Test
     void aMissingStepLeavesOutTheCancelledCopy() {
-        final Map<String, Object> result = json("eql_sequence", copyThenPowerShell(true));
+        final Map<String, Object> result = json("sequence_query", copyThenPowerShell(true));
 
         assertThat(keys(result)).containsExactly(List.of("alice", "H1"));
         assertThat((String) result.get("query")).contains("![any where action == \"Cancel\"] by user, host");
@@ -199,7 +199,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
                 Map.of("index", devices.getUuid(), "by", List.of("user"),
                         "where", List.of(Map.of("field", "action", "value", "Ok")))));
 
-        final Map<String, Object> result = json("eql_sequence", args);
+        final Map<String, Object> result = json("sequence_query", args);
 
         assertThat(keys(result)).containsExactly(List.of("dave"));
         assertThat((String) result.get("query")).contains("with runs=3").doesNotContain("stroom_eql_doc");
@@ -237,8 +237,8 @@ class TestE2eEqlSequence extends AbstractE2eTest {
                             "where", List.of(Map.of("field", "sequence", "value", "upload"))),
                     Map.of("index", auth.getUuid(), "by", List.of("cs-username"), "fields", List.of("by"),
                             "where", List.of(Map.of("field", "by", "value", "SU", "caseInsensitive", true)))));
-            final Map<String, Object> result = json("eql_sequence", args);
-            dump("eql_sequence non-ECS", result);
+            final Map<String, Object> result = json("sequence_query", args);
+            dump("sequence_query non-ECS", result);
 
             final String eql = (String) result.get("query");
             assertThat(eql).isEqualTo("""
@@ -310,8 +310,8 @@ class TestE2eEqlSequence extends AbstractE2eTest {
                             "any_of", List.of(
                                     Map.of("field", "CommandLine", "condition", "CONTAINS", "value", "-enc"),
                                     Map.of("field", "CommandLine", "condition", "CONTAINS", "value", "-e ")))));
-            final Map<String, Object> result = json("eql_sequence", args);
-            dump("eql_sequence text field", result);
+            final Map<String, Object> result = json("sequence_query", args);
+            dump("sequence_query text field", result);
 
             assertThat((String) result.get("query"))
                     .contains("CommandLine.raw : \"get-clipboard\"")
@@ -326,7 +326,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
                     Map.of("index", shells.getUuid(), "by", List.of("user"),
                             "where", List.of(Map.of("field", "Notes", "value", "x"))),
                     Map.of("index", shells.getUuid(), "by", List.of("user"))));
-            assertThat(McpTestClient.text(client.call("eql_sequence", args)))
+            assertThat(McpTestClient.text(client.call("sequence_query", args)))
                     .contains("'Notes' in Elastic Index 'E2E shells " + shellIndex + "' is a text field, which EQL "
                               + "can't search, and it has no subfields");
         } finally {
@@ -367,7 +367,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
                             "where", List.of(Map.of("field", "action", "value", "Login"))),
                     Map.of("index", appDoc.getUuid(), "by", List.of("user"),
                             "where", List.of(Map.of("field", "action", "value", "Login")))));
-            final Map<String, Object> result = json("eql_sequence", args);
+            final Map<String, Object> result = json("sequence_query", args);
 
             assertThat((String) result.get("query")).isEqualTo("""
                     sequence with maxspan=2m
@@ -385,7 +385,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
         final Map<String, Object> args = copyThenPowerShell(false);
         args.remove("maxspan");
 
-        assertThat(McpTestClient.text(client.call("eql_sequence", args)))
+        assertThat(McpTestClient.text(client.call("sequence_query", args)))
                 .contains("Give maxspan")
                 .contains("Within what time of each other must the steps happen?")
                 .contains("Suggest 5m (the default)");
@@ -403,7 +403,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
         final Map<String, Object> args = copyThenPowerShell(false);
         args.put("runAnyway", true);
 
-        assertThat(McpTestClient.text(client.call("eql_sequence", args)))
+        assertThat(McpTestClient.text(client.call("sequence_query", args)))
                 .contains("narrow the window or the first step");
     }
 

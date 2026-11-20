@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Writes the EQL of an `eql_sequence` call from its structured steps, and the ES|QL counts its pre-flight makes of
+/// Writes the EQL of an `sequence_query` call from its structured steps, and the ES|QL counts its pre-flight makes of
 /// each step. Nothing here runs anything.
 ///
 /// A step's conditions take the `search_events` `where` form (field, condition, value), plus `caseInsensitive`.
