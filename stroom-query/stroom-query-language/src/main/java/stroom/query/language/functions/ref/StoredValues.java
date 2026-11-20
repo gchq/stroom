@@ -21,7 +21,8 @@ import java.util.Arrays;
 public class StoredValues {
 
     private final Object[] values;
-    private int period;
+    private long windowKey;
+    private int windowShift;
 
     public StoredValues(final Object[] values) {
         this.values = values;
@@ -35,12 +36,36 @@ public class StoredValues {
         this.values[index] = val;
     }
 
-    public int getPeriod() {
-        return period;
+    /// Gets the key of the time window that the row being added is in, for a query with a `window`
+    /// clause. It is held only while a row is added, and is not stored with the values.
+    ///
+    /// @return The window key, as given by `TimeWindows`.
+    public long getWindowKey() {
+        return windowKey;
     }
 
-    public void setPeriod(final int period) {
-        this.period = period;
+    /// Sets the key of the time window that the row being added is in.
+    ///
+    /// @param windowKey The window key, as given by `TimeWindows`.
+    public void setWindowKey(final long windowKey) {
+        this.windowKey = windowKey;
+    }
+
+    /// Gets how many windows away the row being added really is from the window it is being added
+    /// to. It is not zero for a copy of a row made for a function such as `lag`, which reads the
+    /// values of another window. Like the window key it is not stored with the values.
+    ///
+    /// @return The number of windows, which is zero for a row in its own window, more than zero for a
+    ///         row from an earlier window and less than zero for a row from a later one.
+    public int getWindowShift() {
+        return windowShift;
+    }
+
+    /// Sets how many windows away the row being added really is from the window it is being added to.
+    ///
+    /// @param windowShift The number of windows, as [#getWindowShift()] gives it.
+    public void setWindowShift(final int windowShift) {
+        this.windowShift = windowShift;
     }
 
     @Override
@@ -71,7 +96,8 @@ public class StoredValues {
         final Object[] arr = new Object[values.length];
         System.arraycopy(values, 0, arr, 0, values.length);
         final StoredValues copy = new StoredValues(arr);
-        copy.setPeriod(period);
+        copy.setWindowKey(windowKey);
+        copy.setWindowShift(windowShift);
         return copy;
     }
 }

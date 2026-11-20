@@ -16682,9 +16682,11 @@ components:
         properties:
           advanceSize:
             type: string
-          function:
+          offset:
             type: string
           timeField:
+            type: string
+          timeZone:
             type: string
           windowSize:
             type: string

@@ -77,7 +77,8 @@ public class FsDataStoreModule extends AbstractModule {
 
         // Low priority so we don't remove any temp files while other tasks are still using them.
         LifecycleBinder.create(binder())
-                .bindShutdownTaskTo(S3StreamStoreShutdown.class, 1);
+                .bindShutdownTaskTo(S3StreamStoreShutdown.class, 1)
+                .bindShutdownTaskTo(FsStreamStoreShutdown.class, 1);
     }
 
     @Override
@@ -102,6 +103,18 @@ public class FsDataStoreModule extends AbstractModule {
         @Inject
         public S3StreamStoreShutdown(final S3StreamStore s3StreamStore) {
             super(s3StreamStore::shutdown);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class FsStreamStoreShutdown extends RunnableWrapper {
+
+        @Inject
+        public FsStreamStoreShutdown(final FsStreamStore fsStreamStore) {
+            super(fsStreamStore::shutdown);
         }
     }
 

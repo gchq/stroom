@@ -1209,6 +1209,7 @@ appConfig:
       maxPutsBeforeCommit: 10000
       maxSortedItems: 500000
       maxStringFieldLength: 1000
+      maxWindowCopiesPerEvent: 100
       minPayloadSize: "1M"
       offHeapResults: true
       valueQueueSize: 10000
