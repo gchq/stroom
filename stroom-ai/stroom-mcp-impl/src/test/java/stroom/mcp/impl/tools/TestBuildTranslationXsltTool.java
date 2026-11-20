@@ -576,6 +576,30 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aSaveByUuidAloneIsCheckedAgainstTheBuildsCatalogueAsASaveByBuildIs() {
+        // Found profiling: a save naming only the XSLT's uuid read no catalogue (the notes were looked up by the
+        // call's build, which it doesn't give), so a confirmed event type translated otherwise was saved unsaid.
+        final String logins = SAMPLE.replace(",status,,,,", ",login,carol,ok,s3,");
+        final Map<String, Object> first = world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build",
+                "acme-v1", "name", "N", "sample", logins));
+        assertThat(first).as(String.valueOf(first)).containsKey("saved");
+        final String uuid = String.valueOf(map(first.get("saved")).get("uuid"));
+        // The logins confirmed as Action Other since; the mapping's logon rule writes Logon.
+        confirmedNotes(confirmedType("Authenticate-Logon", "new session", "A session began", "login", "Other"));
+
+        final Map<String, Object> byBuild = world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build",
+                "acme-v1", "name", "N", "sample", logins));
+        final Map<String, Object> byUuid = world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "uuid",
+                uuid, "sample", logins));
+
+        assertThat(byBuild.get("status")).isEqualTo("needs_review");
+        assertThat(byUuid).as(String.valueOf(byUuid)).doesNotContainKey("saved")
+                .containsEntry("status", "needs_review");
+        assertThat((String) byUuid.get("show_user")).isEqualTo(byBuild.get("show_user"))
+                .startsWith("**Event types you confirmed that this mapping translates otherwise**");
+    }
+
+    @Test
     void theUserMayHaveWhatTheyConfirmedFollowedInstead() {
         confirmedStatusAsLogoff();
         final Map<String, Object> kept = keptAsUnknown();

@@ -933,7 +933,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         // event types.
         // A source type group's: its own source types alone, of the build's scope.
         final Optional<SourceTypeScope> scope = b.group == null
-                ? builds.scope(request.build())
+                ? builds.scope(buildOf(request))
                 : Optional.of(new SourceTypeScope(b.build, b.group.field(), SourceTypeRegistry.rows(
                         b.group.registry().found().state()), b.group.sourceTypes()));
         if (samples == null && !streamIds.isEmpty()) {
@@ -995,9 +995,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (samples == null) {
             return;
         }
-        final Map<String, Object> notes = request.build() == null
+        // The build's, a save naming only the XSLT's uuid too (found profiling: a uuid-only save read no catalogue,
+        // so a confirmed event type translated otherwise, or its vendor's code lost, was saved unsaid).
+        final String build = buildOf(request);
+        final Map<String, Object> notes = build == null
                 ? Map.of()
-                : builds.notesInBuild(request.build());
+                : builds.notesInBuild(build);
         final List<String> texts = samples;
         final SplitterSpec spec = splitter;
         final boolean guessed = inferred;
@@ -1088,8 +1091,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // by the sampled records the rules take (checkSample): what a mapping does with confirmed ones is put to the user
     // apart (agreeConfirmedChanged).
     private void checkAgainstNotes(final Build b) {
-        if (b.request.build() == null || b.contradictions == null
-            || SourceNotes.catalogue(builds.notesInBuild(b.request.build())) == null) {
+        final String build = buildOf(b.request);
+        if (build == null || b.contradictions == null || SourceNotes.catalogue(builds.notesInBuild(build)) == null) {
             return;
         }
         b.result.put("source_notes_check", b.contradictions.isEmpty()
@@ -1605,7 +1608,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 : builds.unknownAgreed(request.uuid(), request.build(), request.name());
         final String catchAllAgreed = kept.isEmpty()
                 ? null
-                : catchAllAgreed(request.build());
+                : catchAllAgreed(buildOf(request));
         kept.forEach(rule -> {
             final String key = TranslationBuilds.unknownKey(rule);
             if (key.equals(agreedBefore.get(rule.name()))
