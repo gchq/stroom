@@ -33,6 +33,7 @@ import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.tools.StroomQlSources;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceArguments;
@@ -596,6 +597,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(AiMemoryService.class).toInstance(Mockito.mock(AiMemoryService.class));
                 bind(QueryService.class).toInstance(queryService);
                 bind(DashboardBuilder.class).toInstance(Mockito.mock(DashboardBuilder.class));
+                bind(StroomQlSources.class).toInstance(Mockito.mock(StroomQlSources.class));
                 bind(ResourceStore.class).toInstance(Mockito.mock(ResourceStore.class));
                 bind(Store.class).toInstance(Mockito.mock(Store.class));
                 bind(SecurityContext.class).toInstance(securityContext);

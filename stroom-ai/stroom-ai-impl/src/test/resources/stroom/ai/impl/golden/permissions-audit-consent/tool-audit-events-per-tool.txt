@@ -721,7 +721,7 @@
 (nothing recorded)
 
 ## validate_stroomql {"query":"from \"Test index\"\nselect UserId\n"}
-- audit: processed(1, DocRef{type='Index', uuid='index-uuid', name='Test index'}, "validate_stroomql", "from "Test index"\nselect UserId\n", "OK", true)
+- audit: processedDocuments(1, [DocRef{type='Index', uuid='index-uuid', name='Test index'}], "validate_stroomql", "from "Test index"\nselect UserId\n", "OK", true)
 - event: AskStroomAi.process "Ask Stroom AI ran validate_stroomql in chat 1"
   ProcessEventAction {
     "action" : "EXECUTE",

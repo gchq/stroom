@@ -25,6 +25,7 @@ import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.tools.StroomQlSources;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
@@ -289,6 +290,7 @@ final class ModelEvaluationWorld {
                 bind(TaskContextFactory.class).toInstance(new SimpleTaskContextFactory());
                 bind(Store.class).toInstance(Mockito.mock(Store.class));
                 bind(DashboardBuilder.class).toInstance(Mockito.mock(DashboardBuilder.class));
+                bind(StroomQlSources.class).toInstance(Mockito.mock(StroomQlSources.class));
                 bind(TableSummariser.class).toInstance(Mockito.mock(TableSummariser.class));
                 bind(WordListProvider.class).toInstance(Mockito.mock(WordListProvider.class));
                 bind(TableDownloader.class).toInstance(Mockito.mock(TableDownloader.class));

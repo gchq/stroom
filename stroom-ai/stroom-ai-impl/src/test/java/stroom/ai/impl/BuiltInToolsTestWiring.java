@@ -25,6 +25,7 @@ import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.tools.StroomQlSources;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -101,6 +102,7 @@ final class BuiltInToolsTestWiring {
                 bind(AiMemoryService.class).toInstance(Mockito.mock(AiMemoryService.class));
                 bind(QueryService.class).toInstance(Mockito.mock(QueryService.class));
                 bind(DashboardBuilder.class).toInstance(Mockito.mock(DashboardBuilder.class));
+                bind(StroomQlSources.class).toInstance(Mockito.mock(StroomQlSources.class));
                 bind(ResourceStore.class).toInstance(Mockito.mock(ResourceStore.class));
                 bind(Store.class).toInstance(Mockito.mock(Store.class));
                 bind(SecurityContext.class).toInstance(Mockito.mock(SecurityContext.class));
