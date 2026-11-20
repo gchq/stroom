@@ -258,7 +258,12 @@ public class ToolCallGuard {
         if (others.isEmpty()) {
             return null;
         }
-        return "Joining these rows with those of an earlier query (" + String.join(", ", others) + ")? See "
+        final String joinLine = QueriedSources.joinLine(others.getFirst(), source);
+        return "Joining these rows with those of an earlier query (" + String.join(", ", others) + ")? "
+               + (joinLine == null
+                ? ""
+                : "run_stroomql can join them in one query: " + joinLine + ". ")
+               + "See "
                + (context.session().isChat()
                 ? "get_instructions guide=joins."
                 : "stroom://guide/joins.");
