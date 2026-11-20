@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +37,9 @@ final class CatalogueTables {
     /// The table a set of event types is confirmed by.
     static final String SET_HEADER = "| Event type | Recognised by | Records | Translated as |";
     /// The source notes' table of the catalogue.
-    static final String NOTES_HEADER = "| TypeId | Title | Recognised by | Translated as | Basis |";
+    static final String NOTES_HEADER = "| TypeId | Title | Recognised by | Records | Translated as | Basis |";
+    /// The longest a set's table is in the chat: past it, its first rows and where every row is (the source notes).
+    static final int CHAT_TABLE_CHARS = 20_000;
     /// The catch-all's row's TypeId (the uncatalogued records' events).
     static final String UNKNOWN = "Unknown";
 
@@ -61,19 +64,56 @@ final class CatalogueTables {
         return String.join("\n", lines);
     }
 
+    /// A set's table as the chat shows it: whole when it fits in [#CHAT_TABLE_CHARS]; else its first rows, then how
+    /// many more there are and where every row is (the source notes' "Event types" table), so a long set is still
+    /// one form (decided by the user 2026-11-20).
+    ///
+    /// @param types    The event types of the set, in the order shown.
+    /// @param check    The check of the catalogue they are in (for their records), or null.
+    /// @param notesDoc Where every row is: the source notes doc's name, quoted, or words naming it.
+    /// @return The table, Markdown.
+    static String chatTable(final List<EventType> types, final CatalogueCheckResult check, final String notesDoc) {
+        final String whole = setTable(types, check);
+        if (whole.length() <= CHAT_TABLE_CHARS) {
+            return whole;
+        }
+        final List<String> lines = whole.lines().toList();
+        final StringBuilder shown = new StringBuilder();
+        int rows = 0;
+        for (int i = 0; i < lines.size(); i++) {
+            final String line = lines.get(i);
+            // Room kept for the closing line.
+            if (i >= 2 && shown.length() + line.length() + 300 > CHAT_TABLE_CHARS) {
+                break;
+            }
+            shown.append(line).append('\n');
+            if (i >= 2) {
+                rows++;
+            }
+        }
+        return shown + "\nThe first " + rows + " of these " + types.size() + " event types; the other "
+               + (types.size() - rows) + ", and every row, are in the Event types table of the source notes "
+               + notesDoc + ".";
+    }
+
     /// @param catalogue A catalogue.
+    /// @param records   The records of the sample each event type recognises, by TypeId, as last checked (empty
+    ///                  when unknown: a hand edit read back).
     /// @return Its "Event types" table for the source notes: an event type a row, in the catalogue's order, then
-    /// the catch-all's.
-    static List<String> notesTable(final Catalogue catalogue) {
+    /// the catch-all's. It holds every event type, so the chat need show only a summary of a large set.
+    static List<String> notesTable(final Catalogue catalogue, final Map<String, ?> records) {
         final List<String> lines = new ArrayList<>(List.of("## Event types", "", NOTES_HEADER,
-                "| --- | --- | --- | --- | --- |"));
+                "| --- | --- | --- | --- | --- | --- |"));
         for (final EventType type : catalogue.eventTypes()) {
             lines.add("| " + cell(nonNull(type.typeId())) + " | " + cell(nonNull(type.title())) + " | "
-                      + cell(recognisedBy(type)) + " | " + cell(translatedAs(type)) + " | " + cell(basis(type))
-                      + " |");
+                      + cell(recognisedBy(type)) + " | " + recordsKept(records.get(type.typeId())) + " | "
+                      + cell(translatedAs(type)) + " | " + cell(basis(type)) + " |");
         }
         final Catalogue.CatchAll catchAll = catalogue.catchAll();
-        lines.add("| " + UNKNOWN + " | Uncatalogued records | records no event type recognises | Unknown, their "
+        lines.add("| " + UNKNOWN + " | Uncatalogued records | records no event type recognises | "
+                  + (records.get(UNKNOWN) instanceof final Number count
+                ? String.valueOf(count.longValue())
+                : "") + " | Unknown, their "
                   + "fields kept as Data | " + cell(catchAll.confirmed()
                 ? "confirmed by the user" + (catchAll.allowUnknown() == null
                         ? ""
@@ -169,7 +209,35 @@ final class CatalogueTables {
         return String.join(", ", parts);
     }
 
-    private static String records(final EventType type, final CatalogueCheckResult check) {
+    // A count kept in the notes, said as the set's table says it.
+    private static String recordsKept(final Object count) {
+        if (!(count instanceof final Number number)) {
+            return "";
+        }
+        return number.longValue() == 0
+                ? "0 (not in the sample)"
+                : String.valueOf(number.longValue());
+    }
+
+    /// @param check A check.
+    /// @return The records of the sample each event type recognises, by TypeId, and the uncatalogued ones' under
+    /// [#UNKNOWN]: as the source notes keep them for their table.
+    static Map<String, Object> recordsOf(final CatalogueCheckResult check) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        for (final String typeId : check.order()) {
+            final CatalogueCheckResult.Count count = check.counts().get(typeId);
+            if (count != null) {
+                out.put(typeId, count.records());
+            }
+        }
+        out.put(UNKNOWN, check.uncatalogued().records());
+        return out;
+    }
+
+    /// @param type  An event type.
+    /// @param check The check of its catalogue, or null.
+    /// @return Its records in the sample, for a table's Records column: blank when unchecked.
+    static String records(final EventType type, final CatalogueCheckResult check) {
         if (check == null) {
             return "";
         }
@@ -214,8 +282,9 @@ final class CatalogueTables {
         return "\"" + text + "\"";
     }
 
-    // A table cell: no line breaks, its pipes escaped.
-    private static String cell(final String text) {
+    /// @param text A table cell's text.
+    /// @return It as a cell: no line breaks, its pipes escaped.
+    static String cell(final String text) {
         return nonNull(text).replace("\r", " ").replace("\n", " ").replace("|", "\\|");
     }
 

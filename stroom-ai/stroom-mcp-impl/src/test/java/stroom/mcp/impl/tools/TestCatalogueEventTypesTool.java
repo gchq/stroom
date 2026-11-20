@@ -131,9 +131,9 @@ class TestCatalogueEventTypesTool {
                 List.of(8))).containsEntry("Delete-Records", Map.of("records", 1, "by_way", List.of(1)));
         assertThat(list(check.get("overlaps"))).isEmpty();
         assertThat(map(check.get("uncatalogued"))).containsEntry("records", 0);
-        // The set the user confirms first, as the chat will show it, how it is recognised in words.
-        assertThat(String.valueOf(checked.get("table"))).startsWith(TABLE_HEADER).contains("action is login")
-                .contains("Authenticate Logon, who acted: user");
+        // The set the user confirms first, as the chat will show it: the high-confidence ones summarised.
+        assertThat(String.valueOf(checked.get("table"))).startsWith("**2 high-confidence event types**")
+                .contains("- Authenticate: 2 event types, 16 records; Authenticate-Logon (8), Authenticate-Logoff (8)");
         assertThat(map(checked.get("catalogue")).get("event_types")).isEqualTo(List.of(
                 Map.of("type_id", "Authenticate-Logon", "title", "Authenticate Logon", "status", "proposed"),
                 Map.of("type_id", "Authenticate-Logoff", "title", "Authenticate Logoff", "status", "proposed"),
@@ -146,11 +146,14 @@ class TestCatalogueEventTypesTool {
                 "Authenticate-Logoff", "Export-Report", "Delete-Records");
         assertThat(kept.catchAll().confirmed()).isFalse();
         final String doc = notesText();
+        // Every row, how each is recognised in words and its records: the full table the summary refers to.
         assertThat(doc).contains("## Event types", CatalogueTables.NOTES_HEADER,
-                "| Authenticate-Logon | Authenticate Logon | action is login | Authenticate Logon, who acted: user | "
-                + "agent knowledge (high), proposed |");
+                "| Authenticate-Logon | Authenticate Logon | action is login | 8 | Authenticate Logon, who acted: user "
+                + "| agent knowledge (high), proposed |",
+                "| Delete-Records | Delete Records | action is purge | 1 | Delete | agent knowledge (low), proposed |");
         final List<String> rows = doc.lines().filter(line -> line.startsWith("| ")).toList();
-        assertThat(rows.getLast()).startsWith("| Unknown | Uncatalogued records |");
+        assertThat(rows.getLast()).startsWith("| Unknown | Uncatalogued records | records no event type recognises "
+                                              + "| 0 |");
     }
 
     @Test
@@ -322,7 +325,7 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
-    void theUserConfirmsTheHighConfidenceOnesInOneFormThenSetsOfTenThenTheCatchAll() {
+    void theUserConfirmsTheHighThenTheMediumThenTheLowOnesAFormEachThenTheCatchAll() {
         final List<Map<String, Object>> proposals = new ArrayList<>(List.of(
                 type("Authenticate-Logon", "Authenticate", "high", "login"),
                 type("Authenticate-Logoff", "Authenticate", "high", "logout")));
@@ -334,17 +337,22 @@ class TestCatalogueEventTypesTool {
         // The table first, shown in the chat as it is; then its form, short and plain.
         final Map<String, Object> shown = call(Map.of("build", BUILD, "confirm", true), user.context());
         assertThat(shown).containsEntry("status", "needs_showing");
-        assertThat(String.valueOf(shown.get("table"))).startsWith(TABLE_HEADER).contains("Authenticate-Logon",
-                "Authenticate-Logoff").doesNotContain("Export-Report");
+        // The high-confidence ones summarised, whatever their number; every row in the source notes.
+        assertThat(String.valueOf(shown.get("table"))).startsWith("**2 high-confidence event types**")
+                .contains("Authenticate-Logon", "Authenticate-Logoff", "'acme source notes'")
+                .doesNotContain("Export-Report", TABLE_HEADER);
         assertThat(map(map(shown.get("next")).get("call"))).containsEntry("tool", "catalogue_event_types");
         assertThat(user.shown()).isEmpty();
 
         final Map<String, Object> high = call(Map.of("build", BUILD, "confirm", true), user.context());
         assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form)
-                .startsWith("Accept all 2 event types, or type your amendments").doesNotContain("|"));
+                .startsWith("Accept all 2 event types, or type your amendments").doesNotContain("|")
+                .contains("summarised in the chat", "every row: [acme source notes]("));
         assertThat(high).containsEntry("status", "needs_showing").containsEntry("confirmed_now",
                 List.of("Authenticate-Logon", "Authenticate-Logoff"));
-        assertThat(String.valueOf(high.get("table"))).contains("Export-Report");
+        // The medium ones as their table, whole.
+        assertThat(String.valueOf(high.get("table"))).startsWith(TABLE_HEADER).contains("Export-Report")
+                .doesNotContain("Delete-Records");
 
         call(Map.of("build", BUILD, "confirm", true), user.context());
         // The catch-all last: the uncatalogued records.
@@ -367,7 +375,7 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
-    void mediumConfidenceOnesArePutToTheUserTenAtATime() {
+    void allTheMediumConfidenceOnesArePutToTheUserInOneForm() {
         final StringBuilder lines = new StringBuilder();
         for (int i = 0; i < 50; i++) {
             lines.append("time=2026-11-06T09:%02d:00Z code=c%02d user=user%d\n".formatted(i, i % 25, i % 4));
@@ -385,9 +393,24 @@ class TestCatalogueEventTypesTool {
         final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
         confirmAll(user);
 
+        // Seen: 304 kinds would have been some 30 forms in sets of ten.
         assertThat(user.shown().stream().filter(form -> form.startsWith("Accept all")).toList())
                 .extracting(form -> form.substring(0, form.indexOf(','))).containsExactly(
-                        "Accept all 10 event types", "Accept all 10 event types", "Accept all 5 event types");
+                        "Accept all 25 event types");
+    }
+
+    @Test
+    void aConfidenceWithNoEventTypesIsPassedOver() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Delete-Records", "Delete", "low", "purge")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+
+        confirmAll(user);
+
+        assertThat(user.shown()).hasSize(3);
+        assertThat(user.shown().get(0)).startsWith("Accept all 1 event type,").contains("1 high-confidence");
+        assertThat(user.shown().get(1)).startsWith("Accept all 1 event type,").contains("1 low-confidence");
+        assertThat(user.shown().get(2)).contains("uncatalogued records");
     }
 
     @Test
@@ -414,7 +437,9 @@ class TestCatalogueEventTypesTool {
         propose(List.of(Map.of("op", "change", "type_id", "Authenticate-Logoff", "title", "Session timeout")));
         final Map<String, Object> again = call(Map.of("build", BUILD, "confirm", true), user.context());
         assertThat(again).containsEntry("status", "needs_showing");
-        assertThat(String.valueOf(again.get("table"))).contains("Session timeout");
+        // The summary names TypeIds only: the change is in every row of the source notes, which it refers to.
+        assertThat(String.valueOf(again.get("table"))).contains("'acme source notes'");
+        assertThat(notesText()).contains("| Authenticate-Logoff | Session timeout |");
     }
 
     @Test
@@ -462,7 +487,8 @@ class TestCatalogueEventTypesTool {
 
         final Map<String, Object> review = call(Map.of("build", BUILD, "confirm", true), plain());
         assertThat(review).containsEntry("status", "needs_review").containsKey("review_id");
-        assertThat(String.valueOf(review.get("table"))).startsWith(TABLE_HEADER);
+        // The same summary as a client with forms is shown.
+        assertThat(String.valueOf(review.get("table"))).startsWith("**1 high-confidence event type**");
         // Not its id: shown again.
         assertThat(call(Map.of("build", BUILD, "confirm", true, "reviewed", "true"), plain()))
                 .containsEntry("status", "needs_review");

@@ -50,6 +50,7 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -82,9 +83,12 @@ import java.util.regex.Pattern;
 ///   catalogue checked ([CatalogueCheck]) against the scope's records as processing reads them: compact (counts and
 ///   problems), the full listing saved to the workspace. Problems the proposals bring are refused (nothing
 ///   recorded); overlaps and event types that may be several are recorded, and refuse confirmation until fixed.
-/// * **confirm**: the next set put to the user, its table shown in the chat first (`needs_showing`), then a short
-///   form ("Accept all N event types, or type your amendments"): the high-confidence event types in one form, the
-///   medium and the low in sets of up to ten, then the catch-all for uncatalogued records. A confirmation, given only
+/// * **confirm**: the next set put to the user, shown in the chat first (`needs_showing`), then a short form
+///   ("Accept all N event types, or type your amendments"): at most three sets, then the catch-all for uncatalogued
+///   records (decided by the user 2026-11-20: never many forms). The high-confidence event types, however many, as a
+///   summary by what happened with those worth a look row by row ([CatalogueSummary]); the medium, then the low, each
+///   one set, its table whole (cut past [CatalogueTables#CHAT_TABLE_CHARS]); every row in the source notes' "Event
+///   types" table, which the summary, a cut table and the form refer to. A confirmation, given only
 ///   in its form (decided 2026-11-18): amendments come back for the agent to propose (`op: change`), and the set is
 ///   put to the user again. A client that can't show forms confirms through `needs_review` and its `review_id`.
 ///
@@ -107,8 +111,6 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     static final String NEEDS_REVIEW = "needs_review";
     /// A result's status: every event type and the catch-all confirmed.
     static final String CONFIRMED = "confirmed";
-    /// The most medium- or low-confidence event types put to the user at once.
-    static final int SET_SIZE = 10;
     /// The confirmation's key for the reading a call gave (a source with no mapping yet), kept for the calls after
     /// it.
     static final String READING = "reading";
@@ -520,7 +522,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         result.put("recorded", recorded);
         if (recorded) {
             result.put("source_notes", notes.recordCatalogue(calling.context(), calling.build(), calling.source(),
-                    kept, withStreams(confirming(calling.notesNow()), read)));
+                    kept, withRecords(withStreams(confirming(calling.notesNow()), read), check)));
         }
         final boolean amendmentSent = !changed && brought.isEmpty() && applied.refused().isEmpty()
                                       && confirming(calling.notesNow()).containsKey(AMENDED);
@@ -530,6 +532,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             // confirm=true replayed the amendment, and the build stopped.
             final Map<String, Object> marks = withStreams(confirming(calling.notesNow()), read);
             marks.remove(AMENDED);
+            marks.put(RecordSourceNotesTool.RECORDS, CatalogueTables.recordsOf(check));
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), kept, marks);
         }
         if (!applied.refused().isEmpty()) {
@@ -545,7 +548,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final List<EventType> next = nextSet(kept);
         if (recorded && !check.refused() && !next.isEmpty()) {
             // The set the user confirms next, as the chat will show it.
-            result.put(TABLE, CatalogueTables.setTable(next, check));
+            result.put(TABLE, shownSet(calling, next, check));
         }
         result.put("catalogue", compact(kept));
         saved(calling, applied.catalogue(), check).ifPresent(path -> result.put("listing", path));
@@ -671,8 +674,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final boolean catchAll = set.isEmpty();
         final String shown = catchAll
                 ? catchAllShown(check, catalogue)
-                : CatalogueTables.setTable(set, check);
-        final String digest = Consent.reviewId(shown);
+                : shownSet(calling, set, check);
+        final String digest = Consent.reviewId(binding(shown, set, check));
         if (JsonValues.map(confirming.get(AMENDED)) != null
             && digest.equals(JsonValues.map(confirming.get(AMENDED)).get(DIGEST))) {
             throw new ToolRefusal("The user amended this set in its form: \""
@@ -707,12 +710,20 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     ? ""
                     : "s");
             final Map<String, Object> details = new LinkedHashMap<>();
-            details.put("event types", "the " + set.size() + " " + confidenceOf(set) + "-confidence ones in the "
-                                       + "table shown in the chat, as they are");
-            consent.require(calling.call(), calling.context(), Consent.Request.confirmation(NAME, accept
-                            + ", or type your amendments", details)
+            details.put("event types", "the " + set.size() + " " + confidenceOf(set) + "-confidence ones "
+                                       + (HIGH.equals(confidenceOf(set))
+                    ? "summarised in the chat"
+                    : "in the table shown in the chat") + ", as they are");
+            final DocRef notesDoc = notes.notesDoc(calling.build(), calling.source());
+            details.put("every row", notesDoc.getName());
+            final Consent.Request request = Consent.Request.confirmation(NAME, accept + ", or type your "
+                                                                                + "amendments", details)
                     .withEditable(AMENDMENTS, accept + ", or type your amendments", accept)
-                    .boundTo(shown));
+                    .boundTo(binding(shown, set, check));
+            // The form links the source notes, where every row is, once the doc is there.
+            consent.require(calling.call(), calling.context(), notesDoc.getUuid() == null
+                    ? request
+                    : request.withDocuments(notesDoc));
             final Consent.Change amended = consent.changes(calling.context()).get(AMENDMENTS);
             if (amended != null && NullSafe.isNonBlankString(amended.theirs())
                 && !amended.theirs().strip().equalsIgnoreCase(accept)) {
@@ -738,13 +749,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         final String shown = next.isEmpty()
                 ? catchAllShown(check, now)
-                : CatalogueTables.setTable(next, check);
+                : shownSet(calling, next, check);
         final Map<String, Object> result;
         if (calling.context().userQuestions().canAsk()) {
             result = presented(calling, now, check, next, shown, confirming);
         } else {
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), now, confirming);
-            result = review(calling, now, next, shown);
+            result = review(calling, now, check, next, shown);
         }
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put(STATUS, result.remove(STATUS));
@@ -785,9 +796,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                           final Map<String, Object> confirming) {
         final Map<String, Object> marks = new LinkedHashMap<>(confirming);
         final Map<String, Object> mark = new LinkedHashMap<>();
-        mark.put(DIGEST, Consent.reviewId(shown));
+        mark.put(DIGEST, Consent.reviewId(binding(shown, set, check)));
         mark.put(AT, clock.getAsLong());
         marks.put(SHOWN, mark);
+        marks.put(RecordSourceNotesTool.RECORDS, CatalogueTables.recordsOf(check));
         notes.recordCatalogue(calling.context(), calling.build(), calling.source(), catalogue, marks);
         final Map<String, Object> result = new LinkedHashMap<>();
         // Shown to the user as it is (seen in testing: a set's table saved to the workspace, then retyped by the
@@ -798,7 +810,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final String what = set.isEmpty()
                 ? "the catch-all for the uncatalogued records (the " + check.uncatalogued().records() + " records "
                   + "no event type recognises, kept as " + translatedAs(catalogue.catchAll().translation()) + ")"
-                : "the " + set.size() + " " + confidenceOf(set) + "-confidence event type(s)";
+                : "the " + set.size() + " " + confidenceOf(set) + "-confidence event type(s)" + (HIGH.equals(
+                        confidenceOf(set))
+                        ? " (this summary; every row in the source notes)"
+                        : "");
         final String form = NAME + " build=" + calling.build() + " confirm=true: a short form asks them to accept "
                             + what + " or type their amendments.";
         result.put(HINT, calling.context().session() != null && calling.context().session().isChat()
@@ -824,8 +839,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                                                                              + "to the user"));
         }
         final Object reviewed = argsMap(calling.call()).get(REVIEWED_ARG);
-        if (!Consent.wasReviewed(reviewed, shown)) {
-            final Map<String, Object> result = review(calling, catalogue, set, shown);
+        if (!Consent.wasReviewed(reviewed, binding(shown, set, check))) {
+            final Map<String, Object> result = review(calling, catalogue, check, set, shown);
             result.put(HINT, result.get(HINT) + Consent.reviewNote(reviewed));
             return result;
         }
@@ -839,18 +854,20 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
     private Map<String, Object> review(final Calling calling,
                                        final Catalogue catalogue,
+                                       final CatalogueCheckResult check,
                                        final List<EventType> set,
                                        final String shown) {
+        final String reviewId = Consent.reviewId(binding(shown, set, check));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put(STATUS, NEEDS_REVIEW);
         result.put(TABLE, shown);
-        result.put("review_id", Consent.reviewId(shown));
+        result.put("review_id", reviewId);
         result.put("catalogue", compact(catalogue));
         result.put(HINT, "Show the user this table in your reply, as it is, whole, and ask them to accept "
                          + (set.isEmpty()
                 ? "the catch-all (the uncatalogued records kept as Unknown)"
                 : "all " + set.size() + " event type(s)") + " or say what to change. Once they accept, call "
-                         + NAME + " build=" + calling.build() + " confirm=true reviewed='" + Consent.reviewId(shown)
+                         + NAME + " build=" + calling.build() + " confirm=true reviewed='" + reviewId
                          + "' (this table's review_id). Amendments they give go back as proposals (op: change), and "
                          + "the set is shown again.");
         result.put("next", next(calling.build(), Map.of(CONFIRM_ARG, true, REVIEWED_ARG, "<the review_id, once "
@@ -1058,20 +1075,40 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                + "Correct it with proposals (op: change, add or remove), then confirm again.";
     }
 
-    // The set put to the user next: the high-confidence event types not yet confirmed, all at once (the build is one
-    // source type group); else up to ten of the medium, then of the low, in the catalogue's order.
+    /// The set put to the user next (decided by the user 2026-11-20: at most three sets, never many forms): the
+    /// high-confidence event types not yet confirmed, all at once (the build is one source type group); else all
+    /// the medium; else all the low; in the catalogue's order. A confidence with none waiting is passed over.
+    ///
+    /// @param catalogue The catalogue.
+    /// @return The next set; empty when every event type is confirmed (the catch-all's turn).
     static List<EventType> nextSet(final Catalogue catalogue) {
         for (final String confidence : CONFIDENCES) {
             final List<EventType> waiting = catalogue.eventTypes().stream()
                     .filter(type -> !type.confirmed() && confidence.equals(type.confidence()))
                     .toList();
             if (!waiting.isEmpty()) {
-                return HIGH.equals(confidence)
-                        ? waiting
-                        : waiting.subList(0, Math.min(SET_SIZE, waiting.size()));
+                return waiting;
             }
         }
-        return catalogue.eventTypes().stream().filter(type -> !type.confirmed()).limit(SET_SIZE).toList();
+        // A confidence the catalogue doesn't know (it reads none but these): the rest together.
+        return catalogue.eventTypes().stream().filter(type -> !type.confirmed()).toList();
+    }
+
+    // What a set's confirmation is bound to: what the chat showed, and every row of the set (the summary names only
+    // some TypeIds, so a change to any event type of the set, its title say, puts the set to the user again).
+    private static String binding(final String shown, final List<EventType> set, final CatalogueCheckResult check) {
+        return set.isEmpty()
+                ? shown
+                : shown + "\n\n" + CatalogueTables.setTable(set, check);
+    }
+
+    // A set as the chat shows it: the high-confidence ones as a summary, whatever their number; the others as their
+    // table, cut past what the chat shows; every row in the source notes, which both name.
+    private String shownSet(final Calling calling, final List<EventType> set, final CatalogueCheckResult check) {
+        final String notesDoc = "'" + notes.notesDoc(calling.build(), calling.source()).getName() + "'";
+        return HIGH.equals(confidenceOf(set))
+                ? CatalogueSummary.summary(set, check, notesDoc)
+                : CatalogueTables.chatTable(set, check, notesDoc);
     }
 
 
@@ -1327,6 +1364,14 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Map<String, Object> out = new LinkedHashMap<>(confirming);
         out.remove(SHOWN);
         out.remove(AMENDED);
+        return out;
+    }
+
+    // The confirmation's marks with the records of the sample each event type recognises, for the notes' table.
+    private static Map<String, Object> withRecords(final Map<String, Object> confirming,
+                                                   final CatalogueCheckResult check) {
+        final Map<String, Object> out = new LinkedHashMap<>(confirming);
+        out.put(RecordSourceNotesTool.RECORDS, CatalogueTables.recordsOf(check));
         return out;
     }
 

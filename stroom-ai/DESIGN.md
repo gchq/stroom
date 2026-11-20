@@ -3084,9 +3084,14 @@ event types over thousands of records take about the records' reading), and retu
 
 #### Confirmation
 
-Refused while the check refuses the catalogue (overlaps, a blocking several, problems). Every high-confidence event
-type is confirmed in one set (a build is one source type group); medium and low in sets of up to 10, as before (seen:
-304 kinds would be some 30 forms). The table goes in the chat and the form refers to it (forms are short plain
+Refused while the check refuses the catalogue (overlaps, a blocking several, problems). At most three sets, then the
+catch-all (decided by the user 2026-11-20: 300 doubtful types in sets of 10 were 30 forms, and the high set's table
+for 300 types some 38k characters): every high-confidence event type in one set (a build is one source type group),
+shown as a summary by what happened (action element, counts, a few TypeIds with records) and the event types worth a
+look row by row (`CatalogueSummary`: no record in the sample, no event written, a lone action element in a set of 10
+or more, no description of its own, dropped); every medium in one, every low in one, their tables whole (cut past
+20,000 characters); every row in the source notes' Event types table (with Records), which the summary, a cut table
+and the form name. The table goes in the chat and the form refers to it (forms are short plain
 text): the set's table is shown first (`needs_showing`; Stroom AI's chat shows it itself, other clients' agents show
 it whole), then a form bound to that table, "Accept all N event types, or type your amendments"; a table shown more
 than 90 seconds before its form is shown again. Columns: `| Event type | Recognised by | Records | Translated as |`:
@@ -3290,8 +3295,8 @@ reads them; output JSON):
 * `proposals: [{"op": "add | change | remove", "type_id": "...", ...the entry's keys}]`: applied by TypeId, then
   checked; refused proposals say why (`refused`); the result is the check (compact; the full listing saved to the
   workspace, `listing`) with the next set's `table`.
-* `confirm: true`: puts the next set to the user (its table first, then its form; high-confidence all at once, then
-  medium and low in sets of 10), then the catch-all; `status: needs_review` with a `review_id` where no form can be
+* `confirm: true`: puts the next set to the user (shown first, then its form; the high-confidence as a summary, then
+  the medium, then the low, a set each), then the catch-all; `status: needs_review` with a `review_id` where no form can be
   shown, confirmed by `reviewed=<review_id>`.
 * `catch_all: {"allow_unknown": "..."}` with confirm: the catch-all's agreement.
 * Results: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`, `confirmed`),

@@ -82,10 +82,11 @@ varies; `not: true` for
   `one_type_because`; blocking for the seed's), `problems` (a proposal bringing one is refused, nothing recorded),
   `not_checked` (conditions the check can't evaluate: said, not refused). An event type from the documentation with
   no sampled record is kept and said to be not in the sample. The full listing is saved to the workspace (`listing`).
-- **Confirmation** (`confirm: true`, again after each answer): the high-confidence event types in one set, then the
-  medium and the low in sets of up to ten, then the catch-all for the uncatalogued records (give
-  `catch_all: {allow_unknown: why}`). Each set's table is shown first (in Stroom AI's chat, by the chat itself; else
-  show it in your reply as it is), then a short form: "Accept all N event types, or type your amendments". The
+- **Confirmation** (`confirm: true`, again after each answer): at most three sets, the high-confidence event types,
+  then the medium, then the low, then the catch-all for the uncatalogued records (give
+  `catch_all: {allow_unknown: why}`). The high set is a summary by what happened with the event types worth a look
+  row by row; the medium and low sets are their tables; every row is in the source notes' Event types table. Each is
+  shown first (in Stroom AI's chat, by the chat itself; else show it in your reply as it is), then a short form: "Accept all N event types, or type your amendments". The
   confirmation is only ever the form's: amendments the user types (in the form or the chat) you propose as changes
   (`op: change`, or add and remove), and the set is put to them again; `drop: true` only where the user said to drop
   one. A client without forms gets `needs_review` and a `review_id`: show the table, and once the user agrees, call

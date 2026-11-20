@@ -3622,17 +3622,25 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
 `allow_unknown`, `scope` with the source type field and source types), with the confirmation in progress (the set last
 shown and when, a set the user amended, the streams it was checked against), and the notes doc's "Event types" table
-(`| TypeId | Title | Recognised by | Translated as | Basis |`, conditions in words, the catch-all's `Unknown` row
-last), written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
+(`| TypeId | Title | Recognised by | Records | Translated as | Basis |`, every event type, conditions in words, the
+records as last checked (kept in the confirmation, left blank after a hand edit read back), the catch-all's `Unknown`
+row last), written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
 field dictionary, documents and references stay as record_source_notes keeps them. The build's one notes doc is
 used, else `<source> source notes` is made. Every result carries `catalogue`, compact (each `type_id`, `title`,
 `status`, the catch-all's `status`).
 
 **Confirmation** (`confirm: true`, again after each answer). Refused while the check has overlaps, a blocking
-`several` or problems, saying which. The sets, in the catalogue's order: every high-confidence event type in one, then
-the medium and then the low in sets of up to ten, then the catch-all. Each set's table
+`several` or problems, saying which. The sets, in the catalogue's order, at most three (decided by the user 2026-11-20:
+never many forms; 300 doubtful types were 30 forms): every high-confidence event type in one, every medium in one,
+every low in one, a confidence with none passed over, then the catch-all. The high set is shown as a summary
+(`CatalogueSummary`), whatever its size: grouped by action element, each group's count, records and commonest three
+TypeIds, then the event types worth a look in a table with why (no record in the sample; no action element, an
+action of Other or Unknown, or an Unknown verb; the only one under its element in a set of 10 or more; no
+description of its own; dropped), up to 25 rows, the rest counted. The medium and low sets are their table
 (`| Event type | Recognised by | Records | Translated as |`, recognised by in words: `logger_name is
-…SecurityEventLogger and eventType is "Password change"`) comes first with `status: needs_showing`: Stroom AI's chat
+…SecurityEventLogger and eventType is "Password change"`), cut past 20,000 characters to its first rows and where the
+rest are. Both name the source notes, whose Event types table holds every row; the form links it (`every row`).
+Each comes first with `status: needs_showing`: Stroom AI's chat
 shows it itself, as it is, and the agent is told not to repeat it; another client's agent is told to show it whole.
 The next call (within 90 seconds of the table, or the same call made again with the answer) asks one short plain form
 bound to that table: "Accept all N event types, or type your amendments". A table shown longer ago is shown again

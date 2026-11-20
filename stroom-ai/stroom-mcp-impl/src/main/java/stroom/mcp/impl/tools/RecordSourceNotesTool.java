@@ -88,6 +88,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// The notes block's key for the catalogue's confirmation in progress (`catalogue_event_types`): the set last
     /// shown the user and when, and a set the user amended, until the agent sends the amendments.
     static final String CONFIRMING = "confirming";
+    /// The confirmation's key for the records of the sample each event type recognises, as last checked (by TypeId),
+    /// which the notes' "Event types" table shows.
+    static final String RECORDS = "records";
     // The block keys the catalogue_event_types tool keeps, carried from one write of the notes to the next.
     private static final List<String> CATALOGUE_KEYS = List.of(SourceNotes.EVENT_TYPES, SourceNotes.CATCH_ALL,
             "scope", CONFIRMING);
@@ -321,6 +324,20 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return out;
     }
 
+    /// The build's source notes doc, as [#recordCatalogue] writes it.
+    ///
+    /// @param build  The build.
+    /// @param source The source's name (its notes doc is `<source> source notes` when the build has none yet).
+    /// @return The doc: its name always, its UUID once it exists (else null).
+    DocRef notesDoc(final String build, final String source) {
+        final Map<String, WriteGuard.BuildDoc> contents = contents(build);
+        final String name = notesName(contents, NullSafe.string(source));
+        final WriteGuard.BuildDoc there = contents.get(DocumentationDoc.TYPE + "\n" + name);
+        return there == null
+                ? new DocRef(DocumentationDoc.TYPE, null, name)
+                : there.docRef();
+    }
+
     /// The one place a source notes doc's text is made with its catalogue (for `catalogue_event_types`, and for
     /// [CatalogueNotes#write], a hand edit read back): the JSON block's catalogue keys and the "Event types" table
     /// written together, so the table never goes stale; the field dictionary, documents and references as the notes
@@ -479,7 +496,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         }
         final Catalogue read = SourceNotes.catalogue(catalogue);
         if (read != null) {
-            lines.addAll(CatalogueTables.notesTable(read));
+            final Map<String, Object> confirming = NullSafe.map(JsonValues.map(catalogue.get(CONFIRMING)));
+            lines.addAll(CatalogueTables.notesTable(read, NullSafe.map(JsonValues.map(confirming.get(RECORDS)))));
         }
         if (!references.isEmpty() || !keptNames.isEmpty()) {
             lines.addAll(List.of("## Sources", ""));

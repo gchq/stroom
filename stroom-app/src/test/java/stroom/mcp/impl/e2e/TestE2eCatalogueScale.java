@@ -33,10 +33,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// A catalogue of 300 event types (seen: 304 kinds in one build), lean: generated key=value lines, no indexing.
 /// Proposals add event types in batches, as an agent sends them, never the catalogue whole; every reply is compact
 /// (counts and problems, within a budget, as TestE2eSourceDocs measures replies), the full listing saved to the
-/// workspace; the high-confidence event types are confirmed in one form for the source type group, the medium and
-/// low ones in sets of up to ten. A client outside Stroom takes at most 40,000 characters of a reply (seen in eval
-/// case 68 on Haiku: replies of 61,000 to 93,000 characters saved by Claude Code to files of its own): past it, a
-/// reply is given in outline, saved whole to the workspace, and read from there as the agent reads it.
+/// workspace; the high-confidence event types are confirmed in one form for the source type group, shown as a short
+/// summary by what happened (every row in the source notes), then the medium and then the low ones a form each
+/// (decided by the user 2026-11-20: never many forms; seen: 304 kinds would have been some 30). A client outside
+/// Stroom takes at most 40,000 characters of a reply (seen in eval case 68 on Haiku: replies of 61,000 to 93,000
+/// characters saved by Claude Code to files of its own): past it, a reply is given in outline, saved whole to the
+/// workspace, and read from there as the agent reads it.
 class TestE2eCatalogueScale extends AbstractE2eTest {
 
     private static final int TYPES = 300;
@@ -80,21 +82,33 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
                 "[.. | objects | .type_id? // empty] | unique | length"))))
                 .as("every event type in the saved listing").isEqualTo(String.valueOf(TYPES));
 
-        // ### Confirmed: the high-confidence ones in one form, the medium and low ones in sets of up to ten.
+        // ### Confirmed: the high-confidence ones in one form, summarised; the medium ones in one, the low in one.
         final int formsBefore = client.forms().size();
         Map<String, Object> step = Map.of();
+        String summary = null;
         for (int round = 0; round < 40 && !"confirmed".equals(step.get("status")); round++) {
             final Map<String, Object> given = client.jsonAsGiven(CATALOGUE, args("build", build, "confirm", true,
                     "catch_all", Map.of("allow_unknown", "E2E: kept as Unknown")));
             replies.put("confirm " + round, jsonOf(given).length());
             step = WholeResults.of(client, given);
+            if (summary == null && step.get("table") != null) {
+                summary = String.valueOf(step.get("table"));
+            }
         }
         assertThat(step).containsEntry("status", "confirmed");
+        dump("the high-confidence summary", summary);
+        assertThat(summary).as("the high-confidence ones summarised, not a row each")
+                .startsWith("**100 high-confidence event types**, by what happened")
+                .contains("- Process: 100 event types, 200 records; e.g. Process-Code000 (2)",
+                        "in the Event types table of the source notes '")
+                .doesNotContain("| `Process-Code0");
+        assertThat(summary.length()).isLessThan(2_000);
         final List<Integer> sets = eventTypesPutInEachForm(formsSince(formsBefore));
-        assertThat(sets.getFirst()).as("the high-confidence ones, one form").isEqualTo(TYPES / 3);
-        assertThat(sets.subList(1, sets.size())).as("the medium and low ones").hasSize(20)
-                .allSatisfy(size -> assertThat(size).isLessThanOrEqualTo(10));
-        assertThat(sets.stream().mapToInt(Integer::intValue).sum()).isEqualTo(TYPES);
+        assertThat(sets).as("high, medium and low: a form each").containsExactly(TYPES / 3, TYPES / 3, TYPES / 3);
+        // The source notes hold every row, each with its records: the full table the summary refers to.
+        assertThat(notesDocText(build).lines().filter(line -> line.startsWith("| Process-Code")))
+                .hasSize(TYPES)
+                .allSatisfy(line -> assertThat(line).contains(" | 2 | "));
 
         final Map.Entry<String, Integer> worst = replies.entrySet().stream()
                 .max(Map.Entry.comparingByValue())

@@ -77,7 +77,7 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(nextStep(json("build_status", args("build", build)))).isNotEqualTo("translation");
 
         // ### Proposed: checked against every record, each counted; nothing overlaps, nothing left uncatalogued;
-        // the table for the chat, its ways of recognising in words.
+        // the high-confidence ones summarised for the chat by what happened, every row in the source notes.
         final Map<String, Object> checked = proposed(build, raw, List.of(
                 withKeys(eventType("Authenticate-Logon", "Authenticate", "high", when("action", "equals", "login")),
                         "action", "Logon", "actor", "user"),
@@ -90,7 +90,9 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 .containsEntry("Export-Report", 8L).containsEntry("Delete-Records", 1L);
         assertThat(list(checkOf(checked), "overlaps")).isEmpty();
         assertThat(map(checkOf(checked), "uncatalogued")).containsEntry("records", 0);
-        assertThat(jsonOf(checked)).contains(TABLE_HEADER, "action is");
+        assertThat(String.valueOf(checked.get("table"))).startsWith("**2 high-confidence event types**")
+                .contains("Authenticate: 2 event types, 16 records").doesNotContain(TABLE_HEADER);
+        assertThat(notesDocText(build)).contains("| Authenticate-Logon | Authenticate Logon | action is login | 8 |");
 
         // ### Confirmed: the high-confidence ones in one form, then the medium and the low a set each; the form's
         // text plain, referring to the table in the chat. The low one amended in words: nothing confirmed of it,
@@ -422,9 +424,10 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 .doesNotContain("action");
     }
 
-    // ### Many event types: the high-confidence ones in one form, the medium ones in sets of up to ten.
+    // ### Many event types: the high-confidence ones in one form, all the medium ones in another (decided by the user
+    // 2026-11-20: at most three sets, never many forms).
     @Test
-    void manyEventTypesArePutToTheUserInSetsOfTen() {
+    void manyEventTypesArePutToTheUserAConfidenceAForm() {
         final String build = "e2e-cat-many";
         final List<String> lines = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
@@ -441,7 +444,7 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         proposed(build, raw, proposals);
         final int formsBefore = client.forms().size();
         confirmedCatalogue(build);
-        assertThat(eventTypesPutInEachForm(formsSince(formsBefore))).containsExactly(5, 10, 10);
+        assertThat(eventTypesPutInEachForm(formsSince(formsBefore))).containsExactly(5, 20);
         assertThat(eventTypesOf(build)).hasSize(25);
     }
 

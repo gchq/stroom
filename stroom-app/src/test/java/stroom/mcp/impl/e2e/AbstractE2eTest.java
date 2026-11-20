@@ -713,6 +713,17 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @param build The build.
     /// @return The catalogue: `event_types`, `catch_all` and `scope`.
     Map<String, Object> catalogueOf(final String build) {
+        final Matcher block = NOTES_BLOCK.matcher(notesDocText(build));
+        assertThat(block.find()).as("the source notes' JSON block").isTrue();
+        return JsonUtil.readValue(block.group(1), Map.class);
+    }
+
+    /// The build's source notes doc as the user reads it: its field dictionary, its "Event types" table (every
+    /// event type, with its records) and its JSON block.
+    ///
+    /// @param build The build.
+    /// @return The doc's text.
+    String notesDocText(final String build) {
         final ExplorerNode folder = findFolder("System/MCP Workspace/" + build)
                 .orElseThrow(() -> new AssertionError("No workspace folder for " + build));
         final List<ExplorerNode> notes = securityContext.asProcessingUserResult(() -> explorerNodeService
@@ -722,9 +733,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                                 && node.getName().endsWith(" source notes"))
                 .toList();
         assertThat(notes).as("the source notes of %s", build).hasSize(1);
-        final Matcher block = NOTES_BLOCK.matcher(documentation(notes.getFirst().getUuid()));
-        assertThat(block.find()).as("the source notes' JSON block").isTrue();
-        return JsonUtil.readValue(block.group(1), Map.class);
+        return documentation(notes.getFirst().getUuid());
     }
 
     /// @param build The build.

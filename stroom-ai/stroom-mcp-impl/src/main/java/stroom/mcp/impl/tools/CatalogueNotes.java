@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
@@ -192,8 +193,15 @@ class CatalogueNotes {
             prose(text).ifPresent(summary -> notes.put("summary", summary));
         }
         // Written as catalogue_event_types writes it: the JSON block and the "Event types" table together.
+        // The records last counted are left out: the catalogue changed by hand, they are counted again by the next
+        // check.
+        final Map<String, Object> given = new LinkedHashMap<>(catalogue.toJson());
+        final Map<String, Object> confirming = new LinkedHashMap<>(NullSafe.map(JsonValues.map(
+                notes.get(RecordSourceNotesTool.CONFIRMING))));
+        confirming.remove(RecordSourceNotesTool.RECORDS);
+        given.put(RecordSourceNotesTool.CONFIRMING, confirming);
         final String written = RecordSourceNotesTool.textWithCatalogue(NullSafe.nonBlankStringElse(
-                ToolText.str(notes.getOrDefault("source", "")), source), notes, catalogue.toJson());
+                ToolText.str(notes.getOrDefault("source", "")), source), notes, given);
         if (there.isPresent()) {
             guard.checkInBuild(session, there.get().docRef());
             documentWrites.writeText(there.get().docRef(), written);
