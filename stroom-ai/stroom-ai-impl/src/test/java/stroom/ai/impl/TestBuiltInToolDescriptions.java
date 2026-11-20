@@ -23,6 +23,9 @@ import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenType;
+import stroom.query.language.token.Tokeniser;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -159,6 +162,28 @@ class TestBuiltInToolDescriptions {
     }
 
     @Test
+    void everyStroomQlExampleHasItsClausesInAnOrderStroomAccepts() {
+        // run_stroomql's example had group by after select, which Stroom refuses, and Haiku copied it (eval cases
+        // 71 and 72): each keyword of a quoted example must only follow keywords Stroom allows before it.
+        final Pattern example = Pattern.compile("'(from [^']+)'");
+        final List<String> problems = new ArrayList<>();
+        int examples = 0;
+        for (final StroomTool tool : tools()) {
+            final Matcher matcher = example.matcher(tool.definition().description());
+            while (matcher.find()) {
+                examples++;
+                final String problem = clauseOrderProblem(matcher.group(1));
+                if (problem != null) {
+                    problems.add(tool.definition().name() + ": '" + matcher.group(1) + "' has " + problem);
+                }
+            }
+        }
+
+        assertThat(examples).isPositive();
+        assertThat(problems).isEmpty();
+    }
+
+    @Test
     void theChatStillSeesEveryPart() {
         final Map<String, ToolDefinition> chat = tools().stream()
                 .map(StroomTool::definition)
@@ -167,6 +192,30 @@ class TestBuiltInToolDescriptions {
         assertThat(chat.get("grep").description()).contains("workspace file").contains("Give out to write");
         assertThat(chat.get("grep").parameters().properties()).containsKey("out");
         assertThat(chat.get("list_data_sources").description()).contains("with ask_user");
+    }
+
+    // The first keyword of the query's own clauses (not a bracketed query's) that Stroom doesn't allow after one
+    // before it, as "GROUP after SELECT", or null.
+    private static String clauseOrderProblem(final String query) {
+        final List<TokenType> consumed = new ArrayList<>();
+        int depth = 0;
+        for (final Token token : Tokeniser.parse(query)) {
+            final TokenType type = token.getTokenType();
+            if (TokenType.OPEN_BRACKET.equals(type)) {
+                depth++;
+            } else if (TokenType.CLOSE_BRACKET.equals(type)) {
+                depth--;
+            } else if (depth == 0 && TokenType.KEYWORDS_VALID_BEFORE.containsKey(type)) {
+                final Set<TokenType> validBefore = TokenType.getKeywordsValidBefore(type);
+                for (final TokenType before : consumed) {
+                    if (!validBefore.contains(before)) {
+                        return type + " after " + before;
+                    }
+                }
+                consumed.add(type);
+            }
+        }
+        return null;
     }
 
     private List<StroomTool> tools() {

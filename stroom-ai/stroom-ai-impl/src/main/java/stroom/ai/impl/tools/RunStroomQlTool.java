@@ -148,7 +148,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 .name(NAME)
                 .description(ToolDescription.builder()
                         .general("Runs a StroomQL query as the user (e.g. 'from \"My View\" where EventTime > "
-                                 + "day() - 1d select Host, count() as N group by Host') and writes the results to a "
+                                 + "day() - 1d group by Host select Host, count() as N') and writes the results to a "
                                  + "table")
                         .chatOnly(" in the workspace")
                         .general(". You get the table's path and a profile of it (row count, columns, common "
