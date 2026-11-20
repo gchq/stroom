@@ -141,4 +141,23 @@ public final class MappingConditions {
         }
         return "";
     }
+
+    /// @param other Another mapping's conditions.
+    /// @return True if a condition tested by either gives the same answer on the same record and extracted values:
+    /// the same nil values, unescape transforms and reading of the records (input, held fields, namespace,
+    /// extraction names).
+    boolean testsAlike(final MappingConditions other) {
+        return nilTexts.equals(other.nilTexts) && unescapes.equals(other.unescapes) && derived.equals(other.derived)
+               && mapping.input().equals(other.mapping.input())
+               && mapping.xmlNamespace().equals(other.mapping.xmlNamespace())
+               && mapping.jsonFields().equals(other.mapping.jsonFields())
+               && mapping.xmlFields().equals(other.mapping.xmlFields());
+    }
+
+    /// @param other Another mapping's conditions.
+    /// @return True if [#ruleOf] gives the same answer for either on the same record and extracted values: the
+    /// conditions tested alike ([#testsAlike]), and the same rules, by name and conditions, in the same order.
+    boolean rulesAlike(final MappingConditions other) {
+        return testsAlike(other) && candidates.equals(other.candidates);
+    }
 }

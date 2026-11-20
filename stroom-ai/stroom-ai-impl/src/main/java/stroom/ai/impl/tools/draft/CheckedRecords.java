@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /// A sample's records as one check of a mapping reads them, with what the one evaluator works out of each record
 /// worked out once and shared by every part of the check: the values the mapping's extractions give it
@@ -34,7 +35,8 @@ import java.util.Map;
 /// some 55 times in one check, and once more for each way of each confirmed event type, a minute of a two-minute
 /// build.
 ///
-/// Everything here is of the one mapping it was made for.
+/// Everything here is of the one mapping it was made for: [#forMapping] makes another mapping's, sharing only what
+/// that mapping reads and tests alike, so a changed mapping never reads a value worked out for another.
 public final class CheckedRecords {
 
     // A record's rule not worked out yet (null is a rule that can't be told).
@@ -69,6 +71,26 @@ public final class CheckedRecords {
     public static CheckedRecords of(final TranslationMapping mapping, final List<Object> records) {
         return new CheckedRecords(MappingConditions.of(mapping), records, new Extracted(), unsetRules(records.size()),
                 new IdentityHashMap<>());
+    }
+
+    /// The same records as another mapping reads them, sharing what it reads and tests alike: the records and
+    /// their extracted values when it reads records as this one does (input, held fields, namespace, record, root,
+    /// pairs, extract and for_each the same); whether a list of conditions holds when it also tests them alike (nil
+    /// values and unescape transforms the same); each record's rule when its rules are the same too.
+    ///
+    /// @param changed The other mapping.
+    /// @return Its records, or null when it reads records otherwise (they are to be read again).
+    public CheckedRecords forMapping(final TranslationMapping changed) {
+        if (!readsAlike(mapping(), changed)) {
+            return null;
+        }
+        final MappingConditions other = MappingConditions.of(changed);
+        final boolean testsAlike = conditions.testsAlike(other);
+        return new CheckedRecords(other, records, extracted, testsAlike && conditions.rulesAlike(other)
+                ? rules
+                : unsetRules(records.size()), testsAlike
+                ? held
+                : new IdentityHashMap<>());
     }
 
     /// @return The mapping.
@@ -162,6 +184,17 @@ public final class CheckedRecords {
         final Object[] out = new Object[size];
         Arrays.fill(out, UNSET);
         return out;
+    }
+
+    // Whether two mappings read the sample into the same records with the same extracted values.
+    private static boolean readsAlike(final TranslationMapping one, final TranslationMapping other) {
+        return Objects.equals(one.input(), other.input()) && Objects.equals(one.root(), other.root())
+               && Objects.equals(one.record(), other.record())
+               && Objects.equals(one.xmlNamespace(), other.xmlNamespace())
+               && Objects.equals(one.jsonLayout(), other.jsonLayout())
+               && one.jsonFields().equals(other.jsonFields()) && one.xmlFields().equals(other.xmlFields())
+               && one.pairs().equals(other.pairs()) && one.extract().equals(other.extract())
+               && Objects.equals(one.forEach(), other.forEach());
     }
 
 

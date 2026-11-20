@@ -1008,7 +1008,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Map<String, Object> check = CallProgress.of(context).whileWorking("Checking the mapping against the "
                                                                                 + "sample records", () ->
                 MappingSampleCheck.check(mapping, texts, spec, b.schema, guessed, clock, SourceNotes.catalogue(notes),
-                        scope.orElse(null)));
+                        scope.orElse(null), b.earlierCheck));
+        b.earlierCheck = (MappingSampleCheck.Earlier) check.remove(MappingSampleCheck.EARLIER);
         b.lost = (List<ConfirmedEventTypes.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
         b.contradictions = (List<String>) check.remove(MappingSampleCheck.CATALOGUE_CONTRADICTIONS);
         b.lost.forEach(one -> warnings.add(lostWarning(one)));
@@ -2238,6 +2239,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private final Map<String, String> confirmedChanges = new LinkedHashMap<>();
         private List<Placeholders.Found> placeholders;
         private final Map<String, String> placeholderChoices = new LinkedHashMap<>();
+        // What the sample check read and worked out, for its check again once the user's answers change the mapping.
+        private MappingSampleCheck.Earlier earlierCheck;
         private List<String> applied;
         private String basedOn;
         // Where a new group's Events go, when asked before the sample check (placementAsked).

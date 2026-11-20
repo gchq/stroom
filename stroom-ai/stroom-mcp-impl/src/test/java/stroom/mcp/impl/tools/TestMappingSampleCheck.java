@@ -53,6 +53,29 @@ class TestMappingSampleCheck {
     private static final String SAMPLE = IntStream.range(0, 400)
             .mapToObj(i -> ToolJson.dumps(line(i, "")))
             .collect(Collectors.joining("\n"));
+    // A message's key/value pairs read by extractions: a domain-qualified user and a stand-in for none among them.
+    private static final String REUSE_MAPPING = """
+            {"input": "json", "json_layout": "lines",
+             "extract": [{"field": "msg", "regex": "user=(\\\\S+)", "names": ["user"]},
+                         {"field": "msg", "regex": "act=(\\\\S+)", "names": ["act"]}],
+             "common": [{"path": "EventTime/TimeCreated", "field": "time"},
+                        {"path": "EventSource/User/Id", "field": "user"}],
+             "events": [{"name": "logon", "when": [{"field": "act", "equals": "login"},
+                                                   {"field": "user", "present": true}],
+                         "fields": [{"path": "EventDetail/TypeId", "value": "Authenticate-Logon"},
+                                    {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                        {"name": "logoff", "when": [{"field": "act", "equals": "logout"}],
+                         "fields": [{"path": "EventDetail/TypeId", "value": "Authenticate-Logoff"},
+                                    {"path": "EventDetail/Authenticate/Action", "value": "Logoff"}]},
+                        {"name": "rest", "allow_unknown": "the rest",
+                         "fields": [{"path": "EventDetail/TypeId", "value": "Unknown"},
+                                    {"path": "EventDetail/Unknown/Data", "data_name": "msg", "field": "msg"}]}]}""";
+
+    private static final String REUSE_SAMPLE = String.join("\n",
+            "{\"time\": \"2026-10-01T00:00:00.000Z\", \"msg\": \"user=corp\\\\alice act=login\"}",
+            "{\"time\": \"2026-10-01T00:00:01.000Z\", \"msg\": \"user=- act=login\"}",
+            "{\"time\": \"2026-10-01T00:00:02.000Z\", \"msg\": \"user=corp\\\\bob act=logout\"}",
+            "{\"time\": \"2026-10-01T00:00:03.000Z\", \"msg\": \"user=- act=logout\"}") + "\n";
 
     @Test
     @SuppressWarnings("unchecked")
@@ -93,6 +116,78 @@ class TestMappingSampleCheck {
         assertThat(strings(checked.get("warnings"))).anySatisfy(warning -> assertThat(warning)
                 .startsWith("dropped event type Alert-Usb: 1 sample records are translated by rule 'rest'"));
         assertThat((List<String>) checked.get(MappingSampleCheck.CATALOGUE_CONTRADICTIONS)).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aCheckAgainAfterTheUsersAnswersGivesWhatAWholeCheckGives() {
+        // The domain split and the stand-ins left out, as the user answers the forms after the first check: the
+        // check of the changed mapping that reuses the first's records, extracted values and verdicts says what a
+        // whole check of it says.
+        final Catalogue catalogue = reuseCatalogue();
+        final TranslationMapping first = TranslationMapping.fromJson(JsonUtil.readValue(REUSE_MAPPING, Map.class));
+        final Map<String, Object> firstCheck = reuseCheck(first, catalogue, null);
+        final MappingSampleCheck.Earlier earlier = (MappingSampleCheck.Earlier) firstCheck.get(
+                MappingSampleCheck.EARLIER);
+        final List<LocalCheck.QualifiedIds> qualified = (List<LocalCheck.QualifiedIds>) firstCheck.get(
+                MappingSampleCheck.DOMAIN_QUALIFIED);
+        assertThat(qualified).isNotEmpty();
+        assertThat((List<Object>) firstCheck.get(MappingSampleCheck.PLACEHOLDERS)).isNotEmpty();
+        assertThat((List<Object>) firstCheck.get(MappingSampleCheck.CONFIRMED_LOST)).isEmpty();
+
+        final TranslationMapping split = DomainSplits.split(first, qualified.getFirst(), TranslationWorld.SCHEMA)
+                .mapping();
+        final TranslationMapping leftOut = PlaceholderChoices.leaveOut(split, List.of("-"));
+        for (final TranslationMapping changed : List.of(split, leftOut)) {
+            final Map<String, Object> again = reuseCheck(changed, catalogue, earlier);
+            final Map<String, Object> whole = reuseCheck(changed, catalogue, null);
+
+            assertThat(((MappingSampleCheck.Earlier) again.remove(MappingSampleCheck.EARLIER)).found())
+                    .isSameAs(earlier.found());
+            whole.remove(MappingSampleCheck.EARLIER);
+            assertThat(again).isEqualTo(whole);
+        }
+        // '-' left out, the logon rule's 'user present' fails for its record: the confirmed logon goes to the rule
+        // for the rest, told again, not taken from the first check.
+        assertThat((List<ConfirmedEventTypes.Lost>) reuseCheck(leftOut, catalogue, earlier).get(
+                MappingSampleCheck.CONFIRMED_LOST)).singleElement()
+                .satisfies(one -> assertThat(one.writes()).isEqualTo("Unknown"));
+    }
+
+    @Test
+    void aCheckAgainOfAMappingReadingRecordsOtherwiseReadsThemAgain() {
+        final Catalogue catalogue = reuseCatalogue();
+        final MappingSampleCheck.Earlier earlier = (MappingSampleCheck.Earlier) reuseCheck(
+                TranslationMapping.fromJson(JsonUtil.readValue(REUSE_MAPPING, Map.class)), catalogue, null)
+                .get(MappingSampleCheck.EARLIER);
+        final TranslationMapping otherExtract = TranslationMapping.fromJson(JsonUtil.readValue(
+                REUSE_MAPPING.replace("act=(", "action=("), Map.class));
+
+        final Map<String, Object> again = reuseCheck(otherExtract, catalogue, earlier);
+        final Map<String, Object> whole = reuseCheck(otherExtract, catalogue, null);
+
+        assertThat(((MappingSampleCheck.Earlier) again.remove(MappingSampleCheck.EARLIER)).found())
+                .isNotSameAs(earlier.found());
+        whole.remove(MappingSampleCheck.EARLIER);
+        assertThat(again).isEqualTo(whole);
+    }
+
+    private static Map<String, Object> reuseCheck(final TranslationMapping mapping,
+                                                  final Catalogue catalogue,
+                                                  final MappingSampleCheck.Earlier earlier) {
+        return MappingSampleCheck.check(mapping, List.of(REUSE_SAMPLE), null, TranslationWorld.SCHEMA, false,
+                Clock.systemUTC(), catalogue, null, earlier);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Catalogue reuseCatalogue() {
+        return Catalogue.fromJson(JsonUtil.readValue("""
+                {"event_types": [
+                  {"type_id": "Authenticate-Logon", "event_detail": "Authenticate", "action": "Logon",
+                   "recognised_by": [{"when": [{"field": "act", "equals": "login"}]}], "status": "confirmed"},
+                  {"type_id": "Authenticate-Logoff", "event_detail": "Authenticate", "action": "Logoff",
+                   "recognised_by": [{"when": [{"field": "act", "equals": "logout"}]}], "status": "confirmed"}],
+                 "catch_all": {"status": "confirmed"}}""", Map.class));
     }
 
     @Test

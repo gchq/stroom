@@ -30,7 +30,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// A sample's records with each record's extracted values, rule and ways' verdicts worked out once for a check: the
-/// same as the one evaluator gives them record by record.
+/// same as the one evaluator gives them record by record, and shared with a changed mapping only where it reads and
+/// tests them alike.
 class TestCheckedRecords extends DraftFixtures {
 
     // JSON lines holding JSON (event) and XML (payload) in strings, and key/value pairs in a message read by
@@ -130,6 +131,73 @@ class TestCheckedRecords extends DraftFixtures {
         assertThat(LocalCheck.placeholders(CheckedRecords.of(m, records), SCHEMA))
                 .extracting(Placeholders.Found::value)
                 .containsExactly("-");
+    }
+
+    @Test
+    void aMappingReadingRecordsAlikeSharesTheirExtractedValuesAndTheirRulesWhenItsRulesAreAlike() {
+        final TranslationMapping m = mapping("[]", "");
+        final CheckedRecords checked = CheckedRecords.of(m, records(m));
+        for (int n = 0; n < checked.size(); n++) {
+            checked.ruleOf(n);
+        }
+        // A domain split: a transform on an entry, the conditions as they were.
+        final TranslationMapping split = mapping("[]", ", \"transform\": \"strip_domain\"");
+
+        final CheckedRecords again = checked.forMapping(split);
+
+        assertThat(again).isNotNull();
+        assertThat(again.mapping()).isSameAs(split);
+        assertThat(again.records()).isSameAs(checked.records());
+        assertThat(again.extracted()).isSameAs(checked.extracted());
+        assertThat(rulesOf(again)).isEqualTo(rulesOf(CheckedRecords.of(split, records(split))));
+    }
+
+    @Test
+    void nilValuesChangedTellRulesAgainOverTheSameExtractedValues() {
+        final TranslationMapping m = mapping("[]", "");
+        final CheckedRecords checked = CheckedRecords.of(m, records(m));
+        final List<Condition> loginWay = m.events().get(1).when();
+        assertThat(checked.ruleOf(1)).isEqualTo("login");
+        assertThat(checked.holds(loginWay, 1)).isTrue();
+        // '-' left out (nil_values): the login rule's 'user present' no longer holds for the record with user=-.
+        final TranslationMapping leftOut = mapping("[\"-\"]", "");
+
+        final CheckedRecords again = checked.forMapping(leftOut);
+
+        assertThat(again).isNotNull();
+        assertThat(again.extracted()).isSameAs(checked.extracted());
+        assertThat(again.ruleOf(1)).isEqualTo("rest");
+        assertThat(again.holds(leftOut.events().get(1).when(), 1)).isFalse();
+        assertThat(rulesOf(again)).isEqualTo(rulesOf(CheckedRecords.of(leftOut, records(leftOut))));
+    }
+
+    @Test
+    void aMappingReadingRecordsOtherwiseReadsThemAgain() {
+        final TranslationMapping m = mapping("[]", "");
+        final CheckedRecords checked = CheckedRecords.of(m, records(m));
+        final TranslationMapping otherExtract = mapping(json(MAPPING.formatted("[]", "")
+                .replace("user=(", "usr=(")));
+
+        assertThat(checked.forMapping(otherExtract)).isNull();
+    }
+
+    @Test
+    void rulesChangedAreToldAgain() {
+        final TranslationMapping m = mapping("[]", "");
+        final CheckedRecords checked = CheckedRecords.of(m, records(m));
+        assertThat(checked.ruleOf(0)).isEqualTo("login");
+        final TranslationMapping renamed = mapping(json(MAPPING.formatted("[]", "")
+                .replace("\"name\": \"login\"", "\"name\": \"logon\"")));
+
+        assertThat(checked.forMapping(renamed).ruleOf(0)).isEqualTo("logon");
+    }
+
+    private static List<String> rulesOf(final CheckedRecords checked) {
+        final List<String> rules = new ArrayList<>();
+        for (int n = 0; n < checked.size(); n++) {
+            rules.add(checked.ruleOf(n));
+        }
+        return rules;
     }
 
     // The conditions tested one by one, as CatalogueKept.holds tests them.

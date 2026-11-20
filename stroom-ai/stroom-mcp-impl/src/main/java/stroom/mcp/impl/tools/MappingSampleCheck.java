@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /// A translation mapping checked against the sample's records before anything is generated or stepped (on [LocalCheck]
 /// and [XPathChecks]): fields no record has, time formats the values don't fit, schema values a constant or map gives,
@@ -67,6 +68,9 @@ final class MappingSampleCheck {
     /// The key the contradictions of the event types not yet confirmed go under ([SourceNotes#checkMapping]),
     /// taken out by the caller.
     static final String CATALOGUE_CONTRADICTIONS = "catalogue_contradictions";
+    /// The key what the check read and worked out goes under ([Earlier]), for the caller to take out and give the
+    /// check of the same sample again, once the user's answers have changed the mapping.
+    static final String EARLIER = "earlier";
 
     private MappingSampleCheck() {
         // Static only.
@@ -118,11 +122,62 @@ final class MappingSampleCheck {
                                      final Clock clock,
                                      final Catalogue catalogue,
                                      final SourceTypeScope scope) {
+        return check(mapping, samples, splitter, schema, inferred, clock, catalogue, scope, null);
+    }
+
+    /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock, Catalogue, SourceTypeScope)],
+    /// after an earlier check of the same sample in the same call, the mapping since changed as the user answered
+    /// its forms (a domain split, stand-ins for none left out). What that check read and worked out is used again
+    /// where the change can't alter it, so the answers cost a check of what they change, not of the whole sample
+    /// again (seen in eval case 36 on Haiku: the check run twice, a minute each):
+    ///
+    /// * the records, and their extracted values, when the mapping reads records as before (its input, held
+    ///   fields, namespace, record, root, pairs, extract and for_each the same; [CheckedRecords#forMapping]);
+    /// * whether an event type's way recognises each record, when its conditions are also tested alike (the same
+    ///   nil values and unescape transforms): stand-ins left out (nil_values) change them, a domain split doesn't;
+    /// * the rule taking each record, when its rules are also the same (names and conditions, in order);
+    /// * the extractions' own check (their regexes run as XPath's), when the mapping reads records as before and
+    ///   imports the same functions, and the earlier one finished within its time.
+    ///
+    /// Everything else is checked again, as it reads what the answers change (transforms, nil values, entries).
+    ///
+    /// @param mapping   The mapping.
+    /// @param samples   The sample's texts.
+    /// @param splitter  The Data Splitter spec that reads text, or null.
+    /// @param schema    The event-logging schema.
+    /// @param inferred  True if the spec was inferred from the sample rather than given.
+    /// @param clock     The clock the check's time is read against.
+    /// @param catalogue The build's catalogue of event types, or null when it has none.
+    /// @param scope     The build's (or its group's) source type scope, or null for none.
+    /// @param earlier   What an earlier check of this call kept ([#EARLIER]), or null: used only for the same
+    ///                  sample texts read with the same splitter.
+    /// @return As the other, with [#EARLIER].
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock,
+                                     final Catalogue catalogue,
+                                     final SourceTypeScope scope,
+                                     final Earlier earlier) {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
-        final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
+        final Earlier same = earlier != null && earlier.samples().equals(samples)
+                             && Objects.equals(earlier.splitter(), splitter)
+                ? earlier
+                : null;
         // Each record's extracted values and rule worked out once, for every part of the check (seen in eval case
         // 36 on Haiku: 60 extract entries over 1,000 records, run some 55 times a check, a minute of the build).
-        final CheckedRecords checked = CheckedRecords.of(mapping, found.records());
+        final CheckedRecords reused = same == null
+                ? null
+                : same.checked().forMapping(mapping);
+        final LocalCheck.SampleRecords found = reused == null
+                ? LocalCheck.sampleRecords(mapping, samples, splitter)
+                : same.found();
+        final CheckedRecords checked = reused == null
+                ? CheckedRecords.of(mapping, found.records())
+                : reused;
         final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(checked));
         final List<String> problems = new ArrayList<>(JsonValues.strings(check.get("problems")));
         final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
@@ -148,8 +203,13 @@ final class MappingSampleCheck {
                         .requiredOnInput()));
         warnings.addAll(checkXPaths(mapping, samples, splitter));
         warnings.addAll(checkSeveralValues(mapping, samples, splitter));
-        final XPathChecks.Findings extractions = checkExtractions(mapping, samples, splitter, found.records(),
-                deadline, clock);
+        final boolean extractionsAlike = reused != null && same.extractions() != null
+                                         && same.checked().mapping().functions().equals(mapping.functions());
+        final XPathChecks.Findings extractions = extractionsAlike
+                ? same.extractions()
+                : checkExtractions(mapping, samples, splitter, found.records(), deadline, clock);
+        // Kept for a check again only when it finished within its time: one cut short may get further.
+        final boolean extractionsWhole = extractionsAlike || !clock.instant().isAfter(deadline);
         problems.addAll(extractions.problems());
         warnings.addAll(extractions.warnings());
         if (inferred) {
@@ -175,8 +235,8 @@ final class MappingSampleCheck {
         check.put(CATALOGUE_CONTRADICTIONS, SourceNotes.checkMapping(checked, catalogue));
         final List<String> notChecked = ConfirmedEventTypes.notChecked(checked, catalogue);
         if (!notChecked.isEmpty()) {
-            final List<Object> said = new ArrayList<>(check.get("not_checked") instanceof final List<?> earlier
-                    ? earlier
+            final List<Object> said = new ArrayList<>(check.get("not_checked") instanceof final List<?> already
+                    ? already
                     : List.of());
             said.addAll(notChecked);
             check.put("not_checked", said);
@@ -184,6 +244,9 @@ final class MappingSampleCheck {
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }
+        check.put(EARLIER, new Earlier(samples, splitter, found, checked, extractionsWhole
+                ? extractions
+                : null));
         return check;
     }
 
@@ -372,5 +435,24 @@ final class MappingSampleCheck {
     private static XPathChecks.Extraction extraction(final Extraction extraction) {
         return new XPathChecks.Extraction(extraction.field(), extraction.xpath(), extraction.regex(),
                 extraction.flags(), extraction.names());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a check read and worked out, for a check of the same sample again in the same call.
+    ///
+    /// @param samples     The sample's texts it read.
+    /// @param splitter    The Data Splitter spec it read them with, or null.
+    /// @param found       The records it read.
+    /// @param checked     The records as its mapping read them, with what it worked out of them.
+    /// @param extractions The extractions' own check, or null when it ran out of time.
+    record Earlier(List<String> samples,
+                   SplitterSpec splitter,
+                   LocalCheck.SampleRecords found,
+                   CheckedRecords checked,
+                   XPathChecks.Findings extractions) {
+
     }
 }
