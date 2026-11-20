@@ -33,6 +33,7 @@ public final class WholeResults {
     // How a workspace read marks a line it cut.
     private static final String CUT = " more characters)";
     private static final int SLICE = 100;
+    private static final int TEXT_SLICE = 500;
     private static final Pattern MORE = Pattern.compile("\\(\\d+ results in all; \\d+ not shown\\..*\\)");
 
     private WholeResults() {
@@ -109,7 +110,18 @@ public final class WholeResults {
             }
             return map;
         }
-        throw new AssertionError("A value too long for a line, and not a list or map, at " + at + " in " + path);
+        if ("\"string\"".equals(type)) {
+            // A text line too long for a read: read a slice at a time.
+            final int length = Integer.parseInt(jq(client, path, at + " | length").strip());
+            final StringBuilder sb = new StringBuilder();
+            for (int from = 0; from < length; from += TEXT_SLICE) {
+                sb.append((String) parse(jq(client, path, at + " | .[" + from + ":" + (from + TEXT_SLICE) + "]"),
+                        at));
+            }
+            return sb.toString();
+        }
+        throw new AssertionError("A value too long for a line, and not a list, map or text, at " + at + " in "
+                                 + path);
     }
 
     private static Object parse(final String text, final String at) {

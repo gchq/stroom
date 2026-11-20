@@ -25,6 +25,7 @@ import stroom.util.json.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,36 @@ class TestDocumentationOutline {
         assertThat(String.join("\n", ((List<?>) saved.get("field_mapping")).stream().map(String::valueOf).toList())
                 .stripTrailing())
                 .isEqualTo(((String) before.get("field_mapping")).stripTrailing());
+    }
+
+    @Test
+    void fieldsToDescribeAreKeptEachWithWhereItsValueComesFromCutShort() {
+        // Seen in eval case 68 (300 event types): needs_descriptions of 46,000 characters, each TypeId and
+        // Description listed in its field's `from`.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final List<Map<String, Object>> fields = new ArrayList<>();
+        for (final String path : List.of("EventDetail/TypeId", "EventDetail/Description", "EventSource/User/Id")) {
+            fields.add(Map.of("field", path, "from", "EventSource/User/Id".equals(path)
+                            ? "`user`"
+                            : "\"Account created\" (account created)\n".repeat(600),
+                    "values", List.of("a", "b"), "schemas_say", Map.of("event-logging", "The ...")));
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "needs_descriptions");
+        result.put("written", false);
+        result.put("fields", fields);
+        result.put("hint", "NOT WRITTEN. Describe each field.");
+
+        assertThat(DocumentationOutline.outlineIfLarge(TestLargeResults.CLIENT,
+                Optional.of(new SessionWorkspace(chats, 1)), "eval-68", result, LIMIT)).isTrue();
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LIMIT);
+        final List<Map<String, Object>> said = JsonValues.maps(result.get("fields"));
+        assertThat(said).extracting(field -> field.get("field")).containsExactly("EventDetail/TypeId",
+                "EventDetail/Description", "EventSource/User/Id");
+        assertThat((String) said.getFirst().get("from")).endsWith("(600 lines in all: the rest in the saved result)");
+        assertThat(said.getLast()).isEqualTo(fields.getLast());
+        assertThat(said.getFirst().get("values")).isEqualTo(List.of("a", "b"));
     }
 
     @Test

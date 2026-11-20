@@ -16,9 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.workspace.SessionWorkspace;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +29,13 @@ import java.util.Optional;
 /// A write_documentation result too large for a client outside Stroom ([LargeResults]): seen in eval cases 35, 36
 /// and 56 on Haiku, results of 73,000 to 88,000 characters, almost all the generated Field mapping section given
 /// back for the agent to check. Outlined: the section (or Reference maps) by its headings and size, written to the
-/// doc as generated and saved whole; the doc, its link and what comes next kept whole.
+/// doc as generated and saved whole; the fields to describe (needs_descriptions) each with where its value comes from
+/// cut short; the doc, its link and what comes next kept whole.
 final class DocumentationOutline {
+
+    private static final String FROM = "from";
+    // The most characters of where a field to describe comes from said in an outline.
+    private static final int FROM_CHARS = 300;
 
     private DocumentationOutline() {
         // Static only.
@@ -50,9 +57,29 @@ final class DocumentationOutline {
         return LargeResults.of(WriteDocumentationTool.NAME, key)
                 .keep("type", "uuid", "name", "written", "link", "note", "working_copy_of",
                         "accept_errors_already_recorded", "fields", "confirmation_id", "field_mapping_needs")
+                .outline("fields", (value, room) -> fieldsToDescribe(value))
                 .outline("field_mapping", DocumentationOutline::section)
                 .outline("reference_maps", DocumentationOutline::section)
                 .apply(caller, workspace, result, limit);
+    }
+
+    // The fields to describe (needs_descriptions), each whole but where its value comes from, cut short: seen in
+    // eval case 68 (300 event types), 46,000 characters, each TypeId and Description listed in `from`.
+    private static Object fieldsToDescribe(final Object value) {
+        final List<Object> fields = new ArrayList<>();
+        for (final Object entry : JsonValues.listOrEmpty(value)) {
+            if (entry instanceof final Map<?, ?> field && field.get(FROM) instanceof final String from
+                && from.length() > FROM_CHARS) {
+                final Map<String, Object> said = new LinkedHashMap<>();
+                field.forEach((k, v) -> said.put(String.valueOf(k), v));
+                said.put(FROM, from.substring(0, FROM_CHARS) + "... (" + from.lines().count() + " lines in all: the "
+                               + "rest in the saved result)");
+                fields.add(said);
+            } else {
+                fields.add(entry);
+            }
+        }
+        return fields;
     }
 
     // A generated section in brief: its size and headings, as written to the doc.
