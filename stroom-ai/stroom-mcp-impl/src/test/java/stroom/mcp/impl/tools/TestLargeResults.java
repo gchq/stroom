@@ -140,6 +140,22 @@ class TestLargeResults {
     }
 
     @Test
+    void aResultWithANullPartIsSavedAndOutlined() {
+        // Seen in eval cases 36 and 68: build_translation_xslt's field_mapping is null, and the save threw, so the
+        // result was given whole.
+        final ChatWorkspace chats = writable();
+        final Map<String, Object> result = large();
+        result.put("field_mapping", null);
+        final int limit = LargeResults.length(result) - 1_000;
+
+        assertThat(plan().apply(CLIENT, Optional.of(new SessionWorkspace(chats, 1)), result, limit)).isTrue();
+
+        assertThat(JsonUtil.readValue(written(chats, "/outputs/a_tool/acme_v1.json"), Map.class))
+                .containsEntry("field_mapping", null);
+        assertThat(result).containsEntry("field_mapping", null);
+    }
+
+    @Test
     void savedPathsArePlainFileNames() {
         assertThat(LargeResults.savedPath("survey_feed", "acme v1/x")).isEqualTo("/outputs/survey_feed/acme_v1_x.json");
         assertThat(LargeResults.savedPath("survey_feed", null)).isEqualTo("/outputs/survey_feed/result.json");

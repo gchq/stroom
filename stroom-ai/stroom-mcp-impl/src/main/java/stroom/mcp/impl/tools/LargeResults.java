@@ -263,7 +263,9 @@ final class LargeResults {
     /// @param value A JSON value.
     /// @return Its length as compact JSON.
     static int length(final Object value) {
-        return JsonUtil.writeValueAsString(value, false).length();
+        return value == null
+                ? "null".length()
+                : JsonUtil.writeValueAsString(value, false).length();
     }
 
     /// @param text A text.
@@ -279,7 +281,10 @@ final class LargeResults {
         final Object v = lines
                 ? asLines(value)
                 : value;
-        final String compact = JsonUtil.writeValueAsString(v, false);
+        // JsonUtil gives null, not "null", for a null value (seen: build_translation_xslt's field_mapping: null).
+        final String compact = v == null
+                ? "null"
+                : JsonUtil.writeValueAsString(v, false);
         if (compact.length() + indent <= LINE_CHARS || !(v instanceof Map<?, ?> || v instanceof List<?>)) {
             sb.append(compact);
             return;

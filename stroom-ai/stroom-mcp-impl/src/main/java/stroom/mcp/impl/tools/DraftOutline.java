@@ -118,20 +118,25 @@ final class DraftOutline {
         if (length(result) > limit) {
             // Still too large (seen in eval case 68, 300 event types: 58,000 characters outlined, the source
             // notes, the notes and data_placement each some 15,000 listing every event type): the rest outlined.
-            LargeResults.of(DraftTranslationMappingTool.NAME, build)
+            final boolean outlined = LargeResults.of(DraftTranslationMappingTool.NAME, build)
                     .keep(SAVED, OUTLINE, "schema_version", "schema_version_settled", "splitter", "read_with",
                             "format", "records", "source_notes.fields", "source_notes.unread_fields")
                     .outline("source_notes", (value, room) -> sourceNotes(value))
                     .outline("notes", (value, room) -> notes(value))
                     .outline("schema_check", (value, room) -> schemaCheck(value))
                     .outline(PLACEMENT, (value, room) -> placementGrouped(value))
-                    .step(OUTLINE, (outlined, room) -> {
-                        outlined.put(OUTLINE, outline(mapping, false));
+                    .step(OUTLINE, (said, room) -> {
+                        said.put(OUTLINE, outline(mapping, false));
                         return true;
                     })
                     .cutTheRest()
-                    .step(OUTLINE, (outlined, room) -> fitRules(outlined, room.target()))
+                    .step(OUTLINE, (said, room) -> fitRules(said, room.target()))
                     .apply(caller, workspace, result, limit);
+            if (!outlined) {
+                // The rest not saved: the mapping's outline alone made to fit, as before.
+                result.put(OUTLINE, outline(mapping, false));
+                fitRules(result, limit);
+            }
         }
     }
 
