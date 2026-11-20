@@ -384,7 +384,9 @@ class TestToolCallGuard {
         // With a join line of the two data sources' names, the keys left to the agent.
         assertThat(second.text()).isEqualTo("Ran the query.\n\nJoining these rows with those of an earlier query "
                                             + "(Staff activity)? run_stroomql can join them in one query: from "
-                                            + "\"Staff activity\" join \"HR\" as hr on <key> = hr.<key>. See "
+                                            + "\"Staff activity\" join \"HR\" as hr on <key> = hr.<key>, or from "
+                                            + "\"HR\" join \"Staff activity\" as sa on <key> = sa.<key>. The joined "
+                                            + "source is read in full first, so join the smaller one. See "
                                             + "stroom://guide/joins.");
         // The same data source again, or the same pair the other way round, isn't hinted again.
         assertThat(again.text()).isEqualTo("Ran the query.");
@@ -393,7 +395,9 @@ class TestToolCallGuard {
         assertThat(JsonUtil.readValue(third.text(), Map.class).get("join_hint"))
                 .isEqualTo("Joining these rows with those of an earlier query (Staff activity, HR)? run_stroomql "
                            + "can join them in one query: from \"Staff activity\" join \"web\" as web on <key> = "
-                           + "web.<key>. See stroom://guide/joins.");
+                           + "web.<key>, or from \"web\" join \"Staff activity\" as sa on <key> = sa.<key>. The "
+                           + "joined source is read in full first, so join the smaller one. See "
+                           + "stroom://guide/joins.");
     }
 
     @Test
@@ -408,8 +412,9 @@ class TestToolCallGuard {
         read(stroomQl, query("from A select x"), question);
         assertThat(read(stroomQl, query("from B select y"), question).text())
                 .endsWith("Joining these rows with those of an earlier query (A)? run_stroomql can join them in one "
-                          + "query: from \"A\" join \"B\" as b on <key> = b.<key>. See get_instructions "
-                          + "guide=joins.");
+                          + "query: from \"A\" join \"B\" as b on <key> = b.<key>, or from \"B\" join \"A\" as a "
+                          + "on <key> = a.<key>. The joined source is read in full first, so join the smaller one. "
+                          + "See get_instructions guide=joins.");
         // The next question starts again.
         final ToolCallContext nextQuestion = ToolCallContext.builder(ToolSession.chat(1))
                 .runContext(new ToolRunContext(null, null, () -> false))

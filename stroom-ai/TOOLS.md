@@ -1215,11 +1215,13 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
 * **Joins hint** (`ToolCallGuard`, `QueriedSources`): a successful run_stroomql, esql_query or search_events of a data
   source other than one queried before (in the chat, in the current question; over `/mcp`, in the session within
   the last 10 minutes) ends with one line, "Joining these rows with those of an earlier query (<sources>)?
-  run_stroomql can join them in one query: from "<first>" join "<this>" as <alias> on <key> = <alias>.<key>. See
-  stroom://guide/joins." (`get_instructions guide=joins` in the chat; `join_hint` inside a JSON result), once for
+  run_stroomql can join them in one query: from "<first>" join "<this>" as <alias> on <key> = <alias>.<key>, or
+  from "<this>" join "<first>" as <alias> on <key> = <alias>.<key>. The joined source is read in full first, so
+  join the smaller one. See stroom://guide/joins." (both orders, as the agent took the order its queries happened
+  to run in, eval case 72) (`get_instructions guide=joins` in the chat; `join_hint` inside a JSON result), once for
   each pair of sources. The join line (`QueriedSources.joinLine`) quotes both names and makes the alias from the
   joined name (its initials, or one word cut to 8 letters, never a StroomQL keyword); the keys stay placeholders,
-  and it is left out when either source was given by uuid (decided by the user, 2026-11-21: one fact, not steps).
+  and the join lines are left out when either source was given by uuid (decided by the user, 2026-11-21: one fact, not steps).
 * **Notes**: the time limit is the session's query time limit (`stroom.ai.workspace.queryTimeLimit`, default 2
   minutes), not the tool time limit. The search is always destroyed when the call ends (`AgentSearches.destroy`),
   including on a timeout, so it never runs on after the call.

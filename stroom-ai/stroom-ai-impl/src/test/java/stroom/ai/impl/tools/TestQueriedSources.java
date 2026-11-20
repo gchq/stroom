@@ -39,6 +39,16 @@ class TestQueriedSources {
     }
 
     @Test
+    void theHintsJoinLinesGiveBothOrdersAndWhatDecides() {
+        assertThat(QueriedSources.joinLines("Staff activity", "HR"))
+                .isEqualTo("from \"Staff activity\" join \"HR\" as hr on <key> = hr.<key>, or from \"HR\" join "
+                           + "\"Staff activity\" as sa on <key> = sa.<key>. The joined source is read in full first, "
+                           + "so join the smaller one.");
+        // Only one name writable: no join lines at all.
+        assertThat(QueriedSources.joinLines("Staff activity", "9889f8e1-72da-4b8c-addc-2368bfc625f1")).isNull();
+    }
+
+    @Test
     void noJoinLineIsGivenForAUuidOrANameStroomQlCantQuote() {
         // An index given by uuid (as esql_query often is) isn't a name to write in a query.
         assertThat(QueriedSources.joinLine("Staff activity", "9889f8e1-72da-4b8c-addc-2368bfc625f1")).isNull();

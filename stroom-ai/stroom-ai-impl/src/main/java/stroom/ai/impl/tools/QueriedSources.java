@@ -122,6 +122,22 @@ final class QueriedSources {
         return "from \"" + first + "\" join \"" + joined + "\" as " + alias + " on <key> = " + alias + ".<key>";
     }
 
+    /// The join lines of two data sources a session queried apart, both ways round, and the fact that decides
+    /// between them (decided by the user, 2026-11-21: the agent chose the order the queries happened to run in).
+    ///
+    /// @param first  The data source queried first, as given.
+    /// @param joined The one queried since, as given.
+    /// @return E.g. `from "Staff activity" join "HR" as hr on <key> = hr.<key>, or from "HR" join "Staff
+    /// activity" as sa on <key> = sa.<key>. The joined source is read in full first, so join the smaller one.`;
+    /// null when either name isn't one to write in a query ([#joinLine]).
+    static String joinLines(final String first, final String joined) {
+        final String line = joinLine(first, joined);
+        return line == null
+                ? null
+                : line + ", or " + joinLine(joined, first) + ". The joined source is read in full first, so join "
+                  + "the smaller one.";
+    }
+
     private static boolean writable(final String name) {
         return name != null && !name.isBlank() && name.indexOf('"') < 0 && !UUID.matcher(name.strip()).matches();
     }
