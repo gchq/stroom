@@ -16,12 +16,12 @@
 
 package stroom.index.lucene;
 
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexDeletionPolicy;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.LongSupplier;
 
 /// Keeps the commits of an index shard that have been replaced by a newer commit for a retention period
@@ -41,7 +41,7 @@ class RetainReplacedCommitsDeletionPolicy extends IndexDeletionPolicy {
     private final long retentionMs;
     private final LongSupplier clock;
     // When each replaced commit was first seen to have been replaced, by commit generation.
-    private final Map<Long, Long> replacedTimes = new HashMap<>();
+    private final Long2LongMap replacedTimes = new Long2LongOpenHashMap();
     // Set once every replaced commit is known to be old enough to delete.
     private boolean expireAll;
 
@@ -80,7 +80,7 @@ class RetainReplacedCommitsDeletionPolicy extends IndexDeletionPolicy {
     // The commits are given oldest first, and the last one is the current commit, which is always kept.
     private void deleteExpiredCommits(final List<? extends IndexCommit> commits) {
         final long nowMs = clock.getAsLong();
-        final Map<Long, Long> stillRetained = new HashMap<>();
+        final Long2LongMap stillRetained = new Long2LongOpenHashMap();
         for (int i = 0; i < commits.size() - 1; i++) {
             final IndexCommit commit = commits.get(i);
             final long generation = commit.getGeneration();

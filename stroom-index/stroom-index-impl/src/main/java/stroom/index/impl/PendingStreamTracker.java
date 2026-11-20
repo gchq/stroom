@@ -20,8 +20,8 @@ package stroom.index.impl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 
 /// Records, for one attempt to index a stream, each shard the stream's documents are added to. The record
 /// is made before the first document goes into a shard, so that whatever happens next there is a row
@@ -35,8 +35,11 @@ public class PendingStreamTracker {
     private final IndexShardPendingStreamDao pendingStreamDao;
     private final long streamId;
     private final long taskId;
+    // What the map of document counts gives for a shard that has no row.
+    private static final int NO_ROW = -1;
+
     // The number of documents added to each shard that has a row.
-    private final Map<Long, Integer> documentCounts = new HashMap<>();
+    private final Long2IntMap documentCounts = new Long2IntOpenHashMap();
     private boolean finished;
     private boolean failed;
 
@@ -51,6 +54,7 @@ public class PendingStreamTracker {
         this.pendingStreamDao = pendingStreamDao;
         this.streamId = streamId;
         this.taskId = taskId;
+        documentCounts.defaultReturnValue(NO_ROW);
     }
 
     /// Called before a document is added to a shard. Records the shard if this is the first.
@@ -67,7 +71,7 @@ public class PendingStreamTracker {
     ///
     /// @param shardId The id of the shard.
     public void added(final long shardId) {
-        documentCounts.merge(shardId, 1, Integer::sum);
+        documentCounts.mergeInt(shardId, 1, Integer::sum);
     }
 
     /// Called when a document could not be added to a shard and will be offered to another. A shard that
@@ -75,8 +79,7 @@ public class PendingStreamTracker {
     ///
     /// @param shardId The id of the shard.
     public void addFailed(final long shardId) {
-        final Integer count = documentCounts.get(shardId);
-        if (count != null && count == 0) {
+        if (documentCounts.get(shardId) == 0) {
             try {
                 pendingStreamDao.removeShard(shardId, streamId, taskId);
                 documentCounts.remove(shardId);
