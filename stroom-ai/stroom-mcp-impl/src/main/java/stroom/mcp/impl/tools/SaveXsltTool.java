@@ -269,7 +269,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
             return FieldPlan.fromJson(kept.get().payload());
         } catch (final MappingValidationException e) {
             throw new ToolRefusal("The index plan kept with XSLT '" + xslt.getName() + "' no longer reads: "
-                                  + e.getMessage());
+                                  + MappingProblems.plainly(e));
         }
     }
 

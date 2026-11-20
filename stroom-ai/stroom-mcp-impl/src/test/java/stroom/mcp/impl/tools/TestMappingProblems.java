@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.indexing.FieldPlan;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +54,20 @@ class TestMappingProblems {
                 .contains("keys that are not part of a mapping: ['rules'] (it has "
                           + ToolText.list(MappingProblems.mappingKeys()) + ")");
         assertThat(MappingProblems.structural(e)).isTrue();
+    }
+
+    @Test
+    void aModelThatDoesNotValidateIsSaidInPlainWords() {
+        final MappingValidationException missing = catchThrowableOfType(MappingValidationException.class, () ->
+                FieldPlan.parse(Map.of("backend", "lucene", "index_name", "acme", "time_field", "EventTime")));
+        assertThat(MappingProblems.plainly(missing)).isEqualTo("`fields` is missing");
+
+        final MappingValidationException wrong = catchThrowableOfType(MappingValidationException.class, () ->
+                TranslationMapping.parse(Map.of("input", "json", "events", List.of(Map.of("name", "x",
+                        "fields", "all of them")))));
+        assertThat(MappingProblems.plainly(wrong))
+                .contains("`events[0].fields`: Input should be a valid list (given \"all of them\")")
+                .doesNotContain("validation error");
     }
 
     @Test

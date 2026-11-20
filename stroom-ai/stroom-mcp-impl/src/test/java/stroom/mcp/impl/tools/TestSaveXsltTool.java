@@ -85,6 +85,23 @@ class TestSaveXsltTool {
     }
 
     @Test
+    void aPartialPlanIsRefusedSayingWhatIsMissingAndThatLeavingItOutUsesTheDraftedOne() {
+        // Seen in a Haiku eval run: index_plan without its fields was refused with "1 validation error for
+        // FieldPlan fields Field required"; the agent then left index_plan out, which used the drafted plan.
+        final Map<String, Object> partial = new LinkedHashMap<>(lucenePlan());
+        partial.remove("fields");
+        final SaveXsltTool tool = world.saveXsltTool(Map.of("acme", FieldPlan.fromJson(lucenePlan())));
+
+        final String error = String.valueOf(world.call(tool, Map.of("build", BUILD, "name", "ACME-INDEX-XSLT",
+                "index_plan", partial)).get("error"));
+
+        assertThat(error).doesNotContain("validation error").doesNotContain("Field required")
+                .contains("index_plan is not a whole index plan: `fields` is missing")
+                .contains("Leave index_plan out")
+                .contains("the plan draft_index_mapping drafted or amended in this session");
+    }
+
+    @Test
     void saveToolsCreateOrUpdateByUuid() {
         final SaveXsltTool tool = world.saveXsltTool();
         final String code = HAND.replace("{BODY}", "");

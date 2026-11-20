@@ -106,7 +106,10 @@ final class TranslationArgs {
                     ? JsonUtil.readValue(text, Map.class)
                     : given);
         } catch (final MappingValidationException e) {
-            throw new ToolRefusal("index_plan is not an index plan: " + e.getMessage());
+            throw new ToolRefusal("index_plan is not a whole index plan: " + MappingProblems.plainly(e)
+                                  + ". Leave index_plan out (with no code) to save from the plan draft_index_mapping "
+                                  + "drafted or amended in this session: with uuid=, the one for the index that "
+                                  + "XSLT's kept plan names (else that kept plan); without, the only one drafted.");
         } catch (final RuntimeException e) {
             throw new ToolRefusal("index_plan is not an index plan (draft_index_mapping drafts one): "
                                   + e.getMessage());

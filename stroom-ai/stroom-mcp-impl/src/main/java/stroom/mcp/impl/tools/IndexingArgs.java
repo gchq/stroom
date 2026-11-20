@@ -51,7 +51,11 @@ final class IndexingArgs {
         try {
             return FieldPlan.parse(value);
         } catch (final MappingValidationException e) {
-            throw new ToolRefusal(name + " isn't a valid field plan: " + e.getMessage());
+            // create_index_doc and propose_index_template both fall back to a plan they have (IndexPlans#given).
+            throw new ToolRefusal(name + " isn't a valid field plan: " + MappingProblems.plainly(e) + ". Leave "
+                                  + name + " out to use the plan kept with the indexing XSLT of the pipeline "
+                                  + "named, else the one draft_index_mapping drafted or amended in this session for "
+                                  + "the index (or the only one drafted).");
         }
     }
 
@@ -71,7 +75,7 @@ final class IndexingArgs {
         try {
             return Discovery.fromJson((Map<String, Object>) value);
         } catch (final MappingValidationException e) {
-            throw new ToolRefusal(name + " isn't valid: " + e.getMessage());
+            throw new ToolRefusal(name + " isn't valid: " + MappingProblems.plainly(e));
         }
     }
 
@@ -90,7 +94,7 @@ final class IndexingArgs {
             try {
                 fields.add(PlannedField.fromJson((Map<String, Object>) item));
             } catch (final MappingValidationException e) {
-                throw new ToolRefusal(name + " isn't valid: " + e.getMessage());
+                throw new ToolRefusal(name + " isn't valid: " + MappingProblems.plainly(e));
             }
         }
         return fields;
@@ -107,7 +111,7 @@ final class IndexingArgs {
             try {
                 shared.add(reader.orThrow("SharedTemplate", SharedTemplate.read(reader, item, List.of())));
             } catch (final MappingValidationException e) {
-                throw new ToolRefusal(name + " isn't valid: " + e.getMessage());
+                throw new ToolRefusal(name + " isn't valid: " + MappingProblems.plainly(e));
             }
         }
         return shared;

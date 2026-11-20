@@ -95,6 +95,39 @@ final class MappingProblems {
         return out;
     }
 
+    /// What is wrong with a model given as an argument (a mapping, an index plan, a discovery and the like), in plain
+    /// words for a refusal: each key left out said as missing, each other error where it is with the value given.
+    /// Seen in a Haiku eval run: an index plan without its fields refused as "1 validation error for FieldPlan
+    /// fields Field required", the validator's own wording, which named neither the argument nor what to do.
+    ///
+    /// @param e Why the model doesn't validate.
+    /// @return Its errors (the first 8), joined with `; `, e.g. `` `fields` is missing``.
+    static String plainly(final MappingValidationException e) {
+        final List<String> out = new ArrayList<>();
+        final List<MappingError> errors = e.errors();
+        for (final MappingError error : errors.subList(0, Math.min(8, errors.size()))) {
+            final String where = error.where();
+            if ("missing".equals(error.type()) && !where.isEmpty()) {
+                out.add("`" + where + "` is missing");
+            } else {
+                final Object given = error.input();
+                final String shown = given == null || given instanceof Map || given instanceof List
+                        ? ""
+                        : " (given " + cut(ToolJson.dumps(given instanceof String || given instanceof Number
+                                                        || given instanceof Boolean
+                        ? given
+                        : String.valueOf(given)), 80) + ")";
+                out.add((where.isEmpty()
+                        ? ""
+                        : "`" + where + "`: ") + error.message() + shown);
+            }
+        }
+        if (errors.size() > 8) {
+            out.add("and " + (errors.size() - 8) + " more");
+        }
+        return String.join("; ", out);
+    }
+
     /// @param e Why the mapping doesn't validate.
     /// @return True if its shape is what's wrong (a key missing or misplaced), not a value: the whole shape is then
     /// shown.
