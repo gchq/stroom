@@ -3625,8 +3625,8 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   nearest names); the **regex guard**, a regex over its time budget (timed in Saxon's engine, as processing runs it),
   and a regex or `contains` over values past 10,000 characters where `starts_with` or `contains` recognises the same
   records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting;
-  an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value that
-  differs from 3 or more of the field's values only in a part that varies (a message holding an object's id; masked
+  an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value of a
+  field with at least 3 values written alike, the named one among them, differing only in a part that varies (a message holding an object's id; masked
   as the survey's shapes are), refused with `starts_with` or `matches` with a named group suggested; a code (`Login`,
   `4624`) never (2026-11-20).
 * `order`: the catalogue's.
@@ -3635,10 +3635,11 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
 `allow_unknown`, `scope` with the source type field and source types), with the confirmation in progress (the set last
 shown and when, a set the user amended, what proposals changed since the set was shown, the streams it was checked
 against), and the notes doc's "Event types" part, for people (2026-11-20): a section per action element (`### Authenticate`,
-the summaries' groups in their order), each a table `| Event type | What happened | Recognised by | Records | Status |`
+the summaries' groups in their order), each a table `| Event type | What happened | Recognised by | Records | Translated as | Status |`
 (TypeId and title; the description, or `-`; conditions in words; the records as last checked, kept in the
-confirmation, left blank after a hand edit read back; `confirmed` or `proposed`, the confidence and where it came
-from), the uncatalogued records (the catch-all) last in a section of their own; written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
+confirmation, left blank after a hand edit read back; the event detail, action, who acted and acted on, as the set's
+table says it, the column back by the user's decision of 2026-11-20; `confirmed` or `proposed`, the confidence and
+where it came from), the uncatalogued records (the catch-all) last in a section of their own; written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
 field dictionary, documents and references stay as record_source_notes keeps them. The build's one notes doc is
 used, else `<source> source notes` is made. Every result carries `catalogue`, compact (each `type_id`, `title`,
 `status`, the catch-all's `status`).
@@ -3649,18 +3650,19 @@ never many forms; 300 doubtful types were 30 forms): every high-confidence event
 every low in one, a confidence with none passed over, then the catch-all. Each set is shown as a summary
 (`CatalogueSummary`), whatever its size and confidence: grouped by action element, each group's count, records and
 commonest three TypeIds, then the event types worth a look in a table with why, up to 10 rows, the rest counted
-(decided by the user 2026-11-20). Worth a look: those amended since the set was shown (`amended: title, recognised
-by`, so the user can check their amendment landed; those removed are named), no record in the sample, no action
+(decided by the user 2026-11-20). Worth a look: those changed since the user last saw the set, whoever changed
+them (`changed since shown: title, recognised by`, decided by the user 2026-11-20, so the user can check their
+amendment landed; those removed are named, `Removed since shown:`), no record in the sample, no action
 element, an action of Other or Unknown, or an Unknown verb, the only one under its element in a set of 10 or more, no
 description of its own, dropped, or a `doubt` given; in a medium or low set every one (each is doubtful by its
-confidence), with its `doubt` and `one_type_because` where given; listed amended first, then those a rule or a doubt
+confidence), with its `doubt` and `one_type_because` where given; listed changed first, then those a rule or a doubt
 picks out, then the rest. The summary links the source notes (its Event types part holds every row), says the user
 can ask about any of them in the chat, and the form links the notes too (`every row`).
 Each comes first with `status: needs_showing`: Stroom AI's chat
 shows it itself, as it is, and the agent is told not to repeat it; another client's agent is told to show it whole.
-The next call (within 90 seconds of the table, or the same call made again with the answer) asks one short plain form
-bound to that table: "Accept all N event types, or type your amendments, or ask about any of them". A table shown longer ago is shown again
-before its form. Accepted, the set is `confirmed` (the seed's basis becoming `user_confirmed`; documentation's and the
+The next call (within 90 seconds of the summary, or the same call made again with the answer) asks one short plain
+form bound to that summary: "Accept all N event types, or type your amendments, or ask about any of them". A summary
+shown longer ago is shown again before its form. Accepted, the set is `confirmed` (the seed's basis becoming `user_confirmed`; documentation's and the
 agent's kept) and the next set's table comes back (`confirmed_now`). Amended, nothing of the set is confirmed:
 `status: needs_confirmation` with the user's `amendments` and the `amended` TypeIds; the agent proposes them
 (`op: change`, or add and remove; `drop: true` only where the user said so), and the set is put to the user again; a
@@ -3719,8 +3721,9 @@ and removed since (`CatalogueDiff`).
   `scope`, `survey`, `since_promoted`, `carried`; `hint`; `next` (`step: catalogue`, the call, then).
 * **Large, outside Stroom** (`CatalogueOutline`, 2026-11-20; case 68: 61k–93k): `not_in_sample` and `catalogue`
   counted (by status, TypeIds listed as they fit), the check's counts summed and `order` left out (problems, overlaps,
-  uncatalogued, several kept whole); the set's `table` cut last, saying how many rows and how to read the rest for the
-  user. Confirmation goes by `confirm=true` and `review_id`, never the outlined parts.
+  uncatalogued, several kept whole); the set's `table` (its summary, `CatalogueSummary`) cut last, by lines, its first
+  line always kept, saying how many lines and how to read the rest for the user (bounded in rows, at most 10, but not
+  in lines or characters: a group line an action element, the TypeIds removed, long conditions and doubts). Confirmation goes by `confirm=true` and `review_id`, never the outlined parts.
 * **Refuses**: no build; no survey for the build (naming the `survey_feed` call); no sample streams; a confirm while the
   check refuses the catalogue, or before the user's amendments are proposed; a confirm in Stroom AI's chat with the user
   away; the form declined.
@@ -5013,7 +5016,8 @@ generated without them.
     first save sends `changes=` only: a 50 KB draft written out whole in one call never reached the tool in
     testing. With a build it is also kept with the build in the user's own workspace, so a new MCP session of the
     same user picks it up (the newest wins); build_translation_xslt says so in `changes_applied_to_one` (when it was
-    drafted, in an earlier session). Another user never gets it.
+    drafted, in an earlier session). Another user never gets it. One older than the XSLT's last save, whose kept
+    mapping differs, gives way to the XSLT's (`changes_applied_to_one` says so).
   * `current_translation` lists what the current XSLT looks up (its `stroom:lookup()` maps, the imported functions
     and named templates it calls, the reference data the pipeline loads) with a note asking whether the next version
     keeps them: in testing a V1.3 drafted from the sample lost V1.2's IP lookups.
@@ -5261,7 +5265,8 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   its shape is wrong: `MappingProblems`); `max_records` out of range; a `splitter` that isn't a spec; saving with
   `build` but no `name`; keeping a rule Unknown with no sample records to show (see below); a catalogued build's
   save while its catch-all is unconfirmed (declined, say: ask the user in the chat, then catalogue_event_types; a
-  catalogue read back from a hand-written translation isn't held to it); and
+  catalogue read back from a hand-written translation isn't held to it, as its notes' `made_by` says; one the tool
+  made stays so when a hand edit is read back into it); and
   every save refusal of save_xslt. `changes={}` is the mapping as it stands (the session's draft, or the saved
   mapping); a source type group's first save with no `name` changes the build's draft. With `group`: no source type registry in the build; `source_types` not the registry's, or
   none and no scope; a name whose mode is the common module's; a new group saved with no form and no

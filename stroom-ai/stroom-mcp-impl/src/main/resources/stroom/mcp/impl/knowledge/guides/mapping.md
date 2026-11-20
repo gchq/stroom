@@ -92,10 +92,10 @@ varies; `not: true` for
   of answering, or words in the form's text, are yours to read: a question about an item (examples, what it means,
   how it is recognised, why it is grouped so) you answer in the chat from `explain: [TypeIds or action elements]`
   (changes nothing), then put the set again with `confirm: true` (`answered: true` too after words in the form); a
-  change they ask for you propose (`op: change`, or add and remove), and the set is put to them again, its amended
-  event types listed; if you can't tell which, ask them; never accept for them. `drop: true` only where the user said
-  to drop one. A client without forms gets `needs_review` and a `review_id`: show the table, and once the user agrees,
-  call with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed. The user
+  change they ask for you propose (`op: change`, or add and remove), and the set is put to them again, those changed
+  since they saw it listed (`changed since shown`); if you can't tell which, ask them; never accept for them.
+  `drop: true` only where the user said to drop one. A client without forms gets `needs_review` and a `review_id`:
+  show the summary, and once the user agrees, call with `reviewed=<review_id>`. The step is done when every event type and the catch-all are confirmed. The user
   declining the catch-all wants something else for those records: ask them in the chat, then propose event types for
   them, or give what they become (`catch_all: {translation: {type_id, event_detail, action, description}}`), and
   confirm again; the XSLT can't be saved until the catch-all is confirmed.

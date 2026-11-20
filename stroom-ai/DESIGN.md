@@ -2886,7 +2886,10 @@ entries.
   time), with the session and time it was sent. The newest wins: it is read first, as each session's save replaces
   it. One from an earlier session is used only while the user can still see the build (`TranslationBuilds`), and the
   result says so (`changes_applied_to_one`: when it was drafted). Another user never gets it. A chat in Stroom keeps
-  its own, in its workspace, as before.
+  its own, in its workspace, as before. A kept mapping older than the XSLT's last save, the XSLT's kept mapping
+  another (another user's save, a hand edit kept by rebuild_mapping, another session), gives way to the XSLT's: its
+  changes= apply to that, and `changes_applied_to_one` says so (from a review, 2026-11-20: A's Monday mapping
+  overwrote B's Tuesday save).
 * `draft_translation_mapping` drafts from the samples and the build's confirmed catalogue. The schema version is
   settled in a form. The current translation's lookups are carried into a next version; a save that keeps none of
   them warns.
@@ -3087,8 +3090,8 @@ event types over thousands of records take about the records' reading), and retu
   processing cuts included) where `starts_with` or `contains` would recognise the same records is refused with that
   suggestion. A condition that depends on processing's string cut. An event type recognised by every record of a line
   format that shares it. TypeId Verb-Object and unique; the meaning's schema checks. **A value unique to its record**
-  (decided 2026-11-20; the example: "Object <uuid> has been modified"): an `equals` or `one_of` naming a value that
-  differs from at least 3 of the field's values only in a part that varies (masked as the survey's shapes mask them:
+  (decided 2026-11-20; the example: "Object <uuid> has been modified"): an `equals` or `one_of` naming a value of
+  a field with at least 3 values written alike, the named one among them, differing only in a part that varies (masked as the survey's shapes mask them:
   quoted strings, addresses, UUIDs, long hex numbers, words with a digit), keeping some fixed text, is refused with
   `starts_with` (their fixed start) or `matches` with a named group (keeping the part that varies) suggested. A code
   never trips it, however rare and however varied its field: all fixed text (`Login`) or all variable (`4624`). (A
@@ -3102,19 +3105,22 @@ catch-all (decided by the user 2026-11-20: 300 doubtful types in sets of 10 were
 for 300 types some 38k characters): every high-confidence event type in one set (a build is one source type group),
 every medium in one, every low in one, each shown as a summary by what happened (action element, counts, a few
 TypeIds with records) and the event types worth a look row by row, at most 10, the rest counted (`CatalogueSummary`:
-amended since the set was shown, no record in the sample, no event written, a lone action element in a set of 10 or
-more, no description of its own, dropped, a `doubt` given; in a medium or low set every one, with its `doubt` where
-the agent gave one, the optional proposal key added 2026-11-20); every row in the source notes' Event types part (a
-section per action element, with Records and Status), which the summary links and the form names. The user may ask
+changed since the user last saw the set, whoever changed it (`changed since shown:`, decided by the user
+2026-11-20), no record in the sample, no event written, a lone action element in a set of 10 or more, no description
+of its own, dropped, a `doubt` given; in a medium or low set every one, with its `doubt` where the agent gave one, the
+optional proposal key added 2026-11-20); every row in the source notes' Event types part (a section per action
+element, with Records, Translated as and Status; the Translated as column back, decided by the user 2026-11-20),
+which the summary links and the form names. The user may ask
 about any item (decided 2026-11-20): a message typed instead of the form, or a question in its text, is the agent's to
 read; a question it answers from `explain=` (an event type's meaning, recognition, translation, records and three
 example records; a group's members; changing nothing) and puts the set again; only a change is proposed; acceptance
-stays the form's. The table goes in the chat and the form refers to it (forms are short plain
-text): the set's table is shown first (`needs_showing`; Stroom AI's chat shows it itself, other clients' agents show
-it whole), then a form bound to that table, "Accept all N event types, or type your amendments"; a table shown more
-than 90 seconds before its form is shown again. Columns: `| Event type | Recognised by | Records | Translated as |`:
-Event type (TypeId and title), Recognised by (in words: `logger_name is …SecurityEventLogger and eventType is
-"Password change"`), Records, Translated as (event detail, action, who acted, acted on). The confirmation is the user
+stays the form's. The summary goes in the chat and the form refers to it (forms are short plain
+text): the set's summary is shown first (`needs_showing`; Stroom AI's chat shows it itself, other clients' agents
+show it whole), then a form bound to that summary, "Accept all N event types, or type your amendments"; a summary
+shown more than 90 seconds before its form is shown again. The rows worth a look: `| Event type | Recognised by |
+Records | Translated as | Worth a look |`: Event type (TypeId and title), Recognised by (in words: `logger_name is
+…SecurityEventLogger and eventType is "Password change"`), Records, Translated as (event detail, action, who acted,
+acted on), Worth a look (why). The confirmation is the user
 agreeing to event types, so it is accepted only in its form, never from the chat (decided 2026-11-18). Amendments are
 the user's words, taken from the form's text or the chat; the agent proposes them (`op: change`, or add and remove),
 and the set is put to the user again; dropping only on the user's word. A form put aside by a message is answered as
@@ -3127,7 +3133,10 @@ them (`catch_all: {translation: {type_id, event_detail, action, description}}`, 
 the catch-all is then put to them again in its form, still the only place it is confirmed. build_translation_xslt
 refuses to save a catalogued build while its catch-all is unconfirmed, whatever drafted the mapping (a catalogue
 catalogue_event_types takes the user through; one read back from a hand-written translation, by rebuild_mapping or a
-carried promotion, has no catch-all to put to them and is not refused). The catch-all is
+carried promotion, has no catch-all to put to them and is not refused). Where the catalogue came from is kept with
+it, in the notes it is read from (`made_by`: `catalogue_event_types`, or read back from a hand-written translation;
+older notes by their confirmation's state), and a hand edit read back into a catalogue the tool made keeps it so
+(from a review, 2026-11-20: the read-back dropped the confirmation's state, so a declined catch-all was saved). The catch-all is
 never a drop of every uncatalogued record (its rule keeps every field as Data). Every result carries `catalogue`, compact
 (`type_id`, `title`, `status` each, the catch-all's `status`); the full catalogue is the source notes' JSON block. The
 build plan's step, `catalogue` (was `classify`), is done when every event type and the catch-all are confirmed.
@@ -3155,7 +3164,7 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   one Data a value (`repeat: true`), the vendor's code included, never the values run together (2026-11-20).
 * **Large drafts, outside Stroom** (decided 2026-11-20; seen in Haiku runs over Claude Code: drafts of 70k–168k
   characters past the client's result limit, the mappings hand-written without Descriptions or the vendor's code): for
-  a client outside Stroom, a draft over 40,000 characters (`DraftOutline.WHOLE_RESULT_CHARS`) is saved to
+  a client outside Stroom, a draft over 40,000 characters (`LargeResults.WHOLE_RESULT_CHARS`) is saved to
   `/outputs/drafts/<build>.json` and the result gives `mapping_outline` instead of `mapping`: each rule's TypeId, how it
   is recognised (in words), its Description, its vendor-code Data and what else it writes (dropped, then rules cut
   with a count, if still too large), how to read one rule's entries from the file, and to build with `changes=` alone
@@ -3183,7 +3192,12 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   The same drop happens when a form (or a progress message) a call sends after the client gave up can't be sent,
   long before the call answers (seen in the eval case 36 re-run: 61 s of work, then a form): the transport never
   answers that form, so it waited out its time limit. A form or progress message whose send drops the session puts
-  it back at once (`McpSession.keepInTransport`), and the form is taken as unanswered.
+  it back at once (`McpSession.keepInTransport`), and the form is taken as unanswered: only when this form's own
+  send dropped it (held before the send, gone after); one dropped already by another request is put back and the
+  form waited for. A session that ends as it is put back (a DELETE, or the upkeep's end) is taken out again
+  (`forget` removes it from the server's map before the transport's, and the put-back checks after). Progress a call
+  says while it works is sent off the shared timer, a virtual thread a message, without the call's lock, so a client
+  slow to take one holds up no other session (from a review, 2026-11-20).
 * The generator gained `not`, `starts_with`, `contains` and the explicit `catch_all` flag; nothing else changed
   (choose/when in order, `unmatched` warn, `mcp_log_kind`).
 
@@ -3226,7 +3240,8 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
   `guides/mapping.md`.
 * The source notes' Markdown part is "Event types", for people (2026-11-20): a section per action element
   (`### Authenticate`, the chat summaries' groups and order), each `| Event type | What happened | Recognised by |
-  Records | Status |` (recognised by in words; status `confirmed`/`proposed`, the confidence, where it came from),
+  Records | Translated as | Status |` (recognised by in words; Translated as as the set's table says it, back by the
+  user's decision of 2026-11-20; status `confirmed`/`proposed`, the confidence, where it came from),
   the uncatalogued records last in a section of their own; the JSON block unchanged: the readable form of the catalogue, written with the JSON block
   in one place (`RecordSourceNotesTool.textWithCatalogue`), so it never goes stale.
 * `record_source_notes` keeps fields and documents only; a call giving `events` is refused and pointed at
@@ -4426,6 +4441,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-20 | From a review of the catalogue work and the user's decisions: a re-shown set labels its event types changed since the user last saw it `changed since shown` (whoever changed them); the source notes' Event types tables get Translated as back; a kept mapping older than its XSLT's last save gives way to the XSLT's; a catalogue's origin (`made_by`) is kept through a hand edit read back, so the catch-all guard holds; an ended MCP session is never put back in the transport; a form is taken as unanswered only when its own send failed; progress is sent off the shared timer; the catalogue's outlined summary is cut by lines. | Event type catalogue; /mcp |
 | 2026-11-20 | build_translation_xslt asks its forms before the sample check where they don't depend on it (decided by the user; seen in eval case 36 on Haiku over Claude Code: the check of a 1,000-record sample ran 61 s before the first form, and Claude Code gives up on a call after 60 s with no response or progress notification on it): where a new source type group's Events go is asked before the check (kept for the next call should this one save nothing); the forms on what the check found (domain split, stand-ins for none, confirmed event types translated otherwise, rules kept as Unknown) follow it; while the check runs the client is told it is still going every 5 s (`CallProgress.whileWorking`), which resets Claude Code's idle clock. | Translation |
 | 2026-11-20 | A call the client cancelled over `/mcp` gets no answer, as the MCP spec says (decided by the user; MCP SDK 2.0.1 sent one): what it did stays done, and the session's next tool call result says, one line a call, what it completed. | The /mcp endpoint |
 | 2026-11-20 | A build's draft translation mapping (and every mapping sent for a build's XSLT) is kept with the build, for the user, in the user's own workspace, so a new MCP session of the same user picks it up (decided; seen in eval case 36: a client that started a new session lost its draft); the newest wins, a result built on one from an earlier session says when it was drafted, and another user never gets it. A draft made with no build stays with its session. | Translation |
