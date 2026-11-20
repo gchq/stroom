@@ -472,14 +472,25 @@ public final class SourceNotes {
     public static List<String> checkMapping(final TranslationMapping mapping,
                                             final Catalogue catalogue,
                                             final List<Object> records) {
-        if (catalogue == null || records.isEmpty()) {
+        return checkMapping(CheckedRecords.of(mapping, records), catalogue);
+    }
+
+    /// As [#checkMapping(TranslationMapping, Catalogue, List)], over records whose extracted values, rules and
+    /// ways' verdicts are worked out once for the check.
+    ///
+    /// @param checked   The sample's records, as the mapping reads them.
+    /// @param catalogue The build's catalogue, or null.
+    /// @return The contradictions.
+    public static List<String> checkMapping(final CheckedRecords checked, final Catalogue catalogue) {
+        final TranslationMapping mapping = checked.mapping();
+        if (catalogue == null || checked.size() == 0) {
             return List.of();
         }
         final Catalogue proposed = catalogue.withEventTypes(catalogue.eventTypes().stream()
                 .filter(type -> !type.confirmed() && !type.drop())
                 .toList());
         final List<String> problems = new ArrayList<>();
-        for (final CatalogueKept.Taken taken : CatalogueKept.taken(mapping, proposed, records, null)) {
+        for (final CatalogueKept.Taken taken : CatalogueKept.taken(checked, proposed, null)) {
             final String label = taken.typeId() + (NullSafe.isNonBlankString(taken.type().title())
                     ? " (" + taken.type().title() + ")"
                     : "");

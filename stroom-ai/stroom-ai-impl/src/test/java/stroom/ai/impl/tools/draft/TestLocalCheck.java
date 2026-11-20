@@ -363,9 +363,9 @@ class TestLocalCheck extends DraftFixtures {
         final List<Object> records = new ArrayList<>(List.of(
                 new LinkedHashMap<>(map("category", "Secret", "action", "View", "item", "a")),
                 new LinkedHashMap<>(map("category", "Secret", "action", "Delete", "item", "b"))));
-        final List<String> warned = LocalCheck.sharedTypeIds(typed("category"), records, null);
+        final List<String> warned = LocalCheck.sharedTypeIds(typed("category"), records);
         assertThat(warned).singleElement().asString().contains("'Secret' for rules delete, view");
-        assertThat(LocalCheck.sharedTypeIds(typed("action"), records, null)).isEmpty();
+        assertThat(LocalCheck.sharedTypeIds(typed("action"), records)).isEmpty();
     }
 
     private static TranslationMapping typed(final String typeField) {
@@ -628,7 +628,7 @@ class TestLocalCheck extends DraftFixtures {
         gaveUp.put("events", events);
         final List<Object> records = new ArrayList<>(DraftMapping.records(Map.of("fw.csv",
                 TestDraftMapping.FIREWALL_CSV), null).records());
-        final LocalCheck.Coverage coverage = LocalCheck.unknownCoverage(mapping(gaveUp), records, null);
+        final LocalCheck.Coverage coverage = LocalCheck.unknownCoverage(mapping(gaveUp), records);
         final List<String> problems = coverage.problems();
         assertThat(problems.stream().map(p -> p.split("]")[0]).sorted().toList())
                 .containsExactly("[admin", "[system", "[traffic");
@@ -651,10 +651,10 @@ class TestLocalCheck extends DraftFixtures {
                 "Firewall", "FW", "Prod");
         final List<Object> records = new ArrayList<>(DraftMapping.records(Map.of("fw.csv",
                 TestDraftMapping.FIREWALL_CSV), null).records());
-        LocalCheck.Coverage coverage = LocalCheck.unknownCoverage(traffic(draft, false), records, null);
+        LocalCheck.Coverage coverage = LocalCheck.unknownCoverage(traffic(draft, false), records);
         assertThat(coverage.problems().getFirst()).startsWith("[traffic] can't be kept as Unknown")
                 .contains("keep_unknown: true");
-        coverage = LocalCheck.unknownCoverage(traffic(draft, true), records, null);
+        coverage = LocalCheck.unknownCoverage(traffic(draft, true), records);
         assertThat(coverage.problems()).isEmpty();
         assertThat(coverage.kept().getFirst()).containsEntry("rule", "traffic").containsEntry("against_suggestion",
                 true);

@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueKept;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.draft.CheckedRecords;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.EventRule;
@@ -80,7 +81,23 @@ final class ConfirmedEventTypes {
                            final Catalogue catalogue,
                            final SourceTypeScope scope,
                            final EventSchema schema) {
-        if (catalogue == null || records.isEmpty()
+        return lost(CheckedRecords.of(mapping, records), catalogue, scope, schema);
+    }
+
+    /// As [#lost(TranslationMapping, List, Catalogue, SourceTypeScope, EventSchema)], over records whose extracted
+    /// values, rules and ways' verdicts are worked out once for the check.
+    ///
+    /// @param checked   The sample's records, as the mapping reads them.
+    /// @param catalogue The build's catalogue, or null.
+    /// @param scope     The build's (or its group's) source type scope, or null for none.
+    /// @param schema    The event-logging schema, or null when not known.
+    /// @return As the other.
+    static List<Lost> lost(final CheckedRecords checked,
+                           final Catalogue catalogue,
+                           final SourceTypeScope scope,
+                           final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
+        if (catalogue == null || checked.size() == 0
             || catalogue.eventTypes().stream().noneMatch(type -> type.confirmed() && !type.drop())) {
             return List.of();
         }
@@ -88,8 +105,7 @@ final class ConfirmedEventTypes {
                 .filter(type -> type.confirmed() && !type.drop())
                 .toList());
         final List<Lost> lost = new ArrayList<>();
-        for (final CatalogueKept.Taken taken : CatalogueKept.taken(mapping, confirmed, records,
-                inScope(mapping, records, scope))) {
+        for (final CatalogueKept.Taken taken : CatalogueKept.taken(checked, confirmed, inScope(checked, scope))) {
             taken.byRule().forEach((rule, count) -> otherwise(mapping, taken.type(), taken.typeId(), rule, schema)
                     .ifPresent(writes -> lost.add(new Lost(taken.typeId(), NullSafe.string(taken.type().title()),
                             CatalogueKept.recognisedBy(taken.type()), wanted(taken.type(), taken.typeId()), rule,
@@ -108,14 +124,24 @@ final class ConfirmedEventTypes {
     static List<String> undropped(final TranslationMapping mapping,
                                   final List<Object> records,
                                   final Catalogue catalogue) {
-        if (catalogue == null || records.isEmpty() || catalogue.eventTypes().stream().noneMatch(EventType::drop)) {
+        return undropped(CheckedRecords.of(mapping, records), catalogue);
+    }
+
+    /// As [#undropped(TranslationMapping, List, Catalogue)], over records whose extracted values, rules and ways'
+    /// verdicts are worked out once for the check.
+    ///
+    /// @param checked   The sample's records, as the mapping reads them.
+    /// @param catalogue The build's catalogue, or null.
+    /// @return As the other.
+    static List<String> undropped(final CheckedRecords checked, final Catalogue catalogue) {
+        if (catalogue == null || checked.size() == 0 || catalogue.eventTypes().stream().noneMatch(EventType::drop)) {
             return List.of();
         }
         final Catalogue dropped = catalogue.withEventTypes(catalogue.eventTypes().stream()
                 .filter(EventType::drop)
                 .toList());
         final List<String> warnings = new ArrayList<>();
-        for (final CatalogueKept.Taken taken : CatalogueKept.taken(mapping, dropped, records, null)) {
+        for (final CatalogueKept.Taken taken : CatalogueKept.taken(checked, dropped, null)) {
             taken.byRule().forEach((rule, count) -> {
                 if (!rule.startsWith(CatalogueKept.DROP)) {
                     warnings.add("dropped event type " + taken.typeId() + ": " + count + " sample records are "
@@ -139,7 +165,17 @@ final class ConfirmedEventTypes {
     static List<String> notChecked(final TranslationMapping mapping,
                                    final List<Object> records,
                                    final Catalogue catalogue) {
-        if (catalogue == null || records.isEmpty()) {
+        return notChecked(CheckedRecords.of(mapping, records), catalogue);
+    }
+
+    /// As [#notChecked(TranslationMapping, List, Catalogue)], over records whose extracted values, rules and ways'
+    /// verdicts are worked out once for the check.
+    ///
+    /// @param checked   The sample's records, as the mapping reads them.
+    /// @param catalogue The build's catalogue, or null.
+    /// @return As the other.
+    static List<String> notChecked(final CheckedRecords checked, final Catalogue catalogue) {
+        if (catalogue == null || checked.size() == 0) {
             return List.of();
         }
         final Set<String> confirmed = new LinkedHashSet<>();
@@ -149,7 +185,7 @@ final class ConfirmedEventTypes {
         if (confirmed.isEmpty()) {
             return List.of();
         }
-        return CatalogueKept.notChecked(mapping, CatalogueKept.taken(mapping, catalogue, records, null), confirmed);
+        return CatalogueKept.notChecked(checked.mapping(), CatalogueKept.taken(checked, catalogue, null), confirmed);
     }
 
     /// @param lost The confirmed event types translated otherwise.
@@ -191,31 +227,35 @@ final class ConfirmedEventTypes {
                 .toList();
     }
 
-    /// @param mapping The mapping.
-    /// @param records The sample's records.
+    /// @param checked The sample's records, as the mapping reads them.
     /// @param scope   The build's (or its group's) source type scope, or null for none.
     /// @return Which records (by index) are of the scope's source types: every record without a scope, and a record
-    /// not telling its source type; null for every record.
-    static IntPredicate inScope(final TranslationMapping mapping,
-                                        final List<Object> records,
-                                        final SourceTypeScope scope) {
+    /// not telling its source type; null for every record. Each record is told once, however often it is asked.
+    static IntPredicate inScope(final CheckedRecords checked, final SourceTypeScope scope) {
         if (scope == null || scope.names() == null || NullSafe.isBlankString(scope.field())) {
             return null;
         }
+        final Boolean[] told = new Boolean[checked.size()];
         return n -> {
-            final Object record = records.get(n);
-            final Map<String, String> extracted = mapping.extract().isEmpty()
-                    ? Map.of()
-                    : NullSafe.map(LocalCheck.extractedValues(mapping, record));
-            final String value = valueOf(record, extracted, scope.field());
-            if (NullSafe.isBlankString(value)) {
-                return true;
+            if (told[n] == null) {
+                told[n] = ofScope(checked, scope, n);
             }
-            return SourceTypeRows.first(scope.rows(), value)
-                    .map(SourceTypeRows.Row::name)
-                    .filter(scope.names()::contains)
-                    .isPresent();
+            return told[n];
         };
+    }
+
+    // Whether a record is of the scope's source types, or doesn't tell its source type.
+    private static boolean ofScope(final CheckedRecords checked, final SourceTypeScope scope, final int n) {
+        final Object record = checked.record(n);
+        final Map<String, String> extracted = NullSafe.map(checked.extracted(n));
+        final String value = valueOf(record, extracted, scope.field());
+        if (NullSafe.isBlankString(value)) {
+            return true;
+        }
+        return SourceTypeRows.first(scope.rows(), value)
+                .map(SourceTypeRows.Row::name)
+                .filter(scope.names()::contains)
+                .isPresent();
     }
 
     // What the rule writes for the event type's records, when not what the user confirmed; none when it is.

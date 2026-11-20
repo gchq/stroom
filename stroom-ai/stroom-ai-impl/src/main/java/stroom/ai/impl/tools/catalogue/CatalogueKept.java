@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.catalogue;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.draft.CheckedRecords;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.EventRule;
@@ -30,7 +31,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntPredicate;
 
@@ -69,28 +69,33 @@ public final class CatalogueKept {
                                     final Catalogue catalogue,
                                     final List<Object> records,
                                     final IntPredicate inScope) {
-        if (catalogue == null || NullSafe.isNonBlankString(mapping.forEach())) {
+        return taken(CheckedRecords.of(mapping, records), catalogue, inScope);
+    }
+
+    /// As [#taken(TranslationMapping, Catalogue, List, IntPredicate)], over records whose extracted values, rules
+    /// and ways' verdicts are worked out once for the check: so each part of the check that follows the catalogue
+    /// (its confirmed event types, its dropped ones, each way on its own) reads each record once between them.
+    ///
+    /// @param checked   The sample's records, as the mapping reads them.
+    /// @param catalogue The catalogue.
+    /// @param inScope   Whether the record at an index is the build's to compare, or null for every record.
+    /// @return One per event type, in the catalogue's order; none for a mapping reading `for_each`.
+    public static List<Taken> taken(final CheckedRecords checked,
+                                    final Catalogue catalogue,
+                                    final IntPredicate inScope) {
+        if (catalogue == null || NullSafe.isNonBlankString(checked.mapping().forEach())) {
             return List.of();
-        }
-        final List<Map<String, String>> extracted = new ArrayList<>();
-        final List<String> rules = new ArrayList<>();
-        for (final Object record : records) {
-            final Map<String, String> values = mapping.extract().isEmpty()
-                    ? null
-                    : LocalCheck.extractedValues(mapping, record);
-            extracted.add(values);
-            rules.add(null);
         }
         final List<Taken> out = new ArrayList<>();
         for (final EventType type : catalogue.eventTypes()) {
             final Map<String, Integer> byRule = new LinkedHashMap<>();
             int notChecked = 0;
             int recognised = 0;
-            for (int n = 0; n < records.size(); n++) {
+            for (int n = 0; n < checked.size(); n++) {
                 if (inScope != null && !inScope.test(n)) {
                     continue;
                 }
-                final Boolean ofType = recognises(mapping, type, records.get(n), extracted.get(n));
+                final Boolean ofType = recognises(checked, type, n);
                 if (ofType == null) {
                     notChecked++;
                     continue;
@@ -98,20 +103,14 @@ public final class CatalogueKept {
                 if (!ofType) {
                     continue;
                 }
-                recognised++;
-                if (rules.get(n) == null) {
-                    rules.set(n, Objects.requireNonNullElse(LocalCheck.ruleOf(mapping, records.get(n),
-                            extracted.get(n) == null
-                                    ? Map.of()
-                                    : extracted.get(n)), "\u0000"));
-                }
-                if ("\u0000".equals(rules.get(n))) {
+                final String rule = checked.ruleOf(n);
+                if (rule == null) {
                     // A rule before it tests what can't be told here: which rule takes it isn't known.
                     notChecked++;
-                    recognised--;
                     continue;
                 }
-                byRule.merge(rules.get(n), 1, Integer::sum);
+                recognised++;
+                byRule.merge(rule, 1, Integer::sum);
             }
             out.add(new Taken(type, typeIdOf(type), recognised, byRule, notChecked));
         }
@@ -137,6 +136,24 @@ public final class CatalogueKept {
         boolean untold = false;
         for (final Way way : type.recognisedBy()) {
             final Boolean holds = holds(mapping, way.when(), record, extracted);
+            if (Boolean.TRUE.equals(holds)) {
+                return true;
+            }
+            untold |= holds == null;
+        }
+        return untold
+                ? null
+                : false;
+    }
+
+    // Whether an event type recognises a record, as the other recognises tells it, each way's verdict kept.
+    private static Boolean recognises(final CheckedRecords checked, final EventType type, final int n) {
+        if (type.recognisedBy().isEmpty()) {
+            return true;
+        }
+        boolean untold = false;
+        for (final Way way : type.recognisedBy()) {
+            final Boolean holds = checked.holds(way.when(), n);
             if (Boolean.TRUE.equals(holds)) {
                 return true;
             }

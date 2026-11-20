@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.draft.CheckedRecords;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Condition;
@@ -119,28 +120,30 @@ final class MappingSampleCheck {
                                      final SourceTypeScope scope) {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
         final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
-        final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(mapping, found.records()));
+        // Each record's extracted values and rule worked out once, for every part of the check (seen in eval case
+        // 36 on Haiku: 60 extract entries over 1,000 records, run some 55 times a check, a minute of the build).
+        final CheckedRecords checked = CheckedRecords.of(mapping, found.records());
+        final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(checked));
         final List<String> problems = new ArrayList<>(JsonValues.strings(check.get("problems")));
         final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
-        problems.addAll(LocalCheck.checkSchemaValues(mapping, found.records(), schema));
-        final List<LocalCheck.QualifiedIds> qualified = LocalCheck.domainQualifiedIds(mapping, found.records(),
-                schema);
+        problems.addAll(LocalCheck.checkSchemaValues(checked, schema));
+        final List<LocalCheck.QualifiedIds> qualified = LocalCheck.domainQualifiedIds(checked, schema);
         warnings.addAll(LocalCheck.domainQualifiedWarnings(qualified));
         // Values that look like stand-ins for none, for the user to decide on.
-        final List<Placeholders.Found> placeholders = LocalCheck.placeholders(mapping, found.records(), schema);
+        final List<Placeholders.Found> placeholders = LocalCheck.placeholders(checked, schema);
         warnings.addAll(PlaceholderChoices.warnings(placeholders));
         // Data a rule's own records never hold.
-        warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));
-        warnings.addAll(LocalCheck.mapKeysNotHeld(mapping, found.records()));
+        warnings.addAll(LocalCheck.dataNotHeld(checked));
+        warnings.addAll(LocalCheck.mapKeysNotHeld(checked));
         // Rules the sample never reached: this check says nothing of them.
-        final List<String> unreached = LocalCheck.rulesUnreached(mapping, found.records());
+        final List<String> unreached = LocalCheck.rulesUnreached(checked);
         if (!unreached.isEmpty()) {
             warnings.add("Rules " + unreached + " took none of the " + found.records().size() + " sample records, "
                          + "so this check says nothing of them: before relying on them, step a record of each "
                          + "(step_records at the survey's locations), or give a sample that holds them");
         }
         // The required elements the sample's records leave out, counted.
-        warnings.addAll(LocalCheck.requiredLeftEmpty(mapping, found.records(),
+        warnings.addAll(LocalCheck.requiredLeftEmpty(checked,
                 XsltGenerator.generate(mapping, schema, NullSafe.nonBlankStringElse(schema.version(), "4.1.0"))
                         .requiredOnInput()));
         warnings.addAll(checkXPaths(mapping, samples, splitter));
@@ -161,16 +164,16 @@ final class MappingSampleCheck {
                                               + "splitter if the build's converter names its fields otherwise)"));
         }
         // Event types the user said to drop that a rule still translates.
-        warnings.addAll(ConfirmedEventTypes.undropped(mapping, found.records(), catalogue));
+        warnings.addAll(ConfirmedEventTypes.undropped(checked, catalogue));
         // Confirmed event types whose rules no longer write the vendor's code as Data (seen in eval cases 67, 70).
-        warnings.addAll(VendorCodeKept.missing(mapping, found.records(), catalogue, scope));
+        warnings.addAll(VendorCodeKept.missing(checked, catalogue, scope));
         check.put("problems", problems);
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
         check.put(PLACEHOLDERS, placeholders);
-        check.put(CONFIRMED_LOST, ConfirmedEventTypes.lost(mapping, found.records(), catalogue, scope, schema));
-        check.put(CATALOGUE_CONTRADICTIONS, SourceNotes.checkMapping(mapping, catalogue, found.records()));
-        final List<String> notChecked = ConfirmedEventTypes.notChecked(mapping, found.records(), catalogue);
+        check.put(CONFIRMED_LOST, ConfirmedEventTypes.lost(checked, catalogue, scope, schema));
+        check.put(CATALOGUE_CONTRADICTIONS, SourceNotes.checkMapping(checked, catalogue));
+        final List<String> notChecked = ConfirmedEventTypes.notChecked(checked, catalogue);
         if (!notChecked.isEmpty()) {
             final List<Object> said = new ArrayList<>(check.get("not_checked") instanceof final List<?> earlier
                     ? earlier

@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueKept;
 import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.catalogue.Way;
+import stroom.ai.impl.tools.draft.CheckedRecords;
 import stroom.ai.impl.tools.draft.VendorCode;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.FieldMapping;
@@ -57,10 +58,25 @@ final class VendorCodeKept {
                                 final List<Object> records,
                                 final Catalogue catalogue,
                                 final SourceTypeScope scope) {
-        if (catalogue == null || records.isEmpty()) {
+        return missing(CheckedRecords.of(mapping, records), catalogue, scope);
+    }
+
+    /// As [#missing(TranslationMapping, List, Catalogue, SourceTypeScope)], over records whose extracted values,
+    /// rules and ways' verdicts are worked out once for the check: each way followed on its own reads them once
+    /// between them.
+    ///
+    /// @param checked   The sample's records, as the mapping reads them.
+    /// @param catalogue The build's catalogue, or null when it has none.
+    /// @param scope     The build's (or its group's) source type scope, or null for none.
+    /// @return As the other.
+    static List<String> missing(final CheckedRecords checked,
+                                final Catalogue catalogue,
+                                final SourceTypeScope scope) {
+        final TranslationMapping mapping = checked.mapping();
+        if (catalogue == null || checked.size() == 0) {
             return List.of();
         }
-        final IntPredicate inScope = ConfirmedEventTypes.inScope(mapping, records, scope);
+        final IntPredicate inScope = ConfirmedEventTypes.inScope(checked, scope);
         // Each way of each confirmed event type on its own, so a rule is held to its own way's code.
         final Map<String, Missing> missing = new LinkedHashMap<>();
         for (final EventType type : catalogue.eventTypes()) {
@@ -74,8 +90,8 @@ final class VendorCodeKept {
                     continue;
                 }
                 final EventType ofWay = oneWay(type, typeId, way);
-                for (final CatalogueKept.Taken taken : CatalogueKept.taken(mapping,
-                        catalogue.withEventTypes(List.of(ofWay)), records, inScope)) {
+                for (final CatalogueKept.Taken taken : CatalogueKept.taken(checked,
+                        catalogue.withEventTypes(List.of(ofWay)), inScope)) {
                     for (final String ruleName : taken.byRule().keySet()) {
                         final EventRule rule = CatalogueKept.rule(mapping, ruleName);
                         if (rule == null || rule.catchAll() || rule.drop()) {

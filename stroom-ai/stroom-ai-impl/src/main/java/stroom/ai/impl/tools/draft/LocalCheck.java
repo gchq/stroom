@@ -41,7 +41,6 @@ import stroom.ai.impl.workspace.SafePattern;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -706,15 +705,22 @@ public final class LocalCheck {
         return out;
     }
 
-    // Record n's extracted values: from the list worked out once, else now (null without extract entries).
-    private static Map<String, String> extracted(final TranslationMapping mapping, final List<Object> records,
-                                                 final List<Map<String, String>> extracted, final int n) {
-        if (mapping.extract().isEmpty()) {
-            return null;
+    // Each record's rule, in order.
+    private static List<String> rulesOf(final CheckedRecords checked) {
+        final List<String> rules = new ArrayList<>(checked.size());
+        for (int n = 0; n < checked.size(); n++) {
+            rules.add(checked.ruleOf(n));
         }
-        return extracted != null
-                ? extracted.get(n)
-                : extractedValues(mapping, records.get(n));
+        return rules;
+    }
+
+    // Each record's extracted values, in order (null each without extract entries).
+    private static List<Map<String, String>> extractedOf(final CheckedRecords checked) {
+        final List<Map<String, String>> extracted = new ArrayList<>(checked.size());
+        for (int n = 0; n < checked.size(); n++) {
+            extracted.add(checked.extracted(n));
+        }
+        return extracted;
     }
 
     private static Set<String> derived(final TranslationMapping mapping) {
@@ -732,12 +738,21 @@ public final class LocalCheck {
     /// @param records The sample's records.
     /// @return Their names, in the mapping's order; none when there are no records, or the mapping reads for_each.
     public static List<String> rulesUnreached(final TranslationMapping mapping, final List<Object> records) {
-        if (hasText(mapping.forEach()) || records.isEmpty()) {
+        return rulesUnreached(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#rulesUnreached(TranslationMapping, List)], over records whose rules are worked out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The rules' names.
+    public static List<String> rulesUnreached(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        if (hasText(mapping.forEach()) || checked.size() == 0) {
             return List.of();
         }
         final Set<String> reached = new HashSet<>();
-        for (int n = 0; n < records.size(); n++) {
-            final String name = ruleOf(mapping, records.get(n), extracted(mapping, records, null, n));
+        for (int n = 0; n < checked.size(); n++) {
+            final String name = checked.ruleOf(n);
             if (name != null) {
                 reached.add(name);
             }
@@ -804,13 +819,22 @@ public final class LocalCheck {
     /// any is a problem naming what the records hold (the conditions' rule is refused by the generator too; the
     /// rule for the rest is refused here); a rule with it is reported for the user to confirm.
     ///
-    /// @param mapping   The mapping.
-    /// @param records   The sample's records.
-    /// @param extracted Each record's extracted values, worked out once, or null to work them out.
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
     /// @return The problems, and the rules kept as Unknown (`rule`, `reason`, `records`, `sample`, and
     /// `suggested` and `against_suggestion` where the values show an action).
-    public static Coverage unknownCoverage(final TranslationMapping mapping, final List<Object> records,
-                                           final List<Map<String, String>> extracted) {
+    public static Coverage unknownCoverage(final TranslationMapping mapping, final List<Object> records) {
+        return unknownCoverage(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#unknownCoverage(TranslationMapping, List)], over records whose extracted values and rules are worked
+    /// out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The problems, and the rules kept as Unknown.
+    public static Coverage unknownCoverage(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
         if (hasText(mapping.forEach()) || records.isEmpty()) {
             return new Coverage(List.of(), List.of());
         }
@@ -820,8 +844,8 @@ public final class LocalCheck {
                 .forEach(rule -> writesUnknown.put(rule.name(), rule));
         final Map<String, List<Object>> caught = new LinkedHashMap<>();
         for (int n = 0; n < records.size(); n++) {
-            final Map<String, String> values = extracted(mapping, records, extracted, n);
-            final String name = ruleOf(mapping, records.get(n), values);
+            final Map<String, String> values = checked.extracted(n);
+            final String name = checked.ruleOf(n);
             if (name != null && writesUnknown.containsKey(name)) {
                 // An XML record as its paths, and what extract finds in it, so what it holds is shown and its
                 // actions found as a flat record's are.
@@ -941,12 +965,21 @@ public final class LocalCheck {
     /// already differ per kind (a firewall's action, FortiGate's logid) is fine though the rules test other fields
     /// as well. A TypeId joining fields (join) is told the same way, from its joined values.
     ///
-    /// @param mapping   The mapping.
-    /// @param records   The sample's records.
-    /// @param extracted Each record's extracted values, worked out once, or null to work them out.
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
     /// @return The problem, or an empty list.
-    public static List<String> sharedTypeIds(final TranslationMapping mapping, final List<Object> records,
-                                             final List<Map<String, String>> extracted) {
+    public static List<String> sharedTypeIds(final TranslationMapping mapping, final List<Object> records) {
+        return sharedTypeIds(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#sharedTypeIds(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The problem, or an empty list.
+    public static List<String> sharedTypeIds(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
         final FieldMapping typeId = mapping.common().stream()
                 .filter(e -> "EventDetail/TypeId".equals(e.strippedPath()))
                 .findFirst()
@@ -963,8 +996,8 @@ public final class LocalCheck {
         for (int n = 0; n < records.size(); n++) {
             final Map<String, String> values = mapping.extract().isEmpty()
                     ? Map.of()
-                    : extracted(mapping, records, extracted, n);
-            final String name = ruleOf(mapping, records.get(n), values);
+                    : checked.extracted(n);
+            final String name = checked.ruleOf(n);
             if (name == null || name.isEmpty() || name.startsWith("drop: ") || own.contains(name)) {
                 continue;
             }
@@ -1022,17 +1055,25 @@ public final class LocalCheck {
     public static List<String> requiredLeftEmpty(final TranslationMapping mapping,
                                                  final List<Object> records,
                                                  final Map<String, List<String>> requiredOnInput) {
+        return requiredLeftEmpty(CheckedRecords.of(mapping, records), requiredOnInput);
+    }
+
+    /// As [#requiredLeftEmpty(TranslationMapping, List, Map)], over records whose extracted values and rules are
+    /// worked out once for the check.
+    ///
+    /// @param checked         The sample's records, as the mapping reads them.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value, by rule.
+    /// @return The warnings.
+    public static List<String> requiredLeftEmpty(final CheckedRecords checked,
+                                                 final Map<String, List<String>> requiredOnInput) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
         if (hasText(mapping.forEach()) || requiredOnInput.isEmpty()) {
             return List.of();
         }
         final Set<String> derived = derived(mapping);
-        final List<String> rules = new ArrayList<>();
-        final List<Map<String, String>> extracted = new ArrayList<>();
-        for (int n = 0; n < records.size(); n++) {
-            final Map<String, String> values = extracted(mapping, records, null, n);
-            extracted.add(values);
-            rules.add(ruleOf(mapping, records.get(n), values));
-        }
+        final List<String> rules = rulesOf(checked);
+        final List<Map<String, String>> extracted = extractedOf(checked);
         final List<String> out = new ArrayList<>();
         for (final EventRule rule : mapping.events()) {
             for (final String path : requiredOnInput.getOrDefault(rule.name(), List.of())) {
@@ -1098,17 +1139,23 @@ public final class LocalCheck {
     /// @param records The sample's records.
     /// @return The warnings.
     public static List<String> dataNotHeld(final TranslationMapping mapping, final List<Object> records) {
+        return dataNotHeld(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#dataNotHeld(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The warnings.
+    public static List<String> dataNotHeld(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
         if (hasText(mapping.forEach())) {
             return List.of();
         }
         final Set<String> derived = derived(mapping);
-        final List<String> rules = new ArrayList<>();
-        final List<Map<String, String>> extracted = new ArrayList<>();
-        for (int n = 0; n < records.size(); n++) {
-            final Map<String, String> values = extracted(mapping, records, null, n);
-            extracted.add(values);
-            rules.add(ruleOf(mapping, records.get(n), values));
-        }
+        final List<String> rules = rulesOf(checked);
+        final List<Map<String, String>> extracted = extractedOf(checked);
         final List<String> out = new ArrayList<>();
         for (final EventRule rule : mapping.events()) {
             final List<Integer> taken = new ArrayList<>();
@@ -1162,17 +1209,23 @@ public final class LocalCheck {
     /// @param records The sample records, as the mapping reads them.
     /// @return A warning for each such entry, naming its keys and the values the sample has.
     public static List<String> mapKeysNotHeld(final TranslationMapping mapping, final List<Object> records) {
+        return mapKeysNotHeld(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#mapKeysNotHeld(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The warnings.
+    public static List<String> mapKeysNotHeld(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
         if (hasText(mapping.forEach()) || records.isEmpty()) {
             return List.of();
         }
         final Set<String> derived = derived(mapping);
-        final List<String> rules = new ArrayList<>();
-        final List<Map<String, String>> extracted = new ArrayList<>();
-        for (int n = 0; n < records.size(); n++) {
-            final Map<String, String> values = extracted(mapping, records, null, n);
-            extracted.add(values);
-            rules.add(ruleOf(mapping, records.get(n), values));
-        }
+        final List<String> rules = rulesOf(checked);
+        final List<Map<String, String>> extracted = extractedOf(checked);
         final List<String> out = new ArrayList<>();
         final List<Integer> all = new ArrayList<>();
         for (int n = 0; n < records.size(); n++) {
@@ -1243,7 +1296,7 @@ public final class LocalCheck {
     public static List<String> domainQualifiedUserIds(final TranslationMapping mapping,
                                                       final List<Object> records,
                                                       final EventSchema schema) {
-        return domainQualifiedWarnings(domainQualifiedIds(mapping, records, schema));
+        return domainQualifiedWarnings(domainQualifiedIds(CheckedRecords.of(mapping, records), schema));
     }
 
     /// @param qualified The fields whose values going into users' Ids carry a domain
@@ -1278,7 +1331,18 @@ public final class LocalCheck {
     public static List<QualifiedIds> domainQualifiedIds(final TranslationMapping mapping,
                                                         final List<Object> records,
                                                         final EventSchema schema) {
-        final FieldValues values = new FieldValues(mapping, records);
+        return domainQualifiedIds(CheckedRecords.of(mapping, records), schema);
+    }
+
+    /// As [#domainQualifiedIds(TranslationMapping, List, EventSchema)], over records whose extracted values are
+    /// worked out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @param schema  The event-logging schema, which says which elements are users; null to go by the name User.
+    /// @return Each field, with the Id paths it is mapped into as it is and up to three of its values.
+    public static List<QualifiedIds> domainQualifiedIds(final CheckedRecords checked, final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
+        final FieldValues values = new FieldValues(checked);
         final Map<String, List<String>> paths = new LinkedHashMap<>();
         final Map<String, Set<String>> qualified = new LinkedHashMap<>();
         for (final FieldMapping entry : mapping.allEntries()) {
@@ -1319,7 +1383,18 @@ public final class LocalCheck {
     public static List<Placeholders.Found> placeholders(final TranslationMapping mapping,
                                                         final List<Object> records,
                                                         final EventSchema schema) {
-        final FieldValues values = new FieldValues(mapping, records);
+        return placeholders(CheckedRecords.of(mapping, records), schema);
+    }
+
+    /// As [#placeholders(TranslationMapping, List, EventSchema)], over records whose extracted values are worked
+    /// out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @param schema  The event-logging schema, or null.
+    /// @return The stand-ins found, those the mapping's nil_values already leave out aside.
+    public static List<Placeholders.Found> placeholders(final CheckedRecords checked, final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
+        final FieldValues values = new FieldValues(checked);
         final Map<String, List<String>> byField = new LinkedHashMap<>();
         final Map<String, Boolean> takesText = new LinkedHashMap<>();
         for (final FieldMapping entry : mapping.allEntries()) {
@@ -1398,10 +1473,21 @@ public final class LocalCheck {
     /// @return The problems.
     public static List<String> checkSchemaValues(final TranslationMapping mapping, final List<Object> records,
                                                  final EventSchema schema) {
+        return checkSchemaValues(CheckedRecords.of(mapping, records), schema);
+    }
+
+    /// As [#checkSchemaValues(TranslationMapping, List, EventSchema)], over records whose extracted values are
+    /// worked out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @param schema  The event-logging schema.
+    /// @return The problems.
+    public static List<String> checkSchemaValues(final CheckedRecords checked, final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
         final List<String> out = new ArrayList<>();
         // Read from the record or from what the mapping's extractions give it (seen: SecretServer's fields, read
         // from its message's key/value pairs, never checked when the record's own fields alone were read).
-        final FieldValues fieldValues = new FieldValues(mapping, records);
+        final FieldValues fieldValues = new FieldValues(checked);
         final Set<String> nil = new HashSet<>(mapping.nilValues() == null
                 ? List.of()
                 : mapping.nilValues());
@@ -1498,7 +1584,17 @@ public final class LocalCheck {
     /// @throws stroom.ai.impl.workspace.PatternTimeoutException if the mapping's regexes (its extractions' and
     ///                                                          conditions') take too long to match.
     public static Map<String, Object> checkMapping(final TranslationMapping mapping, final List<Object> records) {
-        return SafePattern.limited(null, () -> new MappingCheck(mapping, records).check());
+        return checkMapping(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#checkMapping(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check, and shared with its other parts.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return As the other.
+    /// @throws stroom.ai.impl.workspace.PatternTimeoutException if the mapping's regexes take too long to match.
+    public static Map<String, Object> checkMapping(final CheckedRecords checked) {
+        return SafePattern.limited(null, () -> new MappingCheck(checked).check());
     }
 
     /// @param text A text, or null.
@@ -1532,15 +1628,17 @@ public final class LocalCheck {
     // or what the mapping's extractions give it, worked out once for all the entries.
     private static final class FieldValues {
 
+        private final CheckedRecords checked;
         private final TranslationMapping mapping;
         private final List<Object> records;
         private final List<Object> items;
         private final Set<String> derived;
-        private final Map<List<Object>, List<Map<String, String>>> extracted = new IdentityHashMap<>();
+        private List<Map<String, String>> itemsExtracted;
 
-        private FieldValues(final TranslationMapping mapping, final List<Object> records) {
-            this.mapping = mapping;
-            this.records = records;
+        private FieldValues(final CheckedRecords checked) {
+            this.checked = checked;
+            this.mapping = checked.mapping();
+            this.records = checked.records();
             this.items = forEachItems(mapping, records);
             this.derived = derived(mapping);
         }
@@ -1554,14 +1652,22 @@ public final class LocalCheck {
             if (!derived.contains(field)) {
                 return pool.stream().map(record -> valueOf(record, field)).toList();
             }
-            final List<Map<String, String>> given = extracted.computeIfAbsent(pool, of -> of.stream()
-                    .map(record -> extractedValues(mapping, record))
-                    .toList());
+            final List<Map<String, String>> given = pool == records
+                    ? extractedOf(checked)
+                    : itemsExtracted();
             final List<String> out = new ArrayList<>();
             given.forEach(values -> out.add(values == null
                     ? null
                     : values.get(field)));
             return out;
+        }
+
+        // Each for_each item's extracted values, worked out once for all the entries.
+        private List<Map<String, String>> itemsExtracted() {
+            if (itemsExtracted == null) {
+                itemsExtracted = items.stream().map(item -> extractedValues(mapping, item)).toList();
+            }
+            return itemsExtracted;
         }
     }
 
@@ -1581,6 +1687,7 @@ public final class LocalCheck {
     // One mapping checked against its sample's records.
     private static final class MappingCheck {
 
+        private final CheckedRecords checked;
         private final TranslationMapping mapping;
         private final List<Object> records;
         private final List<String> problems = new ArrayList<>();
@@ -1590,11 +1697,11 @@ public final class LocalCheck {
         private final List<Object> items;
         private final boolean xml;
 
-        /// @param mapping The mapping.
-        /// @param records The sample's records.
-        MappingCheck(final TranslationMapping mapping, final List<Object> records) {
-            this.mapping = mapping;
-            this.records = records;
+        /// @param checked The sample's records, as the mapping reads them.
+        MappingCheck(final CheckedRecords checked) {
+            this.checked = checked;
+            this.mapping = checked.mapping();
+            this.records = checked.records();
             this.derived = derived(mapping);
             this.items = forEachItems(mapping, records);
             this.xml = records.stream().noneMatch(Map.class::isInstance);
@@ -1618,19 +1725,13 @@ public final class LocalCheck {
             checkZoneSources();
             unread(wanted, seen, suggested);
             // Once a record, not once a check: seen, 60 extract entries over 8,600 records took 9 s, three times
-            // over.
-            List<Map<String, String>> extracted = null;
-            if (!mapping.extract().isEmpty()) {
-                extracted = new ArrayList<>();
-                for (final Object record : records) {
-                    extracted.add(extractedValues(mapping, record));
-                }
-            }
-            problems.addAll(sharedTypeIds(mapping, records, extracted));
-            final Coverage coverage = unknownCoverage(mapping, records, extracted);
+            // over. Worked out here, within the check's time limit for regexes.
+            checked.extracted();
+            problems.addAll(sharedTypeIds(checked));
+            final Coverage coverage = unknownCoverage(checked);
             problems.addAll(coverage.problems());
             if (!hasText(mapping.forEach())) {
-                untold(extracted);
+                untold();
             }
             final Map<String, Object> out = dict("records", records.size(), "problems", problems, "warnings",
                     warnings, "fields_seen", seen.subList(0, Math.min(60, seen.size())));
@@ -1880,10 +1981,10 @@ public final class LocalCheck {
             }
         }
 
-        private void untold(final List<Map<String, String>> extracted) {
+        private void untold() {
             int untold = 0;
             for (int n = 0; n < records.size(); n++) {
-                if (ruleOf(mapping, records.get(n), LocalCheck.extracted(mapping, records, extracted, n)) == null) {
+                if (checked.ruleOf(n) == null) {
                     untold++;
                 }
             }
