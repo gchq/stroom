@@ -164,6 +164,24 @@ class TestCatalogueValidation {
     }
 
     @Test
+    void anActionThatIsAnActionElementOfItsOwnIsSaidToBeOne() {
+        // Seen in eval case 56 on Haiku (2026-11-20): mail moved to Deleted Items proposed as Update with the action
+        // Move, told only to leave action out, kept as Update: Move is an action element of its own.
+        final EventType moved = new EventType("Move-ToDeletedItems", "Moved", null, "Update", "Move", null, null,
+                null, null, List.of(way(equalsTo("a", "1"))), false, EventType.AGENT_KNOWLEDGE, "high", null,
+                EventType.PROPOSED);
+        final EventType other = new EventType("Update-Thing", "Thing", null, "Update", "Frobnicate", null, null,
+                null, null, List.of(way(equalsTo("a", "2"))), false, EventType.AGENT_KNOWLEDGE, "high", null,
+                EventType.PROPOSED);
+
+        assertThat(said(catalogue(null, moved, other))).containsExactly(
+                "Move-ToDeletedItems: event type Move-ToDeletedItems: EventDetail/Update has no Action, so leave "
+                + "action out; Move is an action element of its own: event_detail Move, if that is what the records "
+                + "are",
+                "Update-Thing: event type Update-Thing: EventDetail/Update has no Action, so leave action out");
+    }
+
+    @Test
     void anEventTypeItsConditionsSingleOutNamesItsActionElement() {
         // Seen in eval case 56 on Haiku (2026-11-20): seven event types proposed with an action but no event_detail,
         // confirmed by the user as "Unknown", then every save refused ("writes EventDetail/Unknown ... yet its

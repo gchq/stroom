@@ -57,7 +57,8 @@ public final class EventMeaning {
         }
         final boolean hasAction = action != null && !action.isEmpty();
         if (hasAction && !schema.hasPath(element + "/Action")) {
-            problems.add(label + ": " + element + " has no Action, so leave action out");
+            problems.add(label + ": " + element + " has no Action, so leave action out" + ownElement(schema, detail,
+                    action));
             return new Parts(null, problems);
         }
         if (!hasAction) {
@@ -71,6 +72,21 @@ public final class EventMeaning {
             return new Parts(null, problems);
         }
         return new Parts(allowed.get(), problems);
+    }
+
+    // An Action that names an action element of its own (Move, Delete, Copy), said to be one. Seen in eval case 56
+    // (2026-11-20): Update with the action Move, told only to leave action out, kept as Update.
+    private static String ownElement(final EventSchema schema, final String detail, final String action) {
+        final String stripped = action.strip();
+        if (stripped.isEmpty()) {
+            return "";
+        }
+        final String element = Character.toUpperCase(stripped.charAt(0)) + stripped.substring(1);
+        if (element.equals(detail) || element.contains("/") || SourceNotes.detailProblem(schema, element) != null) {
+            return "";
+        }
+        return "; " + element + " is an action element of its own: event_detail " + element + ", if that is what "
+               + "the records are";
     }
 
     /// What it acts on (`affected_as`) checked against its action element, written out to the leaf the affected
