@@ -96,6 +96,9 @@ public class ToolCallGuard {
     static final int SAME_READ_LIMIT = 3;
     /// The longest gap between identical reads for them to be counted together.
     static final Duration SAME_READ_WINDOW = Duration.ofMinutes(5);
+    /// Outside an agent run (over MCP), how long before a query of another data source still counts for the joins
+    /// hint ([QueriedSources]).
+    static final Duration JOIN_HINT_WINDOW = Duration.ofMinutes(10);
 
     // Answered from the last failure only where the same arguments give the same answer: the mapping and drafting
     // tools. Another tool's call may succeed once the user has changed something in Stroom.
@@ -192,9 +195,10 @@ public class ToolCallGuard {
                 failures.problems.remove(name);
                 failures.calls.remove(new CallKey(name, digest));
             }
-            noted = sameReads >= SAME_READ_LIMIT
+            final ToolResult repeated = sameReads >= SAME_READ_LIMIT
                     ? withRepeatNote(result, sameReadNote(sameReads, context))
                     : result;
+            noted = withJoinHint(repeated, joinHint(failures, read.call(), context));
         } else {
             final String note = failed(failures, name, digest, failure, advice);
             noted = note == null
@@ -238,6 +242,39 @@ public class ToolCallGuard {
             same.lastMs = now;
             return same.times;
         }
+    }
+
+    // The joins hint for a successful query of a data source other than ones queried a little before, or null.
+    private String joinHint(final SessionFailures failures, final ToolCall call, final ToolCallContext context) {
+        final String source = QueriedSources.source(call.name(), arguments(call.arguments()));
+        if (source == null) {
+            return null;
+        }
+        final List<String> others;
+        synchronized (failures) {
+            others = failures.sources.queried(context.runContext().orElse(null), source, clock.getAsLong(),
+                    JOIN_HINT_WINDOW);
+        }
+        if (others.isEmpty()) {
+            return null;
+        }
+        return "Joining these rows with those of an earlier query (" + String.join(", ", others) + ")? See "
+               + (context.session().isChat()
+                ? "get_instructions guide=joins."
+                : "stroom://guide/joins.");
+    }
+
+    // The joins hint: inside the result when it is one JSON object (as join_hint), else after its text.
+    private static ToolResult withJoinHint(final ToolResult result, final String hint) {
+        if (hint == null) {
+            return result;
+        }
+        final Map<String, Object> body = jsonObject(result.text());
+        if (body != null) {
+            body.put("join_hint", hint);
+            return withText(result, JsonUtil.writeValueAsString(body, false));
+        }
+        return withText(result, result.text() + "\n\n" + hint);
     }
 
     // What a read made again, with nothing written since, says.
@@ -629,6 +666,8 @@ public class ToolCallGuard {
         // Identical successful reads since the last write, in the run they were made in ([#readsRun]).
         private final Map<CallKey, SameRead> reads = new LinkedHashMap<>();
         private ToolRunContext readsRun;
+        // The data sources queried, for the joins hint.
+        private final QueriedSources sources = new QueriedSources();
         private volatile long usedMs;
     }
 

@@ -358,6 +358,72 @@ class TestToolCallGuard {
     }
 
     @Test
+    void aQueryOfASecondDataSourcePointsToTheJoinsGuideOncePerPair() {
+        // Seen with Haiku in eval cases 71 to 74: two data sources queried apart and their rows joined by reading
+        // them. The hint costs nothing until a second data source is queried.
+        final StroomTool stroomQl = tool("run_stroomql", ObjectSchema.builder()
+                .addStringProperty("query", "The query.")
+                .build(), call -> ToolResult.text("Ran the query."));
+        final StroomTool esql = tool("esql_query", ObjectSchema.builder()
+                .addStringProperty("index", "The index.")
+                .addStringProperty("pipeline", "The pipeline.")
+                .build(), call -> ToolResult.text("{\"rows\":[]}"));
+        final ToolCallContext mcp = ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "s1",
+                new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "Claude Code"))).build();
+
+        final ToolResult first = read(stroomQl, query("from \\\"Staff activity\\\" select UserId"), mcp);
+        final ToolResult sameSource = read(stroomQl, query("from \\\"Staff activity\\\" where Action = Export "
+                                                           + "select UserId"), mcp);
+        final ToolResult second = read(stroomQl, query("from HR select Username, Department"), mcp);
+        final ToolResult again = read(stroomQl, query("FROM \\\"HR\\\" select Username"), mcp);
+        final ToolResult backToFirst = read(stroomQl, query("from \\\"Staff activity\\\" select Action"), mcp);
+        final ToolResult third = read(esql, "{\"index\":\"web\",\"pipeline\":\"| LIMIT 5\"}", mcp);
+
+        assertThat(first.text()).isEqualTo("Ran the query.");
+        assertThat(sameSource.text()).isEqualTo("Ran the query.");
+        assertThat(second.text()).isEqualTo("Ran the query.\n\nJoining these rows with those of an earlier query "
+                                            + "(Staff activity)? See stroom://guide/joins.");
+        // The same data source again, or the same pair the other way round, isn't hinted again.
+        assertThat(again.text()).isEqualTo("Ran the query.");
+        assertThat(backToFirst.text()).isEqualTo("Ran the query.");
+        // A third data source makes new pairs: inside a JSON result, as a field.
+        assertThat(JsonUtil.readValue(third.text(), Map.class).get("join_hint"))
+                .isEqualTo("Joining these rows with those of an earlier query (Staff activity, HR)? See "
+                           + "stroom://guide/joins.");
+    }
+
+    @Test
+    void theJoinsHintIsForTheChatsCurrentQuestionOrTheMcpSessionsRecentQueries() {
+        final StroomTool stroomQl = tool("run_stroomql", ObjectSchema.builder()
+                .addStringProperty("query", "The query.")
+                .build(), call -> ToolResult.text("Ran the query."));
+        final ToolCallContext question = ToolCallContext.builder(ToolSession.chat(1))
+                .runContext(new ToolRunContext(null, null, () -> false))
+                .build();
+
+        read(stroomQl, query("from A select x"), question);
+        assertThat(read(stroomQl, query("from B select y"), question).text())
+                .endsWith("Joining these rows with those of an earlier query (A)? See get_instructions guide=joins.");
+        // The next question starts again.
+        final ToolCallContext nextQuestion = ToolCallContext.builder(ToolSession.chat(1))
+                .runContext(new ToolRunContext(null, null, () -> false))
+                .build();
+        assertThat(read(stroomQl, query("from C select z"), nextQuestion).text()).isEqualTo("Ran the query.");
+
+        // Over MCP, a query long before isn't one this joins with; a failed query counts for nothing.
+        final ToolCallContext mcp = ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "s2",
+                new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "Claude Code"))).build();
+        read(stroomQl, query("from A select x"), mcp);
+        now.addAndGet(ToolCallGuard.JOIN_HINT_WINDOW.toMillis() + 1);
+        assertThat(read(stroomQl, query("from B select y"), mcp).text()).isEqualTo("Ran the query.");
+        final StroomTool failing = tool("esql_query", ObjectSchema.builder()
+                .addStringProperty("index", "The index.")
+                .build(), call -> ToolResult.error("Error: no such index"));
+        read(failing, "{\"index\":\"web\"}", mcp);
+        assertThat(read(stroomQl, query("from B select y"), mcp).text()).isEqualTo("Ran the query.");
+    }
+
+    @Test
     void anIdenticalReadInsideJsonIsNotedInsideIt() {
         final StroomTool jq = tool("jq", ObjectSchema.builder()
                 .addStringProperty("filter", "The filter.")
@@ -516,6 +582,11 @@ class TestToolCallGuard {
     private ToolResult call(final StroomTool tool, final String arguments) {
         return guard.run(tool, new ToolCall("c", tool.definition().name(), arguments),
                 ToolCallContext.builder(ToolSession.chat(1)).build(), this::run);
+    }
+
+    // A run_stroomql call's arguments: the query, its quotes escaped already.
+    private static String query(final String query) {
+        return "{\"query\":\"" + query + "\"}";
     }
 
     private ToolResult read(final StroomTool tool, final String arguments, final ToolCallContext context) {
