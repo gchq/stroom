@@ -279,6 +279,17 @@ Read-only calls: `build_data_splitter` without `save_as`; `build_translation_xsl
 Lucene index needs Manage Index Shards. `upload_sample`'s files (`files=`) are posted to `/mcp/upload`, which
 needs Use MCP Tools.
 
+**Large results, outside Stroom** (`LargeResults`, 2026-11-20; seen in the Haiku evals: results of 50k–110k
+characters that Claude Code saved to files of its own, which the agent can't read through Stroom's tools). For a client
+outside Stroom with a session workspace, a result of `survey_feed`, `catalogue_event_types`,
+`draft_translation_mapping`, `build_translation_xslt` or `write_documentation` over 40,000 characters is saved whole
+to `/outputs/<tool>/<build, else a stable key>.json` (a list's entries one a line, a long text a line a list entry)
+and given with its large parts outlined, each tool's own steps in order while it is still too large, then the parts
+not kept cut (a list says how many more, `(N more in the saved file ...)`). `whole_result` says where (`saved`), what
+was `outlined` or `cut`, `text_lines`, and how to read a part with jq. Never outlined: status, hint, next, problems
+and refusals, review ids and forms, saved documents. Stroom AI's chat, a result within the limit, no workspace or a
+failed write: the result whole, as before. Test clients read an outlined result back whole (`WholeResults`).
+
 ## Choosing between tools that overlap
 
 Several tools cover neighbouring ground. Which does what:
@@ -3178,6 +3189,9 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   a scope, `scope` (`build`, `source_types`, `share_percent`, `records_passed_over`, `note`) and `read_again`. Or
   `status: needs_kind_field` or `needs_source_type_field` (no forms; nothing surveyed), or `needs_user`
   (`accept_as_is` without forms).
+* **Large, outside Stroom** (`SurveyOutline`, 2026-11-20; cases 36, 56, 61, 65, 66: 52k–109k): `locations` counted by
+  stream with `step_them` (`step_records locations_from=<saved>`), then each shape without its locations and further
+  examples, its example cut short, then left out; signatures whole. Saved to `/outputs/survey_feed/<build, else feed>.json`.
 * **Refuses**: no View Data; neither `feed` nor `stream_ids`; an argument out of range (`<name> must be a whole number
   from <min> to <max>, not '<value>'`); a stream id that doesn't exist; no streams of the type in the feed; nothing
   readable in the streams picked; the fewer-streams form declined.
@@ -3663,6 +3677,10 @@ and removed since (`CatalogueDiff`).
   `listing`; proposals: `recorded`, `source_notes`, `refused`, `check`, `not_in_sample`, `table` (the next set's),
   `listing`; confirmation: `table` (and `review_id`), `confirmed_now`, `amendments` and `amended`, `check`; `read_with`,
   `scope`, `survey`, `since_promoted`, `carried`; `hint`; `next` (`step: catalogue`, the call, then).
+* **Large, outside Stroom** (`CatalogueOutline`, 2026-11-20; case 68: 61k–93k): `not_in_sample` and `catalogue`
+  counted (by status, TypeIds listed as they fit), the check's counts summed and `order` left out (problems, overlaps,
+  uncatalogued, several kept whole); the set's `table` cut last, saying how many rows and how to read the rest for the
+  user. Confirmation goes by `confirm=true` and `review_id`, never the outlined parts.
 * **Refuses**: no build; no survey for the build (naming the `survey_feed` call); no sample streams; a confirm while the
   check refuses the catalogue, or before the user's amendments are proposed; a confirm in Stroom AI's chat with the user
   away; the form declined.
@@ -4183,7 +4201,9 @@ in one stream share a session.
 * **Arguments**: `pipeline_uuid`, `locations` (required): each `{stream, part, record, shape, expect}`, `stream`
   and `record` required, `part` default 0; `shape` names the survey shape the record is an example of; `expect` is
   `event` (default) or `none` for a kind the user chose to leave untranslated. A single location, or the list as
-  JSON text, is read too. `draft_code`. Only the first 500 locations are stepped.
+  JSON text, is read too. Or `locations_from`: the path of a survey_feed result saved to the workspace
+  (`whole_result.saved`), every location it lists stepped (2026-11-20). `draft_code`. Only the first 500 locations are
+  stepped.
 * **Returns**: `pipeline`, `records_stepped`, `records_with_errors`, `records_not_found`, `shapes_not_clean`,
   `left_untranslated_as_intended`, `draft_code_used`, the triage, `records` (the first 100, each `record`, `shape`,
   `events`, `errors`, and `found: false` with `why` for one not found), and as they apply `hint`, `stopped_early`
@@ -4939,6 +4959,10 @@ generated without them.
   the common entries; `writes` dropped, then rules cut with a count, if it is still too large; `data_placement`
   compact. The hint says how to read one rule's entries from the file (a workspace read cuts lines at 2,000
   characters) and to build with `changes=` only, `changes={}` building the draft as it stands.
+  Still too large once outlined (eval case 68, 300 event types: 58,000 characters): the source notes' lists counted,
+  each note cut to its start, the schema check's warnings in brief, `data_placement`'s rules grouped by Data and
+  action, then `writes` dropped and rules cut, the rest saved to `/outputs/draft_translation_mapping/<build>.json`
+  ([LargeResults](#build-tools)).
 * **Refuses**: no samples and no stream_ids; a pattern of the agent's that took too long on the sample
   (`PatternTimeoutException`, returned as the refusal); with `build`, a catalogue whose event types or catch-all are
   still to confirm (`The catalogue's N event type(s) and the catch-all for uncatalogued records are still to confirm:
@@ -5199,7 +5223,9 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   * **A large result, outside Stroom** (`BuiltRulesTrim`): over 40,000 characters for a client outside Stroom,
     `events` counts each rule's Data rather than listing it (`events_note`), and `sample_check` leaves out its
     `warnings`, which the result's `warnings` repeat (each starting `sample: `; `warnings_note`). Seen in eval cases 35
-    and 36 (2026-11-20): a third of results of 69,000 and 100,000 characters said twice.
+    and 36 (2026-11-20): a third of results of 69,000 and 100,000 characters said twice. Still over (eval case 68,
+    300 rules: 110,000): each rule in a line, each warning without its example (long rule lists counted past five),
+    `changes_applied` counted; problems, `saved` and `xslt` kept whole (`LargeResults`).
   * **Confirmed event types translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with
     the user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
     Logon, unsaid): `needs_review` with a table (`| Event type | Recognised by | You confirmed | Records | Now | Rule
@@ -5677,6 +5703,9 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
   `needs_descriptions` (nothing written yet): the fields not yet described, 25 a round (the rest follow once those
   are given), each with where it comes from, sample values, `schemas_say` (the vendor notes and the schemas), `under`
   for a Data name, `was` for one whose source changed.
+* **Large, outside Stroom** (`DocumentationOutline`, 2026-11-20; cases 35, 36, 56: 73k–88k): `field_mapping` (or
+  `reference_maps`) given by size and headings, written to the doc as generated, saved whole a line an entry to
+  `/outputs/write_documentation/<build>.json`.
 * **Refuses**: no `build`; empty markdown; neither `pipeline_uuid` nor `index_uuid`; an unknown layout; an update
   without `change` ("give change, one line for its version control"); accepting `EventDetail/Unknown` events as a
   benign error (Unknown is agreed per rule in build_translation_xslt); `accept_errors` with `index_uuid`; an
