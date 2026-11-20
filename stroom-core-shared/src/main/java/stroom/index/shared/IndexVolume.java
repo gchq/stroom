@@ -53,7 +53,8 @@ import java.util.OptionalLong;
         "bytesFree",
         "bytesTotal",
         "statusMs",
-        "indexVolumeGroupId"
+        "indexVolumeGroupId",
+        "volumeType"
 })
 @JsonInclude(Include.NON_NULL)
 public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity {
@@ -88,6 +89,8 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
     private final Long statusMs;
     @JsonProperty
     private final Integer indexVolumeGroupId;
+    @JsonProperty
+    private final VolumeType volumeType;
 
     @JsonIgnore
     private final HasCapacityInfo capacityInfo = new CapacityInfo();
@@ -107,7 +110,8 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
                        @JsonProperty("bytesFree") final Long bytesFree,
                        @JsonProperty("bytesTotal") final Long bytesTotal,
                        @JsonProperty("statusMs") final Long statusMs,
-                       @JsonProperty("indexVolumeGroupId") final Integer indexVolumeGroupId) {
+                       @JsonProperty("indexVolumeGroupId") final Integer indexVolumeGroupId,
+                       @JsonProperty("volumeType") final VolumeType volumeType) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -123,6 +127,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         this.bytesTotal = bytesTotal;
         this.statusMs = statusMs;
         this.indexVolumeGroupId = indexVolumeGroupId;
+        this.volumeType = Objects.requireNonNullElse(volumeType, VolumeType.LOCAL);
     }
 
     @Override
@@ -194,6 +199,21 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         return statusMs;
     }
 
+    /// Says whether the volume is a disk that only its node can see or a mount that every node can see.
+    ///
+    /// @return The type of the volume, never null.
+    public VolumeType getVolumeType() {
+        return volumeType;
+    }
+
+    /// Tests whether every node can see this volume.
+    ///
+    /// @return True if the volume is shared, false if it is local to one node.
+    @JsonIgnore
+    public boolean isShared() {
+        return VolumeType.SHARED == volumeType;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -211,7 +231,10 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
     @JsonIgnore
     @Override
     public String getIdentifier() {
-        return nodeName + ":" + path;
+        // A shared volume has no node.
+        return isShared()
+                ? path
+                : nodeName + ":" + path;
     }
 
     @Override
@@ -234,7 +257,8 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
                 bytesFree,
                 that.bytesFree) && Objects.equals(bytesTotal, that.bytesTotal) && Objects.equals(
                 statusMs,
-                that.statusMs) && Objects.equals(indexVolumeGroupId, that.indexVolumeGroupId);
+                that.statusMs) && Objects.equals(indexVolumeGroupId, that.indexVolumeGroupId)
+               && volumeType == that.volumeType;
     }
 
     @Override
@@ -253,7 +277,8 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
                 bytesFree,
                 bytesTotal,
                 statusMs,
-                indexVolumeGroupId);
+                indexVolumeGroupId,
+                volumeType);
     }
 
     public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {
@@ -283,6 +308,35 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         }
     }
 
+    /// Whether a volume belongs to one node or is seen by all of them.
+    public enum VolumeType implements HasDisplayValue, HasPrimitiveValue {
+        // A disk that only the volume's node can see.
+        LOCAL("Local", 0),
+        // A mount that every node can see, so the volume has no node.
+        SHARED("Shared", 1);
+
+        public static final PrimitiveValueConverter<VolumeType> PRIMITIVE_VALUE_CONVERTER =
+                PrimitiveValueConverter.create(VolumeType.class, VolumeType.values());
+
+        private final String displayValue;
+        private final byte primitiveValue;
+
+        VolumeType(final String displayValue, final int primitiveValue) {
+            this.displayValue = displayValue;
+            this.primitiveValue = (byte) primitiveValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        @Override
+        public byte getPrimitiveValue() {
+            return primitiveValue;
+        }
+    }
+
     public static final class Builder extends AuditInfoBuilder<IndexVolume, Builder> {
 
         private Integer id;
@@ -296,6 +350,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         private Long bytesTotal;
         private Long statusMs;
         private Integer indexVolumeGroupId;
+        private VolumeType volumeType = VolumeType.LOCAL;
 
         private Builder() {
         }
@@ -316,6 +371,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
             this.bytesTotal = indexVolume.bytesTotal;
             this.statusMs = indexVolume.statusMs;
             this.indexVolumeGroupId = indexVolume.indexVolumeGroupId;
+            this.volumeType = indexVolume.volumeType;
         }
 
         public Builder id(final Integer id) {
@@ -373,6 +429,15 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
             return self();
         }
 
+        /// Sets whether the volume is local to one node or shared by all nodes.
+        ///
+        /// @param volumeType The type of the volume, null meaning local.
+        /// @return This builder.
+        public Builder volumeType(final VolumeType volumeType) {
+            this.volumeType = volumeType;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -394,7 +459,8 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
                     bytesFree,
                     bytesTotal,
                     statusMs,
-                    indexVolumeGroupId);
+                    indexVolumeGroupId,
+                    volumeType);
         }
     }
 

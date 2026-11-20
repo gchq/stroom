@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.node.client.NodeClient;
 import stroom.util.shared.ModelStringUtil;
@@ -182,6 +183,7 @@ public class IndexVolumeEditorController extends Controller {
     }
 
     private void read(final List<String> nodeNames, final IndexVolume volume) {
+        view.setVolumeType(volume.getVolumeType());
         view.setNodeNames(nodeNames);
         view.setNodeName(volume.getNodeName());
         view.setPath(volume.getPath());
@@ -200,9 +202,14 @@ public class IndexVolumeEditorController extends Controller {
         if (!limit.isEmpty()) {
             bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
+        final VolumeType volumeType = view.getVolumeType();
         return volume
                 .copy()
-                .nodeName(view.getNodeName())
+                .volumeType(volumeType)
+                // A shared volume has no node.
+                .nodeName(VolumeType.SHARED == volumeType
+                        ? null
+                        : view.getNodeName())
                 .path(view.getPath())
                 .state(view.getState())
                 .bytesLimit(bytesLimit)

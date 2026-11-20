@@ -21,6 +21,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.shared.ResultPage;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,12 +54,21 @@ public interface IndexVolumeDao {
 //    List<IndexVolumeGroup> getGroupsForVolume(int id);
 //
 
+    /// Saves a volume that has been marked shared and merges other volumes into it, all in one transaction.
+    /// The shards of the merged volumes are pointed at the shared volume and the merged volumes are deleted.
+    ///
+    /// @param sharedVolume    The shared volume to save.
+    /// @param mergedVolumeIds The ids of the volumes with the same path that the shared volume replaces.
+    /// @return The saved shared volume.
+    IndexVolume mergeIntoSharedVolume(IndexVolume sharedVolume, Collection<Integer> mergedVolumeIds);
+
     /**
-     * Retrieve all the volumes in a specific group, on a specific node.
+     * Retrieve all the volumes in a specific group that a specific node can use,
+     * i.e. the local volumes of that node and every shared volume.
      * Used to retrieve a volume on which to put a new shard.
      *
      * @param groupName The name of the group to filter on.
-     * @param nodeName  The node on which the volume must belong.
+     * @param nodeName  The node that will use the volume.
      * @return A list of candidate Index Volumes.
      */
     List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
@@ -67,6 +77,10 @@ public interface IndexVolumeDao {
 
     List<IndexVolume> getVolumesInGroup(final int groupid);
 
+    /// Retrieves the volumes a node can use, i.e. its local volumes and every shared volume.
+    ///
+    /// @param nodeName The node that will use the volumes.
+    /// @return The volumes keyed by the name of their volume group.
     Map<String, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName);
 
     ResultPage<IndexVolume> find(ExpressionCriteria criteria);

@@ -23,25 +23,31 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.mock.MockNodeInfo;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.VerificationMode;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -111,6 +117,42 @@ class TestActiveShards {
             final IndexShardStatus status, final IndexVolume.Builder indexVolumeBuilder,
             final VolumeUseState volumeUseState, final int documentCount, final int maxDocsPerShard) {
         runTest(status, indexVolumeBuilder, volumeUseState, documentCount, maxDocsPerShard, never());
+    }
+
+    @Test
+    void testShardsOfOtherNodesOnASharedVolume_onlyAsManyAsNeededAreTaken() {
+        // Closed shards with room, left on a shared volume by a node that has gone.
+        final IndexVolume sharedVolume = IndexVolume.builder()
+                .bytesUsed(0L)
+                .bytesTotal(1000L)
+                .state(VolumeUseState.ACTIVE)
+                .volumeType(VolumeType.SHARED)
+                .build();
+        final Set<Long> otherNodesShardIds = new HashSet<>();
+        for (int i = 0; i < 5; i++) {
+            final IndexShard indexShard = indexShardDao.create(
+                    indexShardKey,
+                    sharedVolume,
+                    "otherNode",
+                    LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
+            indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.CLOSED);
+            otherNodesShardIds.add(indexShard.getId());
+        }
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(anotherIndexShardWriter);
+
+        final ActiveShards activeShards = new ActiveShards(nodeInfo, indexShardWriterCache, indexShardDao,
+                indexShardCreator, 2, 100, indexShardKey);
+        for (int i = 0; i < 20; i++) {
+            activeShards.addDocument(new IndexDocument());
+        }
+
+        // Two shards were wanted, so two of the five are written to. The rest are left for other nodes,
+        // and no new shard is created.
+        final ArgumentCaptor<Long> shardIdCaptor = ArgumentCaptor.forClass(Long.class);
+        Mockito.verify(indexShardWriterCache, times(20)).getOrOpenWriter(shardIdCaptor.capture());
+        final Set<Long> usedShardIds = new HashSet<>(shardIdCaptor.getAllValues());
+        assertThat(usedShardIds).hasSize(2);
+        assertThat(otherNodesShardIds).containsAll(usedShardIds);
     }
 
     void runTest(

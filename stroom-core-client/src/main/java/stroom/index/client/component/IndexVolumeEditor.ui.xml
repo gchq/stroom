@@ -4,8 +4,13 @@
              xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="indexVolumeEditNode" label="Node"
-                        helpText="The Stroom node that the volume belongs to. The node writes its index shards to this volume."
+        <form:FormGroup identity="indexVolumeEditType" label="Type"
+                        helpText="A local volume is a disk that only its node can see. A shared volume is one mount that every node can see, so it has no node. A shared volume cannot be made local again."
+                        screenReaderText="Shared volumes have no node.">
+            <l:SelectionBox ui:field="volumeType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="nodeNameGroup" identity="indexVolumeEditNode" label="Node"
+                        helpText="The Stroom node that a local volume belongs to. The node writes its index shards to this volume."
                         screenReaderText="The node writes its index shards to this volume."
                         required="true">
             <l:SelectionBox ui:field="nodeName" addStyleNames="w-100"/>

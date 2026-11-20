@@ -103,6 +103,7 @@ public class IndexVolumeGroupEditorController extends Controller {
                 "Delete", this::delete);
         deleteButton.setEnabled(false);
         indexVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes", this::onRescan);
+        indexVolumeStatusList.setDataHandler(this::showMixedWarning);
         delayedUpdate = new DelayedUpdate(indexVolumeStatusList::refresh);
         onDispose(delayedUpdate::reset);
 
@@ -136,6 +137,25 @@ public class IndexVolumeGroupEditorController extends Controller {
         indexVolumeStatusList.init(expressionCriteria,
                 guard(volumes -> open(opener, volumeGroup, title, consumer)),
                 this::dispose);
+    }
+
+    // Warn when the group holds both kinds of volume, as its shards then differ in which nodes can read them.
+    private void showMixedWarning(final List<IndexVolume> volumes) {
+        view.setMixedWarningVisible(holdsSharedAndLocal(volumes));
+    }
+
+    // Package-private for the tests
+    static boolean holdsSharedAndLocal(final List<IndexVolume> volumes) {
+        boolean hasShared = false;
+        boolean hasLocal = false;
+        for (final IndexVolume volume : volumes) {
+            if (volume.isShared()) {
+                hasShared = true;
+            } else {
+                hasLocal = true;
+            }
+        }
+        return hasShared && hasLocal;
     }
 
     private void open(final HasControllerNode opener,

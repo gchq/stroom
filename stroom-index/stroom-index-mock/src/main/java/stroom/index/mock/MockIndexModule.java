@@ -25,6 +25,7 @@ import stroom.index.impl.IndexFieldProvidersImpl;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexShardCreator;
 import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexShardPendingStreams;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexStoreImpl;
@@ -57,6 +58,8 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexShardCreator.class).to(MockIndexShardCreator.class);
         bind(IndexFieldService.class).to(MockIndexFieldService.class);
         bind(Indexer.class).to(MockIndexer.class);
+        // No record is kept of streams' uncommitted documents.
+        bind(IndexShardPendingStreams.class).toInstance((streamId, taskId) -> null);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);
