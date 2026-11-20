@@ -601,10 +601,35 @@
   }
 
 ## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}
-(nothing recorded)
+- audit: processedDocuments(1, [DocRef{type='Index', uuid='index-uuid', name='Test index'}], "propose_query", "from "Test index"\nselect UserId\n", "Offered", true)
+- event: AskStroomAi.process "Ask Stroom AI ran propose_query in chat 1"
+  ProcessEventAction {
+    "action" : "EXECUTE",
+    "arguments" : "from \"Test index\"\nselect UserId\n",
+    "command" : "propose_query",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "DocumentType",
+      "value" : "Index"
+    }, {
+      "name" : "DocumentUuid",
+      "value" : "index-uuid"
+    }, {
+      "name" : "DocumentName",
+      "value" : "Test index"
+    } ],
+    "outcome" : {
+      "description" : "Offered",
+      "success" : true
+    },
+    "type" : "APPLICATION"
+  }
 
 ## propose_query_change {"query":"from \"Test index\"\nwhere UserId = \"alice\"\nselect UserId\n","summary":"Only alice."}
 - audit: documentViewed(1, DocRef{type='Query', uuid='query-uuid', name='Test query'}, "Proposed a change to its query with the propose_query_change tool")
+- audit: processedDocuments(1, [DocRef{type='Index', uuid='index-uuid', name='Test index'}], "propose_query_change", "from "Test index"\nwhere UserId = "alice"\nselect UserId\n", "Offered", true)
 - event: AskStroomAi.viewDocument "Ask Stroom AI viewed Query 'Test query' in chat 1"
   ViewEventAction {
     "objects" : [ {
@@ -623,6 +648,30 @@
       "description" : "Proposed a change to its query with the propose_query_change tool",
       "success" : true
     }
+  }
+- event: AskStroomAi.process "Ask Stroom AI ran propose_query_change in chat 1"
+  ProcessEventAction {
+    "action" : "EXECUTE",
+    "arguments" : "from \"Test index\"\nwhere UserId = \"alice\"\nselect UserId\n",
+    "command" : "propose_query_change",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "DocumentType",
+      "value" : "Index"
+    }, {
+      "name" : "DocumentUuid",
+      "value" : "index-uuid"
+    }, {
+      "name" : "DocumentName",
+      "value" : "Test index"
+    } ],
+    "outcome" : {
+      "description" : "Offered",
+      "success" : true
+    },
+    "type" : "APPLICATION"
   }
 
 ## propose_visualisation {"columns":{"x":"UserId","y":"UserId"},"kind":"bar","library":"echarts","name":"Users","summary":"Events by user.","table":"table-1"}

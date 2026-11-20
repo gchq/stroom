@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.UserActions;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -37,8 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /// `propose_query` - offers the user a "Create query…" button for a StroomQL query the agent has written. It
 /// creates nothing itself: the button opens Stroom's own New Query dialog with the suggested name, and the query is
 /// only created, with the agent's text, if the user confirms the dialog (which checks their permission to create it
-/// in the folder they choose, and logs it as Stroom logs any new document). The query must be valid and read a data
-/// source the user can use.
+/// in the folder they choose, and logs it as Stroom logs any new document). The query must be valid and read only data
+/// sources the user can use, joined ones too ([StroomQlUseCheck]). What it offers is logged as processed.
 class ProposeQueryTool extends AbstractWorkspaceTool {
 
     static final String NAME = "propose_query";
@@ -49,15 +50,18 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
-    private final DataSourceAccess dataSourceAccess;
+    private final StroomQlUseCheck useCheck;
+    private final AiAuditLog auditLog;
     private final Provider<QueryService> queryServiceProvider;
 
     @Inject
     ProposeQueryTool(final ChatWorkspace workspace,
-                     final DataSourceAccess dataSourceAccess,
-                     final Provider<QueryService> queryServiceProvider) {
+                     final StroomQlUseCheck useCheck,
+                     final Provider<QueryService> queryServiceProvider,
+                     final AiAuditLog auditLog) {
         super(workspace);
-        this.dataSourceAccess = dataSourceAccess;
+        this.useCheck = useCheck;
+        this.auditLog = auditLog;
         this.queryServiceProvider = queryServiceProvider;
     }
 
@@ -129,14 +133,18 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
             return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
         }
         final QueryService queryService = queryServiceProvider.get();
-        final DocRef dataSource = queryService.getReferencedDataSource(query)
-                .filter(dataSourceAccess::canUse)
-                .orElse(null);
-        if (dataSource == null) {
-            return ToolResult.text(ValidateStroomQlTool.NO_DATA_SOURCE);
+        // Every data source the query names, joined ones too, must be one the user can use.
+        final StroomQlUseCheck.Checked checked = useCheck.check(query);
+        if (!checked.usable()) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: " + checked.refusal(), false);
+            return ToolResult.text(checked.refusal());
         }
+        final DocRef dataSource = checked.first();
         final ValidateExpressionResult validation = queryService.validateQuery(query);
         if (validation == null || !validation.isOk()) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: invalid: " + NullSafe.get(validation, ValidateExpressionResult::getString), true);
             return ToolResult.text(
                     "The query is not valid, so no button was offered: "
                     + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
@@ -148,6 +156,7 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
         NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> arguments.put("description", description));
         final ToolUserAction action = new ToolUserAction("create-query-" + SEQUENCE.incrementAndGet(),
                 UserActions.CREATE_QUERY, arguments);
+        auditLog.processedDocuments(context.session(), checked.audited(), NAME, query, "Offered", true);
         return ToolResult.text(
                 "The user has been offered a 'Create query…' button for '" + name + "', reading "
                 + DataSourceAccess.describe(dataSource) + ". Nothing is created until they click it and confirm "

@@ -437,6 +437,38 @@ class TestQueryTools {
         assertThat(takeUserActions()).isEmpty();
     }
 
+    @Test
+    void proposeQueryRefusesAJoinedDataSourceTheUserCantUseAndLogsWhatItOffers() {
+        // Decided by the user: the checks before a query is offered cover every data source it names.
+        final String joined = "from \"Windows events\" join \"Secret events\" as s on User = s.User select User";
+        final String formatted = StroomQlFormatter.format(joined);
+        Mockito.when(queryService.getReferencedDataSource(formatted)).thenReturn(Optional.of(WINDOWS));
+        Mockito.when(stroomQlSources.of(formatted)).thenReturn(List.of(
+                new StroomQlSources.Source(WINDOWS, null, false),
+                new StroomQlSources.Source(SECRET, null, true)));
+        final ToolRunContext context = new ToolRunContext(null, null, () -> false);
+
+        assertThat(context.run(() -> run(proposeTool(), "{\"name\":\"n\",\"query\":\""
+                                                         + joined.replace("\"", "\\\"") + "\"}")))
+                .isEqualTo(StroomQlUseCheck.NO_JOINED_DATA_SOURCE);
+        assertThat(takeUserActions()).isEmpty();
+        Mockito.verify(auditLog).processedDocuments(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(List.of(WINDOWS)),
+                Mockito.eq(ProposeQueryTool.NAME), Mockito.eq(formatted), Mockito.anyString(), Mockito.eq(false));
+
+        // With a data source the user can use, the button is offered, and logged naming both.
+        Mockito.when(stroomQlSources.of(formatted)).thenReturn(List.of(
+                new StroomQlSources.Source(WINDOWS, null, false),
+                new StroomQlSources.Source(LINUX, null, true)));
+        Mockito.when(queryService.validateQuery(formatted))
+                .thenReturn(new ValidateExpressionResult(true, formatted, false));
+        assertThat(context.run(() -> run(proposeTool(), "{\"name\":\"n\",\"query\":\""
+                                                         + joined.replace("\"", "\\\"") + "\"}")))
+                .contains("offered a 'Create query…' button");
+        Mockito.verify(auditLog).processedDocuments(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(List.of(WINDOWS, LINUX)), Mockito.eq(ProposeQueryTool.NAME), Mockito.eq(formatted),
+                Mockito.anyString(), Mockito.eq(true));
+    }
+
     private ListDataSourcesTool listTool() {
         return new ListDataSourcesTool(workspace, dataSourceAccess, agentInstructions, auditLog);
     }
@@ -448,12 +480,15 @@ class TestQueryTools {
     }
 
     private ValidateStroomQlTool validateTool() {
-        return new ValidateStroomQlTool(workspace, dataSourceAccess, () -> queryService, () -> stroomQlSources,
-                auditLog);
+        return new ValidateStroomQlTool(workspace, useCheck(), () -> queryService, auditLog);
     }
 
     private ProposeQueryTool proposeTool() {
-        return new ProposeQueryTool(workspace, dataSourceAccess, () -> queryService);
+        return new ProposeQueryTool(workspace, useCheck(), () -> queryService, auditLog);
+    }
+
+    private StroomQlUseCheck useCheck() {
+        return new StroomQlUseCheck(dataSourceAccess, () -> queryService, () -> stroomQlSources);
     }
 
     // Runs a call, keeping the user actions its result offers for takeUserActions.

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.UserActions;
@@ -49,6 +50,8 @@ class TestProposeDashboardTool {
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
+    private final StroomQlSources stroomQlSources = Mockito.mock(StroomQlSources.class);
+    private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final BuildProgress buildProgress = Mockito.mock(BuildProgress.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
@@ -72,7 +75,7 @@ class TestProposeDashboardTool {
                                 ? List.of("Query: everything", "Table columns: EventTime, User")
                                 : List.of()));
         Mockito.when(buildProgress.beforeDashboard(Mockito.any())).thenReturn(Optional.empty());
-        tool = new ProposeDashboardTool(workspace, dataSourceAccess, () -> queryService, dashboardBuilder,
+        tool = new ProposeDashboardTool(workspace, useCheck(), () -> queryService, dashboardBuilder, auditLog,
                 Optional.of(buildProgress));
     }
 
@@ -91,7 +94,7 @@ class TestProposeDashboardTool {
 
     @Test
     void withoutTheBuildToolsADashboardIsOfferedAsBefore() {
-        tool = new ProposeDashboardTool(workspace, dataSourceAccess, () -> queryService, dashboardBuilder,
+        tool = new ProposeDashboardTool(workspace, useCheck(), () -> queryService, dashboardBuilder, auditLog,
                 Optional.empty());
 
         run(args("from \"Windows events\" select EventTime, User", "stroomql", false));
@@ -157,6 +160,22 @@ class TestProposeDashboardTool {
     }
 
     @Test
+    void aQueryJoiningADataSourceTheUserCantUseIsRefused() {
+        // Decided by the user: the checks before a query is offered cover every data source it names.
+        final DocRef secret = new DocRef("Index", "secret-uuid", "Secret events");
+        Mockito.when(stroomQlSources.of(Mockito.anyString())).thenReturn(List.of(
+                new StroomQlSources.Source(VIEW, null, false),
+                new StroomQlSources.Source(secret, null, true)));
+        final String query = "from \"Windows events\" join \"Secret events\" as s on User = s.User select User";
+
+        assertThat(run(args(query, "stroomql", false))).isEqualTo(StroomQlUseCheck.NO_JOINED_DATA_SOURCE);
+        assertThat(takeUserActions()).isEmpty();
+        Mockito.verifyNoInteractions(dashboardBuilder);
+        Mockito.verify(auditLog).processedDocuments(Mockito.any(), Mockito.eq(List.of(VIEW)),
+                Mockito.eq(ProposeDashboardTool.NAME), Mockito.anyString(), Mockito.anyString(), Mockito.eq(false));
+    }
+
+    @Test
     void aDashboardThatCantBeBuiltIsRefusedWithTheReason() {
         Mockito.when(dashboardBuilder.build(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenThrow(new IllegalArgumentException("A classic dashboard can't hold a having clause."));
@@ -194,5 +213,9 @@ class TestProposeDashboardTool {
         final List<Map<String, Object>> taken = List.copyOf(offered);
         offered.clear();
         return taken;
+    }
+
+    private StroomQlUseCheck useCheck() {
+        return new StroomQlUseCheck(dataSourceAccess, () -> queryService, () -> stroomQlSources);
     }
 }

@@ -1148,7 +1148,8 @@ the model to fix the query and validate it again.
   `list_data_sources`); a query joining one the user can't use (`NO_JOINED_DATA_SOURCE`, the same for its join lines
   and `where` subqueries).
 * **Notes**: each validation is audit-logged as processed, with its outcome, naming the first data source as before
-  and each joined one as a `JoinedDocument` (`AiAuditLog.processedDocuments`). Reads untrusted content: the data
+  and each joined one as a `JoinedDocument` (`AiAuditLog.processedDocuments`). propose_query, propose_query_change and
+  propose_dashboard make the same check (`StroomQlUseCheck`) and log what they offer, or refuse, the same way. Reads untrusted content: the data
   source's name is a document name, and the parser's errors are not known to quote only what the model wrote.
 
 ### `run_stroomql`

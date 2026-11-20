@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredPart;
@@ -54,6 +55,8 @@ class TestProposeQueryChangeTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
+    private final StroomQlSources stroomQlSources = Mockito.mock(StroomQlSources.class);
+    private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeQueryChangeTool tool;
@@ -69,8 +72,9 @@ class TestProposeQueryChangeTool {
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(INDEX));
         Mockito.when(queryService.validateQuery(Mockito.anyString()))
                 .thenReturn(new ValidateExpressionResult(true, "ok", false));
-        tool = new ProposeQueryChangeTool(workspace, tabSnapshots, dataSourceAccess, documentAccess,
-                () -> queryService);
+        tool = new ProposeQueryChangeTool(workspace, tabSnapshots,
+                new StroomQlUseCheck(dataSourceAccess, () -> queryService, () -> stroomQlSources), documentAccess,
+                () -> queryService, auditLog);
         tab(QUERY, BASE);
     }
 
@@ -126,6 +130,22 @@ class TestProposeQueryChangeTool {
         Mockito.when(dataSourceAccess.canUse(INDEX)).thenReturn(false);
         assertThat(run("from \"TWITTER-ECS-v1\" select a")).isEqualTo(ValidateStroomQlTool.NO_DATA_SOURCE);
         assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aQueryJoiningADataSourceTheUserCantUseIsRefused() {
+        // Decided by the user: the checks before a query is offered cover every data source it names.
+        final DocRef secret = new DocRef("Index", "secret-uuid", "Secret events");
+        Mockito.when(stroomQlSources.of(Mockito.anyString())).thenReturn(List.of(
+                new StroomQlSources.Source(INDEX, null, false),
+                new StroomQlSources.Source(secret, null, true)));
+
+        assertThat(run("from \"TWITTER-ECS-v1\" where user.name in (from \"Secret events\" select User) "
+                       + "select user.name")).isEqualTo(StroomQlUseCheck.NO_JOINED_DATA_SOURCE);
+        assertThat(takeUserActions()).isEmpty();
+        Mockito.verify(auditLog).processedDocuments(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(List.of(INDEX)),
+                Mockito.eq(ProposeQueryChangeTool.NAME), Mockito.anyString(), Mockito.anyString(),
+                Mockito.eq(false));
     }
 
     private void tab(final DocRef docRef, final String query) {

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
@@ -59,19 +60,22 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
     private final TabSnapshots tabSnapshots;
-    private final DataSourceAccess dataSourceAccess;
+    private final StroomQlUseCheck useCheck;
+    private final AiAuditLog auditLog;
     private final DocumentAccess documentAccess;
     private final Provider<QueryService> queryServiceProvider;
 
     @Inject
     ProposeQueryChangeTool(final ChatWorkspace workspace,
                            final TabSnapshots tabSnapshots,
-                           final DataSourceAccess dataSourceAccess,
+                           final StroomQlUseCheck useCheck,
                            final DocumentAccess documentAccess,
-                           final Provider<QueryService> queryServiceProvider) {
+                           final Provider<QueryService> queryServiceProvider,
+                           final AiAuditLog auditLog) {
         super(workspace);
         this.tabSnapshots = tabSnapshots;
-        this.dataSourceAccess = dataSourceAccess;
+        this.useCheck = useCheck;
+        this.auditLog = auditLog;
         this.documentAccess = documentAccess;
         this.queryServiceProvider = queryServiceProvider;
     }
@@ -158,14 +162,18 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
         // Laid out as people write queries, ending as the editor's does, as it is what the editor will hold.
         final String query = ProposeCodeChangeTool.withLineEndingOf(base.text(), StroomQlFormatter.format(given));
         final QueryService queryService = queryServiceProvider.get();
-        final DocRef dataSource = queryService.getReferencedDataSource(query)
-                .filter(dataSourceAccess::canUse)
-                .orElse(null);
-        if (dataSource == null) {
-            return ToolResult.text(ValidateStroomQlTool.NO_DATA_SOURCE);
+        // Every data source the query names, joined ones too, must be one the user can use.
+        final StroomQlUseCheck.Checked checked = useCheck.check(query);
+        if (!checked.usable()) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: " + checked.refusal(), false);
+            return ToolResult.text(checked.refusal());
         }
+        final DocRef dataSource = checked.first();
         final ValidateExpressionResult validation = queryService.validateQuery(query);
         if (validation == null || !validation.isOk()) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: invalid: " + NullSafe.get(validation, ValidateExpressionResult::getString), true);
             return ToolResult.text(
                     "The query is not valid, so no button was offered: "
                     + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
@@ -189,6 +197,7 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
                 UserActions.APPLY_QUERY_CHANGE, arguments);
         documentAccess.logView(context.session(), queryDoc,
                 "Proposed a change to its query with the " + NAME + " tool");
+        auditLog.processedDocuments(context.session(), checked.audited(), NAME, query, "Offered", true);
 
         return ToolResult.text(
                 "The user has been shown the revised query for Query '" + queryDoc.getName() + "', reading "

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardBuilder.Built;
 import stroom.ai.impl.UserActions;
@@ -60,19 +61,22 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
-    private final DataSourceAccess dataSourceAccess;
+    private final StroomQlUseCheck useCheck;
+    private final AiAuditLog auditLog;
     private final Provider<QueryService> queryServiceProvider;
     private final DashboardBuilder dashboardBuilder;
     private final Optional<BuildProgress> buildProgress;
 
     @Inject
     ProposeDashboardTool(final ChatWorkspace workspace,
-                         final DataSourceAccess dataSourceAccess,
+                         final StroomQlUseCheck useCheck,
                          final Provider<QueryService> queryServiceProvider,
                          final DashboardBuilder dashboardBuilder,
+                         final AiAuditLog auditLog,
                          final Optional<BuildProgress> buildProgress) {
         super(workspace);
-        this.dataSourceAccess = dataSourceAccess;
+        this.useCheck = useCheck;
+        this.auditLog = auditLog;
         this.queryServiceProvider = queryServiceProvider;
         this.dashboardBuilder = dashboardBuilder;
         this.buildProgress = buildProgress;
@@ -171,14 +175,18 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
             return ToolResult.text(notYet.get());
         }
         final QueryService queryService = queryServiceProvider.get();
-        final DocRef dataSource = queryService.getReferencedDataSource(query)
-                .filter(dataSourceAccess::canUse)
-                .orElse(null);
-        if (dataSource == null) {
-            return ToolResult.text(ValidateStroomQlTool.NO_DATA_SOURCE);
+        // Every data source the query names, joined ones too, must be one the user can use.
+        final StroomQlUseCheck.Checked checked = useCheck.check(query);
+        if (!checked.usable()) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: " + checked.refusal(), false);
+            return ToolResult.text(checked.refusal());
         }
+        final DocRef dataSource = checked.first();
         final ValidateExpressionResult validation = queryService.validateQuery(query);
         if (validation == null || !validation.isOk()) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: invalid: " + NullSafe.get(validation, ValidateExpressionResult::getString), true);
             return ToolResult.text(
                     "The query is not valid, so no button was offered: "
                     + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
@@ -188,6 +196,8 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
         try {
             built = dashboardBuilder.build(name, query, queryType, preview);
         } catch (final IllegalArgumentException e) {
+            auditLog.processedDocuments(context.session(), checked.audited(), NAME, query,
+                    "Not offered: " + e.getMessage(), true);
             return ToolResult.text("No button was offered: " + e.getMessage());
         }
 
@@ -202,6 +212,7 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
         NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> arguments.put("description", description));
         final ToolUserAction action = new ToolUserAction("create-dashboard-" + SEQUENCE.incrementAndGet(),
                 UserActions.CREATE_DASHBOARD, arguments);
+        auditLog.processedDocuments(context.session(), checked.audited(), NAME, query, "Offered", true);
         return ToolResult.text(
                 "The user has been offered a 'Create dashboard…' button for '" + name + "', reading "
                 + DataSourceAccess.describe(dataSource) + ": " + built.describe() + ". Nothing is created until "

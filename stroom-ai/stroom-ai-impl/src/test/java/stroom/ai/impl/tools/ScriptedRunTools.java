@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.McpElicitations;
@@ -66,7 +67,9 @@ public final class ScriptedRunTools {
                 new ReadTurnTool(aiService),
                 new AskUserTool(),
                 new MemoryTool(memoryService),
-                new ProposeQueryTool(workspace, dataSourceAccess, () -> queryService)));
+                new ProposeQueryTool(workspace, new StroomQlUseCheck(dataSourceAccess, () -> queryService,
+                        () -> Mockito.mock(StroomQlSources.class)), () -> queryService,
+                        Mockito.mock(AiAuditLog.class))));
         tools.addAll(Arrays.asList(moreTools));
         return new BuiltInTools(tools, new ChatToolCallContexts(workspace, () -> elicitations, () -> runManager));
     }
