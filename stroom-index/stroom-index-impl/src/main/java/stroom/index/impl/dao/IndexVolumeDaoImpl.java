@@ -26,6 +26,7 @@ import stroom.index.impl.db.IndexDbConnProvider;
 import stroom.index.impl.db.jooq.Tables;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
@@ -53,6 +54,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static stroom.index.impl.db.jooq.tables.IndexShard.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
@@ -63,6 +65,10 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 record.get(INDEX_VOLUME.STATE),
                 VolumeUseState.PRIMITIVE_VALUE_CONVERTER::fromPrimitiveValue,
                 VolumeUseState.ACTIVE);
+        final VolumeType volumeType = NullSafe.getOrElse(
+                record.get(INDEX_VOLUME.VOLUME_TYPE),
+                VolumeType.PRIMITIVE_VALUE_CONVERTER::fromPrimitiveValue,
+                VolumeType.LOCAL);
 
         return IndexVolume
                 .builder()
@@ -81,6 +87,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .bytesFree(record.get(INDEX_VOLUME.BYTES_FREE))
                 .bytesTotal(record.get(INDEX_VOLUME.BYTES_TOTAL))
                 .statusMs(record.get(INDEX_VOLUME.STATUS_MS))
+                .volumeType(volumeType)
                 .build();
     };
 
@@ -103,6 +110,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 record.set(INDEX_VOLUME.BYTES_FREE, indexVolume.getBytesFree());
                 record.set(INDEX_VOLUME.BYTES_TOTAL, indexVolume.getBytesTotal());
                 record.set(INDEX_VOLUME.STATUS_MS, indexVolume.getStatusMs());
+                record.set(INDEX_VOLUME.VOLUME_TYPE, indexVolume.getVolumeType().getPrimitiveValue());
                 return record;
             };
 
@@ -150,6 +158,27 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
+    public IndexVolume mergeIntoSharedVolume(final IndexVolume sharedVolume,
+                                             final Collection<Integer> mergedVolumeIds) {
+        return JooqUtil.transactionResult(indexDbConnProvider, context -> {
+            final IndexVolume updated = genericDao.update(context, sharedVolume);
+            if (NullSafe.hasItems(mergedVolumeIds)) {
+                // The merged volumes have the same path as the shared one, so their shards do not move on disk.
+                context
+                        .update(INDEX_SHARD)
+                        .set(INDEX_SHARD.FK_VOLUME_ID, updated.getId())
+                        .where(INDEX_SHARD.FK_VOLUME_ID.in(mergedVolumeIds))
+                        .execute();
+                context
+                        .deleteFrom(INDEX_VOLUME)
+                        .where(INDEX_VOLUME.ID.in(mergedVolumeIds))
+                        .execute();
+            }
+            return updated;
+        });
+    }
+
+    @Override
     public List<IndexVolume> getAll() {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select()
@@ -165,7 +194,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                         .from(INDEX_VOLUME)
                         .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
                         .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
-                        .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                        .and(isUsableByNode(nodeName))
                         .fetch())
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
@@ -198,7 +227,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                         .select(INDEX_VOLUME_GROUP.NAME, INDEX_VOLUME.asterisk())
                         .from(INDEX_VOLUME)
                         .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
-                        .where(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                        .where(isUsableByNode(nodeName))
                         .fetch())
                 .forEach(rec -> {
                     final String groupName = rec.get(INDEX_VOLUME_GROUP.NAME);
@@ -272,6 +301,12 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                         .and(Tables.INDEX_VOLUME.NODE_NAME.eq(nodeName))
                         .fetch())
                 .map(IndexVolumeGroupDaoImpl.RECORD_TO_INDEX_VOLUME_GROUP_MAPPER::apply));
+    }
+
+    // A node can use its own local volumes and every shared volume.
+    private Condition isUsableByNode(final String nodeName) {
+        return INDEX_VOLUME.NODE_NAME.eq(nodeName)
+                .or(INDEX_VOLUME.VOLUME_TYPE.eq(VolumeType.SHARED.getPrimitiveValue()));
     }
 
     private Condition createCondition(final ExpressionCriteria criteria) {

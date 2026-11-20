@@ -228,6 +228,20 @@ public class IndexVolumeRecord extends UpdatableRecordImpl<IndexVolumeRecord> {
         return (Long) get(14);
     }
 
+    /**
+     * Setter for <code>stroom.index_volume.volume_type</code>.
+     */
+    public void setVolumeType(Byte value) {
+        set(15, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_volume.volume_type</code>.
+     */
+    public Byte getVolumeType() {
+        return (Byte) get(15);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -251,7 +265,7 @@ public class IndexVolumeRecord extends UpdatableRecordImpl<IndexVolumeRecord> {
     /**
      * Create a detached, initialised IndexVolumeRecord
      */
-    public IndexVolumeRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String nodeName, String path, Integer fkIndexVolumeGroupId, Byte state, Long bytesLimit, Long bytesUsed, Long bytesFree, Long bytesTotal, Long statusMs) {
+    public IndexVolumeRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String nodeName, String path, Integer fkIndexVolumeGroupId, Byte state, Long bytesLimit, Long bytesUsed, Long bytesFree, Long bytesTotal, Long statusMs, Byte volumeType) {
         super(IndexVolume.INDEX_VOLUME);
 
         setId(id);
@@ -269,6 +283,7 @@ public class IndexVolumeRecord extends UpdatableRecordImpl<IndexVolumeRecord> {
         setBytesFree(bytesFree);
         setBytesTotal(bytesTotal);
         setStatusMs(statusMs);
+        setVolumeType(volumeType);
         resetTouchedOnNotNull();
     }
 }

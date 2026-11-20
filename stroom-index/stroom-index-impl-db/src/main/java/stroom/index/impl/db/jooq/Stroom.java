@@ -15,6 +15,7 @@ import org.jooq.impl.SchemaImpl;
 import stroom.index.impl.db.jooq.tables.IndexField;
 import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
+import stroom.index.impl.db.jooq.tables.IndexShardPendingStream;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 
@@ -48,6 +49,11 @@ public class Stroom extends SchemaImpl {
     public final IndexShard INDEX_SHARD = IndexShard.INDEX_SHARD;
 
     /**
+     * The table <code>stroom.index_shard_pending_stream</code>.
+     */
+    public final IndexShardPendingStream INDEX_SHARD_PENDING_STREAM = IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM;
+
+    /**
      * The table <code>stroom.index_volume</code>.
      */
     public final IndexVolume INDEX_VOLUME = IndexVolume.INDEX_VOLUME;
@@ -76,6 +82,7 @@ public class Stroom extends SchemaImpl {
             IndexField.INDEX_FIELD,
             IndexFieldSource.INDEX_FIELD_SOURCE,
             IndexShard.INDEX_SHARD,
+            IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM,
             IndexVolume.INDEX_VOLUME,
             IndexVolumeGroup.INDEX_VOLUME_GROUP
         );

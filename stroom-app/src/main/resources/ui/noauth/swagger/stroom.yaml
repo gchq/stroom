@@ -4827,6 +4827,26 @@ paths:
       summary: Validates an index volume
       tags:
       - Index Volumes
+  /index/volume/v2/validatePath:
+    post:
+      operationId: validateIndexVolumePath
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexVolume"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+          description: default response
+      summary: Validates that the node called can use the path of an index volume
+      tags:
+      - Index Volumes
   /index/volume/v2/{id}:
     delete:
       operationId: deleteIndexVolume
@@ -7550,6 +7570,10 @@ paths:
         name: queryKey
         schema:
           type: string
+      - in: query
+        name: dispatchId
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -7583,6 +7607,10 @@ paths:
       parameters:
       - in: query
         name: queryKey
+        schema:
+          type: string
+      - in: query
+        name: dispatchId
         schema:
           type: string
       responses:
@@ -16994,6 +17022,11 @@ components:
         version:
           type: integer
           format: int32
+        volumeType:
+          type: string
+          enum:
+          - LOCAL
+          - SHARED
     IndexVolumeGroup:
       type: object
       properties:
@@ -17970,6 +18003,8 @@ components:
       properties:
         dateTimeSettings:
           $ref: "#/components/schemas/DateTimeSettings"
+        dispatchId:
+          type: string
         key:
           $ref: "#/components/schemas/QueryKey"
         query:

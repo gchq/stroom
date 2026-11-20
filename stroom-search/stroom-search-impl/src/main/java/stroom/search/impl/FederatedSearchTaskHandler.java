@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 class FederatedSearchTaskHandler {
@@ -115,27 +116,22 @@ class FederatedSearchTaskHandler {
 
                     // Start remote cluster search execution.
                     final Executor executor = executorProvider.get(THREAD_POOL);
+                    // The nodes that could not be reached, so that their work is not given to one another.
+                    final Set<String> failedNodes = ConcurrentHashMap.newKeySet();
                     final List<CompletableFuture<Void>> futures = new ArrayList<>();
                     for (final Entry<String, NodeSearchTask> entry : nodeSearchTasks.entrySet()) {
                         final String nodeName = entry.getKey();
                         final NodeSearchTask nodeSearchTask = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
-                            final Runnable runnable = taskContextFactory.childContext(
+                            final Runnable runnable = createNodeSearch(
                                     parentContext,
-                                    "Search node: " + nodeName,
-                                    taskContext -> {
-                                        final NodeSearch nodeSearch;
-                                        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                                            nodeSearch = localNodeSearchProvider.get();
-                                        } else {
-                                            nodeSearch = remoteNodeSearchProvider.get();
-                                        }
-                                        nodeSearch.searchNode(sourceNode,
-                                                nodeName,
-                                                task,
-                                                nodeSearchTask,
-                                                taskContext);
-                                    });
+                                    task,
+                                    nodeTaskCreator,
+                                    sourceNode,
+                                    nodeName,
+                                    nodeSearchTask,
+                                    failedNodes,
+                                    executor);
                             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
                                     executor);
                             futures.add(completableFuture);
@@ -172,6 +168,101 @@ class FederatedSearchTaskHandler {
                 }
             }
         }));
+    }
+
+    private Runnable createNodeSearch(final TaskContext parentContext,
+                                      final FederatedSearchTask task,
+                                      final NodeTaskCreator nodeTaskCreator,
+                                      final String sourceNode,
+                                      final String nodeName,
+                                      final NodeSearchTask nodeSearchTask,
+                                      final Set<String> failedNodes,
+                                      final Executor executor) {
+        return taskContextFactory.childContext(
+                parentContext,
+                "Search node: " + nodeName,
+                taskContext -> {
+                    final NodeSearch nodeSearch;
+                    if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                        nodeSearch = localNodeSearchProvider.get();
+                    } else {
+                        nodeSearch = remoteNodeSearchProvider.get();
+                    }
+                    try {
+                        nodeSearch.searchNode(sourceNode,
+                                nodeName,
+                                task,
+                                nodeSearchTask,
+                                taskContext);
+                    } catch (final NodeSearchStartException e) {
+                        if (parentContext.isTerminated() || Thread.currentThread().isInterrupted()) {
+                            // The search has been stopped, which is the likely reason the node could not
+                            // be started, so there is no work to give to anyone.
+                            LOGGER.debug(() -> task.getSearchName() + " - search of node " + nodeName
+                                               + " not started as the search has ended: " + e.getMessage());
+                            return;
+                        }
+                        // No results have been taken from the node, so its work can go to other nodes
+                        // without any result being counted twice.
+                        searchOtherNodes(
+                                parentContext,
+                                task,
+                                nodeTaskCreator,
+                                sourceNode,
+                                nodeName,
+                                nodeSearchTask,
+                                failedNodes,
+                                executor,
+                                e);
+                    }
+                });
+    }
+
+    // Gives the work of a node that could not be reached to other nodes, and waits for them to do it.
+    private void searchOtherNodes(final TaskContext parentContext,
+                                  final FederatedSearchTask task,
+                                  final NodeTaskCreator nodeTaskCreator,
+                                  final String sourceNode,
+                                  final String failedNode,
+                                  final NodeSearchTask failedTask,
+                                  final Set<String> failedNodes,
+                                  final Executor executor,
+                                  final NodeSearchStartException startException) {
+        failedNodes.add(failedNode);
+
+        NodeSearchReassignment reassignment;
+        try {
+            reassignment = nodeTaskCreator.reassign(failedTask, Set.copyOf(failedNodes));
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> "Error reassigning the search of node " + failedNode + ": " + e.getMessage(), e);
+            reassignment = NodeSearchReassignment.NOT_POSSIBLE;
+        }
+
+        if (reassignment.workLost()) {
+            // Some of what the node was to search can't be searched anywhere else.
+            task.getResultStore().onFailure(failedNode, startException);
+        } else {
+            LOGGER.info(() -> task.getSearchName() + " - node " + failedNode
+                              + " could not be reached so its shards are being searched by other nodes: "
+                              + startException.getMessage());
+        }
+
+        // A node that also can't be reached has its share given out again in the same way. That ends
+        // because each failure adds to the nodes that are left out.
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        reassignment.tasks().forEach((nodeName, nodeSearchTask) ->
+                futures.add(CompletableFuture.runAsync(
+                        createNodeSearch(
+                                parentContext,
+                                task,
+                                nodeTaskCreator,
+                                sourceNode,
+                                nodeName,
+                                nodeSearchTask,
+                                failedNodes,
+                                executor),
+                        executor)));
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     private void awaitCompletionAndTerminate(final ResultStore resultCollector,

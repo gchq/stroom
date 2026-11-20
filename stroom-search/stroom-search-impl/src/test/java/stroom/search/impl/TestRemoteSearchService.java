@@ -59,6 +59,25 @@ class TestRemoteSearchService {
     }
 
     @Test
+    void eachDispatchOfASearchHasItsOwnResultsKey() {
+        // A node that takes over shards from one that could not be reached is sent a second task for the
+        // same search, and the results of the two must not replace one another.
+        final String first = RemoteSearchResults.createKey("search", "dispatch-1");
+        final String second = RemoteSearchResults.createKey("search", "dispatch-2");
+
+        assertThat(first).isNotEqualTo(second).startsWith("search");
+        assertThat(RemoteSearchResults.createKey("search", "dispatch-1")).isEqualTo(first);
+        assertThat(RemoteSearchResults.createKey("other-search", "dispatch-1")).isNotEqualTo(first);
+    }
+
+    @Test
+    void taskWithNoDispatchIdIsKeyedByItsSearch() {
+        // As sent by a kind of search that only ever sends a node one task.
+        assertThat(RemoteSearchResults.createKey("search", null)).isEqualTo("search");
+        assertThat(RemoteSearchResults.createKey("search", " ")).isEqualTo("search");
+    }
+
+    @Test
     void ownerGetsTheTables() throws IOException {
         Mockito.when(securityContext.getUserRef()).thenReturn(OWNER);
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

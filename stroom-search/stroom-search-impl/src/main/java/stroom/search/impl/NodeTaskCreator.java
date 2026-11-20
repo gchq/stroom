@@ -20,11 +20,23 @@ import stroom.query.api.Query;
 import stroom.task.api.TaskContext;
 
 import java.util.Map;
+import java.util.Set;
 
 public interface NodeTaskCreator {
 
     Map<String, NodeSearchTask> createNodeSearchTasks(FederatedSearchTask task,
                                                       Query query,
                                                       TaskContext parentContext);
+
+    /// Gives the work of a node whose search could not be started to other nodes, where they are able to
+    /// do it. By default none of the work can be done elsewhere.
+    ///
+    /// @param failedTask  The task that could not be started.
+    /// @param failedNodes The nodes that could not be reached for this search so far, including the one
+    ///                    that the task was for.
+    /// @return The tasks to run in place of the failed one, and whether any of its work is lost.
+    default NodeSearchReassignment reassign(final NodeSearchTask failedTask, final Set<String> failedNodes) {
+        return NodeSearchReassignment.NOT_POSSIBLE;
+    }
 
 }

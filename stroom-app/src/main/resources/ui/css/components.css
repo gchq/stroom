@@ -2873,3 +2873,10 @@ button.main-menu svg {
 .visualisation-asset-tree .gwt-TreeItem-selected {
     background-color: var(--row__background-color--selected);
 }
+
+/* Shown above the volume list when an index volume group holds both shared and local volumes. */
+.indexVolumeGroupEdit-mixedWarning {
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid var(--warn);
+}

@@ -6,6 +6,8 @@
         <form:FormGroup identity="indexVolumeGroupEditVolumeGroupName" label="Volume Group Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
+        <g:Label ui:field="mixedWarning" styleName="indexVolumeGroupEdit-mixedWarning" visible="false"
+                 text="This group holds both shared and local volumes. New shards are created on the shared volumes. Shards on the local volumes can only be read by the node that owns them, so they are not searched while that node is down."/>
         <g:SimplePanel ui:field="list" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder> 

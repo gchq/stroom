@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.SelectionBox;
@@ -174,6 +175,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     }
 
     private void read(final List<String> nodeNames, final IndexVolume volume) {
+        getView().setVolumeType(volume.getVolumeType());
         getView().setNodeNames(nodeNames);
         getView().getNodeName().setText(volume.getNodeName());
         getView().getPath().setText(volume.getPath());
@@ -196,9 +198,14 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         if (limit.length() > 0) {
             bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
+        final VolumeType volumeType = getView().getVolumeType();
         return volume
                 .copy()
-                .nodeName(getView().getNodeName().getText())
+                .volumeType(volumeType)
+                // A shared volume has no node.
+                .nodeName(VolumeType.SHARED == volumeType
+                        ? null
+                        : getView().getNodeName().getText())
                 .path(getView().getPath().getText())
                 .state(getView().getState().getValue())
                 .bytesLimit(bytesLimit)
@@ -206,6 +213,16 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     }
 
     public interface IndexVolumeEditView extends View, Focus {
+
+        /// Gets the chosen type of the volume.
+        ///
+        /// @return Local or shared.
+        VolumeType getVolumeType();
+
+        /// Shows the type of the volume, and the node choice only if the volume is local.
+        ///
+        /// @param volumeType Local or shared.
+        void setVolumeType(VolumeType volumeType);
 
         void setNodeNames(List<String> nodeNames);
 

@@ -55,14 +55,16 @@ public interface RemoteSearchResource extends RestResource {
     @Operation(
             summary = "Poll the server for search results for the supplied queryKey",
             operationId = "pollRemoteSearch")
-    StreamingOutput poll(@QueryParam("queryKey") String queryKey);
+    StreamingOutput poll(@QueryParam("queryKey") String queryKey,
+                         @QueryParam("dispatchId") String dispatchId);
 
     @GET
     @Path(DESTROY_PATH_PART)
     @Operation(
             summary = "Destroy search results",
             operationId = "destroyRemoteSearch")
-    Boolean destroy(@QueryParam("queryKey") String queryKey);
+    Boolean destroy(@QueryParam("queryKey") String queryKey,
+                    @QueryParam("dispatchId") String dispatchId);
 
     /// Gets the join tables of a search, for another node that searches the search's first source and
     /// applies its joins. Only the user who ran the search, or the processing user, may get them.

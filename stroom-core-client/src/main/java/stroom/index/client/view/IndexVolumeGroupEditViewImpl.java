@@ -20,6 +20,7 @@ import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGr
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,6 +34,8 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
 
     @UiField
     TextBox name;
+    @UiField
+    Label mixedWarning;
     @UiField
     SimplePanel list;
 
@@ -59,6 +62,11 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     @Override
     public void setName(final String name) {
         this.name.setText(name);
+    }
+
+    @Override
+    public void setMixedWarningVisible(final boolean visible) {
+        mixedWarning.setVisible(visible);
     }
 
     @Override
