@@ -348,7 +348,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "the time formats, and how changes= merges.");
         // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
         DraftOutline.outlineIfLarge(context.caller(), result, context.workspace(), build,
-                DraftOutline.WHOLE_RESULT_CHARS);
+                LargeResults.WHOLE_RESULT_CHARS);
         return result;
     }
 

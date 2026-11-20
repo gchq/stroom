@@ -23,8 +23,6 @@ import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.workspace.SessionWorkspace;
-import stroom.ai.impl.workspace.WorkspacePath;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -36,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /// A draft too large for a client to take whole: saved to the workspace, its result giving the mapping's outline.
 /// Seen in eval cases 35, 36 and 56 on Haiku over Claude Code: drafts of 74,000 to 168,000 characters, past the
@@ -44,17 +41,13 @@ import java.util.regex.Pattern;
 /// its own, losing every event type's Description and the vendor's code.
 final class DraftOutline {
 
-    /// The most characters a draft's result is given whole in: Claude Code takes about 25,000 tokens of a tool's
-    /// result, and saves a result past some 40,000 characters to a file, showing only its start.
-    static final int WHOLE_RESULT_CHARS = 40_000;
     /// The folder a draft too large to give whole is saved in.
-    static final String FOLDER = "/outputs/drafts/";
+    static final String FOLDER = LargeResults.FOLDER + "drafts/";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DraftOutline.class);
 
     // The most characters of a fixed value (a Description's text) said in the outline.
     private static final int VALUE_CHARS = 80;
-    private static final Pattern PLAIN = Pattern.compile("[^A-Za-z0-9._-]");
     private static final String MAPPING = "mapping";
     private static final String SAVED = "mapping_saved";
     private static final String OUTLINE = "mapping_outline";
@@ -72,9 +65,10 @@ final class DraftOutline {
     }
 
     /// Replaces a draft result's mapping by its outline when the result is past the limit. The mapping is saved
-    /// whole to the workspace (`mapping_saved`, pretty-printed so it reads a part at a time), and `mapping_outline`
-    /// gives its input, its common entries and, per rule, its event type's TypeId, how its records are recognised,
-    /// its Description, its vendor-code Data, the other paths it writes and how many other Data it carries;
+    /// whole to the workspace (`mapping_saved`, an entry a line where lists are long, so it reads a part at a
+    /// time), and `mapping_outline` gives its input, its common entries and, per rule, its event type's TypeId, how
+    /// its records are recognised, its Description, its vendor-code Data, the other paths it writes and how many
+    /// other Data it carries;
     /// `data_placement` lists each action element's elements once ([DataPlacements#compact]). An
     /// outline itself past the limit says less of each rule (no other paths), then lists only the rules that fit.
     /// The server keeps the draft for the session either way, so the first save sends only what changes. Given
@@ -85,7 +79,7 @@ final class DraftOutline {
     /// @param result    The draft's result, changed in place.
     /// @param workspace The session's workspace, if it has one.
     /// @param build     The build, or null.
-    /// @param limit     The most characters a result is given whole in.
+    /// @param limit     The most characters a result is given whole in ([LargeResults#WHOLE_RESULT_CHARS]).
     static void outlineIfLarge(final ToolCaller caller,
                                final Map<String, Object> result,
                                final Optional<SessionWorkspace> workspace,
@@ -97,10 +91,7 @@ final class DraftOutline {
             return;
         }
         final String path = savedPath(build);
-        try {
-            workspace.get().write(WorkspacePath.parse(path), JsonUtil.writeValueAsString(mapping, true), null);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("The draft wasn't saved to {}: {}", path, e.getMessage()), e);
+        if (!LargeResults.save(workspace, path, mapping, false)) {
             return;
         }
         result.remove(MAPPING);
@@ -128,9 +119,9 @@ final class DraftOutline {
     /// @param build The build, or null.
     /// @return Where a draft too large to give whole is saved for it.
     static String savedPath(final String build) {
-        return FOLDER + PLAIN.matcher(build == null
+        return FOLDER + LargeResults.plain(build == null
                 ? "draft"
-                : build).replaceAll("_") + ".json";
+                : build) + ".json";
     }
 
     // The outline's rules cut to those that fit the limit, the rest counted: read from the saved file.
@@ -284,6 +275,6 @@ final class DraftOutline {
     }
 
     private static int length(final Map<String, Object> result) {
-        return JsonUtil.writeValueAsString(result, false).length();
+        return LargeResults.length(result);
     }
 }

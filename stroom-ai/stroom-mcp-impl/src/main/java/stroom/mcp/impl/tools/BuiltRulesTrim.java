@@ -48,7 +48,7 @@ final class BuiltRulesTrim {
     ///
     /// @param caller Who called the tool.
     /// @param result The build's result, changed in place.
-    /// @param limit  The most characters a result is given whole in ([DraftOutline#WHOLE_RESULT_CHARS]).
+    /// @param limit  The most characters a result is given whole in ([LargeResults#WHOLE_RESULT_CHARS]).
     static void trimIfLarge(final ToolCaller caller, final Map<String, Object> result, final int limit) {
         if (caller.kind() != ToolCaller.Kind.EXTERNAL_CLIENT || !(result.get(EVENTS) instanceof List<?>)
             || JsonUtil.writeValueAsString(result, false).length() <= limit) {

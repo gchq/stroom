@@ -544,7 +544,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                  + "most specific last).");
         }
         b.result.put("warnings", MappingCompaction.grouped(TranslationBuilds.warnings(b.result)));
-        BuiltRulesTrim.trimIfLarge(context.caller(), b.result, DraftOutline.WHOLE_RESULT_CHARS);
+        BuiltRulesTrim.trimIfLarge(context.caller(), b.result, LargeResults.WHOLE_RESULT_CHARS);
         return b.result;
     }
 
