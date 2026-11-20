@@ -38,8 +38,9 @@ final class CatalogueTables {
     /// The table a set of event types is confirmed by.
     static final String SET_HEADER = "| Event type | Recognised by | Records | Translated as |";
     /// The source notes' table of the catalogue.
-    static final String NOTES_HEADER = "| Event type | What happened | Recognised by | Records | Status |";
-    private static final String NOTES_SEPARATOR = "| --- | --- | --- | --- | --- |";
+    static final String NOTES_HEADER = "| Event type | What happened | Recognised by | Records | Translated as | "
+                                       + "Status |";
+    private static final String NOTES_SEPARATOR = "| --- | --- | --- | --- | --- | --- |";
     /// The catch-all's row's TypeId (the uncatalogued records' events).
     static final String UNKNOWN = "Unknown";
 
@@ -66,7 +67,8 @@ final class CatalogueTables {
 
     /// The source notes' "Event types" part, for people (decided by the user 2026-11-20): a section per action
     /// element, as the chat's summaries group them and in their order, each a table of its event types (TypeId and
-    /// title, what happened, how a record is recognised in words, records, and the status in short words), then the
+    /// title, what happened, how a record is recognised in words, records, what it is translated as (decided by the
+    /// user 2026-11-20), and the status in short words), then the
     /// uncatalogued records in a section of their own. It holds every event type, so the chat need show only a
     /// summary of a large set. Descriptions are never cut.
     ///
@@ -83,17 +85,18 @@ final class CatalogueTables {
                           + cell(NullSafe.isBlankString(type.description())
                         ? "-"
                         : type.description()) + " | " + cell(recognisedBy(type)) + " | "
-                          + recordsKept(records.get(type.typeId())) + " | " + cell(status(type)) + " |");
+                          + recordsKept(records.get(type.typeId())) + " | " + cell(translatedAs(type)) + " | "
+                          + cell(status(type)) + " |");
             }
             lines.add("");
         }
         final Catalogue.CatchAll catchAll = catalogue.catchAll();
         lines.addAll(List.of("### Uncatalogued records", "", NOTES_HEADER, NOTES_SEPARATOR));
-        lines.add("| `" + UNKNOWN + "` Uncatalogued records | Translated as " + uncataloguedAs(catchAll)
-                  + ", their fields kept as Data | records no event type recognises | "
+        lines.add("| `" + UNKNOWN + "` Uncatalogued records | - | records no event type recognises | "
                   + (records.get(UNKNOWN) instanceof final Number count
                 ? String.valueOf(count.longValue())
-                : "") + " | " + cell(catchAll.confirmed()
+                : "") + " | " + uncataloguedAs(catchAll) + ", their fields kept as Data | "
+                  + cell(catchAll.confirmed()
                 ? "confirmed by the user" + (catchAll.allowUnknown() == null
                         ? ""
                         : ": " + catchAll.allowUnknown())

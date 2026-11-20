@@ -44,15 +44,16 @@ class TestCatalogueTables {
         assertThat(table).startsWith("## Event types").contains("### Process", CatalogueTables.NOTES_HEADER,
                 "### Uncatalogued records");
         assertThat(table.stream().filter(line -> line.startsWith("| `Process-Code"))).hasSize(300)
-                .allSatisfy(line -> assertThat(line).contains(" | 2 | "));
+                .allSatisfy(line -> assertThat(line).contains(" | 2 | Process | "));
         // The catch-all last, in a section of its own.
         assertThat(table.stream().filter(line -> line.startsWith("| ")).toList().getLast())
-                .startsWith("| `Unknown` Uncatalogued records | Translated as Unknown events, their fields kept as "
-                            + "Data | records no event type recognises | 0 | proposed |");
+                .startsWith("| `Unknown` Uncatalogued records | - | records no event type recognises | 0 | Unknown "
+                            + "events, their fields kept as Data | proposed |");
         // Unchecked (a hand edit read back): the records left blank.
         assertThat(CatalogueTables.notesTable(catalogue, Map.of())).contains("| `Process-Code000` Process Code000 | "
-                                                                             + "Test | every record |  | proposed; "
-                                                                             + "medium; from the agent's knowledge |");
+                                                                             + "Test | every record |  | Process | "
+                                                                             + "proposed; medium; from the agent's "
+                                                                             + "knowledge |");
     }
 
     @Test
@@ -70,17 +71,17 @@ class TestCatalogueTables {
 
         assertThat(table.stream().filter(line -> line.startsWith("### ")).toList()).containsExactly(
                 "### Authenticate", "### Export", "### Uncatalogued records");
-        assertThat(table).contains("| `Authenticate-Logon` Authenticate Logon | Test | every record | 4 | confirmed; "
-                                   + "high; from the documentation |",
-                "| `Authenticate-Logoff` Authenticate Logoff | - | every record |  | proposed; medium; from the "
-                + "agent's knowledge |",
-                "| `Export-Report` Export Report | Test | every record |  | proposed; low; from the draft's seed |",
-                "| `Unknown` Uncatalogued records | Translated as Unknown events, their fields kept as Data | records "
-                + "no event type recognises | 3 | confirmed by the user: the rest kept |");
+        assertThat(table).contains("| `Authenticate-Logon` Authenticate Logon | Test | every record | 4 | Authenticate "
+                                   + "| confirmed; high; from the documentation |",
+                "| `Authenticate-Logoff` Authenticate Logoff | - | every record |  | Authenticate | proposed; medium; "
+                + "from the agent's knowledge |",
+                "| `Export-Report` Export Report | Test | every record |  | Export | proposed; low; from the draft's "
+                + "seed |",
+                "| `Unknown` Uncatalogued records | - | records no event type recognises | 3 | Unknown events, their "
+                + "fields kept as Data | confirmed by the user: the rest kept |");
         assertThat(table.indexOf("### Export")).isGreaterThan(table.indexOf(
-                "| `Authenticate-Logoff` Authenticate Logoff | - | every record |  | proposed; medium; from the "
-                + "agent's "
-                + "knowledge |"));
+                "| `Authenticate-Logoff` Authenticate Logoff | - | every record |  | Authenticate | proposed; medium; "
+                + "from the agent's knowledge |"));
     }
 
     private static EventType type(final String typeId,

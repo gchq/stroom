@@ -40,8 +40,8 @@ import java.util.Set;
 /// **Worth a look** is a generic rule, explainable to the user in a few words, with no knowledge of any source: an
 /// event type is listed when
 ///
-/// * the user amended it, and the set is shown again (`amended: title, recognised by`): they check their amendment
-///   landed;
+/// * it changed since the user last saw the set, whoever changed it (decided by the user 2026-11-20), and the set is
+///   shown again (`changed since shown: title, recognised by`): they check their amendment landed;
 /// * no record of the sample is of it (from documentation, say): nothing has shown its conditions hold;
 /// * its records are translated as no event at all: no action element, or an action of `Other` or `Unknown` (the
 ///   event-logging schema's own words for an action it can't name), or a TypeId whose verb is `Unknown`;
@@ -119,7 +119,7 @@ final class CatalogueSummary {
                 .filter(typeId -> set.stream().noneMatch(type -> typeId.equalsIgnoreCase(type.typeId())))
                 .toList();
         if (!removed.isEmpty()) {
-            lines.add("Removed, as amended: " + String.join(", ", removed) + ".");
+            lines.add("Removed since shown: " + String.join(", ", removed) + ".");
             lines.add("");
         }
         final List<Unusual> unusual = worthALook(set, check, amendments);
@@ -167,7 +167,7 @@ final class CatalogueSummary {
             final List<String> why = new ArrayList<>();
             final List<String> amended = amendments.of(type.typeId());
             if (!amended.isEmpty()) {
-                why.add("amended: " + String.join(", ", amended));
+                why.add("changed since shown: " + String.join(", ", amended));
             }
             if (doubtful) {
                 why.add(type.confidence() + " confidence" + (type.doubt() == null

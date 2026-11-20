@@ -221,11 +221,10 @@ class TestCatalogueSummary {
         final String summary = CatalogueSummary.summary(set, check(set, Map.of("Authenticate-Logon", 2,
                 "Authenticate-Logoff", 2)), DOC, amendments);
 
-        assertThat(summary).contains("Removed, as amended: Authenticate-Timeout.",
+        assertThat(summary).contains("Removed since shown: Authenticate-Timeout.",
                 "**Worth a look** (1 event type):",
-                "| `Authenticate-Logoff` Authenticate Logoff | every record | 2 | Authenticate Logoff | amended: "
-                + "title, "
-                + "recognised by |");
+                "| `Authenticate-Logoff` Authenticate Logoff | every record | 2 | Authenticate Logoff | changed since "
+                + "shown: title, recognised by |");
         // Kept in the confirmation's marks between calls.
         assertThat(CatalogueSummary.Amendments.fromJson(amendments.toJson())).isEqualTo(amendments);
     }

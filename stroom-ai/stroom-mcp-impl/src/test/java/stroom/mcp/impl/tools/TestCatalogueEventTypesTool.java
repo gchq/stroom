@@ -152,13 +152,12 @@ class TestCatalogueEventTypesTool {
         // Every row, how each is recognised in words and its records: the full table the summary refers to.
         assertThat(doc).contains("## Event types", "### Authenticate", "### Delete", CatalogueTables.NOTES_HEADER,
                 "| `Authenticate-Logon` Authenticate Logon | Test: Authenticate-Logon | action is login | 8 | "
-                + "proposed; "
-                + "high; from the agent's knowledge |",
-                "| `Delete-Records` Delete Records | Test: Delete-Records | action is purge | 1 | proposed; low; from "
-                + "the agent's knowledge |");
+                + "Authenticate Logon, who acted: user | proposed; high; from the agent's knowledge |",
+                "| `Delete-Records` Delete Records | Test: Delete-Records | action is purge | 1 | Delete | proposed; "
+                + "low; from the agent's knowledge |");
         final List<String> rows = doc.lines().filter(line -> line.startsWith("| ")).toList();
-        assertThat(rows.getLast()).startsWith("| `Unknown` Uncatalogued records | Translated as Unknown events, "
-                                              + "their fields kept as Data | records no event type recognises | 0 |");
+        assertThat(rows.getLast()).startsWith("| `Unknown` Uncatalogued records | - | records no event type "
+                                              + "recognises | 0 | Unknown events, their fields kept as Data |");
     }
 
     @Test
@@ -447,7 +446,8 @@ class TestCatalogueEventTypesTool {
         // The amended event type is worth a look, saying what changed, so the user can check it landed; every row
         // is in the source notes, which the summary refers to.
         assertThat(String.valueOf(again.get("table"))).contains(NOTES_LINK,
-                "| `Authenticate-Logoff` Session timeout | action is logout | 8 | Authenticate | amended: title |");
+                "| `Authenticate-Logoff` Session timeout | action is logout | 8 | Authenticate | changed since shown: "
+                + "title |");
         assertThat(notesText()).contains("| `Authenticate-Logoff` Session timeout |");
     }
 
