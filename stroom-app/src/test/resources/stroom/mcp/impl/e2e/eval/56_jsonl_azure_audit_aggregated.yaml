@@ -27,7 +27,8 @@ expected:
   type_ids: {min_distinct: 6}
   catalogue: {catch_all_confirmed: true, no_overlaps: true, no_condition_on_source_type_field: true}
   records: 161
-  event_types: [View, Send, Create|Update, Delete|Move]
+  # A message moved to Deleted Items may be a Delete, a Move or an Update (the user, 2026-11-20).
+  event_types: [View, Send, Create|Update, Delete|Move|Update]
   paths: [EventTime/TimeCreated, EventSource/User/Id]
   values:
     EventSource/User/Id: [sam.taylor@contoso.example, svc-batch@contoso.example, anja.michel@contoso.example]
