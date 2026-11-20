@@ -1265,7 +1265,7 @@ shows one), and the app itself.
 | Debug logging in `DocumentationTabController` | Fixed (20 November 2026): the `GWT.log` calls and the commented code are gone |
 | `XPathFilterEditor`'s default condition | Still so, harmless |
 | `CombinedParser.getMode()`'s guess for a None converter | Still so, and the entry is wrong that it has no effect: `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives a Data Splitter the XML range mode |
-| `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Still open |
+| `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Fixed (20 November 2026) |
 
 **Fixed** (6 November 2026): ~~Reported (30 October 2026, found fixing the processor profile periods' Remove): lists that
 replace a row after an edit may keep the old object selected, as `MultiSelectionModelImpl` matches
@@ -1725,11 +1725,18 @@ to delete them by hand.~~
   stale 30 October 2026): secrets are replace-only. Editing existing credentials shows no secret
   form ("The secret is set but cannot be shown. Use Replace Secret to set a new one.", with help
   saying so), OK checks only the name, type and expiry, and the list's Replace Secret sets a new one.
-* Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
+* ~~Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
   pipeline's `elastic_index.svg`) embed a `<style>` block with page-wide class names (`.st0` to
   `.st7`), and `OpenAI.svg` has a `<title>` "OpenAI icon", so a tree row reads "OpenAI icon My
   Model". No other icon uses those class names today, so nothing is recoloured, but any that did
-  would be. Found when the document write cycles couldn't match those rows by name.
+  would be. Found when the document write cycles couldn't match those rows by name.~~
+  **Fixed** (20 November 2026): the raw icons give each path its colour as a `fill` attribute in
+  place of the `.st0` to `.st7` classes, and `OpenAI.svg` and the pipeline's `hadoop.svg` (found
+  by the new test) have no `<title>`; `GenerateSvgImages` remade them and `SvgImage`. Their colours
+  are unchanged. `TestSvgImage` fails if any icon has a `<title>` or a `<style>`.
+  Left: `GenerateSvgImages` copies every file in `raw-images`, so it puts back the eleven
+  `xsdbrowser` PNGs deleted by hand in wave 46; their sources in `raw-images/xsdbrowser/` need
+  deleting too.
 * ~~Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
   leaves a blank page: the app is never shown and only a reload offers the terms again
   (`SplashPresenter`, `CurrentUser.showSplash`).~~ **Fixed** (30 October 2026): once the warning
