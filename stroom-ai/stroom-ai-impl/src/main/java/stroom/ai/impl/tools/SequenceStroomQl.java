@@ -123,8 +123,9 @@ final class SequenceStroomQl {
         return sb.append("\neval ").append(ALL).append(" = 'all'")
                 .append("\ngroup by ").append(ALL)
                 // The group's column is selected, or nothing is grouped (seen in Stroom: a row of 1 per event).
-                .append("\nselect ").append(ALL).append(", count() as ").append(ANCHORS).append(", countUnique(").append(key).append(") as ")
-                .append(KEYS)
+                .append("\nselect ").append(ALL)
+                .append(", count() as ").append(ANCHORS)
+                .append(", countUnique(").append(key).append(") as ").append(KEYS)
                 .toString();
     }
 
