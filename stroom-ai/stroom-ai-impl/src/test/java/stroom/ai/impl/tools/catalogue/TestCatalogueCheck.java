@@ -602,6 +602,34 @@ class TestCatalogueCheck {
         assertThat(check.problems()).isEmpty();
     }
 
+    @Test
+    void aFewRecordsOfAnEventTypeAreGivenWithTheValuesItsConditionsTestAsRead() {
+        // For the user who asks what an event type's records look like while confirming it (explain=).
+        final EventType password = securityTypes(EventType.AGENT_KNOWLEDGE).stream()
+                .filter(type -> "Update-Password".equals(type.typeId()))
+                .findFirst()
+                .orElseThrow();
+        final EventType sole = type("Process-All", "Everything", EventType.AGENT_KNOWLEDGE);
+        final CatalogueSample sample = CatalogueSample.read(READING, String.join("\n", pegaLines()), null,
+                LocalCheck.JSON_PARSER_CUT, null);
+
+        final Map<String, List<CatalogueCheck.Example>> examples = CatalogueCheck.examples(sample,
+                List.of(password, sole), 3);
+
+        assertThat(examples.get("Update-Password")).hasSize(3).allSatisfy(example -> {
+            assertThat(example.values()).containsEntry("event.eventType", "Password change")
+                    .containsEntry("event.logger_name", SECURITY);
+            assertThat(example.text()).contains("\\\"eventType\\\": \\\"Password change\\\"");
+            assertThat(example.text().length()).isLessThanOrEqualTo(CatalogueCheckResult.EXCERPT + 1);
+        });
+        // The password changes come after the access group and operator record changes (7 and 5 records).
+        assertThat(examples.get("Update-Password")).extracting(CatalogueCheck.Example::record)
+                .containsExactly(12, 13, 14);
+        // Recognised by every record, it tests no field.
+        assertThat(examples.get("Process-All")).hasSize(3).allSatisfy(example -> assertThat(example.toJson())
+                .containsOnlyKeys("record", "text"));
+    }
+
     // The scope's records: the security logger's four event types, the SOAP logger's requests, responses and faults,
     // REST requests, and one rare record.
     private List<String> pegaLines() {

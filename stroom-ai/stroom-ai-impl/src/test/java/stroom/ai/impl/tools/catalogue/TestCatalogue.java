@@ -67,6 +67,24 @@ class TestCatalogue {
     }
 
     @Test
+    void aDoubtIsOptionalKeptThroughConfirmationAndWrittenOnlyWhenGiven() {
+        // Decided by the user 2026-11-20: a medium or low event type says why it is doubtful where the agent said.
+        final Catalogue.Read read = Catalogue.parse(Map.of("event_types", List.of(
+                Map.of("type_id", "Authenticate-Logon", "confidence", "low", "doubt", "  only seen in the docs  "),
+                Map.of("type_id", "Authenticate-Logoff", "doubt", " "))));
+
+        assertThat(read.errors()).isEmpty();
+        final EventType doubted = read.catalogue().eventType("Authenticate-Logon");
+        assertThat(doubted.doubt()).isEqualTo("only seen in the docs");
+        assertThat(doubted.toJson()).containsEntry("doubt", "only seen in the docs");
+        assertThat(doubted.confirmedByUser().doubt()).isEqualTo("only seen in the docs");
+        assertThat(doubted.withTypeId("Authenticate-Login").doubt()).isEqualTo("only seen in the docs");
+        // Blank is none, and none is left out of the JSON (the contract's keys as they were).
+        assertThat(read.catalogue().eventType("Authenticate-Logoff").doubt()).isNull();
+        assertThat(read.catalogue().eventType("Authenticate-Logoff").toJson()).doesNotContainKey("doubt");
+    }
+
+    @Test
     void aProposalIsReadLaxlyWithDefaultsAndEveryErrorCollected() {
         final Catalogue.Read read = Catalogue.parse(Map.of("event_types", List.of(
                 Map.of("type_id", "Authenticate-Logon", "drop", "no", "success", true,

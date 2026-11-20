@@ -102,7 +102,7 @@ final class VendorCodeKept {
     private static EventType oneWay(final EventType type, final String typeId, final Way way) {
         return new EventType(typeId, type.title(), type.description(), type.eventDetail(), type.action(),
                 type.success(), type.actor(), type.affected(), type.affectedAs(), List.of(way), type.drop(),
-                type.basis(), type.confidence(), type.oneTypeBecause(), type.status());
+                type.basis(), type.confidence(), type.oneTypeBecause(), type.status(), type.doubt());
     }
 
     // True when the rule (or common) carries the field as Data: an entry reading it as Data, one of the Data name

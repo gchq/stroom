@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
+import stroom.ai.impl.tools.catalogue.CatalogueDiff;
 import stroom.ai.impl.tools.catalogue.EventType;
 
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The high-confidence event types' summary (decided by the user 2026-11-20): grouped by what happened, a few TypeIds
-/// each with their records, then those worth a look by a generic rule.
+/// A set's summary (decided by the user 2026-11-20, for every confidence): grouped by what happened, a few TypeIds
+/// each with their records, then those worth a look by a generic rule, the amended and the doubtful among them.
 class TestCatalogueSummary {
 
     private static final String DOC = "'acme source notes'";
@@ -149,7 +150,7 @@ class TestCatalogueSummary {
 
         assertThat(summary.lines().filter(line -> line.startsWith("| `Authenticate-Doc"))).hasSize(
                 CatalogueSummary.MOST_LISTED);
-        assertThat(summary).endsWith("And 15 more worth a look, in the source notes 'acme source notes'.");
+        assertThat(summary).endsWith("And 30 more worth a look, in the source notes 'acme source notes'.");
     }
 
     @Test
@@ -170,6 +171,75 @@ class TestCatalogueSummary {
         assertThat(summary).contains("- Authenticate: 50 event types, 100 records; e.g. Authenticate-Code000 (2)");
     }
 
+    @Test
+    void aMediumSetIsASummaryTooEveryOneWorthALookSayingWhyItIsDoubtful() {
+        // Decided by the user 2026-11-20: medium and low sets are summaries as the high one is.
+        final List<EventType> set = new ArrayList<>();
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        for (int k = 0; k < 14; k++) {
+            final String typeId = "Process-Code%02d".formatted(k);
+            set.add(confident(type(typeId, "Process", null), "medium"));
+            counts.put(typeId, 3);
+        }
+        set.add(doubted(confident(type("Update-Password", "Update", null), "medium"), "only in the vendor's docs"));
+        counts.put("Update-Password", 0);
+        set.add(saidOne(confident(type("Process-Batch", "Process", null), "medium"),
+                "every batch is translated alike"));
+        counts.put("Process-Batch", 5);
+
+        final String summary = CatalogueSummary.summary(set, check(set, counts), DOC);
+        final List<CatalogueSummary.Unusual> worth = CatalogueSummary.worthALook(set, check(set, counts),
+                CatalogueSummary.Amendments.NONE);
+
+        assertThat(summary).startsWith("**16 medium-confidence event types**, by what happened: each is doubtful, so "
+                                       + "each is worth a look below.")
+                .contains("- Process: 15 event types, 47 records")
+                .contains("**Worth a look** (16 event types):")
+                .doesNotContain(CatalogueTables.SET_HEADER + "\n")
+                .endsWith("And 6 more worth a look, in the source notes 'acme source notes'.");
+        assertThat(summary.lines().filter(line -> line.startsWith("| `"))).hasSize(CatalogueSummary.MOST_LISTED);
+        // Those the agent's doubt or a rule picks out first, then those doubtful by their confidence alone.
+        assertThat(worth).extracting(one -> one.type().typeId()).startsWith("Update-Password", "Process-Batch",
+                "Process-Code00");
+        assertThat(whyOf(worth, "Update-Password")).containsExactly("medium confidence: only in the vendor's docs",
+                "no record of it in the sample", "the only one under Update");
+        assertThat(whyOf(worth, "Process-Batch")).containsExactly("medium confidence",
+                "one event type because every batch is translated alike");
+        assertThat(whyOf(worth, "Process-Code03")).containsExactly("medium confidence");
+    }
+
+    @Test
+    void theEventTypesAmendedSinceTheSetWasShownAreListedFirstSayingWhatChanged() {
+        final List<EventType> set = List.of(type("Authenticate-Logon", "Authenticate", "Logon"),
+                type("Authenticate-Logoff", "Authenticate", "Logoff"));
+        final CatalogueSummary.Amendments amendments = CatalogueSummary.Amendments.NONE
+                .with(new CatalogueDiff.Diff(List.of(), List.of(new CatalogueDiff.Changed("Authenticate-Logoff",
+                        List.of("title"))), List.of("Authenticate-Timeout"), false))
+                .with(new CatalogueDiff.Diff(List.of(), List.of(new CatalogueDiff.Changed("Authenticate-Logoff",
+                        List.of("recognised by", "title"))), List.of(), false));
+
+        final String summary = CatalogueSummary.summary(set, check(set, Map.of("Authenticate-Logon", 2,
+                "Authenticate-Logoff", 2)), DOC, amendments);
+
+        assertThat(summary).contains("Removed, as amended: Authenticate-Timeout.",
+                "**Worth a look** (1 event type):",
+                "| `Authenticate-Logoff` Authenticate Logoff | every record | 2 | Authenticate Logoff | amended: title, "
+                + "recognised by |");
+        // Kept in the confirmation's marks between calls.
+        assertThat(CatalogueSummary.Amendments.fromJson(amendments.toJson())).isEqualTo(amendments);
+    }
+
+    @Test
+    void anEventTypeAddedThenRemovedByAmendmentsWasNeverThere() {
+        final CatalogueSummary.Amendments amendments = CatalogueSummary.Amendments.NONE
+                .with(new CatalogueDiff.Diff(List.of("Update-Password"), List.of(), List.of(), false))
+                .with(new CatalogueDiff.Diff(List.of(), List.of(), List.of("Update-Password"), false));
+
+        assertThat(amendments.none()).isTrue();
+        assertThat(CatalogueSummary.Amendments.NONE.with(new CatalogueDiff.Diff(List.of("Update-Password"),
+                List.of(), List.of(), false)).of("update-password")).containsExactly("added");
+    }
+
     private static List<String> whyOf(final List<CatalogueSummary.Unusual> unusual, final String typeId) {
         return unusual.stream()
                 .filter(one -> typeId.equals(one.type().typeId()))
@@ -182,6 +252,24 @@ class TestCatalogueSummary {
     private static EventType type(final String typeId, final String eventDetail, final String action) {
         return new EventType(typeId, typeId.replace('-', ' '), "Test: " + typeId, eventDetail, action, null, null,
                 null, null, List.of(), false, EventType.AGENT_KNOWLEDGE, "high", null, EventType.PROPOSED);
+    }
+
+    private static EventType confident(final EventType type, final String confidence) {
+        return new EventType(type.typeId(), type.title(), type.description(), type.eventDetail(), type.action(),
+                null, null, null, null, List.of(), false, type.basis(), confidence, type.oneTypeBecause(),
+                type.status(), type.doubt());
+    }
+
+    private static EventType doubted(final EventType type, final String doubt) {
+        return new EventType(type.typeId(), type.title(), type.description(), type.eventDetail(), type.action(),
+                null, null, null, null, List.of(), false, type.basis(), type.confidence(), type.oneTypeBecause(),
+                type.status(), doubt);
+    }
+
+    private static EventType saidOne(final EventType type, final String because) {
+        return new EventType(type.typeId(), type.title(), type.description(), type.eventDetail(), type.action(),
+                null, null, null, null, List.of(), false, type.basis(), type.confidence(), because, type.status(),
+                type.doubt());
     }
 
     private static EventType withoutDescription(final EventType type) {

@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
@@ -346,13 +347,15 @@ class TestCatalogueEventTypesTool {
 
         final Map<String, Object> high = call(Map.of("build", BUILD, "confirm", true), user.context());
         assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form)
-                .startsWith("Accept all 2 event types, or type your amendments").doesNotContain("|")
+                .startsWith("Accept all 2 event types, or type your amendments, or ask about any of them")
+                .doesNotContain("|")
                 .contains("summarised in the chat", "every row: [acme source notes]("));
         assertThat(high).containsEntry("status", "needs_showing").containsEntry("confirmed_now",
                 List.of("Authenticate-Logon", "Authenticate-Logoff"));
-        // The medium ones as their table, whole.
-        assertThat(String.valueOf(high.get("table"))).startsWith(TABLE_HEADER).contains("Export-Report")
-                .doesNotContain("Delete-Records");
+        // The medium ones as a summary too, each worth a look (decided by the user 2026-11-20).
+        assertThat(String.valueOf(high.get("table"))).startsWith("**1 medium-confidence event type**")
+                .contains("| `Export-Report` Export Report | action is export | 8 | Export | medium confidence |")
+                .doesNotContain("Delete-Records", TABLE_HEADER + "\n");
 
         call(Map.of("build", BUILD, "confirm", true), user.context());
         // The catch-all last: the uncatalogued records.
@@ -431,14 +434,16 @@ class TestCatalogueEventTypesTool {
         assertThat(SourceNotes.catalogue(notes()).eventTypes()).noneSatisfy(type -> assertThat(type.confirmed())
                 .isTrue());
         // Not put to them again until the amendments are proposed.
-        assertThat(text(Map.of("build", BUILD, "confirm", true), user.context())).contains("The user amended this set",
-                amendment);
+        assertThat(text(Map.of("build", BUILD, "confirm", true), user.context()))
+                .contains("The user wrote in this set's form", amendment);
 
         propose(List.of(Map.of("op", "change", "type_id", "Authenticate-Logoff", "title", "Session timeout")));
         final Map<String, Object> again = call(Map.of("build", BUILD, "confirm", true), user.context());
         assertThat(again).containsEntry("status", "needs_showing");
-        // The summary names TypeIds only: the change is in every row of the source notes, which it refers to.
-        assertThat(String.valueOf(again.get("table"))).contains("'acme source notes'");
+        // The amended event type is worth a look, saying what changed, so the user can check it landed; every row
+        // is in the source notes, which the summary refers to.
+        assertThat(String.valueOf(again.get("table"))).contains("'acme source notes'",
+                "| `Authenticate-Logoff` Session timeout | action is logout | 8 | Authenticate | amended: title |");
         assertThat(notesText()).contains("| Authenticate-Logoff | Session timeout |");
     }
 
@@ -466,6 +471,134 @@ class TestCatalogueEventTypesTool {
 
         assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("status",
                 "needs_showing");
+    }
+
+    @Test
+    void anEventTypeIsExplainedWithExamplesAndNothingIsChanged() {
+        propose(List.of(withKeys(type("Authenticate-Logon", "Authenticate", "high", "login"), "action", "Logon",
+                        "actor", "user"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout"),
+                withKeys(type("Delete-Records", "Delete", "low", "purge"), "doubt", "seen once")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        final String notesBefore = notesText();
+
+        final Map<String, Object> explained = call(Map.of("build", BUILD, "explain", List.of("authenticate-logon",
+                "Delete-Records")), user.context());
+
+        assertThat(explained).containsEntry("status", "explained");
+        assertThat(list(explained.get("event_types"))).hasSize(2).first().satisfies(one -> {
+            assertThat(one).containsEntry("type_id", "Authenticate-Logon")
+                    .containsEntry("title", "Authenticate Logon")
+                    .containsEntry("description", "Test: Authenticate-Logon")
+                    .containsEntry("recognised_by", "action is login")
+                    .containsEntry("translated_as", "Authenticate Logon, who acted: user")
+                    .containsEntry("records", 8)
+                    .containsEntry("status", "proposed, in the set put to the user");
+            assertThat(list(one.get("examples"))).hasSize(CatalogueEventTypesTool.EXAMPLES_GIVEN)
+                    .allSatisfy(example -> {
+                        assertThat(String.valueOf(example.get("text"))).contains("\"action\": \"login\"");
+                        assertThat(map(example.get("values"))).containsEntry("action", "login");
+                    });
+        });
+        assertThat(list(explained.get("event_types")).getLast()).containsEntry("doubt", "seen once")
+                .containsEntry("records", 1);
+        assertThat(String.valueOf(explained.get("hint"))).contains("Nothing was changed", "confirm=true");
+        assertThat(map(map(explained.get("next")).get("call")).get("arguments")).isEqualTo(Map.of("build", BUILD,
+                "confirm", true));
+        // No side effect: the notes (catalogue, the set shown and its marks) as they were, and the form follows.
+        assertThat(notesText()).isEqualTo(notesBefore);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form).startsWith("Accept all 2"));
+    }
+
+    @Test
+    void aGroupOfTheSummaryIsExplainedByItsActionElementWithItsMembers() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout"),
+                type("Export-Report", "Export", "high", "export")));
+
+        final Map<String, Object> explained = call(Map.of("build", BUILD, "explain", "authenticate"), plain());
+
+        assertThat(explained).doesNotContainKey("event_types");
+        assertThat(list(explained.get("groups"))).singleElement().satisfies(group -> {
+            assertThat(group).containsEntry("group", "Authenticate").containsEntry("event_types", 2)
+                    .containsEntry("records", 16);
+            assertThat(list(group.get("members"))).extracting(member -> member.get("type_id"))
+                    .containsExactly("Authenticate-Logon", "Authenticate-Logoff");
+            assertThat(list(group.get("members")).getFirst()).containsEntry("recognised_by", "action is login");
+        });
+        // The uncatalogued records too, by the catch-all's name.
+        assertThat(map(call(Map.of("build", BUILD, "explain", "Unknown"), plain()).get("uncatalogued_records")))
+                .containsEntry("records", 1).containsEntry("translated_as", "Unknown events, their fields kept as "
+                                                                            + "Data");
+    }
+
+    @Test
+    void aNameExplainDoesNotKnowIsRefusedWithTheNearestAndNothingIsChanged() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout")));
+        final String notesBefore = notesText();
+
+        assertThat(text(Map.of("build", BUILD, "explain", List.of("Authenticate-Logout")), plain()))
+                .contains("No event type or group 'Authenticate-Logout'", "nearest: Authenticate-Logon, Authenticate-Logoff",
+                        "Nothing was changed");
+        assertThat(text(Map.of("build", BUILD, "explain", "Authenticate-Logon", "confirm", true), plain()))
+                .contains("given alone");
+        assertThat(notesText()).isEqualTo(notesBefore);
+    }
+
+    @Test
+    void aMessageTypedInsteadOfTheFormIsTheAgentsToReadAndNeverAnAcceptance() {
+        // Decided by the user 2026-11-20: a question is answered in the chat and the set put again; a change is
+        // proposed; acceptance only through the form.
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
+        final String question = "What do the logons look like?";
+        final PuttingAside user = new PuttingAside(question);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        final String told = text(Map.of("build", BUILD, "confirm", true), user.context());
+
+        assertThat(told).contains("sent a message instead", question, "explain=", "confirm=true puts the set to "
+                                  + "them again", "ask them", "never take their message as acceptance");
+        assertThat(SourceNotes.catalogue(notes()).eventTypes()).noneSatisfy(type -> assertThat(type.confirmed())
+                .isTrue());
+        assertThat(call(Map.of("build", BUILD, "explain", "Authenticate-Logon"), user.context()))
+                .containsEntry("status", "explained");
+
+        // The set put to them again: now they accept, in the form.
+        final Map<String, Object> again = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(again).containsEntry("confirmed_now", List.of("Authenticate-Logon"));
+        assertThat(user.asked()).isEqualTo(2);
+    }
+
+    @Test
+    void aQuestionWrittenInTheFormIsAnsweredAndTheSetPutAgainAsItIs() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
+        final String question = "how is a logon recognised?";
+        final List<String> answers = new ArrayList<>(List.of(question));
+        final Answering user = new Answering(form -> form.contains("event types") && !answers.isEmpty()
+                ? Map.of("amendments", answers.removeFirst())
+                : Map.of("value", true));
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        final Map<String, Object> written = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(String.valueOf(written.get("hint"))).contains(question, "A question about any of them",
+                "answered=true");
+
+        assertThat(text(Map.of("build", BUILD, "confirm", true), user.context())).contains("If it is a question",
+                "answered=true");
+        final Map<String, Object> explained = call(Map.of("build", BUILD, "explain", "Authenticate-Logon"),
+                user.context());
+        assertThat(map(map(explained.get("next")).get("call")).get("arguments")).isEqualTo(Map.of("build", BUILD,
+                "confirm", true, "answered", true));
+
+        // answered=true puts the set to them again as it is (shown first), never accepting it for them.
+        final Map<String, Object> again = call(Map.of("build", BUILD, "confirm", true, "answered", true),
+                user.context());
+        assertThat(again).containsEntry("status", "needs_showing");
+        assertThat(SourceNotes.catalogue(notes()).eventTypes().getFirst().confirmed()).isFalse();
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("confirmed_now",
+                List.of("Authenticate-Logon"));
     }
 
     @Test
@@ -806,6 +939,49 @@ class TestCatalogueEventTypesTool {
                                 final String intro,
                                 final Map<String, Object> form) {
             return new ElicitResult(ElicitResult.Action.ACCEPT, answers.apply(intro));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A user of Stroom AI's chat who types a message instead of answering the first catalogue form, then answers
+    // every form.
+    private static final class PuttingAside implements UserQuestions {
+
+        private final String typed;
+        private int asked;
+
+        private PuttingAside(final String typed) {
+            this.typed = typed;
+        }
+
+        private ToolCallContext context() {
+            return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-3",
+                            new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
+                    .userQuestions(this)
+                    .build();
+        }
+
+        private int asked() {
+            return asked;
+        }
+
+        @Override
+        public boolean canAsk() {
+            return true;
+        }
+
+        @Override
+        public ElicitResult ask(final String toolName,
+                                final String callId,
+                                final String intro,
+                                final Map<String, Object> form) {
+            asked++;
+            return asked == 1
+                    ? new ElicitResult(ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD, typed))
+                    : new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("value", true));
         }
     }
 }

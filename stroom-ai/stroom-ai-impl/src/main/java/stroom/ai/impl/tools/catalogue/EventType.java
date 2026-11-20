@@ -42,6 +42,8 @@ import java.util.Objects;
 /// @param confidence     `high`, `medium` or `low`.
 /// @param oneTypeBecause `one_type_because`: why records that look like several event types are one, or null.
 /// @param status         `proposed` or `confirmed`.
+/// @param doubt          Optional: why the agent is unsure of it (a medium or low confidence's reason), said to the user
+///                       where the event type is worth a look; null when none was given.
 public record EventType(String typeId,
                         String title,
                         String description,
@@ -56,7 +58,8 @@ public record EventType(String typeId,
                         String basis,
                         String confidence,
                         String oneTypeBecause,
-                        String status) {
+                        String status,
+                        String doubt) {
 
     /// The seed's, from the draft's rules: never the user's until the user confirms it.
     public static final String DRAFT = "draft";
@@ -77,9 +80,48 @@ public record EventType(String typeId,
     /// The statuses an event type (and the catch-all) may have.
     public static final List<String> STATUSES = List.of(PROPOSED, CONFIRMED);
 
-    /// Fills in an empty list for a null one.
+    /// Fills in an empty list for a null one, and null for a blank doubt.
     public EventType {
         recognisedBy = List.copyOf(Objects.requireNonNullElse(recognisedBy, List.of()));
+        doubt = doubt == null || doubt.isBlank()
+                ? null
+                : doubt.strip();
+    }
+
+    /// An event type with no doubt given.
+    ///
+    /// @param typeId         Its TypeId, or null.
+    /// @param title          Its title.
+    /// @param description    What happened.
+    /// @param eventDetail    Its action element.
+    /// @param action         Its Action, or null.
+    /// @param success        Its outcome, or null.
+    /// @param actor          Who acted, or null.
+    /// @param affected       What was acted on, or null.
+    /// @param affectedAs     What that is under the action element, or null.
+    /// @param recognisedBy   The ways a record of it is told.
+    /// @param drop           True when its records are dropped.
+    /// @param basis          Where it came from.
+    /// @param confidence     `high`, `medium` or `low`.
+    /// @param oneTypeBecause Why records that look like several event types are one, or null.
+    /// @param status         `proposed` or `confirmed`.
+    public EventType(final String typeId,
+                     final String title,
+                     final String description,
+                     final String eventDetail,
+                     final String action,
+                     final String success,
+                     final String actor,
+                     final String affected,
+                     final String affectedAs,
+                     final List<Way> recognisedBy,
+                     final boolean drop,
+                     final String basis,
+                     final String confidence,
+                     final String oneTypeBecause,
+                     final String status) {
+        this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
+                drop, basis, confidence, oneTypeBecause, status, null);
     }
 
     /// Reads one from JSON-like values, laxly (strings, booleans as words, defaults for what isn't given), every
@@ -108,7 +150,8 @@ public record EventType(String typeId,
                 fields.literal("basis", AGENT_KNOWLEDGE, BASES),
                 fields.literal("confidence", "medium", CONFIDENCES),
                 fields.optionalString("one_type_because"),
-                fields.literal("status", PROPOSED, STATUSES));
+                fields.literal("status", PROPOSED, STATUSES),
+                fields.optionalString("doubt"));
         return fields.ok()
                 ? eventType
                 : null;
@@ -122,7 +165,8 @@ public record EventType(String typeId,
                 : fields.optionalString(key);
     }
 
-    /// @return It as JSON, in the catalogue's key order: every key, null ones too.
+    /// @return It as JSON, in the catalogue's key order: every key, null ones too, but `doubt`, which is optional and
+    /// given only when the agent gave one.
     public Map<String, Object> toJson() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("type_id", typeId);
@@ -140,6 +184,9 @@ public record EventType(String typeId,
         out.put("confidence", confidence);
         out.put("one_type_because", oneTypeBecause);
         out.put("status", status);
+        if (doubt != null) {
+            out.put("doubt", doubt);
+        }
         return out;
     }
 
@@ -149,13 +196,13 @@ public record EventType(String typeId,
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, drop, DRAFT.equals(basis)
                 ? USER_CONFIRMED
-                : basis, confidence, oneTypeBecause, CONFIRMED);
+                : basis, confidence, oneTypeBecause, CONFIRMED, doubt);
     }
 
     /// @return It dropped by the user, in the user's form: its records left untranslated, on the user's word.
     public EventType droppedByUser() {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED);
+                recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED, doubt);
     }
 
     /// @return It confirmed.
@@ -167,6 +214,6 @@ public record EventType(String typeId,
     /// @return It with that TypeId.
     public EventType withTypeId(final String typeId) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, drop, basis, confidence, oneTypeBecause, status);
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt);
     }
 }

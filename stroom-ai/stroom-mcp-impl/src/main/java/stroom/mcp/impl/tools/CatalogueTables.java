@@ -38,8 +38,6 @@ final class CatalogueTables {
     static final String SET_HEADER = "| Event type | Recognised by | Records | Translated as |";
     /// The source notes' table of the catalogue.
     static final String NOTES_HEADER = "| TypeId | Title | Recognised by | Records | Translated as | Basis |";
-    /// The longest a set's table is in the chat: past it, its first rows and where every row is (the source notes).
-    static final int CHAT_TABLE_CHARS = 20_000;
     /// The catch-all's row's TypeId (the uncatalogued records' events).
     static final String UNKNOWN = "Unknown";
 
@@ -62,38 +60,6 @@ final class CatalogueTables {
                       + " |");
         }
         return String.join("\n", lines);
-    }
-
-    /// A set's table as the chat shows it: whole when it fits in [#CHAT_TABLE_CHARS]; else its first rows, then how
-    /// many more there are and where every row is (the source notes' "Event types" table), so a long set is still
-    /// one form (decided by the user 2026-11-20).
-    ///
-    /// @param types    The event types of the set, in the order shown.
-    /// @param check    The check of the catalogue they are in (for their records), or null.
-    /// @param notesDoc Where every row is: the source notes doc's name, quoted, or words naming it.
-    /// @return The table, Markdown.
-    static String chatTable(final List<EventType> types, final CatalogueCheckResult check, final String notesDoc) {
-        final String whole = setTable(types, check);
-        if (whole.length() <= CHAT_TABLE_CHARS) {
-            return whole;
-        }
-        final List<String> lines = whole.lines().toList();
-        final StringBuilder shown = new StringBuilder();
-        int rows = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            final String line = lines.get(i);
-            // Room kept for the closing line.
-            if (i >= 2 && shown.length() + line.length() + 300 > CHAT_TABLE_CHARS) {
-                break;
-            }
-            shown.append(line).append('\n');
-            if (i >= 2) {
-                rows++;
-            }
-        }
-        return shown + "\nThe first " + rows + " of these " + types.size() + " event types; the other "
-               + (types.size() - rows) + ", and every row, are in the Event types table of the source notes "
-               + notesDoc + ".";
     }
 
     /// @param catalogue A catalogue.

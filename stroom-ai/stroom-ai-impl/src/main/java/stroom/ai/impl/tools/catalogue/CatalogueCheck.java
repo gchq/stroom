@@ -35,10 +35,12 @@ import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -91,6 +93,8 @@ public final class CatalogueCheck {
     private static final int EXAMPLES_READ = 200;
     // The most examples a shape keeps.
     private static final int EXAMPLES = 5;
+    // The most characters of a value an example gives.
+    private static final int EXAMPLE_VALUE = 100;
     // The most overlaps given their telling fields.
     private static final int TOLD_OVERLAPS = 50;
     // Two shapes whose fields share less than this of their union are clearly different.
@@ -116,6 +120,55 @@ public final class CatalogueCheck {
                                              final CatalogueSample sample,
                                              final EventSchema schema) {
         return new Run(catalogue, new RecordIndex(sample), schema).result();
+    }
+
+    /// A few records of each event type given, from the scope's records as processing reads them, for the user who
+    /// asks what an event type's records look like while confirming it (`catalogue_event_types` `explain=`): each
+    /// record's text shortened, and the values the type's conditions test as they were read. Pure, as the check is.
+    ///
+    /// @param sample The scope's records, as processing reads them.
+    /// @param types  The event types.
+    /// @param most   The most records given an event type.
+    /// @return The records of each, by TypeId (an event type without one by its place, `#0`), in the records' order.
+    public static Map<String, List<Example>> examples(final CatalogueSample sample,
+                                                      final List<EventType> types,
+                                                      final int most) {
+        final RecordIndex index = new RecordIndex(sample);
+        final Run run = new Run(new Catalogue(types, null, null), index, null);
+        final Map<String, List<Example>> out = new LinkedHashMap<>();
+        for (int t = 0; t < types.size(); t++) {
+            final EventType type = types.get(t);
+            final BitSet recognised = run.recognised(type);
+            final Set<String> tested = new LinkedHashSet<>();
+            type.recognisedBy().forEach(way -> way.when().forEach(c -> {
+                if (c.field() != null) {
+                    tested.add(c.field());
+                }
+            }));
+            final List<Example> examples = new ArrayList<>();
+            for (int n = recognised.nextSetBit(0);
+                 n >= 0 && examples.size() < most;
+                 n = recognised.nextSetBit(n + 1)) {
+                final Map<String, String> values = new LinkedHashMap<>();
+                for (final String field : tested) {
+                    final String value = index.text(n, field);
+                    if (value != null) {
+                        values.put(field, shortened(value, EXAMPLE_VALUE));
+                    }
+                }
+                examples.add(new Example(n, CatalogueCheckResult.excerpt(index.recordText(n), false), values));
+            }
+            out.put(NullSafe.isBlankString(type.typeId())
+                    ? "#" + t
+                    : type.typeId(), List.copyOf(examples));
+        }
+        return out;
+    }
+
+    private static String shortened(final String text, final int most) {
+        return text.length() <= most
+                ? text
+                : text.substring(0, most) + "…";
     }
 
     // The literal text an anchored regex starts with (`^Request:` gives `Request:`), or null.
@@ -309,6 +362,16 @@ public final class CatalogueCheck {
 
         private static List<Problem> distinct(final List<Problem> problems) {
             return List.copyOf(new LinkedHashSet<>(problems));
+        }
+
+        // The records an event type recognises, by any of its ways (every record for one with none).
+        private BitSet recognised(final EventType type) {
+            final BitSet all = new BitSet(size);
+            if (type.recognisedBy().isEmpty()) {
+                all.set(0, size);
+            }
+            type.recognisedBy().forEach(way -> all.or(way(way)));
+            return all;
         }
 
         // The records a way recognises: every condition holds (none can't be told). Its conditions that look values
@@ -814,6 +877,34 @@ public final class CatalogueCheck {
             return union.isEmpty()
                     ? 1
                     : (double) both / union.size();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A record of an event type, as the user is shown it when they ask about the event type.
+    ///
+    /// @param record The record's index in the scope's records (from 0).
+    /// @param text   The record's text, shortened.
+    /// @param values The values the event type's conditions test, by field, as read (shortened).
+    public record Example(int record, String text, Map<String, String> values) {
+
+        /// Copies the values given.
+        public Example {
+            values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
+        }
+
+        /// @return It as JSON: `record`, `text` and `values` (left out when none).
+        public Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("record", record);
+            out.put("text", text);
+            if (!values.isEmpty()) {
+                out.put("values", values);
+            }
+            return out;
         }
     }
 }

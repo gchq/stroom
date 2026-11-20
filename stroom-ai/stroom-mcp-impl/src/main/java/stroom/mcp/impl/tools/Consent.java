@@ -979,9 +979,9 @@ public class Consent {
             // Never taken from the chat (the agent could agree for the user): asked in its form again once the user
             // says to go on.
             audit(context.session(), kind, request, "put aside: the user sent a message instead", false);
-            throw new ToolRefusal(McpElicitations.sentInsteadText(request.summary(), request.action(), sent.get(),
+            throw new SentInstead(McpElicitations.sentInsteadText(request.summary(), request.action(), sent.get(),
                     "If they say to go on, call " + request.action() + " again: they are asked to agree in the form "
-                    + "again."));
+                    + "again."), sent.get());
         }
         final Map<String, Object> content = NullSafe.map(answer.content());
         final boolean accepted = answer.action() == ElicitResult.Action.ACCEPT;
@@ -1502,6 +1502,30 @@ public class Consent {
         /// @param message What the agent is told.
         Declined(final String message) {
             super(message);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A confirmation or approval form ([#require]) the user put aside by sending a message in the chat instead of
+    /// answering it: a refusal, carrying what they sent, so a tool whose form the user may well ask about (the
+    /// catalogue's) can tell the agent how to read the message; others give its message as it is.
+    static final class SentInstead extends ToolRefusal {
+
+        private final String sent;
+
+        /// @param message What the agent is told.
+        /// @param sent    What the user sent instead (blank when it couldn't be read).
+        SentInstead(final String message, final String sent) {
+            super(message);
+            this.sent = NullSafe.string(sent);
+        }
+
+        /// @return What the user sent instead, blank when it couldn't be read.
+        String sent() {
+            return sent;
         }
     }
 }
