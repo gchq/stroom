@@ -61,6 +61,8 @@ select logon.UserId, logon.EventTime, export.EventTime
 
 - The joined side (the first source in a windowed join) is held in a join table of at most 1,000,000 rows or
   256 MB; over that the query fails. Filter or group that side to keep it small.
+- A join reads every row of both sides within those limits: a query's row limit (e.g. run_stroomql's 10,000)
+  cuts only the rows the query returns, after the join and any group by.
 - A join whose table has at most 1,000 keys is also pushed down to the first source's search as an `in` term
   (`anti join` only on ID and whole-number fields), so the first source reads only matching events.
 - `where` may name any side's fields: top-level `and` terms on the first source's fields are pushed down to its
