@@ -66,8 +66,7 @@ import java.util.Objects;
 /// do for any other temporal state store. The type is registered through
 /// `PlanBDocumentTypes` so that `PlanBDocCache` resolves it by map name like any other,
 /// which is how a pipeline writes to it. Only the *read* is ours.
-@Description(
-        """
+@Description("""
         Defines a Plan B temporal state store that holds the events displayed by a Floor Map.
         Each event records the state of an entity, e.g. its position, from a point in time, so the Floor Map \
         can show where every entity was at any moment.
@@ -75,8 +74,7 @@ import java.util.Objects;
         How long an entity stays on the map after its last event, how long data is retained, the maximum \
         size of the store and whether to condense data can all be configured.
 
-        Data is loaded into the store using the {{< pipe-elm "PlanBFilter" >}} pipeline element.
-        """)
+        Data is loaded into the store using the PlanBFilter pipeline element.""")
 @JsonPropertyOrder({
         "type",
         "uuid",
