@@ -58,7 +58,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// The query tools' time zones over `/mcp`, on a Lucene index with events at known times either side of the start
 /// of today in Australia/Canberra: `day()` and a time without an offset are worked out in the zone the call gives
-/// (`timeZone`), or else the user's Stroom time zone preference, and each result says which zone its times are in.
+/// (`timeZone`), or else the user's device's zone (which only the chat's browser sends, so UTC over `/mcp`, whatever
+/// the user's Stroom preference), and each result says which zone its times are in and what its date points stood
+/// for.
 @SuppressWarnings("unchecked")
 class TestE2eTimeZones extends AbstractE2eTest {
 
@@ -88,6 +90,8 @@ class TestE2eTimeZones extends AbstractE2eTest {
         final String inCanberra = run(query, "Australia/Canberra");
 
         assertThat(inCanberra).contains("Times are in Australia/Canberra (+1").contains("1 row")
+                .contains("In its conditions day() = " + ZonedDateTime.ofInstant(canberraDay, CANBERRA).toLocalDate()
+                          + "T00:00:00+1")
                 .contains("today-in-canberra").doesNotContain("yesterday-in-canberra")
                 // The result's times are shown in the zone.
                 .contains(ZonedDateTime.ofInstant(canberraDay.plus(1, ChronoUnit.HOURS), CANBERRA).toLocalDate()
@@ -114,23 +118,22 @@ class TestE2eTimeZones extends AbstractE2eTest {
     }
 
     @Test
-    void theDefaultIsTheUsersPreferenceAndALocalPreferenceIsUtcOverMcp() {
-        final Instant canberraDay = ZonedDateTime.now(CANBERRA).truncatedTo(ChronoUnit.DAYS).toInstant();
-        final String index = lucene("E2E time zones preference", List.of(
-                new Event(canberraDay.minus(1, ChronoUnit.HOURS), "yesterday-in-canberra"),
-                new Event(canberraDay.plus(1, ChronoUnit.HOURS), "today-in-canberra")));
+    void theDefaultOverMcpIsUtcWhateverTheUsersPreferenceAndSaysSo() {
+        final Instant utcDay = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS).toInstant();
+        final String index = lucene("E2E time zones default", List.of(
+                new Event(utcDay.minus(1, ChronoUnit.HOURS), "yesterday-in-utc"),
+                new Event(utcDay.plus(1, ChronoUnit.HOURS), "today-in-utc")));
         final String query = "from \"" + index + "\" where EventTime > day() select UserId";
 
-        final String preferred = withPreference(UserTimeZone.fromId("Australia/Canberra"), () -> run(query, null));
-        assertThat(preferred).contains("the user's Stroom time zone").contains("today-in-canberra")
-                .doesNotContain("yesterday-in-canberra");
-        assertThat(withPreference(UserTimeZone.fromId("Australia/Canberra"),
-                () -> McpTestClient.text(client.call("get_current_datetime", args()))))
-                .contains("(Australia/Canberra); UTC ");
-
-        final String local = withPreference(UserTimeZone.local(), () -> run(query, "local"));
-        assertThat(local).contains("Times are in UTC. The user's Stroom time zone is their browser's, which isn't "
-                                   + "known here");
+        final String byDefault = withPreference(UserTimeZone.fromId("Australia/Canberra"), () -> run(query, null));
+        assertThat(byDefault).contains("Times are in UTC. The user's time zone isn't known here, so times are in "
+                                       + "UTC: give timeZone to use another.")
+                .contains("In its conditions day() = " + utcDay.toString().replace("T00:00:00Z", "")
+                          + "T00:00:00Z.")
+                .contains("today-in-utc").doesNotContain("yesterday-in-utc");
+        assertThat(McpTestClient.text(client.call("get_current_datetime", args())))
+                .contains("(UTC). The user's time zone isn't known here");
+        assertThat(run(query, "local")).contains("Times are in UTC. The user's time zone isn't known here");
     }
 
     @Test

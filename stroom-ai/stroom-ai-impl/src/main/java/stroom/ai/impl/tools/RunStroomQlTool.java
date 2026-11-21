@@ -208,6 +208,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         final ToolTimeZone zone = timeZone(request, context);
         final long referenceTime = System.currentTimeMillis();
         final String query = StroomQlDatePoints.inZone(limited.query(), zone, referenceTime);
+        // The times its conditions' date points stood for, said in the result: the Stroom UI works them out in UTC.
+        final List<String> datePoints = StroomQlDatePoints.used(limited.query(), zone, referenceTime);
         final boolean changed = limited.change() != StroomQlLimit.Change.NONE || !query.equals(limited.query());
         final WorkspacePath givenOut = outArg(request);
         final WorkspacePath out = givenOut != null
@@ -245,7 +247,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
             return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, given,
-                    new Written(limited, changed, zone), maxRows) + esqlHint(queryService, dataSource, given, context));
+                    new Written(limited, changed, zone, datePoints), maxRows)
+                                   + esqlHint(queryService, dataSource, given, context));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
@@ -447,6 +450,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             final String profile = TableProfiler.profile(reader, out.path());
             final long rows = MarkdownTables.countRows(workspace.localFile(out));
             return "Ran the query. The results are in " + out + ". " + written.zone().stated()
+                   + datePointsNote(written.datePoints())
                    + limitNote(limited, maxRows, rows)
                    + (warnings.isEmpty()
                     ? ""
@@ -455,6 +459,15 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /// @param datePoints The times the query's conditions' date points stood for ([StroomQlDatePoints#used]).
+    /// @return What the result says of them, e.g. " In its conditions day() = 2026-11-21T00:00:00+11:00.", or
+    /// nothing if there were none.
+    static String datePointsNote(final List<String> datePoints) {
+        return datePoints.isEmpty()
+                ? ""
+                : " In its conditions " + String.join(", ", datePoints) + ".";
     }
 
     /// @return What the model is told about the row limit: nothing if the query's own limit was used and the rows
@@ -497,8 +510,10 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // The query as run: its limit, whether it differs from the agent's, and the time zone it ran in.
-    private record Written(StroomQlLimit.Limited limited, boolean changed, ToolTimeZone zone) {
+    // The query as run: its limit, whether it differs from the agent's, the time zone it ran in, and the times its
+    // conditions' date points stood for.
+    private record Written(StroomQlLimit.Limited limited, boolean changed, ToolTimeZone zone,
+                           List<String> datePoints) {
 
     }
 }

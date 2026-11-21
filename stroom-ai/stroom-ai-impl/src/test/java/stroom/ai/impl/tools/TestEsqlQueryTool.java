@@ -37,6 +37,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,8 +93,10 @@ class TestEsqlQueryTool {
                         assertThat(term.getCondition()).isEqualTo(Condition.EQUALS);
                         assertThat(term.getValue()).isEqualTo("alice*");
                     });
-            assertThat(request.timeRange().getFrom()).isEqualTo("day() - 7d");
-            assertThat(request.timeRange().getTo()).isEqualTo("now()");
+            // Resolved in the call's zone (UTC here) to the times they stood for, so the result can say them.
+            assertThat(request.timeRange().getFrom()).isEqualTo(
+                    LocalDate.now(ZoneOffset.UTC).minusDays(7) + "T00:00:00Z");
+            assertThat(request.timeRange().getTo()).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z");
         }
     }
 

@@ -31,7 +31,10 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -76,20 +79,47 @@ final class StroomQlDatePoints {
         if (query == null || zone.isUtc()) {
             return query;
         }
+        final StringBuilder sb = new StringBuilder(query);
+        // Replaced last first, so replacing one doesn't move those before it.
+        final List<Placed> placed = new ArrayList<>(find(query, zone, referenceTime));
+        Collections.reverse(placed);
+        for (final Placed point : placed) {
+            sb.replace(point.start(), point.end(), "\"" + format(point.time()) + "\"");
+        }
+        return sb.toString();
+    }
+
+    /// @param query         A StroomQL query.
+    /// @param zone          The time zone of the call.
+    /// @param referenceTime What now is, in epoch milliseconds.
+    /// @return The time each date point in the query's conditions stood for, once each in the order first written,
+    /// e.g. `day() = 2026-11-21T00:00:00+11:00`, so a result can say which hours "today" covered (the Stroom UI
+    /// works them out in UTC); empty if there are none or the query can't be read.
+    static List<String> used(final String query, final ToolTimeZone zone, final long referenceTime) {
+        if (query == null) {
+            return List.of();
+        }
+        final Map<String, String> used = new LinkedHashMap<>();
+        for (final Placed point : find(query, zone, referenceTime)) {
+            used.putIfAbsent(point.name(), point.name() + "() = "
+                                           + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(point.time()));
+        }
+        return List.copyOf(used.values());
+    }
+
+    // The date points in the query's conditions, in the order written, with the time each stands for in the zone.
+    private static List<Placed> find(final String query, final ToolTimeZone zone, final long referenceTime) {
         final List<Token> tokens;
         try {
             tokens = Tokeniser.parse(query);
         } catch (final RuntimeException e) {
-            return query;
+            return List.of();
         }
         final ZonedDateTime now = Instant.ofEpochMilli(referenceTime).atZone(zone.zone());
         // The clause each bracket level is in: a bracketed query (a join's, or a where subquery's) has its own.
         final Deque<TokenType> clauses = new ArrayDeque<>();
         TokenType clause = null;
-        final StringBuilder sb = new StringBuilder(query);
-        // Replaced last first, so replacing one doesn't move those before it: the positions are found first.
-        final Deque<int[]> spans = new ArrayDeque<>();
-        final Deque<String> times = new ArrayDeque<>();
+        final List<Placed> placed = new ArrayList<>();
         for (int i = 0; i < tokens.size(); i++) {
             final Token token = tokens.get(i);
             final TokenType type = token.getTokenType();
@@ -104,22 +134,18 @@ final class StroomQlDatePoints {
             } else if (TokenType.ALL_KEYWORDS.contains(type)) {
                 clause = type;
             } else if (TokenType.FUNCTION_NAME.equals(type) && CONDITION_CLAUSES.contains(clause)) {
-                final DatePoint point = BY_NAME.get(token.getText().strip().toLowerCase(Locale.ROOT));
+                final String name = token.getText().strip().toLowerCase(Locale.ROOT);
+                final DatePoint point = BY_NAME.get(name);
                 final int close = i + 2;
                 if (point != null && close < tokens.size()
                     && TokenType.OPEN_BRACKET.equals(tokens.get(i + 1).getTokenType())
                     && TokenType.CLOSE_BRACKET.equals(tokens.get(close).getTokenType())) {
-                    spans.push(new int[]{token.getStart(), tokens.get(close).getEnd() + 1});
-                    times.push("\"" + format(at(point, now)) + "\"");
+                    placed.add(new Placed(name, token.getStart(), tokens.get(close).getEnd() + 1, at(point, now)));
                     i = close;
                 }
             }
         }
-        while (!spans.isEmpty()) {
-            final int[] span = spans.pop();
-            sb.replace(span[0], span[1], times.pop());
-        }
-        return sb.toString();
+        return placed;
     }
 
     /// A time a tool takes (e.g. sequence_query's timeFrom) as a time in the call's zone: a date expression (e.g.
@@ -130,10 +156,11 @@ final class StroomQlDatePoints {
     /// @param value         The time as given, or null.
     /// @param zone          The call's zone.
     /// @param referenceTime What now is, in epoch milliseconds.
-    /// @return The time in the zone; the value as given if the zone is UTC (as Stroom reads it), it has an offset
-    /// already (e.g. `2026-11-21T02:00:00Z`), or it can't be read (whatever reads it next then refuses it).
+    /// @return The time in the zone, in UTC too, so the result can say the time it stood for (e.g. `day()` as
+    /// `2026-11-21T00:00:00Z`); the value as given if it has an offset already (e.g. `2026-11-21T02:00:00Z`) or
+    /// can't be read (whatever reads it next then refuses it).
     static String timeInZone(final String value, final ToolTimeZone zone, final long referenceTime) {
-        if (value == null || value.isBlank() || zone.isUtc() || hasOffset(value.strip())) {
+        if (value == null || value.isBlank() || hasOffset(value.strip())) {
             return value;
         }
         final ZonedDateTime now = Instant.ofEpochMilli(referenceTime).atZone(zone.zone());
@@ -187,5 +214,14 @@ final class StroomQlDatePoints {
         return time.getZone() instanceof ZoneOffset
                 ? DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(time)
                 : DateTimeFormatter.ISO_ZONED_DATE_TIME.format(time);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A date point in a query: its name, where it is written, and the time it stands for.
+    private record Placed(String name, int start, int end, ZonedDateTime time) {
+
     }
 }

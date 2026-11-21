@@ -106,14 +106,33 @@ class TestStroomQlDatePoints {
     }
 
     @Test
-    void aToolsTimeArgumentWithAnOffsetOrInUtcIsLeftAsGiven() {
+    void aToolsTimeArgumentWithAnOffsetIsLeftAsGiven() {
         assertThat(StroomQlDatePoints.timeInZone("2026-11-21T02:00:00Z", CANBERRA, NOW))
                 .isEqualTo("2026-11-21T02:00:00Z");
         assertThat(StroomQlDatePoints.timeInZone("2026-11-21T02:00:00+01:00", CANBERRA, NOW))
                 .isEqualTo("2026-11-21T02:00:00+01:00");
-        assertThat(StroomQlDatePoints.timeInZone("day() - 7d", ToolTimeZone.UTC, NOW)).isEqualTo("day() - 7d");
         assertThat(StroomQlDatePoints.timeInZone("not a time", CANBERRA, NOW)).isEqualTo("not a time");
         assertThat(StroomQlDatePoints.timeInZone(null, CANBERRA, NOW)).isNull();
+    }
+
+    @Test
+    void aToolsTimeArgumentInUtcIsTheTimeItStandsFor() {
+        assertThat(StroomQlDatePoints.timeInZone("day() - 7d", ToolTimeZone.UTC, NOW))
+                .isEqualTo("2026-11-13T00:00:00Z");
+        assertThat(StroomQlDatePoints.timeInZone("2026-11-21T02:00:00", ToolTimeZone.UTC, NOW))
+                .isEqualTo("2026-11-21T02:00:00Z");
+    }
+
+    @Test
+    void theTimesAQuerysConditionsDatePointsStoodForAreListedOnceEach() {
+        assertThat(StroomQlDatePoints.used("from V where T > day() - 1d and T < day() and U > week() eval D = "
+                                           + "hour() select D", CANBERRA, NOW))
+                .containsExactly("day() = 2026-11-21T00:00:00+11:00", "week() = 2026-11-16T00:00:00+11:00");
+        assertThat(StroomQlDatePoints.used("from V where T > day()", ToolTimeZone.UTC, NOW))
+                .containsExactly("day() = 2026-11-20T00:00:00Z");
+        assertThat(StroomQlDatePoints.used("from V where T > now() select T", CANBERRA, NOW)).isEmpty();
+        assertThat(StroomQlDatePoints.used("from V where \"day()\" = T", CANBERRA, NOW)).isEmpty();
+        assertThat(StroomQlDatePoints.used(null, CANBERRA, NOW)).isEmpty();
     }
 
     @Test

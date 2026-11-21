@@ -111,11 +111,14 @@ class TestRunStroomQlTool {
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> stroomQlSources,
                 () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
-        tool.setUserTimeZones(new UserTimeZones(() -> Optional.of(UserTimeZone.fromId("Australia/Canberra"))));
+        // The chat's browser sent the user's device's zone.
+        final ChatBrowserZones browserZones = new ChatBrowserZones();
+        browserZones.record(1, "Australia/Canberra");
+        final ChatToolCallContexts contexts = ToolCalls.chatContexts(workspace);
+        contexts.setBrowserZones(browserZones);
 
         tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
-                "{\"query\": \"from web where EventTime > day() eval D = day() select D\"}"), ToolCalls.inChat(1,
-                workspace));
+                "{\"query\": \"from web where EventTime > day() eval D = day() select D\"}"), contexts.forChat(1));
 
         final ArgumentCaptor<QuerySearchRequest> captor = ArgumentCaptor.forClass(QuerySearchRequest.class);
         Mockito.verify(queryService).search(captor.capture());
@@ -124,6 +127,15 @@ class TestRunStroomQlTool {
         assertThat(settings.getDateTimePattern()).isEqualTo(ToolTimeZone.DATE_TIME_PATTERN);
         assertThat(captor.getValue().getQuery()).contains("where EventTime > \"")
                 .contains("[Australia/Canberra]\"").contains("eval D = day()");
+    }
+
+    @Test
+    void theResultSaysTheTimesItsConditionsDatePointsStoodFor() {
+        assertThat(RunStroomQlTool.datePointsNote(List.of("day() = 2026-11-21T00:00:00+11:00",
+                "week() = 2026-11-16T00:00:00+11:00")))
+                .isEqualTo(" In its conditions day() = 2026-11-21T00:00:00+11:00, week() = "
+                           + "2026-11-16T00:00:00+11:00.");
+        assertThat(RunStroomQlTool.datePointsNote(List.of())).isEmpty();
     }
 
     @Test

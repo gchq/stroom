@@ -43,7 +43,7 @@ class TestBuiltInTools {
     @Test
     void getCurrentDate() {
         assertThat(run(new GetCurrentDateTool(), "{}"))
-                .isEqualTo(LocalDate.now(ZoneOffset.UTC) + " (UTC)");
+                .isEqualTo(LocalDate.now(ZoneOffset.UTC) + " (UTC). " + UserTimeZones.DEVICE_NOT_KNOWN);
     }
 
     @Test
@@ -65,7 +65,8 @@ class TestBuiltInTools {
     @Test
     void getCurrentDatetimeIsUtcIsoAndCurrent() {
         final String result = run(new GetCurrentDateTimeTool(), "{}");
-        assertThat(result).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z \\(UTC\\)");
+        assertThat(result).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z \\(UTC\\)\\. "
+                                   + "The user's time zone isn't known here.*");
         assertThat(Duration.between(Instant.parse(result.substring(0, 20)), Instant.now()).abs())
                 .isLessThan(Duration.ofMinutes(1));
     }
@@ -77,8 +78,8 @@ class TestBuiltInTools {
         assertThat(GetCurrentDateTimeTool.text(now, zone("Australia/Canberra")))
                 .isEqualTo("2026-11-21T10:42:00+11:00 (Australia/Canberra); UTC 2026-11-20T23:42:00Z");
         assertThat(GetCurrentDateTimeTool.text(now, new ToolTimeZone(ZoneOffset.UTC,
-                ToolTimeZone.Source.FALLBACK, UserTimeZones.BROWSER_NOT_KNOWN)))
-                .isEqualTo("2026-11-20T23:42:00Z (UTC). " + UserTimeZones.BROWSER_NOT_KNOWN);
+                ToolTimeZone.Source.FALLBACK, UserTimeZones.DEVICE_NOT_KNOWN)))
+                .isEqualTo("2026-11-20T23:42:00Z (UTC). " + UserTimeZones.DEVICE_NOT_KNOWN);
         assertThat(run(new GetCurrentDateTimeTool(), "{\"timeZone\":\"+11:00\"}"))
                 .matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+11:00 \\(\\+11:00\\); UTC .*Z");
         assertThat(run(new GetCurrentDateTimeTool(), "{\"timeZone\":\"Mars\"}"))

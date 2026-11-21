@@ -1041,26 +1041,27 @@ refused with the forms it takes. None touches the workspace.
 
 ### Time zones
 
-Classes: `UserTimeZones`, `ToolTimeZone`, `UserTimeZonePreference`, `StroomQlDatePoints`, `ChatBrowserZones`
+Classes: `UserTimeZones`, `ToolTimeZone`, `StroomQlDatePoints`, `ChatBrowserZones`
 
 `run_stroomql`, `sequence_query`, `esql_query`, `get_current_datetime` and `get_current_date` take `timeZone`
 ("Time zone for the times and results: local, UTC, a zone id or an offset; default the user's."): `local`, `UTC` or
 `GMT` (`Z`), a zone id (`Australia/Canberra`, in any case) or an offset (`+11:00`, `+11`, `UTC+11:00`). It decides
 what `day()` and a time without an offset mean in the call, and the zone its result's times are shown in. Without
-it, the zone is the user's Stroom time zone preference (`UserPreferences.timeZone`, as the Stroom UI applies it),
-read as the user the tool runs as (the chat's, or the MCP token's) through Stroom's user preferences resource,
-called directly (`UserTimeZonePreference`; the user preferences service gives the current user's preferences only
-through it). A preference to use the browser's zone, and `local`, are the browser's zone, which the chat client
-sends with each question (`AskStroomAiRequest.localZoneId`, kept per chat in memory by `ChatBrowserZones`); where
-it isn't known (over `/mcp`, or a run resumed after a restart before the next question), `local` is the
-preference's zone when that names one, and otherwise UTC, with "The user's Stroom time zone is their browser's,
-which isn't known here, so times are in UTC: give timeZone to use another." An unknown zone is refused: "unknown
-time zone 'X': give local, UTC, a zone id such as Europe/London, or an offset such as +01:00".
+it (or given `local`), the zone is the user's device's: the zone the chat's browser sends with each question
+(`AskStroomAiRequest.localZoneId`, kept per chat in memory by `ChatBrowserZones`). The user's Stroom time zone
+preference isn't used (decided by the user, 2026-11-21; its default is UTC). Where the device's zone isn't known
+(over `/mcp`, whose clients send none, or a chat run resumed after a restart before its next question), the zone is
+UTC, with "The user's time zone isn't known here, so times are in UTC: give timeZone to use another." An unknown
+zone is refused: "unknown time zone 'X': give local, UTC, a zone id such as Europe/London, or an offset such as
++01:00".
 
-Every result with times says the zone: "Times are in Australia/Canberra (+11:00), the user's Stroom time zone."
-(", the user's browser's time zone." for the browser's; nothing after the zone when the call gave it); JSON results
-carry `time_zone`, `utc_offset`, `time_zone_source` (`given`, `preference`, `browser`, `fallback`) and any
-`time_zone_note`.
+Every result with times says the zone: "Times are in Australia/Canberra (+11:00), the user's device's time zone."
+(nothing after the zone when the call gave it); JSON results carry `time_zone`, `utc_offset`, `time_zone_source`
+(`given`, `browser`, `fallback`) and any `time_zone_note`. Every result also says what its relative times stood
+for, as the Stroom UI works `day()` out in UTC and the agent's "today" may cover other hours: `run_stroomql` adds
+"In its conditions day() = 2026-11-21T00:00:00+11:00." (each date point in `where`, `filter` and `having`, once,
+`StroomQlDatePoints.used`), and `sequence_query` and `esql_query` give `timeFrom`/`timeTo` resolved to ISO times
+(in UTC too, e.g. `day() - 7d` as `2026-11-14T00:00:00Z`).
 
 How the zone is applied, with no change to Stroom's core (as the user decided, 2026-11-21):
 

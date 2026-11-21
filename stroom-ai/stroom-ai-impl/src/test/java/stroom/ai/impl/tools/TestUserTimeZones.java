@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,115 +33,83 @@ class TestUserTimeZones {
     private static final ToolCaller MCP_CLIENT = new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "client");
 
     @Test
-    void defaultIsTheUsersPreferredZoneId() {
-        final ToolTimeZone zone = zones(UserTimeZone.fromId("Australia/Canberra")).resolve(null, mcp());
-
-        assertThat(zone.zone()).isEqualTo(CANBERRA);
-        assertThat(zone.source()).isEqualTo(Source.PREFERENCE);
-        assertThat(zone.stated()).startsWith("Times are in Australia/Canberra (+1")
-                .endsWith("), the user's Stroom time zone.");
-    }
-
-    @Test
-    void defaultIsTheUsersPreferredOffset() {
-        final ToolTimeZone zone = zones(UserTimeZone.fromOffset(5, 30)).resolve("", mcp());
-
-        assertThat(zone.zone()).isEqualTo(ZoneOffset.ofHoursMinutes(5, 30));
-        assertThat(zone.label()).isEqualTo("+05:30");
-    }
-
-    @Test
-    void defaultIsUtcWithoutAPreference() {
-        final ToolTimeZone zone = UserTimeZones.UTC_ONLY.resolve(null, chat(null));
-
-        assertThat(zone.isUtc()).isTrue();
-        assertThat(zone.stated()).isEqualTo("Times are in UTC, the user's Stroom time zone.");
-        assertThat(zones(UserTimeZone.utc()).resolve(null, mcp()).isUtc()).isTrue();
-    }
-
-    @Test
-    void localPreferenceInAChatIsTheBrowsersZone() {
-        final ToolTimeZone zone = zones(UserTimeZone.local()).resolve(null, chat("Australia/Canberra"));
+    void defaultInAChatIsTheDevicesZone() {
+        final ToolTimeZone zone = UserTimeZones.resolve(null, chat("Australia/Canberra"));
 
         assertThat(zone.zone()).isEqualTo(CANBERRA);
         assertThat(zone.source()).isEqualTo(Source.BROWSER);
-        assertThat(zone.stated()).endsWith("), the user's browser's time zone.");
+        assertThat(zone.stated()).startsWith("Times are in Australia/Canberra (+1")
+                .endsWith("), the user's device's time zone.");
+        assertThat(UserTimeZones.resolve("", chat("+05:30")).zone()).isEqualTo(ZoneOffset.ofHoursMinutes(5, 30));
     }
 
     @Test
-    void localPreferenceOverMcpIsUtcAndSaysSo() {
-        final ToolTimeZone zone = zones(UserTimeZone.local()).resolve(null, mcp());
+    void defaultOverMcpIsUtcAndSaysSo() {
+        final ToolTimeZone zone = UserTimeZones.resolve(null, mcp());
 
         assertThat(zone.isUtc()).isTrue();
-        assertThat(zone.note()).isEqualTo(UserTimeZones.BROWSER_NOT_KNOWN);
-        assertThat(zone.stated()).isEqualTo("Times are in UTC. " + UserTimeZones.BROWSER_NOT_KNOWN);
+        assertThat(zone.source()).isEqualTo(Source.FALLBACK);
+        assertThat(zone.note()).isEqualTo(UserTimeZones.DEVICE_NOT_KNOWN);
+        assertThat(zone.stated()).isEqualTo("Times are in UTC. " + UserTimeZones.DEVICE_NOT_KNOWN);
         assertThat(zone.structured()).containsEntry("time_zone", "UTC")
-                .containsEntry("time_zone_note", UserTimeZones.BROWSER_NOT_KNOWN);
+                .containsEntry("time_zone_source", "fallback")
+                .containsEntry("time_zone_note", UserTimeZones.DEVICE_NOT_KNOWN);
     }
 
     @Test
-    void localInAChatIsTheBrowsersZoneWhateverThePreference() {
-        final ToolTimeZone zone = zones(UserTimeZone.fromId("Europe/London")).resolve("local",
-                chat("Australia/Canberra"));
-
-        assertThat(zone.zone()).isEqualTo(CANBERRA);
+    void defaultInAChatWhoseDevicesZoneIsntKnownIsUtcAndSaysSo() {
+        assertThat(UserTimeZones.resolve(null, chat(null)).note()).isEqualTo(UserTimeZones.DEVICE_NOT_KNOWN);
+        assertThat(UserTimeZones.resolve(null, chat("Not/AZone")).isUtc()).isTrue();
     }
 
     @Test
-    void localOverMcpIsTheUsersPreferredZone() {
-        assertThat(zones(UserTimeZone.fromId("Europe/London")).resolve("LOCAL", mcp()).zone())
-                .isEqualTo(ZoneId.of("Europe/London"));
-        assertThat(zones(UserTimeZone.local()).resolve("local", mcp()).note())
-                .isEqualTo(UserTimeZones.BROWSER_NOT_KNOWN);
+    void localIsTheDevicesZoneOrUtcSayingSo() {
+        assertThat(UserTimeZones.resolve("LOCAL", chat("Australia/Canberra")).zone()).isEqualTo(CANBERRA);
+        assertThat(UserTimeZones.resolve("local", mcp()).note()).isEqualTo(UserTimeZones.DEVICE_NOT_KNOWN);
+    }
+
+    @Test
+    void aGivenZoneWinsOverTheDevices() {
+        final ToolTimeZone zone = UserTimeZones.resolve("Europe/London", chat("Australia/Canberra"));
+
+        assertThat(zone.zone()).isEqualTo(ZoneId.of("Europe/London"));
+        assertThat(zone.source()).isEqualTo(Source.GIVEN);
+        assertThat(UserTimeZones.resolve("UTC", chat("Australia/Canberra")).isUtc()).isTrue();
     }
 
     @Test
     void givenUtcAndGmtAreUtc() {
-        final UserTimeZones zones = zones(UserTimeZone.fromId("Australia/Canberra"));
-
-        assertThat(zones.resolve("UTC", mcp()).isUtc()).isTrue();
-        assertThat(zones.resolve("gmt", mcp()).isUtc()).isTrue();
-        assertThat(zones.resolve("Z", mcp()).isUtc()).isTrue();
-        assertThat(zones.resolve("+00:00", mcp()).isUtc()).isTrue();
-        assertThat(zones.resolve("UTC", mcp()).stated()).isEqualTo("Times are in UTC.");
+        assertThat(UserTimeZones.resolve("UTC", mcp()).isUtc()).isTrue();
+        assertThat(UserTimeZones.resolve("gmt", mcp()).isUtc()).isTrue();
+        assertThat(UserTimeZones.resolve("Z", mcp()).isUtc()).isTrue();
+        assertThat(UserTimeZones.resolve("+00:00", mcp()).isUtc()).isTrue();
+        assertThat(UserTimeZones.resolve("UTC", mcp()).stated()).isEqualTo("Times are in UTC.");
     }
 
     @Test
     void givenZoneIdInAnyCase() {
-        final UserTimeZones zones = UserTimeZones.UTC_ONLY;
-
-        assertThat(zones.resolve("Australia/Canberra", mcp()).zone()).isEqualTo(CANBERRA);
-        assertThat(zones.resolve("australia/canberra", mcp()).zone()).isEqualTo(CANBERRA);
-        assertThat(zones.resolve("Australia/Canberra", mcp()).source()).isEqualTo(Source.GIVEN);
+        assertThat(UserTimeZones.resolve("Australia/Canberra", mcp()).zone()).isEqualTo(CANBERRA);
+        assertThat(UserTimeZones.resolve("australia/canberra", mcp()).zone()).isEqualTo(CANBERRA);
+        assertThat(UserTimeZones.resolve("Australia/Canberra", mcp()).source()).isEqualTo(Source.GIVEN);
     }
 
     @Test
     void givenOffsets() {
-        final UserTimeZones zones = UserTimeZones.UTC_ONLY;
-
-        assertThat(zones.resolve("+11:00", mcp()).zone()).isEqualTo(ZoneOffset.ofHours(11));
-        assertThat(zones.resolve("-05:30", mcp()).zone()).isEqualTo(ZoneOffset.ofHoursMinutes(-5, -30));
-        assertThat(zones.resolve("+11", mcp()).zone()).isEqualTo(ZoneOffset.ofHours(11));
-        assertThat(zones.resolve("+11:00", mcp()).stated()).isEqualTo("Times are in +11:00.");
-        assertThat(zones.resolve("UTC+11:00", mcp()).zone().normalized()).isEqualTo(ZoneOffset.ofHours(11));
+        assertThat(UserTimeZones.resolve("+11:00", mcp()).zone()).isEqualTo(ZoneOffset.ofHours(11));
+        assertThat(UserTimeZones.resolve("-05:30", mcp()).zone()).isEqualTo(ZoneOffset.ofHoursMinutes(-5, -30));
+        assertThat(UserTimeZones.resolve("+11", mcp()).zone()).isEqualTo(ZoneOffset.ofHours(11));
+        assertThat(UserTimeZones.resolve("+11:00", mcp()).stated()).isEqualTo("Times are in +11:00.");
+        assertThat(UserTimeZones.resolve("UTC+11:00", mcp()).zone().normalized()).isEqualTo(ZoneOffset.ofHours(11));
     }
 
     @Test
     void invalidZoneIsRefusedSayingWhatToGive() {
-        assertThatThrownBy(() -> UserTimeZones.UTC_ONLY.resolve("Mars/Olympus", mcp()))
+        assertThatThrownBy(() -> UserTimeZones.resolve("Mars/Olympus", mcp()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessage("unknown time zone 'Mars/Olympus': give local, UTC, a zone id such as Europe/London, "
                             + "or an offset such as +01:00");
-        assertThatThrownBy(() -> UserTimeZones.UTC_ONLY.resolve("+25:00", mcp()))
+        assertThatThrownBy(() -> UserTimeZones.resolve("+25:00", mcp()))
                 .isInstanceOf(ToolRefusal.class);
-    }
-
-    @Test
-    void unreadablePreferredZoneIsUtcAndSaysSo() {
-        final ToolTimeZone zone = zones(UserTimeZone.fromId("Not/AZone")).resolve(null, mcp());
-
-        assertThat(zone.isUtc()).isTrue();
-        assertThat(zone.note()).contains("can't be read");
     }
 
     @Test
@@ -153,10 +120,6 @@ class TestUserTimeZones {
                 .isEqualTo(UserTimeZone.fromOffset(-5, -30));
         assertThat(ToolTimeZone.UTC.userTimeZone()).isEqualTo(UserTimeZone.utc());
         assertThat(ToolTimeZone.UTC.dateTimeSettings(1L).getReferenceTime()).isEqualTo(1L);
-    }
-
-    private static UserTimeZones zones(final UserTimeZone preference) {
-        return new UserTimeZones(() -> Optional.of(preference));
     }
 
     private static ToolCallContext chat(final String browserZone) {

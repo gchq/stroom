@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 ///
 /// @param zone   The zone.
 /// @param source Where it came from.
-/// @param note   Why it isn't the zone asked for (e.g. the user's browser's zone isn't known over MCP), or null.
+/// @param note   Why it isn't the zone asked for (e.g. the user's device's zone isn't known over MCP), or null.
 public record ToolTimeZone(ZoneId zone, Source source, String note) {
 
     /// UTC, as given by the caller.
@@ -95,8 +95,8 @@ public record ToolTimeZone(ZoneId zone, Source source, String note) {
                 : zone.getId() + " (" + offsetNow() + ")";
     }
 
-    /// @return What a result says of its times, e.g. "Times are in Australia/Canberra (+11:00), the user's Stroom
-    /// time zone." with the note, if any, after it.
+    /// @return What a result says of its times, e.g. "Times are in Australia/Canberra (+11:00), the user's
+    /// device's time zone." with the note, if any, after it.
     public String stated() {
         final String said = "Times are in " + label() + source.said + ".";
         return note == null
@@ -167,11 +167,9 @@ public record ToolTimeZone(ZoneId zone, Source source, String note) {
     public enum Source {
         /// The call gave it (`timeZone`).
         GIVEN(""),
-        /// The user's Stroom time zone preference.
-        PREFERENCE(", the user's Stroom time zone"),
-        /// The user's browser, as the user's Stroom preference (or `local`) says to use.
-        BROWSER(", the user's browser's time zone"),
-        /// Neither the preference nor the browser's zone could be used (see the note).
+        /// The user's device's zone, as the chat's browser sends it.
+        BROWSER(", the user's device's time zone"),
+        /// UTC, as the user's device's zone isn't known (see the note).
         FALLBACK("");
 
         private final String said;

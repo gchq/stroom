@@ -21,8 +21,6 @@ import stroom.ai.impl.tools.ToolSchema.StringSchema;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.util.json.JsonUtil;
 
-import jakarta.inject.Inject;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,17 +32,8 @@ import java.util.Map;
  */
 public abstract class AbstractBuiltInTool implements StroomTool {
 
-    // Resolves a call's time zone: UTC (no user preference) unless injected.
-    private UserTimeZones userTimeZones = UserTimeZones.UTC_ONLY;
-
-    /// @param userTimeZones Resolves a call's time zone from its `timeZone` argument and the user's preference.
-    @Inject
-    void setUserTimeZones(final UserTimeZones userTimeZones) {
-        this.userTimeZones = userTimeZones;
-    }
-
     /// The time zone of a call that has times in it: its `timeZone` argument ([UserTimeZones#ARG]), else the
-    /// user's Stroom time zone preference.
+    /// user's device's zone, or UTC where that isn't known.
     ///
     /// @param request The call.
     /// @param context The call's context.
@@ -52,7 +41,7 @@ public abstract class AbstractBuiltInTool implements StroomTool {
     /// @throws WorkspaceException for a zone that isn't one, saying what to give.
     protected ToolTimeZone timeZone(final ToolCall request, final ToolCallContext context) {
         try {
-            return userTimeZones.resolve(stringArg(request, UserTimeZones.ARG), context);
+            return UserTimeZones.resolve(stringArg(request, UserTimeZones.ARG), context);
         } catch (final ToolRefusal e) {
             throw new WorkspaceException(e.getMessage());
         }
