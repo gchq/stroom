@@ -327,7 +327,8 @@ public final class XsltGenerator {
         this.dataFunctionWanted = "function".equals(style.dataEntries()) && mapping.allEntries().stream()
                 .anyMatch(entry -> isSet(entry.dataName()) && entry.value() == null && !entry.isGroup()
                                    && !(entry.hasMap() || entry.defaultValue() != null || entry.transform() != null
-                                        || isSet(entry.timeFormat()) || entry.repeat()));
+                                        || entry.maxLength() != null || isSet(entry.timeFormat())
+                                        || entry.repeat()));
         final Set<String> taken = new HashSet<>(ownFunctions.values());
         taken.addAll(keyedFunctions.values());
         taken.add("json-to-xml");
@@ -901,22 +902,23 @@ public final class XsltGenerator {
         return entry.anyOf() != null && !entry.anyOf().isEmpty();
     }
 
-    // The entry's one value, transformed as asked; src is the variable or selector holding its values.
+    // The entry's one value, transformed as asked and cut to its max_length; src is the variable or selector holding
+    // its values.
     private String scalar(final FieldMapping entry, final String src) {
         final String one = src + "[1]";
         final String name = entry.transform() == null
                 ? null
                 : ownFunctions.get(Conversion.transform(entry.transform()));
-        return name != null
+        return XPathText.capText(name != null
                 ? "mcp:" + name + "(" + one + ")"
-                : XPathText.transformExpression(entry.transform(), one);
+                : XPathText.transformExpression(entry.transform(), one), entry.maxLength());
     }
 
     // The one value an entry without repeat writes, maps or tests as a key: the first with text, transformed if asked.
     // Seen in testing: several values (a field given again, an xpath giving several) were written joined with
     // spaces where the entry had no transform, and only the first where it had one.
     private String one(final FieldMapping entry, final String src) {
-        if (entry.transform() != null) {
+        if (entry.transform() != null || entry.maxLength() != null) {
             return scalar(entry, src);
         }
         // A lookup, a dictionary, any_of (its first value) and join (one string) give one value already.
@@ -1149,8 +1151,8 @@ public final class XsltGenerator {
 
     private String valueExpression(final FieldMapping entry) {
         if (entry.repeat()) {
-            // Written inside xsl:for-each over the values: the current value, transformed if asked.
-            return entry.transform() != null
+            // Written inside xsl:for-each over the values: the current value, transformed and cut if asked.
+            return entry.transform() != null || entry.maxLength() != null
                     ? scalar(entry, ".")
                     : ".";
         }

@@ -234,6 +234,10 @@
    "description": "Applied to the input value first: lower, upper, trim, strip_domain (DOMAIN\\user or user@domain -> user), domain (the DOMAIN or domain part), digits (digits only), unescape_quotes (a quoted CSV value's doubled quotes as one: Data Splitter keeps them doubled), unescape_backslashes (a quote or backslash escaped with a backslash as itself, in quoted key=value values: Data Splitter keeps the escape), strip_control (ANSI colour codes and other control characters out: a log written for a terminal).",
    "model": null
   },
+  "max_length": {
+   "description": "The value cut to this many characters (a positive whole number), after any transform: for a value longer than the user wants kept, e.g. 4000 for a message body. Not with value, map, time_format, fill_template or mask_names.",
+   "model": null
+  },
   "repeat": {
    "description": "Write one element per value of the input (a JSON array, an element the record has several of) instead of the first value: the nearest element on the path the schema lets repeat is written once per value, e.g. Group for EventSource/User/Groups/Group/Name, or a Data per value. Nothing else may be mapped below that element; transform is allowed, map and time_format are not.",
    "model": null

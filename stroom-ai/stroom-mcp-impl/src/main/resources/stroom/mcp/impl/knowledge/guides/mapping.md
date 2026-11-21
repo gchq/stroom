@@ -137,6 +137,7 @@ varies; `not: true` for
 | `map` | Values replaced: `{"ok": "true", "fail": "false"}` |
 | `default` | Written when the input is empty |
 | `transform` | `lower`, `upper`, `trim`, `strip_domain`, `domain`, `digits`, `unescape_quotes`, `unescape_backslashes`, `strip_control` |
+| `max_length` | The value cut to this many characters, after any `transform` (e.g. `4000` for a long message body); not with `value`, `map` or `time_format` |
 | `dictionary` | The value a Dictionary of key=value lines gives |
 | `repeat: true` | One element per value of a field holding several (a list of strings); for a delimited list, or several elements per item, use a group (below) |
 | `time_format`, `timezone` | Time parsing: see below |

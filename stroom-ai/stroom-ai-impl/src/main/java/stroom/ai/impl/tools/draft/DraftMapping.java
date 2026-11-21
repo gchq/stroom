@@ -1285,11 +1285,15 @@ public final class DraftMapping {
             }
             LocalCheck.withXmlFields(new ArrayList<>(records), xmlFields);
             survey();
+            // Each node mapped once, by one of the paths it is read by (chat 182: a value written three times).
+            final Set<String> otherPaths = HeldXmlPaths.leftOut(names, xmlFields);
+            taken.addAll(otherPaths);
             final List<String> allXml = new ArrayList<>(already);
             allXml.addAll(xmlFields);
             mapping.put("xml_fields", allXml);
             final List<String> inside = names.stream()
-                    .filter(n -> xmlFields.stream().anyMatch(x -> n.startsWith(x + "/") && !n.contains("//")))
+                    .filter(n -> xmlFields.stream().anyMatch(x -> n.startsWith(x + "/") && !n.contains("//"))
+                                 && !otherPaths.contains(n))
                     .limit(4)
                     .toList();
             final List<String> holding = new ArrayList<>(wholes);

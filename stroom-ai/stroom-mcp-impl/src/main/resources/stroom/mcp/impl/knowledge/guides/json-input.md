@@ -60,8 +60,9 @@ The JSONParser has two length properties; they do different things:
 `profile_sample` and `draft_translation_mapping` name string values over 10,000 characters (`long_strings`: field,
 length, record). Ask the user whether the field must be kept whole. If it must, raise
 `jsonParser.stringTruncateLength` past the longest value (`update_pipeline` `set_properties`, `{"element":
-"jsonParser", "name": "stringTruncateLength", "value": 50000}`); if not, cap it in the mapping (an `xpath` with
-`substring(..., 1, 4000)`) and leave the parser's default. Never lower `maxStringLength`: it turns every long value
+"jsonParser", "name": "stringTruncateLength", "value": 50000}`); if not, cap it in the mapping (`"max_length": 4000` on
+the field's entry; the parser still cuts at its limit first, so a cap at or below it only shortens further) and leave
+the parser's default. Never lower `maxStringLength`: it turns every long value
 into an Error.
 
 A value holding a NUL (`\u0000` in the JSON, `nul_strings`) switches the XML writer's escaping off until the next

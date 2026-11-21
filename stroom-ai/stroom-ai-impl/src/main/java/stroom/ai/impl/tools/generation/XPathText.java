@@ -333,6 +333,15 @@ public final class XPathText {
         };
     }
 
+    /// @param one       The value's expression.
+    /// @param maxLength The most characters kept, or null for all.
+    /// @return The value cut to that many characters (a mapping entry's `max_length`), or as it is.
+    public static String capText(final String one, final Integer maxLength) {
+        return maxLength == null
+                ? one
+                : "substring(" + one + ", 1, " + maxLength + ")";
+    }
+
     /// @param path A path into XML held in a field (`/Envelope/Body/User`, `//User`, `/Login/@id`).
     /// @return It as XPath steps matched by local name, whatever the XML's namespaces.
     public static String xmlSteps(final String path) {

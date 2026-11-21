@@ -82,6 +82,11 @@ import java.util.regex.Pattern;
 ///                     else the name (`as`) of an outer group's; with field, a key of that item, alone the item
 ///                     itself. Null for an entry reading a key of its own group's item (or, outside groups, any
 ///                     entry).
+/// @param fillTemplate `fill_template`: the input is a template whose numbered placeholders are filled from the
+///                     record's values; null for none.
+/// @param maskNames    `mask_names`: the input is a bit mask, written as the names of its set bits; null for none.
+/// @param maxLength    `max_length`: the value cut to this many characters (after any transform), for a value longer
+///                     than the user wants kept (a message body); null for no cap.
 public record FieldMapping(String path,
                            String field,
                            List<String> anyOf,
@@ -108,7 +113,8 @@ public record FieldMapping(String path,
                            FieldGroup group,
                            String item,
                            FillTemplate fillTemplate,
-                           MaskNames maskNames) {
+                           MaskNames maskNames,
+                           Integer maxLength) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
@@ -118,7 +124,7 @@ public record FieldMapping(String path,
     private static final List<String> GROUP_REFUSES = List.of("field", "any_of", "join", "value", "xpath", "meta",
             "lookup", "dictionary", "transform", "repeat", "scope", "time_format", "timezone", "map", "default",
             "data_parent", "separator", "rollover", "time_fallback", "meta_fallback", "item", "fill_template",
-            "mask_names");
+            "mask_names", "max_length");
     // An Event's own children: a group's field path starting with one is a path from Event, not from the group.
     private static final Set<String> EVENT_SECTIONS = Set.of("EventTime", "EventSource", "EventDetail", "EventChain",
             "Meta", "Followers");
@@ -140,7 +146,7 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName, null, null, null, false, null, null, null, null, null, null, null);
+                null, null, dataName, null, null, null, false, null, null, null, null, null, null, null, null);
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -192,7 +198,10 @@ public record FieldMapping(String path,
                         ? fields.optionalModel("timezone", (value, at) -> ZoneSource.read(reader, value, at))
                         : null, fields.optionalStrings("meta_fallback"), null, item,
                 fields.optionalModel("fill_template", (value, at) -> FillTemplate.read(reader, value, at)),
-                fields.optionalModel("mask_names", (value, at) -> MaskNames.read(reader, value, at)));
+                fields.optionalModel("mask_names", (value, at) -> MaskNames.read(reader, value, at)),
+                fields.has("max_length")
+                        ? (int) fields.integer("max_length", 1, 1)
+                        : null);
         if (!fields.ok()) {
             return null;
         }
@@ -296,7 +305,8 @@ public record FieldMapping(String path,
         return new FieldMapping(enclosing.isEmpty()
                 ? path
                 : relative, null, null, null, null, null, null, null, null, false, null, null, null, null, null,
-                dataName, null, null, null, false, null, null, null, header.withFields(entries), null, null, null);
+                dataName, null, null, null, false, null, null, null, header.withFields(entries), null, null, null,
+                null);
     }
 
     // Whether an input of a group's field (or of a group's for_each) reads what it may: item names a group it is in,
@@ -507,6 +517,13 @@ public record FieldMapping(String path,
             return "'" + path + "': timezone from a field or meta attribute goes with a time_format pattern (not an "
                    + "epoch, which has no zone to read) and one value";
         }
+        if (maxLength != null && (value != null || hasMap() || isSet(timeFormat) || fillTemplate != null
+                                  || maskNames != null)) {
+            // Asked for by the user (chat 182: message bodies cut at 10,000 characters): a cap of an input's text.
+            return "'" + path + "': max_length cuts the input's text (after any transform) to that many characters, "
+                   + "so it goes with an input (field, any_of, join, xpath or lookup): no value, map, time_format, "
+                   + "fill_template or mask_names with it";
+        }
         final String rendered = renderProblem();
         if (rendered != null) {
             return rendered;
@@ -575,7 +592,7 @@ public record FieldMapping(String path,
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + ToolText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
                 join, separator, rollover, timeFallback, zoneSource, metaFallback, group, item, fillTemplate,
-                maskNames);
+                maskNames, maxLength);
     }
 
     /// @param defaultValue The output when the input is empty.
@@ -583,7 +600,7 @@ public record FieldMapping(String path,
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength);
     }
 
     /// @param dataName The Data element's Name.
@@ -591,7 +608,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength);
     }
 
     /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
@@ -607,7 +624,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataParent(final String dataParent) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength);
     }
 
     /// @param path The path.
@@ -615,7 +632,7 @@ public record FieldMapping(String path,
     public FieldMapping withPath(final String path) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength);
     }
 
     /// @param fields A group entry's fields.
@@ -623,7 +640,7 @@ public record FieldMapping(String path,
     public FieldMapping withGroupFields(final List<FieldMapping> fields) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group.withFields(fields), item, fillTemplate, maskNames);
+                zoneSource, metaFallback, group.withFields(fields), item, fillTemplate, maskNames, maxLength);
     }
 
     /// @return True if it is a group (for_each): its element written once per item.
@@ -690,6 +707,7 @@ public record FieldMapping(String path,
                 .putIfSet("mask_names", maskNames == null
                         ? null
                         : maskNames.toJson(mode))
+                .putIfSet("max_length", maxLength)
                 .putIfSet("item", item == null
                         ? null
                         : item.isEmpty()

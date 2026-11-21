@@ -105,6 +105,7 @@
   "problems": [],
   "warnings": [
    "[logon] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[logon] the same input is written twice: 'result' as EventDetail/Authenticate/Outcome/Success and as EventDetail/Authenticate/Data[@Name='outcome'], so each event holds it twice. Remove one, e.g. changes={\"events\": [{\"name\": \"logon\", \"fields\": [{\"path\": \"EventDetail/Authenticate/Data\", \"data_name\": \"outcome\", \"remove\": true}]}]}",
    "[logon] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
    "[other] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."

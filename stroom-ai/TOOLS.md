@@ -5174,6 +5174,12 @@ generated without them.
   still to confirm (`The catalogue's N event type(s) and the catch-all for uncatalogued records are still to confirm:
   call catalogue_event_types build=... confirm=true ...`).
 * **Notes**:
+  * **Held XML, each node once** (`HeldXmlPaths`, 2026-11-21): a held XML field's element is read as
+    `<field>/<path>` and as `<field>//<name>`, an attribute under both and as `<field>//@<name>` too (all still
+    readable, and the note offers `//`); the draft maps each node by one of them: its full path when its name is found
+    at one depth, `//<name>` only when found at several, never both, and an attribute only under its element's chosen
+    path (the others are taken, so not drafted as Data). Seen in chat 182: a Teams message body's `//p` and `/div/p`,
+    `//@alt`, `//emoji/@alt` and `/div/p/emoji/@alt`, each value written two or three times.
   * The draft is kept for the session (`SentMappings`, as `draft:<build>` and, with a build, `draft:`), so the
     first save sends `changes=` only: a 50 KB draft written out whole in one call never reached the tool in
     testing. With a build it is also kept with the build in the user's own workspace, so a new MCP session of the
@@ -5437,6 +5443,15 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   none and no scope; a name whose mode is the common module's; a new group saved with no form and no
   `own_output_feed`; a promoted group's change with no form and no `pipeline`; a module that doesn't generate.
 * **Notes**:
+  * **The same input written twice** (`WrittenTwice`, 2026-11-21): a warning, never a problem, when one rule writes
+    the same input (the same entry but for its path, data_name and data_parent, read in the same groups' for_each)
+    to two places as Data and Data, or as Data and an element, naming the rule, the input, both places
+    (`.../Data[@Name='x']/Data[@Name='y']`) and the `changes` removing one (the Data beside an element, else the less
+    deep Data; a group's, when the copy is in one). Two typed elements (UserId as EventSource/User/Id and
+    Send/Source/User/Id) and the same Data in two rules are not warned of; a top-level field written as it is to an
+    element and as Data keeps its own warning ("the Data entry says it again"). Seen in chat 182 (rule
+    update_inboxrule): `event.Parameters`' items as Data of `Update/After/Object` and of `Update`, the draft's copy left
+    in as the agent's removal named another path.
   * **The vendor's code kept** (`VendorCodeKept`, 2026-11-20): a confirmed event type whose rule no longer writes its
     vendor-code Data is warned of in `sample_check` (`sample: …`), naming the event type, rule, field and Data; the
     XSLT is still built. Not for the catch-all, drop rules or event types not confirmed.
@@ -7319,6 +7334,16 @@ bits are set; names in the table's order, each once, one element each with `repe
 log a warning naming the record (`RenderXslt`): placeholders left unfilled, set bits no name covers, a value that is no
 mask; a key a map lacks is Stroom's own lookup warning. `RenderXslt` writes the functions only when the mapping uses
 them, so other XSLTs are unchanged to the byte.
+
+**A length cap** (`max_length`, 2026-11-21): an entry's value cut to that many characters after any transform,
+`substring(…, 1, N)` round the transformed first value (`XPathText.capText`, from `XsltGenerator.scalar`), for every
+input kind and inside groups and `repeat` loops alike. A positive whole number; refused with `value`, `map`,
+`time_format`, `fill_template` and `mask_names`, and on a group entry as its other conversions are. The documentation
+says it beside the transform (`` `body` (strip_control, first 4000 characters) ``). Asked for in chat 182: the
+`long_strings_note` told the agent to cap a long JSON body with an xpath, which it wrote as
+`substring(event.Body.Content, 1, 10000)`, selecting nothing for JSON input; the note now names `max_length`, and says
+the JSONParser still cuts (and warns) at its `stringTruncateLength` first. `rebuild_mapping` doesn't read the cap back
+from an XSLT (an entry with one is read as an xpath).
 
 **The generator** (`XsltGenerator.generate`, with `EventTrees` and `EventNode` for each rule's element tree and the
 checks): an XSLT with the right input namespace, a template per record that picks the event kind, elements in

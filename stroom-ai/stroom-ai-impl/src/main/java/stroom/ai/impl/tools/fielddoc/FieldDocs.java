@@ -161,8 +161,15 @@ public final class FieldDocs {
         if (JsonValues.truthy(entry.dictionary())) {
             text += " via dictionary `" + entry.dictionary() + "`";
         }
+        final List<String> conversions = new ArrayList<>();
         if (JsonValues.truthy(entry.transform())) {
-            text += " (" + entry.transform() + ")";
+            conversions.add(entry.transform());
+        }
+        if (entry.maxLength() != null) {
+            conversions.add("first " + entry.maxLength() + " characters");
+        }
+        if (!conversions.isEmpty()) {
+            text += " (" + String.join(", ", conversions) + ")";
         }
         if (entry.fillTemplate() != null) {
             text += " (a template, its placeholders " + entry.fillTemplate().pattern() + " filled from `"

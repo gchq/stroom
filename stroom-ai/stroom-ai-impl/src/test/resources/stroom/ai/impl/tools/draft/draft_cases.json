@@ -17443,7 +17443,8 @@
       "path": "EventSource/User/Id",
       "any_of": [
        "payload/Envelope/Body/Login/User",
-       "payload//User"
+       "payload/Envelope/Body/GetAccount/User",
+       "payload/Envelope/Body/UpdateAccount/User"
       ]
      },
      {
@@ -17473,7 +17474,8 @@
         "path": "EventDetail/Authenticate/User/Id",
         "any_of": [
          "payload/Envelope/Body/Login/User",
-         "payload//User"
+         "payload/Envelope/Body/GetAccount/User",
+         "payload/Envelope/Body/UpdateAccount/User"
         ]
        },
        {
@@ -17485,11 +17487,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "payload/Envelope/Body/Login/Result",
         "field": "payload/Envelope/Body/Login/Result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
        }
       ]
      },
@@ -17509,28 +17506,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
         "field": "payload/Envelope/Body/GetAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -17552,26 +17529,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "status",
         "field": "status"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -17600,38 +17557,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
         "field": "payload/Envelope/Body/GetAccount/Account/@id"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Result",
         "field": "payload/Envelope/Body/GetAccount/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -17667,13 +17599,8 @@
    "unmapped_fields": [
     "status",
     "payload/Envelope/Body/Login/Result",
-    "payload//Result",
-    "payload/Envelope/Body/GetAccount/User",
     "payload/Envelope/Body/GetAccount/Account/@id",
-    "payload//Account/@id",
-    "payload//@id",
     "payload/Envelope/Body/GetAccount/Result",
-    "payload/Envelope/Body/UpdateAccount/User",
     "payload/Envelope/Body/UpdateAccount/Account/@id",
     "payload/Envelope/Body/UpdateAccount/Result"
    ],
@@ -17740,7 +17667,8 @@
       "path": "EventSource/User/Id",
       "any_of": [
        "payload/Envelope/Body/Login/User",
-       "payload//User"
+       "payload/Envelope/Body/GetAccount/User",
+       "payload/Envelope/Body/UpdateAccount/User"
       ]
      },
      {
@@ -17770,7 +17698,8 @@
         "path": "EventDetail/Authenticate/User/Id",
         "any_of": [
          "payload/Envelope/Body/Login/User",
-         "payload//User"
+         "payload/Envelope/Body/GetAccount/User",
+         "payload/Envelope/Body/UpdateAccount/User"
         ]
        },
        {
@@ -17782,11 +17711,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "payload/Envelope/Body/Login/Result",
         "field": "payload/Envelope/Body/Login/Result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
        }
       ]
      },
@@ -17806,28 +17730,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
         "field": "payload/Envelope/Body/GetAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -17849,26 +17753,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "status",
         "field": "status"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -17897,38 +17781,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Result",
-        "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
         "field": "payload/Envelope/Body/GetAccount/Account/@id"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Result",
         "field": "payload/Envelope/Body/GetAccount/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -17964,13 +17823,8 @@
    "unmapped_fields": [
     "status",
     "payload/Envelope/Body/Login/Result",
-    "payload//Result",
-    "payload/Envelope/Body/GetAccount/User",
     "payload/Envelope/Body/GetAccount/Account/@id",
-    "payload//Account/@id",
-    "payload//@id",
     "payload/Envelope/Body/GetAccount/Result",
-    "payload/Envelope/Body/UpdateAccount/User",
     "payload/Envelope/Body/UpdateAccount/Account/@id",
     "payload/Envelope/Body/UpdateAccount/Result"
    ],

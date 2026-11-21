@@ -207,6 +207,17 @@ class TestFieldDocs {
     }
 
     @Test
+    void aCapIsSaidBesideTheTransform() {
+        final FieldMapping capped = FieldMapping.fromJson(FieldDocFixtures.json("""
+                {"path": "EventDetail/Send/Data", "data_name": "body", "field": "body", "transform": "strip_control",
+                 "max_length": 4000}"""));
+        assertThat(FieldDocs.sourceText(capped)).isEqualTo("`body` (strip_control, first 4000 characters)");
+        final FieldMapping cappedOnly = FieldMapping.fromJson(FieldDocFixtures.json("""
+                {"path": "EventDetail/Send/Data", "data_name": "body", "field": "body", "max_length": 10}"""));
+        assertThat(FieldDocs.sourceText(cappedOnly)).isEqualTo("`body` (first 10 characters)");
+    }
+
+    @Test
     void descriptionsGivenWinAndTheRestAreAskedForOnce() {
         final Descriptions given = new Descriptions(Map.of("a", "  The a.  ", "b", " "), true);
         assertThat(given.given()).isEqualTo(Map.of("a", "The a."));

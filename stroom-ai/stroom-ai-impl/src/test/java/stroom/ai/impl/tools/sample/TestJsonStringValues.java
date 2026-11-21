@@ -54,6 +54,20 @@ class TestJsonStringValues {
     }
 
     @Test
+    void theNoteOffersMaxLengthNotAnXpathAndSaysTheParserCutsFirst() {
+        // Chat 182: the note's "an xpath with substring(..., 1, 4000)" became substring(event.Body.Content, 1, 10000),
+        // which selects nothing for JSON input; the sample check found it empty and the agent dropped the cap.
+        final String note = JsonStringValues.longStringsNote(List.of(SampleProfiler.map("field", "event.Body.Content",
+                "length", 46_000, "record", 3)), JsonStringValues.DEFAULT_TRUNCATE_LENGTH);
+
+        assertThat(note).contains("max_length on the field's entry, e.g. \"max_length\": 4000")
+                .contains("The parser still cuts (and warns) at its stringTruncateLength first, so a max_length at or "
+                          + "below it only shortens the value further")
+                .doesNotContain("substring(")
+                .doesNotContain("xpath");
+    }
+
+    @Test
     void valuesUpToTheLimitAreNotReported() {
         final String lines = line(SampleProfiler.map("body", "x".repeat(10_000))) + "\n"
                              + line(SampleProfiler.map("body", "short"));

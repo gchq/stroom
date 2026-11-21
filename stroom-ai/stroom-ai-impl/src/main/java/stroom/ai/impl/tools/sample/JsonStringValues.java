@@ -162,9 +162,11 @@ public final class JsonStringValues {
                + first.get("length") + " characters, record " + first.get("record") + "). Stroom's JSONParser "
                + "cuts each at " + limit + " characters (its stringTruncateLength) and logs a Warning. Ask the "
                + "user which they want: the field whole (raise jsonParser.stringTruncateLength on the pipeline "
-               + "past the longest value, with update_pipeline set_properties), or cut (cap it in the mapping, "
-               + "e.g. an xpath with substring(..., 1, 4000)). Leave maxStringLength alone: it is a separate limit "
-               + "that logs an Error, and lowering it turns every long value into one.";
+               + "past the longest value, with update_pipeline set_properties), or cut (cap it in the mapping: "
+               + "max_length on the field's entry, e.g. \"max_length\": 4000, which keeps that many characters "
+               + "after any transform). The parser still cuts (and warns) at its stringTruncateLength first, so a "
+               + "max_length at or below it only shortens the value further. Leave maxStringLength alone: it is a "
+               + "separate limit that logs an Error, and lowering it turns every long value into one.";
     }
 
     /// @param fields The fields holding a NUL character.
