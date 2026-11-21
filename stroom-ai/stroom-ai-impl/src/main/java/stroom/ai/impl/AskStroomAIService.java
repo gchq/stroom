@@ -323,6 +323,8 @@ public class AskStroomAIService {
         this.aiConfigProvider = aiConfigProvider;
         this.securityContext = securityContext;
         this.mcpAgentChat = mcpAgentChat;
+        // A message the user sends as the chat's run stops for them is their reply to what it stopped for.
+        runManager.onStoppedForUser(this::takeUpSentAsItStopped);
     }
 
     /**
@@ -918,19 +920,15 @@ public class AskStroomAIService {
             return Steered.STEERED;
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
-            // A message sent instead of answering a request for approval denies the calls, with the message as
-            // the reason, and the run carries on with it. Questions it stopped for are put aside the same way.
             aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, snapshotId, message);
-            toolApprovalService.pending(chatId).ifPresent(pending ->
-                    toolApprovalService.denyAll(pending, "The user sent a message instead: " + message));
-            mcpElicitationsProvider.get().supersedePending(chatId);
-            carryOn(chatId);
+            sentInstead(chatId, message);
             return Steered.STEERED;
         }
         // Queued until the run's current step finishes, unless the user sends it now.
         final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.QUEUED_STEER_MESSAGE,
                 snapshotId, message);
-        if (runDao.getActive(chatId).isEmpty()) {
+        final AiChatRun now = runDao.getActive(chatId).orElse(null);
+        if (now == null) {
             // The run finished as the message arrived, so it will not see it. Ask it as a question instead.
             aiService.deleteMessage(steerMessage.getId());
             return Steered.NO_RUN;
@@ -941,8 +939,69 @@ public class AskStroomAIService {
             aiService.deleteMessage(steerMessage.getId());
             return Steered.IDLE_COMPACTION;
         }
+        if (now.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
+            // The run stopped for the user as the message arrived, so will not read it: it is taken up here, unless
+            // the run took it up as it stopped. Seen: typed just after a form was shown, as the run that showed it
+            // was still stopping, it was left unread, the form unanswered, and the chat waited for ever.
+            takeUpSentAsItStopped(chatId);
+        }
         LOGGER.debug(() -> "Steering run " + active.getId() + " of chat " + chatId);
         return Steered.STEERED;
+    }
+
+    // A message sent instead of answering what the chat's run stopped for: a request for approval has its calls
+    // denied, with the message as the reason, and questions are put aside; the run carries on with the message.
+    private void sentInstead(final int chatId, final String message) {
+        toolApprovalService.pending(chatId).ifPresent(pending ->
+                toolApprovalService.denyAll(pending, "The user sent a message instead: " + message));
+        mcpElicitationsProvider.get().supersedePending(chatId);
+        carryOn(chatId);
+    }
+
+    /// Takes up what the user sent to steer the chat's run that it never read, as it stopped to wait for them
+    /// (the run tells this once it has stopped, and a message stored as it stopped is checked here too, so one
+    /// sent at any moment is taken up, once). Each message is marked sent, as the run would have marked it. The
+    /// first sent after what the run stopped for (its form or request for approval) was shown is the user's reply
+    /// to it, as a message sent once the run has stopped is: the run carries on with it. One sent before that is
+    /// left for the run to read when it carries on, as it was. Package-private for testing.
+    ///
+    /// @param chatId The chat.
+    void takeUpSentAsItStopped(final int chatId) {
+        final AiChatRun active = runDao.getActive(chatId).orElse(null);
+        // A tool waiting for a form to be filled in holds the run's thread, which reads the message itself.
+        if (active == null
+            || active.getStatus() != AiChatRunStatus.WAITING_FOR_USER
+            || active.getStopReason() == AiChatRunStopReason.NEEDS_INPUT) {
+            return;
+        }
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+        final int askedId = messages.stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION
+                                   || message.getMessageType() == AiMessageType.APPROVAL_REQUEST)
+                .mapToInt(AiChatMessage::getId)
+                .max()
+                .orElse(0);
+        String reply = null;
+        for (final AiChatMessage message : messages) {
+            // Marked sent once only, so taken up here or by the run, not both.
+            if (message.getMessageType().isQueuedSteer()
+                && aiService.changeMessageType(chatId, message.getId(), AiChatRunManager.QUEUED_STEERS,
+                    AiMessageType.STEER_MESSAGE)
+                && message.getId() > askedId
+                && reply == null) {
+                reply = message.getMessage();
+            }
+        }
+        if (reply == null) {
+            return;
+        }
+        LOGGER.debug(() -> "Taking up a message sent as the run of chat " + chatId + " stopped for the user");
+        try {
+            sentInstead(chatId, reply);
+        } catch (final AiChatRunManager.AiChatBusyException e) {
+            // Carried on already, by a later message taken up the other way, which reads this one too.
+            LOGGER.debug(() -> "The run of chat " + chatId + " was carried on already");
+        }
     }
 
     /// Sends a message the user sent to steer the chat's run now, rather than when the run's current step finishes:

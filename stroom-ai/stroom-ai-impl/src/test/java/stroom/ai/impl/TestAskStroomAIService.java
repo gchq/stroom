@@ -343,7 +343,9 @@ class TestAskStroomAIService {
         Mockito.doThrow(new RuntimeException("not yours")).when(aiService).verifyOwnership(1);
 
         assertThatThrownBy(() -> serviceForDelete().deleteChat(1)).hasMessage("not yours");
-        Mockito.verifyNoInteractions(runManager);
+        // Only told, as it was made, what to tell it of runs that stop for the user.
+        Mockito.verify(runManager).onStoppedForUser(Mockito.any());
+        Mockito.verifyNoMoreInteractions(runManager);
         Mockito.verify(aiService, Mockito.never()).deleteChat(Mockito.anyInt());
     }
 
@@ -1016,6 +1018,136 @@ class TestAskStroomAIService {
                                                              + "name");
         Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
         Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testAMessageSentAsTheRunStopsForQuestionsIsTheirAnswer() {
+        // Seen in testing: typed just after a form was shown, while the run that showed it was still stopping, the
+        // message was queued for a run that would never read it, the form was left unanswered, and the chat waited
+        // for ever. Running when the message arrived; stopped for the questions once it had been stored.
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.of(waiting));
+        final AiChatMessage sent = message(21, AiMessageType.QUEUED_STEER_MESSAGE, "what is source?");
+        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, null, "what is source?"))
+                .thenReturn(sent);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "survey the feed"),
+                message(20, AiMessageType.ELICITATION, "{}"),
+                sent));
+        Mockito.when(aiService.changeMessageType(1, 21, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE)).thenReturn(true);
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "what is source?"));
+
+        // Sent, the questions put aside, and the run carried on with it, as for a message sent once it had stopped.
+        final InOrder inOrder = Mockito.inOrder(aiService, mcpElicitations, runManager);
+        inOrder.verify(aiService).changeMessageType(1, 21, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE);
+        inOrder.verify(mcpElicitations).supersedePending(1);
+        inOrder.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(Mockito.anyInt());
+    }
+
+    @Test
+    void testTakeUpSentAsItStopped_aMessageSentAsTheRunStoppedForApprovalDeniesTheCalls() {
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_APPROVAL, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting));
+        final AiChatMessage request = toolApprovalMessage(20);
+        Mockito.when(toolApprovalService.pending(1)).thenReturn(Optional.of(request));
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "make the feed"), request,
+                message(21, AiMessageType.SEND_NOW_STEER_MESSAGE, "no, use the other name")));
+        Mockito.when(aiService.changeMessageType(1, 21, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE)).thenReturn(true);
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+
+        service().takeUpSentAsItStopped(1);
+
+        Mockito.verify(toolApprovalService).denyAll(request, "The user sent a message instead: no, use the other "
+                                                             + "name");
+        Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testTakeUpSentAsItStopped_aMessageSentBeforeTheFormWasShownIsOnlyMarkedSent() {
+        // Sent while the run worked, before it asked: not a reply to the form, so read when the run carries on.
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting));
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "survey the feed"),
+                message(15, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday"),
+                message(20, AiMessageType.ELICITATION, "{}")));
+        Mockito.when(aiService.changeMessageType(1, 15, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE)).thenReturn(true);
+
+        service().takeUpSentAsItStopped(1);
+
+        Mockito.verify(aiService).changeMessageType(1, 15, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE);
+        Mockito.verifyNoInteractions(mcpElicitations, toolApprovalService);
+        Mockito.verify(runManager, Mockito.never()).continueRun(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testTakeUpSentAsItStopped_aMessageTakenUpAlreadyIsLeftAlone() {
+        // The run, as it stopped, and the request that stored the message both look: only one takes it up.
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting));
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(20, AiMessageType.ELICITATION, "{}"),
+                message(21, AiMessageType.QUEUED_STEER_MESSAGE, "what is source?")));
+        Mockito.when(aiService.changeMessageType(1, 21, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE)).thenReturn(false);
+
+        service().takeUpSentAsItStopped(1);
+
+        Mockito.verifyNoInteractions(mcpElicitations, toolApprovalService);
+        Mockito.verify(runManager, Mockito.never()).continueRun(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testTakeUpSentAsItStopped_carriedOnAlreadyIsNotAnError() {
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null);
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        // Carried on by another message between the look and the carry on.
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting), Optional.of(running));
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "survey the feed"),
+                message(20, AiMessageType.ELICITATION, "{}"),
+                message(21, AiMessageType.QUEUED_STEER_MESSAGE, "what is source?")));
+        Mockito.when(aiService.changeMessageType(1, 21, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE)).thenReturn(true);
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+        Mockito.when(runManager.continueRun(Mockito.eq(1), Mockito.any()))
+                .thenThrow(new AiChatRunManager.AiChatBusyException(1));
+
+        service().takeUpSentAsItStopped(1);
+
+        Mockito.verify(mcpElicitations).supersedePending(1);
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testTakeUpSentAsItStopped_notWhileAToolWaitsForAForm() {
+        // The tool holds the run's thread, which reads the message itself.
+        final AiChatRun waitingForForm = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_INPUT, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waitingForForm));
+
+        service().takeUpSentAsItStopped(1);
+
+        Mockito.verify(aiService, Mockito.never()).getMessages(Mockito.anyInt());
+        Mockito.verifyNoInteractions(mcpElicitations, toolApprovalService);
     }
 
     @Test

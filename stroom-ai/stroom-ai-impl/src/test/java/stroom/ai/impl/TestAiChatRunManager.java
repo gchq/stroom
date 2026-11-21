@@ -38,6 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -48,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 
@@ -241,6 +243,62 @@ class TestAiChatRunManager {
 
         Mockito.verify(runDao).compareAndSetStatus(eq(5), eq(List.of(AiChatRunStatus.RUNNING)),
                 eq(AiChatRunStatus.WAITING_FOR_USER), eq(AiChatRunStopReason.NEEDS_ANSWERS), isNull());
+    }
+
+    @Test
+    void testExecute_aRunThatStopsForTheUserLeavesWhatTheyJustSentForTheListener() {
+        // Seen in testing: a message typed as a form was shown, while the run that showed it was still stopping,
+        // was marked sent as the run stopped, though nothing would read it, and the form was left unanswered.
+        Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.WAITING_FOR_USER),
+                any(), any())).thenReturn(true);
+        final List<Integer> told = new ArrayList<>();
+        final AtomicBoolean runningHereWhenTold = new AtomicBoolean(true);
+        runManager.onStoppedForUser(chatId -> {
+            told.add(chatId);
+            runningHereWhenTold.set(runManager.isRunningHere(chatId));
+        });
+
+        runManager.execute(run, r -> {
+            throw new AiChatRunManager.WaitingForUserException("needs answers", AiChatRunStopReason.NEEDS_ANSWERS);
+        }, () -> false);
+
+        // Left queued, for the listener to take up, told once the run has stopped and given up its place.
+        Mockito.verify(aiDao, Mockito.never()).changeMessageTypes(anyInt(), any(), any());
+        assertThat(told).containsExactly(1);
+        assertThat(runningHereWhenTold).isFalse();
+    }
+
+    @Test
+    void testExecute_aRunStoppedAsItWouldWaitForTheUserIsNotTakenForWaiting() {
+        // A stop was asked for while it worked, so it ends stopped, not waiting.
+        Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.WAITING_FOR_USER),
+                any(), any())).thenReturn(false);
+        Mockito.when(runDao.get(5)).thenReturn(Optional.of(run));
+        final List<Integer> told = new ArrayList<>();
+        runManager.onStoppedForUser(told::add);
+
+        runManager.execute(run, r -> {
+            throw new AiChatRunManager.WaitingForUserException("needs approval");
+        }, () -> false);
+
+        assertThat(told).isEmpty();
+        Mockito.verify(aiDao).changeMessageTypes(1, AiChatRunManager.QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
+    }
+
+    @Test
+    void testExecute_aListenerThatFailsLeavesTheRunWaiting() {
+        Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.WAITING_FOR_USER),
+                any(), any())).thenReturn(true);
+        runManager.onStoppedForUser(chatId -> {
+            throw new IllegalStateException("database gone");
+        });
+
+        runManager.execute(run, r -> {
+            throw new AiChatRunManager.WaitingForUserException("needs approval");
+        }, () -> false);
+
+        Mockito.verify(runDao, Mockito.never()).compareAndSetStatus(eq(5), anyCollection(),
+                eq(AiChatRunStatus.FAILED), any(), any());
     }
 
     @Test

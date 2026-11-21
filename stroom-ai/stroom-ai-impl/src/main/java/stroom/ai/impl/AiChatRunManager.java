@@ -51,6 +51,7 @@ import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 /// Starts and keeps track of "Ask Stroom AI" agent runs. A run answers one question in a chat. It is recorded in
 /// `ai_chat_run` and worked on in the background, as the user who asked, so the request that started it returns
@@ -125,6 +127,9 @@ public class AiChatRunManager {
     private final Map<String, AtomicInteger> toolCallsByUser = new ConcurrentHashMap<>();
     private final AtomicInteger toolCallsOnNode = new AtomicInteger();
     private volatile ScheduledExecutorService heartbeatExecutor;
+    // Told of each chat whose run has stopped to wait for the user (see onStoppedForUser).
+    private volatile IntConsumer stoppedForUser = chatId -> {
+    };
 
     @Inject
     AiChatRunManager(final AiChatRunDao runDao,
@@ -358,6 +363,7 @@ public class AiChatRunManager {
     /// @param terminated Whether the run's task has been terminated, e.g. because its session ended. The work
     ///                   may return normally when that happens.
     void execute(final AiChatRun run, final Consumer<AiChatRun> work, final BooleanSupplier terminated) {
+        boolean waitingForUser = false;
         try {
             work.accept(run);
             if (terminated.getAsBoolean()) {
@@ -368,8 +374,9 @@ public class AiChatRunManager {
         } catch (final WaitingForUserException e) {
             // Give up the thread and the slot until the user answers (S8).
             LOGGER.debug(() -> "Run " + run.getId() + " is waiting for the user: " + e.getMessage());
-            if (!runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.RUNNING),
-                    AiChatRunStatus.WAITING_FOR_USER, e.getStopReason(), null)) {
+            waitingForUser = runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.RUNNING),
+                    AiChatRunStatus.WAITING_FOR_USER, e.getStopReason(), null);
+            if (!waitingForUser) {
                 // A stop was asked for while it worked.
                 stopped(run, null);
             }
@@ -397,11 +404,38 @@ public class AiChatRunManager {
             throw e;
         } finally {
             // Anything the user sent that the run didn't pick up stays in the conversation, as sent, for the model to
-            // see on the chat's next run, rather than being shown as waiting forever.
-            aiDao.changeMessageTypes(run.getChatId(), QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
+            // see on the chat's next run, rather than being shown as waiting forever. A run that stopped to wait for
+            // the user leaves it for the listener told below: sent as it stopped, it may be the user's reply to what
+            // the run stopped for (seen: a message typed as a form was shown was left unread, the form unanswered).
+            if (!waitingForUser) {
+                aiDao.changeMessageTypes(run.getChatId(), QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
+            }
             localRuns.remove(run.getChatId(), localRuns.get(run.getChatId()));
             // A slot has come free.
             startQueued();
+        }
+        if (waitingForUser) {
+            tellStoppedForUser(run);
+        }
+    }
+
+    /// Sets what is told of each chat whose run has stopped to wait for the user: once its status says so, it has
+    /// given up its thread and slot, and on that thread, as the user. A message the user sent while the run worked
+    /// is left queued for it, so it can take up one sent as the run stopped (which the run never read) as the
+    /// user's reply to what the run stopped for.
+    ///
+    /// @param listener Given the chat's id. It may carry the run on.
+    public void onStoppedForUser(final IntConsumer listener) {
+        stoppedForUser = Objects.requireNonNull(listener);
+    }
+
+    private void tellStoppedForUser(final AiChatRun run) {
+        try {
+            stoppedForUser.accept(run.getChatId());
+        } catch (final RuntimeException e) {
+            // The run waits for the user as before; what they sent stays queued, shown as waiting.
+            LOGGER.error(() -> "Unable to take up what the user sent as run " + run.getId() + " of chat "
+                               + run.getChatId() + " stopped for them", e);
         }
     }
 
