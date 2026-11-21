@@ -1079,12 +1079,14 @@ How the zone is applied, with no change to Stroom's core (as the user decided, 2
   `ToolTimeZone.inZone`): run_stroomql's table, sequence_query's sequences and entities, esql_query's rows.
 * `timeFrom`/`timeTo` of sequence_query and esql_query are put in the zone by the tool
   (`StroomQlDatePoints.timeInZone`): a date expression or a time without an offset becomes an ISO time with the
-  zone's offset (`day() - 7d` is `2026-11-14T00:00:00+11:00`); one with an offset, or any in UTC, is sent as given.
+  zone's offset (`day() - 7d` is `2026-11-14T00:00:00+11:00`, in UTC too); one with an offset is sent as given.
 
-Not in the zone: ES|QL's own date functions and literals in the pipeline (`NOW()`, `BUCKET`, `DATE_TRUNC`,
-`DATE_FORMAT`) run in UTC, as `ElasticEsqlService` (core) sends no `time_zone` with the request (Elasticsearch 9.5.3
-takes one); esql_query's result says so in a zone other than UTC. A step's or `where` condition's date value
-(sequence_query, esql_query) is read in UTC by Stroom's query builders. The table tool's expressions run in UTC.
+ES|QL's own date work in the pipeline (`BUCKET`, `DATE_TRUNC`, `DATE_EXTRACT`, `DATE_FORMAT`, a date without an
+offset, and the rows' dates) is in the zone too: esql_query gives `ElasticEsql.Request.timeZone`, and
+`ElasticEsqlService` (core, decided by the user 2026-11-21) sends it as Elasticsearch's `time_zone` (taken by
+9.5.3). A cluster that refuses it (an error naming `time_zone`) runs the query again without it, in UTC
+(`Result.timeZone` null), and esql_query's result then says so. Not in the zone: a step's or `where` condition's
+date value (sequence_query, esql_query) is read in UTC by Stroom's query builders. The table tool's expressions run in UTC.
 
 ## Search: data sources, queries and events
 
@@ -1319,8 +1321,8 @@ written from the doc, so a query never names another index.
   streams the user can't see or that have been deleted (results carry no note of it, the user's choice). Use on the
   Elastic Index doc is still checked, and the query audited.
 * **Returns**: in the chat, Markdown: the query run, the first 100 rows, the zone the times are in ("Times are in
-  …", and in a zone other than UTC, "The pipeline's own date functions and literals (NOW(), BUCKET, DATE_TRUNC,
-  DATE_FORMAT) work in UTC."), and a note of how many rows (groups) there are and whether they were cut short; over
+  …", and when the cluster refused the zone, "The cluster didn't take the time zone, so the pipeline's own date
+  functions and dates without an offset (BUCKET, DATE_TRUNC, DATE_EXTRACT, DATE_FORMAT) work in UTC."), and a note of how many rows (groups) there are and whether they were cut short; over
   `/mcp`, the same as JSON (`columns`, `rows`, `row_count`, `limit`, `truncated`, `grouped`, `total_groups` or
   `total_rows`, `note`, the zone's fields and `time_zone_esql_note`). `timeZone` (see Time zones) sets the zone of
   `timeFrom`/`timeTo` and of the rows' times. Either way the rows are written to

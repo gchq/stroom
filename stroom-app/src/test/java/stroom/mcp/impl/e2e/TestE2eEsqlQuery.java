@@ -150,7 +150,8 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
                 });
         assertThat(inCanberra).containsEntry("time_zone", "Australia/Canberra")
                 .containsEntry("time_zone_source", "given");
-        assertThat((String) inCanberra.get("time_zone_esql_note")).contains("work in UTC");
+        // The cluster takes the zone, so the pipeline's own date work is in it: nothing is said of UTC.
+        assertThat(inCanberra).doesNotContainKey("time_zone_esql_note");
         assertThat((Map<String, Object>) inCanberra.get("time_range")).containsEntry("from",
                 "2026-01-01T12:00:00+11:00");
 
@@ -162,6 +163,26 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
                     assertThat(row.getLast()).isEqualTo("2026-01-01T12:00:00.000Z");
                 });
         assertThat(inUtc).containsEntry("time_zone", "UTC").doesNotContainKey("time_zone_esql_note");
+    }
+
+    @Test
+    void thePipelinesOwnDateWorkIsInTheZoneGiven() {
+        // One event a minute from 2026-01-01T00:00Z. In Canberra (+11:00 in January) the day starts at 13:00Z the
+        // day before, and a date without an offset is a Canberra time.
+        final DocRef index = seededIndex(EVENTS, false);
+        final Map<String, Object> arguments = args("index", index.getUuid(), "pipeline",
+                "| WHERE @timestamp >= \"2026-01-01T12:30:00\" | STATS n = COUNT(*) BY d = DATE_TRUNC(1 day, "
+                + "@timestamp)", "timeFrom", "2026-01-01T12:00:00", "timeTo", "2026-01-01T13:00:00", "timeZone",
+                "Australia/Canberra");
+
+        final Map<String, Object> inCanberra = json("esql_query", arguments);
+        dump("esql_query date work in Canberra", inCanberra);
+
+        assertThat((List<List<Object>>) inCanberra.get("rows")).singleElement()
+                .satisfies(row -> {
+                    assertThat(((Number) row.getFirst()).longValue()).isEqualTo(30L);
+                    assertThat(row.getLast()).isEqualTo("2026-01-01T00:00:00.000+11:00");
+                });
     }
 
     @Test

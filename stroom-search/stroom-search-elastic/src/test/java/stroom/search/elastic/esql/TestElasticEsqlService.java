@@ -302,6 +302,48 @@ class TestElasticEsqlService {
     }
 
     @Test
+    void testTheTimeZoneIsSentAndSaidInTheResult() {
+        stubQuery(GROUPED);
+
+        final Result result = service.query(new Request(INDEX_REF, "", null, null, null, null, false, null,
+                "Australia/Canberra"));
+
+        assertThat(onlyQueryBody().get("time_zone").asString()).isEqualTo("Australia/Canberra");
+        assertThat(result.timeZone()).isEqualTo("Australia/Canberra");
+    }
+
+    @Test
+    void testNoTimeZoneIsSentForUtc() {
+        stubQuery(GROUPED);
+
+        final Result result = service.query(request(""));
+
+        assertThat(onlyQueryBody().has("time_zone")).isFalse();
+        assertThat(result.timeZone()).isNull();
+    }
+
+    @Test
+    void testAClusterThatRefusesTheTimeZoneRunsTheQueryInUtc() {
+        stubQuery(GROUPED);
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(QUERY_PATH))
+                .atPriority(1)
+                .withRequestBody(WireMock.containing("time_zone"))
+                .willReturn(ElasticWireMock.elasticResponse(400, """
+                        {"error": {"type": "x_content_parse_exception",
+                         "reason": "[1:40] [esql/query] unknown field [time_zone]"}, "status": 400}""")));
+
+        final Result result = service.query(new Request(INDEX_REF, "", null, null, null, null, false, null,
+                "+11:00"));
+
+        final List<LoggedRequest> requests = ELASTIC.findAll(WireMock.postRequestedFor(
+                WireMock.urlPathEqualTo(QUERY_PATH)));
+        assertThat(requests).hasSize(2);
+        assertThat(json(requests.getLast().getBodyAsString()).has("time_zone")).isFalse();
+        assertThat(result.timeZone()).isNull();
+        assertThat(result.rows()).isNotEmpty();
+    }
+
+    @Test
     void testEsqlVersion() {
         assertThat(service.esqlVersion(INDEX_REF)).contains("9.5.3");
         stubVersion("8.13.0");

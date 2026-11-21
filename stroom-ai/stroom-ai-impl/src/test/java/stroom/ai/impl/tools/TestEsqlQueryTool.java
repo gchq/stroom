@@ -112,8 +112,38 @@ class TestEsqlQueryTool {
             final Request request = request(world);
             assertThat(request.timeRange().getFrom()).isEqualTo("2026-01-01T12:00:00+11:00");
             assertThat(request.timeRange().getTo()).isEqualTo("2026-01-01T13:00:00Z");
+            // The pipeline's own date work is asked for in the zone; this cluster refused it (no zone in the result).
+            assertThat(request.timeZone()).isEqualTo("+11:00");
             assertThat(output).contains("| 2026-01-01T12:00:00.000+11:00 |")
                     .contains("Times are in +11:00. " + EsqlQueryTool.ESQL_UTC_NOTE);
+        }
+    }
+
+    @Test
+    void aPipelineRunInTheZoneSaysNothingOfUtc() throws Exception {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(new Result("FROM i", "i",
+                    List.of(new Column("d", "date")), List.of(List.of("2026-01-01T00:00:00.000+11:00")), 1, 10,
+                    null, false, false, null, null, "9.5.3", List.of(), "Australia/Canberra"));
+            final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", "| STATS BY d = DATE_TRUNC(1 day, t)",
+                    "timeZone", "Australia/Canberra")));
+
+            assertThat(request(world).timeZone()).isEqualTo("Australia/Canberra");
+            assertThat(output).contains("| 2026-01-01T00:00:00.000+11:00 |")
+                    .contains("Times are in Australia/Canberra (+1").doesNotContain(EsqlQueryTool.ESQL_UTC_NOTE);
+        }
+    }
+
+    @Test
+    void aPipelineInUtcAsksForNoZone() throws Exception {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(result(List.of(), 10, false, false,
+                    null));
+            world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of("index", "elastic-index-uuid",
+                    "pipeline", "| KEEP t", "timeZone", "UTC")));
+
+            assertThat(request(world).timeZone()).isNull();
         }
     }
 

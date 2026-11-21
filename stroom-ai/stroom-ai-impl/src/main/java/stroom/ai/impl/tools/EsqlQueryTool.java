@@ -125,10 +125,12 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                         + "escape it (\"a\\\\@b\", or \"\"\"a\\@b\"\"\") or use LIKE for a simple "
                                         + "pattern.";
 
-    /// What a result in a zone other than UTC says of the pipeline's own date functions, which Stroom runs without
-    /// a zone, so in UTC: only the time range (timeFrom, timeTo) and the rows' times shown are in the zone.
-    static final String ESQL_UTC_NOTE = "The pipeline's own date functions and literals (NOW(), BUCKET, "
-                                        + "DATE_TRUNC, DATE_FORMAT) work in UTC.";
+    /// What a result in a zone other than UTC says when the cluster refused the zone (Elasticsearch's
+    /// `time_zone`), so the pipeline's own date work ran in UTC: only the time range (timeFrom, timeTo) and the
+    /// rows' times shown are in the zone.
+    static final String ESQL_UTC_NOTE = "The cluster didn't take the time zone, so the pipeline's own date "
+                                        + "functions and dates without an offset (BUCKET, DATE_TRUNC, "
+                                        + "DATE_EXTRACT, DATE_FORMAT) work in UTC.";
 
     private final Provider<ElasticEsql> elasticEsqlProvider;
     private final DataSourceAccess dataSourceAccess;
@@ -284,7 +286,9 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         try {
             result = elasticEsqlProvider.get().query(new Request(index, pipeline, filter, timeRange,
                     Objects.requireNonNullElse(intArg(request, LIMIT_ARG), ElasticEsql.MAX_ROWS), timeLimit(context),
-                    true, context.stopped()));
+                    true, context.stopped(), zone.isUtc()
+                    ? null
+                    : zone.id()));
         } catch (final Refusal refusal) {
             if (refusal.reason() == Reason.STOPPED) {
                 // The user stopped the chat, and the query was cancelled in Elasticsearch: the run ends stopped.
@@ -605,7 +609,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         } else {
             sb.append(ToolTables.preview(columns, cells, SHOWN_ROWS));
         }
-        sb.append("\n\n").append(zoneNote(zone)).append(' ').append(rowsNote(result));
+        sb.append("\n\n").append(zoneNote(zone, result)).append(' ').append(rowsNote(result));
         if (!cells.isEmpty()) {
             sb.append(" The rows are in ").append(out).append('.');
         }
@@ -614,11 +618,18 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
 
     /// @param zone The call's zone.
     /// @return What the result says of its times' zone: in a zone other than UTC, also that ES|QL's own date
-    /// functions work in UTC.
-    static String zoneNote(final ToolTimeZone zone) {
-        return zone.isUtc()
-                ? zone.stated()
-                : zone.stated() + " " + ESQL_UTC_NOTE;
+    /// functions work in UTC, if the cluster refused the zone.
+    ///
+    /// @param result What the query gave, with the zone its date work was in.
+    static String zoneNote(final ToolTimeZone zone, final Result result) {
+        return utcPipeline(zone, result)
+                ? zone.stated() + " " + ESQL_UTC_NOTE
+                : zone.stated();
+    }
+
+    // Whether the pipeline's own date work ran in UTC though the call's zone isn't UTC (the cluster refused it).
+    private static boolean utcPipeline(final ToolTimeZone zone, final Result result) {
+        return !zone.isUtc() && result.timeZone() == null;
     }
 
     /// What the rows are: how many, whether they were cut short, and how many there are in all.
@@ -684,7 +695,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
             map.put("time_range", time);
         }
         map.putAll(zone.structured());
-        if (!zone.isUtc()) {
+        if (utcPipeline(zone, result)) {
             map.put("time_zone_esql_note", ESQL_UTC_NOTE);
         }
         map.put("version", result.version());

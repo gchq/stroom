@@ -118,6 +118,10 @@ public interface ElasticEsql {
     /// @param stopped    True once the caller wants the query stopped (e.g. the user stopped the chat), asked
     ///                   while it runs; null for never. A query stopped is cancelled in Elasticsearch, and refused
     ///                   with [Reason#STOPPED].
+    /// @param timeZone   The time zone the query's own date work is in (Elasticsearch's `time_zone`: what
+    ///                   `DATE_TRUNC`, `DATE_EXTRACT`, a date without an offset and the rows' dates are in), a zone
+    ///                   id or an offset, e.g. `Australia/Canberra`; null for UTC. A cluster that refuses it runs the
+    ///                   query in UTC, as [Result#timeZone] says.
     record Request(DocRef index,
                    String pipeline,
                    ExpressionOperator filter,
@@ -125,7 +129,8 @@ public interface ElasticEsql {
                    Integer limit,
                    Duration timeLimit,
                    boolean countTotal,
-                   BooleanSupplier stopped) {
+                   BooleanSupplier stopped,
+                   String timeZone) {
 
         /// A null `stopped` is never stopped.
         public Request {
@@ -134,7 +139,28 @@ public interface ElasticEsql {
                     : stopped;
         }
 
-        /// A query that is never stopped by its caller (only by its time limit).
+        /// A query in UTC.
+        ///
+        /// @param index      The Elastic Index document.
+        /// @param pipeline   The ES|QL commands after `FROM`.
+        /// @param filter     A Stroom expression the documents must match, or null.
+        /// @param timeRange  A time range on the document's time field, or null.
+        /// @param limit      The most rows to return, or null for the configured default.
+        /// @param timeLimit  How long the query may take, or null for the configured limit.
+        /// @param countTotal True to count the rows without the limits when they are cut short.
+        /// @param stopped    True once the caller wants the query stopped; null for never.
+        public Request(final DocRef index,
+                       final String pipeline,
+                       final ExpressionOperator filter,
+                       final TimeRange timeRange,
+                       final Integer limit,
+                       final Duration timeLimit,
+                       final boolean countTotal,
+                       final BooleanSupplier stopped) {
+            this(index, pipeline, filter, timeRange, limit, timeLimit, countTotal, stopped, null);
+        }
+
+        /// A query in UTC that is never stopped by its caller (only by its time limit).
         ///
         /// @param index      The Elastic Index document.
         /// @param pipeline   The ES|QL commands after `FROM`.
@@ -150,7 +176,7 @@ public interface ElasticEsql {
                        final Integer limit,
                        final Duration timeLimit,
                        final boolean countTotal) {
-            this(index, pipeline, filter, timeRange, limit, timeLimit, countTotal, null);
+            this(index, pipeline, filter, timeRange, limit, timeLimit, countTotal, null, null);
         }
     }
 
@@ -190,6 +216,8 @@ public interface ElasticEsql {
     /// @param warnings    What Elasticsearch warned of while running the query, in its own words (e.g. that a
     ///                    function met a multi-valued field, so gave null), without the limit it added; empty for
     ///                    none.
+    /// @param timeZone    The time zone the query's own date work and the rows' dates were in, as the request
+    ///                    gave it; null for UTC (none was asked for, or the cluster refused it).
     record Result(String query,
                   String indexName,
                   List<Column> columns,
@@ -202,7 +230,8 @@ public interface ElasticEsql {
                   Long totalRows,
                   String totalNote,
                   String version,
-                  List<String> warnings) {
+                  List<String> warnings,
+                  String timeZone) {
 
         /// Copies the lists, so the result can't be changed.
         public Result {
@@ -217,6 +246,38 @@ public interface ElasticEsql {
                     : rows.stream()
                             .map(row -> Collections.unmodifiableList(new ArrayList<>(row)))
                             .toList();
+        }
+
+        /// What a query in UTC gave.
+        ///
+        /// @param query     The ES|QL query run.
+        /// @param indexName The index (or pattern) the query read.
+        /// @param columns   The columns.
+        /// @param rows      The rows.
+        /// @param tookMs    How long Elasticsearch took, in milliseconds.
+        /// @param limit     The most rows the query could return.
+        /// @param limitNote What was done to the limit, or null.
+        /// @param truncated True if the rows reached the limit.
+        /// @param grouped   True if the query's last `STATS` groups its rows.
+        /// @param totalRows How many rows the query gives without its limits, or null.
+        /// @param totalNote Why the total isn't known when it was asked for, or null.
+        /// @param version   The cluster's version.
+        /// @param warnings  What Elasticsearch warned of.
+        public Result(final String query,
+                      final String indexName,
+                      final List<Column> columns,
+                      final List<List<Object>> rows,
+                      final long tookMs,
+                      final int limit,
+                      final String limitNote,
+                      final boolean truncated,
+                      final boolean grouped,
+                      final Long totalRows,
+                      final String totalNote,
+                      final String version,
+                      final List<String> warnings) {
+            this(query, indexName, columns, rows, tookMs, limit, limitNote, truncated, grouped, totalRows,
+                    totalNote, version, warnings, null);
         }
     }
 

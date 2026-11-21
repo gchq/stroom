@@ -214,15 +214,30 @@ public class ElasticEsqlService implements ElasticEsql {
             return elasticClientCache.contextResult(cluster.getConnection(), client -> {
                 final String version = checkVersion(client);
                 final String query = limited.pipeline().query(indexName);
-                final Response response = run(client, query, filter, version, deadline, timeLimit,
-                        request.stopped());
+                String timeZone = NullSafe.isBlankString(request.timeZone())
+                        ? null
+                        : request.timeZone().strip();
+                Response response;
+                try {
+                    response = run(client, query, filter, timeZone, version, deadline, timeLimit,
+                            request.stopped());
+                } catch (final Refusal e) {
+                    if (timeZone == null || !refusesTimeZone(e)) {
+                        throw e;
+                    }
+                    // A cluster that doesn't take time_zone (e.g. outside snapshot builds of older versions): the
+                    // query runs in UTC, as the result says.
+                    LOGGER.debug(() -> LogUtil.message("The cluster refused time_zone: {}", e.getMessage()));
+                    timeZone = null;
+                    response = run(client, query, filter, null, version, deadline, timeLimit, request.stopped());
+                }
                 final boolean truncated = response.rows().size() >= limited.limit();
                 Long total = null;
                 String totalNote = null;
                 if (request.countTotal() && truncated) {
                     try {
-                        total = count(client, pipeline.forTotal().query(indexName), filter, version, deadline,
-                                timeLimit, request.stopped());
+                        total = count(client, pipeline.forTotal().query(indexName), filter, timeZone, version,
+                                deadline, timeLimit, request.stopped());
                     } catch (final Refusal e) {
                         if (e.reason() == Reason.STOPPED) {
                             throw e;
@@ -232,7 +247,7 @@ public class ElasticEsqlService implements ElasticEsql {
                 }
                 return new Result(query, indexName, response.columns(), response.rows(), response.tookMs(),
                         limited.limit(), joinNotes(capNote, limited.note()), truncated, pipeline.groups(), total,
-                        totalNote, version, response.warnings());
+                        totalNote, version, response.warnings(), timeZone);
             });
         });
     }
@@ -415,11 +430,12 @@ public class ElasticEsqlService implements ElasticEsql {
     private static long count(final ElasticsearchClient client,
                               final String query,
                               final Query filter,
+                              final String timeZone,
                               final String version,
                               final Instant deadline,
                               final Duration timeLimit,
                               final BooleanSupplier stopped) {
-        final Response response = run(client, query, filter, version, deadline, timeLimit, stopped);
+        final Response response = run(client, query, filter, timeZone, version, deadline, timeLimit, stopped);
         if (response.rows().isEmpty() || response.rows().getFirst().isEmpty()
             || !(response.rows().getFirst().getFirst() instanceof final Number number)) {
             throw new Refusal(Reason.CLUSTER_ERROR, "Elasticsearch gave no count");
@@ -432,6 +448,7 @@ public class ElasticEsqlService implements ElasticEsql {
     private static Response run(final ElasticsearchClient client,
                                 final String query,
                                 final Query filter,
+                                final String timeZone,
                                 final String version,
                                 final Instant deadline,
                                 final Duration timeLimit,
@@ -439,6 +456,9 @@ public class ElasticEsqlService implements ElasticEsql {
         LOGGER.debug(() -> LogUtil.message("Running ES|QL query: {}, filter: {}", query, filter));
         final QueryRequest queryRequest = QueryRequest.of(b -> {
             b.query(query).format(EsqlFormat.Json).columnar(false);
+            if (timeZone != null) {
+                b.timeZone(timeZone);
+            }
             if (filter != null) {
                 b.filter(filter);
             }
@@ -513,6 +533,13 @@ public class ElasticEsqlService implements ElasticEsql {
     private static Refusal timedOut(final Duration timeLimit) {
         return new Refusal(Reason.TIMEOUT, "The query took longer than " + timeLimit.toSeconds() + " seconds, so "
                                            + "it was cancelled: narrow the time range or the filter");
+    }
+
+    /// @param refusal Why Elasticsearch refused a query.
+    /// @return True if it refused the query's `time_zone`, as a cluster that doesn't take it does.
+    static boolean refusesTimeZone(final Refusal refusal) {
+        return (refusal.reason() == Reason.REFUSED || refusal.reason() == Reason.CLUSTER_ERROR)
+               && NullSafe.getOrElse(refusal.getMessage(), message -> message.contains("time_zone"), false);
     }
 
     // What a failed query is refused as.
