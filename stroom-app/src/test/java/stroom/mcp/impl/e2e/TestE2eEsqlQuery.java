@@ -138,7 +138,7 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
         final DocRef index = seededIndex(EVENTS, false);
         final Map<String, Object> arguments = args("index", index.getUuid(), "pipeline",
                 "| STATS n = COUNT(*), earliest = MIN(@timestamp)", "timeFrom", "2026-01-01T12:00:00", "timeTo",
-                "2026-01-01T13:00:00", "time_zone", "Australia/Canberra");
+                "2026-01-01T13:00:00", "timeZone", "Australia/Canberra");
 
         final Map<String, Object> inCanberra = json("esql_query", arguments);
         dump("esql_query in Canberra", inCanberra);
@@ -154,7 +154,7 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
         assertThat((Map<String, Object>) inCanberra.get("time_range")).containsEntry("from",
                 "2026-01-01T12:00:00+11:00");
 
-        arguments.put("time_zone", "UTC");
+        arguments.put("timeZone", "UTC");
         final Map<String, Object> inUtc = json("esql_query", arguments);
         assertThat((List<List<Object>>) inUtc.get("rows")).singleElement()
                 .satisfies(row -> {

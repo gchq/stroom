@@ -229,7 +229,7 @@ class TestSequenceQueryTool {
     void theTimeRangeAndTheSequencesTimesAreInTheZoneGiven() {
         final Map<String, Object> args = args("2m");
         args.put("timeFrom", "2026-01-01T11:00:00");
-        args.put("time_zone", "+11:00");
+        args.put("timeZone", "+11:00");
 
         final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
 

@@ -37,13 +37,13 @@ public abstract class AbstractBuiltInTool implements StroomTool {
     // Resolves a call's time zone: UTC (no user preference) unless injected.
     private UserTimeZones userTimeZones = UserTimeZones.UTC_ONLY;
 
-    /// @param userTimeZones Resolves a call's time zone from its `time_zone` argument and the user's preference.
+    /// @param userTimeZones Resolves a call's time zone from its `timeZone` argument and the user's preference.
     @Inject
     void setUserTimeZones(final UserTimeZones userTimeZones) {
         this.userTimeZones = userTimeZones;
     }
 
-    /// The time zone of a call that has times in it: its `time_zone` argument ([UserTimeZones#ARG]), else the
+    /// The time zone of a call that has times in it: its `timeZone` argument ([UserTimeZones#ARG]), else the
     /// user's Stroom time zone preference.
     ///
     /// @param request The call.

@@ -165,7 +165,7 @@ public record ToolTimeZone(ZoneId zone, Source source, String note) {
 
     /// Where a tool call's time zone came from.
     public enum Source {
-        /// The call gave it (`time_zone`).
+        /// The call gave it (`timeZone`).
         GIVEN(""),
         /// The user's Stroom time zone preference.
         PREFERENCE(", the user's Stroom time zone"),

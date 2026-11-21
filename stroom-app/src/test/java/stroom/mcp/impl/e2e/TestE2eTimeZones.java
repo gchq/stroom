@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// The query tools' time zones over `/mcp`, on a Lucene index with events at known times either side of the start
 /// of today in Australia/Canberra: `day()` and a time without an offset are worked out in the zone the call gives
-/// (`time_zone`), or else the user's Stroom time zone preference, and each result says which zone its times are in.
+/// (`timeZone`), or else the user's Stroom time zone preference, and each result says which zone its times are in.
 @SuppressWarnings("unchecked")
 class TestE2eTimeZones extends AbstractE2eTest {
 
@@ -149,7 +149,7 @@ class TestE2eTimeZones extends AbstractE2eTest {
                         "where", List.of(Map.of("field", "Action", "value", "Export")))));
         arguments.put("maxspan", "5m");
         arguments.put("timeFrom", "day()");
-        arguments.put("time_zone", "Australia/Canberra");
+        arguments.put("timeZone", "Australia/Canberra");
 
         final Map<String, Object> result = json("sequence_query", arguments);
         dump("sequence_query in Canberra", result);
@@ -180,7 +180,7 @@ class TestE2eTimeZones extends AbstractE2eTest {
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("query", query);
         if (timeZone != null) {
-            arguments.put("time_zone", timeZone);
+            arguments.put("timeZone", timeZone);
         }
         final String result = McpTestClient.text(client.call("run_stroomql", arguments));
         dump("run_stroomql " + timeZone, Map.of("result", result));

@@ -52,7 +52,7 @@ class TestBuiltInTools {
 
         assertThat(GetCurrentDateTool.text(now, zone("Australia/Canberra")))
                 .isEqualTo("2026-11-21 (Australia/Canberra)");
-        assertThat(run(new GetCurrentDateTool(), "{\"time_zone\":\"Nowhere/Special\"}"))
+        assertThat(run(new GetCurrentDateTool(), "{\"timeZone\":\"Nowhere/Special\"}"))
                 .startsWith("Error: unknown time zone 'Nowhere/Special'");
     }
 
@@ -79,9 +79,9 @@ class TestBuiltInTools {
         assertThat(GetCurrentDateTimeTool.text(now, new ToolTimeZone(ZoneOffset.UTC,
                 ToolTimeZone.Source.FALLBACK, UserTimeZones.BROWSER_NOT_KNOWN)))
                 .isEqualTo("2026-11-20T23:42:00Z (UTC). " + UserTimeZones.BROWSER_NOT_KNOWN);
-        assertThat(run(new GetCurrentDateTimeTool(), "{\"time_zone\":\"+11:00\"}"))
+        assertThat(run(new GetCurrentDateTimeTool(), "{\"timeZone\":\"+11:00\"}"))
                 .matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+11:00 \\(\\+11:00\\); UTC .*Z");
-        assertThat(run(new GetCurrentDateTimeTool(), "{\"time_zone\":\"Mars\"}"))
+        assertThat(run(new GetCurrentDateTimeTool(), "{\"timeZone\":\"Mars\"}"))
                 .isEqualTo("Error: " + UserTimeZones.unknown("Mars"));
     }
 

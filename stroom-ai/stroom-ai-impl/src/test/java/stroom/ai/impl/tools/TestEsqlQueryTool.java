@@ -103,7 +103,7 @@ class TestEsqlQueryTool {
                     List.of(List.of("2026-01-01T01:00:00.000Z")), 10, false, false, null));
             final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
                     "index", "elastic-index-uuid", "pipeline", "| KEEP t", "timeFrom", "2026-01-01T12:00:00",
-                    "timeTo", "2026-01-01T13:00:00Z", "time_zone", "+11:00")));
+                    "timeTo", "2026-01-01T13:00:00Z", "timeZone", "+11:00")));
 
             final Request request = request(world);
             assertThat(request.timeRange().getFrom()).isEqualTo("2026-01-01T12:00:00+11:00");
@@ -117,7 +117,7 @@ class TestEsqlQueryTool {
     void anUnknownZoneIsRefused() {
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
-                    "index", "elastic-index-uuid", "pipeline", GROUPED, "time_zone", "Mars")));
+                    "index", "elastic-index-uuid", "pipeline", GROUPED, "timeZone", "Mars")));
 
             assertThat(output).isEqualTo("Error: " + UserTimeZones.unknown("Mars"));
             Mockito.verifyNoInteractions(world.elasticEsql());

@@ -557,7 +557,7 @@ Runs an ES|QL query on an Elastic Index, answered by Elasticsearch itself: for t
       "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
       "type" : "string"
     },
-    "time_zone" : {
+    "timeZone" : {
       "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
     },
@@ -853,7 +853,7 @@ Returns the current date in the user's time zone as an ISO-8601 string (YYYY-MM-
 
 {
   "properties" : {
-    "time_zone" : {
+    "timeZone" : {
       "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
     }
@@ -880,7 +880,7 @@ Returns the current date and time in the user's time zone (ISO-8601 with its off
 
 {
   "properties" : {
-    "time_zone" : {
+    "timeZone" : {
       "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
     }
@@ -2547,7 +2547,7 @@ Runs a StroomQL query as the user (e.g. 'from "My View" where EventTime > day() 
       "description" : "The StroomQL query.",
       "type" : "string"
     },
-    "time_zone" : {
+    "timeZone" : {
       "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
     }
@@ -2846,7 +2846,7 @@ Use for any 'X, then Y, by the same user/host, within N' question, in one data s
       "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
       "type" : "string"
     },
-    "time_zone" : {
+    "timeZone" : {
       "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
     },

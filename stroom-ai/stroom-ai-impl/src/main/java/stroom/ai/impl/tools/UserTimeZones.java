@@ -31,7 +31,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 /// Resolves the time zone of a tool call that has times in it (run_stroomql, sequence_query, esql_query,
-/// get_current_datetime): the zone the call gives (`time_zone`), else the user's Stroom time zone preference, as
+/// get_current_datetime): the zone the call gives (`timeZone`), else the user's Stroom time zone preference, as
 /// the Stroom UI applies it. The tools run as the user (the chat's, or the MCP token's), so the preference is theirs.
 ///
 /// A zone is given as `local`, `UTC` or `GMT`, a zone id (e.g. `Australia/Canberra`) or an offset (e.g. `+11:00`).
@@ -42,7 +42,7 @@ import java.util.Optional;
 public class UserTimeZones {
 
     /// The argument the tools take.
-    public static final String ARG = "time_zone";
+    public static final String ARG = "timeZone";
     /// The argument's description, kept short as it is paid for on every call.
     public static final String DESCRIPTION = "Time zone for the times and results: local, UTC, a zone id or an "
                                              + "offset; default the user's.";
@@ -51,7 +51,7 @@ public class UserTimeZones {
 
     static final String LOCAL = "local";
     static final String BROWSER_NOT_KNOWN = "The user's Stroom time zone is their browser's, which isn't known "
-                                            + "here, so times are in UTC: give time_zone to use another.";
+                                            + "here, so times are in UTC: give timeZone to use another.";
 
     private final UserTimeZonePreference preference;
 
@@ -61,7 +61,7 @@ public class UserTimeZones {
         this.preference = preference;
     }
 
-    /// @param given   The zone the call gives (`time_zone`), or null/blank for the user's.
+    /// @param given   The zone the call gives (`timeZone`), or null/blank for the user's.
     /// @param context The call's context, with the user's browser's zone if the session's client sent it.
     /// @return The call's zone.
     /// @throws ToolRefusal for a zone that isn't one, saying what to give.
