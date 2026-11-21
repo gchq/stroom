@@ -563,6 +563,12 @@ final class EqlQueryWriter {
         Filter onField(final String otherField) {
             return new Filter(otherField, condition, value, caseInsensitive, negated, length);
         }
+
+        /// @param otherValue Another value, e.g. this one's time in the call's zone.
+        /// @return This condition with that value.
+        Filter withValue(final String otherValue) {
+            return new Filter(field, condition, otherValue, caseInsensitive, negated, length);
+        }
     }
 
 

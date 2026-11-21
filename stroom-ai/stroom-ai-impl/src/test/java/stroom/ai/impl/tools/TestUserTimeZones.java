@@ -113,6 +113,19 @@ class TestUserTimeZones {
     }
 
     @Test
+    void formatDateAndParseDateInAZoneOtherThanUtcAreSaidToWorkInUtc() {
+        final ToolTimeZone canberra = new ToolTimeZone(CANBERRA, Source.GIVEN, null);
+
+        assertThat(canberra.formatDateNote("from V eval H = formatDate(EventTime, 'HH') select H"))
+                .isEqualTo(" formatDate and parseDate work in UTC unless given a zone, e.g. formatDate(EventTime, "
+                           + "'HH:mm', 'Australia/Canberra').");
+        assertThat(canberra.formatDateNote("parsedate (${t})")).isNotEmpty();
+        assertThat(canberra.formatDateNote("from V eval D = floorDay(EventTime) select D")).isEmpty();
+        assertThat(ToolTimeZone.UTC.formatDateNote("formatDate(EventTime)")).isEmpty();
+        assertThat(canberra.formatDateNote(null)).isEmpty();
+    }
+
+    @Test
     void zoneAsStroomUserTimeZone() {
         assertThat(new ToolTimeZone(CANBERRA, Source.GIVEN, null).userTimeZone())
                 .isEqualTo(UserTimeZone.fromId("Australia/Canberra"));

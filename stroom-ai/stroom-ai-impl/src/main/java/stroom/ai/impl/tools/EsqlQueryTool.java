@@ -39,6 +39,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
@@ -265,13 +266,13 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         }
         final DocRef index = index(given);
         final List<QueryField> fields = fields(index);
-        final List<Term> terms = terms(request, index, fields);
+        // The zone timeFrom, timeTo and the where conditions' times are read in, and the rows' times shown in.
+        final ToolTimeZone zone = timeZone(request, context);
+        final long referenceTime = System.currentTimeMillis();
+        final List<Term> terms = terms(request, index, fields, zone, referenceTime);
         final ExpressionOperator filter = terms.isEmpty()
                 ? null
                 : expression(terms);
-        // The zone timeFrom and timeTo are read in, and the rows' times shown in.
-        final ToolTimeZone zone = timeZone(request, context);
-        final long referenceTime = System.currentTimeMillis();
         final String timeFrom = StroomQlDatePoints.timeInZone(stringArg(request, TIME_FROM_ARG), zone, referenceTime);
         final String timeTo = StroomQlDatePoints.timeInZone(stringArg(request, TIME_TO_ARG), zone, referenceTime);
         final TimeRange timeRange = timeFrom == null && timeTo == null
@@ -372,8 +373,14 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
     }
 
     // The where conditions, checked as search_events checks them: on fields the index has, and refused where the
-    // answer through Stroom's query builder would mislead (IS_NULL on Elasticsearch matches every document).
-    private static List<Term> terms(final ToolCall request, final DocRef index, final List<QueryField> fields) {
+    // answer through Stroom's query builder would mislead (IS_NULL on Elasticsearch matches every document). A
+    // condition's time on a date field is put in the call's zone, as timeFrom's is (Stroom's query builder reads
+    // one in UTC).
+    private static List<Term> terms(final ToolCall request,
+                                    final DocRef index,
+                                    final List<QueryField> fields,
+                                    final ToolTimeZone zone,
+                                    final long referenceTime) {
         final List<Term> given = SearchEventsTool.terms(request);
         if (given.isEmpty()) {
             return given;
@@ -396,6 +403,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                 .map(term -> MisleadingSearches.elasticsearchNullAs(term.condition(), types.get(term.field()))
                         .map(search -> new Term(term.field(), search.condition(), search.value()))
                         .orElse(term))
+                .map(term -> FieldType.DATE.name().equals(types.get(term.field()))
+                        ? new Term(term.field(), term.condition(), StroomQlDatePoints.conditionInZone(term.value(),
+                        term.condition(), zone, referenceTime))
+                        : term)
                 .toList();
         final Optional<String> misleading = MisleadingSearches.refusal(MisleadingSearches.ELASTICSEARCH,
                 terms.stream()

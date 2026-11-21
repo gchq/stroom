@@ -1085,8 +1085,13 @@ ES|QL's own date work in the pipeline (`BUCKET`, `DATE_TRUNC`, `DATE_EXTRACT`, `
 offset, and the rows' dates) is in the zone too: esql_query gives `ElasticEsql.Request.timeZone`, and
 `ElasticEsqlService` (core, decided by the user 2026-11-21) sends it as Elasticsearch's `time_zone` (taken by
 9.5.3). A cluster that refuses it (an error naming `time_zone`) runs the query again without it, in UTC
-(`Result.timeZone` null), and esql_query's result then says so. Not in the zone: a step's or `where` condition's
-date value (sequence_query, esql_query) is read in UTC by Stroom's query builders. The table tool's expressions run in UTC.
+(`Result.timeZone` null), and esql_query's result then says so. A `where` condition's time on a date field
+(esql_query, and sequence_query's Elastic steps; the StroomQL engine's run in the query's zone) is put in the zone
+as timeFrom is (`StroomQlDatePoints.conditionInZone`: each of a between's or an in's values), as Stroom's query
+builders read one in UTC. The table tool's expressions run in the call's zone (`TableEngine.Query.dateTimeSettings`):
+date rounding (`floorDay`, `ceilHour`...) and `day()`; a result with expressions says so. Stroom's `formatDate` and
+`parseDate` work in UTC unless given a zone (in StroomQL and dashboards too), so a run_stroomql or table result whose
+expressions call them, in a zone other than UTC, says so with an example (`ToolTimeZone.formatDateNote`).
 
 ## Search: data sources, queries and events
 

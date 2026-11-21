@@ -44,6 +44,7 @@ import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TimeRange;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
@@ -70,6 +71,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -188,6 +190,17 @@ class TestSequenceQueryTool {
         sequences.add(pair("alice", "H1", T0, 40_000, 1));
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
                 () -> queryService, auditLog, agentSearches);
+    }
+
+    @Test
+    void aStepsConditionOnADateFieldIsInTheCallsZone() {
+        final ToolTimeZone plusEleven = new ToolTimeZone(ZoneOffset.ofHours(11), ToolTimeZone.Source.GIVEN, null);
+        final Map<String, FieldType> types = Map.of("@timestamp", FieldType.DATE, "user", FieldType.KEYWORD);
+
+        assertThat(SequenceQueryTool.inZone(new Filter("@timestamp", Condition.GREATER_THAN, "2026-11-21T02:00:00",
+                false), types, plusEleven, 0L).value()).isEqualTo("2026-11-21T02:00:00+11:00");
+        assertThat(SequenceQueryTool.inZone(new Filter("user", Condition.EQUALS, "2026-11-21T02:00:00", false),
+                types, plusEleven, 0L).value()).isEqualTo("2026-11-21T02:00:00");
     }
 
     @Test

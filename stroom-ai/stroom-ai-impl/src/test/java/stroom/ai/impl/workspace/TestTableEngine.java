@@ -23,6 +23,8 @@ import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Order;
 import stroom.ai.impl.workspace.TableEngine.Query;
 import stroom.ai.impl.workspace.TableEngine.Result;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.UserTimeZone;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -232,6 +234,27 @@ class TestTableEngine {
         assertThat(result.rows().get(1).get(2)).satisfiesAnyOf(
                 value -> assertThat(value).isEmpty(),
                 value -> assertThat(value).startsWith("ERR"));
+    }
+
+    @Test
+    void testExpressionsDatesAreInTheQuerysZone() throws IOException {
+        final Path times = tempDir.resolve("zoned.csv");
+        Files.writeString(times, """
+                time
+                2026-01-01T01:30:00.000Z
+                """);
+        final Query query = query()
+                // The day starts at midnight in the query's zone; formatDate gives it in UTC (as Stroom's does).
+                .eval(List.of(new Eval("hour", "formatDate(floorDay(${time}), 'yyyy-MM-dd HH:mm')")))
+                .select(List.of("hour"))
+                .build();
+
+        assertThat(TableEngine.run(times, Format.CSV, query).rows()).containsExactly(List.of("2026-01-01 00:00"));
+        assertThat(TableEngine.run(times, Format.CSV, query.withDateTimeSettings(DateTimeSettings.builder()
+                .timeZone(UserTimeZone.fromId("Australia/Canberra")).build())).rows())
+                .containsExactly(List.of("2025-12-31 13:00"));
+        assertThat(query.hasExpressions()).isTrue();
+        assertThat(query().build().hasExpressions()).isFalse();
     }
 
     @Test

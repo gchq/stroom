@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ToolTimeZone.Source;
+import stroom.query.api.ExpressionTerm.Condition;
 
 import org.junit.jupiter.api.Test;
 
@@ -133,6 +134,19 @@ class TestStroomQlDatePoints {
         assertThat(StroomQlDatePoints.used("from V where T > now() select T", CANBERRA, NOW)).isEmpty();
         assertThat(StroomQlDatePoints.used("from V where \"day()\" = T", CANBERRA, NOW)).isEmpty();
         assertThat(StroomQlDatePoints.used(null, CANBERRA, NOW)).isEmpty();
+    }
+
+    @Test
+    void aConditionsTimeIsInTheZoneEachOfABetweensOrAnInsValuesToo() {
+        assertThat(StroomQlDatePoints.conditionInZone("2026-11-21T02:00:00", Condition.GREATER_THAN, CANBERRA, NOW))
+                .isEqualTo("2026-11-21T02:00:00+11:00");
+        assertThat(StroomQlDatePoints.conditionInZone("day() - 1d, 2026-11-21T02:00:00Z", Condition.BETWEEN,
+                CANBERRA, NOW)).isEqualTo("2026-11-20T00:00:00+11:00,2026-11-21T02:00:00Z");
+        assertThat(StroomQlDatePoints.conditionInZone("2026-11-21T02:00:00,2026-11-21T03:00:00", Condition.IN,
+                CANBERRA, NOW)).isEqualTo("2026-11-21T02:00:00+11:00,2026-11-21T03:00:00+11:00");
+        // Not a time: as given.
+        assertThat(StroomQlDatePoints.conditionInZone("alice", Condition.EQUALS, CANBERRA, NOW)).isEqualTo("alice");
+        assertThat(StroomQlDatePoints.conditionInZone("", Condition.IS_NULL, CANBERRA, NOW)).isEmpty();
     }
 
     @Test

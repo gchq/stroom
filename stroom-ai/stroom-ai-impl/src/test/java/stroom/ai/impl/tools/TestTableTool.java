@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.FakeTabWorkspace;
+import stroom.ai.impl.workspace.TableEngine;
 import stroom.ai.impl.workspace.TableEngine.Order;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -29,6 +30,10 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +58,26 @@ class TestTableTool {
                 "user,n\nalice,3\nbob,1\nalice,5\ncarol,2\n", null);
         tool = new TableTool(files.workspace(), new ColumnSummariser(Mockito.mock(TableSummariser.class),
                 () -> null));
+    }
+
+    @Test
+    void aQueryWithExpressionsSaysTheZoneItsDatesAreIn() {
+        final TableEngine.Query plain = TableTool.query(Map.of(), List::of);
+        final TableEngine.Query computed = TableTool.query(Map.of("eval", List.of(
+                Map.of("as", "h", "expression", "formatDate(${t}, 'HH')"))), List::of);
+        final ToolTimeZone canberra = new ToolTimeZone(ZoneId.of("Australia/Canberra"),
+                ToolTimeZone.Source.BROWSER, null);
+
+        assertThat(TableTool.zoneNote(plain, canberra)).isEmpty();
+        assertThat(TableTool.zoneNote(computed, canberra))
+                .startsWith(" Its expressions' date rounding (floorDay, ceilHour...) and day() are in "
+                            + "Australia/Canberra (+1")
+                .endsWith(" formatDate and parseDate work in UTC unless given a zone, e.g. formatDate(EventTime, "
+                          + "'HH:mm', 'Australia/Canberra').");
+        assertThat(TableTool.zoneNote(computed, new ToolTimeZone(ZoneOffset.UTC,
+                ToolTimeZone.Source.FALLBACK, UserTimeZones.DEVICE_NOT_KNOWN)))
+                .isEqualTo(" Its expressions' date rounding (floorDay, ceilHour...) and day() are in UTC. "
+                           + UserTimeZones.DEVICE_NOT_KNOWN);
     }
 
     @Test

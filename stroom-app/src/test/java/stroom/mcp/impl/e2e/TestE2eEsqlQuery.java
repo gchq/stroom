@@ -166,6 +166,20 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
     }
 
     @Test
+    void aWhereConditionsTimeIsInTheZoneGiven() {
+        // One event a minute from 2026-01-01T00:00Z: from 12:30 to 13:00 in Canberra (+11:00) is 30 events.
+        final DocRef index = seededIndex(EVENTS, false);
+        final Map<String, Object> result = json("esql_query", args("index", index.getUuid(), "pipeline",
+                "| STATS n = COUNT(*)", "where", List.of(Map.of("field", "@timestamp", "condition",
+                        "GREATER_THAN_OR_EQUAL_TO", "value", "2026-01-01T12:30:00")), "timeTo",
+                "2026-01-01T13:00:00", "timeZone", "Australia/Canberra"));
+        dump("esql_query where in Canberra", result);
+
+        assertThat((List<List<Object>>) result.get("rows")).singleElement()
+                .satisfies(row -> assertThat(((Number) row.getFirst()).longValue()).isEqualTo(30L));
+    }
+
+    @Test
     void thePipelinesOwnDateWorkIsInTheZoneGiven() {
         // One event a minute from 2026-01-01T00:00Z. In Canberra (+11:00 in January) the day starts at 13:00Z the
         // day before, and a date without an offset is a Canberra time.

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.DateExpressionParser;
@@ -32,6 +33,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -41,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// Puts a StroomQL query's date points (`day()`, `week()`, `hour()` and so on) in the condition clauses (`where`,
 /// `filter`, `having`) in a time zone, as the time each stands for there, quoted: e.g. `EventTime > day()` in
@@ -181,6 +184,30 @@ final class StroomQlDatePoints {
         } catch (final RuntimeException e) {
             return value;
         }
+    }
+
+    /// A condition's value on a date field (e.g. esql_query's or a sequence_query step's `where`) as a time in the
+    /// call's zone, as [#timeInZone] does a tool's time: each of a between's or an in's values separated by commas
+    /// (a negated in is IN with `negated`).
+    ///
+    /// @param value         The condition's value, or null.
+    /// @param condition     The condition.
+    /// @param zone          The call's zone.
+    /// @param referenceTime What now is, in epoch milliseconds.
+    /// @return The value in the zone; a value that isn't a time as given.
+    static String conditionInZone(final String value,
+                                  final Condition condition,
+                                  final ToolTimeZone zone,
+                                  final long referenceTime) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        if (condition == Condition.BETWEEN || condition == Condition.IN) {
+            return Arrays.stream(value.split(",", -1))
+                    .map(part -> timeInZone(part.strip(), zone, referenceTime))
+                    .collect(Collectors.joining(","));
+        }
+        return timeInZone(value, zone, referenceTime);
     }
 
     private static boolean hasOffset(final String value) {

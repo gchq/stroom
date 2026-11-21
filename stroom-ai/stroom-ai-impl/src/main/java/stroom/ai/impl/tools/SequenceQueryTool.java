@@ -398,11 +398,13 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         final Target target = target(docs);
         final List<Step> steps = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
-            steps.add(step(given.get(i), "Step " + (i + 1), byGiven, docs, fieldsByDoc, target, fieldNotes));
+            steps.add(step(given.get(i), "Step " + (i + 1), byGiven, docs, fieldsByDoc, target, fieldNotes, zone,
+                    referenceTime));
         }
         final Step until = givenUntil == null
                 ? null
-                : step(givenUntil, "The until step", byGiven, docs, fieldsByDoc, target, fieldNotes);
+                : step(givenUntil, "The until step", byGiven, docs, fieldsByDoc, target, fieldNotes, zone,
+                        referenceTime);
         checkJoins(steps, until);
         checkVersion(target.version(), steps);
         if (docs.size() > 1) {
@@ -772,7 +774,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                              final List<DocRef> docs,
                              final Map<DocRef, List<QueryField>> fieldsByDoc,
                              final Target target,
-                             final List<String> notes) {
+                             final List<String> notes,
+                             final ToolTimeZone zone,
+                             final long referenceTime) {
         final DocRef doc = byGiven.get(given.index());
         final List<QueryField> fields = fieldsByDoc.get(doc);
         final Map<String, FieldType> types = new LinkedHashMap<>();
@@ -805,9 +809,11 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             }
         }
         final List<Filter> filters = given.filters().stream()
+                .map(filter -> inZone(filter, types, zone, referenceTime))
                 .map(filter -> filter.onField(swapped.getOrDefault(filter.field(), filter.field())))
                 .toList();
         final List<Filter> anyOf = given.anyOf().stream()
+                .map(filter -> inZone(filter, types, zone, referenceTime))
                 .map(filter -> filter.onField(swapped.getOrDefault(filter.field(), filter.field())))
                 .toList();
         final List<String> by = given.by().stream().map(name -> swapped.getOrDefault(name, name)).toList();
@@ -820,6 +826,23 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             EqlQueryWriter.eqlCondition(filter, types.get(filter.field()));
         }
         return new Step(position + 1, filters, anyOf, by, given.missing(), given.runs(), given.fields(), types);
+    }
+
+    /// @param filter        A step's condition.
+    /// @param types         The types of its document's fields, by name.
+    /// @param zone          The call's zone.
+    /// @param referenceTime What now is, in epoch milliseconds.
+    /// @return The condition with its value as a time in the zone if its field is a date (e.g. `2026-11-21T02:00:00`
+    /// or `day()` as `2026-11-21T02:00:00+11:00`), as the time range's are; else the condition as given.
+    static Filter inZone(final Filter filter,
+                         final Map<String, FieldType> types,
+                         final ToolTimeZone zone,
+                         final long referenceTime) {
+        if (types.get(filter.field()) != FieldType.DATE || filter.length()) {
+            return filter;
+        }
+        return filter.withValue(StroomQlDatePoints.conditionInZone(filter.value(), filter.condition(), zone,
+                referenceTime));
     }
 
     private static List<Filter> concat(final List<Filter> first, final List<Filter> second) {

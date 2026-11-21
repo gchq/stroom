@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.workspace;
 
+import stroom.query.api.DateTimeSettings;
+
 import org.apache.commons.csv.CSVException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -80,7 +82,7 @@ public final class TableEngine {
     }
 
     private static Result runOn(final Path file, final Format format, final Query query) {
-        try (final RowSource source = withEvals(open(file, format), query.eval())) {
+        try (final RowSource source = withEvals(open(file, format), query.eval(), query.dateTimeSettings())) {
             final List<String> header = source.header();
             final List<CompiledCondition> conditions = new ArrayList<>();
             for (final Condition condition : query.where()) {
@@ -146,7 +148,8 @@ public final class TableEngine {
         final List<Supplier<GroupValue>> makers = new ArrayList<>();
         for (final Aggregate aggregate : aggregates) {
             if (aggregate.expression() != null) {
-                final TableExpression expression = TableExpression.compile(aggregate.expression(), header);
+                final TableExpression expression = TableExpression.compile(aggregate.expression(), header,
+                        query.dateTimeSettings());
                 makers.add(() -> new ExpressionValue(expression.group()));
             } else {
                 checkFunction(aggregate);
@@ -492,7 +495,8 @@ public final class TableEngine {
                         boolean distinct,
                         boolean mask,
                         List<Order> orderBy,
-                        Integer limit) {
+                        Integer limit,
+                        DateTimeSettings dateTimeSettings) {
 
         public Query {
             eval = List.copyOf(Objects.requireNonNullElse(eval, List.of()));
@@ -501,6 +505,30 @@ public final class TableEngine {
             groupBy = List.copyOf(Objects.requireNonNullElse(groupBy, List.of()));
             aggregates = List.copyOf(Objects.requireNonNullElse(aggregates, List.of()));
             orderBy = List.copyOf(Objects.requireNonNullElse(orderBy, List.of()));
+        }
+
+        /// A query whose expressions' date functions work in UTC.
+        public Query(final List<Eval> eval,
+                     final List<String> select,
+                     final List<Condition> where,
+                     final List<String> groupBy,
+                     final List<Aggregate> aggregates,
+                     final boolean distinct,
+                     final boolean mask,
+                     final List<Order> orderBy,
+                     final Integer limit) {
+            this(eval, select, where, groupBy, aggregates, distinct, mask, orderBy, limit, null);
+        }
+
+        /// @param settings What the expressions' date functions work in (their time zone), or null for UTC.
+        /// @return This query with them.
+        public Query withDateTimeSettings(final DateTimeSettings settings) {
+            return new Query(eval, select, where, groupBy, aggregates, distinct, mask, orderBy, limit, settings);
+        }
+
+        /// @return True if the query has expressions (computed columns or aggregates given as expressions).
+        public boolean hasExpressions() {
+            return !eval.isEmpty() || aggregates.stream().anyMatch(aggregate -> aggregate.expression() != null);
         }
 
         /// A query without computed columns.
@@ -512,7 +540,7 @@ public final class TableEngine {
                      final boolean mask,
                      final List<Order> orderBy,
                      final Integer limit) {
-            this(List.of(), select, where, groupBy, aggregates, distinct, mask, orderBy, limit);
+            this(List.of(), select, where, groupBy, aggregates, distinct, mask, orderBy, limit, null);
         }
     }
 
@@ -676,7 +704,9 @@ public final class TableEngine {
 
     /// @return The rows, with the computed columns added to each: each worked out in turn, so one can use those
     /// before it.
-    private static RowSource withEvals(final RowSource source, final List<Eval> evals) throws IOException {
+    private static RowSource withEvals(final RowSource source,
+                                       final List<Eval> evals,
+                                       final DateTimeSettings dateTimeSettings) throws IOException {
         if (evals.isEmpty()) {
             return source;
         }
@@ -691,7 +721,7 @@ public final class TableEngine {
                 throw new WorkspaceException("There is already a column '" + name + "'. Name the computed column "
                                              + "something else.");
             }
-            final TableExpression expression = TableExpression.compile(eval.expression(), header);
+            final TableExpression expression = TableExpression.compile(eval.expression(), header, dateTimeSettings);
             if (expression.isAggregate()) {
                 throw new ExpressionException("The computed column '" + name + "' uses an aggregate (e.g. sum or "
                                              + "count), which works over groups of rows: give it in aggregates, "

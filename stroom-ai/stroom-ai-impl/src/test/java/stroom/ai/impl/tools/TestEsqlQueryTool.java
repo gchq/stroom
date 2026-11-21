@@ -101,6 +101,21 @@ class TestEsqlQueryTool {
     }
 
     @Test
+    void aConditionsTimeOnADateFieldIsInTheZoneGiven() {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", GROUPED, "timeZone", "+11:00",
+                    "where", List.of(Map.of("field", "EventTime", "condition", "GREATER_THAN_OR_EQUAL_TO",
+                                    "value", "2026-11-21T02:00:00"),
+                            Map.of("field", "UserId", "value", "2026-11-21T02:00:00")))));
+
+            assertThat(request(world).filter().getChildren()).extracting(item -> ((ExpressionTerm) item).getValue())
+                    // A text field's value that looks like a time is left as it is.
+                    .containsExactly("2026-11-21T02:00:00+11:00", "2026-11-21T02:00:00");
+        }
+    }
+
+    @Test
     void theTimeRangeAndTheRowsTimesAreInTheZoneGiven() {
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(result(

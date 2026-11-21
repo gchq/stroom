@@ -55,6 +55,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * {@code table} - filters, groups, aggregates and sorts a table in the workspace (an attached table, or a CSV or
@@ -249,16 +251,19 @@ class TableTool extends AbstractWorkspaceTool {
         }
         final WorkspacePath path = pathArg(request, PATH_ARG);
         refuseUnlessATable(path);
+        // Its expressions' date functions (now(), day(), parseDate, formatDate) work in the call's zone.
+        final ToolTimeZone zone = timeZone(request, context);
         // Arguments in a shape that can't be read are refused here, before the query is run, so they don't count
         // as failures of the query towards the fallback (seen: aggregates given as a JSON string in two parallel
         // calls, the second refusal coming with an unasked-for summary of a column).
-        final Query query = query(args, () -> columns(sessionWorkspace(context), path));
+        final Query query = query(args, () -> columns(sessionWorkspace(context), path))
+                .withDateTimeSettings(zone.dateTimeSettings(System.currentTimeMillis()));
         final WorkspacePath out = outArg(request);
         final Map<?, ?> join = joinArg(args.get(JOIN_ARG));
         try {
             return ToolResult.text(join == null
-                    ? run(context, path, query, out)
-                    : runJoined(context, path, join, query, out));
+                    ? run(context, path, query, out, zone)
+                    : runJoined(context, path, join, query, out, zone));
         } catch (final ExpressionException e) {
             // The model fixes its expression from the message; a column's summary wouldn't help.
             throw e;
@@ -391,7 +396,8 @@ class TableTool extends AbstractWorkspaceTool {
     private String run(final ToolCallContext context,
                        final WorkspacePath path,
                        final Query query,
-                       final WorkspacePath out) {
+                       final WorkspacePath out,
+                       final ToolTimeZone zone) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final Result result = TableEngine.run(workspace.localFile(path), Format.forPath(path), query);
         // A snapshot of a table's results may hold only some of the rows its search found, which the answer must say.
@@ -400,7 +406,8 @@ class TableTool extends AbstractWorkspaceTool {
                                + CurrentResultsTool.coverage(workspace, path, result.rowsRead())
                                        .map(coverage -> " " + coverage)
                                        .orElse("")
-                               + esqlNote(workspace.sourceDocUuid(path), query, result.rowsRead());
+                               + esqlNote(workspace.sourceDocUuid(path), query, result.rowsRead())
+                               + zoneNote(query, zone);
         if (out != null) {
             writeTable(workspace, out, result, workspace.sourceDocUuid(path));
             return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"
@@ -410,12 +417,33 @@ class TableTool extends AbstractWorkspaceTool {
                 limits(context).getMaxLinesPerRead());
     }
 
+    /// @param query The query.
+    /// @param zone  The call's zone, which its expressions' date rounding and points work in.
+    /// @return What the result says of the zone: nothing for a query without expressions, whose cells are as the
+    /// table holds them; else e.g. " Its expressions' date rounding (floorDay, ceilHour...) and day() are in
+    /// Australia/Canberra (+11:00).", what formatDate and parseDate work in if it calls them, and the zone's note.
+    static String zoneNote(final Query query, final ToolTimeZone zone) {
+        if (!query.hasExpressions()) {
+            return "";
+        }
+        final String expressions = Stream.concat(query.eval().stream().map(Eval::expression),
+                        query.aggregates().stream().map(Aggregate::expression))
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" "));
+        return " Its expressions' date rounding (floorDay, ceilHour...) and day() are in " + zone.label() + "."
+               + zone.formatDateNote(expressions)
+               + (zone.note() == null
+                ? ""
+                : " " + zone.note());
+    }
+
     // Joins the other table to this one, then runs the query on the joined rows.
     private String runJoined(final ToolCallContext context,
                              final WorkspacePath path,
                              final Map<?, ?> join,
                              final Query query,
-                             final WorkspacePath out) {
+                             final WorkspacePath out,
+                             final ToolTimeZone zone) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final String rightName = string(join.get(PATH_ARG));
         if (rightName == null) {
@@ -438,7 +466,7 @@ class TableTool extends AbstractWorkspaceTool {
                     : workspace.sourceDocUuid(right);
             final String summary = joinSummary(path, right, spec, joined) + " " + result.rowsMatched() + " of "
                                    + result.rowsRead() + " joined rows matched; the result has "
-                                   + result.rows().size() + " row(s).";
+                                   + result.rows().size() + " row(s)." + zoneNote(query, zone);
             if (out != null) {
                 writeTable(workspace, out, result, source);
                 return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"

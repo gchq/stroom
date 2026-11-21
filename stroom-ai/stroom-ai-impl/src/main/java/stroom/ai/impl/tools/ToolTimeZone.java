@@ -50,6 +50,8 @@ public record ToolTimeZone(ZoneId zone, Source source, String note) {
     private static final DateTimeFormatter ISO_SECONDS = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private static final DateTimeFormatter IN_ZONE = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN, Locale.ROOT);
     // A time as Stroom writes a date field's value in UTC, e.g. 2026-11-20T14:00:00.000Z.
+    // A call of Stroom's formatDate or parseDate, which work in UTC unless given a zone.
+    private static final Pattern FORMAT_OR_PARSE_DATE = Pattern.compile("(?i)\\b(?:formatDate|parseDate)\\s*\\(");
     private static final Pattern STROOM_UTC_TIME = Pattern.compile(
             "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z");
 
@@ -102,6 +104,19 @@ public record ToolTimeZone(ZoneId zone, Source source, String note) {
         return note == null
                 ? said
                 : said + " " + note;
+    }
+
+    /// @param expressions A query's or a table call's expressions, as written.
+    /// @return What a result says when they call Stroom's formatDate or parseDate in a zone other than UTC: that
+    /// those work in UTC unless given a zone (unlike `day()` or `floorDay`, which work in the query's), e.g.
+    /// " formatDate and parseDate work in UTC unless given a zone, e.g. formatDate(EventTime, 'HH:mm',
+    /// 'Australia/Canberra')."; else nothing.
+    public String formatDateNote(final String expressions) {
+        if (isUtc() || expressions == null || !FORMAT_OR_PARSE_DATE.matcher(expressions).find()) {
+            return "";
+        }
+        return " formatDate and parseDate work in UTC unless given a zone, e.g. formatDate(EventTime, 'HH:mm', '"
+               + id() + "').";
     }
 
     /// @return The zone as a JSON result gives it: `time_zone` (its id), `utc_offset` (now), `time_zone_source`,

@@ -96,6 +96,19 @@ public final class TableExpression {
     /// @throws ExpressionException if it can't be read, names a column the table doesn't have or a function that
     ///                            doesn't exist or isn't available here.
     public static TableExpression compile(final String text, final List<String> header) {
+        return compile(text, header, null);
+    }
+
+    /// @param text             The expression.
+    /// @param header           The table's columns.
+    /// @param dateTimeSettings What its date functions work in (the time zone of `now()`, `day()`, `parseDate`
+    ///                         and `formatDate`), or null for UTC.
+    /// @return The expression, ready to work out.
+    /// @throws ExpressionException if it can't be read, names a column the table doesn't have or a function that
+    ///                            doesn't exist or isn't available here.
+    public static TableExpression compile(final String text,
+                                          final List<String> header,
+                                          final DateTimeSettings dateTimeSettings) {
         if (text == null || text.isBlank()) {
             throw new ExpressionException("Give an expression.");
         }
@@ -105,7 +118,8 @@ public final class TableExpression {
         final FieldIndex fieldIndex = new FieldIndex();
         final Expression expression;
         try {
-            expression = new ExpressionParser(new ParamFactory(new HashMap<>())).parse(CONTEXT, fieldIndex, text);
+            expression = new ExpressionParser(new ParamFactory(new HashMap<>()))
+                    .parse(context(dateTimeSettings), fieldIndex, text);
         } catch (final RuntimeException | ParseException e) {
             throw new ExpressionException("The expression '" + text + "' can't be read: " + e.getMessage()
                                          + suggestion(e.getMessage()) + infixHint(text));
@@ -123,6 +137,15 @@ public final class TableExpression {
             columns[pos] = column(fieldIndex.getField(pos), header, text);
         }
         return new TableExpression(text, expression, columns);
+    }
+
+    // The context of an expression whose date functions work in the settings' zone; UTC without settings.
+    private static ExpressionContext context(final DateTimeSettings dateTimeSettings) {
+        return dateTimeSettings == null
+                ? CONTEXT
+                : new ExpressionContext(MAX_STRING_LENGTH, dateTimeSettings,
+                        (map, key, effectiveTimeMs) -> ValErr.create("getState isn't available here"),
+                        (model, systemPrompt, message) -> ValErr.create("askAi isn't available here"));
     }
 
     /// Checks an expression for a dashboard table's column, with the parser the table tool's eval uses. Unlike

@@ -450,7 +450,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             final String profile = TableProfiler.profile(reader, out.path());
             final long rows = MarkdownTables.countRows(workspace.localFile(out));
             return "Ran the query. The results are in " + out + ". " + written.zone().stated()
-                   + datePointsNote(written.datePoints())
+                   + datePointsNote(written.datePoints()) + written.zone().formatDateNote(given)
                    + limitNote(limited, maxRows, rows)
                    + (warnings.isEmpty()
                     ? ""
