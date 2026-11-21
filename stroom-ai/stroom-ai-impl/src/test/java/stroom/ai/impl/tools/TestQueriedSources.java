@@ -18,6 +18,9 @@ package stroom.ai.impl.tools;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// The join line the joins hint gives for two data sources a session queried apart: their names quoted as StroomQL
@@ -54,5 +57,21 @@ class TestQueriedSources {
         assertThat(QueriedSources.joinLine("Staff activity", "9889f8e1-72da-4b8c-addc-2368bfc625f1")).isNull();
         assertThat(QueriedSources.joinLine("9889F8E1-72DA-4B8C-ADDC-2368BFC625F1", "HR")).isNull();
         assertThat(QueriedSources.joinLine("Say \"hi\"", "HR")).isNull();
+    }
+
+    @Test
+    void aDataSourceGivenByUuidIsNamedFromItsResult() {
+        final String uuid = "e5fc4ae6-69ad-4dd4-b9a7-42d61a6e454a";
+        assertThat(QueriedSources.named(uuid, Map.of("index", Map.of("uuid", uuid, "name", "Staff activity"))))
+                .isEqualTo("Staff activity");
+        assertThat(QueriedSources.named(uuid, Map.of("data_source", Map.of("uuid", uuid, "name", "HR"))))
+                .isEqualTo("HR");
+        // A name as given stays; a uuid the result doesn't name, or names another document for, stays a uuid.
+        assertThat(QueriedSources.named("web", Map.of("index", Map.of("uuid", uuid, "name", "Staff activity"))))
+                .isEqualTo("web");
+        assertThat(QueriedSources.named(uuid, Map.of("rows", List.of()))).isEqualTo(uuid);
+        assertThat(QueriedSources.named(uuid, null)).isEqualTo(uuid);
+        assertThat(QueriedSources.named(uuid, Map.of("index", Map.of("uuid", "other", "name", "X"))))
+                .isEqualTo(uuid);
     }
 }

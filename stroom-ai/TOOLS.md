@@ -1224,7 +1224,9 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
   to run in, eval case 72) (`get_instructions guide=joins` in the chat; `join_hint` inside a JSON result), once for
   each pair of sources. The join line (`QueriedSources.joinLine`) quotes both names and makes the alias from the
   joined name (its initials, or one word cut to 8 letters, never a StroomQL keyword); the keys stay placeholders,
-  and the join lines are left out when either source was given by uuid (decided by the user, 2026-11-21: one fact, not steps).
+  and a source given by uuid is named from its result's `index` or `data_source` (`QueriedSources.named`), so the
+  same data source given both ways counts once; the join lines are left out only when a uuid's result names no
+  document (decided by the user, 2026-11-21: one fact, not steps; name for a uuid, 2026-11-21).
 * **Notes**: the time limit is the session's query time limit (`stroom.ai.workspace.queryTimeLimit`, default 2
   minutes), not the tool time limit. The search is always destroyed when the call ends (`AgentSearches.destroy`),
   including on a timeout, so it never runs on after the call.

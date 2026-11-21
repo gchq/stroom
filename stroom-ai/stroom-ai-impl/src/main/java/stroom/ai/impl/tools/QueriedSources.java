@@ -77,6 +77,28 @@ final class QueriedSources {
                 : value.strip();
     }
 
+    /// The data source a query read, by name: as given, or, when it was given by uuid, the name its result gives
+    /// (esql_query's and search_events' `index`, e.g. `{"index": {"uuid": "...", "name": "Staff activity"}}`), so
+    /// the join line can name it and the same data source given both ways counts once.
+    ///
+    /// @param source The data source as given.
+    /// @param result The call's result as a JSON object, or null if it isn't one.
+    /// @return Its name, or the source as given when it is no uuid or the result doesn't name it.
+    static String named(final String source, final Map<String, Object> result) {
+        if (source == null || result == null || !UUID.matcher(source.strip()).matches()) {
+            return source;
+        }
+        for (final String key : List.of("index", "data_source")) {
+            if (result.get(key) instanceof final Map<?, ?> doc
+                && source.strip().equalsIgnoreCase(String.valueOf(doc.get("uuid")))
+                && doc.get("name") instanceof final String name
+                && !name.isBlank()) {
+                return name.strip();
+            }
+        }
+        return source;
+    }
+
     /// Records a successful query of a data source.
     ///
     /// @param run    The agent run it is in (a chat's question), or null outside one.

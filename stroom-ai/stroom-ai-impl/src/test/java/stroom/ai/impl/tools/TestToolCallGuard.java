@@ -401,6 +401,38 @@ class TestToolCallGuard {
     }
 
     @Test
+    void aDataSourceGivenByUuidIsNamedInTheJoinsHintFromItsResult() {
+        // esql_query and search_events are often given an index's uuid: the join line needs its name, which the
+        // result gives, and the same index named once and given by uuid once is one data source.
+        final String uuid = "e5fc4ae6-69ad-4dd4-b9a7-42d61a6e454a";
+        final StroomTool stroomQl = tool("run_stroomql", ObjectSchema.builder()
+                .addStringProperty("query", "The query.")
+                .build(), call -> ToolResult.text("Ran the query."));
+        final StroomTool esql = tool("esql_query", ObjectSchema.builder()
+                .addStringProperty("index", "The index.")
+                .build(), call -> ToolResult.text("{\"index\":{\"type\":\"ElasticIndex\",\"uuid\":\"" + uuid
+                                                  + "\",\"name\":\"Staff activity\"},\"rows\":[]}"));
+        final ToolCallContext mcp = ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "s3",
+                new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "Claude Code"))).build();
+
+        read(stroomQl, query("from \\\"Staff activity\\\" select UserId"), mcp);
+        final ToolResult sameIndexByUuid = read(esql, "{\"index\":\"" + uuid + "\"}", mcp);
+        final ToolResult hr = read(stroomQl, query("from HR select Username"), mcp);
+
+        assertThat(JsonUtil.readValue(sameIndexByUuid.text(), Map.class)).doesNotContainKey("join_hint");
+        assertThat(hr.text()).contains("from \"Staff activity\" join \"HR\" as hr on <key> = hr.<key>")
+                .doesNotContain(uuid);
+        final ToolCallContext other = ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "s4",
+                new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "Claude Code"))).build();
+        read(stroomQl, query("from HR select Username"), other);
+        assertThat(JsonUtil.readValue(read(esql, "{\"index\":\"" + uuid + "\"}", other).text(), Map.class)
+                .get("join_hint"))
+                .asString()
+                .contains("(HR)? run_stroomql can join them in one query: from \"HR\" join \"Staff activity\" as "
+                          + "sa on <key> = sa.<key>");
+    }
+
+    @Test
     void theJoinsHintIsForTheChatsCurrentQuestionOrTheMcpSessionsRecentQueries() {
         final StroomTool stroomQl = tool("run_stroomql", ObjectSchema.builder()
                 .addStringProperty("query", "The query.")

@@ -198,7 +198,7 @@ public class ToolCallGuard {
             final ToolResult repeated = sameReads >= SAME_READ_LIMIT
                     ? withRepeatNote(result, sameReadNote(sameReads, context))
                     : result;
-            noted = withJoinHint(repeated, joinHint(failures, read.call(), context));
+            noted = withJoinHint(repeated, joinHint(failures, read.call(), context, result));
         } else {
             final String note = failed(failures, name, digest, failure, advice);
             noted = note == null
@@ -245,8 +245,12 @@ public class ToolCallGuard {
     }
 
     // The joins hint for a successful query of a data source other than ones queried a little before, or null.
-    private String joinHint(final SessionFailures failures, final ToolCall call, final ToolCallContext context) {
-        final String source = QueriedSources.source(call.name(), arguments(call.arguments()));
+    private String joinHint(final SessionFailures failures,
+                            final ToolCall call,
+                            final ToolCallContext context,
+                            final ToolResult result) {
+        final String source = QueriedSources.named(QueriedSources.source(call.name(), arguments(call.arguments())),
+                jsonObject(result.text()));
         if (source == null) {
             return null;
         }
