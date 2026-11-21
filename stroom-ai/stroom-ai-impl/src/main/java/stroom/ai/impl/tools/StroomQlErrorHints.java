@@ -25,7 +25,8 @@ import java.util.Set;
 
 /// Hints for a StroomQL query Stroom refused, for SQL habits StroomQL doesn't share: a clause after select (StroomQL
 /// puts every clause but show before it; Sonnet wrote where after select in eval case 72), order by (StroomQL's is
-/// sort by), and a join line after another clause (join lines go straight after from). Stroom's parser names only
+/// sort by), a join line after another clause (join lines go straight after from), and between with one value
+/// (Sonnet wrote `between "a,b"` in cases 72 and 73). Stroom's parser names only
 /// the token it stopped at, e.g. "Unexpected token GROUP after SELECT", "Syntax exception, expected AS" or
 /// "Unexpected token JOIN after WHERE" (seen with Haiku in eval cases 71 to 73, and Sonnet in 71). The query is
 /// read with Stroom's own tokeniser, so text in quotes never counts, and only the query's own clauses do, not a
@@ -36,6 +37,8 @@ final class StroomQlErrorHints {
                                        + "where, eval, window, filter, sort by, group by, having, limit, select, show.";
     static final String ORDER_BY = " StroomQL uses sort by, not order by.";
     static final String JOIN_AFTER_FROM = " Join lines go straight after from.";
+    static final String BETWEEN_AND = " between takes two values joined by and, e.g. EventTime between "
+                                      + "\"2026-01-05T00:00:00Z\" and \"2026-01-12T00:00:00Z\".";
 
     // The clauses that go before select (join lines have a hint of their own).
     private static final Set<TokenType> BEFORE_SELECT = Set.of(TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW,
@@ -66,6 +69,9 @@ final class StroomQlErrorHints {
         boolean clauseAfterSelect = false;
         boolean orderBy = false;
         boolean joinLate = false;
+        // A between whose and hasn't come yet, and whether one never had it before the next clause.
+        boolean betweenOpen = false;
+        boolean betweenWithoutAnd = false;
         TokenType lastClause = null;
         int depth = 0;
         for (int i = 0; i < tokens.size(); i++) {
@@ -86,6 +92,14 @@ final class StroomQlErrorHints {
                 if (TokenType.isKeyword(type) && !INSIDE_A_CLAUSE.contains(type)) {
                     lastClause = type;
                 }
+                if (TokenType.BETWEEN.equals(type)) {
+                    betweenOpen = true;
+                } else if (TokenType.AND.equals(type) || TokenType.BETWEEN_AND.equals(type)) {
+                    betweenOpen = false;
+                } else if (betweenOpen && TokenType.isKeyword(type) && !INSIDE_A_CLAUSE.contains(type)) {
+                    betweenWithoutAnd = true;
+                    betweenOpen = false;
+                }
                 if (isOrderBy(tokens, i)) {
                     orderBy = true;
                 }
@@ -97,6 +111,8 @@ final class StroomQlErrorHints {
                 ? ORDER_BY
                 : "") + (joinLate
                 ? JOIN_AFTER_FROM
+                : "") + (betweenWithoutAnd || betweenOpen
+                ? BETWEEN_AND
                 : "");
     }
 

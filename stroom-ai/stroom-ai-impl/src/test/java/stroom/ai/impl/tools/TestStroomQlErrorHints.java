@@ -58,6 +58,20 @@ class TestStroomQlErrorHints {
     }
 
     @Test
+    void aBetweenWithoutAndIsNamed() {
+        // Sonnet wrote between "a,b" in eval cases 72 and 73, and Stroom said only "Expected between and".
+        assertThat(StroomQlErrorHints.of("from E where EventTime between \"2026-01-05T00:00:00Z,2026-01-12T00:00:00Z\" "
+                                         + "select UserId"))
+                .isEqualTo(StroomQlErrorHints.BETWEEN_AND);
+        assertThat(StroomQlErrorHints.BETWEEN_AND)
+                .isEqualTo(" between takes two values joined by and, e.g. EventTime between \"2026-01-05T00:00:00Z\" "
+                           + "and \"2026-01-12T00:00:00Z\".");
+        assertThat(StroomQlErrorHints.of("from E where EventTime between day() - 1d and day() select UserId"))
+                .isEmpty();
+        assertThat(StroomQlErrorHints.of("from E where Name = \"between\" select UserId")).isEmpty();
+    }
+
+    @Test
     void theHintsFollowTheErrorAsASentence() {
         assertThat(StroomQlErrorHints.appendTo("Unexpected token GROUP after SELECT", "from E select a group by a"))
                 .isEqualTo("Unexpected token GROUP after SELECT." + StroomQlErrorHints.CLAUSE_ORDER);
