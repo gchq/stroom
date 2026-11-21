@@ -97,6 +97,25 @@ class TestSessionWorkspace {
     }
 
     @Test
+    void aCallThatEndsWithoutWritingFreesItsPathForTheNextCall() {
+        final ChatWorkspace chatWorkspace = workspaceWith(ConcurrentHashMap.newKeySet());
+        final int chatId = CHAT_IDS.incrementAndGet();
+        final SessionWorkspace failed = new SessionWorkspace(chatWorkspace, chatId);
+        final WorkspacePath first = failed.newFile("/outputs/queries/query", ".md", NOW);
+        // Another call's path, held while it runs.
+        final SessionWorkspace running = new SessionWorkspace(chatWorkspace, chatId);
+        final WorkspacePath second = running.newFile("/outputs/queries/query", ".md", NOW);
+
+        failed.releaseHolds();
+
+        // The failed call's path is free again; the running call's is still held.
+        assertThat(new SessionWorkspace(chatWorkspace, chatId).newFile("/outputs/queries/query", ".md", NOW))
+                .isEqualTo(first);
+        assertThat(new SessionWorkspace(chatWorkspace, chatId).newFile("/outputs/queries/query", ".md", NOW))
+                .isNotEqualTo(second);
+    }
+
+    @Test
     void anotherChatMayUseTheSameName() {
         final ChatWorkspace chatWorkspace = workspaceWith(Set.of());
 

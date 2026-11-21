@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
@@ -136,6 +137,27 @@ class TestRunStroomQlTool {
                 .isEqualTo(" In its conditions day() = 2026-11-21T00:00:00+11:00, week() = "
                            + "2026-11-16T00:00:00+11:00.");
         assertThat(RunStroomQlTool.datePointsNote(List.of())).isEmpty();
+    }
+
+    @Test
+    void aRefusedCallFreesThePathItHeldForItsResults() {
+        final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(workspace.limits()).thenReturn(new AiWorkspaceConfig());
+        Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+        Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(ELASTIC));
+        query(ExpressionOperator.builder().addTerm("tags", Condition.IS_NOT_NULL, null).build());
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> stroomQlSources,
+                () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
+        final SessionWorkspace sessionWorkspace = Mockito.spy(new SessionWorkspace(workspace, 1));
+
+        final String result = tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
+                        "{\"query\": \"from web where tags is not null select tags\"}"),
+                ToolCallContext.builder(ToolSession.chat(1)).workspace(sessionWorkspace).build()).text();
+
+        assertThat(result).startsWith("Error: ");
+        Mockito.verify(sessionWorkspace).newFile("/outputs/queries/query", ".md");
+        Mockito.verify(sessionWorkspace).releaseHolds();
     }
 
     @Test

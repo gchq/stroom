@@ -19,7 +19,6 @@ package stroom.ai.impl.workspace;
 import stroom.ai.impl.workspace.ChatWorkspace.Entry;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -41,14 +40,14 @@ public final class SessionWorkspace {
 
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     private static final int MAX_NAME_TRIES = 1000;
-    // A hold not released by a write (the call failed first) is dropped after this.
-    private static final Duration STALE_HOLD = Duration.ofHours(1);
     // The paths held by calls for files they are about to write, by chat, for every session on this node: each call
     // has its own SessionWorkspace, so the holds are shared between them. The value is when the path was held.
     private static final ConcurrentHashMap<Hold, Instant> HELD = new ConcurrentHashMap<>();
 
     private final ChatWorkspace workspace;
     private final int chatId;
+    // The paths this call holds, released when it writes them or when it ends.
+    private final Set<WorkspacePath> holds = ConcurrentHashMap.newKeySet();
     // The files written through this, in the order first written, less any since deleted.
     private final Set<WorkspacePath> written = Collections.synchronizedSet(new LinkedHashSet<>());
 
@@ -62,7 +61,8 @@ public final class SessionWorkspace {
     /// A new file's path for a tool's output, named by the time: `<prefix>-<yyyyMMdd-HHmmss><extension>`, or with
     /// `-2`, `-3` and so on before the extension when a file is already at that path in this chat's workspace, or
     /// another call has the path for a file it is about to write. The path is held for this call until it writes a
-    /// file there, so calls made at once, in the same second, each get their own path.
+    /// file there or ends ([#releaseHolds()]), so calls made at once, in the same second, each get their own path,
+    /// and a call that fails first leaves no gap in the names.
     ///
     /// @param prefix    The path up to the time, e.g. `/outputs/queries/query`.
     /// @param extension The extension, with its dot, e.g. `.md`.
@@ -74,7 +74,6 @@ public final class SessionWorkspace {
     // As newFile(prefix, extension), at a given time.
     WorkspacePath newFile(final String prefix, final String extension, final Instant now) {
         final String base = prefix + "-" + FILE_TIME.format(now.atZone(ZoneOffset.UTC));
-        releaseStaleHolds(now);
         for (int n = 1; n <= MAX_NAME_TRIES; n++) {
             final WorkspacePath path = WorkspacePath.parse(n == 1
                     ? base + extension
@@ -233,19 +232,26 @@ public final class SessionWorkspace {
         workspace.checkWritable(path);
     }
 
-    // Holds a path for this chat; false if another call holds it.
+    /// Releases the paths this call holds for files it hasn't written ([#newFile]), as the call ends, whether it
+    /// failed or wrote nothing there, so the next call may have them.
+    public void releaseHolds() {
+        List.copyOf(holds).forEach(this::release);
+    }
+
+    // Holds a path for this call; false if another call holds it.
     private boolean hold(final WorkspacePath path, final Instant now) {
-        return HELD.putIfAbsent(new Hold(chatId, path.path()), now) == null;
+        if (HELD.putIfAbsent(new Hold(chatId, path.path()), now) == null) {
+            holds.add(path);
+            return true;
+        }
+        return false;
     }
 
-    // Releases this chat's hold on a path, if there is one.
+    // Releases this call's hold on a path, if it has one (never another call's).
     private void release(final WorkspacePath path) {
-        HELD.remove(new Hold(chatId, path.path()));
-    }
-
-    private static void releaseStaleHolds(final Instant now) {
-        final Instant stale = now.minus(STALE_HOLD);
-        HELD.values().removeIf(heldAt -> heldAt.isBefore(stale));
+        if (holds.remove(path)) {
+            HELD.remove(new Hold(chatId, path.path()));
+        }
     }
 
 

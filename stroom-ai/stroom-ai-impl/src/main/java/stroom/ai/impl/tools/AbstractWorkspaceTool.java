@@ -61,6 +61,9 @@ public abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
         } catch (final WorkspaceException | ToolSessionException e) {
             // ToolSessionException: the tool needs the chat (e.g. the tab the user attached), and this isn't one.
             return ToolResult.text("Error: " + e.getMessage());
+        } finally {
+            // A path held for a file the call didn't write (it failed first, or had nothing to write) is free again.
+            sessionWorkspace(context).releaseHolds();
         }
     }
 
