@@ -122,6 +122,30 @@ class TestE2eSequenceQueryLucene extends AbstractE2eTest {
     }
 
     @Test
+    void anIsoTimeWithoutMillisecondsIsReadAndTheEndOfTheRangeIsExclusive() {
+        // Seen in eval case 73: timeFrom 2026-01-05T00:00:00Z, written unquoted, failed with "Unexpected token".
+        final List<Event> events = new ArrayList<>();
+        events.add(new Event("10:00:00", "alice", "Logon"));
+        events.add(new Event("10:01:00", "alice", "Export"));
+        // At the end of the range, so left out.
+        events.add(new Event("10:03:00", "alice", "Export"));
+        final String index = lucene("E2E sequence times", events);
+        final Map<String, Object> args = logonThenExport(index, "Logon");
+        args.put("timeFrom", "2026-01-05T00:00:00Z");
+        args.put("timeTo", "2026-01-05T10:03:00Z");
+
+        final Map<String, Object> result = json("sequence_query", args);
+        dump("sequence_query Lucene times", result);
+
+        assertThat(result).containsEntry("engine", "StroomQL").containsEntry("sequence_count", 1);
+        assertThat((String) result.get("query")).contains("a.EventTime >= \"2026-01-05T00:00:00Z\"")
+                .contains("e.EventTime < \"2026-01-05T10:03:00Z\"");
+        final List<String> columns = (List<String>) result.get("columns");
+        assertThat((List<List<String>>) result.get("rows")).extracting(row -> row.get(columns.indexOf("s2_time")))
+                .containsExactly("2026-01-05T10:01:00.000Z");
+    }
+
+    @Test
     void aFirstStepWithTooManyEventsPerUserIsRefusedBeforeTheJoinRuns() {
         final List<Event> events = new ArrayList<>();
         // One user's 10,001 probes: more than 10,000 first-step events, and more than 100 for each user.

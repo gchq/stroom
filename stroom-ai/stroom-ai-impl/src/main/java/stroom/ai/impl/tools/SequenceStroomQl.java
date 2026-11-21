@@ -59,8 +59,12 @@ final class SequenceStroomQl {
     // The count query groups every event into one group of this name.
     private static final String ALL = "Sequence";
     private static final Pattern PLAIN_NAME = Pattern.compile("[A-Za-z_@][A-Za-z0-9_@.]*");
-    // A time as StroomQL takes it unquoted: an ISO 8601 time, or a date expression such as day() - 7d.
+    // A time as given: an ISO 8601 time, or a date expression such as day() - 7d.
     private static final Pattern TIME_VALUE = Pattern.compile("[A-Za-z0-9:.+\\-() ]+");
+    // An ISO 8601 date or date and time, with or without seconds, fractions and an offset (Z or +11:00). StroomQL
+    // reads it unquoted only in some forms (2026-01-05T00:00:00Z fails), so it is always quoted.
+    private static final Pattern ISO_TIME = Pattern.compile(
+            "\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}(:?\\d{2})?)?)?");
 
     private SequenceStroomQl() {
         // Static only.
@@ -263,16 +267,20 @@ final class SequenceStroomQl {
         if (NullSafe.isNonBlankString(timeRange.getFrom())) {
             terms.add(name + " >= " + time(timeRange.getFrom()));
         }
+        // The end is exclusive, as a run_stroomql time range's is.
         if (NullSafe.isNonBlankString(timeRange.getTo())) {
-            terms.add(name + " <= " + time(timeRange.getTo()));
+            terms.add(name + " < " + time(timeRange.getTo()));
         }
         return terms;
     }
 
-    // A time as given (ISO 8601, or a date expression such as day() - 7d), unquoted, as StroomQL reads a date
-    // expression's tokens; anything else is refused.
+    // A time as given: an ISO 8601 time quoted, a date expression such as day() - 7d unquoted, as StroomQL reads a
+    // date expression's tokens; anything else is refused.
     private static String time(final String given) {
         final String time = given.strip();
+        if (ISO_TIME.matcher(time).matches()) {
+            return string(time);
+        }
         if (!TIME_VALUE.matcher(time).matches()) {
             throw new WorkspaceException("The time '" + given + "' can't be read: give an ISO 8601 time (e.g. "
                                          + "2026-01-01T00:00:00.000Z) or a date expression such as day() - 7d.");

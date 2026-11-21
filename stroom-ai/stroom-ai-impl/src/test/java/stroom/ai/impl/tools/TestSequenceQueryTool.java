@@ -965,8 +965,8 @@ class TestSequenceQueryTool {
                 join "Lucene events" as e on a.UserId = e.UserId within 5m after a.EventTime
                 where a.Action = "Logon"
                   and e.Action = "Export"
-                  and a.EventTime >= 2026-01-01T00:00:00.000Z
-                  and e.EventTime >= 2026-01-01T00:00:00.000Z
+                  and a.EventTime >= "2026-01-01T00:00:00.000Z"
+                  and e.EventTime >= "2026-01-01T00:00:00.000Z"
                 limit 1000
                 select a.UserId as "UserId", a.EventTime as "Step 1 time", a.StreamId as "Step 1 StreamId", \
                 a.EventId as "Step 1 EventId", e.EventTime as "Step 2 time", e.StreamId as "Step 2 StreamId", \

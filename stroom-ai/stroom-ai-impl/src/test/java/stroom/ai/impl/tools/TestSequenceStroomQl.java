@@ -125,10 +125,10 @@ class TestSequenceStroomQl {
                   and not (a.Level in ("debug", "trace"))
                   and (a.Kind = "x" or a.Kind = "y")
                   and e.Action = "Export"
-                  and a.EventTime >= 2026-01-01T00:00:00.000Z
-                  and a.EventTime <= day() - 1d
-                  and e.EventTime >= 2026-01-01T00:00:00.000Z
-                  and e.EventTime <= day() - 1d""")
+                  and a.EventTime >= "2026-01-01T00:00:00.000Z"
+                  and a.EventTime < day() - 1d
+                  and e.EventTime >= "2026-01-01T00:00:00.000Z"
+                  and e.EventTime < day() - 1d""")
                 .contains("join \"File events\" as e on a.UserId = e.UserId within 90s after a.EventTime")
                 .contains("a.Action as \"Step 1 Action\"");
         final SearchRequest parsed = parse(query);
@@ -138,6 +138,45 @@ class TestSequenceStroomQl {
                 .contains("*copy*", "srv*", "10, 20", "1024", "2026-01-01T00:00:00.000Z", "day()-1d");
         assertThat(terms).filteredOn(term -> term.getCondition() == Condition.BETWEEN).singleElement()
                 .extracting(ExpressionTerm::getField).isEqualTo("Bytes");
+    }
+
+    @Test
+    void isoTimesAreQuotedAndDateExpressionsAreNot() {
+        // Seen in eval case 73: an ISO time without milliseconds, unquoted, failed in Stroom with "Unexpected token".
+        final List<String> isoTimes = List.of("2026-01-05T00:00:00Z", "2026-01-05T00:00:00.000Z",
+                "2026-01-05T00:00:00+11:00", "2026-01-05T00:00:00.123+11:00", "2026-01-05T00:00Z", "2026-01-05");
+        for (final String isoTime : isoTimes) {
+            final String query = SequenceStroomQl.anchorCount(side(EVENTS, step(List.of(equalsTo("Action",
+                    "Logon")))), new TimeRange(null, isoTime, isoTime));
+
+            assertThat(query).contains("EventTime >= \"" + isoTime + "\"")
+                    .contains("EventTime < \"" + isoTime + "\"");
+            assertThat(terms(parse(query).getQuery().getExpression())).extracting(ExpressionTerm::getValue)
+                    .contains(isoTime);
+        }
+        final List<String> expressions = List.of("day() + 2h", "now() - 7d", "day()");
+        for (final String expression : expressions) {
+            final String query = SequenceStroomQl.join(side(EVENTS, step(List.of())), side(FILES, step(List.of())),
+                    Duration.ofMinutes(5), new TimeRange(null, expression, expression), 10);
+
+            assertThat(query).contains("a.EventTime >= " + expression)
+                    .contains("e.EventTime < " + expression);
+            parse(query);
+        }
+    }
+
+    @Test
+    void theEndOfTheTimeRangeIsExclusive() {
+        final String query = SequenceStroomQl.join(side(EVENTS, step(List.of())), side(FILES, step(List.of())),
+                Duration.ofMinutes(5), new TimeRange(null, "2026-01-05T00:00:00Z", "2026-01-12T00:00:00Z"), 10);
+
+        assertThat(query).contains("a.EventTime < \"2026-01-12T00:00:00Z\"")
+                .contains("e.EventTime < \"2026-01-12T00:00:00Z\"")
+                .doesNotContain("<=");
+        assertThat(terms(parse(query).getQuery().getExpression()))
+                .filteredOn(term -> "2026-01-12T00:00:00Z".equals(term.getValue()))
+                .extracting(ExpressionTerm::getCondition)
+                .containsOnly(Condition.LESS_THAN);
     }
 
     @Test
@@ -176,7 +215,7 @@ class TestSequenceStroomQl {
         assertThat(one).isEqualTo("""
                 from "Events"
                 where Tier = "A100"
-                  and EventTime >= 2026-01-01T00:00:00.000Z
+                  and EventTime >= "2026-01-01T00:00:00.000Z"
                 eval Sequence = 'all'
                 group by Sequence
                 select Sequence, count() as Anchors, countUnique(UserId) as Keys""");
