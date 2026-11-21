@@ -768,6 +768,24 @@ class TestEvalScore {
     }
 
     @Test
+    void whenNoCallMatchesTheProblemIsSaidOfTheClosestCall() {
+        // The second call holds one of the two rows; the last, a check afterwards, none.
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of("carol", "x.com", 1))),
+                        "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 201)),
+                        "total_groups", 12), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(12))), "ok")));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's rows row 2 was [bob, github.com, 201]");
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("no esql_query call matched; the closest, call 2 of 3, held 1 of 2 expected rows");
+    }
+
+    @Test
     void theTotalGroupsMayComeFromAnotherAcceptedCall() {
         // The answer call cut short without a total; a later call over the same groups gives it.
         final EvalScore score = new EvalScore("q");

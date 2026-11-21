@@ -859,17 +859,18 @@ final class EvalScore {
     ///
     /// * `expected.tools_used`: each tool was called at least once;
     /// * a call of `expected.answer.tool` (default `esql_query`) was accepted (how many were refused is noted);
-    /// * `expected.answer.rows`: an accepted call's rows hold the expected rows (in order when `ordered: true`,
-    ///   else in any order), and no others. The first accepted call that matches is the answer, whatever calls came
-    ///   after it (an agent may answer from one call, then run others to check or add to it), and which call it was
-    ///   is noted; if none matches, the problem is said of the last accepted call. A row matches when each expected
-    ///   value is one of its values, whatever the columns are called: a string exactly, or as the start of a date
+    /// * `expected.answer.rows`: an accepted call's rows hold the expected rows (in order when `ordered: true`, else in
+    ///   any order), and no others. The first accepted call that matches is the answer, whatever calls came after it
+    ///   (an agent may answer from one call, then run others to check or add to it), and which call it was is noted; if
+    ///   none matches, the problem is said of the closest accepted call (the one holding the most expected rows, in any
+    ///   order; the latest of those as close), and the other checks are of it. A row matches when each expected value
+    ///   is one of its values, whatever the columns are called: a string exactly, or as the start of a date
     ///   (`2026-01-02` matches `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it,
     ///   default 0.001), or 0.05 for one given with decimals, as an answer rounded to one place is. The rows must be
     ///   the query's: a value worked out in the agent's reply (a conversion, a cut-off) doesn't count. A call's rows
     ///   may also be those of the latest `table` call on the file it wrote (its result's `out`, the table call's
-    ///   `path`), as when Sonnet kept a join's logon rows with table in case 72; the answer call is still the call
-    ///   that wrote the file, so the other checks are of its query;
+    ///   `path`), as when Sonnet kept a join's logon rows with table in case 72; the answer call is still the call that
+    ///   wrote the file, so the other checks are of its query;
     /// * `expected.answer.total_groups`: the `total_groups` of any accepted call that gives it, or the answer
     ///   call's row count, if it wasn't cut short;
     /// * `expected.answer.uncapped`: when true, the answer call's rows weren't cut at the most a query may return
@@ -929,6 +930,20 @@ final class EvalScore {
                 note("answer rows from " + (fromTable
                         ? "a " + TABLE_TOOL + " call on "
                         : "") + tool + " call " + (tries.indexOf(matching) + 1) + " of " + tries.size());
+            } else {
+                // The call that came closest is the one whose problem is said, the latest of those as close.
+                ToolUse closest = answerCall;
+                int most = -1;
+                for (final ToolUse call : accepted) {
+                    final int held = held(wanted, call, tabled, tolerance);
+                    if (held >= most) {
+                        most = held;
+                        closest = call;
+                    }
+                }
+                answerCall = closest;
+                note("no " + tool + " call matched; the closest, call " + (tries.indexOf(closest) + 1) + " of "
+                     + tries.size() + ", held " + most + " of " + wanted.size() + " expected rows");
             }
             final String mismatch = rowsMismatch(wanted, answerCall, tabled, ordered, tolerance);
             questionCheck("answer rows", mismatch == null, "the answer's rows " + mismatch);
@@ -1016,6 +1031,38 @@ final class EvalScore {
             }
         }
         return given;
+    }
+
+    // How many of the wanted rows a call's rows (or those of the latest table call on the file it wrote) hold, in any
+    // order: the more of the two.
+    private static int held(final List<List<Object>> wanted,
+                            final ToolUse call,
+                            final Map<ToolUse, ToolUse> tabled,
+                            final double tolerance) {
+        final int own = held(wanted, rows(call.result().get("rows")), tolerance);
+        final ToolUse table = tabled.get(call);
+        return table == null
+                ? own
+                : Math.max(own, held(wanted, rows(table.result().get("rows")), tolerance));
+    }
+
+    // How many of the wanted rows the rows hold, in any order, each row matched once.
+    private static int held(final List<List<Object>> wanted,
+                            final List<List<Object>> rows,
+                            final double tolerance) {
+        final List<List<Object>> left = new ArrayList<>(rows);
+        int held = 0;
+        for (final List<Object> want : wanted) {
+            final List<Object> found = left.stream()
+                    .filter(row -> rowMatches(want, row, tolerance))
+                    .findFirst()
+                    .orElse(null);
+            if (found != null) {
+                left.remove(found);
+                held++;
+            }
+        }
+        return held;
     }
 
     // Why the rows don't hold what is wanted, or null if they do.
