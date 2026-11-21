@@ -17,6 +17,8 @@
 package stroom.mcp.impl.e2e;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -30,13 +32,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The question cases' tables of records ([EvalCases#table]), and the answers the join and sequence questions (cases
-/// 71 to 74) expect, worked out here by brute force over the same records: every pair of events tried, no query.
+/// 71 to 75) expect, worked out here by brute force over the same records: every pair of events tried, no query.
 @SuppressWarnings("unchecked")
 class TestEvalCases {
 
     private static final Instant WEEK_FROM = Instant.parse("2026-01-05T00:00:00Z");
     private static final Instant WEEK_TO = Instant.parse("2026-01-12T00:00:00Z");
     private static final Duration WINDOW = Duration.ofMinutes(5);
+    private static final String PAST_THE_LIMIT = "75_stroomql_join_exports_past_the_row_limit";
+    // run_stroomql's default row limit (AiWorkspaceConfig).
+    private static final int MAX_QUERY_ROWS = 10_000;
 
     @Test
     void aQuestionsTablesAreItsRecordsWithEachColumnsType() {
@@ -69,8 +74,44 @@ class TestEvalCases {
     }
 
     @Test
-    void theExportsByDepartmentAreTheJoinedWeeksFilesSummed() {
-        final Map<String, Object> evalCase = EvalCases.load("71_stroomql_join_exports_by_department");
+    void aQuestionsRecordsMayBeGeneratedTheSameEachTime() {
+        final Map<String, Object> evalCase = EvalCases.load(PAST_THE_LIMIT);
+        final Map<String, Object> spec = (Map<String, Object>) evalCase.get("lucene_index");
+
+        final EvalCases.QuestionTable events = EvalCases.table(spec);
+        final EvalCases.QuestionTable again = EvalCases.table(spec);
+        final EvalCases.QuestionTable hr = EvalCases.table(((List<Map<String, Object>>) evalCase
+                .get("data_connections")).getFirst());
+
+        assertThat(events.name()).isEqualTo("Staff activity");
+        assertThat(events.timeField()).isEqualTo("EventTime");
+        assertThat(events.records()).hasSize(42_000).isEqualTo(again.records());
+        assertThat(events.records().getFirst().keySet()).containsExactly("EventTime", "UserId", "Action", "Files");
+        assertThat(events.records()).extracting(event -> event.get("Action"))
+                .containsOnly("Logon", "Export", "Logoff");
+        assertThat(hr.records()).hasSize(12_000).first().extracting(record -> record.get("Username"))
+                .isEqualTo("user00001");
+        assertThatThrownBy(() -> EvalQuestionRecords.generate(Map.of("kind", "nothing", "seed", 1, "users", 1)))
+                .hasMessageContaining("No question records generator nothing");
+    }
+
+    @Test
+    void theExportsPastTheLimitAreMoreRowsThanAQueryMayReturnEveryWayButGrouped() {
+        final Map<String, Object> evalCase = EvalCases.load(PAST_THE_LIMIT);
+        final List<Map<String, String>> exports = week(evalCase, event -> "Export".equals(event.get("Action")));
+
+        // A hand join reads more rows than run_stroomql returns (by default 10,000) whichever way it goes: the
+        // week's exports, each user's exports totalled, or HR's users.
+        assertThat(exports).hasSizeGreaterThan(MAX_QUERY_ROWS);
+        assertThat(exports.stream().map(event -> event.get("UserId")).distinct().count())
+                .isGreaterThan(MAX_QUERY_ROWS);
+        assertThat(hr(evalCase)).hasSizeGreaterThan(MAX_QUERY_ROWS);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"71_stroomql_join_exports_by_department", PAST_THE_LIMIT})
+    void theExportsByDepartmentAreTheJoinedWeeksFilesSummed(final String id) {
+        final Map<String, Object> evalCase = EvalCases.load(id);
         final Map<String, Map<String, String>> hr = hr(evalCase);
         final Map<String, Long> files = new LinkedHashMap<>();
         for (final Map<String, String> event : week(evalCase, event -> "Export".equals(event.get("Action")))) {
@@ -83,7 +124,7 @@ class TestEvalCases {
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .forEach(entry -> rows.add(List.of(entry.getKey(), entry.getValue().intValue())));
 
-        assertThat(rows).isEqualTo(expectedRows(evalCase));
+        assertThat(rows).as(id).isEqualTo(expectedRows(evalCase));
     }
 
     @Test

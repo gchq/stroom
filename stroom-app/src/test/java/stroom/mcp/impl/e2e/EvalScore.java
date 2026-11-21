@@ -872,6 +872,8 @@ final class EvalScore {
     ///   that wrote the file, so the other checks are of its query;
     /// * `expected.answer.total_groups`: the `total_groups` of any accepted call that gives it, or the answer
     ///   call's row count, if it wasn't cut short;
+    /// * `expected.answer.uncapped`: when true, the answer call's rows weren't cut at the most a query may return
+    ///   (its result's `capped`), as rows a hand join reads are (how many accepted calls were is noted);
     /// * `expected.answer.query`: a regular expression (any case) found in the answer call's `query`, e.g. that it
     ///   joins in Stroom rather than naming values read by an earlier call, a join done by hand;
     /// * `expected.answer.result`: values the answer call's result holds, by key, e.g. a sequence's `engine`.
@@ -904,6 +906,10 @@ final class EvalScore {
         if (accepted.isEmpty()) {
             return;
         }
+        final long capped = accepted.stream().filter(EvalScore::capped).count();
+        if (capped > 0) {
+            note(tool + ": " + capped + " of " + accepted.size() + " accepted call(s) cut at the row limit");
+        }
         ToolUse answerCall = accepted.getLast();
         final List<List<Object>> wanted = rows(answer.get("rows"));
         if (!wanted.isEmpty()) {
@@ -927,6 +933,10 @@ final class EvalScore {
             final String mismatch = rowsMismatch(wanted, answerCall, tabled, ordered, tolerance);
             questionCheck("answer rows", mismatch == null, "the answer's rows " + mismatch);
         }
+        if (Boolean.TRUE.equals(answer.get("uncapped"))) {
+            questionCheck("answer uncapped", !capped(answerCall), "the answer's rows were cut at the row limit, so "
+                                                                  + "they are not all the data's");
+        }
         if (answer.get("total_groups") instanceof final Number total) {
             final List<Object> given = totalGroups(answerCall, accepted);
             final Object said = given.size() > 1
@@ -948,6 +958,11 @@ final class EvalScore {
             questionCheck("answer " + value.getKey(), String.valueOf(value.getValue()).equals(String.valueOf(given)),
                     "the answer's " + value.getKey() + " was " + given + ", expected " + value.getValue());
         }
+    }
+
+    // Whether a call's rows were cut at the most a query may return (its result's `capped`).
+    private static boolean capped(final ToolUse call) {
+        return Boolean.TRUE.equals(call.result().get("capped"));
     }
 
     // Why neither a call's rows nor those of the latest table call on the file it wrote hold what is wanted (said of

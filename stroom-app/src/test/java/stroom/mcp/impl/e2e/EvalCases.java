@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /// The evaluation set (the `eval` resources, a YAML file a case): each case's sample, request, reference solution
 /// and what its Events must hold.
@@ -63,7 +64,7 @@ final class EvalCases {
             "67_jsonl_flat_and_nested_keys", "68_csv_documented_codes_many", "69_json_array_membership_alerts",
             "70_jsonl_uncatalogued_records_proposals", "71_stroomql_join_exports_by_department",
             "72_stroomql_leavers_still_logging_on", "73_sequence_logon_then_export_lucene",
-            "74_sequence_logon_then_export_elastic");
+            "74_sequence_logon_then_export_elastic", "75_stroomql_join_exports_past_the_row_limit");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");
@@ -256,7 +257,8 @@ final class EvalCases {
 
     /// The question's data that isn't the proxy uploads ([EvalProxyUploads]): a table of records the case gives
     /// (`events` of its `lucene_index` or `elastic_index`, `csv` of a `data_connections` entry), with each column's
-    /// type (`fields`, or a data connection's `columns`): `text`, `long` or `date` (ISO 8601).
+    /// type (`fields`, or a data connection's `columns`): `text`, `long` or `date` (ISO 8601). Records too many to
+    /// keep in a resource are made by a generator instead (`generate`, [EvalQuestionRecords#generate]).
     ///
     /// @param spec The `lucene_index`, `elastic_index` or `data_connections` entry.
     /// @return Its records, or null for an `elastic_index` of the proxy uploads, which has no `events`.
@@ -264,20 +266,23 @@ final class EvalCases {
         final Object resource = spec.containsKey("events")
                 ? spec.get("events")
                 : spec.get("csv");
-        if (resource == null) {
+        final Object generate = spec.get("generate");
+        if (resource == null && generate == null) {
             return null;
         }
         final Map<String, String> types = new LinkedHashMap<>();
         ((Map<String, Object>) spec.getOrDefault("fields", spec.getOrDefault("columns", Map.of())))
                 .forEach((column, type) -> types.put(column, String.valueOf(type)));
-        final List<Map<String, String>> records = records(String.valueOf(resource));
+        final List<Map<String, String>> records = resource != null
+                ? records(String.valueOf(resource))
+                : EvalQuestionRecords.generate((Map<String, Object>) generate);
         for (final String column : records.isEmpty()
                 ? List.<String>of()
                 : records.getFirst().keySet()) {
             final String type = types.get(column);
             if (type == null || !QUESTION_TYPES.contains(type)) {
-                throw new IllegalStateException(resource + ": column " + column + " has type " + type
-                                                + ", not one of " + QUESTION_TYPES);
+                throw new IllegalStateException(Objects.requireNonNullElse(resource, generate) + ": column " + column
+                                                + " has type " + type + ", not one of " + QUESTION_TYPES);
             }
         }
         return new QuestionTable(String.valueOf(spec.get("name")), types, records);

@@ -153,6 +153,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final String EVENT_ID = "EventId";
     // Where run_stroomql says it wrote its results.
     private static final Pattern STROOMQL_RESULTS = Pattern.compile("The results are in (\\S+\\.md)\\.");
+    // run_stroomql's note when its rows reached the most a query may return (RunStroomQlTool.limitNote).
+    private static final Pattern STROOMQL_CAPPED = Pattern.compile("It returned \\d+ rows, the most allowed");
 
     // The forms the user answered in the case's own build: each its message and the answer's content.
     private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
@@ -340,9 +342,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     }
 
     /// A tool call of a question's answer, as [EvalScore#scoreQuestion] reads it: its JSON; for run_stroomql, which
-    /// answers with the path of the table it wrote, the query run, that path (`out`) and that table's `columns` and
-    /// `rows`; for table, which answers in a Markdown table, the `path` it read and that table's `columns` and
-    /// `rows`.
+    /// answers with the path of the table it wrote, the query run, that path (`out`), whether its rows were cut at
+    /// the most a query may return (`capped`) and that table's `columns` and `rows`; for table, which answers in a
+    /// Markdown table, the `path` it read and that table's `columns` and `rows`.
     ///
     /// @param tool      The tool.
     /// @param arguments Its arguments.
@@ -357,6 +359,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if ("run_stroomql".equals(tool)) {
             final Map<String, Object> json = new LinkedHashMap<>(stroomQlTable(text));
             json.put("query", arguments.get("query"));
+            json.put("capped", STROOMQL_CAPPED.matcher(text).find());
             final Matcher matcher = STROOMQL_RESULTS.matcher(text);
             if (matcher.find()) {
                 json.put("out", matcher.group(1));

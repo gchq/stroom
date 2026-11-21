@@ -933,6 +933,32 @@ class TestEvalScore {
     }
 
     @Test
+    void anAnswerFromRowsCutAtTheRowLimitFails() {
+        // Case 75's question: the exports by department, over more rows than a query may return.
+        final Map<String, Object> exports = Map.of("kind", "question", "expected", Map.of("answer", Map.of(
+                "tool", "run_stroomql", "uncapped", true, "rows", List.of(List.of("Engineering", 100)))));
+        final EvalScore.ToolUse capped = new EvalScore.ToolUse("run_stroomql", false, Map.of("query",
+                "from \"Staff activity\" where Action = Export select UserId, Files", "capped", true,
+                "rows", List.of(List.of("user00001", "3"))), "ok");
+
+        final EvalScore byHand = new EvalScore("q");
+        byHand.scoreQuestion(exports, List.of(capped));
+        assertThat(byHand.passed()).isFalse();
+        assertThat(byHand.summary()).contains("the answer's rows were cut at the row limit");
+        assertThat((List<String>) byHand.toMap().get("notes"))
+                .contains("run_stroomql: 1 of 1 accepted call(s) cut at the row limit");
+
+        // A capped call on the way to a whole answer is noted, not failed.
+        final EvalScore joined = new EvalScore("q");
+        joined.scoreQuestion(exports, List.of(capped, new EvalScore.ToolUse("run_stroomql", false, Map.of("query",
+                "from \"Staff activity\" join HR as hr on UserId = hr.Username", "capped", false,
+                "rows", List.of(List.of("Engineering", "100"))), "ok")));
+        assertThat(joined.passed()).as(joined.summary()).isTrue();
+        assertThat((List<String>) joined.toMap().get("notes"))
+                .contains("run_stroomql: 1 of 2 accepted call(s) cut at the row limit");
+    }
+
+    @Test
     void aTableResultIsReadAsItsMarkdownTable() {
         final Map<String, Object> table = AbstractEvalTest.markdownTable("""
                 2 of 11 rows matched; the result has 2 row(s).

@@ -1,0 +1,50 @@
+name: Files exported by department over more rows than a query returns, a Lucene index joined to HR (a question)
+kind: question
+capabilities: [stroomql, join, data_connection, aggregation, row_limit]
+# Case 71's question on 42,000 activity events of 12,000 users (made at setup, EvalQuestionRecords) and an HR Data
+# Connection of the 12,000 users, each in one of six departments. Every user exported in the week, so the week's
+# exports (15,000 or so), each user's export total (12,000 users) and HR's users are each more rows than run_stroomql
+# returns (by default 10,000): a join done by hand reads rows cut short and gives totals too small. Only the join in
+# Stroom (or a bracketed query) counts every row. The traps: the join done by hand; the week left out (the events
+# span three weeks); the events counted rather than their files summed. Worked out by brute force (TestEvalCases).
+lucene_index:
+  name: Staff activity
+  generate: {kind: staff_activity, users: 12000, events: 42000, seed: 75, from: '2025-12-29', span: 21,
+             export_week: '2026-01-05'}
+  fields: {EventTime: date, UserId: text, Action: text, Files: long}
+data_connections:
+  - name: HR
+    generate: {kind: hr_users, users: 12000, seed: 76,
+               departments: {Engineering: 30, Sales: 22, Operations: 18, Finance: 13, Marketing: 10, Legal: 7}}
+    columns: {Username: text, Department: text, Status: text}
+request: >
+  Which departments exported the most files in the week starting Monday 5 January 2026? The "Staff activity" index
+  has our staff's activity and the "HR" Data Connection says which department each user is in. Give each department
+  with the total number of files it exported that week, most first.
+user_knows: >
+  UserId in "Staff activity" is the Username in "HR". An export is Action Export, and Files is how many files it
+  exported. The week is 5 January 2026 00:00 UTC up to, not including, 12 January 2026. The totals must be exact.
+expected:
+  tools_used: [run_stroomql]
+  answer:
+    tool: run_stroomql
+    ordered: true
+    uncapped: true
+    query: '\bjoin\b|\(\s*from\b'
+    rows:
+      - [Engineering, 46287]
+      - [Sales, 33865]
+      - [Operations, 28426]
+      - [Finance, 20464]
+      - [Marketing, 16211]
+      - [Legal, 10813]
+reference:
+  run_stroomql:
+    query: >-
+      from "Staff activity"
+      join "HR" as hr on UserId = hr.Username
+      where Action = Export and EventTime >= 2026-01-05T00:00:00.000Z and EventTime < 2026-01-12T00:00:00.000Z
+      eval TotalFiles = sum(Files)
+      group by hr.Department
+      sort by TotalFiles desc
+      select hr.Department, TotalFiles
