@@ -84,7 +84,8 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   A proposal bringing one of these is refused. An element the schema requires of the
   action element (Update's After, Send's Source and Destination, the object View, Create or Delete is of,
   Authenticate's Action and user) that nothing is placed at is `unplaced`: the set isn't put to the user until it is.
-  Most of a type's fields kept as Data is only worth a look (`typing`).
+  Most of a type's fields kept as Data is only worth a look (`typing`); its `could_type` lists those fields and the
+  schema's elements below the action element: place those that have a home there, from what you know of the source.
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no

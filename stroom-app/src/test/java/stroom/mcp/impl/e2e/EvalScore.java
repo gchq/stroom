@@ -65,20 +65,26 @@ import javax.xml.parsers.ParserConfigurationException;
 ///   the TypeId matches whole; `action`, the action element (`Send`, or `Move|Delete`); `text`, a text the event holds
 ///   anywhere (an element's text or a Data Value, e.g. the vendor's operation code, whatever element holds it);
 ///   `data`, Data fields and their values, as `type_ids.same`'s selectors are. An entry may give its own
-///   `data_share_at_most`, for the events it selects. An entry selecting no event is a problem.
+///   `typed_at_least`, the fewest distinct typed leaf paths below EventDetail the events it selects hold between them
+///   (an element outside Data with its own text, e.g. `Move/Source/Folder/Path`; Data, TypeId, Description,
+///   Classification and Purpose not counted), and its own `data_share_at_most`, for the events it selects. An entry
+///   selecting no event is a problem.
 ///   ```yaml
 ///   typed:
 ///     - select: {text: MoveToDeletedItems}
 ///       paths: [Move/Source/Folder/Path|Delete/Folder/Path, Move/Destination/Folder/Path]
-///       data_share_at_most: 0.5
+///       typed_at_least: 4
 ///   ```
+///   `typed_at_least` replaced the eval cases' Data-share caps (2026-11-22): a build keeping every field it doesn't
+///   place as Data (the user's standing decision: nothing lost) can't meet a share cap however much it types, as
+///   the references met it only by dropping most fields; how many elements are typed is what a build controls.
 /// - `expected.data_share_at_most`: a number from 0 to 1, at most the share of the EventDetail values (element
 ///   texts and attribute values, its TypeId, Description, Classification and Purpose left out) held in Data (Data
 ///   Values, nested Data's too) over every event but the catch-all's Unknown ones.
 ///
 /// Where either is given, the score holds `typed_checks`, the share over those events (`data_share`: its `share`,
-/// the `data` values and all the `values`) and the share by TypeId (`data_shares`), so runs compare even when they
-/// pass.
+/// the `data` values and all the `values`), the share by TypeId (`data_shares`) and the distinct typed leaf paths
+/// by TypeId (`typed_paths`), so runs compare even when they pass.
 @SuppressWarnings("unchecked")
 final class EvalScore {
 
@@ -132,6 +138,8 @@ final class EvalScore {
     // for a case that expects neither typed paths nor a share.
     private Map<String, Object> dataShare;
     private Map<String, Object> dataShares;
+    // The distinct typed leaf paths below EventDetail by TypeId: null as the shares are.
+    private Map<String, Object> typedPaths;
 
     /// @param caseId The case.
     EvalScore(final String caseId) {
@@ -250,11 +258,12 @@ final class EvalScore {
 
     // expected.typed and expected.data_share_at_most: what the events hold in the schema's own elements rather than
     // in Data. Each `typed` entry's `select` picks events ([#selected]); each of its `paths` (below EventDetail,
-    // alternatives a|b, * any one element) must have a value outside Data in at least one of them, and its
+    // alternatives a|b, * any one element) must have a value outside Data in at least one of them, its
+    // `typed_at_least`, if given, is the fewest distinct typed leaf paths they hold between them, and its
     // `data_share_at_most`, if given, caps the share of their EventDetail values held in Data. The top level's
     // `data_share_at_most` caps that share over every event but the catch-all's Unknown ones. The shares, overall
-    // and by TypeId, are kept in the score whenever either is given, so runs compare even when they pass. Whether
-    // every check held.
+    // and by TypeId, and the typed leaf paths by TypeId, are kept in the score whenever either is given, so runs
+    // compare even when they pass. Whether every check held.
     private boolean scoreTyped(final Map<String, Object> expected, final List<Element> read) {
         final List<Map<String, Object>> entries = (List<Map<String, Object>>) expected.getOrDefault("typed",
                 List.of());
@@ -274,6 +283,12 @@ final class EvalScore {
         dataShare = overall.toMap();
         dataShares = new LinkedHashMap<>();
         byTypeId.forEach((typeId, values) -> dataShares.put(typeId, values.toMap()));
+        final Map<String, Set<String>> pathsByTypeId = new TreeMap<>();
+        for (final Element event : catalogued) {
+            pathsByTypeId.computeIfAbsent(typeId(event), ignored -> new TreeSet<>()).addAll(typedLeafPaths(event));
+        }
+        typedPaths = new LinkedHashMap<>();
+        pathsByTypeId.forEach((typeId, paths) -> typedPaths.put(typeId, paths.size()));
         boolean held = true;
         if (most != null) {
             held = shareHeld("data share", overall, share(most), "the events hold");
@@ -296,6 +311,9 @@ final class EvalScore {
                                                                     + ") has a typed EventDetail/" + path
                                                                     + " (Data doesn't count)");
             }
+            if (entry.get("typed_at_least") != null) {
+                held = typedPathsHeld(selector, ids, selected, least(entry.get("typed_at_least"))) && held;
+            }
             if (entry.get("data_share_at_most") != null) {
                 final DetailValues values = selected.stream()
                         .map(EvalScore::detailValues)
@@ -314,6 +332,58 @@ final class EvalScore {
                                                      + "in Data (" + values.data() + " of " + values.all()
                                                      + "), at most " + most + " expected");
         return held;
+    }
+
+    // Whether the selected events hold at least the fewest distinct typed leaf paths between them: a check either
+    // way, a problem if not.
+    private boolean typedPathsHeld(final Map<String, Object> selector,
+                                   final Set<String> ids,
+                                   final List<Element> selected,
+                                   final int least) {
+        final Set<String> paths = new TreeSet<>();
+        selected.forEach(event -> paths.addAll(typedLeafPaths(event)));
+        final boolean held = paths.size() >= least;
+        typedCheck("typed paths " + selector + " at least " + least, held, "the events of " + selector + " (TypeIds "
+                                                                          + ids + ") hold " + paths.size()
+                                                                          + " distinct typed EventDetail leaf paths "
+                                                                          + "(Data doesn't count) " + paths
+                                                                          + ", at least " + least + " expected");
+        return held;
+    }
+
+    // A typed_at_least: a whole number, at least 1.
+    private static int least(final Object given) {
+        if (!(given instanceof final Number number) || number.intValue() < 1
+            || number.doubleValue() != number.intValue()) {
+            throw new IllegalArgumentException("typed_at_least " + given + " is not a whole number of at least 1");
+        }
+        return number.intValue();
+    }
+
+    // The paths below EventDetail of the elements outside Data with their own text (TypeId, Description,
+    // Classification and Purpose left out), e.g. Move/Source/Folder/Path.
+    private static Set<String> typedLeafPaths(final Element event) {
+        final Set<String> paths = new TreeSet<>();
+        for (final Element detail : named(event, "EventDetail")) {
+            for (final Element child : children(detail)) {
+                if (!DETAIL_META.contains(child.getLocalName())) {
+                    typedLeafPaths(child, child.getLocalName(), paths);
+                }
+            }
+        }
+        return paths;
+    }
+
+    private static void typedLeafPaths(final Element element, final String path, final Set<String> paths) {
+        if (DATA.equals(element.getLocalName())) {
+            return;
+        }
+        if (!directText(element).isBlank()) {
+            paths.add(path);
+        }
+        for (final Element child : children(element)) {
+            typedLeafPaths(child, path + "/" + child.getLocalName(), paths);
+        }
     }
 
     // A data_share_at_most: a number from 0 to 1.
@@ -1434,6 +1504,7 @@ final class EvalScore {
             map.put("typed_checks", List.copyOf(typedChecks));
             map.put("data_share", dataShare);
             map.put("data_shares", dataShares);
+            map.put("typed_paths", typedPaths);
         }
         map.put("notes", List.copyOf(notes));
         return map;

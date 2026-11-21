@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.catalogue;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.CouldType;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Typing;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.VendorCode;
@@ -65,7 +66,7 @@ import java.util.regex.Pattern;
 ///   of an element placed below it) that nothing the catalogue gives writes, e.g. Update/After, Send/Destination,
 ///   the object View needs: derived from the schema, element by element.
 /// * **Typing**: how many fields its records' events type and keep as Data; a high share kept as Data is only worth
-///   a look.
+///   a look, and the agent is told what it could type ([CatalogueCheckResult.CouldType], 2026-11-22).
 ///
 /// The values are converted here as [stroom.ai.impl.tools.generation.XPathText#transformExpression] writes each
 /// transform in the XSLT.
@@ -83,6 +84,12 @@ final class PlacementCheck {
     private static final int VALUES_READ = 2_000;
     private static final int SHOWN = 3;
     private static final int LEAVES_SHOWN = 8;
+    // What could be typed: the most Data fields listed, the longest example, the most groups of the schema's
+    // elements, and the most elements in one.
+    private static final int COULD_TYPE_FIELDS = 12;
+    private static final int EXAMPLE_LENGTH = 30;
+    private static final int HOME_GROUPS = 6;
+    private static final int HOMES_SHOWN = 14;
     private static final List<String> PREFERRED_LEAVES = List.of("Id", "Name", "EmailAddress", "Path", "Title",
             "HostName", "IPAddress");
     private static final Pattern DATE_TIME = Pattern.compile(
@@ -196,7 +203,7 @@ final class PlacementCheck {
         written.addAll(givenElsewhere(type, detail));
         written.addAll(drafted(detail, recognised));
         unplaced.addAll(required(label, detail, written));
-        return new Checked(problems, unplaced, notChecked, typing(type, recognised, fill));
+        return new Checked(problems, unplaced, notChecked, typing(type, detail, recognised, fill, written));
     }
 
     // The action element, as the translation writes it; null for none, Unknown, or one the schema hasn't.
@@ -825,7 +832,11 @@ final class PlacementCheck {
 
     // How many of the fields its records hold are typed and kept as Data, as the translation will write them: those
     // its placements, who acted and its outcome read are typed; those common to every event aren't counted.
-    private Typing typing(final EventType type, final BitSet recognised, final Map<String, String> fill) {
+    private Typing typing(final EventType type,
+                          final String detail,
+                          final BitSet recognised,
+                          final Map<String, String> fill,
+                          final List<String> written) {
         if (recognised.cardinality() == 0) {
             return null;
         }
@@ -857,7 +868,123 @@ final class PlacementCheck {
                 ? "most of its fields are kept as Data (" + data.size() + " of " + total + "; typed: "
                   + typedCount + "): placements would type those the schema has homes for"
                 : null;
-        return new Typing(typedCount, data.size(), fill, note);
+        final CouldType couldType = note == null
+                ? null
+                : new CouldType(dataFields(data, codes, recognised), homes(detail, written));
+        return new Typing(typedCount, data.size(), fill, note, couldType);
+    }
+
+    // The fields kept as Data, but the vendor codes recognising the type (Data keeps those by design): most filled
+    // first, each with its fill rate and a short example value.
+    private List<String> dataFields(final Set<String> data, final Set<String> codes, final BitSet recognised) {
+        final int records = recognised.cardinality();
+        final Map<String, Integer> fills = new LinkedHashMap<>();
+        data.stream()
+                .filter(field -> !codes.contains(field))
+                .forEach(field -> fills.put(field, filled(field, recognised)));
+        final List<String> out = new ArrayList<>();
+        fills.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(COULD_TYPE_FIELDS)
+                .forEach(entry -> {
+                    final List<String> example = values(entry.getKey(), recognised, false);
+                    out.add(entry.getKey() + " (" + entry.getValue() + "/" + records + (example.isEmpty()
+                            ? ""
+                            : ", e.g. " + ToolText.repr(shortened(example.getFirst()))) + ")");
+                });
+        if (fills.size() > COULD_TYPE_FIELDS) {
+            out.add("… " + (fills.size() - COULD_TYPE_FIELDS) + " more");
+        }
+        return out;
+    }
+
+    private static String shortened(final String value) {
+        final String one = SPACES.matcher(value.strip()).replaceAll(" ");
+        return one.length() <= EXAMPLE_LENGTH
+                ? one
+                : one.substring(0, EXAMPLE_LENGTH) + "…";
+    }
+
+    // Where the schema has homes below the action element: the elements under each object the event type writes
+    // (the element holding a leaf written, e.g. Source/Folder for Source/Folder/Id), then the action element's other
+    // children (an element holding others with its own, the objects of a collection by name only).
+    private List<String> homes(final String detail, final List<String> written) {
+        final String at = EVENT_DETAIL + detail;
+        final Element action = schema.resolve(at).getLast().decl();
+        final Set<String> objects = new LinkedHashSet<>();
+        final Set<String> tops = new HashSet<>();
+        for (final String path : written) {
+            final String[] steps = path.split("/");
+            if (path.isBlank() || DATA.equals(steps[0])) {
+                continue;
+            }
+            tops.add(steps[0]);
+            final List<Child> chain;
+            try {
+                chain = schema.resolve(at + "/" + path);
+            } catch (final IllegalArgumentException e) {
+                continue;
+            }
+            final int holding = schema.isLeaf(chain.getLast().decl())
+                    ? steps.length - 1
+                    : steps.length;
+            if (holding > 0) {
+                objects.add(String.join("/", Arrays.copyOfRange(steps, 0, holding)));
+            }
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String object : objects) {
+            if (out.size() < HOME_GROUPS) {
+                out.add(object + ": " + homesIn(schema.resolve(at + "/" + object).getLast().decl()));
+            }
+        }
+        final List<String> leaves = new ArrayList<>();
+        final List<String> alternatives = new ArrayList<>();
+        for (final Child child : schema.children(action)) {
+            if (DATA.equals(child.name()) || "Meta".equals(child.name()) || tops.contains(child.name())) {
+                continue;
+            }
+            if (schema.isLeaf(child.decl())) {
+                leaves.add(child.name());
+            } else if (schema.isObject(child.decl())) {
+                alternatives.add(child.name());
+            } else if (out.size() < HOME_GROUPS) {
+                out.add(child.name() + ": " + homesIn(child.decl()));
+            }
+        }
+        if (!leaves.isEmpty()) {
+            out.add(detail + ": " + capped(leaves));
+        }
+        if (!alternatives.isEmpty()) {
+            out.add("other objects: " + capped(alternatives));
+        }
+        return out;
+    }
+
+    // An element's children: its leaves by name first, then those holding others, each with the leaf a value most
+    // often goes in.
+    private String homesIn(final Element decl) {
+        final List<String> leaves = new ArrayList<>();
+        final List<String> holding = new ArrayList<>();
+        for (final Child child : schema.children(decl)) {
+            if (DATA.equals(child.name()) || "Meta".equals(child.name())) {
+                continue;
+            }
+            if (schema.isLeaf(child.decl())) {
+                leaves.add(child.name());
+            } else {
+                holding.add(child.name() + example(child.decl()));
+            }
+        }
+        leaves.addAll(holding);
+        return capped(leaves);
+    }
+
+    private static String capped(final List<String> names) {
+        return String.join(", ", names.subList(0, Math.min(HOMES_SHOWN, names.size())))
+               + (names.size() > HOMES_SHOWN
+                ? ", … " + (names.size() - HOMES_SHOWN) + " more"
+                : "");
     }
 
     // A field whose own fields the records hold too (a held document's, an object's): counted by them.

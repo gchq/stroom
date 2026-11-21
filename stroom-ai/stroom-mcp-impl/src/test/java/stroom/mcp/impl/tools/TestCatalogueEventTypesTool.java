@@ -189,6 +189,29 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void anEventTypeKeepingMostOfItsFieldsAsDataTellsTheAgentWhatItCouldTypeAndRefusesNothing() {
+        // Haiku eval run 1, case 56: only what the schema requires placed, and nothing told the agent what more it
+        // could type (added 2026-11-22).
+        Mockito.when(sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", sample().replace("object=rec-99", "object=rec-99 table=orders reason=retention "
+                                                                     + "rows=40 owner=al days=90")), List.of()));
+        final Map<String, Object> checked = propose(List.of(type("Delete-Records", "Delete", "low", "purge")));
+
+        assertThat(checked).containsEntry("recorded", true);
+        final Map<String, Object> typing = map(map(map(checked.get("check")).get("typing")).get("Delete-Records"));
+        assertThat(typing).containsKeys("worth_a_look", "could_type");
+        final Map<String, Object> couldType = map(typing.get("could_type"));
+        assertThat(String.valueOf(couldType.get("data"))).contains("table (1/1, e.g. 'orders')");
+        assertThat(String.valueOf(couldType.get("schema"))).startsWith("Object: ").contains("Outcome: ");
+        assertThat(String.valueOf(checked.get("hint"))).contains("Most fields of Delete-Records are kept as Data",
+                "check.typing.<TypeId>.could_type", "place those fields that have a home in the schema",
+                "leave the rest as Data");
+        // The set summary the user is shown is unchanged.
+        assertThat(checked).containsKey("table");
+        assertThat(String.valueOf(checked.get("table"))).doesNotContain("could_type", "orders");
+    }
+
+    @Test
     void aSetLeavingAnElementTheSchemaRequiresEmptyIsNotPutToTheUserUntilPlaced() {
         propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
                 withKeys(type("Delete-Records", "Delete", "low", "purge"), "placements", List.of())));

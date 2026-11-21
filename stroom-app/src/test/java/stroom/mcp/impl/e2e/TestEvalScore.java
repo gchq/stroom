@@ -761,6 +761,56 @@ class TestEvalScore {
     }
 
     @Test
+    void typedAtLeastCountsTheDistinctTypedLeafPathsTheSelectedEventsHoldBetweenThem() {
+        // Two moves: the first types the source folder's Id and Path and the destination's Path, the second the
+        // destination's Id; Data (named as a typed element too), the TypeId and the Description don't count.
+        final String first = event("", "<TypeId>Move-MailItems</TypeId><Description>Moved</Description><Move><Source>"
+                                       + "<Folder><Id>F1</Id><Path>\\Inbox</Path></Folder></Source><Destination>"
+                                       + "<Folder><Path>\\Deleted Items</Path>" + data("Id", "F2") + "</Folder>"
+                                       + "</Destination>" + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final String second = event("", "<TypeId>Move-MailItems</TypeId><Move><Source><Folder><Id>F1</Id></Folder>"
+                                        + "</Source><Destination><Folder><Id>F2</Id></Folder></Destination>"
+                                        + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate</Id></User></Source>"
+                                      + "<Destination><User><Id>anja</Id></User></Destination>"
+                                      + data("Operation", "Send") + "</Send>");
+
+        final EvalScore enough = new EvalScore("c");
+        enough.scoreEvents(expecting(Map.of("records", 3, "typed", List.of(Map.of("select",
+                Map.of("text", "MoveToDeletedItems"), "paths", List.of(), "typed_at_least", 4)))),
+                List.of(first, second, send), List.of(true, true, true), null);
+
+        assertThat((List<String>) enough.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) enough.toMap().get("typed_checks")).containsExactly(Map.of(
+                "check", "typed paths {text=MoveToDeletedItems} at least 4", "passed", true));
+        // Reported by TypeId, as the shares are.
+        assertThat(enough.toMap().get("typed_paths")).isEqualTo(Map.of("Move-MailItems", 4, "Send-Mail", 2));
+
+        final EvalScore tooFew = new EvalScore("c");
+        tooFew.scoreEvents(expecting(Map.of("records", 3, "typed", List.of(Map.of("select",
+                Map.of("text", "MoveToDeletedItems"), "paths", List.of(), "typed_at_least", 5)))),
+                List.of(first, second, send), List.of(true, true, true), null);
+
+        assertThat(tooFew.stage1()).isFalse();
+        assertThat((List<String>) tooFew.toMap().get("problems")).containsExactly(
+                "the events of {text=MoveToDeletedItems} (TypeIds [Move-MailItems]) hold 4 distinct typed EventDetail "
+                + "leaf paths (Data doesn't count) [Move/Destination/Folder/Id, Move/Destination/Folder/Path, "
+                + "Move/Source/Folder/Id, Move/Source/Folder/Path], at least 5 expected");
+    }
+
+    @Test
+    void typedAtLeastMustBeAWholeNumberOfAtLeastOne() {
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate</Id></User>"
+                                      + "</Source>" + data("Operation", "Send") + "</Send>");
+        for (final Object given : List.of(0, 2.5, "3")) {
+            assertThatThrownBy(() -> new EvalScore("c").scoreEvents(expecting(Map.of("records", 1, "typed",
+                    List.of(Map.of("select", Map.of("text", "Send"), "paths", List.of(), "typed_at_least", given)))),
+                    List.of(send), List.of(true), null))
+                    .hasMessageContaining("typed_at_least " + given + " is not a whole number of at least 1");
+        }
+    }
+
+    @Test
     void case56FailsAChat182StyleTranslationAndPassesOneTypedAsItsReferenceIs() {
         // Test chat 182 (2026-11-21): the Messaging group's events with almost nothing typed, the actor as View/User,
         // the Operation as Data of Update/After/Object, everything else Data; which case 56 passed before it scored
@@ -770,18 +820,20 @@ class TestEvalScore {
         final Map<String, Object> expected = new HashMap<>();
         expected.put("records", 6);
         expected.put("typed", case56.get("typed"));
-        expected.put("data_share_at_most", case56.get("data_share_at_most"));
 
         final EvalScore chat182 = new EvalScore("56");
         chat182.scoreEvents(expecting(expected), chat182Events(), List.of(true, true, true, true, true, true), null);
 
         assertThat(chat182.stage1()).isFalse();
+        // The share is reported, no longer capped (2026-11-22): how many elements are typed is.
         assertThat((Map<String, Object>) chat182.toMap().get("data_share"))
                 .hasEntrySatisfying("share", share -> assertThat((Double) share).isGreaterThan(0.8));
         assertThat((List<Map<String, Object>>) chat182.toMap().get("typed_checks"))
                 .filteredOn(check -> Boolean.FALSE.equals(check.get("passed")))
                 .extracting(check -> String.valueOf(check.get("check")))
-                .contains("data share at most 0.5")
+                .noneMatch(check -> check.startsWith("data share"))
+                .contains("typed paths {text=MailItemsAccessed} at least 4", "typed paths {text=Send} at least 5",
+                        "typed paths {text=TeamMemberAdded} at least 4")
                 .anyMatch(check -> check.startsWith("typed {text=MailItemsAccessed} View/Folder/Path"))
                 .anyMatch(check -> check.startsWith("typed {text=Send} Send/Payload/Email/Subject"))
                 .anyMatch(check -> check.startsWith("typed {text=New-InboxRule} Create/Configuration/Name"))
@@ -797,6 +849,36 @@ class TestEvalScore {
         assertThat(reference.stage1()).isTrue();
         assertThat((Map<String, Object>) reference.toMap().get("data_share"))
                 .hasEntrySatisfying("share", share -> assertThat((Double) share).isLessThan(0.4));
+
+        // Haiku eval run 1 (2026-11-22): only what the schema requires placed, every other field kept as Data;
+        // each event type types too few elements.
+        final EvalScore run1 = new EvalScore("56");
+        run1.scoreEvents(expecting(expected), run1Events(), List.of(true, true, true, true, true, true), null);
+
+        assertThat((List<Map<String, Object>>) run1.toMap().get("typed_checks"))
+                .filteredOn(check -> String.valueOf(check.get("check")).startsWith("typed paths"))
+                .hasSize(6)
+                .allSatisfy(check -> assertThat(check).containsEntry("passed", false));
+    }
+
+    // Case 56's records translated as Haiku's build in eval run 1 translated them (its rules' typed entries).
+    private static List<String> run1Events() {
+        return List.of(
+                event("", "<TypeId>View-MailItems</TypeId><View><Object><Id>5a6f815d</Id></Object>"
+                          + data("Operation", "MailItemsAccessed") + data("FolderPath", "\\Drafts") + "</View>"),
+                event("", "<TypeId>Send-Email</TypeId><Send><Source><User><Id>kate.jones@contoso.example</Id>"
+                          + "</User></Source><Destination><User><Id>anja.michel@contoso.example</Id></User>"
+                          + "</Destination>" + data("Operation", "Send") + data("Subject", "Re: roster") + "</Send>"),
+                event("", "<TypeId>Create-InboxRule</TypeId><Create><Object><Id>357dcfb8</Id></Object>"
+                          + data("Operation", "New-InboxRule") + "</Create>"),
+                event("", "<TypeId>Move-ToDeletedItems</TypeId><Move><Source><Folder><Id>AAMkF0B8</Id></Folder>"
+                          + "</Source><Destination><Folder><Id>AAMkEEEF</Id></Folder></Destination>"
+                          + data("Operation", "MoveToDeletedItems") + data("FolderPath", "\\Inbox") + "</Move>"),
+                event("", "<TypeId>Send-TeamsMessage</TypeId><Send><Source><User><Id>anja.michel@contoso.example</Id>"
+                          + "</User></Source><Destination><User><Id>kate.jones@contoso.example</Id></User>"
+                          + "</Destination>" + data("Operation", "MessageSent") + "</Send>"),
+                event("", "<TypeId>Authorise-TeamMemberAdded</TypeId><Authorise><Action>Modify</Action><Group>"
+                          + "<Id>0b9a8c7d</Id></Group>" + data("Operation", "TeamMemberAdded") + "</Authorise>"));
     }
 
     // Case 56's records translated as test chat 182 translated them.
@@ -855,12 +937,17 @@ class TestEvalScore {
         return List.of(
                 event("", "<TypeId>View-MailItems</TypeId><Description>Mail items were accessed</Description><View>"
                           + "<Folder><Id>AAMk32B9</Id><Path>\\Drafts</Path><Type>Mail folder</Type></Folder>"
+                          + "<Email><Id>&lt;37fd1f4c@contoso.example&gt;</Id></Email><User>"
+                          + "<EmailAddress>li.wei@contoso.example</EmailAddress></User>"
                           + data("Operation", "MailItemsAccessed") + data("MailAccessType", "Sync") + "</View>"),
                 event("", "<TypeId>Send-Mail</TypeId><Description>A message was sent</Description><Send><Source>"
-                          + "<User><EmailAddress>kate.jones@contoso.example</EmailAddress></User></Source>"
+                          + "<User><EmailAddress>kate.jones@contoso.example</EmailAddress></User><Device>"
+                          + "<IPAddress>203.0.113.57</IPAddress></Device></Source>"
                           + "<Destination><User><EmailAddress>anja.michel@contoso.example</EmailAddress></User><User>"
                           + "<EmailAddress>accounts@fabrikam.example</EmailAddress></User></Destination><Payload>"
-                          + "<Email><Id>&lt;f8ce0925@contoso.example&gt;</Id><Subject>Re: roster</Subject>"
+                          + "<Email><Type>Email</Type><Id>&lt;f8ce0925@contoso.example&gt;</Id><From>"
+                          + "<EmailAddress>kate.jones@contoso.example</EmailAddress></From>"
+                          + "<Subject>Re: roster</Subject>"
                           + data("SizeInBytes", "483614") + "</Email></Payload>" + data("Operation", "Send")
                           + "</Send>"),
                 event("", "<TypeId>Create-InboxRule</TypeId><Description>An inbox rule was created</Description>"
@@ -875,7 +962,7 @@ class TestEvalScore {
                 event("", "<TypeId>Send-TeamsMessage</TypeId><Description>A message was posted in Teams</Description>"
                           + "<Send><Source><User><EmailAddress>anja.michel@contoso.example</EmailAddress></User>"
                           + "</Source><Destination><User><EmailAddress>kate.jones@contoso.example</EmailAddress>"
-                          + "</User></Destination><Payload><Chat><Id>6100214</Id></Chat></Payload>"
+                          + "</User></Destination><Payload><Chat><Id>6100214</Id><Room>General</Room></Chat></Payload>"
                           + data("Operation", "MessageSent") + data("team", "Ops") + "</Send>"),
                 event("", "<TypeId>Add-TeamMember</TypeId><Description>A member was added to a team</Description>"
                           + "<Authorise><User><Id>li.wei@contoso.example</Id><Name>Li Wei</Name></User>"

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.catalogue;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.ModelReader;
@@ -247,6 +248,64 @@ class TestPlacementCheck {
     }
 
     @Test
+    void anEventTypeKeepingMostOfItsFieldsAsDataIsToldWhatCouldBeTyped() {
+        // Eval case 56: only what the schema requires placed, the rest kept as Data, and nothing told the agent what
+        // more it could type.
+        final EventType view = type("View-MailItems", "View", "MailItemsAccessed", List.of(
+                placement("Email/Subject", "event.Subject")));
+
+        final Map<String, Object> couldType = couldType(check(view), "View-MailItems");
+        // Small: it goes to the model with every check.
+        assertThat(ToolJson.dumps(couldType).length()).isLessThan(1_000);
+
+        assertThat(strings(couldType.get("data")))
+                .contains("event.MailboxOwnerUPN (1/1, e.g. 'al@acme.com')", "event.ClientIP (1/1, e.g. '10.0.0.9')")
+                // The vendor code recognising it, the field placed and who acted aren't listed.
+                .noneMatch(field -> field.startsWith("event.Operation ") || field.startsWith("event.Subject ")
+                                    || field.startsWith("event.UserId "));
+        assertThat(String.valueOf(couldType.get("schema")))
+                // The object it writes, then the action element's other children.
+                .startsWith("Email: ")
+                .contains("Subject", "Outcome: ", "Success", "other objects: ")
+                .doesNotContain("Data", "Meta");
+    }
+
+    @Test
+    void whatCouldBeTypedIsCapped() {
+        final Map<String, Object> event = new LinkedHashMap<>();
+        event.put("Operation", "FolderBind");
+        event.put("UserId", "jo@acme.com");
+        for (int i = 0; i < 30; i++) {
+            event.put("Field" + i, "a value long enough to be shortened in the example " + i);
+        }
+        final EventType view = type("View-Folder", "View", "FolderBind", List.of());
+        final CatalogueSample sample = CatalogueSample.read(READING, ToolJson.dumps(Map.of("event", event)), null,
+                LocalCheck.JSON_PARSER_CUT, null);
+
+        final Map<String, Object> couldType = couldType(CatalogueCheck.check(catalogue(view), sample, SCHEMA),
+                "View-Folder");
+
+        final List<String> data = strings(couldType.get("data"));
+        assertThat(data).hasSize(13);
+        assertThat(data.getLast()).isEqualTo("… 18 more");
+        assertThat(data.getFirst()).endsWith("…')");
+        assertThat(ToolJson.dumps(couldType).length()).isLessThan(1_500);
+    }
+
+    @Test
+    void anEventTypeMostlyTypedIsNotToldWhatCouldBeTyped() {
+        final EventType send = type("Send-Mail", "Send", "Send", List.of(
+                placement("Source/User/EmailAddress", "event.UserId"),
+                Map.of("path", "Destination/User", "for_each", Map.of("array", "event.Recipients"),
+                        "fields", List.of(Map.of("path", "EmailAddress", "item", true))),
+                placement("Payload/Email/Subject", "event.Subject")));
+
+        final Map<String, Object> typing = typingJson(check(send), "Send-Mail");
+
+        assertThat(typing).doesNotContainKeys("worth_a_look", "could_type");
+    }
+
+    @Test
     void valuesAreTransformedAsTheXsltTransformsThem() {
         assertThat(PlacementCheck.transformed("strip_domain", "ACME\\jo")).isEqualTo("jo");
         assertThat(PlacementCheck.transformed("strip_domain", "jo@acme.com")).isEqualTo("jo");
@@ -405,6 +464,21 @@ class TestPlacementCheck {
             event.put(String.valueOf(keysAndValues[i]), keysAndValues[i + 1]);
         }
         return ToolJson.dumps(Map.of("event", event));
+    }
+
+    private static Map<String, Object> typingJson(final CatalogueCheckResult check, final String typeId) {
+        final Map<String, Object> typing = JsonValues.mapOrEmpty(check.toJson().get("typing"));
+        return JsonValues.mapOrEmpty(typing.get(typeId));
+    }
+
+    private static Map<String, Object> couldType(final CatalogueCheckResult check, final String typeId) {
+        final Map<String, Object> couldType = JsonValues.mapOrEmpty(typingJson(check, typeId).get("could_type"));
+        assertThat(couldType).as("could_type of " + typeId).isNotEmpty();
+        return couldType;
+    }
+
+    private static List<String> strings(final Object value) {
+        return JsonValues.strings(value);
     }
 
     private static CatalogueCheckResult check(final EventType... types) {

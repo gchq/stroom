@@ -3785,7 +3785,13 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
 * `typing` (2026-11-21): per event type in the sample, the fields typed and kept as Data (those every event shares
   aside), each placed field's fill rate in its records (`fill`), and `worth_a_look` when at least 5 and 80% of its
   fields are Data: said among the set's worth-a-look reasons, never refused (compact: only types with placements or
-  a note).
+  a note). With the note, `could_type` (2026-11-22) tells the agent, not the user, what it could type: `data`, the
+  fields kept as Data (the vendor's code aside), most filled first, at most 12, each with its fill rate and a short
+  example value; `schema`, the elements below the action element, those under each object the type writes first
+  (e.g. `Email: Type, Id, Name, Subject, ...`), then the action element's other children (`Outcome: Success, ...`),
+  the objects of a collection by name. The hint asks for placements of those fields that have a home in the schema,
+  from what the agent knows of the source, the rest left as Data; nothing is refused, and no field is matched to an
+  element by its name.
 * `order`: the catalogue's.
 
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and

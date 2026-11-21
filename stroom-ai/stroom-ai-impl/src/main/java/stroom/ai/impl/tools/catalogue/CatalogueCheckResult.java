@@ -443,11 +443,23 @@ public record CatalogueCheckResult(Map<String, Count> counts,
     /// @param data  The fields kept as Data.
     /// @param fill  Each placed field's fill rate in the type's records, e.g. `7 of 9`.
     /// @param note  Why it is worth a look (most of its fields kept as Data), or null: never a refusal.
-    public record Typing(int typed, int data, Map<String, String> fill, String note) {
+    /// @param couldType What the agent could type, given with the note (null without it): told to the agent in the
+    ///                  check's result, never to the user.
+    public record Typing(int typed, int data, Map<String, String> fill, String note, CouldType couldType) {
 
         /// Copies the fill rates, in order.
         public Typing {
             fill = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(fill, Map.of())));
+        }
+
+        /// A typing with nothing said of what could be typed.
+        ///
+        /// @param typed The fields typed.
+        /// @param data  The fields kept as Data.
+        /// @param fill  Each placed field's fill rate.
+        /// @param note  Why it is worth a look, or null.
+        public Typing(final int typed, final int data, final Map<String, String> fill, final String note) {
+            this(typed, data, fill, note, null);
         }
 
         Map<String, Object> toJson() {
@@ -460,6 +472,38 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             if (note != null) {
                 out.put("worth_a_look", note);
             }
+            if (couldType != null) {
+                out.put("could_type", couldType.toJson());
+            }
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What an event type that keeps most of its fields as Data could type (added 2026-11-22, eval case 56: the
+    /// agent placed only what the schema requires, and nothing told it what more it could type): the fields it
+    /// keeps as Data, and where the schema has homes below its action element. Generic: no field is matched to an
+    /// element by its name; the agent places what it knows of the source.
+    ///
+    /// @param data  The fields kept as Data, most filled first (capped), each with its fill rate and an example
+    ///              value, e.g. `event.Subject (3/3, e.g. 'Report 1')`.
+    /// @param homes The schema's elements below the action element: those under the objects the event type writes,
+    ///              then its action element's other children (capped), e.g. `Email: Id, Subject, From/EmailAddress`.
+    public record CouldType(List<String> data, List<String> homes) {
+
+        /// Copies the lists.
+        public CouldType {
+            data = List.copyOf(Objects.requireNonNullElse(data, List.of()));
+            homes = List.copyOf(Objects.requireNonNullElse(homes, List.of()));
+        }
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("data", data);
+            out.put("schema", String.join("; ", homes));
             return out;
         }
     }

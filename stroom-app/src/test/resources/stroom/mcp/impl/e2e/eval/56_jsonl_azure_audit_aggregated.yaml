@@ -55,11 +55,13 @@ expected:
   # events with almost nothing typed, View-MailItems 2 typed values to 17 in Data, Update-InboxRule 0 to 24, which
   # every check above passed). Each event type selected by its Operation, the vendor's code wherever it is held; each
   # path's alternatives the schema-correct homes a design may choose.
-  data_share_at_most: 0.5
+  # typed_at_least (2026-11-22, in place of Data-share caps a build keeping every field it doesn't place as Data
+  # can't meet): the fewest distinct typed leaf paths the event type's events hold, set above Haiku eval run 1's
+  # build (only what the schema requires placed) and below the reference's.
   typed:
     - select: {text: MailItemsAccessed}
       paths: ["View/Folder/Path|View/Folder/Id|View/Folder/Name|View/Object/Id|View/Object/Name|View/Email/Id"]
-      data_share_at_most: 0.6
+      typed_at_least: 4
     - select: {text: Send}
       paths:
         - "Send/Source/User/Id|Send/Source/User/EmailAddress|Send/Payload/Email/From/Id\
@@ -67,24 +69,24 @@ expected:
         - "Send/Destination/User/Id|Send/Destination/User/EmailAddress|Send/Payload/Email/To/Id\
           |Send/Payload/Email/To/EmailAddress"
         - "Send/Payload/Email/Subject|Send/Payload/Email/Name"
-      data_share_at_most: 0.6
+      typed_at_least: 5
     - select: {text: New-InboxRule}
       paths: ["Create/Configuration/Name|Create/Object/Name|Update/After/Configuration/Name|Update/After/Object/Name"]
-      data_share_at_most: 0.6
+      typed_at_least: 2
     - select: {text: MoveToDeletedItems}
       paths:
         - "Move/Source/Folder/Path|Move/Source/Folder/Id|Move/Source/Folder/Name|Delete/Folder/Path|Delete/Folder/Id\
           |Delete/Folder/Name|Update/Before/Folder/Path|Update/Before/Folder/Id|Update/Before/Folder/Name"
         - "Move/Destination/Folder/Path|Move/Destination/Folder/Id|Move/Destination/Folder/Name|Update/After/Folder/Path\
           |Update/After/Folder/Id|Update/After/Folder/Name|Delete/Folder/Path|Delete/Folder/Id|Delete/Folder/Name"
-      data_share_at_most: 0.6
+      typed_at_least: 3
     - select: {text: MessageSent}
       paths:
         - "Send/Source/User/Id|Send/Source/User/EmailAddress|Send/Payload/Chat/From/Id\
           |Send/Payload/Chat/From/EmailAddress|Send/Payload/GroupChat/From/Id|Send/Payload/GroupChat/From/EmailAddress"
         - "Send/Destination/User/Id|Send/Destination/User/EmailAddress|Send/Payload/Chat/To/Id\
           |Send/Payload/Chat/To/EmailAddress|Send/Payload/GroupChat/To/Id|Send/Payload/GroupChat/To/EmailAddress"
-      data_share_at_most: 0.6
+      typed_at_least: 4
     - select: {text: TeamMemberAdded}
       paths:
         - "Authorise/AddGroups/Group/Name|Authorise/AddGroups/Group/Id|Authorise/Group/Name|Authorise/Group/Id\
@@ -92,7 +94,7 @@ expected:
           |Update/After/User/Groups/Group/Id|Authorise/User/Groups/Group/Name|Authorise/User/Groups/Group/Id"
         - "Authorise/User/Id|Authorise/User/EmailAddress|Authorise/User/Name|Update/After/User/Id\
           |Update/After/User/EmailAddress|Update/After/User/Name"
-      data_share_at_most: 0.6
+      typed_at_least: 4
 files:
   - {name: m365-audit.json, resource: aggregated/azure-audit/azure-audit-1.json, lines: 400}
 reference:
@@ -128,6 +130,10 @@ reference:
           - {path: EventDetail/View/Folder/Type, value: Mail folder}
           - {path: EventDetail/View/Folder/Id, xpath: "*[@key='event']/*[@key='Folders']/*[1]/*[@key='Id']"}
           - {path: EventDetail/View/Folder/Path, xpath: "*[@key='event']/*[@key='Folders']/*[1]/*[@key='Path']"}
+          # The first item read in it, and the mailbox read.
+          - {path: EventDetail/View/Email/Id,
+             xpath: "*[@key='event']/*[@key='Folders']/*[1]/*[@key='FolderItems']/*[1]/*[@key='InternetMessageId']"}
+          - {path: EventDetail/View/User/EmailAddress, field: event.MailboxOwnerUPN}
       - name: mail_send
         when: [{field: Operation, equals: Send}]
         fields:
@@ -135,9 +141,12 @@ reference:
           - {path: EventDetail/Description, value: A message was sent}
           - {path: EventDetail/Send/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
+          - {path: EventDetail/Send/Source/Device/IPAddress, field: ClientIP}
           - {path: EventDetail/Send/Destination/User, for_each: {array: event.Item.Recipients}, as: recipient,
              fields: [{path: EmailAddress, item: true}]}
+          - {path: EventDetail/Send/Payload/Email/Type, value: Email}
           - {path: EventDetail/Send/Payload/Email/Id, field: event.Item.InternetMessageId}
+          - {path: EventDetail/Send/Payload/Email/From/EmailAddress, field: UserId}
           - {path: EventDetail/Send/Payload/Email/Subject, field: event.Item.Subject}
           - {path: EventDetail/Send/Payload/Email/Data, data_name: SizeInBytes, field: event.Item.SizeInBytes}
       - name: inbox_rule
@@ -151,6 +160,8 @@ reference:
              xpath: "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"}
           - {path: EventDetail/Create/Configuration/Data, data_name: SubjectContainsWords,
              xpath: "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'SubjectContainsWords']/*[@key='Value']"}
+          # The mailbox the rule is on.
+          - {path: EventDetail/Create/User/EmailAddress, field: event.MailboxOwnerUPN}
       - name: mail_deleted
         when: [{field: Operation, equals: MoveToDeletedItems}]
         fields:
@@ -168,9 +179,12 @@ reference:
           - {path: EventDetail/Description, value: A message was posted in Teams}
           - {path: EventDetail/Send/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
+          - {path: EventDetail/Send/Source/Device/IPAddress, field: ClientIP}
           - {path: EventDetail/Send/Destination/User, for_each: {array: event.Recipients}, as: recipient,
              fields: [{path: EmailAddress, item: true}]}
           - {path: EventDetail/Send/Payload/Chat/Id, field: event.MessageId}
+          - {path: EventDetail/Send/Payload/Chat/SessionId, field: event.ChatThreadId}
+          - {path: EventDetail/Send/Payload/Chat/Room, field: event.ChannelName}
           - {path: EventDetail/Send/Data, data_name: team, field: event.TeamName}
       - name: team_member_added
         when: [{field: Operation, equals: TeamMemberAdded}]

@@ -649,6 +649,18 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                      + "(check.unplaced), e.g. " + said(check.unplaced().getFirst()) + ": give those event types "
                      + "placements (op: change, placements) before their set is put to the user.");
         }
+        final List<String> couldType = check.typing().entrySet().stream()
+                .filter(entry -> entry.getValue().couldType() != null)
+                .map(Map.Entry::getKey)
+                .toList();
+        if (!couldType.isEmpty()) {
+            said.add("Most fields of " + String.join(", ", couldType.subList(0, Math.min(5, couldType.size())))
+                     + (couldType.size() > 5
+                    ? " (and " + (couldType.size() - 5) + " more)"
+                    : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, and the schema's "
+                     + "elements below the action element): place those fields that have a home in the schema "
+                     + "(op: change, placements), from what you know of the source; leave the rest as Data.");
+        }
         if (check.uncatalogued().records() > 0) {
             said.add(check.uncatalogued().records() + " record(s) no event type recognises (check.uncatalogued, by "
                      + "shape): the catch-all translates them as Unknown; propose event types for those that are "

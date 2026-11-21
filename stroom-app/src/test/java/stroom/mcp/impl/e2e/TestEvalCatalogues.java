@@ -139,14 +139,16 @@ class TestEvalCatalogues {
                 .get("placements")).containsExactly(
                 Map.of("path", "Configuration/Type", "value", "Inbox rule"),
                 Map.of("path", "Configuration/Name", "xpath",
-                        "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"));
+                        "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"),
+                Map.of("path", "User/EmailAddress", "field", "event.MailboxOwnerUPN"));
         // A group kept with its fields.
         assertThat((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Send-Mail")
                 .get("placements")).extracting(placement -> placement.get("path"))
-                .containsExactly("Source/User/EmailAddress", "Destination/User", "Payload/Email/Id",
+                .containsExactly("Source/User/EmailAddress", "Source/Device/IPAddress", "Destination/User",
+                        "Payload/Email/Type", "Payload/Email/Id", "Payload/Email/From/EmailAddress",
                         "Payload/Email/Subject");
         assertThat(((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Send-Mail")
-                .get("placements")).get(1))
+                .get("placements")).get(2))
                 .containsEntry("for_each", Map.of("array", "event.Item.Recipients"))
                 .containsEntry("fields", List.of(Map.of("path", "EmailAddress", "item", true)));
         // The user authenticating and the outcome written in common, for each Authenticate event.
