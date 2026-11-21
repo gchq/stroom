@@ -56,28 +56,30 @@ expected:
   # group: almost nothing typed, which every check above passed). Each event type selected by its Operation, the
   # vendor's code wherever it is held; each path's alternatives the schema-correct homes a design may choose.
   # typed_at_least (2026-11-22, in place of Data-share caps a build keeping every field it doesn't place as Data
-  # can't meet): the fewest distinct typed leaf paths the event type's events hold, set above Haiku eval run 1's
-  # build (only what the schema requires placed) and below the reference's.
+  # can't meet): the fewest distinct typed leaf paths the event type's events hold, as many as a correct mapping types
+  # (2026-11-22: the reference's padding removed: User/Domain by transform, EmailAddress repeating the Id,
+  # AuthService/Id from Workload, a constant Group/Type). Here the named paths tell a build that types the affected
+  # user and the role (Haiku with a follow-up from the user) from one that doesn't (Haiku runs 2 and 3).
   typed:
     - select: {text: UserLoggedIn}
       paths: ["Authenticate/User/Id|Authenticate/User/EmailAddress|Authenticate/User/Name"]
-      typed_at_least: 4
+      typed_at_least: 3
     - select: {text: UserLoginFailed}
       paths:
         - "Authenticate/User/Id|Authenticate/User/EmailAddress|Authenticate/User/Name"
         - "Authenticate/Outcome/Success|Authenticate/Outcome/Permitted|Authenticate/Outcome/Reason\
           |Authenticate/Outcome/Description"
-      typed_at_least: 5
+      typed_at_least: 4
     - select: {text: Reset user password.}
       paths: ["Authenticate/User/Id|Authenticate/User/EmailAddress|Update/After/User/Id|Update/After/User/EmailAddress"]
-      typed_at_least: 4
+      typed_at_least: 3
     - select: {text: Add member to role.}
       paths:
         - "Authorise/AddGroups/Group/Name|Authorise/AddGroups/Group/Id|Authorise/Group/Name|Authorise/Group/Id\
           |Update/After/Group/Name|Update/After/Group/Id|Update/After/Object/Name|Update/After/User/Groups/Group/Name\
           |Update/After/User/Groups/Group/Id|Authorise/User/Groups/Group/Name|Authorise/User/Groups/Group/Id"
         - "Authorise/User/Id|Authorise/User/EmailAddress|Update/After/User/Id|Update/After/User/EmailAddress"
-      typed_at_least: 6
+      typed_at_least: 5
 reference:
   # The user chose to cut values longer than the JSON parser keeps (user_knows): recorded with the draft.
   long_values: cut
@@ -104,9 +106,6 @@ reference:
           - {path: EventDetail/Authenticate/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: UserId}
-          - {path: EventDetail/Authenticate/User/Domain, field: UserId, transform: domain}
-          - {path: EventDetail/Authenticate/User/EmailAddress, field: UserId}
-          - {path: EventDetail/Authenticate/Outcome/AuthService/Id, field: Workload}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'true'}
       - name: logon_failed
         when: [{field: Operation, equals: UserLoginFailed}]
@@ -116,9 +115,6 @@ reference:
           - {path: EventDetail/Authenticate/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authenticate/Action, value: Logon}
           - {path: EventDetail/Authenticate/User/Id, field: UserId}
-          - {path: EventDetail/Authenticate/User/Domain, field: UserId, transform: domain}
-          - {path: EventDetail/Authenticate/User/EmailAddress, field: UserId}
-          - {path: EventDetail/Authenticate/Outcome/AuthService/Id, field: Workload}
           - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
           - {path: EventDetail/Authenticate/Outcome/Description, field: event.LogonError}
       - name: password_reset
@@ -130,9 +126,6 @@ reference:
           - {path: EventDetail/Authenticate/Action, value: ResetPassword}
           # The user whose password was reset: the target that is a user principal name (Type 5).
           - {path: EventDetail/Authenticate/User/Id, xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
-          - {path: EventDetail/Authenticate/User/EmailAddress,
-             xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
-          - {path: EventDetail/Authenticate/Outcome/AuthService/Id, field: Workload}
           - {path: EventDetail/Authenticate/Outcome/Success, field: event.ResultStatus,
              map: {Success: 'true', Failed: 'false'}}
       - name: role_member_added
@@ -144,9 +137,6 @@ reference:
           - {path: EventDetail/Authorise/Action, value: Modify}
           # The member added: the target that is a user principal name (Type 5); the role, by its new values.
           - {path: EventDetail/Authorise/User/Id, xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
-          - {path: EventDetail/Authorise/User/EmailAddress,
-             xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
-          - {path: EventDetail/Authorise/AddGroups/Group/Type, value: Directory role}
           - {path: EventDetail/Authorise/AddGroups/Group/Id,
              xpath: "*[@key='event']/*[@key='ModifiedProperties']/*[*[@key='Name'] = 'Role.TemplateId']/*[@key='NewValue']"}
           - {path: EventDetail/Authorise/AddGroups/Group/Name,

@@ -163,6 +163,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String ASKED_BY = "asked_by";
     private static final String DIGEST = "digest";
     private static final String AMENDED = "amended";
+    // What the agent is told of fields kept as Data that the schema has homes for (asked for by the user
+    // 2026-11-22: worded more strongly, with an example of the call).
+    private static final String SHOULD_BE_TYPED = "These fields should be typed: each one the schema has a home for "
+                                                  + "belongs in a placement, not in Data, from what you know of the "
+                                                  + "source; only what has no home stays as Data. ";
     private static final String STREAMS = "streams";
     // What the proposals changed since the set was shown (the user's amendments, from the form or the chat), kept
     // until the set is confirmed: the amended event types are worth a look when it is shown again.
@@ -658,8 +663,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                      + (couldType.size() > 5
                     ? " (and " + (couldType.size() - 5) + " more)"
                     : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, and the schema's "
-                     + "elements below the action element): place those fields that have a home in the schema "
-                     + "(op: change, placements), from what you know of the source; leave the rest as Data.");
+                     + "elements below the action element). " + SHOULD_BE_TYPED + typingExample(couldType.getFirst()));
         }
         if (check.uncatalogued().records() > 0) {
             said.add(check.uncatalogued().records() + " record(s) no event type recognises (check.uncatalogued, by "
@@ -1775,6 +1779,14 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
     private static Map<String, Object> confirming(final Map<String, Object> notesNow) {
         return new LinkedHashMap<>(NullSafe.map(JsonValues.map(notesNow.get(RecordSourceNotesTool.CONFIRMING))));
+    }
+
+    // An example of the call placing fields, for the event type named (the element and field an illustration only:
+    // which field goes where is the agent's to say).
+    private static String typingExample(final String typeId) {
+        return "E.g. " + NAME + " proposals=[{\"op\": \"change\", \"type_id\": \"" + typeId + "\", "
+               + "\"placements\": [{\"path\": \"Folder/Path\", \"field\": \"<the field holding the folder's "
+               + "path>\"}]}] (the path below the action element, one placement per field with a home).";
     }
 
     // The confirmation's marks cleared (no set shown or amended), the streams kept.

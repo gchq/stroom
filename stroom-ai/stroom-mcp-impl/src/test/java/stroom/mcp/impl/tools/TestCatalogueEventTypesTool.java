@@ -203,9 +203,13 @@ class TestCatalogueEventTypesTool {
         final Map<String, Object> couldType = map(typing.get("could_type"));
         assertThat(String.valueOf(couldType.get("data"))).contains("table (1/1, e.g. 'orders')");
         assertThat(String.valueOf(couldType.get("schema"))).startsWith("Object: ").contains("Outcome: ");
+        // Worded strongly, with an example of the call for the event type named (asked for by the user 2026-11-22:
+        // Haiku went on past the softer wording in eval case 56).
         assertThat(String.valueOf(checked.get("hint"))).contains("Most fields of Delete-Records are kept as Data",
-                "check.typing.<TypeId>.could_type", "place those fields that have a home in the schema",
-                "leave the rest as Data");
+                "check.typing.<TypeId>.could_type", "These fields should be typed",
+                "belongs in a placement, not in Data", "only what has no home stays as Data",
+                "E.g. catalogue_event_types proposals=[{\"op\": \"change\", \"type_id\": \"Delete-Records\", "
+                + "\"placements\": [{\"path\": ");
         // The set summary the user is shown is unchanged.
         assertThat(checked).containsKey("table");
         assertThat(String.valueOf(checked.get("table"))).doesNotContain("could_type", "orders");
