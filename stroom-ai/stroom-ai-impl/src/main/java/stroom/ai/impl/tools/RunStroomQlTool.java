@@ -65,9 +65,6 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +83,6 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
 
     static final String QUERY_ARG = "query";
     private static final Duration POLL_INTERVAL = Duration.ofMillis(500);
-    private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private final Provider<QueryService> queryServiceProvider;
     private final Provider<StroomQlSources> stroomQlSourcesProvider;
@@ -212,8 +208,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         final WorkspacePath givenOut = outArg(request);
         final WorkspacePath out = givenOut != null
                 ? givenOut
-                : WorkspacePath.parse("/outputs/queries/query-"
-                                      + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)) + ".md");
+                : workspace.newFile("/outputs/queries/query", ".md");
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = queryService.getReferencedDataSource(query).orElse(null);
         final String sourceDocUuid = NullSafe.get(dataSource, DocRef::getUuid);

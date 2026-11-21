@@ -57,9 +57,7 @@ import jakarta.inject.Provider;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -166,7 +164,6 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     private static final int[] ESQL_VERSION = {8, 14};
     private static final int[] MISSING_VERSION = {8, 8};
     private static final int[] RUNS_VERSION = {8, 7};
-    private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     private static final String FIELDS_HINT = "describe_data_source gives the index's fields";
     private static final Set<String> TEXT_NATIVE_TYPES = Set.of("text", "match_only_text");
     // The types a text field's subfield may have for EQL to search it in its place, the most fitting first.
@@ -466,8 +463,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         final WorkspacePath givenOut = outArg(request);
         final WorkspacePath out = givenOut != null
                 ? givenOut
-                : WorkspacePath.parse("/outputs/eql/eql-" + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC))
-                                      + ".md");
+                : workspace.newFile("/outputs/eql/eql", ".md");
         final List<String> columns = EqlSequenceResults.columns(steps);
         final List<List<String>> cells = rows.stream().map(row -> EqlSequenceResults.cells(row, steps)).toList();
         if (!cells.isEmpty()) {
@@ -511,8 +507,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         final WorkspacePath givenOut = outArg(request);
         final WorkspacePath out = givenOut != null
                 ? givenOut
-                : WorkspacePath.parse("/outputs/sequences/sequence-"
-                                      + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)) + ".md");
+                : sessionWorkspace(context).newFile("/outputs/sequences/sequence", ".md");
         return stroomQlSequence.run(plan, new StroomQlSequence.Call(maxspan, maxspanSource(givenMaxspan),
                 timeRange(request), limit, timeLimit(context), limits(context).getMaxQueryLength(),
                 sessionWorkspace(context), out, context.session().isChat(), context.stopped()));

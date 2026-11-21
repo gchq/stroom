@@ -32,6 +32,10 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -166,6 +170,45 @@ class TestE2eStroomQlJoins extends AbstractE2eTest {
         assertThat(replyText("validate_stroomql", args("query", query)))
                 .startsWith("The query is not valid: ")
                 .contains("No such HR");
+    }
+
+    @Test
+    void parallelQueriesInTheSameSecondWriteTheirResultsToTheirOwnFiles() throws Exception {
+        // Seen in eval case 72: two parallel run_stroomql calls wrote the same file, so one's results were lost.
+        // Three at once, as many heavy calls as a user may have working (AiConfig's maxRunsPerUser).
+        final List<String> queries = List.of(
+                "from \"" + hr + "\" where Active = false select Username",
+                "from \"" + events + "\" where UserId = leaver select Host",
+                "from \"" + hr + "\" where Department = IT select Username");
+        final CountDownLatch start = new CountDownLatch(1);
+        final ExecutorService executor = Executors.newFixedThreadPool(queries.size());
+        final List<String> results = new ArrayList<>();
+        try {
+            final List<Future<String>> futures = new ArrayList<>();
+            for (final String query : queries) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    return replyText("run_stroomql", args("query", query));
+                }));
+            }
+            start.countDown();
+            for (final Future<String> future : futures) {
+                results.add(future.get());
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(results).extracting(TestE2eStroomQlJoins::resultsPath).doesNotHaveDuplicates();
+        assertThat(rows(results.get(0), "Username")).containsExactly(List.of("leaver"));
+        assertThat(rows(results.get(1), "Host")).containsExactly(List.of("h5"));
+        assertThat(rows(results.get(2), "Username")).containsExactly(List.of("ssmith"));
+    }
+
+    private static String resultsPath(final String result) {
+        final Matcher matcher = RESULTS_PATH.matcher(result);
+        assertThat(matcher.find()).as("run_stroomql wrote its results: %s", result).isTrue();
+        return matcher.group(1);
     }
 
     private String createCsv(final String name, final String csv, final List<DataColumn> columns) {

@@ -55,9 +55,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.time.Duration;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -91,7 +88,6 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
     static final int SHOWN_ROWS = 100;
     private static final int FIELDS_NAMED = 60;
     private static final int MAX_FIELDS = 2_000;
-    private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     private static final String FIELDS_HINT = "describe_data_source gives the index's fields";
     // Elasticsearch's warning that a single-value function or comparison met a multi-valued field.
     static final String MULTI_VALUE_WARNING = "single-value function encountered multi-value";
@@ -273,8 +269,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         final WorkspacePath givenOut = outArg(request);
         final WorkspacePath out = givenOut != null
                 ? givenOut
-                : WorkspacePath.parse("/outputs/esql/esql-"
-                                      + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)) + ".md");
+                : workspace.newFile("/outputs/esql/esql", ".md");
 
         final Result result;
         try {
