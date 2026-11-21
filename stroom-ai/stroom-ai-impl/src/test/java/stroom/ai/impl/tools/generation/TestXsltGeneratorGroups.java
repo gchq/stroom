@@ -464,4 +464,52 @@ class TestXsltGeneratorGroups extends XsltRuns {
         assertThat(result.problems()).anySatisfy(problem -> assertThat(problem)
                 .contains("the schema allows one Outcome there"));
     }
+
+    @Test
+    void aGroupOfEmailsInASendsPayloadWritesEachWithItsOwnFromAndValidates() {
+        final XsltGenerator.Generated result = generate(sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""), entry("""
+                {"path": "EventDetail/Send/Payload/Email", "for_each": {"split": "recipients", "on": ","},
+                 "fields": [{"path": "From/EmailAddress", "item": true}]}""")));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), """
+                <records xmlns="records:2">
+                <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="sender" value="jane"/>\
+                <data name="first_recipient" value="john"/>\
+                <data name="recipients" value="a@x.org,b@y.org"/></record>
+                </records>""");
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        assertThat(children(find(children(events, "Event").getFirst(), "EventDetail/Send/Payload"), "Email"))
+                .extracting(email -> text(email, "From/EmailAddress"))
+                .containsExactly("a@x.org", "b@y.org");
+    }
+
+    @Test
+    void aGroupAtAnElementOnceInARepeatingOneIsRefused() {
+        // Each Email of Send/Payload has one From, though the Email repeats.
+        final XsltGenerator.Generated result = generate(sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""), entry("""
+                {"path": "EventDetail/Send/Payload/Email/From", "for_each": {"split": "recipients", "on": ","},
+                 "fields": [{"path": "EmailAddress", "item": true}]}""")));
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("EventDetail/Send/Payload/Email/From", "the schema allows one From there",
+                        "['Email'] may occur more than once"));
+    }
+
+    @Test
+    void repeatOnALeafWhoseElementOccursOnceInARepeatingOneIsRefused() {
+        // A From a value would be an Email a value: refused, the group on the Email suggested.
+        final XsltGenerator.Generated result = generate(sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""), entry("""
+                {"path": "EventDetail/Send/Payload/Email/From/EmailAddress", "repeat": true,
+                 "xpath": "tokenize(data[@name='recipients']/@value, ',')"}""")));
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("EventDetail/Send/Payload/Email/From/EmailAddress", "repeat writes EmailAddress, or the "
+                                                                              + "From holding it", "['Email']",
+                        "for_each"));
+    }
 }

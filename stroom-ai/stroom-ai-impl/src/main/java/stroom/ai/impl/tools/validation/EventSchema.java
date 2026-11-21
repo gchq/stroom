@@ -257,9 +257,11 @@ public final class EventSchema {
         return chain;
     }
 
-    /// Whether a path below Event can select several values in one event: an element on it the schema lets
-    /// repeat (Data, say), under a wildcard step any of the elements it stands for. A path the schema doesn't
-    /// know, or an expression rather than a path, counts as one value.
+    /// Whether a path below Event can select several values in one event: an element anywhere on it the schema
+    /// lets repeat (Data, say, or the Email holding a Payload/Email/From/EmailAddress), under a wildcard step any of
+    /// the elements it stands for. A path the schema doesn't know, or an expression rather than a path, counts as
+    /// one value. What an index field's multiplicity needs; to place values one element each, see
+    /// [#repeatsInPlace(String)] and [#takesSeveralInPlace(String)].
     ///
     /// @param path A path below Event.
     /// @return True if it can select several values.
@@ -290,6 +292,67 @@ public final class EventSchema {
             current = children.stream().map(Child::decl).toList();
         }
         return false;
+    }
+
+    /// Whether the last element of a path below Event may itself occur more than once where it is: its own
+    /// maxOccurs, or that of a sequence, choice or group reference around it in its parent's content model, allows
+    /// more than one (View/Folder, Send/Payload/Email). An element higher up that repeats doesn't count: each Email
+    /// of Send/Payload has one From. Under a wildcard step, any of the elements it stands for.
+    ///
+    /// @param path A plain path below Event, e.g. `EventDetail/Send/Payload/Email`.
+    /// @return True if its last element may repeat in its parent; false for a path the schema doesn't know, or an
+    /// expression rather than a path.
+    public boolean repeatsInPlace(final String path) {
+        final List<List<Child>> steps = steps(path);
+        return steps != null && steps.getLast().stream().anyMatch(Child::repeatable);
+    }
+
+    /// Whether a leaf path below Event can be given several values in one event, one element a value: the leaf,
+    /// or the element holding it, may occur more than once in its own parent (Data; Destination/User for
+    /// Destination/User/EmailAddress). Not Payload/Email/From/EmailAddress: neither From nor its EmailAddress
+    /// repeats in an Email, and an Email a value would be another email.
+    ///
+    /// @param path A plain path below Event to a leaf.
+    /// @return True if a value an element can be written there; false for a path the schema doesn't know, or an
+    /// expression rather than a path.
+    public boolean takesSeveralInPlace(final String path) {
+        final List<List<Child>> steps = steps(path);
+        if (steps == null) {
+            return false;
+        }
+        return steps.getLast().stream().anyMatch(Child::repeatable)
+               || steps.size() > 1 && steps.get(steps.size() - 2).stream().anyMatch(Child::repeatable);
+    }
+
+    // The children each element step of a plain path stands for (several under a wildcard), up to any attribute
+    // step; null for an expression, a path the schema doesn't have, or one with no element step.
+    private List<List<Child>> steps(final String path) {
+        final List<String> names = segments(PREDICATE.matcher(path.split(" ! ", -1)[0]).replaceAll(""));
+        if (names.isEmpty() || names.stream().anyMatch(step -> !WILD_STEP.matcher(step).matches())) {
+            return null;
+        }
+        final List<List<Child>> steps = new ArrayList<>();
+        List<Element> current = List.of(event);
+        for (final String step : names) {
+            if ("Event".equals(step) && steps.isEmpty()) {
+                continue;
+            }
+            if (step.startsWith("@")) {
+                break;
+            }
+            final List<Child> children = current.stream()
+                    .flatMap(decl -> children(decl).stream())
+                    .filter(child -> "*".equals(step) || child.name().equals(step))
+                    .toList();
+            if (children.isEmpty()) {
+                return null;
+            }
+            steps.add(children);
+            current = children.stream().map(Child::decl).toList();
+        }
+        return steps.isEmpty()
+                ? null
+                : steps;
     }
 
     /// Whether the schema has an element at a path below Event: predicates are ignored, a wildcard step stands for
@@ -422,8 +485,10 @@ public final class EventSchema {
     /// @param decl        Its declaration (local, or the global one it refers to).
     /// @param index       Its position in the parent's content model.
     /// @param required    True if it must appear (not optional, not one of a choice).
-    /// @param repeatable  True if it may appear more than once: its own maxOccurs, or that of anything around it (a
-    ///                    sequence, a choice, a group reference), allows more than one.
+    /// @param repeatable  True if it may appear more than once in its parent: its own maxOccurs, or that of
+    ///                    anything around it in the parent's content model (a sequence, a choice, a group
+    ///                    reference), allows more than one. Elements above the parent are not counted: an Email
+    ///                    repeats in Send/Payload, its From doesn't (see [EventSchema#canRepeat(String)] for a path).
     /// @param choice      The id of the choice it belongs to, or null.
     /// @param alternative True if that choice is one-of (neither it nor anything around it repeats), so an element
     ///                    holds only one of its members; false for a member of a choice that repeats (its members

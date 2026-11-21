@@ -294,7 +294,9 @@ final class PlacementCheck {
                 return;
             }
         }
-        if (placement.group() && !schema.canRepeat(EVENT_DETAIL + detail + "/" + below)) {
+        // The group's own element must repeat in its parent: one higher up that repeats (Payload/Email for
+        // Payload/Email/From) would make each item another of it, not another From.
+        if (placement.group() && !schema.repeatsInPlace(EVENT_DETAIL + detail + "/" + below)) {
             problems.add(said + ": for_each writes " + below + " once per item, but the schema has one " + below
                          + " in an event: put the group on an element that repeats (e.g. Email/To), or place one "
                          + "value, or leave the field as Data");
@@ -424,7 +426,7 @@ final class PlacementCheck {
         }
         final String head = field + " holds several values in " + several + " of its records (e.g. "
                             + ToolText.repr(example) + ")";
-        return schema.canRepeat(EVENT_DETAIL + detail + "/" + below)
+        return schema.takesSeveralInPlace(EVENT_DETAIL + detail + "/" + below)
                 ? head + ", and only the first is written: give repeat: true (one " + below + " a value), or leave "
                   + "it as Data"
                 : head + ", but " + below + " takes one: place them with for_each on an element that repeats (e.g. "

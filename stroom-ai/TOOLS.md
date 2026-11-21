@@ -7127,7 +7127,12 @@ The checks `check_xslt`, `check_events`, the translation build and the stepping 
   maxOccurs or that of anything around it (a sequence, a choice, a group reference) allows more than one, and a
   choice's members are alternatives only when neither it nor anything around it repeats: in 4.x, View's, Move's
   Source's and Authorise's objects are a choice of elements each maxOccurs 1 inside `MultiObjectGroup` with maxOccurs
-  unbounded, so several Folders, or an Object and a Folder, go in one View (3.x has the choice itself unbounded). Used by the checks and by the
+  unbounded, so several Folders, or an Object and a Folder, go in one View (3.x has the choice itself unbounded).
+  That is repetition in the element's own parent: an Email of Send/Payload repeats, its From doesn't. A group
+  (`for_each`) and a typed placement's group go only on an element that repeats in its parent, and `repeat: true`
+  only on a leaf that does or whose element does (Destination/User/EmailAddress, not Payload/Email/From/EmailAddress:
+  a for_each on the Email instead); an index field is marked multiple when anything on its path repeats
+  (`canRepeat`). Used by the checks and by the
   translation generator (schema order, paths that don't exist with suggestions, constants against enumerations).
 * **`EventChecks`** and **`SchemaErrors`**: `check_events`' two checks. `SchemaErrors` validates against a compiled
   schema, giving each error's line, a path such as `/Events/Event[2]/EventTime/TimeCreated` (a position where the

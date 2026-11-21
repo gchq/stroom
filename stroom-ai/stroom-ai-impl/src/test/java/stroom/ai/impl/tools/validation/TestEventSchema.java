@@ -92,6 +92,33 @@ class TestEventSchema {
     }
 
     @Test
+    void testAnElementRepeatsInItsOwnParentNotBecauseOfOneAbove() {
+        // Send/Payload's Email repeats (MultiObjectGroup), but each Email has one From (maxOccurs 1 in
+        // EmailComplexType's sequence).
+        assertThat(child("EventDetail/Send/Payload", "Email").repeatable()).isTrue();
+        assertThat(child("EventDetail/Send/Payload/Email", "From").repeatable()).isFalse();
+        assertThat(child("EventDetail/Send/Payload/Email/From", "EmailAddress").repeatable()).isFalse();
+
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Send/Payload/Email")).isTrue();
+        assertThat(SCHEMA.repeatsInPlace("Event/EventDetail/View/Folder")).isTrue();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Send/Payload/Email/From")).isFalse();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/View/Outcome")).isFalse();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/*/Folder")).isTrue();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Nowhere")).isFalse();
+        assertThat(SCHEMA.repeatsInPlace("concat(a, b)")).isFalse();
+
+        // A value an element: the leaf or the element holding it repeats in its parent.
+        assertThat(SCHEMA.takesSeveralInPlace("EventDetail/Send/Destination/User/EmailAddress")).isTrue();
+        assertThat(SCHEMA.takesSeveralInPlace("EventDetail/Unknown/Data")).isTrue();
+        assertThat(SCHEMA.takesSeveralInPlace("EventDetail/Send/Payload/Email/From/EmailAddress")).isFalse();
+        assertThat(SCHEMA.takesSeveralInPlace("EventSource/User/Id")).isFalse();
+
+        // A path can still select several values in one event (what an index field needs): an Email each.
+        assertThat(SCHEMA.canRepeat("EventDetail/Send/Payload/Email/From/EmailAddress")).isTrue();
+        assertThat(SCHEMA.canRepeat("EventDetail/*/Resource/HTTPMethod")).isTrue();
+    }
+
+    @Test
     void testMembersOfAChoiceInARepeatingGroupMayBeMixed() {
         final Child object = child("EventDetail/View", "Object");
         final Child folder = child("EventDetail/View", "Folder");

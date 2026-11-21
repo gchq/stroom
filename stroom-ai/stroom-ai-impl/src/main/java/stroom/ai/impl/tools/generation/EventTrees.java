@@ -409,18 +409,32 @@ final class EventTrees {
         node.leaf = entry;
         checkLeaf(where, last, entry);
         if (entry.repeat()) {
-            int anchor = -1;
-            for (int i = 0; i < chain.size(); i++) {
-                if (chain.get(i).repeatable()) {
-                    anchor = i;
-                }
-            }
-            if (anchor < 0) {
+            // One value an element: the leaf, else the element holding it, where it may occur more than once in
+            // its own parent. An element higher up that repeats doesn't do (Send's Payload/Email repeats, but each
+            // Email has one From: a From a value would be an Email a value).
+            final int anchor = chain.getLast().repeatable()
+                    ? chain.size() - 1
+                    : chain.size() > 1 && chain.get(chain.size() - 2).repeatable()
+                            ? chain.size() - 2
+                            : -1;
+            final List<String> higher = chain.subList(0, Math.max(0, chain.size() - 2)).stream()
+                    .filter(Child::repeatable)
+                    .map(Child::name)
+                    .toList();
+            if (anchor >= 0) {
+                walk(tree, chain.subList(0, anchor + 1), where).repeat = entry;
+            } else if (higher.isEmpty()) {
                 note(problems, where + ": repeat needs an element on the path the schema lets repeat; none of "
                                + ToolText.list(chain.stream().map(Child::name).toList())
                                + " may occur more than once");
             } else {
-                walk(tree, chain.subList(0, anchor + 1), where).repeat = entry;
+                final String holder = chain.size() > 1
+                        ? chain.get(chain.size() - 2).name()
+                        : last.name();
+                note(problems, where + ": repeat writes " + last.name() + ", or the " + holder + " holding it, once "
+                               + "per value, but the schema allows one of each there; of the path's elements, "
+                               + ToolText.list(higher) + " may occur more than once: put a for_each group on it, "
+                               + "its fields placed below it, or map one value");
             }
         }
     }
