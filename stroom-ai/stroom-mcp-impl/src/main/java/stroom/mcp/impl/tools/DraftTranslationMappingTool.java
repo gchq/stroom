@@ -339,8 +339,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             SentMappings.remember(context, SentMappings.DRAFT, mapping);
         }
         result.put("hint", settled.map(text -> text + " ").orElse("")
-                           + "Decide what the notes ask (the action element per event type, System Name and "
-                           + "Environment, the time zone), then build_translation_xslt(build=, name= to save it, "
+                           + "Decide what the notes ask (e.g. the action element per event type, System Name "
+                           + "and Environment), then build_translation_xslt(build=, name= to save it, "
                            + "changes= only the rules and entries you change, schema_version=this schema_version, "
                            + "stream_ids=the sample streams (or sample=the texts), splitter=this splitter). "
                            + DraftOutline.keptFor(build) + ", so it needn't be sent whole. A rule's data "

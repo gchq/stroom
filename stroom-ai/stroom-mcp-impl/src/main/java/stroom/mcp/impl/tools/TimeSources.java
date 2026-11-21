@@ -152,6 +152,9 @@ final class TimeSources {
                       + "(e.g. Australia/Sydney) or offset (+10:00). Until then Stroom reads them as UTC.");
             return;
         }
+        // Chosen: the draft's notes no longer say the zone is the user's to say (seen in chat 182: the note did, and
+        // the agent asked the user again in the chat).
+        answeredZone(notes);
         final Map<String, Object> source = zoneSource(chosen);
         if (source != null) {
             zoneless.forEach(entry -> entry.put("timezone", new LinkedHashMap<>(source)));
@@ -166,6 +169,25 @@ final class TimeSources {
         }
         zoneless.forEach(entry -> entry.put("timezone", chosen));
         notes.add("The times read from " + where + " are read in " + chosen + ", as the user chose.");
+    }
+
+    // The draft's notes once the zone is chosen: a time's note saying only that it has none dropped, and the rest
+    // kept without what says the zone is the user's to say.
+    private static void answeredZone(final List<Object> notes) {
+        final String asked = " " + DraftMapping.NO_ZONE;
+        final List<Object> kept = new ArrayList<>();
+        for (final Object note : notes) {
+            if (note instanceof final String text && text.contains(asked)) {
+                final String rest = text.replace(asked, "");
+                if (!rest.endsWith("has no time zone or offset.")) {
+                    kept.add(rest);
+                }
+            } else {
+                kept.add(note);
+            }
+        }
+        notes.clear();
+        notes.addAll(kept);
     }
 
     // The answer given as timezone=, else asked in a form; null when neither (no forms).

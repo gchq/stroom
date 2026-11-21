@@ -191,6 +191,11 @@ class TestDraftTranslationMappingTool {
         assertThat(String.valueOf(chosen.get("mapping"))).contains("timezone=+10:00");
         assertThat(String.valueOf(world.formsShown.getLast())).contains("UTC", "+10:00 (a guess",
                 "Another zone: I'll name it");
+        // Answered in the form: nothing says the zone is still the user's to say (seen in chat 182: the note did,
+        // and the agent asked the user again in the chat).
+        assertThat(String.valueOf(chosen.get("notes"))).contains("as the user chose")
+                .doesNotContain("the user's to say", "has no time zone or offset.");
+        assertThat(String.valueOf(chosen.get("hint"))).doesNotContain("the time zone");
 
         world.asked.clear();
         assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(11), TimeSources.TIMEZONE_ARG,

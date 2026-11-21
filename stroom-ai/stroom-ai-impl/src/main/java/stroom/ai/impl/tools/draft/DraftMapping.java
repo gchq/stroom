@@ -135,8 +135,8 @@ public final class DraftMapping {
     /// The draft's key for times with no zone or offset: `examples` (some values of each such field, by field) and
     /// `zone_names` (the zones a field of zone names holds), for the user to say the zone the source writes in.
     public static final String TIME_ZONES = "time_zones";
-    // What the notes say of a time with no zone.
-    private static final String NO_ZONE = "The zone the source writes it in is the user's to say: "
+    /// What the notes say of a time with no zone, until the user says which it is.
+    public static final String NO_ZONE = "The zone the source writes it in is the user's to say: "
                                           + "draft_translation_mapping asks (timezone=), and Stroom reads it as UTC "
                                           + "until then.";
     // An epoch time in seconds (ten digits, a fraction allowed) inside a record's key, and the replace that takes it
