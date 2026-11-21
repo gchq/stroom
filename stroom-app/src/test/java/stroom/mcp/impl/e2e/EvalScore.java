@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.sample.SourceTypeRows;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -40,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
@@ -49,10 +51,34 @@ import javax.xml.parsers.ParserConfigurationException;
 
 /// A case's score, and the scoring of a case's Events against what the case expects: the record count, the event types,
 /// the paths every event has, values some event holds, values and types none may hold, Data where it belongs, the
-/// TypeIds, the Descriptions and how many Unknown events; and for an aggregated feed's case, its build's source types
-/// ([#scoreSourceTypes]); for a case that starts from another case's promoted build, what it changed of that build
-/// ([#scoreLaterBuild]); the forms the user was asked ([#scoreForms]); and the build's event type catalogue
-/// ([#scoreCatalogue]).
+/// TypeIds, the Descriptions, how many Unknown events, and what the events hold in the schema's own elements rather
+/// than in Data; and for an aggregated feed's case, its build's source types ([#scoreSourceTypes]); for a case that
+/// starts from another case's promoted build, what it changed of that build ([#scoreLaterBuild]); the forms the user
+/// was asked ([#scoreForms]); and the build's event type catalogue ([#scoreCatalogue]).
+///
+/// What the events hold typed (a translation that puts nearly everything in Data passes every other check: seen in
+/// test chat 182, 2026-11-21, View-MailItems with 2 typed values and 17 in Data):
+///
+/// - `expected.typed`: a list of entries, each `select`ing events and naming `paths` below EventDetail that at least
+///   one of them must have a value at outside Data (alternatives `a|b`, `*` any one element); a Data element never
+///   satisfies a typed path, nor anything it holds. `select`'s keys must all hold: `type_id`, a regular expression
+///   the TypeId matches whole; `action`, the action element (`Send`, or `Move|Delete`); `text`, a text the event holds
+///   anywhere (an element's text or a Data Value, e.g. the vendor's operation code, whatever element holds it);
+///   `data`, Data fields and their values, as `type_ids.same`'s selectors are. An entry may give its own
+///   `data_share_at_most`, for the events it selects. An entry selecting no event is a problem.
+///   ```yaml
+///   typed:
+///     - select: {text: MoveToDeletedItems}
+///       paths: [Move/Source/Folder/Path|Delete/Folder/Path, Move/Destination/Folder/Path]
+///       data_share_at_most: 0.5
+///   ```
+/// - `expected.data_share_at_most`: a number from 0 to 1, at most the share of the EventDetail values (element
+///   texts and attribute values, its TypeId, Description, Classification and Purpose left out) held in Data (Data
+///   Values, nested Data's too) over every event but the catch-all's Unknown ones.
+///
+/// Where either is given, the score holds `typed_checks`, the share over those events (`data_share`: its `share`,
+/// the `data` values and all the `values`) and the share by TypeId (`data_shares`), so runs compare even when they
+/// pass.
 @SuppressWarnings("unchecked")
 final class EvalScore {
 
@@ -79,6 +105,7 @@ final class EvalScore {
     private static final String UNKNOWN = "Unknown";
     private static final String CONFIRMED = "confirmed";
     private static final String DOCUMENTATION = "documentation";
+    private static final String DATA = "Data";
 
     private final String caseId;
     private final List<String> problems = new ArrayList<>();
@@ -98,6 +125,13 @@ final class EvalScore {
     private final List<Map<String, Object>> sourceTypeChecks = new ArrayList<>();
     // The event type catalogue's checks, each with whether it passed: none for a case that expects none.
     private final List<Map<String, Object>> catalogueChecks = new ArrayList<>();
+    // The checks of what the events hold typed rather than in Data, each with whether it passed: none for a case
+    // that expects none.
+    private final List<Map<String, Object>> typedChecks = new ArrayList<>();
+    // The share of the EventDetail values held in Data, over every event but the Unknown ones and by TypeId: null
+    // for a case that expects neither typed paths nor a share.
+    private Map<String, Object> dataShare;
+    private Map<String, Object> dataShares;
 
     /// @param caseId The case.
     EvalScore(final String caseId) {
@@ -207,10 +241,198 @@ final class EvalScore {
         final boolean typeIdsHeld = scoreTypeIds(expected, read);
         final boolean described = scoreDescriptions(expected, read);
         final boolean fewUnknown = scoreUnknown(expected, read);
+        final boolean typedHeld = scoreTyped(expected, read);
         stage1 = counted == records1 && !validity.isEmpty() && validEvents == validity.size()
                  && missingTypes.isEmpty() && missingPaths.isEmpty() && !valuesMissing && !heldWrongly
                  && forbidden.isEmpty() && !misplaced && textsAbsent.isEmpty() && textsWrong.isEmpty()
-                 && typeIdsHeld && described && fewUnknown;
+                 && typeIdsHeld && described && fewUnknown && typedHeld;
+    }
+
+    // expected.typed and expected.data_share_at_most: what the events hold in the schema's own elements rather than
+    // in Data. Each `typed` entry's `select` picks events ([#selected]); each of its `paths` (below EventDetail,
+    // alternatives a|b, * any one element) must have a value outside Data in at least one of them, and its
+    // `data_share_at_most`, if given, caps the share of their EventDetail values held in Data. The top level's
+    // `data_share_at_most` caps that share over every event but the catch-all's Unknown ones. The shares, overall
+    // and by TypeId, are kept in the score whenever either is given, so runs compare even when they pass. Whether
+    // every check held.
+    private boolean scoreTyped(final Map<String, Object> expected, final List<Element> read) {
+        final List<Map<String, Object>> entries = (List<Map<String, Object>>) expected.getOrDefault("typed",
+                List.of());
+        final Object most = expected.get("data_share_at_most");
+        if (entries.isEmpty() && most == null) {
+            return true;
+        }
+        final List<Element> catalogued = read.stream()
+                .filter(event -> !eventTypes(event).contains(UNKNOWN))
+                .toList();
+        final Map<String, DetailValues> byTypeId = new TreeMap<>();
+        for (final Element event : catalogued) {
+            byTypeId.merge(typeId(event), detailValues(event), DetailValues::plus);
+        }
+        final DetailValues overall = byTypeId.values().stream()
+                .reduce(new DetailValues(0, 0), DetailValues::plus);
+        dataShare = overall.toMap();
+        dataShares = new LinkedHashMap<>();
+        byTypeId.forEach((typeId, values) -> dataShares.put(typeId, values.toMap()));
+        boolean held = true;
+        if (most != null) {
+            held = shareHeld("data share", overall, share(most), "the events hold");
+        }
+        for (final Map<String, Object> entry : entries) {
+            final Map<String, Object> selector = maps(entry.get("select"));
+            final List<Element> selected = read.stream().filter(event -> selected(event, selector)).toList();
+            if (selected.isEmpty()) {
+                held = false;
+                typedCheck("typed " + selector, false, "no event matches " + selector + ", whose typed paths are "
+                                                       + "expected");
+                continue;
+            }
+            final Set<String> ids = new TreeSet<>();
+            selected.forEach(event -> ids.add(typeId(event)));
+            for (final String path : strings(entry.get("paths"))) {
+                final boolean typed = selected.stream().anyMatch(event -> hasTypedValue(event, path));
+                held = typed && held;
+                typedCheck("typed " + selector + " " + path, typed, "no event of " + selector + " (TypeIds " + ids
+                                                                    + ") has a typed EventDetail/" + path
+                                                                    + " (Data doesn't count)");
+            }
+            if (entry.get("data_share_at_most") != null) {
+                final DetailValues values = selected.stream()
+                        .map(EvalScore::detailValues)
+                        .reduce(new DetailValues(0, 0), DetailValues::plus);
+                held = shareHeld("data share " + selector, values, share(entry.get("data_share_at_most")),
+                        "the events of " + selector + " (TypeIds " + ids + ") hold") && held;
+            }
+        }
+        return held;
+    }
+
+    // Whether the values' share in Data is at most the cap: a check either way, a problem if not.
+    private boolean shareHeld(final String check, final DetailValues values, final double most, final String who) {
+        final boolean held = values.share() <= most;
+        typedCheck(check + " at most " + most, held, who + " " + values.rounded() + " of their EventDetail values "
+                                                     + "in Data (" + values.data() + " of " + values.all()
+                                                     + "), at most " + most + " expected");
+        return held;
+    }
+
+    // A data_share_at_most: a number from 0 to 1.
+    private static double share(final Object given) {
+        if (!(given instanceof final Number number) || number.doubleValue() < 0 || number.doubleValue() > 1) {
+            throw new IllegalArgumentException("data_share_at_most " + given + " is not a number from 0 to 1");
+        }
+        return number.doubleValue();
+    }
+
+    // Whether a typed entry's selector picks the event: each of its keys holds. `type_id`, a regular expression the
+    // event's TypeId matches whole; `action`, the event's action element (EventDetail's child, alternatives a|b);
+    // `text`, a text the event holds anywhere (an element's text or a Data Value, as `texts` reads them); `data`,
+    // Data fields with their values, as type_ids.same's selectors ([#matches]).
+    private static boolean selected(final Element event, final Map<String, Object> selector) {
+        for (final Map.Entry<String, Object> key : selector.entrySet()) {
+            final String value = String.valueOf(key.getValue());
+            final boolean holds = switch (key.getKey()) {
+                case "type_id" -> Pattern.compile(value).matcher(typeId(event)).matches();
+                case "action" -> List.of(value.split("\\|")).stream().anyMatch(eventTypes(event)::contains);
+                case "text" -> allTexts(List.of(event)).contains(value);
+                case "data" -> matches(event, maps(key.getValue()));
+                default -> throw new IllegalArgumentException("typed select " + key.getKey() + " is none of "
+                                                              + "type_id, action, text and data");
+            };
+            if (!holds) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Whether the event has a value at the path below EventDetail (or one of its alternatives, a|b; * any one
+    // element) outside Data: Data elements never satisfy a typed path, nor what they hold.
+    private static boolean hasTypedValue(final Element event, final String path) {
+        for (final Element detail : named(event, "EventDetail")) {
+            for (final String alternative : path.split("\\|")) {
+                List<Element> at = List.of(detail);
+                for (final String step : alternative.split("/")) {
+                    final List<Element> next = new ArrayList<>();
+                    for (final Element element : at) {
+                        for (final Element child : children(element)) {
+                            if (!DATA.equals(child.getLocalName())
+                                && ("*".equals(step) || step.equals(child.getLocalName()))) {
+                                next.add(child);
+                            }
+                        }
+                    }
+                    at = next;
+                }
+                if (at.stream().anyMatch(EvalScore::typedValue)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Whether an element outside Data has a value: its own text, or a child (not Data) with one.
+    private static boolean typedValue(final Element element) {
+        if (DATA.equals(element.getLocalName())) {
+            return false;
+        }
+        return !directText(element).isBlank() || children(element).stream().anyMatch(EvalScore::typedValue);
+    }
+
+    // The values an event's EventDetail holds (element texts and attribute values, its TypeId, Description,
+    // Classification and Purpose left out), and how many of them are in Data (a Data element's Value, nested Data's
+    // too; a Name is not a value).
+    private static DetailValues detailValues(final Element event) {
+        DetailValues values = new DetailValues(0, 0);
+        for (final Element detail : named(event, "EventDetail")) {
+            for (final Element child : children(detail)) {
+                if (!DETAIL_META.contains(child.getLocalName())) {
+                    values = values.plus(valuesIn(child, false));
+                }
+            }
+        }
+        return values;
+    }
+
+    private static DetailValues valuesIn(final Element element, final boolean inData) {
+        final boolean data = inData || DATA.equals(element.getLocalName());
+        int all = 0;
+        if (data) {
+            all += element.getAttribute("Value").isBlank()
+                    ? 0
+                    : 1;
+        } else {
+            all += directText(element).isBlank()
+                    ? 0
+                    : 1;
+            final NamedNodeMap attributes = element.getAttributes();
+            for (int i = 0; i < attributes.getLength(); i++) {
+                final Node attribute = attributes.item(i);
+                if (attribute.getNamespaceURI() == null && !attribute.getNodeValue().isBlank()) {
+                    all++;
+                }
+            }
+        }
+        DetailValues values = new DetailValues(data
+                ? all
+                : 0, all);
+        for (final Element child : children(element)) {
+            values = values.plus(valuesIn(child, data));
+        }
+        return values;
+    }
+
+    // A check of what the events hold typed: kept, and a problem if it failed.
+    private void typedCheck(final String check, final boolean passed, final String problem) {
+        final Map<String, Object> made = new LinkedHashMap<>();
+        made.put("check", check);
+        made.put("passed", passed);
+        if (!passed) {
+            made.put("problem", problem);
+            problems.add(problem);
+        }
+        typedChecks.add(made);
     }
 
     // expected.type_ids: the events' TypeIds (the catch-all's Unknown events left out of the pattern and the count)
@@ -1171,6 +1393,9 @@ final class EvalScore {
                 .append(" stage1=").append(stage1).append(" indexed=").append(indexed)
                 .append(" events=").append(validEvents).append('/').append(events)
                 .append(" types=").append(eventTypes);
+        if (dataShare != null) {
+            sb.append(" data_share=").append(dataShare.get("share"));
+        }
         problems.forEach(problem -> sb.append("\n  - ").append(problem));
         if (!missingTypes.isEmpty()) {
             sb.append("\n  - missing types ").append(missingTypes);
@@ -1204,6 +1429,11 @@ final class EvalScore {
         }
         if (!catalogueChecks.isEmpty()) {
             map.put("catalogue_checks", List.copyOf(catalogueChecks));
+        }
+        if (dataShare != null) {
+            map.put("typed_checks", List.copyOf(typedChecks));
+            map.put("data_share", dataShare);
+            map.put("data_shares", dataShares);
         }
         map.put("notes", List.copyOf(notes));
         return map;
@@ -1403,6 +1633,42 @@ final class EvalScore {
     /// @param text    Its text, for saying why it was refused.
     record ToolUse(String name, boolean refused, Map<String, Object> result, String text) {
 
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// The values an EventDetail holds, and how many of them are in Data.
+    ///
+    /// @param data How many are in Data.
+    /// @param all  How many there are.
+    record DetailValues(int data, int all) {
+
+        /// @param other More values.
+        /// @return These and the other's together.
+        DetailValues plus(final DetailValues other) {
+            return new DetailValues(data + other.data, all + other.all);
+        }
+
+        /// @return The share in Data, 0 for no values at all.
+        double share() {
+            return all == 0
+                    ? 0
+                    : (double) data / all;
+        }
+
+        /// @return The share in Data, to two places.
+        double rounded() {
+            return Math.round(share() * 100) / 100.0;
+        }
+
+        /// @return The share and its counts, as the score holds them.
+        Map<String, Object> toMap() {
+            final Map<String, Object> map = new LinkedHashMap<>();
+            map.put("share", rounded());
+            map.put("data", data);
+            map.put("values", all);
+            return map;
+        }
     }
 
     // --------------------------------------------------------------------------------

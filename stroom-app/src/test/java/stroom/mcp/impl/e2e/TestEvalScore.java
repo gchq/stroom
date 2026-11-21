@@ -26,6 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 @SuppressWarnings("unchecked")
 class TestEvalScore {
@@ -593,6 +595,300 @@ class TestEvalScore {
         plain.scoreCatalogue(expecting(Map.of("records", 1)), null, null);
         assertThat(plain.toMap()).doesNotContainKey("catalogue_checks");
         assertThat((List<String>) plain.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void typedPathsAreHeldOutsideDataWithAlternatives() {
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Description>Sent</Description><Send><Source><User>"
+                                      + "<EmailAddress>kate@contoso.example</EmailAddress></User></Source>"
+                                      + "<Destination><User><Id>anja</Id></User></Destination><Payload><Email>"
+                                      + "<Subject>Re: roster</Subject></Email></Payload>"
+                                      + data("Operation", "Send") + "</Send>");
+        final Map<String, Object> expected = Map.of("records", 1, "typed", List.of(Map.of(
+                "select", Map.of("text", "Send"),
+                "paths", List.of("Send/Source/User/Id|Send/Source/User/EmailAddress", "Send/Destination/User",
+                        "Send/Payload/*/Subject"))));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send), List.of(true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat(score.stage1()).isTrue();
+        assertThat((List<Map<String, Object>>) score.toMap().get("typed_checks"))
+                .extracting(check -> check.get("check"), check -> check.get("passed"))
+                .containsExactly(
+                        tuple("typed {text=Send} Send/Source/User/Id|Send/Source/User/EmailAddress", true),
+                        tuple("typed {text=Send} Send/Destination/User", true),
+                        tuple("typed {text=Send} Send/Payload/*/Subject", true));
+    }
+
+    @Test
+    void dataNeverSatisfiesATypedPath() {
+        // The values are all there, but in Data: a Data element named as the path's element, a typed element that
+        // holds only Data, and Data that * would reach.
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User>"
+                                      + data("Id", "kate") + "</User></Source>"
+                                      + data("Operation", "Send") + "<Data Name=\"Subject\" Value=\"Re: roster\"/>"
+                                      + "</Send>");
+        final Map<String, Object> expected = Map.of("records", 1, "typed", List.of(Map.of(
+                "select", Map.of("action", "Send"),
+                "paths", List.of("Send/Source/User", "Send/Source/User/Data", "Send/Subject|Send/*"))));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send), List.of(true), null);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "no event of {action=Send} (TypeIds [Send-Mail]) has a typed EventDetail/Send/Source/User (Data "
+                + "doesn't count)",
+                "no event of {action=Send} (TypeIds [Send-Mail]) has a typed EventDetail/Send/Source/User/Data (Data "
+                + "doesn't count)",
+                "no event of {action=Send} (TypeIds [Send-Mail]) has a typed EventDetail/Send/Subject|Send/* (Data "
+                + "doesn't count)");
+    }
+
+    @Test
+    void aTypedPathNeedsOnlyOneSelectedEventAndAnEntrySelectingNoneIsAProblem() {
+        final String typed = event("", "<TypeId>Move-MailItems</TypeId><Move><Source><Folder><Path>\\Inbox</Path>"
+                                       + "</Folder></Source>" + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final String bare = event("", "<TypeId>Move-MailItems</TypeId><Move>"
+                                      + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final Map<String, Object> expected = Map.of("records", 2, "typed", List.of(
+                Map.of("select", Map.of("text", "MoveToDeletedItems"), "paths", List.of("Move/Source/Folder/Path")),
+                Map.of("select", Map.of("text", "TeamMemberAdded"), "paths", List.of("Authorise/User/Id"))));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(bare, typed), List.of(true, true), null);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "no event matches {text=TeamMemberAdded}, whose typed paths are expected");
+    }
+
+    @Test
+    void theEventsAreSelectedByTypeIdActionTextOrData() {
+        final String move = event("", "<TypeId>Move-MailItems</TypeId><Move><Source><Folder><Path>\\Inbox</Path>"
+                                      + "</Folder></Source>" + data("event.Operation", "MoveToDeletedItems")
+                                      + "</Move>");
+        final String delete = event("", "<TypeId>Delete-MailItem</TypeId><Delete><Email><Id>m1</Id></Email>"
+                                        + data("Operation", "HardDelete") + "</Delete>");
+        final List<Map<String, Object>> selectors = List.of(
+                Map.of("type_id", "Move-.*"),
+                Map.of("type_id", "Move"),
+                Map.of("action", "Delete|Move"),
+                Map.of("text", "\\Inbox"),
+                Map.of("data", Map.of("Operation", "MoveToDeletedItems")),
+                Map.of("action", "Delete", "text", "MoveToDeletedItems"));
+        final List<Object> selected = new ArrayList<>();
+        for (final Map<String, Object> selector : selectors) {
+            final EvalScore score = new EvalScore("c");
+            score.scoreEvents(expecting(Map.of("records", 2, "typed", List.of(Map.of("select", selector,
+                    "paths", List.of())), "data_share_at_most", 1)), List.of(move, delete), List.of(true, true),
+                    null);
+            selected.add(((List<String>) score.toMap().get("problems")).isEmpty());
+        }
+
+        // A TypeId pattern matches the whole TypeId; every key of a selector must hold.
+        assertThat(selected).containsExactly(true, false, true, true, true, false);
+        final EvalScore unknownKey = new EvalScore("c");
+        assertThatThrownBy(() -> unknownKey.scoreEvents(expecting(Map.of("records", 1, "typed", List.of(Map.of(
+                "select", Map.of("operation", "Send"), "paths", List.of())))), List.of(move), List.of(true), null))
+                .hasMessageContaining("typed select operation is none of type_id, action, text and data");
+    }
+
+    @Test
+    void theDataShareIsMeasuredByTypeIdReportedAndCapped() {
+        // Send-Mail: 4 values (the actor, a recipient, the subject in Data, the outcome) of which 1 in Data;
+        // Update-InboxRule: all 3 in Data, a nested Data's values counted and its Name not. The TypeId, the
+        // Description and the Unknown event are left out.
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Description>Sent</Description><Send><Source>"
+                                      + "<User><Id>kate</Id></User></Source><Destination><User><Id>anja</Id>"
+                                      + "</User></Destination>" + data("Subject", "Re: roster")
+                                      + "<Outcome><Success>true</Success></Outcome></Send>");
+        final String rule = event("", "<TypeId>Update-InboxRule</TypeId><Update><After><Object>"
+                                      + data("Operation", "New-InboxRule") + "<Data Name=\"Parameters\">"
+                                      + data("Name", "FW to personal") + data("MoveToFolder", "Archive")
+                                      + "</Data></Object></After></Update>");
+        final Map<String, Object> expected = Map.of("records", 3, "data_share_at_most", 0.5);
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send, rule, unknown("x")), List.of(true, true, true), null);
+
+        assertThat(score.toMap().get("data_shares")).isEqualTo(Map.of(
+                "Send-Mail", Map.of("share", 0.25, "data", 1, "values", 4),
+                "Update-InboxRule", Map.of("share", 1.0, "data", 3, "values", 3)));
+        assertThat(score.toMap().get("data_share")).isEqualTo(Map.of("share", 0.57, "data", 4, "values", 7));
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the events hold 0.57 of their EventDetail values in Data (4 of 7), at most 0.5 expected");
+        assertThat(score.summary()).contains(" data_share=0.57");
+
+        // Under the cap, the shares are still reported.
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreEvents(expecting(Map.of("records", 1, "data_share_at_most", 0.3)), List.of(send),
+                List.of(true), null);
+        assertThat(passing.stage1()).isTrue();
+        assertThat(passing.toMap().get("data_share")).isEqualTo(Map.of("share", 0.25, "data", 1, "values", 4));
+        assertThat((List<Map<String, Object>>) passing.toMap().get("typed_checks"))
+                .containsExactly(Map.of("check", "data share at most 0.3", "passed", true));
+
+        // A case expecting neither has no shares in its score.
+        final EvalScore plain = new EvalScore("c");
+        plain.scoreEvents(expecting(Map.of("records", 1)), List.of(send), List.of(true), null);
+        assertThat(plain.toMap()).doesNotContainKeys("typed_checks", "data_share", "data_shares");
+    }
+
+    @Test
+    void anEntrysDataShareIsOfTheEventsItSelects() {
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate</Id></User>"
+                                      + "</Source>" + data("Operation", "Send") + "</Send>");
+        final String rule = event("", "<TypeId>Update-InboxRule</TypeId><Update><After><Object><Name>FW</Name>"
+                                      + "</Object></After>" + data("Operation", "New-InboxRule")
+                                      + data("MoveToFolder", "Archive") + "</Update>");
+        final Map<String, Object> expected = Map.of("records", 2, "typed", List.of(
+                Map.of("select", Map.of("text", "Send"), "paths", List.of(), "data_share_at_most", 0.5),
+                Map.of("select", Map.of("text", "New-InboxRule"), "paths", List.of(), "data_share_at_most", 0.5)));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send, rule), List.of(true, true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the events of {text=New-InboxRule} (TypeIds [Update-InboxRule]) hold 0.67 of their EventDetail "
+                + "values in Data (2 of 3), at most 0.5 expected");
+        assertThatThrownBy(() -> new EvalScore("c").scoreEvents(expecting(Map.of("records", 1,
+                "data_share_at_most", 60)), List.of(send), List.of(true), null))
+                .hasMessageContaining("data_share_at_most 60 is not a number from 0 to 1");
+    }
+
+    @Test
+    void case56FailsAChat182StyleTranslationAndPassesOneTypedAsItsReferenceIs() {
+        // Test chat 182 (2026-11-21): the Messaging group's events with almost nothing typed, the actor as View/User,
+        // the Operation as Data of Update/After/Object, everything else Data; which case 56 passed before it scored
+        // typed paths.
+        final Map<String, Object> case56 = (Map<String, Object>) EvalCases.load("56_jsonl_azure_audit_aggregated")
+                .get("expected");
+        final Map<String, Object> expected = new HashMap<>();
+        expected.put("records", 6);
+        expected.put("typed", case56.get("typed"));
+        expected.put("data_share_at_most", case56.get("data_share_at_most"));
+
+        final EvalScore chat182 = new EvalScore("56");
+        chat182.scoreEvents(expecting(expected), chat182Events(), List.of(true, true, true, true, true, true), null);
+
+        assertThat(chat182.stage1()).isFalse();
+        assertThat((Map<String, Object>) chat182.toMap().get("data_share"))
+                .hasEntrySatisfying("share", share -> assertThat((Double) share).isGreaterThan(0.8));
+        assertThat((List<Map<String, Object>>) chat182.toMap().get("typed_checks"))
+                .filteredOn(check -> Boolean.FALSE.equals(check.get("passed")))
+                .extracting(check -> String.valueOf(check.get("check")))
+                .contains("data share at most 0.5")
+                .anyMatch(check -> check.startsWith("typed {text=MailItemsAccessed} View/Folder/Path"))
+                .anyMatch(check -> check.startsWith("typed {text=Send} Send/Payload/Email/Subject"))
+                .anyMatch(check -> check.startsWith("typed {text=New-InboxRule} Create/Configuration/Name"))
+                .anyMatch(check -> check.startsWith("typed {text=MoveToDeletedItems} Move/Source/Folder/Path"))
+                .anyMatch(check -> check.startsWith("typed {text=TeamMemberAdded} Authorise/AddGroups/Group/Name"))
+                .anyMatch(check -> check.startsWith("typed {text=TeamMemberAdded} Authorise/User/Id"));
+
+        final EvalScore reference = new EvalScore("56");
+        reference.scoreEvents(expecting(expected), referenceEvents(), List.of(true, true, true, true, true, true),
+                null);
+
+        assertThat((List<String>) reference.toMap().get("problems")).isEmpty();
+        assertThat(reference.stage1()).isTrue();
+        assertThat((Map<String, Object>) reference.toMap().get("data_share"))
+                .hasEntrySatisfying("share", share -> assertThat((Double) share).isLessThan(0.4));
+    }
+
+    // Case 56's records translated as test chat 182 translated them.
+    private static List<String> chat182Events() {
+        return List.of(
+                event("", "<TypeId>View-MailItems</TypeId><View><User><Id>li.wei@contoso.example</Id>"
+                          + "<EmailAddress>li.wei@contoso.example</EmailAddress></User>"
+                          + data("Operation", "MailItemsAccessed") + data("MailboxOwnerUPN", "li.wei@contoso.example")
+                          + data("ClientInfoString", "Client=REST;Outlook") + data("LogonType", "1")
+                          + data("ExternalAccess", "false") + data("MailboxGuid", "5a6f815d")
+                          + data("MailAccessType", "Sync") + data("IsThrottled", "False")
+                          + data("FolderId", "AAMk32B9") + data("FolderPath", "\\Drafts")
+                          + data("InternetMessageId", "<37fd1f4c@contoso.example>") + data("SizeInBytes", "315880")
+                          + data("InternetMessageId", "<0fa6dea5@contoso.example>") + data("SizeInBytes", "55909")
+                          + data("OperationCount", "3") + data("RecordType", "25") + data("UserType", "0")
+                          + "</View>"),
+                event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate.jones@contoso.example</Id></User>"
+                          + "</Source><Destination><User><Id>anja.michel@contoso.example</Id></User><User>"
+                          + "<Id>accounts@fabrikam.example</Id></User></Destination><Payload><Email>"
+                          + data("Subject", "Re: roster") + data("SizeInBytes", "483614")
+                          + data("Id", "AAMk9328") + data("InternetMessageId", "<f8ce0925@contoso.example>")
+                          + data("ParentFolderId", "AAMk90A1") + data("ParentFolderPath", "\\Sent Items")
+                          + data("BodyContentType", "HTML") + "</Email></Payload>"
+                          + data("Operation", "Send") + data("MailboxOwnerUPN", "kate.jones@contoso.example")
+                          + data("ClientInfoString", "Client=OWA") + data("LogonType", "1")
+                          + data("ExternalAccess", "false") + data("MailboxGuid", "3ddbd4ed")
+                          + data("RecordType", "50") + data("UserType", "0") + "</Send>"),
+                event("", "<TypeId>Update-InboxRule</TypeId><Update><After><Object>"
+                          + data("Operation", "New-InboxRule") + data("MailboxOwnerUPN", "sam.taylor@contoso.example")
+                          + data("Name", "FW to personal") + data("SubjectContainsWords", "invoice;payment")
+                          + data("MoveToFolder", "Conversation History") + data("StopProcessingRules", "True")
+                          + data("ClientInfoString", "Client=REST;Outlook") + data("MailboxGuid", "357dcfb8")
+                          + "</Object></After></Update>"),
+                event("", "<TypeId>Move-MailToDeletedItems</TypeId><Update><After><Object>"
+                          + data("Operation", "MoveToDeletedItems") + data("FolderPath", "\\Inbox")
+                          + data("DestFolderPath", "\\Deleted Items") + data("FolderId", "AAMkF0B8")
+                          + data("DestFolderId", "AAMkEEEF") + data("Subject", "FW: Change freeze & CAB notes")
+                          + data("InternetMessageId", "<0ca2b8f1@contoso.example>")
+                          + "</Object></After></Update>"),
+                event("", "<TypeId>Send-TeamsMessage</TypeId><Send><Source><User>"
+                          + "<Id>anja.michel@contoso.example</Id></User></Source>"
+                          + data("Operation", "MessageSent") + data("Recipients", "kate.jones@contoso.example")
+                          + data("TeamName", "Ops") + data("ChannelName", "General") + data("MessageId", "6100214")
+                          + data("ChatThreadId", "19:b66f@thread.tacv2") + data("CommunicationType", "Team")
+                          + "</Send>"),
+                event("", "<TypeId>Update-TeamMemberAdded</TypeId><Update><After><Object>"
+                          + data("Operation", "TeamMemberAdded") + data("TeamName", "Finance")
+                          + data("TeamGuid", "0b9a8c7d") + data("ChannelName", "General")
+                          + data("MemberUPN", "li.wei@contoso.example") + data("MemberDisplayName", "Li Wei")
+                          + data("MemberRole", "2") + data("MemberUPN", "svc-batch@contoso.example")
+                          + "</Object></After></Update>"));
+    }
+
+    // Case 56's records translated as its reference mapping translates them.
+    private static List<String> referenceEvents() {
+        return List.of(
+                event("", "<TypeId>View-MailItems</TypeId><Description>Mail items were accessed</Description><View>"
+                          + "<Folder><Id>AAMk32B9</Id><Path>\\Drafts</Path><Type>Mail folder</Type></Folder>"
+                          + data("Operation", "MailItemsAccessed") + data("MailAccessType", "Sync") + "</View>"),
+                event("", "<TypeId>Send-Mail</TypeId><Description>A message was sent</Description><Send><Source>"
+                          + "<User><EmailAddress>kate.jones@contoso.example</EmailAddress></User></Source>"
+                          + "<Destination><User><EmailAddress>anja.michel@contoso.example</EmailAddress></User><User>"
+                          + "<EmailAddress>accounts@fabrikam.example</EmailAddress></User></Destination><Payload>"
+                          + "<Email><Id>&lt;f8ce0925@contoso.example&gt;</Id><Subject>Re: roster</Subject>"
+                          + data("SizeInBytes", "483614") + "</Email></Payload>" + data("Operation", "Send")
+                          + "</Send>"),
+                event("", "<TypeId>Create-InboxRule</TypeId><Description>An inbox rule was created</Description>"
+                          + "<Create><Configuration><Type>Inbox rule</Type><Name>FW to personal</Name>"
+                          + data("SubjectContainsWords", "invoice;payment") + "</Configuration>"
+                          + data("Operation", "New-InboxRule") + "</Create>"),
+                event("", "<TypeId>Move-MailItems</TypeId><Description>Messages were moved to Deleted Items"
+                          + "</Description><Move><Source><Folder><Id>AAMkF0B8</Id><Path>\\Inbox</Path></Folder>"
+                          + "</Source><Destination><Folder><Id>AAMkEEEF</Id>"
+                          + "<Path>\\Deleted Items</Path></Folder></Destination>"
+                          + data("Operation", "MoveToDeletedItems") + "</Move>"),
+                event("", "<TypeId>Send-TeamsMessage</TypeId><Description>A message was posted in Teams</Description>"
+                          + "<Send><Source><User><EmailAddress>anja.michel@contoso.example</EmailAddress></User>"
+                          + "</Source><Destination><User><EmailAddress>kate.jones@contoso.example</EmailAddress>"
+                          + "</User></Destination><Payload><Chat><Id>6100214</Id></Chat></Payload>"
+                          + data("Operation", "MessageSent") + data("team", "Ops") + "</Send>"),
+                event("", "<TypeId>Add-TeamMember</TypeId><Description>A member was added to a team</Description>"
+                          + "<Authorise><User><Id>li.wei@contoso.example</Id><Name>Li Wei</Name></User>"
+                          + "<Action>Modify</Action><AddGroups><Group><Id>0b9a8c7d</Id><Name>Finance</Name></Group>"
+                          + "</AddGroups>" + data("Operation", "TeamMemberAdded") + "<Data Name=\"member\">"
+                          + data("UPN", "li.wei@contoso.example") + "</Data><Data Name=\"member\">"
+                          + data("UPN", "svc-batch@contoso.example") + "</Data></Authorise>"));
+    }
+
+    // A Data element of the name and value (the value's XML escaped).
+    private static String data(final String name, final String value) {
+        return "<Data Name=\"" + name + "\" Value=\"" + value.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;") + "\"/>";
     }
 
     // A catalogue as the source notes' JSON block holds it: a logon recognised two ways, a logoff, an unlock from the

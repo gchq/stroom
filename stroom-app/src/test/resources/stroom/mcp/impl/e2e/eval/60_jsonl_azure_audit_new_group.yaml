@@ -50,6 +50,30 @@ expected:
     not_asked: ["Which field says which source"]
   unchanged: true
   separate_index: true
+  # What the events hold in the schema's own elements rather than Data (test chat 182, 2026-11-21, of the Messaging
+  # group: almost nothing typed, which every check above passed). Each event type selected by its Operation, the
+  # vendor's code wherever it is held; each path's alternatives the schema-correct homes a design may choose.
+  data_share_at_most: 0.5
+  typed:
+    - select: {text: UserLoggedIn}
+      paths: ["Authenticate/User/Id|Authenticate/User/EmailAddress|Authenticate/User/Name"]
+      data_share_at_most: 0.6
+    - select: {text: UserLoginFailed}
+      paths:
+        - "Authenticate/User/Id|Authenticate/User/EmailAddress|Authenticate/User/Name"
+        - "Authenticate/Outcome/Success|Authenticate/Outcome/Permitted|Authenticate/Outcome/Reason\
+          |Authenticate/Outcome/Description"
+      data_share_at_most: 0.6
+    - select: {text: Reset user password.}
+      paths: ["Authenticate/User/Id|Authenticate/User/EmailAddress|Update/After/User/Id|Update/After/User/EmailAddress"]
+      data_share_at_most: 0.6
+    - select: {text: Add member to role.}
+      paths:
+        - "Authorise/AddGroups/Group/Name|Authorise/AddGroups/Group/Id|Authorise/Group/Name|Authorise/Group/Id\
+          |Update/After/Group/Name|Update/After/Group/Id|Update/After/Object/Name|Update/After/User/Groups/Group/Name\
+          |Update/After/User/Groups/Group/Id|Authorise/User/Groups/Group/Name|Authorise/User/Groups/Group/Id"
+        - "Authorise/User/Id|Authorise/User/EmailAddress|Update/After/User/Id|Update/After/User/EmailAddress"
+      data_share_at_most: 0.6
 reference:
   source_types:
     group: Identity
@@ -92,12 +116,18 @@ reference:
           - {path: EventDetail/Description, value: A user's password was reset}
           - {path: EventDetail/Authenticate/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authenticate/Action, value: ResetPassword}
-          - {path: EventDetail/Authenticate/User/Id, field: UserId}
+          # The user whose password was reset: the target that is a user principal name (Type 5).
+          - {path: EventDetail/Authenticate/User/Id, xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
       - name: role_member_added
         when: [{field: Operation, equals: Add member to role.}]
         fields:
           - {path: EventDetail/TypeId, value: Add-RoleMember}
           - {path: EventDetail/Description, value: A member was added to a role}
-          - {path: EventDetail/Update/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/Update/After/Object/Type, value: Role membership}
-          - {path: EventDetail/Update/After/Object/Id, field: UserId}
+          - {path: EventDetail/Authorise/Data, data_name: Operation, field: Operation}
+          - {path: EventDetail/Authorise/Action, value: Modify}
+          # The member added: the target that is a user principal name (Type 5); the role, by its new values.
+          - {path: EventDetail/Authorise/User/Id, xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
+          - {path: EventDetail/Authorise/AddGroups/Group/Id,
+             xpath: "*[@key='event']/*[@key='ModifiedProperties']/*[*[@key='Name'] = 'Role.TemplateId']/*[@key='NewValue']"}
+          - {path: EventDetail/Authorise/AddGroups/Group/Name,
+             xpath: "*[@key='event']/*[@key='ModifiedProperties']/*[*[@key='Name'] = 'Role.DisplayName']/*[@key='NewValue']"}

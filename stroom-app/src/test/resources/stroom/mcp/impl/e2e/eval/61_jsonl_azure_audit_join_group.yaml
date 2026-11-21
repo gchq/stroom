@@ -61,6 +61,54 @@ expected:
     asked:
       - {message: "go in this build's source type group"}
     not_asked: ["Which field says which source", "runs in pipeline"]
+  # What the events hold in the schema's own elements rather than Data, as case 56's (test chat 182), and OneDrive's
+  # files typed.
+  data_share_at_most: 0.5
+  typed:
+    - select: {text: MailItemsAccessed}
+      paths: ["View/Folder/Path|View/Folder/Id|View/Folder/Name|View/Object/Id|View/Object/Name|View/Email/Id"]
+      data_share_at_most: 0.6
+    - select: {text: Send}
+      paths:
+        - "Send/Source/User/Id|Send/Source/User/EmailAddress|Send/Payload/Email/From/Id\
+          |Send/Payload/Email/From/EmailAddress"
+        - "Send/Destination/User/Id|Send/Destination/User/EmailAddress|Send/Payload/Email/To/Id\
+          |Send/Payload/Email/To/EmailAddress"
+        - "Send/Payload/Email/Subject|Send/Payload/Email/Name"
+      data_share_at_most: 0.6
+    - select: {text: New-InboxRule}
+      paths: ["Create/Configuration/Name|Create/Object/Name|Update/After/Configuration/Name|Update/After/Object/Name"]
+      data_share_at_most: 0.6
+    - select: {text: MoveToDeletedItems}
+      paths:
+        - "Move/Source/Folder/Path|Move/Source/Folder/Id|Move/Source/Folder/Name|Delete/Folder/Path|Delete/Folder/Id\
+          |Delete/Folder/Name|Update/Before/Folder/Path|Update/Before/Folder/Id|Update/Before/Folder/Name"
+        - "Move/Destination/Folder/Path|Move/Destination/Folder/Id|Move/Destination/Folder/Name|Update/After/Folder/Path\
+          |Update/After/Folder/Id|Update/After/Folder/Name|Delete/Folder/Path|Delete/Folder/Id|Delete/Folder/Name"
+      data_share_at_most: 0.6
+    - select: {text: MessageSent}
+      paths:
+        - "Send/Source/User/Id|Send/Source/User/EmailAddress|Send/Payload/Chat/From/Id\
+          |Send/Payload/Chat/From/EmailAddress|Send/Payload/GroupChat/From/Id|Send/Payload/GroupChat/From/EmailAddress"
+        - "Send/Destination/User/Id|Send/Destination/User/EmailAddress|Send/Payload/Chat/To/Id\
+          |Send/Payload/Chat/To/EmailAddress|Send/Payload/GroupChat/To/Id|Send/Payload/GroupChat/To/EmailAddress"
+      data_share_at_most: 0.6
+    - select: {text: TeamMemberAdded}
+      paths:
+        - "Authorise/AddGroups/Group/Name|Authorise/AddGroups/Group/Id|Authorise/Group/Name|Authorise/Group/Id\
+          |Update/After/Group/Name|Update/After/Group/Id|Update/After/User/Groups/Group/Name\
+          |Update/After/User/Groups/Group/Id|Authorise/User/Groups/Group/Name|Authorise/User/Groups/Group/Id"
+        - "Authorise/User/Id|Authorise/User/EmailAddress|Authorise/User/Name|Update/After/User/Id\
+          |Update/After/User/EmailAddress|Update/After/User/Name"
+      data_share_at_most: 0.6
+    - select: {text: FileAccessed}
+      paths: ["View/File/Path|View/File/Name|View/File/Id|View/Document/Path|View/Document/Name|View/Document/Id\
+          |View/Object/Name|View/Object/Id"]
+      data_share_at_most: 0.6
+    - select: {text: FileModified}
+      paths: ["Update/After/File/Path|Update/After/File/Name|Update/After/File/Id|Update/After/Document/Name\
+          |Update/After/Document/Id|Update/After/Object/Name|Update/After/Object/Id"]
+      data_share_at_most: 0.6
 reference:
   source_types:
     group: Messaging
@@ -83,8 +131,13 @@ reference:
           - {path: EventDetail/TypeId, value: View-MailItems}
           - {path: EventDetail/Description, value: Mail items were accessed}
           - {path: EventDetail/View/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/View/Object/Type, value: Mailbox}
-          - {path: EventDetail/View/Object/Id, field: event.MailboxOwnerUPN}
+          - {path: EventDetail/View/Data, data_name: MailAccessType,
+             xpath: "*[@key='event']/*[@key='OperationProperties']/*[*[@key='Name'] = 'MailAccessType']/*[@key='Value']"}
+          # The tools write one object, so one Folder (a group may only repeat an element the schema repeats on
+          # its own): the first folder accessed.
+          - {path: EventDetail/View/Folder/Type, value: Mail folder}
+          - {path: EventDetail/View/Folder/Id, xpath: "*[@key='event']/*[@key='Folders']/*[1]/*[@key='Id']"}
+          - {path: EventDetail/View/Folder/Path, xpath: "*[@key='event']/*[@key='Folders']/*[1]/*[@key='Path']"}
       - name: mail_send
         when: [{field: Operation, equals: Send}]
         fields:
@@ -92,25 +145,32 @@ reference:
           - {path: EventDetail/Description, value: A message was sent}
           - {path: EventDetail/Send/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
-          - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Item.Recipients, repeat: true}
-          - {path: EventDetail/Send/Payload/Email/Name, field: event.Item.Subject}
+          - {path: EventDetail/Send/Destination/User, for_each: {array: event.Item.Recipients}, as: recipient,
+             fields: [{path: EmailAddress, item: true}]}
+          - {path: EventDetail/Send/Payload/Email/Id, field: event.Item.InternetMessageId}
+          - {path: EventDetail/Send/Payload/Email/Subject, field: event.Item.Subject}
+          - {path: EventDetail/Send/Payload/Email/Data, data_name: SizeInBytes, field: event.Item.SizeInBytes}
       - name: inbox_rule
         when: [{field: Operation, equals: New-InboxRule}]
         fields:
           - {path: EventDetail/TypeId, value: Create-InboxRule}
           - {path: EventDetail/Description, value: An inbox rule was created}
           - {path: EventDetail/Create/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/Create/Object/Type, value: Inbox rule}
-          - {path: EventDetail/Create/Object/Id, field: event.MailboxOwnerUPN}
+          - {path: EventDetail/Create/Configuration/Type, value: Inbox rule}
+          - {path: EventDetail/Create/Configuration/Name,
+             xpath: "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"}
+          - {path: EventDetail/Create/Configuration/Data, data_name: SubjectContainsWords,
+             xpath: "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'SubjectContainsWords']/*[@key='Value']"}
       - name: mail_deleted
         when: [{field: Operation, equals: MoveToDeletedItems}]
         fields:
-          - {path: EventDetail/TypeId, value: Delete-MailItem}
-          - {path: EventDetail/Description, value: A message was moved to Deleted Items}
-          - {path: EventDetail/Delete/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/Delete/Object/Type, value: Email}
-          - {path: EventDetail/Delete/Object/Id, field: event.MailboxOwnerUPN}
-          - {path: EventDetail/Delete/Data, data_name: folder, field: event.Folder.Path}
+          - {path: EventDetail/TypeId, value: Move-MailItems}
+          - {path: EventDetail/Description, value: Messages were moved to Deleted Items}
+          - {path: EventDetail/Move/Data, data_name: Operation, field: Operation}
+          - {path: EventDetail/Move/Source/Folder/Id, field: event.Folder.Id}
+          - {path: EventDetail/Move/Source/Folder/Path, field: event.Folder.Path}
+          - {path: EventDetail/Move/Destination/Folder/Id, field: event.DestFolder.Id}
+          - {path: EventDetail/Move/Destination/Folder/Path, field: event.DestFolder.Path}
       - name: teams_message
         when: [{field: Operation, equals: MessageSent}]
         fields:
@@ -118,16 +178,25 @@ reference:
           - {path: EventDetail/Description, value: A message was posted in Teams}
           - {path: EventDetail/Send/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
-          - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Recipients, repeat: true}
+          - {path: EventDetail/Send/Destination/User, for_each: {array: event.Recipients}, as: recipient,
+             fields: [{path: EmailAddress, item: true}]}
+          - {path: EventDetail/Send/Payload/Chat/Id, field: event.MessageId}
           - {path: EventDetail/Send/Data, data_name: team, field: event.TeamName}
       - name: team_member_added
         when: [{field: Operation, equals: TeamMemberAdded}]
         fields:
           - {path: EventDetail/TypeId, value: Add-TeamMember}
           - {path: EventDetail/Description, value: A member was added to a team}
-          - {path: EventDetail/Update/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/Update/After/Object/Type, value: Team}
-          - {path: EventDetail/Update/After/Object/Id, field: event.TeamName}
+          - {path: EventDetail/Authorise/Data, data_name: Operation, field: Operation}
+          - {path: EventDetail/Authorise/Action, value: Modify}
+          # The first member added typed (one User, as the tools write it), every member's UPN as Data.
+          - {path: EventDetail/Authorise/User/Id, xpath: "*[@key='event']/*[@key='Members']/*[1]/*[@key='UPN']"}
+          - {path: EventDetail/Authorise/User/Name,
+             xpath: "*[@key='event']/*[@key='Members']/*[1]/*[@key='DisplayName']"}
+          - {path: EventDetail/Authorise/Data, data_name: member, for_each: {array: event.Members}, as: member,
+             fields: [{path: Data, data_name: UPN, field: UPN}]}
+          - {path: EventDetail/Authorise/AddGroups/Group/Id, field: event.TeamGuid}
+          - {path: EventDetail/Authorise/AddGroups/Group/Name, field: event.TeamName}
       - name: meeting
         when: [{field: Operation, equals: MeetingParticipantDetail}]
         fields:
@@ -142,16 +211,15 @@ reference:
           - {path: EventDetail/TypeId, value: View-File}
           - {path: EventDetail/Description, value: A file was accessed or downloaded}
           - {path: EventDetail/View/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/View/Object/Type, value: File}
-          - {path: EventDetail/View/Object/Id, field: event.ObjectId}
-          - {path: EventDetail/View/Object/Name, field: event.SourceFileName}
+          - {path: EventDetail/View/File/Name, field: event.SourceFileName}
+          - {path: EventDetail/View/File/Path, field: event.ObjectId}
+          - {path: EventDetail/View/Data, data_name: Platform, field: event.Platform}
       - name: file_changed
         when: [{field: Operation, one_of: [FileModified, SharingSet]}]
         fields:
           - {path: EventDetail/TypeId, value: Update-File}
           - {path: EventDetail/Description, value: A file was modified or shared}
           - {path: EventDetail/Update/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/Update/After/Object/Type, value: File}
-          - {path: EventDetail/Update/After/Object/Id, field: event.ObjectId}
-          - {path: EventDetail/Update/After/Object/Name, field: event.SourceFileName}
+          - {path: EventDetail/Update/After/File/Name, field: event.SourceFileName}
+          - {path: EventDetail/Update/After/File/Path, field: event.ObjectId}
           - {path: EventDetail/Update/Data, data_name: shared_with, field: event.TargetUserOrGroupName}
