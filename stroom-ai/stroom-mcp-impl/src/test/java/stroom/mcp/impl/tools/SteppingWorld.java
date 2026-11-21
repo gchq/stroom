@@ -30,6 +30,8 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -105,6 +107,8 @@ final class SteppingWorld {
     final LookupAgreements lookups = new LookupAgreements(consent);
     /// Checks output no schema filter checks: finds nothing wrong unless a test says otherwise.
     final OutputSchemas outputSchemas = Mockito.mock(OutputSchemas.class);
+    /// The build's catalogue of event types: none unless a test keeps one ([#keepsACatalogue]).
+    final CatalogueNotes catalogueNotes = Mockito.mock(CatalogueNotes.class);
     final List<String> said = new ArrayList<>();
     /// Each walk opened: the stream, and the code it was opened with.
     final List<Map.Entry<Long, Map<String, String>>> opened = new ArrayList<>();
@@ -144,6 +148,7 @@ final class SteppingWorld {
         Mockito.when(keptMappings.keptMapping(anyString())).thenReturn(Optional.empty());
         Mockito.when(buildRecords.recordPassed(any(), anyString(), any(), any())).thenReturn(Optional.empty());
         Mockito.when(plan.buildOf(any())).thenReturn(Optional.empty());
+        Mockito.when(catalogueNotes.catalogue(anyString())).thenReturn(Optional.empty());
         Mockito.when(plan.withNext(any(), any(), any())).thenAnswer(inv -> inv.getArgument(2));
         Mockito.when(steppingWalks.open(any(), anyLong(), any(), any())).thenAnswer(inv -> walk(
                 inv.getArgument(1), inv.getArgument(2)));
@@ -346,6 +351,31 @@ final class SteppingWorld {
                 null, "Workload", rows));
         Mockito.when(keptMappings.keptMapping(anyString())).thenReturn(Optional.of(new KeptMapping.Kept(
                 XsltSaves.TRANSLATION, Map.of("mapping", mapping.toJson(DumpMode.COMPACT)))));
+    }
+
+    /// Puts the pipeline in the build `acme`, whose source notes keep a catalogue of the event types: each
+    /// recognised by nothing here, as the steps' outputs say which event type a record is of.
+    ///
+    /// @param types The event types: a TypeId each, or `!TypeId` for one whose records are dropped.
+    void keepsACatalogue(final String... types) {
+        final List<EventType> eventTypes = new ArrayList<>();
+        for (final String type : types) {
+            final boolean drop = type.startsWith("!");
+            final String typeId = drop
+                    ? type.substring(1)
+                    : type;
+            eventTypes.add(new EventType(typeId, typeId + " title", null, "Authenticate", null, null, null, null,
+                    null, List.of(), drop, EventType.USER_CONFIRMED, "high", null, EventType.CONFIRMED));
+        }
+        Mockito.when(plan.buildOf(any())).thenReturn(Optional.of("acme"));
+        Mockito.when(catalogueNotes.catalogue("acme")).thenReturn(Optional.of(new Catalogue(eventTypes,
+                Catalogue.CatchAll.CONFIRMED, null)));
+    }
+
+    /// @return An event-logging Events of one event of the TypeId, as a catalogued translation writes it.
+    static String eventOf(final String typeId) {
+        return "<Events xmlns=\"event-logging:3\" Version=\"4.1.0\"><Event><EventDetail><TypeId>" + typeId
+               + "</TypeId><Authenticate/></EventDetail></Event></Events>";
     }
 
     /// @return A JSON record as Stroom's JSON parser gives it to the XSLT, of the source type (its `Workload`).

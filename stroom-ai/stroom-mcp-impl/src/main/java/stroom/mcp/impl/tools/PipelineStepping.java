@@ -698,6 +698,12 @@ class PipelineStepping {
         return plan.withNext(context, plan.buildOf(pipeline).orElse(null), result);
     }
 
+    /// @param pipeline A pipeline.
+    /// @return The build it is in, or empty when it is in none.
+    Optional<String> buildOf(final DocRef pipeline) {
+        return plan.buildOf(pipeline);
+    }
+
     /// Records that the streams were stepped, as the data they hold is shown.
     ///
     /// @param context   The call's context.

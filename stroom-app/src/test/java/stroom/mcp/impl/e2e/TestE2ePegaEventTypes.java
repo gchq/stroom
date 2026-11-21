@@ -149,6 +149,13 @@ class TestE2ePegaEventTypes extends AbstractE2eTest {
                 "template_uuid", templateUuid("translation", "Event Data (JSON)"))));
         final Map<String, Object> stepped = stepSample(pipeline, raw);
         assertThat(stepped).as("stepped clean: %s", stepped).containsEntry("verdict", "clean");
+        // Every catalogued event type stepped at least once, past the head of the stream where need be (seen in chat
+        // 182: nothing said whether the build's event types were among the records stepped).
+        assertThat(map(stepped, "stepped_by_event_type").keySet()).as("the event types stepped: %s",
+                stepped.get("not_stepped")).containsExactlyInAnyOrderElementsOf(EXPECTED.keySet());
+        assertThat(stepped).doesNotContainKey("not_stepped");
+        assertThat(String.valueOf(stepped.get("hint"))).contains("Every one of the build's " + EXPECTED.size()
+                                                                 + " catalogued event types was stepped");
         final Map<String, Object> done = process(pipeline, raw);
         final List<Long> events = ids(list(done, "streams").getFirst(), "events");
         assertThat(events).hasSize(1);

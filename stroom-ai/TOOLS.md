@@ -4314,7 +4314,7 @@ a part. With `draft_code`, it tries a change without saving it.
 
 Processing · read-only (records a clean verdict in the build record) · requires Stepping; unlocked further by View
 Data; checks View on the pipeline · takes a run slot · Classes: `StepSampleTool`, `PipelineStepping`,
-`SteppingVerdicts`, `PassedOverRecords`, `BuildRecords`
+`SteppingVerdicts`, `PassedOverRecords`, `SteppedEventTypes`, `BuildRecords`
 
 The correctness check before processing. Steps every record of the sample streams, stream by stream, each stream
 walked in one session, and returns one verdict for the whole sample: error groups triaged with the records they
@@ -4326,10 +4326,15 @@ promotion and returns the plan's `next`.
   (at least 1). With neither `max_records` nor `records_per_stream`, the first 50 records of each stream are stepped
   (`StepSampleTool.PER_STREAM`): sample files of 985 records each were stepped a record per request on a remote
   Stroom, and the head of each stream already says whether the translation is right; processing reads the rest.
+  With the build's event type catalogue, those defaults step on until every catalogued event type is stepped
+  (below).
 * **Returns**: `pipeline`, `records_stepped`, `records_with_errors`, `draft_code_used`, the triage (`verdict`,
   `groups_by_class`, `groups`, each group with up to 20 `records`, keys such as `7:3` or `7:1:3` past the first
   part), `first_record_output` (each default output element's output for the first record, up to 5,000
-  characters), and as they apply `hint`, `stopped_early`, `record` and `next`.
+  characters), and as they apply `hint`, `stopped_early`, `record` and `next`. With a catalogue, for an events
+  pipeline: `stepped_by_event_type` (records stepped of each event type stepped, by TypeId, in the catalogue's
+  order) and `not_stepped` (`type_id`, `title`, `why`: `not in the sample: ...` when every stream was stepped to its
+  end, else `not found within the limit: ...` with the limit met).
 * **Refuses**: no `pipeline_uuid` or empty `stream_ids`; `max_records` or `records_per_stream` below 1 or not a
   whole number; a pipeline that looks up reference data from a feed with no stream of
   that type yet (`PipelineStepping.refuseUnloadedReferences`): a step then finds no reference data, and Stroom keeps
@@ -4365,6 +4370,21 @@ promotion and returns the plan's `next`.
     more minutes. Streams left once the cap is reached are not stepped at all.
   * Clean with draft code: the hint says to save it (`build_translation_xslt uuid=` for a generated XSLT, else
     `save_xslt uuid=`) and step the saved code once more; only then does the plan move on.
+  * Every catalogued event type stepped (`SteppedEventTypes`). When the pipeline's build has an event type
+    catalogue (its source notes), a record is of an event type when its output has an event whose
+    `EventDetail/TypeId` is the type's (its TypeId, else the default the translation writes); a dropped event type
+    writes no event and isn't looked for, nor is the catch-all. With the default limits, each stream's head is its
+    first 50 records of the group's own (records passed over not counted), at most an even share of the 500;
+    then, while an event type is not stepped, the streams not yet ended are stepped on from where they were left,
+    in turn, each an even share of what is left of the 500, stopping as soon as every event type has been. The
+    bound is the existing one: 500 records a call (`max_records` lower), and the call's time for stepping, which
+    past the heads only stops the search (no `stopped_early`; the verdict of the records stepped is recorded as
+    usual). `records_per_stream` or `max_records` given are kept as given, the event types still told. The hint
+    says every event type was stepped, or which weren't and that the verdict doesn't cover them. Record numbers
+    from the catalogue's check aren't used to step straight to a type's records: they number the sample's records
+    as the survey reads them, not stepping's parts and records, and stepping only steps on from a record. Seen in
+    chat 182: the first 50 records of each of two streams, 57 of the 100 passed over, and nothing said whether
+    the build's 7 event types were among the 43 left.
 
 ### `step_records`
 

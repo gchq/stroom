@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -38,14 +39,19 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.function.BooleanSupplier;
 
 /// `step_sample` - steps every record of the sample streams to completion and returns one verdict for the whole sample:
 /// error groups triaged (blocking / review / benign) with the records they affect, plus per-record status. The
@@ -56,7 +62,12 @@ import java.util.TreeSet;
 /// when its stream is done. It takes a run slot over `/mcp`, says where it is now and then, stops at once when its
 /// thread is interrupted (the client gave up on the call, or the run was stopped), and stops before the session's
 /// time limit for a long call, with a verdict of the records stepped so far that is not recorded.
+///
+/// With the build's event type catalogue, it steps on past each stream's head until every catalogued event type has
+/// been stepped at least once, within the limit for one call, and says which were and weren't ([SteppedEventTypes]).
 class StepSampleTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StepSampleTool.class);
 
     static final String NAME = "step_sample";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
@@ -70,6 +81,8 @@ class StepSampleTool extends AbstractBuiltInTool {
     private final PipelineStepping stepping;
     private final int perStream;
     private final int maxSampleRecords;
+    // The build's catalogue of event types; none in tests that make the tool themselves.
+    private Provider<CatalogueNotes> catalogueNotesProvider;
 
     @Inject
     StepSampleTool(final PipelineStepping stepping) {
@@ -84,6 +97,15 @@ class StepSampleTool extends AbstractBuiltInTool {
         this.maxSampleRecords = maxSampleRecords;
     }
 
+    /// Where the build's catalogue of event types is kept (set by injection; none in tests that make the tool
+    /// themselves): with one, the sample is stepped until every catalogued event type has been.
+    ///
+    /// @param catalogueNotes The build's catalogue.
+    @Inject
+    void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
+        this.catalogueNotesProvider = catalogueNotes;
+    }
+
     @Override
     public ToolDefinition definition() {
         return ToolDefinition.builder()
@@ -93,7 +115,9 @@ class StepSampleTool extends AbstractBuiltInTool {
                              + "the whole sample: error groups triaged (blocking / review / benign) with the records "
                              + "they affect, plus per-record status. This is the correctness check before "
                              + "processing; a blocking group means fix and step again. Large samples are stepped "
-                             + "from the head of each stream (records_per_stream); processing covers the rest.")
+                             + "from the head of each stream (records_per_stream); processing covers the rest. "
+                             + "With the build's event type catalogue it steps on until each event type is "
+                             + "stepped (stepped_by_event_type, not_stepped).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PIPELINE_UUID_ARG, PipelineStepping.PIPELINE_UUID_DESCRIPTION)
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Sample streams to step through, every "
@@ -230,11 +254,15 @@ class StepSampleTool extends AbstractBuiltInTool {
         final Integer perStreamLimit = recordsPerStream == null && maxRecords == null
                 ? Integer.valueOf(perStream)
                 : recordsPerStream;
+        // With the build's catalogue, and the head of each stream to step by default, the sample is stepped on
+        // until each event type has been (seen in chat 182: of 100 records stepped, 57 were passed over, and nothing
+        // said whether any of the build's 7 event types was among the rest).
+        final SteppedEventTypes eventTypes = SteppedEventTypes.of(catalogue(pipeline));
+        final boolean search = eventTypes != null && recordsPerStream == null && maxRecords == null;
         final Walked walked;
         try {
             walked = PipelineStepping.withinTimeLimit(context, () -> walk(context, pipeline, streamIds, draftCode,
-                    childType,
-                    cap, perStreamLimit, keepOutputs));
+                    childType, cap, perStreamLimit, keepOutputs, eventTypes, search));
         } finally {
             stepping.audit(context, streamIds, "Stepped stream(s) through " + pipeline.name() + " with the " + NAME
                                                + " tool");
@@ -243,7 +271,27 @@ class StepSampleTool extends AbstractBuiltInTool {
                 List.copyOf(walked.outputs));
     }
 
-    // Every stream walked, up to the caps, or until the call's time is up.
+    // The catalogue of event types of the build the pipeline is in, or null when it is in none or the build has none.
+    private Catalogue catalogue(final SteppedPipeline pipeline) {
+        if (catalogueNotesProvider == null) {
+            return null;
+        }
+        try {
+            return stepping.buildOf(pipeline.ref())
+                    .flatMap(build -> catalogueNotesProvider.get().catalogue(build))
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            // Only the event types stepped go untold: never fail the step over it.
+            LOGGER.debug(() -> LogUtil.message("Couldn't read the catalogue of pipeline {}'s build: {}",
+                    pipeline.ref().getUuid(), e.getMessage()));
+            return null;
+        }
+    }
+
+    // Every stream walked, up to the caps, or until the call's time is up. With the catalogue's event types to step
+    // (search), each stream's head is its first perStreamLimit records of the group's own (those passed over not
+    // counted), at most an even share of the cap; then the streams not yet ended are stepped on, in turn, an even
+    // share of what is left of the cap each, until every event type has been stepped.
     private Walked walk(final ToolCallContext context,
                         final SteppedPipeline pipeline,
                         final List<Long> streamIds,
@@ -251,18 +299,20 @@ class StepSampleTool extends AbstractBuiltInTool {
                         final String childType,
                         final int cap,
                         final Integer perStreamLimit,
-                        final boolean keepOutputs) {
+                        final boolean keepOutputs,
+                        final SteppedEventTypes eventTypes,
+                        final boolean search) {
         final Walked walked = new Walked(keepOutputs, stepping.unvalidatedOutput(pipeline),
-                stepping.passedOver(pipeline));
-        final String outputElement = pipeline.outputElement();
+                stepping.passedOver(pipeline), eventTypes, search);
         final CallProgress progress = CallProgress.of(context);
+        final int share = ceilDiv(cap, Math.max(1, streamIds.size()));
         int n = 0;
         for (final long streamId : streamIds) {
             n++;
-            final int streamStart = walked.records.size();
+            final int room = cap - walked.records.size();
             final int limit = perStreamLimit == null
-                    ? cap - streamStart
-                    : Math.min(perStreamLimit, cap - streamStart);
+                    ? room
+                    : Math.min(perStreamLimit, room);
             if (limit <= 0) {
                 // The cap is reached: the streams left are not stepped at all.
                 break;
@@ -270,44 +320,124 @@ class StepSampleTool extends AbstractBuiltInTool {
             // Told when each stream starts, and while one is stepped only now and then, never at every record.
             progress.say("Stepping stream " + streamId + " (" + n + " of " + streamIds.size() + ") through "
                          + pipeline.name() + ": up to " + limit + " records");
-            try (final Walk walk = stepping.open(pipeline, streamId, draftCode, childType)) {
-                SteppingResult result = walk.first();
-                if (!PipelineStepping.isFound(result)) {
-                    // An element that fails before the first record (an XSLT that doesn't compile, say) reports it
-                    // here.
-                    walked.markers.addAll(SteppingWalks.markers(result, String.valueOf(streamId)));
-                }
-                while (PipelineStepping.isFound(result) && walked.records.size() < cap
-                       && (perStreamLimit == null || walked.records.size() - streamStart < perStreamLimit)) {
-                    walked.perStream.merge(streamId, 1, Integer::sum);
-                    final StepLocation location = result.getFoundLocation();
-                    final String key = SteppingWalks.recordKey(streamId, location);
-                    record(walked, pipeline, outputElement, result, key, location);
-                    progress.nowAndThen("Stepping stream " + streamId + " (" + n + " of " + streamIds.size()
-                                        + "): " + (walked.records.size() - streamStart) + " of up to " + limit
-                                        + " records stepped");
-                    if (PipelineStepping.timeIsUp()) {
-                        walked.cut = true;
-                        break;
-                    }
-                    result = walk.forward(location);
-                }
-            } catch (final ToolTimeoutException e) {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw e;
-                }
-                // A step outlasted the call's time.
-                walked.cut = true;
-            }
+            final StreamState state = new StreamState();
+            walked.states.put(streamId, state);
+            final BooleanSupplier more = search
+                    ? () -> state.judged < perStreamLimit && state.stepped < share
+                    : () -> perStreamLimit == null || state.stepped < perStreamLimit;
+            stepOn(progress, pipeline, streamId, "(" + n + " of " + streamIds.size() + ")", limit, draftCode,
+                    childType, cap, walked, state, more, false);
             if (walked.cut) {
-                break;
+                return walked;
             }
+        }
+        if (search && walked.wroteEvents > 0) {
+            searchOn(progress, pipeline, streamIds, draftCode, childType, cap, walked);
         }
         return walked;
     }
 
-    // What one record's step met and wrote.
-    private static void record(final Walked walked,
+    // The streams not yet ended stepped on, in turn, until every catalogued event type has been stepped, the cap is
+    // reached, or the call's time is up (then the search stops: the verdict of the records stepped still holds).
+    private void searchOn(final CallProgress progress,
+                          final SteppedPipeline pipeline,
+                          final List<Long> streamIds,
+                          final Map<String, String> draftCode,
+                          final String childType,
+                          final int cap,
+                          final Walked walked) {
+        final SteppedEventTypes eventTypes = walked.eventTypes;
+        while (!eventTypes.allStepped() && !walked.searchStopped) {
+            final int left = cap - walked.records.size();
+            final List<Long> open = streamIds.stream()
+                    .filter(id -> walked.states.containsKey(id) && !walked.states.get(id).ended)
+                    .toList();
+            if (left <= 0 || open.isEmpty()) {
+                return;
+            }
+            for (final long streamId : open) {
+                final StreamState state = walked.states.get(streamId);
+                final int until = state.stepped + ceilDiv(left, open.size());
+                walked.searched = true;
+                progress.say("Stepping on in stream " + streamId + " for the event types not stepped yet: "
+                             + String.join(", ", eventTypes.notStepped()));
+                stepOn(progress, pipeline, streamId, "(stepping on)", until - state.stepped, draftCode, childType,
+                        cap, walked, state, () -> state.stepped < until && !eventTypes.allStepped(), true);
+                if (walked.searchStopped || eventTypes.allStepped()) {
+                    return;
+                }
+            }
+        }
+    }
+
+    // One stream stepped on from where it was left (from its first record when not yet stepped), in a session of its
+    // own ended with it, while `more` holds, until it ends or the cap is reached. Out of time, a stream's head marks
+    // the walk cut; the search past the heads only stops.
+    private void stepOn(final CallProgress progress,
+                        final SteppedPipeline pipeline,
+                        final long streamId,
+                        final String which,
+                        final int limit,
+                        final Map<String, String> draftCode,
+                        final String childType,
+                        final int cap,
+                        final Walked walked,
+                        final StreamState state,
+                        final BooleanSupplier more,
+                        final boolean searching) {
+        final String outputElement = pipeline.outputElement();
+        final int start = state.stepped;
+        try (final Walk walk = stepping.open(pipeline, streamId, draftCode, childType)) {
+            SteppingResult result = state.last == null
+                    ? walk.first()
+                    : walk.forward(state.last.getFoundLocation());
+            if (state.last == null && !PipelineStepping.isFound(result)) {
+                // An element that fails before the first record (an XSLT that doesn't compile, say) reports it
+                // here.
+                walked.markers.addAll(SteppingWalks.markers(result, String.valueOf(streamId)));
+            }
+            while (PipelineStepping.isFound(result) && walked.records.size() < cap && more.getAsBoolean()) {
+                walked.perStream.merge(streamId, 1, Integer::sum);
+                final StepLocation location = result.getFoundLocation();
+                final String key = SteppingWalks.recordKey(streamId, location);
+                state.stepped++;
+                if (!record(walked, pipeline, outputElement, result, key, location)) {
+                    state.judged++;
+                }
+                state.last = result;
+                progress.nowAndThen("Stepping stream " + streamId + " " + which + ": " + (state.stepped - start)
+                                    + " of up to " + limit + " records stepped");
+                if (PipelineStepping.timeIsUp()) {
+                    stopped(walked, searching);
+                    return;
+                }
+                result = walk.forward(location);
+            }
+            state.ended = !PipelineStepping.isFound(result);
+        } catch (final ToolTimeoutException e) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw e;
+            }
+            // A step outlasted the call's time.
+            stopped(walked, searching);
+        }
+    }
+
+    // The call's time is up: a stream's head cut short, or the search past the heads stopped.
+    private static void stopped(final Walked walked, final boolean searching) {
+        if (searching) {
+            walked.searchStopped = true;
+        } else {
+            walked.cut = true;
+        }
+    }
+
+    private static int ceilDiv(final int a, final int b) {
+        return -Math.floorDiv(-a, b);
+    }
+
+    // What one record's step met and wrote. True if the group's pipeline passed it over.
+    private static boolean record(final Walked walked,
                                final SteppedPipeline pipeline,
                                final String outputElement,
                                final SteppingResult result,
@@ -332,6 +462,9 @@ class StepSampleTool extends AbstractBuiltInTool {
             if (EventXml.countEvents(output) > 0) {
                 walked.wroteAnEvent++;
             }
+            if (walked.eventTypes != null) {
+                walked.eventTypes.count(output);
+            }
         }
         if (SteppingVerdicts.writesReferenceData(output)) {
             walked.wroteReference++;
@@ -352,6 +485,7 @@ class StepSampleTool extends AbstractBuiltInTool {
                         : text);
             }
         }
+        return sifted.passedOver();
     }
 
     // The verdict of what was stepped, recorded when clean.
@@ -389,6 +523,11 @@ class StepSampleTool extends AbstractBuiltInTool {
         result.put("records_stepped", keys.size());
         result.put("records_with_errors", walked.records.stream().filter(r -> r.errors() > 0).count());
         walked.passedOver.addTo(result);
+        // Only an events pipeline's records write a TypeId: an indexing pipeline of the build is told nothing.
+        final boolean toldEventTypes = walked.eventTypes != null && walked.wroteEvents > 0;
+        if (toldEventTypes) {
+            walked.eventTypes.addTo(result, notSteppedBecause(streamIds, maxRecords, perStreamLimit, cap, walked));
+        }
         result.put("draft_code_used", PipelineStepping.draftCodeUsed(draftCode));
         result.putAll(summary);
         result.put("first_record_output", walked.firstOutput);
@@ -402,9 +541,23 @@ class StepSampleTool extends AbstractBuiltInTool {
                                + ": calling it again steps the same " + cap + ". The rest are checked when the "
                                + "sample is processed: wait_for_processing reports any record that fails, and "
                                + "check_events reads the Events.");
-        } else if (perStreamLimit != null && walked.perStream.values().stream().anyMatch(n -> n >= perStreamLimit)) {
+        } else if (walked.search && walked.states.values().stream().anyMatch(state -> !state.ended)) {
+            final String passedOver = walked.passedOver.count() > 0
+                    ? " (the group's own: records passed over not counted)"
+                    : "";
+            final String searched = walked.searched
+                    ? ", then on through the streams for the event types not yet stepped"
+                    : "";
+            result.put("hint", "Stepped the first " + perStreamLimit + " records of each stream" + passedOver
+                               + searched + ": processing then reads every record, and wait_for_processing "
+                               + "reports any that fail.");
+        } else if (!walked.search && perStreamLimit != null
+                   && walked.perStream.values().stream().anyMatch(n -> n >= perStreamLimit)) {
             result.put("hint", "Stepped the first " + perStreamLimit + " records of each stream: processing then "
                                + "reads every record, and wait_for_processing reports any that fail.");
+        }
+        if (toldEventTypes) {
+            addToHint(result, walked.eventTypes.said());
         }
         if (pipeline.jsonRootMap() && !keys.isEmpty() && walked.perStream.values().stream().allMatch(n -> n == 1)
             && stepping.streamIsArray(streamIds.getFirst())) {
@@ -427,13 +580,44 @@ class StepSampleTool extends AbstractBuiltInTool {
         if ("clean".equals(result.get("verdict")) && draftCode == null) {
             return stepping.withNext(context, ref, result);
         } else if ("clean".equals(result.get("verdict"))) {
-            final String hint = result.get("hint") instanceof final String said
-                    ? said + " "
-                    : "";
-            result.put("hint", hint + "Clean with draft code: save it (build_translation_xslt uuid= for a "
-                               + "generated XSLT, else save_xslt uuid=) and step the saved code once more.");
+            addToHint(result, "Clean with draft code: save it (build_translation_xslt uuid= for a generated XSLT, "
+                              + "else save_xslt uuid=) and step the saved code once more.");
         }
         return result;
+    }
+
+    // Why the catalogued event types not stepped weren't: not in the sample, or not found within the limit.
+    private static String notSteppedBecause(final List<Long> streamIds,
+                                            final Integer maxRecords,
+                                            final Integer perStreamLimit,
+                                            final int cap,
+                                            final Walked walked) {
+        final boolean everyStreamEnded = !walked.cut && !walked.searchStopped
+                                         && streamIds.stream().allMatch(id -> walked.states.containsKey(id)
+                                                                              && walked.states.get(id).ended);
+        if (everyStreamEnded) {
+            return "not in the sample: none of the " + walked.records.size() + " records stepped (every stream to "
+                   + "its end) is of it";
+        }
+        if (walked.cut || walked.searchStopped) {
+            return "not found within the limit: the call's time for stepping ran out first";
+        }
+        if (walked.records.size() >= cap) {
+            return "not found within the limit: " + (maxRecords != null && maxRecords <= cap
+                    ? "max_records=" + cap
+                    : "the " + cap + " records one step_sample steps");
+        }
+        return "not found within the limit: the first " + perStreamLimit + " records of each stream"
+               + (walked.search
+                ? ""
+                : " (records_per_stream)");
+    }
+
+    // A sentence added to the result's hint, or the hint when it has none.
+    private static void addToHint(final Map<String, Object> result, final String sentence) {
+        result.put("hint", result.get("hint") instanceof final String said
+                ? said + " " + sentence
+                : sentence);
     }
 
     // Each stream stepped as one record, from a JSON array read with the parser's root map: a review group.
@@ -505,6 +689,8 @@ class StepSampleTool extends AbstractBuiltInTool {
 
         private final List<ErrorTriage.Marker> markers = new ArrayList<>();
         private final List<Stepped> records = new ArrayList<>();
+        // Each stream stepped, in the order first stepped.
+        private final Map<Long, StreamState> states = new LinkedHashMap<>();
         private final List<String> unknown = new ArrayList<>();
         private final List<String> unknownOutputs = new ArrayList<>();
         private final Map<Long, Integer> perStream = new LinkedHashMap<>();
@@ -522,15 +708,40 @@ class StepSampleTool extends AbstractBuiltInTool {
         // The records a source type group's pipeline passed over.
         private final PassedOverRecords passedOver;
 
+        // The build's catalogued event types the records stepped are of; null without a catalogue.
+        private final SteppedEventTypes eventTypes;
+        // Whether the streams are stepped until every catalogued event type has been.
+        private final boolean search;
+
         // Stopped before the call's time ran out.
         private boolean cut;
+        // Whether the streams were stepped on past their heads for event types not yet stepped, and whether that
+        // stopped before the call's time ran out.
+        private boolean searched;
+        private boolean searchStopped;
 
         private Walked(final boolean keepOutputs,
                        final UnvalidatedOutput unvalidated,
-                       final PassedOverRecords passedOver) {
+                       final PassedOverRecords passedOver,
+                       final SteppedEventTypes eventTypes,
+                       final boolean search) {
             this.keepOutputs = keepOutputs;
             this.unvalidated = unvalidated;
             this.passedOver = passedOver;
+            this.eventTypes = eventTypes;
+            this.search = search;
         }
+    }
+
+    // How far one stream has been stepped.
+    private static final class StreamState {
+
+        // The last record stepped, to step on from; null before the first.
+        private SteppingResult last;
+        // The records stepped, and of those the ones the group's pipeline didn't pass over.
+        private int stepped;
+        private int judged;
+        // Whether the stream has no record past the last stepped.
+        private boolean ended;
     }
 }

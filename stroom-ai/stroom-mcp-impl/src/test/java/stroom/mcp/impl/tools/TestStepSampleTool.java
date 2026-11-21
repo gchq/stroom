@@ -487,6 +487,189 @@ class TestStepSampleTool {
         });
     }
 
+    @Test
+    void anEventTypeFirstMetPastTheHeadOfTheStreamsIsStepped() {
+        // Seen in chat 182: the first 50 records of each stream were stepped, and nothing said whether each of the
+        // build's 7 event types was among them. Here Logoff-User is first met at record 5 of stream 8, past both
+        // heads of 2.
+        world.keepsACatalogue("Logon-User", "Logoff-User");
+        world.stepper = (stream, at) -> at.getRecordIndex() < 8
+                ? SteppingWorld.step(stream, 0, at.getRecordIndex(), SteppingWorld.eventOf(
+                stream == 8L && at.getRecordIndex() == 5
+                        ? "Logoff-User"
+                        : "Logon-User"))
+                : null;
+
+        final Map<String, Object> result = stepSample(tool(2, 500), "{\"pipeline_uuid\": \"p-1\", "
+                                                                    + "\"stream_ids\": [7, 8]}");
+
+        // Each head of 2 (4 records), then on through stream 7 to its end (6 more) and stream 8 until Logoff-User
+        // was stepped (4 more), and no further.
+        assertThat(result.get("records_stepped")).isEqualTo(14);
+        assertThat(result.get(SteppedEventTypes.STEPPED_BY_EVENT_TYPE)).isEqualTo(Map.of("Logon-User", 13,
+                "Logoff-User", 1));
+        assertThat(result).doesNotContainKey(SteppedEventTypes.NOT_STEPPED);
+        assertThat(result.get("verdict")).isEqualTo("clean");
+        assertThat(world.opened).extracting(Map.Entry::getKey).containsExactly(7L, 8L, 7L, 8L);
+        assertThat(String.valueOf(result.get("hint")))
+                .startsWith("Stepped the first 2 records of each stream, then on through the streams for the event "
+                            + "types not yet stepped")
+                .contains("Every one of the build's 2 catalogued event types was stepped at least once");
+    }
+
+    @Test
+    void recordsAGroupsPipelinePassesOverDontUseUpTheHeadOfAStream() {
+        // Seen in chat 182: of the 100 records stepped (the first 50 of each stream), 57 were other source types'
+        // records, passed over; only 43 of the group's were stepped.
+        world.keepsAGroupMapping();
+        world.keepsACatalogue("Send-Message", "Join-Meeting");
+        world.stepper = (stream, at) -> switch ((int) at.getRecordIndex()) {
+            case 0, 1, 2, 3 -> SteppingWorld.passedOver(stream, 0, at.getRecordIndex(),
+                    SteppingWorld.azureRecord("SharePoint"));
+            case 4 -> SteppingWorld.stepFrom(stream, 0, 4, SteppingWorld.azureRecord("ExchangeOnline"),
+                    SteppingWorld.eventOf("Send-Message"));
+            case 5 -> SteppingWorld.stepFrom(stream, 0, 5, SteppingWorld.azureRecord("MicrosoftTeams"),
+                    SteppingWorld.eventOf("Join-Meeting"));
+            case 6 -> SteppingWorld.stepFrom(stream, 0, 6, SteppingWorld.azureRecord("MicrosoftTeams"),
+                    SteppingWorld.eventOf("Join-Meeting"));
+            default -> null;
+        };
+
+        final Map<String, Object> result = stepSample(tool(2, 500), "{\"pipeline_uuid\": \"p-1\", "
+                                                                    + "\"stream_ids\": [7]}");
+
+        // The head is the group's first 2 records: the 4 passed over aren't counted.
+        assertThat(List.of(result.get("records_stepped"), result.get(PassedOverRecords.RECORDS_PASSED_OVER),
+                result.get("verdict"))).containsExactly(6, 4, "clean");
+        assertThat(result.get(SteppedEventTypes.STEPPED_BY_EVENT_TYPE)).isEqualTo(Map.of("Send-Message", 1,
+                "Join-Meeting", 1));
+        assertThat(world.opened).hasSize(1);
+        assertThat(String.valueOf(result.get("hint")))
+                .startsWith("Stepped the first 2 records of each stream (the group's own: records passed over not "
+                            + "counted):");
+    }
+
+    @Test
+    void anEventTypeNotFoundWithinTheLimitIsSaidAndTheLimitKept() {
+        // A stream longer than one call steps: stepped up to the cap, the event type never met said, and why.
+        world.keepsACatalogue("Logon-User", "Delete-File", "!Read-Heartbeat");
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(),
+                SteppingWorld.eventOf("Logon-User"));
+
+        final Map<String, Object> result = stepSample(tool(2, 10), "{\"pipeline_uuid\": \"p-1\", "
+                                                                   + "\"stream_ids\": [7, 8]}");
+
+        assertThat(result.get("records_stepped")).isEqualTo(10);
+        assertThat(result.get(SteppedEventTypes.STEPPED_BY_EVENT_TYPE)).isEqualTo(Map.of("Logon-User", 10));
+        // An event type whose records are dropped writes no event: not looked for.
+        assertThat(notStepped(result)).singleElement().satisfies(one -> {
+            assertThat(one.get("type_id")).isEqualTo("Delete-File");
+            assertThat(one.get("why")).isEqualTo("not found within the limit: the 10 records one step_sample "
+                                                 + "steps");
+        });
+        assertThat(String.valueOf(result.get("hint")))
+                .startsWith("Stopped at 10 records, the limit for one step_sample")
+                .contains("1 of the build's 2 catalogued event types were not stepped (Delete-File");
+        // A clean verdict of the records stepped is still recorded.
+        assertThat(result.get("verdict")).isEqualTo("clean");
+        assertThat(result).doesNotContainKey("stopped_early");
+    }
+
+    @Test
+    void anEventTypeNoStreamHoldsIsSaidNotInTheSample() {
+        world.keepsACatalogue("Logon-User", "Delete-File");
+        world.records(5, SteppingWorld.eventOf("Logon-User"));
+
+        final Map<String, Object> result = stepSample(tool(2, 500), "{\"pipeline_uuid\": \"p-1\", "
+                                                                    + "\"stream_ids\": [7, 8]}");
+
+        // Every record of both streams stepped, looking for it.
+        assertThat(result.get("records_stepped")).isEqualTo(10);
+        assertThat(notStepped(result)).singleElement().satisfies(one -> assertThat(one.get("why"))
+                .isEqualTo("not in the sample: none of the 10 records stepped (every stream to its end) is of it"));
+    }
+
+    @Test
+    void theSearchPastTheHeadsStopsWhenTheCallsTimeIsUpWithTheVerdictKept() {
+        // Each step past the heads takes 100 ms; the call has a second for stepping. The heads are stepped in full
+        // (their verdict recorded), and the search stops, not the call.
+        world.keepsACatalogue("Logon-User", "Delete-File");
+        world.stepper = (stream, at) -> {
+            if (at.getRecordIndex() >= 2) {
+                try {
+                    Thread.sleep(100);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return SteppingWorld.step(stream, 0, at.getRecordIndex(), SteppingWorld.eventOf("Logon-User"));
+        };
+        final ToolCallContext context = world.contextBuilder()
+                .limits(SteppingWorld.queryTimeLimit(PipelineStepping.MARGIN.plusSeconds(1)))
+                .build();
+
+        final Map<String, Object> result = BuildToolCalls.json(tool(2, 500).execute(BuildToolCalls.call(
+                StepSampleTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}"), context).text());
+
+        assertThat(result).doesNotContainKey("stopped_early");
+        // The heads at least, and stopped by the time well short of the 500 cap (loose bounds: timing varies).
+        assertThat((Integer) result.get("records_stepped")).isBetween(2, 499);
+        assertThat(notStepped(result)).singleElement().satisfies(one -> assertThat(one.get("why"))
+                .isEqualTo("not found within the limit: the call's time for stepping ran out first"));
+        Mockito.verify(world.buildRecords).recordPassed(any(), anyString(), any(), any());
+    }
+
+    @Test
+    void aBuildWithNoCatalogueStepsTheHeadOfEachStreamAsBefore() {
+        world.records(5, SteppingWorld.eventOf("Logon-User"));
+
+        final Map<String, Object> result = stepSample(tool(2, 500), "{\"pipeline_uuid\": \"p-1\", "
+                                                                    + "\"stream_ids\": [7, 8]}");
+
+        assertThat(result.get("records_stepped")).isEqualTo(4);
+        assertThat(result).doesNotContainKeys(SteppedEventTypes.STEPPED_BY_EVENT_TYPE,
+                SteppedEventTypes.NOT_STEPPED);
+        assertThat(String.valueOf(result.get("hint")))
+                .isEqualTo("Stepped the first 2 records of each stream: processing then reads every record, and "
+                           + "wait_for_processing reports any that fail.");
+    }
+
+    @Test
+    void recordsPerStreamGivenIsKeptWithACatalogueAndTheEventTypesSaid() {
+        world.keepsACatalogue("Logon-User", "Delete-File");
+        world.stepper = (stream, at) -> at.getRecordIndex() < 5
+                ? SteppingWorld.step(stream, 0, at.getRecordIndex(), SteppingWorld.eventOf(at.getRecordIndex() == 4
+                ? "Delete-File"
+                : "Logon-User"))
+                : null;
+
+        final Map<String, Object> result = stepSample(tool(50, 500), "{\"pipeline_uuid\": \"p-1\", "
+                                                                     + "\"stream_ids\": [7], "
+                                                                     + "\"records_per_stream\": 2}");
+
+        assertThat(result.get("records_stepped")).isEqualTo(2);
+        assertThat(notStepped(result)).singleElement().satisfies(one -> assertThat(one.get("why"))
+                .isEqualTo("not found within the limit: the first 2 records of each stream (records_per_stream)"));
+    }
+
+    private StepSampleTool tool(final int perStream, final int cap) {
+        final StepSampleTool tool = new StepSampleTool(world.stepping(), perStream, cap);
+        tool.setCatalogueNotes(() -> world.catalogueNotes);
+        return tool;
+    }
+
+    private Map<String, Object> stepSample(final StepSampleTool tool, final String arguments) {
+        final ToolResult result = tool.execute(BuildToolCalls.call(StepSampleTool.NAME, arguments),
+                world.context());
+        assertThat(result.isError()).as(result.text()).isFalse();
+        return BuildToolCalls.json(result.text());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> notStepped(final Map<String, Object> result) {
+        return (List<Map<String, Object>>) result.get(SteppedEventTypes.NOT_STEPPED);
+    }
+
     private void unknownThenAnEvent() {
         world.stepper = (stream, at) -> switch ((int) at.getRecordIndex()) {
             case 0 -> SteppingWorld.step(stream, 0, 0, "<Events xmlns=\"event-logging:3\"><Event><EventDetail>"
