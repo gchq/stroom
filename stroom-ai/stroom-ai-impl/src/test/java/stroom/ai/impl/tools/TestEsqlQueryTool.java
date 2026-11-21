@@ -97,6 +97,34 @@ class TestEsqlQueryTool {
     }
 
     @Test
+    void theTimeRangeAndTheRowsTimesAreInTheZoneGiven() {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(result(
+                    List.of(List.of("2026-01-01T01:00:00.000Z")), 10, false, false, null));
+            final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", "| KEEP t", "timeFrom", "2026-01-01T12:00:00",
+                    "timeTo", "2026-01-01T13:00:00Z", "time_zone", "+11:00")));
+
+            final Request request = request(world);
+            assertThat(request.timeRange().getFrom()).isEqualTo("2026-01-01T12:00:00+11:00");
+            assertThat(request.timeRange().getTo()).isEqualTo("2026-01-01T13:00:00Z");
+            assertThat(output).contains("| 2026-01-01T12:00:00.000+11:00 |")
+                    .contains("Times are in +11:00. " + EsqlQueryTool.ESQL_UTC_NOTE);
+        }
+    }
+
+    @Test
+    void anUnknownZoneIsRefused() {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", GROUPED, "time_zone", "Mars")));
+
+            assertThat(output).isEqualTo("Error: " + UserTimeZones.unknown("Mars"));
+            Mockito.verifyNoInteractions(world.elasticEsql());
+        }
+    }
+
+    @Test
     void aConditionOnAFieldTheIndexHasntIsRefusedWithItsFields() {
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(

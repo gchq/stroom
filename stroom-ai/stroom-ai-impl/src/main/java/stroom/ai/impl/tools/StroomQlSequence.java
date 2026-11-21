@@ -32,7 +32,6 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
-import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
@@ -219,7 +218,9 @@ class StroomQlSequence {
         }
         final List<Step> steps = List.of(plan.first().step(), plan.second().step());
         final List<String> columns = EqlSequenceResults.columns(steps);
-        final List<List<String>> cells = rows.stream().map(row -> EqlSequenceResults.cells(row, steps)).toList();
+        final List<List<String>> cells = rows.stream()
+                .map(row -> EqlSequenceResults.cells(row, steps).stream().map(call.zone()::inZone).toList())
+                .toList();
         if (!cells.isEmpty()) {
             ToolTables.write(call.workspace(), call.out(), columns, cells, plan.first().doc().getUuid());
         }
@@ -314,8 +315,11 @@ class StroomQlSequence {
         final QueryService queryService = queryServiceProvider.get();
         final QuerySearchRequest request = QuerySearchRequest.builder()
                 .searchRequestSource(SearchRequestSource.builder().sourceType(SourceType.API).build())
-                .query(query)
-                .queryContext(QueryContext.builder().dateTimeSettings(DateTimeSettings.builder().build()).build())
+                // Date points in the conditions in the call's zone, as run_stroomql runs them.
+                .query(StroomQlDatePoints.inZone(query, call.zone(), call.referenceTime()))
+                .queryContext(QueryContext.builder()
+                        .dateTimeSettings(call.zone().dateTimeSettings(call.referenceTime()))
+                        .build())
                 .incremental(false)
                 .timeout(call.timeLimit().toMillis())
                 .storeHistory(false)
@@ -550,11 +554,14 @@ class StroomQlSequence {
                     .append(" to ").append(NullSafe.nonBlankStringElse(call.timeRange().getTo(), "any"))
                     .append(".\n");
         }
+        sb.append(call.zone().stated()).append('\n');
         sb.append('\n').append(countedText(outcome)).append("\n\n").append(pairsNote(outcome)).append('\n');
         if (!outcome.entities().isEmpty()) {
             final List<String> columns = new ArrayList<>(outcome.steps().getFirst().joinFields());
             columns.addAll(List.of("pairs", "first", "last", "shortest gap (s)"));
-            final List<List<String>> cells = outcome.entities().stream().map(StroomQlSequence::entityCells).toList();
+            final List<List<String>> cells = outcome.entities().stream()
+                    .map(entity -> entityCells(entity, call.zone()))
+                    .toList();
             sb.append("\nBy entity:\n\n").append(ToolTables.preview(columns, cells, SequenceQueryTool.SHOWN_ROWS))
                     .append('\n');
             sb.append("\nPairs:\n\n").append(ToolTables.preview(outcome.columns(), outcome.cells(),
@@ -566,11 +573,11 @@ class StroomQlSequence {
         return sb.toString();
     }
 
-    private static List<String> entityCells(final Entity entity) {
+    private static List<String> entityCells(final Entity entity, final ToolTimeZone zone) {
         final List<String> cells = new ArrayList<>(entity.keys());
         cells.add(String.valueOf(entity.sequences()));
-        cells.add(EqlSequenceResults.iso(entity.first()));
-        cells.add(EqlSequenceResults.iso(entity.last()));
+        cells.add(zone.inZone(EqlSequenceResults.iso(entity.first())));
+        cells.add(zone.inZone(EqlSequenceResults.iso(entity.last())));
         cells.add(EqlSequenceResults.seconds(entity.shortestSpan()));
         return cells;
     }
@@ -599,6 +606,7 @@ class StroomQlSequence {
             time.put("to", call.timeRange().getTo());
             map.put("time_range", time);
         }
+        map.putAll(call.zone().structured());
         map.put("time_field", outcome.plan().first().timeField());
         map.put("step_counts", List.of(outcome.anchors()));
         map.put("first_step_keys", outcome.keys());
@@ -615,8 +623,8 @@ class StroomQlSequence {
             final Map<String, Object> row = new LinkedHashMap<>();
             row.put("keys", entity.keys());
             row.put("sequences", entity.sequences());
-            row.put("first", EqlSequenceResults.iso(entity.first()));
-            row.put("last", EqlSequenceResults.iso(entity.last()));
+            row.put("first", call.zone().inZone(EqlSequenceResults.iso(entity.first())));
+            row.put("last", call.zone().inZone(EqlSequenceResults.iso(entity.last())));
             row.put("shortest_gap_s", EqlSequenceResults.seconds(entity.shortestSpan()));
             return row;
         }).toList());
@@ -669,6 +677,8 @@ class StroomQlSequence {
     /// @param out            The pairs' file.
     /// @param chat           True for a chat (Markdown), false over MCP (JSON).
     /// @param stopped        True once the user has stopped the run.
+    /// @param zone           The zone of the conditions' date points and times, and of the result's times.
+    /// @param referenceTime  What now is, in epoch milliseconds.
     record Call(Duration maxspan,
                 String maxspanSource,
                 TimeRange timeRange,
@@ -678,7 +688,9 @@ class StroomQlSequence {
                 SessionWorkspace workspace,
                 WorkspacePath out,
                 boolean chat,
-                BooleanSupplier stopped) {
+                BooleanSupplier stopped,
+                ToolTimeZone zone,
+                long referenceTime) {
 
     }
 

@@ -335,6 +335,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                         .addStringProperty(TIME_FROM_ARG, "Optional: from this time on the docs' time field (ISO "
                                                           + "8601, or Stroom's day()-7d).")
                         .addStringProperty(TIME_TO_ARG, "Optional: up to this time (ISO 8601, or Stroom's now()).")
+                        .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .addIntegerProperty(LIMIT_ARG, "The most sequences (default " + DEFAULT_LIMIT + ", at most "
                                                        + ElasticEql.MAX_SEQUENCES + ").")
                         .addBooleanProperty(RUN_ANYWAY_ARG, "True to run even though the counts say it won't finish "
@@ -378,9 +379,12 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 return doc;
             });
         }
+        // The zone the time range's date expressions and times without an offset, and the results' times, are in.
+        final ToolTimeZone zone = timeZone(request, context);
+        final long referenceTime = System.currentTimeMillis();
         final Optional<DocRef> notElastic = docs.stream().filter(doc -> !isElastic(doc)).findFirst();
         if (notElastic.isPresent()) {
-            return runInStroom(request, context, given, givenUntil, byGiven, notElastic.get());
+            return runInStroom(request, context, given, givenUntil, byGiven, notElastic.get(), zone, referenceTime);
         }
         final Map<DocRef, List<QueryField>> fieldsByDoc = new LinkedHashMap<>();
         for (final DocRef doc : docs) {
@@ -413,7 +417,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 ? EqlQueryWriter.maxspan(givenMaxspan)
                 : askMaxspan(request, context);
         final String maxspanSource = maxspanSource(givenMaxspan);
-        final TimeRange timeRange = timeRange(request);
+        final TimeRange timeRange = timeRange(request, zone, referenceTime);
         final Integer givenLimit = intArg(request, LIMIT_ARG);
         final int most = mostSequences(steps);
         final int asked = Objects.requireNonNullElse(givenLimit, DEFAULT_LIMIT);
@@ -465,7 +469,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 ? givenOut
                 : workspace.newFile("/outputs/eql/eql", ".md");
         final List<String> columns = EqlSequenceResults.columns(steps);
-        final List<List<String>> cells = rows.stream().map(row -> EqlSequenceResults.cells(row, steps)).toList();
+        final List<List<String>> cells = rows.stream()
+                .map(row -> EqlSequenceResults.cells(row, steps).stream().map(zone::inZone).toList())
+                .toList();
         if (!cells.isEmpty()) {
             ToolTables.write(workspace, out, columns, cells, docs.getFirst().getUuid());
         }
@@ -479,7 +485,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 truncated, preflight, steps, columns, cells, entities, EqlSequenceResults.untimed(rows), reviews, out,
                 fieldNotes.stream().distinct().toList(), stroomQl, stroomQl == null
                         ? null
-                        : invalid(stroomQl));
+                        : invalid(stroomQl), zone);
         final Map<String, Object> structured = structured(outcome);
         return context.session().isChat()
                 ? ToolResult.text(markdown(outcome)).withStructuredContent(structured)
@@ -492,7 +498,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                                    final List<GivenStep> given,
                                    final GivenStep givenUntil,
                                    final Map<String, DocRef> byGiven,
-                                   final DocRef notElastic) {
+                                   final DocRef notElastic,
+                                   final ToolTimeZone zone,
+                                   final long referenceTime) {
         final String reason = DataSourceAccess.describe(notElastic) + " isn't an Elastic Index, so the sequence ran "
                               + "in Stroom as a StroomQL windowed join (two steps, joined by their by fields) "
                               + "rather than in Elasticsearch as EQL.";
@@ -509,8 +517,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 ? givenOut
                 : sessionWorkspace(context).newFile("/outputs/sequences/sequence", ".md");
         return stroomQlSequence.run(plan, new StroomQlSequence.Call(maxspan, maxspanSource(givenMaxspan),
-                timeRange(request), limit, timeLimit(context), limits(context).getMaxQueryLength(),
-                sessionWorkspace(context), out, context.session().isChat(), context.stopped()));
+                timeRange(request, zone, referenceTime), limit, timeLimit(context), limits(context).getMaxQueryLength(),
+                sessionWorkspace(context), out, context.session().isChat(), context.stopped(), zone, referenceTime));
     }
 
     private static String maxspanSource(final String givenMaxspan) {
@@ -519,12 +527,14 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 : "the user's answer";
     }
 
-    private TimeRange timeRange(final ToolCall request) {
+    // The call's time range, its date expressions and times without an offset as times in the call's zone.
+    private TimeRange timeRange(final ToolCall request, final ToolTimeZone zone, final long referenceTime) {
         final String timeFrom = stringArg(request, TIME_FROM_ARG);
         final String timeTo = stringArg(request, TIME_TO_ARG);
         return timeFrom == null && timeTo == null
                 ? null
-                : new TimeRange(null, timeFrom, timeTo);
+                : new TimeRange(null, StroomQlDatePoints.timeInZone(timeFrom, zone, referenceTime),
+                        StroomQlDatePoints.timeInZone(timeTo, zone, referenceTime));
     }
 
     /// @param doc A data source.
@@ -1463,6 +1473,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                     .append(" to ").append(NullSafe.nonBlankStringElse(outcome.timeRange().getTo(), "any"))
                     .append(".\n");
         }
+        sb.append(outcome.zone().stated()).append('\n');
         final String counted = preflightText(outcome.preflight());
         if (!counted.isEmpty()) {
             sb.append('\n').append(counted).append('\n');
@@ -1471,7 +1482,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         if (!outcome.entities().isEmpty()) {
             final List<String> columns = new ArrayList<>(outcome.steps().getFirst().joinFields());
             columns.addAll(List.of("sequences", "first", "last", "shortest gap (s)"));
-            final List<List<String>> cells = outcome.entities().stream().map(SequenceQueryTool::entityCells).toList();
+            final List<List<String>> cells = outcome.entities().stream()
+                    .map(entity -> entityCells(entity, outcome.zone()))
+                    .toList();
             sb.append("\nBy entity (sequences found, at least these):\n\n")
                     .append(ToolTables.preview(columns, cells, SHOWN_ROWS)).append('\n');
             sb.append("\nSequences:\n\n").append(ToolTables.preview(outcome.columns(), outcome.cells(), SHOWN_ROWS))
@@ -1555,11 +1568,11 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                   + "propose_query, or propose_dashboard for a table with the event preview.";
     }
 
-    private static List<String> entityCells(final Entity entity) {
+    private static List<String> entityCells(final Entity entity, final ToolTimeZone zone) {
         final List<String> cells = new ArrayList<>(entity.keys());
         cells.add(String.valueOf(entity.sequences()));
-        cells.add(EqlSequenceResults.iso(entity.first()));
-        cells.add(EqlSequenceResults.iso(entity.last()));
+        cells.add(zone.inZone(EqlSequenceResults.iso(entity.first())));
+        cells.add(zone.inZone(EqlSequenceResults.iso(entity.last())));
         cells.add(EqlSequenceResults.seconds(entity.shortestSpan()));
         return cells;
     }
@@ -1644,6 +1657,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             time.put("to", outcome.timeRange().getTo());
             map.put("time_range", time);
         }
+        map.putAll(outcome.zone().structured());
         map.put("time_field", result.timeField());
         if (!outcome.fieldNotes().isEmpty()) {
             map.put("field_notes", outcome.fieldNotes());
@@ -1670,8 +1684,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             final Map<String, Object> row = new LinkedHashMap<>();
             row.put("keys", entity.keys());
             row.put("sequences", entity.sequences());
-            row.put("first", EqlSequenceResults.iso(entity.first()));
-            row.put("last", EqlSequenceResults.iso(entity.last()));
+            row.put("first", outcome.zone().inZone(EqlSequenceResults.iso(entity.first())));
+            row.put("last", outcome.zone().inZone(EqlSequenceResults.iso(entity.last())));
             row.put("shortest_gap_s", EqlSequenceResults.seconds(entity.shortestSpan()));
             return row;
         }).toList());
@@ -1815,6 +1829,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     /// @param fieldNotes      What was done to the steps' fields.
     /// @param stroomQl        The same sequence as a StroomQL windowed join, or null if one can't say it.
     /// @param stroomQlInvalid Why that isn't valid StroomQL, or null.
+    /// @param zone            The zone the result's times are in.
     record Outcome(List<DocRef> docs,
                    Result result,
                    Duration maxspan,
@@ -1833,7 +1848,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                    WorkspacePath out,
                    List<String> fieldNotes,
                    String stroomQl,
-                   String stroomQlInvalid) {
+                   String stroomQlInvalid,
+                   ToolTimeZone zone) {
 
         /// @return The most sequences these steps can return ([#mostSequences(List)]).
         int mostSequences() {

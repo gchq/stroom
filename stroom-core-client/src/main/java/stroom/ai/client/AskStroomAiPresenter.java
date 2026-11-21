@@ -105,6 +105,7 @@ import stroom.pipeline.stepping.client.presenter.CodeChangeReviewPresenter;
 import stroom.pipeline.stepping.client.presenter.CodeDiffCardRenderer;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.client.event.QueryCodeChangeEvent;
+import stroom.query.client.presenter.TimeZones;
 import stroom.query.shared.QueryDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -307,6 +308,7 @@ public class AskStroomAiPresenter
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
+    private final TimeZones timeZones;
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
@@ -487,8 +489,10 @@ public class AskStroomAiPresenter
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final DocumentTypeCache documentTypeCache,
-                                final AiDocumentationChanges aiDocumentationChanges) {
+                                final AiDocumentationChanges aiDocumentationChanges,
+                                final TimeZones timeZones) {
         super(eventBus, view, askStroomAiProxy);
+        this.timeZones = timeZones;
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
@@ -878,7 +882,7 @@ public class AskStroomAiPresenter
                     getView().setEmptyState(false);
                     askStroomAiClient.getConfig(config -> {
                         final AskStroomAiRequest request = new AskStroomAiRequest(
-                                currentChat, config, this.data, null);
+                                currentChat, config, this.data, null, null, null, timeZones.getLocalTimeZoneId());
                         // Generate a title from the attachment type.
                         maybeGenerateTitle(getContextTitle(this.data));
                         // Clear context so it isn't re-attached when the user sends a question.
@@ -4208,7 +4212,8 @@ public class AskStroomAiPresenter
             final AiTabSnapshot tabSnapshot = attachedTabSnapshot();
             final AskStroomAiRequest request = new AskStroomAiRequest(
                     currentChat, config, data, message, getView().getAgentMode(),
-                    AiTabSnapshots.toSend(tabSnapshot, lastSentTabHashes.get(chatId)));
+                    AiTabSnapshots.toSend(tabSnapshot, lastSentTabHashes.get(chatId)),
+                    timeZones.getLocalTimeZoneId());
             // Clear context so follow-up messages don't re-attach the same data.
             this.data = null;
             requestInFlight = true;
@@ -4581,7 +4586,8 @@ public class AskStroomAiPresenter
         }
         getView().setSendButtonLoadingState(true);
         askStroomAiClient.getConfig(config -> {
-            final AskStroomAiRequest request = new AskStroomAiRequest(currentChat, config, null, null);
+            final AskStroomAiRequest request = new AskStroomAiRequest(currentChat, config, null, null, null, null,
+                    timeZones.getLocalTimeZoneId());
             askStroomAiClient.resumeRun(request,
                     response -> startPolling(),
                     error -> showError(error, "Unable to resume", () ->

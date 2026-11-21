@@ -34,6 +34,7 @@ public class ChatToolCallContexts {
     private final ToolSessionLimits sessionLimits;
     private final Provider<McpElicitations> elicitationsProvider;
     private final Provider<AiChatRunManager> runManagerProvider;
+    private ChatBrowserZones browserZones;
 
     /// @param workspace            The workspaces of the chats.
     /// @param elicitationsProvider Shows forms in the chat and waits for the answers.
@@ -48,6 +49,12 @@ public class ChatToolCallContexts {
         this.runManagerProvider = runManagerProvider;
     }
 
+    /// @param browserZones The time zone of the browser each chat was last asked from.
+    @Inject
+    void setBrowserZones(final ChatBrowserZones browserZones) {
+        this.browserZones = browserZones;
+    }
+
     /// @param chatId The chat the call is made in.
     /// @return The context of a call in the chat, part of the agent run this thread is working on, if any (see
     /// [ToolRunContext#current()]).
@@ -59,6 +66,9 @@ public class ChatToolCallContexts {
                 // The session's limits, including its time limit.
                 .limits(sessionLimits.forSession(session))
                 .runContext(ToolRunContext.current().orElse(null))
+                .localZoneId(browserZones == null
+                        ? null
+                        : browserZones.get(chatId))
                 .build();
     }
 

@@ -42,6 +42,7 @@ public final class ToolCallContext {
     private final SessionLimits limits;
     private final ToolRunContext runContext;
     private final StroomLinks links;
+    private final String localZoneId;
 
     private ToolCallContext(final Builder builder) {
         this.session = Objects.requireNonNull(builder.session, "session");
@@ -53,6 +54,7 @@ public final class ToolCallContext {
         this.limits = builder.limits;
         this.runContext = builder.runContext;
         this.links = Objects.requireNonNullElse(builder.links, StroomLinks.CHAT);
+        this.localZoneId = builder.localZoneId;
     }
 
     /// @param session The session the call is made in.
@@ -154,6 +156,12 @@ public final class ToolCallContext {
         return links;
     }
 
+    /// @return The time zone id of the user's browser (e.g. `Australia/Canberra`), when the session's client sent it
+    /// (the Stroom AI chat sends it with each question), or empty if it isn't known (e.g. over MCP).
+    public Optional<String> localZoneId() {
+        return Optional.ofNullable(localZoneId).filter(id -> !id.isBlank());
+    }
+
     @Override
     public String toString() {
         return "ToolCallContext{session=" + session.kind() + " " + session.id() + ", caller=" + caller().name()
@@ -172,6 +180,7 @@ public final class ToolCallContext {
         private SessionLimits limits;
         private ToolRunContext runContext;
         private StroomLinks links;
+        private String localZoneId;
 
         private Builder(final ToolSession session) {
             this.session = session;
@@ -232,6 +241,13 @@ public final class ToolCallContext {
         /// @return This builder.
         public Builder links(final StroomLinks links) {
             this.links = links;
+            return this;
+        }
+
+        /// @param localZoneId The time zone id of the user's browser, or null if it isn't known.
+        /// @return This builder.
+        public Builder localZoneId(final String localZoneId) {
+            this.localZoneId = localZoneId;
             return this;
         }
 

@@ -19,15 +19,19 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.docref.DocRef;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.UserTimeZone;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.time.Duration;
@@ -40,7 +44,7 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// run_stroomql refuses a query on a Lucene or Elastic index whose answer through Stroom would mislead, as
-/// search_events refuses such a search.
+/// search_events refuses such a search; and runs in the call's time zone.
 class TestRunStroomQlTool {
 
     private static final DocRef ELASTIC = new DocRef("ElasticIndex", "e", "web");
@@ -97,6 +101,29 @@ class TestRunStroomQlTool {
         assertThat(RunStroomQlTool.misleading(queryService, first(null), NO_LUCENE_TEXT)).isEmpty();
         // A query Stroom can't parse is Stroom's to refuse, when it runs: it has no data sources to check.
         assertThat(RunStroomQlTool.misleading(queryService, List.of(), NO_LUCENE_TEXT)).isEmpty();
+    }
+
+    @Test
+    void theSearchRunsInTheUsersZoneWithItsConditionsDatePointsInIt() {
+        final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(workspace.limits()).thenReturn(new AiWorkspaceConfig());
+        Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> stroomQlSources,
+                () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
+        tool.setUserTimeZones(new UserTimeZones(() -> Optional.of(UserTimeZone.fromId("Australia/Canberra"))));
+
+        tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
+                "{\"query\": \"from web where EventTime > day() eval D = day() select D\"}"), ToolCalls.inChat(1,
+                workspace));
+
+        final ArgumentCaptor<QuerySearchRequest> captor = ArgumentCaptor.forClass(QuerySearchRequest.class);
+        Mockito.verify(queryService).search(captor.capture());
+        final DateTimeSettings settings = captor.getValue().getQueryContext().getDateTimeSettings();
+        assertThat(settings.getTimeZone()).isEqualTo(UserTimeZone.fromId("Australia/Canberra"));
+        assertThat(settings.getDateTimePattern()).isEqualTo(ToolTimeZone.DATE_TIME_PATTERN);
+        assertThat(captor.getValue().getQuery()).contains("where EventTime > \"")
+                .contains("[Australia/Canberra]\"").contains("eval D = day()");
     }
 
     @Test

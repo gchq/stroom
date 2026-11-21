@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /// Reads the markdown tables that table attachments are stored as: a header row, a separator row of dashes, then
 /// one row per line. Cells are separated by `|`, and a `|` inside a cell is escaped as `\|`.
@@ -178,6 +179,53 @@ public final class MarkdownTables {
             return true;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /// Changes the cells of the rows of a Markdown table file (not its headings), e.g. to show times in another time
+    /// zone.
+    ///
+    /// @param file A file holding one Markdown table: a header row, a separator row, then the rows.
+    /// @param cell What a cell becomes, given its text: the text itself to leave it as it is.
+    /// @return True if the file was changed.
+    /// @throws UncheckedIOException if the file can't be read or written.
+    public static boolean mapCells(final Path file, final UnaryOperator<String> cell) {
+        final Path rewritten = file.resolveSibling(file.getFileName() + ".tmp");
+        boolean changed = false;
+        try {
+            try (final BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8);
+                    final BufferedWriter writer = Files.newBufferedWriter(rewritten, StandardCharsets.UTF_8)) {
+                final String header = reader.readLine();
+                final String separator = reader.readLine();
+                if (header == null || separator == null) {
+                    return false;
+                }
+                writer.write(header + "\n");
+                writer.write(separator + "\n");
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    final List<String> cells = parseRow(line);
+                    final List<String> mapped = cells.stream().map(cell).toList();
+                    if (mapped.equals(cells)) {
+                        writer.write(line + "\n");
+                    } else {
+                        changed = true;
+                        writer.write(row(mapped));
+                    }
+                }
+            }
+            if (changed) {
+                Files.move(rewritten, file, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return changed;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } finally {
+            try {
+                Files.deleteIfExists(rewritten);
+            } catch (final IOException e) {
+                // Left for the temporary files' clean up.
+            }
         }
     }
 

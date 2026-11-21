@@ -159,8 +159,8 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file, or reads a stream's records | search | yes | | View Data | | | slot |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries, ...) | core | yes | | | | View | |
 | `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts; finds documents by name | core | yes | | | Manage Processors | View | |
-| `get_current_date` | Today's date in UTC | core | yes | | | | | trusted |
-| `get_current_datetime` | The current date and time in UTC | core | yes | | | | | trusted |
+| `get_current_date` | Today's date in the user's time zone | core | yes | | | | | trusted |
+| `get_current_datetime` | The current date and time in the user's time zone, and in UTC | core | yes | | | | | trusted |
 | `get_current_time` | The current time of day in UTC | core | yes | | | | | trusted |
 | `get_instructions` | The AGENTS docs that apply to folders or documents, or a bundled working guide | core | yes | | | | View | |
 | `instruction_evidence` | What the user's own recent chats say about how they want things done: repeated and mixed form answers, and their messages | core | yes | build | | | | chat |
@@ -1031,11 +1031,59 @@ on a later call without `focus`, rather than worked out again.
 Core · read-only · reads only trusted content · Classes: `GetCurrentDateTool`, `GetCurrentDateTimeTool`,
 `GetCurrentTimeTool`, `GetUtcTimeOffsetTool`
 
-The current date (`2026-10-31`), date and time (`2026-10-31T09:15:02Z`) and time of day (`09:15:02Z`) in UTC,
-to the second, so the model never guesses them. `get_utc_time_offset` gives a time zone's current offset from UTC,
-daylight saving included ("Europe/London is currently +00:00 from UTC."), from `timeZone` (an IANA ID or a fixed
-offset such as `+02:00`), or the Stroom server's default zone when none is given; an unknown zone is refused with
-the forms it takes. None takes other arguments or touches the workspace.
+The current date and the current date and time in the call's time zone (see Time zones, below), with the zone:
+`2026-11-21 (Australia/Canberra)`, and `2026-11-21T10:42:00+11:00 (Australia/Canberra); UTC 2026-11-20T23:42:00Z`
+(in UTC, `2026-11-20T23:42:00Z (UTC)`), to the second, so the model never guesses them; both take `time_zone`.
+`get_current_time` gives the time of day in UTC (`09:15:02Z`). `get_utc_time_offset` gives a time zone's current
+offset from UTC, daylight saving included ("Europe/London is currently +00:00 from UTC."), from `timeZone` (an IANA
+ID or a fixed offset such as `+02:00`), or the Stroom server's default zone when none is given; an unknown zone is
+refused with the forms it takes. None touches the workspace.
+
+### Time zones
+
+Classes: `UserTimeZones`, `ToolTimeZone`, `UserTimeZonePreference`, `StroomQlDatePoints`, `ChatBrowserZones`
+
+`run_stroomql`, `sequence_query`, `esql_query`, `get_current_datetime` and `get_current_date` take `time_zone`
+("Time zone for the times and results: local, UTC, a zone id or an offset; default the user's."): `local`, `UTC` or
+`GMT` (`Z`), a zone id (`Australia/Canberra`, in any case) or an offset (`+11:00`, `+11`, `UTC+11:00`). It decides
+what `day()` and a time without an offset mean in the call, and the zone its result's times are shown in. Without
+it, the zone is the user's Stroom time zone preference (`UserPreferences.timeZone`, as the Stroom UI applies it),
+read as the user the tool runs as (the chat's, or the MCP token's) through Stroom's user preferences resource,
+called directly (`UserTimeZonePreference`; the user preferences service gives the current user's preferences only
+through it). A preference to use the browser's zone, and `local`, are the browser's zone, which the chat client
+sends with each question (`AskStroomAiRequest.localZoneId`, kept per chat in memory by `ChatBrowserZones`); where
+it isn't known (over `/mcp`, or a run resumed after a restart before the next question), `local` is the
+preference's zone when that names one, and otherwise UTC, with "The user's Stroom time zone is their browser's,
+which isn't known here, so times are in UTC: give time_zone to use another." An unknown zone is refused: "unknown
+time zone 'X': give local, UTC, a zone id such as Europe/London, or an offset such as +01:00".
+
+Every result with times says the zone: "Times are in Australia/Canberra (+11:00), the user's Stroom time zone."
+(", the user's browser's time zone." for the browser's; nothing after the zone when the call gave it); JSON results
+carry `time_zone`, `utc_offset`, `time_zone_source` (`given`, `preference`, `browser`, `fallback`) and any
+`time_zone_note`.
+
+How the zone is applied, with no change to Stroom's core (as the user decided, 2026-11-21):
+
+* A query's `DateTimeSettings` carry the zone and the ISO pattern `yyyy-MM-dd'T'HH:mm:ss.SSSXXX`, so a time without
+  an offset in a condition, and the expression functions (`eval`, `select`), are in the zone.
+* Stroom works a condition's date points (`day()`, `week()`, `hour()` and so on, in `where`, `filter` and
+  `having`) out in UTC whatever the query's zone (`DateExpressionParser`), so `StroomQlDatePoints.inZone` puts each
+  in the zone before the query runs, quoted, with the zone so durations after it keep daylight saving:
+  `EventTime > day() - 1d` in Canberra runs as `EventTime > "2026-11-21T00:00:00+11:00[Australia/Canberra]" - 1d`.
+  It reads the query with Stroom's tokeniser (strings and comments untouched), leaves `now()` (the same instant in
+  every zone) and `eval`/`select` (already in the zone), and does nothing in UTC. A failure of a query it changed
+  gives the parser's error for the query as written.
+* A StroomQL column with no format gives a date field's value in UTC whatever the zone, so a result's cells written
+  as Stroom writes a UTC time (`2026-11-20T14:00:00.000Z`) are shown in the zone (`2026-11-21T01:00:00.000+11:00`,
+  `ToolTimeZone.inZone`): run_stroomql's table, sequence_query's sequences and entities, esql_query's rows.
+* `timeFrom`/`timeTo` of sequence_query and esql_query are put in the zone by the tool
+  (`StroomQlDatePoints.timeInZone`): a date expression or a time without an offset becomes an ISO time with the
+  zone's offset (`day() - 7d` is `2026-11-14T00:00:00+11:00`); one with an offset, or any in UTC, is sent as given.
+
+Not in the zone: ES|QL's own date functions and literals in the pipeline (`NOW()`, `BUCKET`, `DATE_TRUNC`,
+`DATE_FORMAT`) run in UTC, as `ElasticEsqlService` (core) sends no `time_zone` with the request (Elasticsearch 9.5.3
+takes one); esql_query's result says so in a zone other than UTC. A step's or `where` condition's date value
+(sequence_query, esql_query) is read in UTC by Stroom's query builders. The table tool's expressions run in UTC.
 
 ## Search: data sources, queries and events
 
@@ -1200,8 +1248,9 @@ complete or until Stroom reports errors. The rows are then fetched with `downloa
 for every row the cap allows, with each row's stream and event ids. `StreamId` and `EventId` columns that are empty
 (a data source without streams) are dropped. The workspace file records the data source's uuid as its source.
 
-* **Arguments**: `query` (required), `out` (optional; a `.md` file in `/outputs/`).
-* **Returns**: text: "Ran the query. The results are in <path>.", any limit note, Stroom's warnings ("Stroom warned:
+* **Arguments**: `query` (required), `time_zone` (optional, see Time zones), `out` (optional; a `.md` file in
+  `/outputs/`).
+* **Returns**: text: "Ran the query. The results are in <path>. Times are in <zone>.", any limit note, Stroom's warnings ("Stroom warned:
   …", a join's included, e.g. a joined source's own warnings or a row matching over 1,000 joined rows), and the
   table's profile. Joins (join lines, `where` subqueries) run in Stroom, as the Query pane runs them. The
   description names the joins guide (`stroom://guide/joins`; in the chat, `get_instructions guide=joins`).
@@ -1268,9 +1317,12 @@ written from the doc, so a query never names another index.
   doesn't, so its description says counts and sums come straight from Elasticsearch and may include documents from
   streams the user can't see or that have been deleted (results carry no note of it, the user's choice). Use on the
   Elastic Index doc is still checked, and the query audited.
-* **Returns**: in the chat, Markdown: the query run, the first 100 rows, and a note of how many rows (groups) there
-  are and whether they were cut short; over `/mcp`, the same as JSON (`columns`, `rows`, `row_count`, `limit`,
-  `truncated`, `grouped`, `total_groups` or `total_rows`, `note`). Either way the rows are written to
+* **Returns**: in the chat, Markdown: the query run, the first 100 rows, the zone the times are in ("Times are in
+  …", and in a zone other than UTC, "The pipeline's own date functions and literals (NOW(), BUCKET, DATE_TRUNC,
+  DATE_FORMAT) work in UTC."), and a note of how many rows (groups) there are and whether they were cut short; over
+  `/mcp`, the same as JSON (`columns`, `rows`, `row_count`, `limit`, `truncated`, `grouped`, `total_groups` or
+  `total_rows`, `note`, the zone's fields and `time_zone_esql_note`). `time_zone` (see Time zones) sets the zone of
+  `timeFrom`/`timeTo` and of the rows' times. Either way the rows are written to
   `/outputs/esql/esql-<time>.md` for the table tool. Audited as a Search event (`AiAuditLog.searched`).
 * **Steered to**: the description, the server instructions and the chat prompt tell the agent to work out derived
   values and cut-offs in the query (EVAL for a conversion, WHERE after STATS for a threshold), not in its reply, so
@@ -1333,7 +1385,9 @@ by the same user on the same host", "20 failed logons then a success". Structure
   order in every step), `missing=true` for "and then NOT", `runs=N` (1 to 100), and up to 5 fields to show;
   `until` (`{index, where, any_of, by}`); `maxspan` (at most 24h); `timeFrom`/`timeTo`; `limit` (default 1,000, at most
   10,000, and for EQL at most as many sequences as fit 10,000 fetched events: 5,000 two-step ones, said in the
-  result, as Elasticsearch refuses more ids than its max result window, seen in the 2026-11-20 benchmark); `runAnyway`; `out` (chat).
+  result, as Elasticsearch refuses more ids than its max result window, seen in the 2026-11-20 benchmark); `runAnyway`; `out` (chat);
+  `time_zone` (see Time zones: the zone of `timeFrom`/`timeTo`, of the windowed join's conditions' date points, and
+  of the result's times, which both engines' results state, `time_zone` in JSON).
 * **EQL** (`EqlQueryWriter`): `sequence with maxspan=2m [any where stroom_eql_doc == "1" and ...] by a, b ...`,
   `![...]` for missing, `with runs=N`, `until [...]`. EQUALS is `==` (`:` case-insensitive), `like`/`like~` with
   `*`, `cidrMatch` for a CIDR on an IP field; IN `in`/`in~` or `cidrMatch`; CONTAINS/STARTS_WITH/ENDS_WITH like

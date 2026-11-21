@@ -16,17 +16,19 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 
 /**
- * {@code get_current_date} - the current date, in UTC.
+ * {@code get_current_date} - the current date in the user's time zone (or the one asked for).
  */
-class GetCurrentDateTool implements StroomTool {
+class GetCurrentDateTool extends AbstractBuiltInTool {
 
     @Inject
     GetCurrentDateTool() {
@@ -41,14 +43,34 @@ class GetCurrentDateTool implements StroomTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name("get_current_date")
-                .description("Returns the current date in UTC as an ISO-8601 string (YYYY-MM-DD). "
-                             + "Call this whenever you need to know today's date; do not guess it.")
+                .description("Returns the current date in the user's time zone as an ISO-8601 string "
+                             + "(YYYY-MM-DD), with the zone. Call this whenever you need to know today's date; "
+                             + "do not guess it.")
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
+                        .build())
                 .build();
     }
 
     @Override
     public ToolResult execute(final ToolCall request, final ToolCallContext context) {
-        return ToolResult.text(LocalDate.now(ZoneOffset.UTC).toString());
+        final ToolTimeZone zone;
+        try {
+            zone = timeZone(request, context);
+        } catch (final WorkspaceException e) {
+            return ToolResult.text("Error: " + e.getMessage());
+        }
+        return ToolResult.text(text(Instant.now(), zone));
+    }
+
+    /// @param now  Now.
+    /// @param zone The call's time zone.
+    /// @return Today in the zone, with the zone, e.g. `2026-11-21 (Australia/Canberra)`, and the zone's note, if any.
+    static String text(final Instant now, final ToolTimeZone zone) {
+        final String text = LocalDate.ofInstant(now, zone.zone()) + " (" + zone.id() + ")";
+        return zone.note() == null
+                ? text
+                : text + ". " + zone.note();
     }
 
     @Override

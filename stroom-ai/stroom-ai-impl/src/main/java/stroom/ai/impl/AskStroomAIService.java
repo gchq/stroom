@@ -25,6 +25,7 @@ import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryPath;
+import stroom.ai.impl.tools.ChatBrowserZones;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
@@ -221,6 +222,7 @@ public class AskStroomAIService {
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final TaskContextFactory taskContextFactory;
     private final HttpServletRequestHolder requestHolder;
+    private ChatBrowserZones chatBrowserZones;
     private final TableSummariserImpl tableSummariser;
     private final McpToolServerFactory mcpToolServerFactory;
     private final McpClientCache mcpClientCache;
@@ -338,6 +340,7 @@ public class AskStroomAIService {
         final AiChat aiChat = request.getAiChat();
         final Integer chatId = NullSafe.get(aiChat, AiChat::getId);
         aiService.verifyOwnership(chatId);
+        recordBrowserZone(chatId, request);
 
         LOGGER.debug(() -> "askStroomAi: chatId=" + chatId
                            + " hasContext=" + (request.getContext() != null)
@@ -692,6 +695,19 @@ public class AskStroomAIService {
         this.answerLinks = answerLinks;
     }
 
+    /// @param chatBrowserZones The time zone of the browser each chat was last asked from.
+    @Inject
+    void setChatBrowserZones(final ChatBrowserZones chatBrowserZones) {
+        this.chatBrowserZones = chatBrowserZones;
+    }
+
+    // The zone of the browser the chat is asked from, for the tools' 'local' time zone.
+    private void recordBrowserZone(final Integer chatId, final AskStroomAiRequest request) {
+        if (chatBrowserZones != null) {
+            chatBrowserZones.record(chatId, request.getLocalZoneId());
+        }
+    }
+
     // The answer with the documents and streams it mentions linked, if they can be.
     private String withLinks(final int chatId, final String answer) {
         return answerLinks == null
@@ -1028,6 +1044,7 @@ public class AskStroomAIService {
     public AskStroomAiResponse resumeRun(final AskStroomAiRequest request) {
         final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
         aiService.verifyOwnership(chatId);
+        recordBrowserZone(chatId, request);
         // An idle compaction stopped by the user answered no question, so is not what is resumed.
         final AiChatRun previous = runDao.getLatestShown(chatId).orElse(null);
         if (!AiChatRunManager.isResumable(previous)) {

@@ -1,7 +1,7 @@
 Arguments: {"query":"from \"Firewall events\" group by Host select Host, count() as N","out":"/outputs/hosts.md"}
 
 === Output ===
-Ran the query. The results are in /outputs/hosts.md. The query had no limit, so 'limit 10000' (the most rows a query may return here) was added.
+Ran the query. The results are in /outputs/hosts.md. Times are in UTC, the user's Stroom time zone. The query had no limit, so 'limit 10000' (the most rows a query may return here) was added.
 
 Profile of /outputs/hosts.md: 3 rows, 4 columns.
 

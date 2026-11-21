@@ -226,6 +226,23 @@ class TestSequenceQueryTool {
     }
 
     @Test
+    void theTimeRangeAndTheSequencesTimesAreInTheZoneGiven() {
+        final Map<String, Object> args = args("2m");
+        args.put("timeFrom", "2026-01-01T11:00:00");
+        args.put("time_zone", "+11:00");
+
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
+
+        assertThat(request().timeRange().getFrom()).isEqualTo("2026-01-01T11:00:00+11:00");
+        assertThat(json).containsEntry("time_zone", "+11:00").containsEntry("time_zone_source", "given");
+        assertThat((List<Map<String, Object>>) json.get("entities")).singleElement()
+                .satisfies(entity -> assertThat(entity).containsEntry("first", "2026-01-01T11:00:00.000+11:00"));
+        assertThat((List<List<String>>) json.get("rows")).singleElement().asList()
+                .contains("2026-01-01T11:00:00.000+11:00");
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("Times are in +11:00.");
+    }
+
+    @Test
     void overMcpTheResultIsJson() {
         final String output = run(mcp(), args("2m"));
 

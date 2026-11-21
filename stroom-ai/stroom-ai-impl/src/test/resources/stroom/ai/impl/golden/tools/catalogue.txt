@@ -557,6 +557,10 @@ Runs an ES|QL query on an Elastic Index, answered by Elasticsearch itself: for t
       "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
       "type" : "string"
     },
+    "time_zone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
+      "type" : "string"
+    },
     "where" : {
       "description" : "Optional: conditions every document must meet, all of them, as search_events takes them; applied before the pipeline, as Stroom searches apply them.",
       "items" : {
@@ -843,11 +847,20 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Returns the current date in UTC as an ISO-8601 string (YYYY-MM-DD). Call this whenever you need to know today's date; do not guess it.
+Returns the current date in the user's time zone as an ISO-8601 string (YYYY-MM-DD), with the zone. Call this whenever you need to know today's date; do not guess it.
 
 ### Parameters
 
-(none)
+{
+  "properties" : {
+    "time_zone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
+  "type" : "object"
+}
 
 ================================================================================
 ## get_current_datetime
@@ -861,11 +874,20 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Returns the current date and time in UTC as an ISO-8601 string (YYYY-MM-DDThh:mm:ssZ). Call this whenever you need to know the current date and time; do not guess it.
+Returns the current date and time in the user's time zone (ISO-8601 with its offset and zone) and in UTC. Call this whenever you need to know the current date and time; do not guess it.
 
 ### Parameters
 
-(none)
+{
+  "properties" : {
+    "time_zone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
+  "type" : "object"
+}
 
 ================================================================================
 ## get_current_time
@@ -2524,6 +2546,10 @@ Runs a StroomQL query as the user (e.g. 'from "My View" where EventTime > day() 
     "query" : {
       "description" : "The StroomQL query.",
       "type" : "string"
+    },
+    "time_zone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
+      "type" : "string"
     }
   },
   "required" : [ "query" ],
@@ -2818,6 +2844,10 @@ Use for any 'X, then Y, by the same user/host, within N' question, in one data s
     },
     "timeTo" : {
       "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
+      "type" : "string"
+    },
+    "time_zone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
     },
     "until" : {

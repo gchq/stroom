@@ -132,6 +132,39 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
     }
 
     @Test
+    void theTimeRangeAndTheRowsTimesAreInTheZoneGiven() {
+        // One event a minute from 2026-01-01T00:00Z: 12:00 to 13:00 in Canberra (+11:00 in January) is 01:00Z to
+        // 02:00Z, 60 events.
+        final DocRef index = seededIndex(EVENTS, false);
+        final Map<String, Object> arguments = args("index", index.getUuid(), "pipeline",
+                "| STATS n = COUNT(*), earliest = MIN(@timestamp)", "timeFrom", "2026-01-01T12:00:00", "timeTo",
+                "2026-01-01T13:00:00", "time_zone", "Australia/Canberra");
+
+        final Map<String, Object> inCanberra = json("esql_query", arguments);
+        dump("esql_query in Canberra", inCanberra);
+
+        assertThat((List<List<Object>>) inCanberra.get("rows")).singleElement()
+                .satisfies(row -> {
+                    assertThat(((Number) row.getFirst()).longValue()).isEqualTo(60L);
+                    assertThat(row.getLast()).isEqualTo("2026-01-01T12:00:00.000+11:00");
+                });
+        assertThat(inCanberra).containsEntry("time_zone", "Australia/Canberra")
+                .containsEntry("time_zone_source", "given");
+        assertThat((String) inCanberra.get("time_zone_esql_note")).contains("work in UTC");
+        assertThat((Map<String, Object>) inCanberra.get("time_range")).containsEntry("from",
+                "2026-01-01T12:00:00+11:00");
+
+        arguments.put("time_zone", "UTC");
+        final Map<String, Object> inUtc = json("esql_query", arguments);
+        assertThat((List<List<Object>>) inUtc.get("rows")).singleElement()
+                .satisfies(row -> {
+                    assertThat(((Number) row.getFirst()).longValue()).isEqualTo(60L);
+                    assertThat(row.getLast()).isEqualTo("2026-01-01T12:00:00.000Z");
+                });
+        assertThat(inUtc).containsEntry("time_zone", "UTC").doesNotContainKey("time_zone_esql_note");
+    }
+
+    @Test
     void theDocumentsOfAStreamNotInStroomAreCountedByEsqlQueryButNotRunStroomQl() {
         final DocRef index = seededIndex(EVENTS, true);
 

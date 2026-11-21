@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,17 @@ class TestBuiltInTools {
     @Test
     void getCurrentDate() {
         assertThat(run(new GetCurrentDateTool(), "{}"))
-                .isEqualTo(LocalDate.now(ZoneOffset.UTC).toString());
+                .isEqualTo(LocalDate.now(ZoneOffset.UTC) + " (UTC)");
+    }
+
+    @Test
+    void getCurrentDateInAZone() {
+        final Instant now = Instant.parse("2026-11-20T23:42:00Z");
+
+        assertThat(GetCurrentDateTool.text(now, zone("Australia/Canberra")))
+                .isEqualTo("2026-11-21 (Australia/Canberra)");
+        assertThat(run(new GetCurrentDateTool(), "{\"time_zone\":\"Nowhere/Special\"}"))
+                .startsWith("Error: unknown time zone 'Nowhere/Special'");
     }
 
     @Test
@@ -54,9 +65,24 @@ class TestBuiltInTools {
     @Test
     void getCurrentDatetimeIsUtcIsoAndCurrent() {
         final String result = run(new GetCurrentDateTimeTool(), "{}");
-        assertThat(result).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z");
-        assertThat(Duration.between(Instant.parse(result), Instant.now()).abs())
+        assertThat(result).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z \\(UTC\\)");
+        assertThat(Duration.between(Instant.parse(result.substring(0, 20)), Instant.now()).abs())
                 .isLessThan(Duration.ofMinutes(1));
+    }
+
+    @Test
+    void getCurrentDatetimeGivesTheZonesTimeAndUtc() {
+        final Instant now = Instant.parse("2026-11-20T23:42:00Z");
+
+        assertThat(GetCurrentDateTimeTool.text(now, zone("Australia/Canberra")))
+                .isEqualTo("2026-11-21T10:42:00+11:00 (Australia/Canberra); UTC 2026-11-20T23:42:00Z");
+        assertThat(GetCurrentDateTimeTool.text(now, new ToolTimeZone(ZoneOffset.UTC,
+                ToolTimeZone.Source.FALLBACK, UserTimeZones.BROWSER_NOT_KNOWN)))
+                .isEqualTo("2026-11-20T23:42:00Z (UTC). " + UserTimeZones.BROWSER_NOT_KNOWN);
+        assertThat(run(new GetCurrentDateTimeTool(), "{\"time_zone\":\"+11:00\"}"))
+                .matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+11:00 \\(\\+11:00\\); UTC .*Z");
+        assertThat(run(new GetCurrentDateTimeTool(), "{\"time_zone\":\"Mars\"}"))
+                .isEqualTo("Error: " + UserTimeZones.unknown("Mars"));
     }
 
     @Test
@@ -210,6 +236,10 @@ class TestBuiltInTools {
                 return usable.getAsBoolean();
             }
         };
+    }
+
+    private static ToolTimeZone zone(final String id) {
+        return new ToolTimeZone(ZoneId.of(id), ToolTimeZone.Source.GIVEN, null);
     }
 
     private static String run(final StroomTool tool, final String argsJson) {

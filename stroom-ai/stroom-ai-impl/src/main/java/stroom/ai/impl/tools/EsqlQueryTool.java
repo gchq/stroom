@@ -125,6 +125,11 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                         + "escape it (\"a\\\\@b\", or \"\"\"a\\@b\"\"\") or use LIKE for a simple "
                                         + "pattern.";
 
+    /// What a result in a zone other than UTC says of the pipeline's own date functions, which Stroom runs without
+    /// a zone, so in UTC: only the time range (timeFrom, timeTo) and the rows' times shown are in the zone.
+    static final String ESQL_UTC_NOTE = "The pipeline's own date functions and literals (NOW(), BUCKET, "
+                                        + "DATE_TRUNC, DATE_FORMAT) work in UTC.";
+
     private final Provider<ElasticEsql> elasticEsqlProvider;
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
@@ -226,6 +231,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                         .addStringProperty(TIME_FROM_ARG, "Optional: from this time on the index's time field "
                                                           + "(ISO 8601, or Stroom's day()-7d).")
                         .addStringProperty(TIME_TO_ARG, "Optional: up to this time (ISO 8601, or Stroom's now()).")
+                        .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .addIntegerProperty(LIMIT_ARG, "The most rows (default " + ElasticEsql.MAX_ROWS + ", at most "
                                                        + ElasticEsql.MAX_ROWS + "); a LIMIT in the pipeline "
                                                        + "lowers it.")
@@ -261,8 +267,11 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         final ExpressionOperator filter = terms.isEmpty()
                 ? null
                 : expression(terms);
-        final String timeFrom = stringArg(request, TIME_FROM_ARG);
-        final String timeTo = stringArg(request, TIME_TO_ARG);
+        // The zone timeFrom and timeTo are read in, and the rows' times shown in.
+        final ToolTimeZone zone = timeZone(request, context);
+        final long referenceTime = System.currentTimeMillis();
+        final String timeFrom = StroomQlDatePoints.timeInZone(stringArg(request, TIME_FROM_ARG), zone, referenceTime);
+        final String timeTo = StroomQlDatePoints.timeInZone(stringArg(request, TIME_TO_ARG), zone, referenceTime);
         final TimeRange timeRange = timeFrom == null && timeTo == null
                 ? null
                 : new TimeRange(null, timeFrom, timeTo);
@@ -290,12 +299,12 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
 
         final List<String> columns = result.columns().stream().map(ElasticEsql.Column::name).toList();
         final List<List<String>> cells = result.rows().stream()
-                .map(row -> row.stream().map(EsqlQueryTool::cell).toList())
+                .map(row -> row.stream().map(value -> zone.inZone(cell(value))).toList())
                 .toList();
         ToolTables.write(workspace, out, columns, cells, index.getUuid());
-        final Map<String, Object> structured = structured(index, terms, timeRange, result, out);
+        final Map<String, Object> structured = structured(index, terms, timeRange, result, out, zone);
         return context.session().isChat()
-                ? ToolResult.text(markdown(index, terms, timeRange, result, columns, cells, out))
+                ? ToolResult.text(markdown(index, terms, timeRange, result, columns, cells, out, zone))
                         .withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
     }
@@ -573,7 +582,8 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                    final Result result,
                                    final List<String> columns,
                                    final List<List<String>> cells,
-                                   final WorkspacePath out) {
+                                   final WorkspacePath out,
+                                   final ToolTimeZone zone) {
         final StringBuilder sb = new StringBuilder("Ran the ES|QL query on ")
                 .append(DataSourceAccess.describe(index))
                 .append(" (Elasticsearch ").append(result.version()).append(", ").append(result.tookMs())
@@ -595,11 +605,20 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         } else {
             sb.append(ToolTables.preview(columns, cells, SHOWN_ROWS));
         }
-        sb.append("\n\n").append(rowsNote(result));
+        sb.append("\n\n").append(zoneNote(zone)).append(' ').append(rowsNote(result));
         if (!cells.isEmpty()) {
             sb.append(" The rows are in ").append(out).append('.');
         }
         return sb.toString();
+    }
+
+    /// @param zone The call's zone.
+    /// @return What the result says of its times' zone: in a zone other than UTC, also that ES|QL's own date
+    /// functions work in UTC.
+    static String zoneNote(final ToolTimeZone zone) {
+        return zone.isUtc()
+                ? zone.stated()
+                : zone.stated() + " " + ESQL_UTC_NOTE;
     }
 
     /// What the rows are: how many, whether they were cut short, and how many there are in all.
@@ -645,7 +664,8 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                                   final List<Term> terms,
                                                   final TimeRange timeRange,
                                                   final Result result,
-                                                  final WorkspacePath out) {
+                                                  final WorkspacePath out,
+                                                  final ToolTimeZone zone) {
         final Map<String, Object> indexRef = new LinkedHashMap<>();
         indexRef.put("type", index.getType());
         indexRef.put("uuid", index.getUuid());
@@ -663,12 +683,20 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
             time.put("to", timeRange.getTo());
             map.put("time_range", time);
         }
+        map.putAll(zone.structured());
+        if (!zone.isUtc()) {
+            map.put("time_zone_esql_note", ESQL_UTC_NOTE);
+        }
         map.put("version", result.version());
         map.put("took_ms", result.tookMs());
         map.put("columns", result.columns().stream()
                 .map(column -> Map.of("name", column.name(), "type", column.type()))
                 .toList());
-        map.put("rows", result.rows().stream().limit(SHOWN_ROWS).toList());
+        map.put("rows", result.rows().stream().limit(SHOWN_ROWS)
+                .map(row -> row.stream().map(value -> value instanceof final String text
+                        ? zone.inZone(text)
+                        : value).toList())
+                .toList());
         map.put("row_count", result.rows().size());
         if (result.rows().size() > SHOWN_ROWS) {
             map.put("rows_shown", SHOWN_ROWS);

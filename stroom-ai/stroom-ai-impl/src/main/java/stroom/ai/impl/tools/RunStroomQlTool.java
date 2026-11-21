@@ -32,7 +32,6 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
-import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
@@ -176,6 +175,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
+                        .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("A .md file in /outputs/ for the results (default "
                                           + "/outputs/queries/query-<time>.md).")
@@ -204,7 +204,11 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         // Never an unbounded search: the rows are capped, whatever the query asks for.
         final int maxRows = limits(context).getMaxQueryRows();
         final StroomQlLimit.Limited limited = StroomQlLimit.apply(given, maxRows);
-        final String query = limited.query();
+        // The zone day(), a time without an offset and the results' times are in.
+        final ToolTimeZone zone = timeZone(request, context);
+        final long referenceTime = System.currentTimeMillis();
+        final String query = StroomQlDatePoints.inZone(limited.query(), zone, referenceTime);
+        final boolean changed = limited.change() != StroomQlLimit.Change.NONE || !query.equals(limited.query());
         final WorkspacePath givenOut = outArg(request);
         final WorkspacePath out = givenOut != null
                 ? givenOut
@@ -223,7 +227,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         final QuerySearchRequest searchRequest = QuerySearchRequest.builder()
                 .searchRequestSource(SearchRequestSource.builder().sourceType(SourceType.API).build())
                 .query(query)
-                .queryContext(QueryContext.builder().dateTimeSettings(DateTimeSettings.builder().build()).build())
+                .queryContext(QueryContext.builder().dateTimeSettings(zone.dateTimeSettings(referenceTime)).build())
                 .incremental(false)
                 .timeout(timeLimit(context).toMillis())
                 .storeHistory(false)
@@ -241,7 +245,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
             return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, given,
-                    limited, maxRows) + esqlHint(queryService, dataSource, given, context));
+                    new Written(limited, changed, zone), maxRows) + esqlHint(queryService, dataSource, given, context));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
@@ -368,13 +372,14 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                + translation.get().pipeline() + "'.";
     }
 
-    // The parser's error for the query as the agent wrote it, when the limit this tool changed is in the one that
-    // failed: a query with group by after select fails at the limit added before select, a token the agent never
-    // wrote (seen with Haiku in eval case 71). Empty if the limit is the agent's own, or the query as written parses.
+    // The parser's error for the query as the agent wrote it, when what this tool changed (the limit, or a date
+    // point put in the call's time zone) is in the one that failed: a query with group by after select fails at the
+    // limit added before select, a token the agent never wrote (seen with Haiku in eval case 71). Empty if the query
+    // ran as written, or the query as written parses.
     private static Optional<String> errorAsWritten(final QueryService queryService,
                                                    final String given,
-                                                   final StroomQlLimit.Limited limited) {
-        if (limited.change() == StroomQlLimit.Change.NONE) {
+                                                   final boolean changed) {
+        if (!changed) {
             return Optional.empty();
         }
         final ValidateExpressionResult result = queryService.validateQuery(given);
@@ -391,8 +396,9 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                            final WorkspacePath out,
                            final String sourceDocUuid,
                            final String given,
-                           final StroomQlLimit.Limited limited,
+                           final Written written,
                            final int maxRows) {
+        final StroomQlLimit.Limited limited = written.limited();
         final QueryService queryService = queryServiceProvider.get();
         if (response == null) {
             throw new WorkspaceException(started
@@ -404,7 +410,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(started
                     ? "The query started, but failed while it ran: " + String.join("; ", errors)
                     : "The query failed: " + StroomQlErrorHints.appendTo(errorAsWritten(queryService, given,
-                            limited).orElse(String.join("; ", errors)), given));
+                            written.changed()).orElse(String.join("; ", errors)), given));
         }
         // Warnings don't stop the results being used, but say what to make of them (e.g. a join's row matching
         // very many rows).
@@ -427,6 +433,11 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         try {
             // A data source without streams gives empty ids, which only mislead.
             MarkdownTables.dropEmptyColumns(resourceStore.getTempFile(resourceKey), EventsFile.SOURCE_ID_COLUMNS);
+            // Stroom gives a date field's values in UTC whatever the query's zone: they are shown in it.
+            final ToolTimeZone zone = written.zone();
+            if (!zone.isUtc()) {
+                MarkdownTables.mapCells(resourceStore.getTempFile(resourceKey), zone::inZone);
+            }
             workspace.write(out, resourceStore.getTempFile(resourceKey), sourceDocUuid);
         } finally {
             resourceStore.deleteTempFile(resourceKey);
@@ -435,7 +446,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 StandardCharsets.UTF_8)) {
             final String profile = TableProfiler.profile(reader, out.path());
             final long rows = MarkdownTables.countRows(workspace.localFile(out));
-            return "Ran the query. The results are in " + out + "." + limitNote(limited, maxRows, rows)
+            return "Ran the query. The results are in " + out + ". " + written.zone().stated()
+                   + limitNote(limited, maxRows, rows)
                    + (warnings.isEmpty()
                     ? ""
                     : " Stroom warned: " + String.join("; ", warnings))
@@ -481,4 +493,12 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         return true;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    // The query as run: its limit, whether it differs from the agent's, and the time zone it ran in.
+    private record Written(StroomQlLimit.Limited limited, boolean changed, ToolTimeZone zone) {
+
+    }
 }
