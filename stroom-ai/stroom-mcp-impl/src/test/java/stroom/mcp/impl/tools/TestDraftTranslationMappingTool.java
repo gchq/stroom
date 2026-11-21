@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
@@ -339,6 +340,136 @@ class TestDraftTranslationMappingTool {
                 .containsEntry("records_left_out", Map.of("web", 8));
         assertThat(ToolJson.dumps(draft.get("mapping"))).contains("select", "update").doesNotContain("\"get\"",
                 "\"post\"", "\"field\": \"path\"");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aGroupOfSourceTypesIsNamedPerSourceTypeFromTheSourceTypeField() {
+        // Seen in chat 182: the user answered "as per source type", which only one name could be given for.
+        scopedOverDbAndWeb(List.of(
+                new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "www")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB", "web", "Acme Web"), "environment", "Test"));
+
+        assertThat(draft).doesNotContainKey("error");
+        final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
+        final Map<String, Object> name = systemNameEntry(mapping);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("db", "Acme DB");
+        values.put("web", "Acme Web");
+        values.put("www", "Acme Web");
+        assertThat(name).containsEntry("field", "source").containsEntry("map", values).doesNotContainKey("value");
+        assertThat(ToolJson.dumps(mapping)).doesNotContain("TODO system name");
+        assertThat(ToolJson.dumps(draft.get("notes"))).doesNotContain("Ask the user for EventSource/System/Name");
+        // The draft only reads: the names go on the registry's rows when the group is saved (build_translation_xslt).
+        Mockito.verify(world.registries, Mockito.never()).writeRegistry(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any());
+
+        // Given again as JSON text, in another order: the same names, not another the user gave; left out, kept.
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "{\"web\": \"Acme Web\", \"db\": \"Acme DB\"}"));
+        assertThat(again).doesNotContainKey("error");
+        final Map<String, Object> leftOut = world.call(tool, Map.of("stream_ids", List.of(7), "build",
+                "acme-v1"));
+        assertThat(systemNameEntry((Map<String, Object>) leftOut.get("mapping"))).containsEntry("map", values);
+        // Another the user changed to: refused unless they did.
+        assertThat((String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "Acme")).get("error")).contains("user_changed");
+        final Map<String, Object> changed = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "Acme", "user_changed", true));
+        assertThat(systemNameEntry((Map<String, Object>) changed.get("mapping"))).containsEntry("value", "Acme");
+    }
+
+    @Test
+    void aGroupOfSourceTypesNotYetNamedIsOfferedOneNameOrEachSourceTypesOwn() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+
+        assertThat(ToolJson.dumps(draft.get("notes"))).contains("one name for the group or each source type's own",
+                "db, web", "system_name={\\\"<source type>\\\": \\\"<name>\\\"}");
+    }
+
+    @Test
+    void namesPerSourceTypeThatLeaveOneOutOrNameAnotherAreRefused() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final String missing = (String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB"))).get("error");
+        assertThat(missing).contains("web").contains("each of");
+        final String unknown = (String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB", "web", "Acme Web", "mail", "Acme Mail"))).get("error");
+        assertThat(unknown).contains("mail").contains("db, web");
+        // Nothing kept of a refused call: the right names are taken next.
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1", "system_name",
+                Map.of("db", "Acme DB", "web", "Acme Web")))).doesNotContainKey("error");
+    }
+
+    @Test
+    void namesPerSourceTypeAreRefusedWhereASourceTypeIsntToldByExactValues() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.PATTERN, "^we")));
+
+        final String refused = (String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB", "web", "Acme Web"))).get("error");
+
+        assertThat(refused).contains("web", "one name");
+        // Nor offered.
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+        assertThat(ToolJson.dumps(draft.get("notes"))).doesNotContain("each source type's own");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void oneNameForAGroupOfSourceTypesIsWrittenAsBefore() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "Acme"));
+
+        assertThat(systemNameEntry((Map<String, Object>) draft.get("mapping"))).containsEntry("value", "Acme");
+    }
+
+    // A build of an aggregated feed (records of db and web, told by 'source') whose scope is both source types,
+    // told by these rows.
+    private void scopedOverDbAndWeb(final List<SourceTypeRows.Row> rows) {
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", dbAndWebLines()), List.of()));
+        final Map<String, Object> state = SurveyDoc.merge(null, Map.of("feed", "ACME", "format", "json lines",
+                "streams_read", List.of(7L)), Map.of(), 2, "now");
+        state.put("source_types", Map.of("field", "source", "scope", Map.of("build", "acme-v1", "source_types",
+                List.of("db", "web"), "rows", SourceTypeScope.kept(rows))));
+        final String survey = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME")).getUuid();
+        world.world.docs.put(survey, DocumentationDoc.builder().uuid(survey).name(SurveyDoc.docName("ACME"))
+                .version("v0").data(SurveyDoc.render(state)).build());
+    }
+
+    // The mapping's common EventSource/System/Name entry.
+    private static Map<String, Object> systemNameEntry(final Map<String, Object> mapping) {
+        return JsonValues.maps(mapping.get("common")).stream()
+                .filter(entry -> "EventSource/System/Name".equals(entry.get("path")))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    // JSON lines of two source types, told by 'source'.
+    private static String dbAndWebLines() {
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            lines.append("{\"source\": \"db\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"select\", \"user\": \"u").append(i).append("\"}\n");
+            lines.append("{\"source\": \"").append(i % 2 == 0
+                            ? "web"
+                            : "www").append("\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"get\", \"path\": \"/p").append(i).append("\"}\n");
+        }
+        return lines.toString();
     }
 
     @Test

@@ -651,11 +651,20 @@ class SourceTypeGroups {
                 ? groupPlacement(state, plan.group()).map(JsonValues::deepCopy)
                 : Optional.empty();
         final List<String> joining = new ArrayList<>();
+        final Map<String, String> namesByValue = systemNamesByValue(plan.groupMapping(), plan.field());
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
             final Map<String, Object> row = new LinkedHashMap<>(given);
             final boolean ours = plan.sourceTypes().contains(JsonValues.text(row.get("name")));
             if (ours) {
+                // Each source type's own System/Name, where the group writes it from the source type field: on its
+                // rows, so the registry's table shows it. Only the group's rows, and only that key, are changed.
+                final String systemName = SourceTypeRows.VALUE.equals(JsonValues.text(row.get("match")))
+                        ? namesByValue.get(JsonValues.text(row.get("value")))
+                        : null;
+                if (systemName != null) {
+                    row.put("system_name", systemName);
+                }
                 row.put("status", SourceTypeRegistry.TRANSLATED);
                 row.put("group", plan.group());
                 row.put(GROUP_XSLT, Map.of("uuid", groupUuid, "name", groupName));
@@ -1471,7 +1480,10 @@ class SourceTypeGroups {
             final List<FieldMapping> entries = given.common().stream()
                     .filter(entry -> root.equals(SourceTypeModule.partOf(entry.strippedPath())))
                     .toList();
-            if (!entries.isEmpty() && entries.stream().allMatch(entry -> recordLevel(entry, given))) {
+            // A System/Name read per record (each source type's own) is the group's: the feed's common module, which
+            // every group imports, holds no group's names (seen in chat 182: a later group got no System/Name).
+            if (!entries.isEmpty() && entries.stream().allMatch(entry -> recordLevel(entry, given))
+                && entries.stream().noneMatch(SourceTypeGroups::nameReadPerRecord)) {
                 moving.add(root);
             }
         }
@@ -1488,6 +1500,13 @@ class SourceTypeGroups {
             // The feed's shared decisions: its Environment, and its System Name by default.
             replaceValue(commonEntries, ENVIRONMENT, JsonValues.text(state.get("environment")));
             replaceValue(commonEntries, SYSTEM_NAME, JsonValues.text(state.get("system_name")));
+        } else if (kept.stream().anyMatch(SourceTypeGroups::nameReadPerRecord)) {
+            // The group's own System, its names read per record: the feed's Environment all the same.
+            final List<Map<String, Object>> own = new ArrayList<>();
+            kept.forEach(entry -> own.add(new LinkedHashMap<>(entry.toJson(DumpMode.COMPACT))));
+            replaceValue(own, ENVIRONMENT, JsonValues.text(state.get("environment")));
+            kept.clear();
+            own.forEach(entry -> kept.add(FieldMapping.fromJson(entry)));
         }
         final Map<String, Object> json = new LinkedHashMap<>(given.toJson(DumpMode.COMPACT));
         for (final String key : List.of("pairs", "extract", "json_fields", "xml_fields", "for_each", "drop_when",
@@ -1533,6 +1552,14 @@ class SourceTypeGroups {
             final List<FieldMapping> commons = common.common().stream()
                     .filter(entry -> part.at().equals(SourceTypeModule.partOf(entry.strippedPath())))
                     .toList();
+            if (theirs.stream().anyMatch(SourceTypeGroups::nameReadPerRecord)
+                || commons.stream().anyMatch(SourceTypeGroups::nameReadPerRecord)) {
+                // Names read per record are a group's own: its System is written by itself, the common module's
+                // part (a name passed to it, or one written before) not called for it.
+                notes.add(part.at() + ": this group writes its own, its System/Name read record by record (each "
+                          + "source type's own), so the common module's part isn't called for it");
+                continue;
+            }
             if (compared(theirs).equals(compared(commons))) {
                 kept.removeAll(theirs);
             } else {
@@ -1587,6 +1614,26 @@ class SourceTypeGroups {
         return !derived.contains(field) && held.stream().noneMatch(name -> field.equals(name)
                                                                           || field.startsWith(name + ".")
                                                                           || field.startsWith(name + "/"));
+    }
+
+    // Each source type field value's System/Name, where the group's mapping writes the Name from that field by a map
+    // (each source type's own); none otherwise.
+    private static Map<String, String> systemNamesByValue(final TranslationMapping mapping, final String field) {
+        if (mapping == null || field == null) {
+            return Map.of();
+        }
+        return mapping.common().stream()
+                .filter(entry -> SYSTEM_NAME.equals(entry.strippedPath()) && field.equals(entry.field())
+                                 && entry.map() != null)
+                .findFirst()
+                .<Map<String, String>>map(FieldMapping::map)
+                .orElse(Map.of());
+    }
+
+    // An EventSource/System/Name entry that is no one name: read from the record (e.g. each source type's own, a
+    // field and its map).
+    private static boolean nameReadPerRecord(final FieldMapping entry) {
+        return SYSTEM_NAME.equals(entry.strippedPath()) && entry.value() == null;
     }
 
     private static void replaceValue(final List<Map<String, Object>> entries, final String path, final String value) {

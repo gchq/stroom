@@ -62,6 +62,10 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
     private static final String FOLDER = "E2E Feeds/PegaGroups";
     private static final String BUILD = "pega-groups";
     private static final String SECOND_BUILD = "pega-groups-2";
+    private static final String NAMES_FEED = "E2E-PEGA-NAMES";
+    private static final String NAMES_FOLDER = "E2E Feeds/PegaNames";
+    private static final String NAMES_BUILD = "pega-names";
+    private static final String NAMES_SECOND_BUILD = "pega-names-2";
     private static final String WRAPPER = """
             [{"path": "EventTime/TimeCreated", "field": "timestamp"},
              {"path": "EventSource/System/Name", "value": "PEGA"},
@@ -233,6 +237,111 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         assertThat(count(integrationDone.logged(), "pega_integration: soap" + XsltGenerator.NOT_PARSED + "XML"))
                 .isEqualTo(truncated);
         assertThat(integrationDone.logged()).doesNotContain("WARN New source type");
+    }
+
+    @Test
+    void aGroupNamedPerSourceTypeWritesEachRecordsOwnSystemNameAndALaterGroupItsOwn() {
+        // Seen in chat 182: the user named the system "as per source type"; a map put in the feed's common module
+        // left a later group's records with no System/Name.
+        createFeed("pega-names-src", NAMES_FEED);
+        final String text = lines("pega/pega-1.json", 1500);
+        final long stream = upload(NAMES_FEED, text);
+        promote("pega-names-src", Map.of("Feed", NAMES_FOLDER));
+        final List<String> records = text.lines().toList();
+        final int securityAt = indexOf(records, "\"PegaSecurityEvent\"", null);
+        final int dbAt = indexOf(records, "\"PegaDB\"", null);
+        final int soapAt = indexOf(records, "\"PegaIntegration\"", "Envelope>\"}");
+        final String template = templateUuid("translation", "Event Data (JSON)");
+
+        // --- The first build: a group of two source types, each named its own. ---
+        json("start_build", args("build", NAMES_BUILD, "feeds", List.of(NAMES_FEED)));
+        client.answeringWith(scopeOf(List.of("PegaSecurityEvent", "PegaDB"), null));
+        json("survey_feed", args("feed", NAMES_FEED, "build", NAMES_BUILD));
+        final Map<String, Object> shown = json("record_source_types", args("build", NAMES_BUILD, "feed",
+                NAMES_FEED, "environment", "Prod"));
+        json("record_source_types", args("build", NAMES_BUILD, "feed", NAMES_FEED, "environment", "Prod",
+                "reviewed", shown.get("review_id"), "group", "PEGA app"));
+
+        // Unnamed: one name for the group, or each source type's own, offered.
+        final Map<String, Object> unnamed = json("draft_translation_mapping", args("build", NAMES_BUILD,
+                "stream_ids", List.of(stream), "schema_version", VERSION));
+        dump("draft_translation_mapping unnamed", unnamed);
+        assertThat(jsonOf(unnamed.get("notes"))).contains("each source type's own", "PegaDB, PegaSecurityEvent");
+        final Map<String, Object> named = json("draft_translation_mapping", args("build", NAMES_BUILD,
+                "stream_ids", List.of(stream), "schema_version", VERSION, "system_name",
+                Map.of("PegaSecurityEvent", "PEGA Security", "PegaDB", "PEGA DB")));
+        dump("draft_translation_mapping named per source type", named);
+        final Map<String, Object> nameEntry = list(map(named, "mapping"), "common").stream()
+                .filter(entry -> "EventSource/System/Name".equals(entry.get("path")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(nameEntry).containsEntry("field", "sourcetype")
+                .containsEntry("map", Map.of("PegaSecurityEvent", "PEGA Security", "PegaDB", "PEGA DB"));
+
+        // Built with the draft's System/Name, as the agent sends it.
+        final Map<String, Object> mapping = withSystemName(securityMapping(), nameEntry);
+        final Map<String, Object> app = agreed("build_translation_xslt", args("build", NAMES_BUILD, "feeds",
+                List.of(NAMES_FEED), "schema_version", VERSION, "stream_ids", List.of(stream), "mapping", mapping));
+        dump("build_translation_xslt PEGA app", app);
+        assertThat(app).as("the group saved: %s", app.get("problems")).containsEntry("ok", true);
+        final Map<String, Object> first = map(app, "group");
+        final String commonUuid = uuidOf(map(first, "common"));
+        // The feed's common module holds no group's names.
+        assertThat(readXslt(commonUuid).getData()).doesNotContain("PEGA Security", "PEGA DB");
+        // Each source type's own name on its row of the registry, every row kept.
+        final Map<String, Map<String, Object>> rows = new LinkedHashMap<>();
+        list(SourceTypeRegistry.read(documentation(uuidOf(map(first, "registry")))), "rows")
+                .forEach(row -> rows.put((String) row.get("name"), row));
+        assertThat(rows).containsKeys("PegaSecurityEvent", "PegaDB", "PegaIntegration");
+        assertThat(rows.get("PegaSecurityEvent")).containsEntry("system_name", "PEGA Security");
+        assertThat(rows.get("PegaDB")).containsEntry("system_name", "PEGA DB");
+
+        final String appPipeline = uuidOf(agreed("create_pipeline", args("build", NAMES_BUILD, "group",
+                "PEGA app", "template_uuid", template)));
+        for (final Map.Entry<Integer, String> record : Map.of(securityAt, "PEGA Security", dbAt, "PEGA DB")
+                .entrySet()) {
+            assertOneValidEvent(appPipeline, stream, record.getKey());
+            final Element event = children(parse(translationOutput(appPipeline, stream, record.getKey()))
+                    .getDocumentElement(), "Event").getFirst();
+            assertThat(textAt(event, "EventSource/System/Name")).as("record %s", record.getKey())
+                    .isEqualTo(record.getValue());
+            assertThat(textAt(event, "EventSource/System/Environment")).isEqualTo("Prod");
+        }
+        promote(NAMES_BUILD, Map.of("Pipeline", NAMES_FOLDER, "XSLT", NAMES_FOLDER, "Documentation",
+                NAMES_FOLDER));
+
+        // --- A later build's group of one name: its records get its own. ---
+        json("start_build", args("build", NAMES_SECOND_BUILD, "feeds", List.of(NAMES_FEED)));
+        client.answeringWith(scopeOf(List.of("PegaIntegration"), null));
+        json("survey_feed", args("feed", NAMES_FEED, "build", NAMES_SECOND_BUILD));
+        final Map<String, Object> shownAgain = json("record_source_types", args("build", NAMES_SECOND_BUILD,
+                "feed", NAMES_FEED));
+        json("record_source_types", args("build", NAMES_SECOND_BUILD, "feed", NAMES_FEED, "reviewed",
+                shownAgain.get("review_id"), "group", "PEGA integration"));
+        final Map<String, Object> integration = agreed("build_translation_xslt", args("build", NAMES_SECOND_BUILD,
+                "feeds", List.of(NAMES_FEED), "schema_version", VERSION, "stream_ids", List.of(stream), "mapping",
+                integrationMapping()));
+        dump("build_translation_xslt PEGA integration", integration);
+        assertThat(integration).as("the later group saved: %s", integration.get("problems"))
+                .containsEntry("ok", true);
+        final String integrationPipeline = uuidOf(agreed("create_pipeline", args("build", NAMES_SECOND_BUILD,
+                "group", "PEGA integration", "template_uuid", template)));
+        assertOneValidEvent(integrationPipeline, stream, soapAt);
+        final Element call = children(parse(translationOutput(integrationPipeline, stream, soapAt))
+                .getDocumentElement(), "Event").getFirst();
+        assertThat(textAt(call, "EventSource/System/Name")).isEqualTo("PEGA");
+    }
+
+    // The mapping with its common EventSource/System/Name entry replaced by the one given.
+    private static Map<String, Object> withSystemName(final Map<String, Object> mapping,
+                                                      final Map<String, Object> entry) {
+        final Map<String, Object> out = new LinkedHashMap<>(mapping);
+        out.put("common", ((List<Map<String, Object>>) mapping.get("common")).stream()
+                .map(each -> "EventSource/System/Name".equals(each.get("path"))
+                        ? entry
+                        : each)
+                .toList());
+        return out;
     }
 
     // Stepped clean with the saved code: the passed-over records and the truncated bodies are counted, not faults,

@@ -177,6 +177,44 @@ class TestSourceTypeModules extends XsltRuns {
     }
 
     @Test
+    void aGroupNamedPerSourceTypeWritesEachRecordsOwnSystemName() {
+        // Seen in chat 182: the user named the system as per source type. The group writes its own System, its Name
+        // from the source type field's value, beside the common module's other parts.
+        final Modules modules = modules();
+        final TranslationMapping mapping = TranslationMapping.fromJson(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/Generator", "value": "Pega"},
+                            {"path": "EventSource/System/Name", "field": "sourcetype", "transform": "trim",
+                             "map": {"PegaSecurityEvent": "PEGA Security", "PegaDB": "PEGA DB"}},
+                            {"path": "EventSource/System/Environment", "value": "Prod"}],
+                 "ignored_fields": ["app", "sourcetype"],
+                 "events": [{"name": "line", "allow_unknown": "a test",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Line"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "message",
+                                         "field": "message"}]}]}"""));
+        final TranslationMapping group = mapping.withModule(new SourceTypeModule(SourceTypeModule.GROUP,
+                "PEGA app", "pega_app", List.of("PegaSecurityEvent", "PegaDB"), COMMON_HREF, null,
+                SourceTypeModule.commonParts(modules.commonMapping()), null, "sourcetype", ROWS));
+        final XsltGenerator.Generated generated = XsltGenerator.generate(group, SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+        assertThat(generated.xslt()).doesNotContain("<xsl:call-template name=\"pega_common_system\"");
+
+        // Padded values, which the group strips to tell their source type, get their names too.
+        final String all = records();
+        final String padded = all.substring(0, all.length() - "</map>".length())
+                              + record("2026-11-10T00:00:08.000Z", " PegaDB\t", "pad")
+                              + record("2026-11-10T00:00:09.000Z", "PegaSecurityEvent ", "logout") + "</map>";
+        final List<String> logged = new ArrayList<>();
+        final XmlElement events = transform(generated.xslt(), padded, modules.imports(), logged);
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        assertThat(children(events, "Event")).extracting(event -> text(event, "EventSource/System/Name"))
+                .containsExactly("PEGA Security", "PEGA Security", "PEGA DB", "PEGA DB", "PEGA Security");
+        assertThat(children(events, "Event")).extracting(event -> text(event, "EventSource/System/Environment"))
+                .containsOnly("Prod");
+    }
+
+    @Test
     void aRecordPassedOverHasItsNumberReadAsTheGroupsOwnAreRead() {
         // Stroom moves to a record's location only when one is read: a record passed over without reading it left
         // later log lines naming earlier records (seen with the dispatcher in the aggregated feed walks). Each record

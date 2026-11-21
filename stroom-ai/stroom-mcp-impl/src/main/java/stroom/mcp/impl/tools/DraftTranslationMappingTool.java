@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
@@ -37,6 +38,7 @@ import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -166,7 +168,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                         .addStringProperty(SYSTEM_NAME_ARG, "EventSource/System/Name, if the user has said: one "
                                                             + "name, or for a stream of several products a JSON "
                                                             + "object of each variant's, e.g. {\"cef\": "
-                                                            + "\"SecureGate\"}.")
+                                                            + "\"SecureGate\"}, or for a build's group of source "
+                                                            + "types each source type's.")
                         .addStringProperty(ENVIRONMENT_ARG, "EventSource/System/Environment, if the user has said, "
                                                             + "e.g. Prod.")
                         .addBooleanProperty(USER_CHANGED_ARG, "True when the user has changed the system_name or "
@@ -251,13 +254,17 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             return target.question();
         }
         final String version = target.version();
+        // An aggregated feed's build with a scope: its source types, which the System/Name may be given for each.
+        final SourceTypeScope groupScope = build == null
+                ? null
+                : builds.scope(build).orElse(null);
         // Sample streams of an aggregated feed's build with a scope: read through it, so the rules drafted are the
         // scope's (records of other source types left out as they are read).
         final SampleStreamTexts.Texts read = given == null
                 ? sampleStreamTexts.read(streamIds)
                 : null;
-        final SampleStreamTexts.Scoped scoped = read != null
-                ? builds.scope(build).map(scope -> sampleStreamTexts.scoped(read, scope)).orElse(null)
+        final SampleStreamTexts.Scoped scoped = read != null && groupScope != null
+                ? sampleStreamTexts.scoped(read, groupScope)
                 : null;
         final Map<String, String> samples = scoped != null
                 ? scoped.texts().texts()
@@ -271,7 +278,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 ? null
                 : builds.notesInBuild(build);
         awaitingConfirmation(sourceNotes);
-        final SystemGiven system = system(call, build);
+        final SystemGiven system = system(call, build, groupScope);
+        final Map<String, String> bySourceType = SourceTypeSystemNames.of(system.systemName(), groupScope);
         // The spec given, else the build's saved Data Splitter, as catalogue_event_types and the sample check read
         // the records (seen in chat 169: the draft inferred a splitter of its own, and the agent drafted again with
         // the saved one's spec).
@@ -288,7 +296,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final String forEach = SourceNotes.catalogue(sourceNotes) == null
                 ? null
                 : builds.catalogueForEach(context, build).orElse(null);
-        final Map<String, Object> result = drafted(samples, call, system, sourceNotes,
+        // Named per source type: drafted with one of the names, then written from the source type field.
+        final String draftName = bySourceType.isEmpty()
+                ? SystemNames.single(system.systemName())
+                : bySourceType.values().iterator().next();
+        final Map<String, Object> result = drafted(samples, call, draftName, system.environment(), sourceNotes,
                 detailCheck(context, build, sourceNotes, version), splitter, forEach);
         if (readWith != null) {
             result.put("read_with", "the build's Data Splitter '" + readWith + "'");
@@ -324,7 +336,17 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         // Several formats, each its own rules: a System/Name each, unless one was given (seen: one name for five
         // products).
         final List<Object> systemNotes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
-        SystemNames.apply(mapping, variantFieldOf(splitter, result.get("splitter")), system.systemName(), systemNotes);
+        if (bySourceType.isEmpty()) {
+            final String variantField = variantFieldOf(splitter, result.get("splitter"));
+            SystemNames.apply(mapping, variantField, system.systemName(), systemNotes);
+            if (variantField == null && SystemNames.single(system.systemName()) == null) {
+                // A group of several source types: one name, or each source type's own (seen in chat 182).
+                SourceTypeSystemNames.unnamedNote(groupScope).ifPresent(systemNotes::add);
+            }
+        } else {
+            // Kept on the registry's rows when the group is saved (build_translation_xslt): the draft writes nothing.
+            SourceTypeSystemNames.apply(mapping, groupScope, bySourceType);
+        }
         result.put("notes", systemNotes);
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         dataPlacement(context, build, mapping, version, result);
@@ -440,14 +462,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
 
     private Map<String, Object> drafted(final Map<String, String> samples,
                                         final ToolCall call,
-                                        final SystemGiven system,
+                                        final String systemName,
+                                        final String environment,
                                         final Map<String, Object> sourceNotes,
                                         final Function<String, String> detailCheck,
                                         final SplitterSpec splitter,
                                         final String forEach) {
         return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
-                SystemNames.single(system.systemName()), system.environment(), sourceNotes, detailCheck, splitter,
-                forEach));
+                systemName, environment, sourceNotes, detailCheck, splitter, forEach));
     }
 
     // A catalogue of event types still to confirm: the translation follows the catalogue, so the draft waits for it
@@ -482,17 +504,15 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     // the chat 163 review: the user answered Test, and the second draft was given Prod). Given first, they are
     // recorded; left out later, the recorded ones are used; given otherwise, the call is refused, unless the user
     // changed them (user_changed).
-    private SystemGiven system(final ToolCall call, final String build) {
+    // A System/Name for each of a group's source types is checked before it is recorded, so a refused one is never
+    // kept.
+    private SystemGiven system(final ToolCall call, final String build, final SourceTypeScope scope) {
         final Object givenName = ToolArgs.raw(call, SYSTEM_NAME_ARG);
         final String givenEnvironment = stringArg(call, ENVIRONMENT_ARG);
         if (NullSafe.isBlankString(build)) {
             return new SystemGiven(givenName, givenEnvironment);
         }
-        final String nameText = givenName == null
-                ? null
-                : givenName instanceof final String text
-                        ? text
-                        : ToolJson.dumpsSortedKeys(givenName);
+        final String nameText = nameText(givenName);
         final Map<String, Object> recorded = recordedSystem(build);
         final String recordedName = (String) recorded.get("system_name");
         final String recordedEnvironment = (String) recorded.get("environment");
@@ -518,6 +538,10 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final String environment = givenEnvironment != null
                 ? givenEnvironment
                 : recordedEnvironment;
+        final Object nameGiven = name != null && name.startsWith("{")
+                ? ToolJson.loads(name)
+                : name;
+        SourceTypeSystemNames.of(nameGiven, scope);
         if ((nameText != null || givenEnvironment != null)
             && (!Objects.equals(name, recordedName) || !Objects.equals(environment, recordedEnvironment))) {
             try {
@@ -527,9 +551,27 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                         e.getMessage()), e);
             }
         }
-        return new SystemGiven(name != null && name.startsWith("{")
-                ? ToolJson.loads(name)
-                : name, environment);
+        return new SystemGiven(nameGiven, environment);
+    }
+
+    // The System/Name as the build's record keeps it: a name, or a JSON object written with its keys sorted (given
+    // as an object or as its text alike), so the same names given again are the same.
+    private static String nameText(final Object given) {
+        if (given == null) {
+            return null;
+        }
+        if (given instanceof final String text) {
+            if (!ToolText.strip(text).startsWith("{")) {
+                return text;
+            }
+            try {
+                return ToolJson.dumpsSortedKeys(ToolJson.loads(text));
+            } catch (final RuntimeException e) {
+                throw new ToolRefusal("system_name is a name, or a JSON object of each variant's or source type's "
+                                      + "name, e.g. {\"cef\": \"SecureGate\"}");
+            }
+        }
+        return ToolJson.dumpsSortedKeys(given);
     }
 
     // The System/Name and Environment the build's record keeps; none when it keeps none or can't be read.
@@ -670,7 +712,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     // --------------------------------------------------------------------------------
 
 
-    // The System/Name (one name, or a map of each variant's) and Environment the draft writes.
+    // The System/Name (one name, or a map of each variant's or source type's) and Environment the draft writes.
     private record SystemGiven(Object systemName, String environment) {
 
     }

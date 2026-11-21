@@ -231,6 +231,65 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aGroupNamedPerSourceTypeWritesItsOwnSystemAndALaterGroupItsOwnName() {
+        // Seen in chat 182: a System/Name per source type (field and map) went to the feed's common module, which
+        // every group imports: a later group's records got no System/Name at all.
+        final Map<String, Object> saved = world.call(tool, args(perSourceType(security(), "PegaSecurityEvent",
+                "PEGA Security"), "PEGA app", List.of("PegaSecurityEvent", "PegaDB")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("common_parts")))
+                .doesNotContain("EventSource/System").contains("EventTime", "EventSource/Device");
+        final Map<String, String> docs = xsltsInBuild();
+        // The feed's common module holds no group's names, nor a System part to call.
+        final TranslationMapping common = keptMapping(world.xslt(docs.get("PEGA common")));
+        assertThat(common.common()).noneSatisfy(entry -> assertThat(entry.strippedPath())
+                .startsWith("EventSource/System"));
+        assertThat(world.xslt(docs.get("PEGA common")).getData()).doesNotContain("PEGA Security", "PEGA DB");
+        // The group writes its own System, each record's name by its source type.
+        final XsltDoc group = world.xslt(docs.get("PEGA app"));
+        assertThat(ToolJson.dumps(keptMapping(group).toJson(DumpMode.COMPACT)))
+                .contains("\"field\": \"sourcetype\", \"map\": {\"PegaSecurityEvent\": \"PEGA Security\", "
+                          + "\"PegaDB\": \"PEGA DB\"}");
+        assertThat(group.getData()).contains("'PEGA Security'", "'PEGA DB'", "<Environment>Prod</Environment>");
+        // Each source type's own name on its row of the registry; every other row as it was.
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("system_name", "PEGA Security");
+        assertThat(rowNamed(written.getLast(), "PegaDB")).containsEntry("system_name", "PEGA DB")
+                .containsEntry("status", SourceTypeRegistry.TRANSLATED);
+        assertThat(JsonValues.maps(SourceTypeRegistry.read(written.getLast()).get("rows")))
+                .extracting(row -> JsonValues.text(row.get("name"))).containsExactly("PegaSecurityEvent",
+                        "PegaIntegration", "PegaDB");
+        assertThat(rowNamed(written.getLast(), "PegaIntegration")).containsEntry("status", SourceTypeRegistry.PARKED)
+                .doesNotContainKey("group");
+        assertThat(rowNamed(written.getLast(), "PegaIntegration").get("system_name")).isNull();
+
+        // A later group of one name: its own, written by itself (the common module has no System part).
+        final Map<String, Object> later = world.call(tool, args(integration(), "PEGA integration",
+                List.of("PegaIntegration")));
+        assertThat(later.get("problems")).as("%s", later).isEqualTo(List.of());
+        final XsltDoc integration = world.xslt(xsltsInBuild().get("PEGA integration"));
+        assertThat(integration.getData()).contains("PEGA Integration").doesNotContain("PEGA Security");
+    }
+
+    @Test
+    void aLaterGroupNamedPerSourceTypeDoesntLeaveItsSystemToTheCommonModule() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final String commonCode = world.xslt(xsltsInBuild().get("PEGA common")).getData();
+
+        final Map<String, Object> saved = world.call(tool, args(perSourceType(integration(), "PegaIntegration",
+                "PEGA Calls"), "PEGA rest", List.of("PegaIntegration", "PegaDB")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(world.xslt(xsltsInBuild().get("PEGA common")).getData()).isEqualTo(commonCode);
+        final XsltDoc rest = world.xslt(xsltsInBuild().get("PEGA rest"));
+        // The common module's System part not called: the group writes its own.
+        assertThat(rest.getData()).doesNotContain("name=\"pega_common_system\"").contains("pega_common_device");
+        assertThat(keptMapping(rest).common()).anySatisfy(entry -> assertThat(entry.strippedPath())
+                .isEqualTo("EventSource/System/Name"));
+        assertThat(rest.getData()).contains("'PEGA Calls'", "'PEGA DB'");
+    }
+
+    @Test
     void aSharedCallOfALaterGroupIsAddedToTheCommonModuleNotImportedByTheGroup() {
         world.world.add(XsltDoc.TYPE, "Event Meta", world.world.folder("System/Shared").uuid, "u-meta");
         world.world.docs.put("u-meta", XsltDoc.builder().uuid("u-meta").name("Event Meta")
@@ -1067,6 +1126,22 @@ class TestSourceTypeGroups {
                                         {"path": "EventDetail/Authenticate/Data", "data_name": "correlation",
                                          "field": "soap/Envelope/Header/CorrelationId"}]}]}"""
                 .formatted(WRAPPER.replace("\"PEGA\"", "\"PEGA Integration\"")));
+    }
+
+    // The mapping with its System/Name each source type's own, read from the source type field.
+    private static Map<String, Object> perSourceType(final Map<String, Object> mapping,
+                                                     final String first,
+                                                     final String firstName) {
+        final Map<String, Object> out = new LinkedHashMap<>(mapping);
+        final Map<String, Object> names = new LinkedHashMap<>();
+        names.put(first, firstName);
+        names.put("PegaDB", "PEGA DB");
+        out.put("common", JsonValues.maps(mapping.get("common")).stream()
+                .map(entry -> "EventSource/System/Name".equals(entry.get("path"))
+                        ? Map.<String, Object>of("path", "EventSource/System/Name", "field", "sourcetype", "map", names)
+                        : entry)
+                .toList());
+        return out;
     }
 
     // A sample record of the source type, its message as given (escaped for a JSON string).

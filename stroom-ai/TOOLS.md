@@ -5122,6 +5122,13 @@ generated without them.
 * **Arguments**: `samples` (pasted text, by name or a list) or `stream_ids` (uploaded sample streams, read by the
   tool); `source_name`, `system_name`, `environment` (with `build`, kept in the build's record as the user's
   answers: left out later, the kept ones are used; given otherwise, refused unless `user_changed=true`);
+  `system_name` is one name, a JSON object of each variant's, or, for a build whose scope is a group of several
+  source types, a JSON object of each source type's (`SourceTypeSystemNames`: keys that are the scope's source types;
+  one left out or another named is refused, as is a group whose source types aren't each told by exact values of a
+  record's own field). Then System/Name is written from the source type field (`field`, `transform: trim`, as the
+  group strips the value to tell its source type, and `map`, each row's value to its source type's name);
+  build_translation_xslt puts them on the group's registry rows (`system_name`) when it saves the group, so the
+  draft stays read-only. Unnamed, a note offers one name or each source type's own;
   `splitter` (a build_data_splitter spec, else inferred);
   `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
   this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose).
@@ -5276,8 +5283,11 @@ the site's libraries its shared calls name, all by `uuid='…', name='…'`. A r
 elements itself writes its own (its time, say). The first group's mapping makes the common module (`<feed> common`),
 kept with its own mapping: its common entries for those elements that read only the record's own fields or
 constants, its shared calls, the registry's Environment and default System Name; the System part takes each group's
-System Name (its source types' rows', else its mapping's) as a parameter. A later group's entries the same as the
-common module's (its System Name and Environment aside) are left to it; others are its own, said in `group.notes`;
+System Name (its source types' rows', else its mapping's) as a parameter. A System/Name read per record (each source
+type's own, a `field` and `map`) is never the common module's: the group writing it keeps its whole System part (with
+the registry's Environment), so a later group gets its own name or the common module's. A later group's entries the
+same as the common module's (its System Name and Environment aside) are left to it; others are its own, said in
+`group.notes`;
 a shared call of a later group's that the common module lacks is added to the common module, saved again (in place,
 or as a new version of a promoted one), never imported by the group. **One source type group a build**
 (decided 2026-11-13): `group` defaults to the one the build's scope names (`record_source_types`; a new translation in
