@@ -2078,10 +2078,13 @@ public final class DraftMapping {
                 common.add(dict(PATH, "EventSource/Generator", VALUE, firstText(sourceName, null, "TODO generator")));
             }
             if (common.stream().noneMatch(e -> ((String) e.get(PATH)).startsWith("EventSource/Device/"))) {
-                notes.add("No host field was recognised: EventSource/Device is the device where the event happened. "
-                          + "Map the field that names it (a door, a reader, a switch, a host) to Device/Name, "
-                          + "HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's "
-                          + "address, only when the record names none.");
+                // Required by the schema (seen in chat 182: the agent offered the user "Leave it empty", which
+                // fails validation).
+                notes.add("No host field was recognised: EventSource/Device is the device where the event happened, "
+                          + "and the schema requires it (an event without one fails validation: never offer to "
+                          + "leave it out). Map the field that names it (a door, a reader, a switch, a host) to "
+                          + "Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the "
+                          + "sender's address, only when the record names none.");
             }
         }
 

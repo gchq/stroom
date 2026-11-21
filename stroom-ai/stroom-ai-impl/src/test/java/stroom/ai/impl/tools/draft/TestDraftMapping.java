@@ -480,8 +480,11 @@ class TestDraftMapping extends DraftFixtures {
         // With nothing naming the device, the note says what the device is, and the sender's address comes last.
         final Map<String, Object> plain = draft(List.of("{\"time\": \"2026-10-02T12:00:00Z\", \"user\": \"alice\"}\n"),
                 "S", "S", "Prod");
+        // It also says the schema requires one (seen in chat 182: "Leave it empty" offered to the user).
         assertThat(notes(plain)).anyMatch(n -> n.startsWith("No host field was recognised: EventSource/Device is the "
-                                                            + "device where the event happened"));
+                                                            + "device where the event happened")
+                                               && n.contains("the schema requires it")
+                                               && n.contains("never offer to leave it out"));
     }
 
     @Test
