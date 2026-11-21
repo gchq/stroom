@@ -1343,7 +1343,7 @@ written from the doc, so a query never names another index.
   command not allowed; an unknown field (with the index's fields most like it, and `describe_data_source`); a text
   field grouped by when it has a keyword sub-field (group by the sub-field); a cluster older than 8.14 (use
   `run_stroomql`); a query over the time limit (`esqlTimeout`, and the session's query time limit), which is
-  cancelled; partial results (`allow_partial_results=false` from 8.18).
+  cancelled; partial results (`allow_partial_results=false` from 9.1; 9.0 refuses it).
 * **Stop and cluster errors**: a stop of the chat's run cancels the query in Elasticsearch within about 250 ms and
   ends the run stopped (not a tool error). A transient circuit breaker or a rejection (429) says the cluster is
   short of memory or overloaded, try again shortly (transient to the tool call guard); a permanent breaker, or the

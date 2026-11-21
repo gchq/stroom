@@ -738,7 +738,7 @@ searches are unchanged. Decided with the user:
   table, and a cut at 10,000 says to split by time window or narrow the query, as ES|QL has no offset;
   `stroom.elastic.search.esqlRowLimit` stays the service's own default for other callers). Time: `esqlTimeout` (2 minutes) and the session's
   query time limit; a query past it is cancelled. Partial results are refused (`allow_partial_results=false`
-  from 8.18). Clusters older than 8.14 are refused, naming run_stroomql.
+  from 9.1; 9.0 refuses it). Clusters older than 8.14 are refused, naming run_stroomql.
 * **Never a false full ranking.** Rows that reach the cap are truncated; then a second query (the pipeline without
   its trailing SORT and LIMIT, then `STATS stroom_total_rows = COUNT(*)`) counts the groups or rows in all. It
   costs a second aggregation, run only when truncated; if it fails the total is said to be unknown.
@@ -951,7 +951,7 @@ other data source, as a StroomQL windowed join. Decided with the user:
   with the body in its message, which is read too. `ToolCallGuard` counts "overloaded", "short of memory", "too many
   requests" and an HTTP/status 429 as transient (not a repeated failure); a query needing too much memory is
   counted, so the same call made again is told to change it. ES|QL already refused partial results
-  (`allow_partial_results=false` from 8.18, `is_partial` refused), as EQL does.
+  (`allow_partial_results=false` from 9.1, as 9.0 refuses it; `is_partial` refused), as EQL does.
 
 ### Explain processing, retention and volumes
 
