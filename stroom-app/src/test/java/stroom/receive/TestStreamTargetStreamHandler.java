@@ -39,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -199,5 +200,82 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         });
 
         assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
+    }
+
+    /// Check that the feed in the global attribute map wins over the feed in a
+    /// `.meta` entry when the map is set to override embedded meta.
+    @Test
+    void testOverrideEmbeddedMeta_meta() {
+        assertOverrideEmbeddedFeed(StroomZipFileType.META);
+    }
+
+    /// Check that the feed in the global attribute map wins over the feed in a
+    /// `.mf` (manifest) entry when the map is set to override embedded meta.
+    @Test
+    void testOverrideEmbeddedMeta_manifest() {
+        assertOverrideEmbeddedFeed(StroomZipFileType.MANIFEST);
+    }
+
+    /// Check that the feed in a `.meta` entry wins over the feed in the global
+    /// attribute map when the map is not set to override embedded meta.
+    @Test
+    void testNoOverrideEmbeddedMeta() {
+        streamStore.clear();
+
+        final String selectedFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String embeddedFeedName = FileSystemTestUtil.getUniqueTestString();
+        final AttributeMap attributeMap = new AttributeMap(false);
+        attributeMap.put(StandardHeaderArguments.FEED, selectedFeedName);
+        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
+
+        addEntries(selectedFeedName, attributeMap, StroomZipFileType.META, embeddedFeedName);
+
+        assertThat(streamStore.getStreamStoreCount())
+                .isEqualTo(1);
+        assertThat(streamStore.getLastMeta().getFeedName())
+                .isEqualTo(embeddedFeedName);
+    }
+
+    private void assertOverrideEmbeddedFeed(final StroomZipFileType embeddedMetaType) {
+        streamStore.clear();
+
+        final String selectedFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String embeddedFeedName = FileSystemTestUtil.getUniqueTestString();
+        final AttributeMap attributeMap = new AttributeMap(true);
+        attributeMap.put(StandardHeaderArguments.FEED, selectedFeedName);
+        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
+
+        addEntries(selectedFeedName, attributeMap, embeddedMetaType, embeddedFeedName);
+
+        assertThat(streamStore.getStreamStoreCount())
+                .isEqualTo(1);
+        assertThat(streamStore.getLastMeta().getFeedName())
+                .isEqualTo(selectedFeedName);
+    }
+
+    private void addEntries(final String feedName,
+                            final AttributeMap attributeMap,
+                            final StroomZipFileType embeddedMetaType,
+                            final String embeddedFeedName) {
+        final byte[] embeddedMeta = (StandardHeaderArguments.FEED + ":" + embeddedFeedName + "\n")
+                .getBytes(StandardCharsets.UTF_8);
+
+        final ProgressHandler progressHandler = new ProgressHandler("Test");
+        final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
+                streamStore,
+                feedProperties,
+                metaService,
+                null,
+                volumeGroupNameProvider);
+        streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
+            try {
+                handler.addEntry("1" + embeddedMetaType.getDotExtension(),
+                        new ByteArrayInputStream(embeddedMeta), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.DATA.getDotExtension(),
+                        new ByteArrayInputStream("DATA".getBytes(StandardCharsets.UTF_8)), progressHandler);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 }

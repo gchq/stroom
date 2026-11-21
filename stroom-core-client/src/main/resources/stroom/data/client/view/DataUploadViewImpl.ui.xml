@@ -5,6 +5,17 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="dataUploadFeed" label="Feed" addStyleNames="dock-min">
+            <g:SimplePanel ui:field="feed" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadFeedSource" label="Send Streams To" addStyleNames="dock-min"
+                        helpText="Only applies to zip files. Choose whether every stream goes into the feed
+                        selected above, whatever the zip's .meta and .manifest files say, or into the feed named
+                        in each stream's own .meta or .manifest file. Streams that don't name a feed go into the
+                        feed selected above. When using the feeds named in the zip, the upload is rejected if any
+                        of those feeds don't exist or you don't have permission to update them.">
+            <l:SelectionBox ui:field="feedSource" addStyleNames="w-100"/>
+        </form:FormGroup>
         <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max">
             <g:TextArea ui:field="metaData" addStyleNames="max"/>
         </form:FormGroup>

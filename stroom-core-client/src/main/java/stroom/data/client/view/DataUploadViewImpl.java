@@ -17,6 +17,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.data.shared.UploadFeedSource;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -24,15 +25,21 @@ import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
 
     private final Widget widget;
 
+    @UiField
+    SimplePanel feed;
+    @UiField
+    SelectionBox<UploadFeedSource> feedSource;
     @UiField
     SelectionBox<String> type;
     @UiField
@@ -47,6 +54,10 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
                               final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         effective.setUtc(userPreferencesManager.isUtc());
+
+        feedSource.addItem(UploadFeedSource.SELECTED_FEED);
+        feedSource.addItem(UploadFeedSource.ZIP_FEEDS);
+        feedSource.setValue(UploadFeedSource.SELECTED_FEED);
     }
 
     @Override
@@ -82,6 +93,16 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @Override
     public String getMetaData() {
         return metaData.getText();
+    }
+
+    @Override
+    public void setFeedView(final View view) {
+        feed.setWidget(view.asWidget());
+    }
+
+    @Override
+    public UploadFeedSource getFeedSource() {
+        return feedSource.getValue();
     }
 
 

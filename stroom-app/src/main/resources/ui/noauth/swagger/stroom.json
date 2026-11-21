@@ -31692,6 +31692,10 @@
           "feedName" : {
             "type" : "string"
           },
+          "feedSource" : {
+            "type" : "string",
+            "enum" : [ "SELECTED_FEED", "ZIP_FEEDS" ]
+          },
           "fileName" : {
             "type" : "string"
           },
