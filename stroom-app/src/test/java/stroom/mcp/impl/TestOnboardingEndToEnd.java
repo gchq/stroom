@@ -396,7 +396,7 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
     // The plan's catalogue step as an agent takes it: the call it names lists the evidence. The sample's records are
     // all one event type (every record a logon, told by nothing in it): a sole event type recognised by every
     // record, the seed (which the draft couldn't give an action element) given the logon's, as the agent knows it,
-    // and confirmed with its catch-all (which catches nothing), and the draft next.
+    // and confirmed, its catch-all (which catches nothing) standing with no form, and the draft next.
     private Map<String, Object> classify(final Map<String, Object> call) {
         assertThat(call).containsEntry("tool", CatalogueSteps.CATALOGUE);
         assertThat(map(call, "arguments")).containsEntry("build", BUILD).containsKey("stream_ids");

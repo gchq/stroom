@@ -715,9 +715,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         if (check.refused()) {
             throw new ToolRefusal(notConfirmable(check));
         }
+        if (catchAllSettles(catalogue, check)) {
+            final Catalogue settled = catalogue.withCatchAllConfirmedByUser();
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), settled,
+                    withoutMarks(confirming));
+            return done(calling, settled, check, List.of(), true);
+        }
         final List<EventType> set = nextSet(catalogue);
         if (set.isEmpty() && catalogue.catchAll().confirmed()) {
-            return done(calling, catalogue, check, List.of());
+            return done(calling, catalogue, check, List.of(), false);
         }
         final boolean catchAll = set.isEmpty();
         final String shown = catchAll
@@ -771,7 +777,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             final DocRef notesDoc = notes.notesDoc(calling.build(), calling.source());
             details.put("every row", notesDoc.getName());
             final Consent.Request request = Consent.Request.confirmation(NAME, formText(accept), details)
-                    .withEditable(AMENDMENTS, formText(accept), accept)
+                    // The acceptance a button, the user's amendments or question typed under it (asked for by the
+                    // user 2026-11-21: a prefilled box, as chat 182 showed, isn't a way to accept). The field's title
+                    // short, as the form's message, shown above it, asks the question.
+                    .withSuggested(AMENDMENTS, "Your answer", accept)
                     .boundTo(binding(shown, set, check));
             // The form links the source notes, where every row is, once the doc is there.
             try {
@@ -799,10 +808,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                                 final CatalogueCheckResult check,
                                                 final List<String> confirmedNow,
                                                 final Map<String, Object> confirming) {
+        if (catchAllSettles(now, check)) {
+            final Catalogue settled = now.withCatchAllConfirmedByUser();
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), settled, confirming);
+            return done(calling, settled, check, confirmedNow, true);
+        }
         final List<EventType> next = nextSet(now);
         if (next.isEmpty() && now.catchAll().confirmed()) {
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), now, confirming);
-            return done(calling, now, check, confirmedNow);
+            return done(calling, now, check, confirmedNow, false);
         }
         final String shown = next.isEmpty()
                 ? catchAllShown(check, now)
@@ -823,18 +837,33 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return out;
     }
 
+    // Every event type confirmed, and the catch-all left to put to the user, with no sampled record uncatalogued:
+    // there is nothing to show them, so it stands as proposed with no form (asked for by the user 2026-11-21, chat
+    // 182: a form asking them to keep 0 records as Unknown).
+    private static boolean catchAllSettles(final Catalogue catalogue, final CatalogueCheckResult check) {
+        return nextSet(catalogue).isEmpty()
+               && !catalogue.catchAll().confirmed()
+               && check.uncatalogued().records() == 0;
+    }
+
     // Every event type and the catch-all confirmed: the catalogue done, the plan's next step.
     private Map<String, Object> done(final Calling calling,
                                      final Catalogue catalogue,
                                      final CatalogueCheckResult check,
-                                     final List<String> confirmedNow) {
+                                     final List<String> confirmedNow,
+                                     final boolean catchAllSettled) {
         final Map<String, Object> result = new LinkedHashMap<>();
         if (!confirmedNow.isEmpty()) {
             result.put("confirmed_now", confirmedNow);
         }
         result.put("catalogue", compact(catalogue));
         result.put("check", check.toJson());
-        result.put(HINT, "Every event type and the catch-all are confirmed: the catalogue is in the build's source "
+        result.put(HINT, (catchAllSettled
+                ? "No sampled record is uncatalogued, so the catch-all stands as proposed (records no event type "
+                  + "recognises, should any come, kept as " + translatedAs(catalogue.catchAll().translation())
+                  + "), with no form: don't ask the user about it. "
+                : "")
+                         + "Every event type and the catch-all are confirmed: the catalogue is in the build's source "
                          + "notes, which draft_translation_mapping (build=) follows, a rule a way of recognising "
                          + "each event type.");
         final Map<String, Object> withNext = plan.withNext(calling.context(), calling.build(), result);

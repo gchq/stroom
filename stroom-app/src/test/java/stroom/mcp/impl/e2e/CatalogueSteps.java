@@ -88,7 +88,7 @@ public final class CatalogueSteps {
 
     /// Every set of the build's catalogue put to the user (`confirm=true`) until the catch-all is confirmed: each
     /// form answered by the client's user, a `needs_review` answered with its review id, the catch-all agreed with
-    /// a reason.
+    /// a reason (asked only when some records are uncatalogued; with none, it stands with no form).
     ///
     /// @param mcp   The client.
     /// @param build The build.

@@ -1158,9 +1158,17 @@ public class Consent {
                 final Map<String, Object> field = new LinkedHashMap<>();
                 field.put("type", "string");
                 field.put("title", editable.title());
-                field.put("default", editable.proposed());
-                field.put("description", "Proposed: " + editable.proposed() + ". Accept to confirm it, or change it "
-                                         + "first; left empty, the proposal stands. Decline to stop.");
+                if (editable.suggested()) {
+                    // Shown as a button, with a box for the user's own words under it (asked for by the user,
+                    // 2026-11-21: the catalogue's accept a button again, as classify_kinds' was, not a prefilled box).
+                    field.put("examples", List.of(editable.proposed()));
+                    field.put("description", "Choose \"" + editable.proposed() + "\", or type your own; left empty, "
+                                             + "it stands. Decline to stop.");
+                } else {
+                    field.put("default", editable.proposed());
+                    field.put("description", "Proposed: " + editable.proposed() + ". Accept to confirm it, or change "
+                                             + "it first; left empty, the proposal stands. Decline to stop.");
+                }
                 properties.put(name, field);
             });
         }
@@ -1307,10 +1315,19 @@ public class Consent {
 
     /// A value the user may correct in the form itself.
     ///
-    /// @param title    Its field's title, e.g. `Feed name`.
-    /// @param proposed The tool's proposal, e.g. `ACME-VPN-V1.0`.
-    public record Editable(String title, String proposed) {
+    /// @param title     Its field's title, e.g. `Feed name`.
+    /// @param proposed  The tool's proposal, e.g. `ACME-VPN-V1.0`.
+    /// @param suggested True if the proposal is offered as an answer to choose (a button in Stroom AI's chat), with a
+    ///                  box under it for the user's own words; false if it fills the field, to accept or change.
+    public record Editable(String title, String proposed, boolean suggested) {
 
+        /// A value whose proposal fills its field.
+        ///
+        /// @param title    Its field's title.
+        /// @param proposed The tool's proposal.
+        public Editable(final String title, final String proposed) {
+            this(title, proposed, false);
+        }
     }
 
     /// A value the user changed in a form.
@@ -1405,6 +1422,17 @@ public class Consent {
         public Request withEditable(final String key, final String title, final String proposed) {
             final Map<String, Editable> more = new LinkedHashMap<>(editable);
             more.put(key, new Editable(title, proposed));
+            return new Request(kind, action, summary, details, more, documents, binding, options);
+        }
+
+        /// @param key      The value's key, e.g. `amendments`.
+        /// @param title    Its field's title, e.g. `Accept all 6 event types, or type your amendments`.
+        /// @param proposed The proposal, offered as an answer to choose, e.g. `Accept all 6 event types`.
+        /// @return This request, with the value answered in its form by choosing the proposal (a button in Stroom
+        /// AI's chat) or typing the user's own words; left empty, the proposal stands.
+        public Request withSuggested(final String key, final String title, final String proposed) {
+            final Map<String, Editable> more = new LinkedHashMap<>(editable);
+            more.put(key, new Editable(title, proposed, true));
             return new Request(kind, action, summary, details, more, documents, binding, options);
         }
 

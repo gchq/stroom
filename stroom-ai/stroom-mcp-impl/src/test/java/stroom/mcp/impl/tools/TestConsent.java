@@ -199,6 +199,7 @@ class TestConsent {
         final Map<?, ?> field = (Map<?, ?>) properties.get("name");
         assertThat(field.get("type")).isEqualTo("string");
         assertThat(field.get("default")).isEqualTo("FIREWALL-EDGE-V1.0");
+        assertThat(field.containsKey("examples")).isFalse();
         assertThat(field.get("title")).isEqualTo("Feed name");
         assertThat(consent.edited(context, "name", "FIREWALL-EDGE-V1.0")).isEqualTo("ACME-FW-V1.0");
         assertThat(consent.changes(context)).isEqualTo(Map.of("name",
@@ -216,6 +217,50 @@ class TestConsent {
                 null)).context(), request)).hasMessageContaining("did not agree");
         assertThatThrownBy(() -> consent.require(CALL, new Questions(new ElicitResult(ElicitResult.Action.CANCEL,
                 null)).context(), request)).hasMessageMatching("No answer yet to: Create feed.*they didn't decline.*");
+    }
+
+    @Test
+    void aSuggestedAnswerIsOfferedToChooseAndTheUserMayTypeTheirOwn() {
+        // Seen in chat 182: the catalogue's acceptance a filled box, not a way to accept.
+        final Consent.Request request = Consent.Request.confirmation("catalogue_event_types",
+                "Accept all 2 event types, or type your amendments", Map.of("event types", "two")).withSuggested(
+                "amendments", "Your answer", "Accept all 2 event types");
+        final Questions chosen = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT,
+                Map.of("amendments", "Accept all 2 event types")));
+        final ToolCallContext context = chosen.context();
+        consent.require(CALL, context, request);
+        final Map<?, ?> properties = (Map<?, ?>) chosen.forms.getFirst().get("properties");
+        assertThat(new ArrayList<Object>(properties.keySet())).containsExactly("amendments");
+        final Map<?, ?> field = (Map<?, ?>) properties.get("amendments");
+        assertThat(field.get("type")).isEqualTo("string");
+        assertThat(field.get("title")).isEqualTo("Your answer");
+        // Offered as an answer to choose (a button in Stroom AI's chat), not filling the box.
+        assertThat(field.get("examples")).isEqualTo(List.of("Accept all 2 event types"));
+        assertThat(field.containsKey("default")).isFalse();
+        // Chosen, it is the proposal: nothing changed.
+        assertThat(consent.edited(context, "amendments", "Accept all 2 event types"))
+                .isEqualTo("Accept all 2 event types");
+        assertThat(consent.changes(context)).isEmpty();
+
+        // Left empty, the proposal stands.
+        final Questions empty = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of()));
+        final ToolCallContext same = empty.context();
+        consent.require(CALL, same, request);
+        assertThat(consent.edited(same, "amendments", "Accept all 2 event types"))
+                .isEqualTo("Accept all 2 event types");
+        assertThat(consent.changes(same)).isEmpty();
+
+        // Their own words: a change.
+        final Questions typed = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT,
+                Map.of("amendments", " logout is a session timeout ")));
+        final ToolCallContext own = typed.context();
+        consent.require(CALL, own, request);
+        assertThat(consent.changes(own)).isEqualTo(Map.of("amendments",
+                new Consent.Change("Accept all 2 event types", "logout is a session timeout")));
+
+        // Declining the form stops it.
+        assertThatThrownBy(() -> consent.require(CALL, new Questions(new ElicitResult(ElicitResult.Action.DECLINE,
+                null)).context(), request)).hasMessageContaining("did not agree");
     }
 
     @Test

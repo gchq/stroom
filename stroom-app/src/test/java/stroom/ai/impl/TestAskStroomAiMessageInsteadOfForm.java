@@ -217,7 +217,7 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
         final String explain = JsonUtil.writeValueAsString(Map.of("build", build, "explain",
                 List.of("Authenticate-Logon")), false);
         // Shown, its form put aside by the question, explained, then put to the user again (once more in case the
-        // table has to be shown again first), and the catch-all after it.
+        // table has to be shown again first); every record catalogued, the catch-all stands with no form.
         model.callTool(CATALOGUE, confirm)
                 .callTool(CATALOGUE, confirm)
                 .callTool(CATALOGUE, explain)

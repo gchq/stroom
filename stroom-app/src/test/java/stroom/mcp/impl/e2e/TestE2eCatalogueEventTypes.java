@@ -116,15 +116,22 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(types.get("Export-Report")).containsEntry("status", "confirmed");
         assertThat(types.get("Delete-Records")).containsEntry("status", "proposed");
 
-        // ### The amendment sent as a change; the set confirmed; the catch-all confirmed last, with the
-        // uncatalogued records' count.
+        // ### The amendment sent as a change; the set confirmed by choosing its acceptance, offered as an answer
+        // (a button in Stroom AI's chat), not a box filled with it. No record left uncatalogued, the catch-all
+        // stands with no form (seen in chat 182: a form asking the user to keep 0 records as Unknown).
         client.answeringWith(McpTestClient::agree);
         proposed(build, raw, List.of(args("op", "change", "type_id", "Delete-Records", "description",
                 "Audit records deleted", "actor", "user", "affected", "object", "affected_as", "Document")));
-        final int beforeCatchAll = client.forms().size();
+        final int beforeLast = client.forms().size();
         final Map<String, Object> confirmed = confirmedCatalogue(build);
-        assertThat(formsSince(beforeCatchAll).getLast().message()).as("the catch-all, confirmed last")
-                .contains("uncatalogued records");
+        assertThat(formsSince(beforeLast)).as("the low one's form, and no catch-all form").singleElement()
+                .satisfies(form -> {
+                    assertThat(form.message()).startsWith("Accept all 1 event type,");
+                    assertThat(map(map(form.requestedSchema(), "properties"), "amendments"))
+                            .containsEntry("examples", List.of("Accept all 1 event type"))
+                            .doesNotContainKey("default");
+                });
+        assertThat(String.valueOf(confirmed.get("hint"))).contains("No sampled record is uncatalogued");
         assertThat(map(catalogueOf(build), "catch_all")).containsEntry("status", "confirmed");
         assertThat(eventTypesOf(build).values()).allSatisfy(type -> assertThat(type)
                 .containsEntry("status", "confirmed"));

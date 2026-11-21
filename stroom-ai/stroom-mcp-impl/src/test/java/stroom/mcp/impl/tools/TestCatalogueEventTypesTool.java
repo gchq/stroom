@@ -330,6 +330,8 @@ class TestCatalogueEventTypesTool {
 
     @Test
     void theUserConfirmsTheHighThenTheMediumThenTheLowOnesAFormEachThenTheCatchAll() {
+        // A record no event type recognises, for the catch-all's form.
+        withAnUncataloguedRecord();
         final List<Map<String, Object>> proposals = new ArrayList<>(List.of(
                 type("Authenticate-Logon", "Authenticate", "high", "login"),
                 type("Authenticate-Logoff", "Authenticate", "high", "logout")));
@@ -378,6 +380,71 @@ class TestCatalogueEventTypesTool {
         assertThat(kept.eventType("Export-Report").basis()).isEqualTo("agent_knowledge");
         assertThat(kept.catchAll()).isEqualTo(new Catalogue.CatchAll("confirmed",
                 "The user keeps the rest as Unknown", null));
+    }
+
+    @Test
+    void theSetsFormOffersItsAcceptanceAsAnAnswerToChooseNotAFilledBox() {
+        // Seen in chat 182: a box filled with "Accept all 6 event types", no way to accept but to send it as typed.
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout")));
+        final BuildToolCalls.FormUser user = user(Map.of("amendments", "Accept all 2 event types"));
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        final Map<String, Object> chosen = call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        final Map<String, Object> field = map(map(user.schemas().getFirst().get("properties")).get("amendments"));
+        assertThat(field).containsEntry("type", "string")
+                .containsEntry("examples", List.of("Accept all 2 event types"))
+                .doesNotContainKey("default");
+        // Choosing it confirms the set, as accepting the form with the box left empty does.
+        assertThat(chosen).containsEntry("confirmed_now", List.of("Authenticate-Logon", "Authenticate-Logoff"));
+        assertThat(SourceNotes.catalogue(notes()).eventTypes()).allSatisfy(type -> assertThat(type.confirmed())
+                .isTrue());
+    }
+
+    @Test
+    void withEveryRecordCataloguedTheCatchAllStandsWithNoForm() {
+        // Seen in chat 182: a form asking the user to keep 0 uncatalogued records as Unknown.
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout"),
+                type("Export-Report", "Export", "high", "export"),
+                type("Delete-Records", "Delete", "high", "purge")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        final Map<String, Object> done = call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        assertThat(done).containsEntry("status", "confirmed").containsEntry("confirmed_now", List.of(
+                "Authenticate-Logon", "Authenticate-Logoff", "Export-Report", "Delete-Records"));
+        assertThat(String.valueOf(done.get("hint"))).contains("No sampled record is uncatalogued",
+                "the catch-all stands as proposed", "don't ask the user about it");
+        assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form).startsWith("Accept all 4"));
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isTrue();
+        // Asked again, nothing more is put to the user.
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("status",
+                "confirmed");
+        assertThat(user.shown()).hasSize(1);
+    }
+
+    @Test
+    void withRecordsUncataloguedTheCatchAllIsStillAskedInItsForm() {
+        // The purge record left to the catch-all.
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout"),
+                type("Export-Report", "Export", "high", "export")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        final Map<String, Object> catchAll = call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        assertThat(catchAll).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(catchAll.get("table"))).contains("Uncatalogued records");
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isFalse();
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("status",
+                "confirmed");
+        assertThat(user.shown()).hasSize(2);
+        assertThat(user.shown().getLast()).contains("uncatalogued records");
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isTrue();
     }
 
     @Test
@@ -769,6 +836,13 @@ class TestCatalogueEventTypesTool {
             }
         }
         throw new AssertionError("The catalogue was never confirmed");
+    }
+
+    // The sample with one more record, whose action no event type the tests propose recognises.
+    private void withAnUncataloguedRecord() {
+        Mockito.when(sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", sample() + "time=2026-11-06T09:31:00Z action=archive user=user1 host=web2 "
+                                   + "level=INFO src=10.0.0.2 object=rec-98\n"), List.of()));
     }
 
     private Map<String, Object> propose(final List<Map<String, Object>> proposals) {
