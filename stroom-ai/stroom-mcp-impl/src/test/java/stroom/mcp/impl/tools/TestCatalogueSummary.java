@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
 import stroom.ai.impl.tools.catalogue.CatalogueDiff;
+import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 import stroom.ai.impl.tools.catalogue.EventType;
 
 import org.junit.jupiter.api.Test;
@@ -131,6 +132,25 @@ class TestCatalogueSummary {
         assertThat(CatalogueSummary.unusual(set, check)).singleElement().satisfies(one -> {
             assertThat(one.type().typeId()).isEqualTo("View-MailItems");
             assertThat(one.why()).contains(note);
+        });
+    }
+
+    @Test
+    void whatTheCheckFindsWorthALookIsListedNeverARefusal() {
+        // Chat 182: Move-MailToDeletedItems written as Update.
+        final List<EventType> set = List.of(type("Move-MailToDeletedItems", "Update", null),
+                type("Send-Mail", "Send", null));
+        final CatalogueCheckResult plain = check(set, Map.of("Move-MailToDeletedItems", 3, "Send-Mail", 3));
+        final String said = "its TypeId's verb Move is an action element of its own, but its records are written as "
+                            + "Update";
+        final CatalogueCheckResult check = new CatalogueCheckResult(plain.counts(), List.of(), plain.uncatalogued(),
+                plain.unparsed(), List.of(), List.of(), List.of(), plain.order(), List.of(), Map.of(),
+                List.of(new Problem("Move-MailToDeletedItems", -1, said)));
+
+        assertThat(check.refused()).isFalse();
+        assertThat(CatalogueSummary.unusual(set, check)).singleElement().satisfies(one -> {
+            assertThat(one.type().typeId()).isEqualTo("Move-MailToDeletedItems");
+            assertThat(one.why()).containsExactly(said);
         });
     }
 

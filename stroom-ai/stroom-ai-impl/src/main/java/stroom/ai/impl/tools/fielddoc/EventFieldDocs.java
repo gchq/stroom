@@ -252,13 +252,14 @@ public final class EventFieldDocs {
             for (final EventRule rule : kept) {
                 final String conditions = FieldDocs.conditionsText(rule.when());
                 // A catch-all the sample never reaches is a safety net, not events kept Unknown (seen: read as a
-                // decision about the sample, beside "0 of 1000" in the event types).
+                // decision about the sample, beside "0 of 1000" in the event types). The reason ends its sentence
+                // (seen in chat 182: "... confirmed with the catalogue None of the 84 sampled records reach it"),
+                // and the sample is not counted again here: the counts line says it once.
                 lines.add("- `" + rule.name() + "` (" + (conditions.isEmpty()
                         ? "records no other rule matches"
-                        : conditions) + "): " + rule.allowUnknown()
+                        : conditions) + "): " + sentence(rule.allowUnknown())
                           + (sample.sampled() && sample.eventsOf(rule.name()).isEmpty()
-                        ? " None of the " + sample.total() + " sampled records reach it: it catches records the "
-                          + "sample doesn't have."
+                        ? " No sample record reaches it: it catches records the sample doesn't have."
                         : ""));
             }
             lines.add("");
@@ -364,8 +365,18 @@ public final class EventFieldDocs {
         // section). A rule that writes only Data (an Unknown one) is judged on its Data, so such
         // rules still go together, apart from the rest. Each path is compared without the side an object is on
         // (FieldDocs.comparedPath), so a folder created and a folder moved write the same fields.
+        // A catch-all no sample record reaches is summarised, not tabled, and its own fields are not asked to be
+        // described (seen in chat 182: a 74-row table of "(no sample record reaches this rule)", and three of five
+        // rounds of field descriptions spent on its fields alone).
+        final List<String> summarised = c.rules().stream()
+                .filter(rule -> unreachedCatchAll(c, rule, own.get(rule.name())))
+                .map(EventRule::name)
+                .toList();
         final Map<String, Set<String>> signatures = new LinkedHashMap<>();
         own.forEach((name, keys) -> {
+            if (summarised.contains(name)) {
+                return;
+            }
             final List<FieldKey> judged = keys.stream()
                     .filter(k -> !TYPE_AND_DESCRIPTION.contains(k.path()))
                     .toList();
@@ -380,6 +391,15 @@ public final class EventFieldDocs {
         });
         for (final List<String> names : FieldDocs.similarGroups(signatures)) {
             lines.addAll(eventTypeSection(c, names, own, head));
+        }
+        for (final String name : summarised) {
+            final EventRule rule = c.rules().stream().filter(r -> r.name().equals(name)).findFirst().orElseThrow();
+            final String conditions = FieldDocs.conditionsText(rule.when());
+            lines.addAll(List.of("#### " + MarkdownHtml.text(name), "", (!conditions.isEmpty()
+                    ? "When " + conditions
+                    : c.rules().size() > 1
+                            ? "Any other record"
+                            : "Every record") + ": none in the sample. " + unreachedSummary(own.get(name)), ""));
         }
         if (!sample.unexplained().isEmpty()) {
             lines.add(sample.unexplained().size() + " of the sample's " + sample.total() + " events were not written "
@@ -464,7 +484,7 @@ public final class EventFieldDocs {
                     || path.equals("EventDetail/Description")) {
                     continue;
                 }
-                if (path.endsWith("/Data") || path.contains("/Data/") || path.contains("/Data[")) {
+                if (isData(path)) {
                     data++;
                 } else {
                     typed++;
@@ -475,6 +495,41 @@ public final class EventFieldDocs {
                     : "") + typed + " typed, " + data + " kept as Data");
         }
         return "Below the action element: " + String.join("; ", counts) + ".";
+    }
+
+    // Whether a rule is a catch-all no sample record reaches that writes EventDetail/Unknown, its own fields below
+    // it all Data: summarised rather than tabled. Without a sample every rule is tabled, as nothing says the sample
+    // lacks its records.
+    private static boolean unreachedCatchAll(final Context c, final EventRule rule, final List<FieldKey> own) {
+        if (!c.sample().sampled() || !c.sample().eventsOf(rule.name()).isEmpty()) {
+            return false;
+        }
+        if (!rule.catchAll() && !(rule.when().isEmpty() && MappingFacts.keptUnknown(c.mapping()).contains(rule))) {
+            return false;
+        }
+        final List<FieldKey> detail = detailKeys(own);
+        return !detail.isEmpty() && detail.stream().allMatch(k -> k.path().startsWith("EventDetail/Unknown/")
+                                                                  && isData(k.path()));
+    }
+
+    // The summary of an unreached catch-all, in place of its table.
+    private static String unreachedSummary(final List<FieldKey> own) {
+        final int fields = detailKeys(own).size();
+        return "It writes `EventDetail/Unknown`, holding each of the " + fields + " field" + (fields == 1
+                ? ""
+                : "s") + " it reads besides the common fields as Data; no sample record reaches it, so they are not "
+               + "listed one by one.";
+    }
+
+    // The keys below the action element: EventDetail's, TypeId and Description aside.
+    private static List<FieldKey> detailKeys(final List<FieldKey> own) {
+        return NullSafe.list(own).stream()
+                .filter(k -> k.path().startsWith("EventDetail/") && !TYPE_AND_DESCRIPTION.contains(k.path()))
+                .toList();
+    }
+
+    private static boolean isData(final String path) {
+        return path.endsWith("/Data") || path.contains("/Data/") || path.contains("/Data[");
     }
 
     // A field's row: its path, description, source, and with a sample the values written.
@@ -759,6 +814,15 @@ public final class EventFieldDocs {
                 .toList());
         detail.sort(c.order());
         final List<String> detailLines = new ArrayList<>();
+        final List<FieldKey> keys = new ArrayList<>(fields.keySet());
+        if (unreachedCatchAll(c, rule, keys)) {
+            // Summarised, as by event type: a line per field of a rule no sample record reaches says nothing.
+            final int count = detailKeys(keys).size();
+            detailLines.add("each of its " + count + " field" + (count == 1
+                    ? ""
+                    : "s") + " as Data of `Unknown` (not listed: no sample record reaches it)");
+            detail.clear();
+        }
         for (final FieldMapping e : detail) {
             final FieldKey key = FieldKey.of(e);
             String line = "`" + xpath(e, "EventDetail/") + "` <- " + c.source(e);
@@ -884,6 +948,18 @@ public final class EventFieldDocs {
         return "(no value in the " + sampled + " sampled event" + (sampled == 1
                 ? ")"
                 : "s)");
+    }
+
+    /// A reason given in the user's words, ending its sentence: a full stop added where it has none.
+    ///
+    /// @param text The reason, or null.
+    /// @return It stripped, ending with `.`, `!` or `?`; "" for none.
+    static String sentence(final String text) {
+        final String stripped = ToolText.strip(NullSafe.string(text));
+        if (stripped.isEmpty() || stripped.endsWith(".") || stripped.endsWith("!") || stripped.endsWith("?")) {
+            return stripped;
+        }
+        return stripped + ".";
     }
 
     static String orNotSampled(final String shown) {

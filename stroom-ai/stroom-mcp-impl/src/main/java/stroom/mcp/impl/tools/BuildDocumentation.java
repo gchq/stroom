@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.InstructionRules.FieldMappingLayout;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
@@ -47,6 +48,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -306,7 +308,53 @@ class BuildDocumentation {
                 }
             }
         }
-        return groups;
+        return acrossStreams(groups);
+    }
+
+    /// Error groups of several streams as one: those of the same class, element, severity and message pattern
+    /// (numbers and quoted values aside, as triage groups them) merged, their counts added, the first one's
+    /// example kept (seen in chat 182: each kind of error once per stream, with a different example). Ordered by
+    /// class (blocking first), then count.
+    ///
+    /// @param groups The groups, stream by stream.
+    /// @return The merged groups.
+    static List<Map<String, Object>> acrossStreams(final List<Map<String, Object>> groups) {
+        final Map<List<String>, Map<String, Object>> merged = new LinkedHashMap<>();
+        for (final Map<String, Object> group : groups) {
+            final List<String> key = List.of(String.valueOf(group.get("class")), String.valueOf(group.get("element")),
+                    String.valueOf(group.get("severity")), ErrorTriage.normalise(firstMessage(group.get("examples"))));
+            final Map<String, Object> into = merged.get(key);
+            if (into == null) {
+                merged.put(key, new LinkedHashMap<>(group));
+                continue;
+            }
+            into.put("count", count(into.get("count")) + count(group.get("count")));
+            if (into.get("records_affected") != null || group.get("records_affected") != null) {
+                into.put("records_affected", count(into.get("records_affected"))
+                                             + count(group.get("records_affected")));
+            }
+            if (!Boolean.TRUE.equals(into.get("accepted")) && Boolean.TRUE.equals(group.get("accepted"))) {
+                into.put("accepted", true);
+                into.put("reason", group.get("reason"));
+            }
+        }
+        final List<Map<String, Object>> out = new ArrayList<>(merged.values());
+        out.sort(Comparator.<Map<String, Object>>comparingInt(g -> classOrder(g.get("class")))
+                .thenComparing(g -> -count(g.get("count"))));
+        return out;
+    }
+
+    private static int classOrder(final Object errorClass) {
+        final int index = ErrorTriage.CLASSES.indexOf(String.valueOf(errorClass));
+        return index < 0
+                ? ErrorTriage.CLASSES.size()
+                : index;
+    }
+
+    private static int count(final Object value) {
+        return value instanceof final Number number
+                ? number.intValue()
+                : 0;
     }
 
     /// The Errors section: what processing the sample gave, and the errors the user accepted as benign.
@@ -383,7 +431,9 @@ class BuildDocumentation {
                 : "") + " Describe each in one "
                           + "short sentence for this source, for someone searching the data, from its name, from, "
                           + "values and the user's source notes; build on schemas_say (the vendor's first) without "
-                          + "only repeating it; where the values don't make it clear, say so rather than guess."
+                          + "only repeating it; where the values don't make it clear, say so rather than guess: "
+                          + "give no code a meaning (15 = Exchange) the values or source notes don't show, and say "
+                          + "whose an Id is only where its name or the source notes do."
                           + (shared
                 ? " A field with under is one description for every element it lists."
                 : "")

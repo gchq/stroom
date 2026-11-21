@@ -3818,7 +3818,9 @@ commonest three TypeIds, then the event types worth a look in a table with why, 
 them (`changed since shown: title, recognised by`, decided by the user 2026-11-20, so the user can check their
 amendment landed; those removed are named, `Removed since shown:`), no record in the sample, no action
 element, an action of Other or Unknown, or an Unknown verb, the only one under its element in a set of 10 or more, no
-description of its own, dropped, or a `doubt` given; in a medium or low set every one (each is doubtful by its
+description of its own, dropped, a `doubt` given, or what the check lists in `worth_a_look` (a TypeId whose verb is
+itself an action element of the build's schema, other than the event_detail it is written as: `Move-MailToDeletedItems`
+as Update, chat 182; never a refusal, `CatalogueCheck.verbsOtherThanWritten`, 2026-11-22); in a medium or low set every one (each is doubtful by its
 confidence), with its `doubt` and `one_type_because` where given; listed changed first, then those a rule or a doubt
 picks out, then the rest. The summary links the source notes (its Event types part holds every row), says the user
 can ask about any of them in the chat, and the form links the notes too (`every row`).
@@ -5943,11 +5945,18 @@ tool generates two sections in it and keeps the version control:
   versions of the pipeline and every document it runs, the code stepped in an element's place, the streams and the
   survey's records; never a run the call's time cut short), so the rounds of field descriptions don't step the same
   records again. An empty Sample values cell says why: "(no sample record reaches this rule)" (or "these rules"),
-  or "(no value in the N sampled events)" (`EventFieldDocs.orWhyNone`). For a translation the pipeline is stepped with the mapping's XSLT
+  or "(no value in the N sampled events)" (`EventFieldDocs.orWhyNone`). A catch-all rule (`catch_all`, or one
+  without conditions kept as Unknown) that no sample record reaches, writing only Data below `EventDetail/Unknown`,
+  is summarised in a line (it writes Unknown, holding each of its N fields as Data) with no table, and fields only
+  it writes are not asked to be described (2026-11-22, chat 182: a 74-row table of "(no sample record reaches this
+  rule)", and three of five rounds of descriptions spent on them); one the sample reaches keeps its table, as does
+  every rule without a sample. A kept-Unknown reason ends its sentence before "No sample record reaches it". For a translation the pipeline is stepped with the mapping's XSLT
   generated with rule markers (processing instructions, `XsltGenerator.RULE_INSTRUCTION`, which survive stepping
   where comments don't), so each Event is matched to the rule that wrote it. The section opens with "Counts are of
   N sample records (n of stream ...)" so a reader knows which records were counted (seen: counts from a different
-  sample taken for a change in routing). An index XSLT written by hand is documented from the documents it writes
+  sample taken for a change in routing); a source type group's adds ", M of them translated by this group (the rest
+  are of source types it passes over)" when some aren't (2026-11-22, chat 182: 206 records, 84 events and the agent's
+  1,207 in one doc). The documentation guide asks the agent not to count the sample in Purpose and data. An index XSLT written by hand is documented from the documents it writes
   (`writtenFieldsSection`), a CEF one from the lines it writes (`cefWrittenSection`), to Kafka or as text to a file
   alike (`CefLines.linesIn` reads Kafka records' values, a text XSLT's lines, or the text of XML a TextWriter
   writes). A hand-written discovery
@@ -5972,7 +5981,9 @@ tool generates two sections in it and keeps the version control:
   the feed(s) its processor filters read and the pipelines that look the maps up (a pipeline reference naming one
   of those feeds, or the pipeline as loader). The facts are evaluate_pipeline's `reference` section's
   (`ReferenceEvaluation`), shared, not duplicated. Nothing is kept with it, so no digest closes it.
-* **Errors** is generated from the pipeline's Error streams: every kind of error with counts and an example, and
+* **Errors** is generated from the pipeline's Error streams: every kind of error with counts and an example (the
+  same class, element, severity and message pattern merged across the streams, counts added, the first example
+  kept: `BuildDocumentation.acrossStreams`, 2026-11-22, chat 182 listed each kind once per stream), and
   the errors the user accepted as benign with their reasons (`AcceptedErrors`), kept with the doc so triage doesn't
   raise them again. The agent's own sections on errors stay as written.
 
@@ -5995,7 +6006,8 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
   `reference_maps` instead for a reference data pipeline),
   `note`, the build's `next`; for a promoted pipeline `working_copy_of` and a `next` about promote_build. Or
   `needs_descriptions` (nothing written yet): the fields not yet described, 25 a round (the rest follow once those
-  are given), each with where it comes from, sample values, `schemas_say` (the vendor notes and the schemas), `under`
+  are given; its hint asks for no code meaning the values or source notes don't show, and whose an Id is only where
+  its name or the notes say, 2026-11-22), each with where it comes from, sample values, `schemas_say` (the vendor notes and the schemas), `under`
   for a Data name, `was` for one whose source changed.
 * **Large, outside Stroom** (`DocumentationOutline`, 2026-11-20; cases 35, 36, 56: 73k–88k): `field_mapping` (or
   `reference_maps`) given by size and headings, written to the doc as generated, saved whole a line an entry to

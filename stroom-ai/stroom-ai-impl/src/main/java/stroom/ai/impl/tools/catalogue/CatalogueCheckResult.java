@@ -44,6 +44,8 @@ import java.util.Objects;
 ///                     catalogue gives writes ([PlacementCheck]): they refuse confirmation, not proposals.
 /// @param typing       How many of each event type's fields are typed and kept as Data, by TypeId (those in the
 ///                     sample only).
+/// @param worthALook   `worth_a_look`: what the check finds worth the user's look in an event type and never refuses,
+///                     e.g. a TypeId whose verb is an action element other than the one its records are written as.
 public record CatalogueCheckResult(Map<String, Count> counts,
                                    List<Overlap> overlaps,
                                    Uncatalogued uncatalogued,
@@ -53,7 +55,8 @@ public record CatalogueCheckResult(Map<String, Count> counts,
                                    List<Problem> notChecked,
                                    List<String> order,
                                    List<Problem> unplaced,
-                                   Map<String, Typing> typing) {
+                                   Map<String, Typing> typing,
+                                   List<Problem> worthALook) {
 
     /// The most overlaps the compact form lists.
     public static final int OVERLAPS_SHOWN = 10;
@@ -82,6 +85,33 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         order = List.copyOf(Objects.requireNonNullElse(order, List.of()));
         unplaced = List.copyOf(Objects.requireNonNullElse(unplaced, List.of()));
         typing = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(typing, Map.of())));
+        worthALook = List.copyOf(Objects.requireNonNullElse(worthALook, List.of()));
+    }
+
+    /// A check with nothing found worth a look beyond its typing.
+    ///
+    /// @param counts       The records each event type recognises.
+    /// @param overlaps     Records two event types recognise.
+    /// @param uncatalogued The records no event type recognises.
+    /// @param unparsed     The records whose held values don't parse.
+    /// @param several      Event types whose records may be several.
+    /// @param problems     What is refused.
+    /// @param notChecked   Conditions not checked.
+    /// @param order        The TypeIds in the catalogue's order.
+    /// @param unplaced     The elements the schema requires that nothing writes.
+    /// @param typing       How many of each event type's fields are typed and kept as Data.
+    public CatalogueCheckResult(final Map<String, Count> counts,
+                                final List<Overlap> overlaps,
+                                final Uncatalogued uncatalogued,
+                                final Unparsed unparsed,
+                                final List<Several> several,
+                                final List<Problem> problems,
+                                final List<Problem> notChecked,
+                                final List<String> order,
+                                final List<Problem> unplaced,
+                                final Map<String, Typing> typing) {
+        this(counts, overlaps, uncatalogued, unparsed, several, problems, notChecked, order, unplaced, typing,
+                List.of());
     }
 
     /// A check with no placements checked (nothing unplaced, no typing).
@@ -102,7 +132,8 @@ public record CatalogueCheckResult(Map<String, Count> counts,
                                 final List<Problem> problems,
                                 final List<Problem> notChecked,
                                 final List<String> order) {
-        this(counts, overlaps, uncatalogued, unparsed, several, problems, notChecked, order, List.of(), Map.of());
+        this(counts, overlaps, uncatalogued, unparsed, several, problems, notChecked, order, List.of(), Map.of(),
+                List.of());
     }
 
     /// @return True if the catalogue can't be confirmed as it is: a problem, an overlap, or a type that may be
@@ -120,6 +151,15 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         return unplaced.stream()
                 .filter(problem -> typeIds.stream().anyMatch(typeId -> typeId != null
                                                                        && typeId.equalsIgnoreCase(problem.typeId())))
+                .toList();
+    }
+
+    /// @param typeId An event type's TypeId, compared ignoring case.
+    /// @return What the check finds worth a look in it, in words; none when nothing is.
+    public List<String> worthALookOf(final String typeId) {
+        return worthALook.stream()
+                .filter(one -> typeId != null && typeId.equalsIgnoreCase(one.typeId()))
+                .map(Problem::problem)
                 .toList();
     }
 
@@ -157,6 +197,9 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         }
         if (!unplaced.isEmpty()) {
             out.put("unplaced", unplaced.stream().map(Problem::toJson).toList());
+        }
+        if (!worthALook.isEmpty()) {
+            out.put("worth_a_look", worthALook.stream().map(Problem::toJson).toList());
         }
         final Map<String, Object> typed = new LinkedHashMap<>();
         typing.forEach((typeId, one) -> {

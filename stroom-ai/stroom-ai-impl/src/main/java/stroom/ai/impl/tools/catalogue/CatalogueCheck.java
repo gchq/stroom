@@ -303,6 +303,58 @@ public final class CatalogueCheck {
     // --------------------------------------------------------------------------------
 
 
+    /// The event types whose TypeId's verb (the part before its first `-`) is itself the name of an action element
+    /// of the schema (a child of EventDetail), but not the one its records are written as (seen in chat 182:
+    /// `Move-MailToDeletedItems` written as Update). Worth a look only, never refused: a verb may be the source's
+    /// word for what the element written means (an `Update-InboxRule` for a rule created).
+    ///
+    /// @param types  The event types.
+    /// @param schema The event-logging schema the action elements are read from.
+    /// @return Each such event type, with why.
+    static List<Problem> verbsOtherThanWritten(final List<EventType> types, final EventSchema schema) {
+        final List<String> elements = actionElements(schema);
+        final List<Problem> out = new ArrayList<>();
+        for (final EventType type : types) {
+            final String typeId = NullSafe.string(type.typeId()).strip();
+            final int dash = typeId.indexOf('-');
+            if (type.drop() || dash <= 0 || NullSafe.isBlankString(type.eventDetail())) {
+                continue;
+            }
+            final String verb = typeId.substring(0, dash);
+            final String written = ToolText.split(ToolText.strip(type.eventDetail().strip(), "/"), "/").getFirst();
+            final Optional<String> element = elements.stream().filter(verb::equalsIgnoreCase).findFirst();
+            if (element.isPresent() && !element.get().equalsIgnoreCase(written)) {
+                out.add(new Problem(type.typeId(), -1, "its TypeId's verb " + verb + " is an action element of its "
+                                                       + "own, but its records are written as " + written));
+            }
+        }
+        return out;
+    }
+
+    // The action elements: the children of EventDetail in its largest choice (Authenticate, View, ... Unknown),
+    // as the schema of the build's version has them; none when it has no EventDetail.
+    private static List<String> actionElements(final EventSchema schema) {
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve("EventDetail");
+        } catch (final RuntimeException e) {
+            return List.of();
+        }
+        if (chain.isEmpty()) {
+            return List.of();
+        }
+        final Map<Integer, List<String>> byChoice = new LinkedHashMap<>();
+        for (final EventSchema.Child child : schema.children(chain.getLast().decl())) {
+            if (child.choice() != null) {
+                byChoice.computeIfAbsent(child.choice(), ignored -> new ArrayList<>()).add(child.name());
+            }
+        }
+        return byChoice.values().stream()
+                .max(Comparator.comparingInt(List::size))
+                .orElse(List.of());
+    }
+
+
     // One check of a catalogue over the records.
     private static final class Run {
 
@@ -368,15 +420,17 @@ public final class CatalogueCheck {
             problems.addAll(soleOfLineFormat());
             final List<Problem> unplaced = new ArrayList<>();
             final Map<String, CatalogueCheckResult.Typing> typing = new LinkedHashMap<>();
+            final List<Problem> worthALook = new ArrayList<>();
             if (schema != null) {
                 placements(problems, unplaced, notChecked, typing);
+                worthALook.addAll(verbsOtherThanWritten(types, schema));
             }
             final BitSet unparsedRecords = new BitSet(size);
             final Unparsed unparsed = unparsed(unparsedRecords);
             return new CatalogueCheckResult(counts, overlaps(), uncatalogued(unparsedRecords), unparsed, several(),
                     distinct(problems), distinct(notChecked),
                     CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList(), distinct(unplaced),
-                    typing);
+                    typing, distinct(worthALook));
         }
 
         // Each event type's placements checked against the schema and its records, the elements the schema

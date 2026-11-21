@@ -52,6 +52,8 @@ import java.util.Set;
 ///   records without one have none;
 /// * most of its fields are kept as Data, few typed by its placements (never a refusal: the schema may have no home
 ///   for them);
+/// * its TypeId's verb is itself an action element of the schema, other than the one it is written as
+///   (`Move-MailToDeletedItems` as Update; never a refusal: the verb may be the source's word);
 /// * its records are dropped (not translated);
 /// * the agent said why it doubts it (`doubt`);
 /// * it is of a medium or low set: each of those is doubtful by its confidence, so every one is worth a look, with
@@ -253,6 +255,9 @@ final class CatalogueSummary {
                     : check.typing().get(type.typeId());
             if (typing != null && typing.note() != null) {
                 why.add(typing.note());
+            }
+            if (check != null) {
+                why.addAll(check.worthALookOf(type.typeId()));
             }
             if (!why.isEmpty()) {
                 out.add(new Unusual(type, List.copyOf(why)));

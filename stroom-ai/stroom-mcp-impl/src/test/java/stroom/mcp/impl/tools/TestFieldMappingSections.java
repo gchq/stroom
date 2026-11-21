@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -305,5 +306,32 @@ class TestFieldMappingSections {
         return JsonUtil.readValue("{\"backend\": \"" + backend + "\", \"index_name\": \"" + index + "\", "
                                   + "\"time_field\": \"" + time + "\", \"fields\": [{\"name\": \"User.Id\", "
                                   + "\"type\": \"keyword\", \"source\": \"EventSource/User/Id\"}]}", Map.class);
+    }
+
+    @Test
+    void aGroupsCountsSayHowManyRecordsItTranslatedTheRestPassedOver() {
+        // Seen in chat 182: "206 sample records", "84 events" and the agent's "1,207 records" in one doc, with
+        // nothing saying the 206 held other source types' records the group passes over.
+        final Map<String, String> outputs = new LinkedHashMap<>();
+        final String event = "<Events xmlns=\"event-logging:3\"><Event><EventDetail><TypeId>x</TypeId>"
+                             + "</EventDetail></Event></Events>";
+        final String none = "<Events xmlns=\"event-logging:3\"/>";
+        outputs.put("73274:0", event);
+        outputs.put("73274:1", none);
+        outputs.put("73275:0", event);
+        final TranslationMapping group = TranslationMapping.fromJson(JsonUtil.readValue("""
+                {"input": "json", "common": [{"path": "EventTime/TimeCreated", "field": "t"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/TypeId", "value": "x"},
+                  {"path": "EventDetail/View/Data", "data_name": "a", "field": "a"}]}]}""", Map.class));
+
+        assertThat(FieldMappingSections.countsLine(outputs, group)).isEqualTo("Counts are of 3 sample records (2 of "
+                + "stream 73274, 1 of stream 73275), 2 of them translated by this group (the rest are of source types "
+                + "it passes over).\n\n");
+        // Not a group's pipeline, or every record translated: as before.
+        assertThat(FieldMappingSections.countsLine(outputs, null)).isEqualTo("Counts are of 3 sample records (2 of "
+                + "stream 73274, 1 of stream 73275).\n\n");
+        outputs.remove("73274:1");
+        assertThat(FieldMappingSections.countsLine(outputs, group)).isEqualTo("Counts are of 2 sample records (1 of "
+                + "stream 73274, 1 of stream 73275).\n\n");
     }
 }

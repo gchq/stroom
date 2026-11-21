@@ -300,8 +300,93 @@ class TestEventFieldDocs {
                 .childElements(FieldDocs.EVT, "Event");
         kept = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA, events, FieldDocs.BY_EVENT_TYPE, null)
                 .split("### Kept as Unknown", 2)[1].split("###", 2)[0];
-        assertThat(kept).contains("anything else None of the 1 sampled records reach it: it catches records the "
-                                  + "sample doesn't have.");
+        assertThat(kept).contains("anything else. No sample record reaches it: it catches records the sample "
+                                  + "doesn't have.");
+    }
+
+    @Test
+    void aKeptUnknownReasonEndsItsSentence() {
+        // Seen in chat 182: "the catch-all confirmed with the catalogue None of the 84 sampled records reach it".
+        assertThat(EventFieldDocs.sentence("the catch-all confirmed with the catalogue"))
+                .isEqualTo("the catch-all confirmed with the catalogue.");
+        assertThat(EventFieldDocs.sentence(" Not an action. ")).isEqualTo("Not an action.");
+        assertThat(EventFieldDocs.sentence("why?")).isEqualTo("why?");
+        assertThat(EventFieldDocs.sentence(null)).isEmpty();
+    }
+
+    @Test
+    void aCatchAllNoSampleRecordReachesIsSummarisedAndItsFieldsAreNotAsked() {
+        // Seen in chat 182: a 74-row table of "(no sample record reaches this rule)" for the catch-all, and three
+        // of five rounds of field descriptions spent on fields only it writes.
+        final TranslationMapping mapping = catchAllMapping();
+        final List<XmlElement> events = XmlParser.parse("<Events xmlns=\"event-logging:3\"><Event><?"
+                                                        + XsltGenerator.RULE_INSTRUCTION + " login?><EventDetail>"
+                                                        + "<TypeId>login</TypeId><Authenticate><Action>Logon</Action>"
+                                                        + "</Authenticate></EventDetail></Event></Events>")
+                .childElements(FieldDocs.EVT, "Event");
+        final Descriptions asking = Descriptions.asking(true);
+        final String text = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA, events, FieldDocs.BY_EVENT_TYPE,
+                asking);
+        final String section = text.split("#### uncatalogued", 2)[1];
+        assertThat(section).contains("Any other record: none in the sample. It writes `EventDetail/Unknown`, holding "
+                                     + "each of the 3 fields it reads besides the common fields as Data; no sample "
+                                     + "record reaches it, so they are not listed one by one.")
+                .doesNotContain("| `EventDetail/Unknown")
+                .doesNotContain("(no sample record reaches this rule)");
+        assertThat(asking.wanted().keySet()).noneMatch(key -> key.contains("Unknown") || key.contains("colour")
+                                                              || key.contains("size") || key.contains("shape"));
+        assertThat(asking.wanted().keySet()).anyMatch(key -> key.contains("Authenticate/Action"));
+
+        final String compact = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA, events, FieldDocs.COMPACT, null);
+        assertThat(compact).contains("each of its 3 fields as Data of `Unknown` (not listed: no sample record "
+                                     + "reaches it)")
+                .doesNotContain("Unknown/Data[@Name='colour']");
+    }
+
+    @Test
+    void aCatchAllTheSampleReachesKeepsItsTable() {
+        final TranslationMapping mapping = catchAllMapping();
+        final List<XmlElement> events = XmlParser.parse("<Events xmlns=\"event-logging:3\"><Event><?"
+                                                        + XsltGenerator.RULE_INSTRUCTION + " uncatalogued?>"
+                                                        + "<EventDetail><TypeId>Unknown</TypeId><Unknown>"
+                                                        + "<Data Name=\"colour\" Value=\"red\"/></Unknown>"
+                                                        + "</EventDetail></Event></Events>")
+                .childElements(FieldDocs.EVT, "Event");
+        final Descriptions asking = Descriptions.asking(true);
+        final String section = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA, events, FieldDocs.BY_EVENT_TYPE,
+                asking).split("#### uncatalogued", 2)[1];
+        assertThat(section).contains("| `EventDetail/Unknown/Data[@Name='colour']/@Value` |").contains("`red`")
+                .doesNotContain("not listed one by one");
+        assertThat(asking.wanted().keySet()).anyMatch(key -> key.contains("colour"));
+    }
+
+    @Test
+    void withoutASampleACatchAllKeepsItsTable() {
+        final String text = EventFieldDocs.fieldMappingMarkdown(catchAllMapping(), SCHEMA);
+        assertThat(text.split("#### uncatalogued", 2)[1]).contains("Data[@Name='colour']")
+                .doesNotContain("not listed one by one");
+    }
+
+    // A rule for logons and a catch-all for every other record, holding three fields as Data of Unknown.
+    private static TranslationMapping catchAllMapping() {
+        return TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "timestamp"},
+                 {"path": "EventSource/System/Name", "value": "FW"},
+                 {"path": "EventSource/System/Environment", "value": "Prod"},
+                 {"path": "EventSource/Generator", "value": "FW"},
+                 {"path": "EventSource/Device/HostName", "field": "device"}],
+                 "events": [{"name": "login", "when": [{"field": "action", "equals": "login"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "login"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                            {"name": "uncatalogued", "allow_unknown": "records no event type recognises",
+                             "catch_all": true,
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Unknown"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "colour",
+                                         "field": "colour"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "size", "field": "size"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "shape",
+                                         "field": "shape"}]}]}"""));
     }
 
     @Test

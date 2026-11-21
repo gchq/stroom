@@ -37,6 +37,7 @@ import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.fielddoc.MarkdownHtml;
 import stroom.ai.impl.tools.fielddoc.WrittenEventDocs;
+import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
@@ -507,7 +508,9 @@ class FieldMappingSections {
         final long unmarked = events.stream().filter(event -> EventFieldDocs.ruleOf(event) == null).count();
         String section = (group
                 ? groupLine(module)
-                : "") + countsLine(outputs) + (drift.isPresent() && unmarked * 2 > events.size()
+                : "") + countsLine(outputs, group
+                ? mapping
+                : null) + (drift.isPresent() && unmarked * 2 > events.size()
                 ? WrittenEventDocs.writtenEventsMarkdown(schema, events, layout, described)
                 : EventFieldDocs.fieldMappingMarkdown(group
                         ? withCommonParts(mapping)
@@ -681,11 +684,36 @@ class FieldMappingSections {
     // Which records the counts are of: seen in VS Code, counts from a different sample (the first records of one
     // stream, then records spread over every stream) taken for a change in how events are routed.
     private static String countsLine(final Map<String, String> outputs) {
+        return countsLine(outputs, null);
+    }
+
+    /// The line saying which records the counts are of, and for a source type group's pipeline how many of them
+    /// it translated, the rest passed over (seen in chat 182: "206 sample records", "84 events" and the agent's own
+    /// "1,207 records" in one doc, with nothing tying them together).
+    ///
+    /// @param outputs The stepped outputs, keyed `stream:record`.
+    /// @param group   The group's mapping, or null for a pipeline that is not a group's.
+    /// @return The line, ending with a blank line.
+    static String countsLine(final Map<String, String> outputs, final TranslationMapping group) {
         final Map<String, Integer> perStream = new LinkedHashMap<>();
         outputs.keySet().forEach(key -> perStream.merge(key.split(":")[0], 1, Integer::sum));
         final List<String> counted = new ArrayList<>();
         perStream.forEach((stream, count) -> counted.add(count + " of stream " + stream));
-        return "Counts are of " + outputs.size() + " sample records (" + String.join(", ", counted) + ").\n\n";
+        String line = "Counts are of " + outputs.size() + " sample records (" + String.join(", ", counted) + ")";
+        if (group != null) {
+            final long translated = outputs.values().stream()
+                    .filter(xml -> !EventFieldDocs.sampledEvents(List.of(NullSafe.string(xml))).isEmpty())
+                    .count();
+            if (translated < outputs.size()) {
+                final boolean drops = !group.dropWhen().isEmpty() || group.events().stream()
+                        .anyMatch(EventRule::drop);
+                line += ", " + translated + " of them translated by this group (the rest are of source types it "
+                        + "passes over" + (drops
+                        ? ", or left untranslated"
+                        : "") + ")";
+            }
+        }
+        return line + ".\n\n";
     }
 
     // The pipeline's own XSLT (not its template's).

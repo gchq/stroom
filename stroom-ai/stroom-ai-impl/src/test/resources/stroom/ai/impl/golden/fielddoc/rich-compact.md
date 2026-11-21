@@ -2,7 +2,7 @@ Each record holds several events: one per `items` item. Sources marked "of the r
 
 ### Kept as Unknown
 
-- `rest` (records no other rule matches): anything else
+- `rest` (records no other rule matches): anything else.
 
 ### Left untranslated
 

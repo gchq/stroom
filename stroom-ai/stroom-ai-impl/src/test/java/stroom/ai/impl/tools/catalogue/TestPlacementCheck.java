@@ -489,6 +489,35 @@ class TestPlacementCheck {
         return JsonValues.strings(value);
     }
 
+    @Test
+    void aTypeIdWhoseVerbIsAnotherActionElementIsWorthALookNeverRefused() {
+        // Chat 182: Move-MailToDeletedItems written as Update. Update-InboxRule for a rule created is the source's
+        // word, written as its verb says, so it is left alone.
+        final EventType moved = type("Move-MailToDeletedItems", "Update", "MoveToDeletedItems", List.of());
+        final EventType rule = type("Update-InboxRule", "Update", "New-InboxRule", List.of());
+        final EventType moveAsMove = type("Move-Mail", "Move", "Move", List.of());
+        final EventType notAnElement = type("Unlock-Mailbox", "Update", "Unlock", List.of());
+        final EventType network = type("Network-Blocked", "Alert", "Blocked", List.of());
+
+        final CatalogueCheckResult check = check(moved, rule, moveAsMove, notAnElement, network);
+
+        assertThat(check.worthALookOf("move-maildeleteditems")).isEmpty();
+        assertThat(check.worthALookOf("Move-MailToDeletedItems")).containsExactly("its TypeId's verb Move is an "
+                                                                                + "action element of its own, but "
+                                                                                + "its records are written as Update");
+        // Read from the schema, not a list of verbs: Network is one of EventDetail's action elements too.
+        assertThat(check.worthALookOf("Network-Blocked")).singleElement().asString().contains("verb Network",
+                "written as Alert");
+        assertThat(check.worthALookOf("Update-InboxRule")).isEmpty();
+        assertThat(check.worthALookOf("Move-Mail")).isEmpty();
+        assertThat(check.worthALookOf("Unlock-Mailbox")).isEmpty();
+        assertThat(check.problems()).noneMatch(problem -> problem.problem().contains("verb"));
+        assertThat(check.toJson()).containsKey("worth_a_look");
+        // An action element written with a path below it (Network/Permit) is compared by its first step.
+        assertThat(CatalogueCheck.verbsOtherThanWritten(List.of(type("Network-Allowed", "Network/Permit", "Allowed",
+                List.of())), SCHEMA)).isEmpty();
+    }
+
     private static CatalogueCheckResult check(final EventType... types) {
         return CatalogueCheck.check(catalogue(types), sample(), SCHEMA);
     }
