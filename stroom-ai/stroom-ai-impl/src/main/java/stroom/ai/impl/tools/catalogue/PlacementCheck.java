@@ -874,17 +874,27 @@ final class PlacementCheck {
         return new Typing(typedCount, data.size(), fill, note, couldType);
     }
 
-    // The fields kept as Data, but the vendor codes recognising the type (Data keeps those by design): most filled
-    // first, each with its fill rate and a short example value.
+    // The fields kept as Data, but the vendor codes recognising the type (Data keeps those by design): those most
+    // the event type's own first (filled in its records far more than in the source's records at large), so the
+    // fields every record carries alike come last (seen in eval case 56: the list began with the twelve fields every
+    // audit record holds, Id, OrganizationId, RecordType..., and the subject, folders and members the schema has
+    // homes for were cut off as "... more"); each with its fill rate and a short example value.
     private List<String> dataFields(final Set<String> data, final Set<String> codes, final BitSet recognised) {
         final int records = recognised.cardinality();
         final Map<String, Integer> fills = new LinkedHashMap<>();
+        final Map<String, Double> ownness = new LinkedHashMap<>();
         data.stream()
                 .filter(field -> !codes.contains(field))
-                .forEach(field -> fills.put(field, filled(field, recognised)));
+                .forEach(field -> {
+                    final int filledHere = filled(field, recognised);
+                    fills.put(field, filledHere);
+                    ownness.put(field, (double) filledHere / records - everywhere(field));
+                });
         final List<String> out = new ArrayList<>();
         fills.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .sorted(Comparator.comparing((Map.Entry<String, Integer> entry) -> ownness.get(entry.getKey()))
+                        .reversed()
+                        .thenComparing(Map.Entry.<String, Integer>comparingByValue().reversed()))
                 .limit(COULD_TYPE_FIELDS)
                 .forEach(entry -> {
                     final List<String> example = values(entry.getKey(), recognised, false);
@@ -896,6 +906,18 @@ final class PlacementCheck {
             out.add("… " + (fills.size() - COULD_TYPE_FIELDS) + " more");
         }
         return out;
+    }
+
+    // The share of all the source's records (every event type's) that hold a value of the field.
+    private double everywhere(final String field) {
+        final List<List<String>> values = index.values(field);
+        if (values.isEmpty()) {
+            return 0;
+        }
+        final long filled = values.stream()
+                .filter(record -> record.stream().anyMatch(value -> !value.isBlank()))
+                .count();
+        return (double) filled / values.size();
     }
 
     private static String shortened(final String value) {

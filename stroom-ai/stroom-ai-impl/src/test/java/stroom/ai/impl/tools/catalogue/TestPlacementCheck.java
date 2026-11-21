@@ -263,6 +263,14 @@ class TestPlacementCheck {
                 // The vendor code recognising it, the field placed and who acted aren't listed.
                 .noneMatch(field -> field.startsWith("event.Operation ") || field.startsWith("event.Subject ")
                                     || field.startsWith("event.UserId "));
+        // The event type's own fields first, those most records hold alike last (seen in eval case 56: the list began
+        // with the fields every audit record carries, and the ones the schema has homes for were cut off).
+        final List<String> named = strings(couldType.get("data")).stream()
+                .map(field -> field.substring(0, field.indexOf(' ')))
+                .toList();
+        assertThat(named.getFirst()).isEqualTo("event.MailboxOwnerUPN");
+        assertThat(named.indexOf("event.LogonType")).isLessThan(named.indexOf("event.ClientIP"))
+                .isLessThan(named.indexOf("event.OrganizationId"));
         assertThat(String.valueOf(couldType.get("schema")))
                 // The object it writes, then the action element's other children.
                 .startsWith("Email: ")
