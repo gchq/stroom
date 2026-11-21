@@ -856,6 +856,115 @@ class TestEvalScore {
     }
 
     @Test
+    void theAnswerRowsMayComeFromATableCallOnTheFileTheQueryWrote() {
+        // As case 72 on Sonnet: a join grouped by user and action, its logon rows then kept with table.
+        final List<List<Object>> grouped = List.of(List.of("gina", "Read", "6"), List.of("dave", "Logon", "3"),
+                List.of("frank", "Read", "5"), List.of("gina", "Logon", "1"));
+        final List<List<Object>> logons = List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1"));
+        final String join = "from \"Staff activity\" join HR as hr on UserId = hr.Username where hr.Status = "
+                            + "Leaver group by UserId, Action select UserId, Action, count() as N";
+
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(leavers(), List.of(
+                stroomQl("from HR select Username", "/outputs/queries/q1.md", List.of(List.of("dave"))),
+                stroomQl(join, "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/q2.md", logons)));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("answer rows from a table call on run_stroomql call 2 of 2");
+    }
+
+    @Test
+    void aTableCallOnAnotherFileOrBeforeTheQueryGivesNoAnswerRows() {
+        final List<List<Object>> grouped = List.of(List.of("dave", "Logon", "3"), List.of("frank", "Read", "5"),
+                List.of("gina", "Logon", "1"));
+        final List<List<Object>> logons = List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1"));
+        final String join = "from \"Staff activity\" join HR as hr on UserId = hr.Username select UserId";
+
+        final EvalScore otherFile = new EvalScore("q");
+        otherFile.scoreQuestion(leavers(), List.of(stroomQl(join, "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/other.md", logons)));
+        assertThat(otherFile.passed()).isFalse();
+        assertThat(otherFile.summary()).contains("the answer's rows were 3, expected 2");
+
+        final EvalScore before = new EvalScore("q");
+        before.scoreQuestion(leavers(), List.of(table("/outputs/queries/q2.md", logons),
+                stroomQl(join, "/outputs/queries/q2.md", grouped)));
+        assertThat(before.passed()).isFalse();
+
+        // A later query that wrote the same file: the table call after it is that query's.
+        final EvalScore rewritten = new EvalScore("q");
+        rewritten.scoreQuestion(leavers(), List.of(stroomQl(join, "/outputs/queries/q2.md", grouped),
+                stroomQl("from \"Staff activity\" select UserId", "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/q2.md", logons)));
+        assertThat(rewritten.passed()).isFalse();
+        assertThat(rewritten.summary()).contains("the answer's query doesn't match");
+    }
+
+    @Test
+    void theLatestTableCallOnTheFileIsTheOneThatCounts() {
+        final List<List<Object>> grouped = List.of(List.of("dave", "Logon", "3"), List.of("frank", "Read", "5"),
+                List.of("gina", "Logon", "1"));
+        final List<List<Object>> logons = List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1"));
+        final String join = "from \"Staff activity\" join HR as hr on UserId = hr.Username select UserId";
+
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(leavers(), List.of(stroomQl(join, "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/q2.md", logons),
+                table("/outputs/queries/q2.md", List.of(List.of("frank", "Read", "5")))));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's rows were 1, expected 2");
+    }
+
+    @Test
+    void aJoinDoneByHandFailsWhateverATableCallOnItGives() {
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(leavers(), List.of(
+                stroomQl("from \"Staff activity\" where Action = Logon group by UserId select UserId, count()",
+                        "/outputs/queries/q1.md", List.of(List.of("dave", "3"), List.of("bob", "1"))),
+                table("/outputs/queries/q1.md", List.of(List.of("dave", "3"), List.of("gina", "1")))));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's query doesn't match");
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("answer rows from a table call on run_stroomql call 1 of 1");
+    }
+
+    @Test
+    void aTableResultIsReadAsItsMarkdownTable() {
+        final Map<String, Object> table = AbstractEvalTest.markdownTable("""
+                2 of 11 rows matched; the result has 2 row(s).
+
+                | UserId | Action | N |
+                | --- | --- | --- |
+                | dave | Logon | 3 |
+                | gina | Logon | 1 |
+                """);
+
+        assertThat(table).containsEntry("columns", List.of("UserId", "Action", "N"))
+                .containsEntry("rows", List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1")));
+        assertThat(AbstractEvalTest.markdownTable("No rows matched.")).containsEntry("rows", List.of());
+    }
+
+    // Case 72's question: the leavers who logged on, and how often, joined in the query.
+    private static Map<String, Object> leavers() {
+        return Map.of("kind", "question", "expected", Map.of(
+                "tools_used", List.of("run_stroomql"),
+                "answer", Map.of("tool", "run_stroomql", "query", "\\bjoin\\b|\\(\\s*from\\b",
+                        "rows", List.of(List.of("dave", 3), List.of("gina", 1)))));
+    }
+
+    private static EvalScore.ToolUse stroomQl(final String query, final String out, final List<List<Object>> rows) {
+        return new EvalScore.ToolUse("run_stroomql", false, Map.of("query", query, "out", out, "rows", rows), "ok");
+    }
+
+    private static EvalScore.ToolUse table(final String path, final List<List<Object>> rows) {
+        return new EvalScore.ToolUse("table", false, Map.of("path", path, "rows", rows), "ok");
+    }
+
+    @Test
     void theAnswerCallMustHoldTheValuesTheCaseGives() {
         // A sequence on a Lucene index runs in Stroom as a windowed join, not EQL.
         final Map<String, Object> sequence = Map.of("kind", "question", "expected", Map.of("answer", Map.of(

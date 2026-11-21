@@ -31,6 +31,8 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,6 +55,9 @@ import javax.xml.parsers.ParserConfigurationException;
 /// ([#scoreCatalogue]).
 @SuppressWarnings("unchecked")
 final class EvalScore {
+
+    // The tool whose calls on a file an answer call wrote may give its rows.
+    private static final String TABLE_TOOL = "table";
 
     private static final String EVT = "event-logging:3";
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
@@ -861,7 +866,10 @@ final class EvalScore {
     ///   value is one of its values, whatever the columns are called: a string exactly, or as the start of a date
     ///   (`2026-01-02` matches `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it,
     ///   default 0.001), or 0.05 for one given with decimals, as an answer rounded to one place is. The rows must be
-    ///   the query's: a value worked out in the agent's reply (a conversion, a cut-off) doesn't count;
+    ///   the query's: a value worked out in the agent's reply (a conversion, a cut-off) doesn't count. A call's rows
+    ///   may also be those of the latest `table` call on the file it wrote (its result's `out`, the table call's
+    ///   `path`), as when Sonnet kept a join's logon rows with table in case 72; the answer call is still the call
+    ///   that wrote the file, so the other checks are of its query;
     /// * `expected.answer.total_groups`: the `total_groups` of any accepted call that gives it, or the answer
     ///   call's row count, if it wasn't cut short;
     /// * `expected.answer.query`: a regular expression (any case) found in the answer call's `query`, e.g. that it
@@ -903,15 +911,20 @@ final class EvalScore {
                     ? number.doubleValue()
                     : 0.001;
             final boolean ordered = Boolean.TRUE.equals(answer.get("ordered"));
+            final Map<ToolUse, ToolUse> tabled = tabled(calls, tool);
             final ToolUse matching = accepted.stream()
-                    .filter(call -> mismatch(wanted, rows(call.result().get("rows")), ordered, tolerance) == null)
+                    .filter(call -> rowsMismatch(wanted, call, tabled, ordered, tolerance) == null)
                     .findFirst()
                     .orElse(null);
             if (matching != null) {
                 answerCall = matching;
-                note("answer rows from " + tool + " call " + (tries.indexOf(matching) + 1) + " of " + tries.size());
+                final boolean fromTable = mismatch(wanted, rows(matching.result().get("rows")), ordered, tolerance)
+                                          != null;
+                note("answer rows from " + (fromTable
+                        ? "a " + TABLE_TOOL + " call on "
+                        : "") + tool + " call " + (tries.indexOf(matching) + 1) + " of " + tries.size());
             }
-            final String mismatch = mismatch(wanted, rows(answerCall.result().get("rows")), ordered, tolerance);
+            final String mismatch = rowsMismatch(wanted, answerCall, tabled, ordered, tolerance);
             questionCheck("answer rows", mismatch == null, "the answer's rows " + mismatch);
         }
         if (answer.get("total_groups") instanceof final Number total) {
@@ -935,6 +948,41 @@ final class EvalScore {
             questionCheck("answer " + value.getKey(), String.valueOf(value.getValue()).equals(String.valueOf(given)),
                     "the answer's " + value.getKey() + " was " + given + ", expected " + value.getValue());
         }
+    }
+
+    // Why neither a call's rows nor those of the latest table call on the file it wrote hold what is wanted (said of
+    // the table call's, if there is one), or null if either does.
+    private static String rowsMismatch(final List<List<Object>> wanted,
+                                       final ToolUse call,
+                                       final Map<ToolUse, ToolUse> tabled,
+                                       final boolean ordered,
+                                       final double tolerance) {
+        final String own = mismatch(wanted, rows(call.result().get("rows")), ordered, tolerance);
+        final ToolUse table = tabled.get(call);
+        if (own == null || table == null) {
+            return own;
+        }
+        return mismatch(wanted, rows(table.result().get("rows")), ordered, tolerance);
+    }
+
+    // The latest accepted table call on the file each accepted call of the tool wrote, after it and before any
+    // later call of the tool wrote the same file, by the call.
+    private static Map<ToolUse, ToolUse> tabled(final List<ToolUse> calls, final String tool) {
+        final Map<ToolUse, ToolUse> tabled = new IdentityHashMap<>();
+        final Map<Object, ToolUse> writers = new HashMap<>();
+        for (final ToolUse call : calls) {
+            if (call.refused()) {
+                continue;
+            }
+            final Object out = call.result().get("out");
+            if (tool.equals(call.name()) && out != null) {
+                writers.put(out, call);
+            } else if (TABLE_TOOL.equals(call.name()) && writers.get(call.result().get("path")) instanceof
+                    final ToolUse writer) {
+                tabled.put(writer, call);
+            }
+        }
+        return tabled;
     }
 
     // The total groups the calls give: the answer call's total_groups (or its row count, if it wasn't cut short),
@@ -1287,7 +1335,9 @@ final class EvalScore {
     ///
     /// @param name    The tool.
     /// @param refused True if it was refused or failed.
-    /// @param result  Its result as JSON (for esql_query, its `rows`, `truncated`, `total_groups`...); empty if none.
+    /// @param result  Its result as JSON (for esql_query, its `rows`, `truncated`, `total_groups`...; for run_stroomql,
+    ///                its table's `columns` and `rows`, its `query` and the `out` file it wrote; for table, the
+    ///                `columns` and `rows` it gave and the `path` it read); empty if none.
     /// @param text    Its text, for saying why it was refused.
     record ToolUse(String name, boolean refused, Map<String, Object> result, String text) {
 

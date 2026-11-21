@@ -340,7 +340,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     }
 
     /// A tool call of a question's answer, as [EvalScore#scoreQuestion] reads it: its JSON; for run_stroomql, which
-    /// answers with the path of the table it wrote, the query run and that table's `columns` and `rows`.
+    /// answers with the path of the table it wrote, the query run, that path (`out`) and that table's `columns` and
+    /// `rows`; for table, which answers in a Markdown table, the `path` it read and that table's `columns` and
+    /// `rows`.
     ///
     /// @param tool      The tool.
     /// @param arguments Its arguments.
@@ -355,6 +357,15 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if ("run_stroomql".equals(tool)) {
             final Map<String, Object> json = new LinkedHashMap<>(stroomQlTable(text));
             json.put("query", arguments.get("query"));
+            final Matcher matcher = STROOMQL_RESULTS.matcher(text);
+            if (matcher.find()) {
+                json.put("out", matcher.group(1));
+            }
+            return new EvalScore.ToolUse(tool, false, json, text);
+        }
+        if ("table".equals(tool)) {
+            final Map<String, Object> json = new LinkedHashMap<>(markdownTable(text));
+            json.put("path", arguments.get("path"));
             return new EvalScore.ToolUse(tool, false, json, text);
         }
         return new EvalScore.ToolUse(tool, false, result.structuredContent() instanceof final Map<?, ?> map
@@ -1290,9 +1301,18 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         final String file = McpTestClient.text(client.call("read_file", args("path", matcher.group(1),
                 "count", 1_000)));
+        return markdownTable(file);
+    }
+
+    /// The first Markdown table in a text (lines read with read_file, numbered, are read past their numbers): its
+    /// `columns` and `rows`, each cell as text.
+    ///
+    /// @param text The text.
+    /// @return The table's `columns` and `rows`, both empty if there is none.
+    static Map<String, Object> markdownTable(final String text) {
         List<String> header = null;
         final List<List<String>> rows = new ArrayList<>();
-        for (final String line : file.split("\n")) {
+        for (final String line : text.split("\n")) {
             final int tab = line.indexOf('\t');
             final String row = tab < 0
                     ? line
