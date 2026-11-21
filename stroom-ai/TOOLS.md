@@ -3478,9 +3478,9 @@ its rows and statuses kept, values it lacks added as `new` (a row a value; where
 the value's rarest item no row has). Where the survey read records with no value (a held value of plain text, the
 held field or the field missing), the `(no value)` row (`match: none`, `SourceTypeRows.NONE`, matching only records
 with no value) is added last, unless the rows are given (`(no value)` gives it); it may be in a scope like any other
-source type, and a group translating it selects records whose reading finds nothing. Rows given again keep the
-registry's translated or placed rows (those with a group
-or pipeline) they leave out, each where it was in the order; `remove` drops rows by name. Removing a translated or
+source type, and a group translating it selects records whose reading finds nothing. Rows given again keep every
+row of the registry they leave out (parked ones too), each where it was in the order; only `remove` drops rows, by
+name. Removing a translated or
 placed row, or a changed value or pattern on a translated row, is confirmed by the user in one form (plain text,
 listed as `to_confirm` in the review), and refused for a translated row where no form can be shown; a translated row
 renamed (a new name with its match) is refused, saying to add the new row and remove the old one. For a combination

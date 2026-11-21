@@ -183,8 +183,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                              + "feed's registry ('<feed> source types') in the build. An assessment build writes the "
                              + "registry without a scope. Where the field's values are many paths or names, it "
                              + "proposes anchored patterns, and where they are lists (`DNS, File Server`), a row "
-                             + "an item; either confirmed by the user. Rows given again keep the "
-                             + "registry's translated and placed rows they leave out; remove= drops a row, and "
+                             + "an item; either confirmed by the user. Rows given again keep every "
+                             + "row of the registry they leave out; only remove= drops a row, and "
                              + "removing a translated or placed row, or changing a translated row's value or "
                              + "pattern, is confirmed by the user in a form. Once the build's scope is chosen, a "
                              + "call keeping its rows and source types writes the settings given (system_names, "
@@ -802,7 +802,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                   + "the user to confirm in a form, and this client can't show one. Leave them as "
                                   + "they are. Nothing was written.");
         }
-        // Kept in their place: each after the row it followed, else first.
+        // Every row the call leaves out is kept, in its place (each after the row it followed, else first): only
+        // remove= drops one (seen in chat 182: rows=[the group's two rows], given to record their System Names,
+        // dropped the feed's three other parked source types from the registry).
         final List<SourceTypeRows.Row> out = new ArrayList<>(given.stream()
                 .filter(row -> !remove.contains(row.name()))
                 .toList());
@@ -810,7 +812,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         for (final Map<String, Object> was : previous) {
             final String name = JsonValues.text(was.get("name"));
             final boolean present = out.stream().anyMatch(row -> row.name().equals(name));
-            if (!present && !remove.contains(name) && (translated(was) || placed(was))) {
+            if (!present && !remove.contains(name)) {
                 final String follows = after;
                 final int at = follows == null
                         ? 0

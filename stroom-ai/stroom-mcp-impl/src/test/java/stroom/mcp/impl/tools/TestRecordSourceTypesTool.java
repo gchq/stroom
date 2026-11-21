@@ -597,6 +597,36 @@ class TestRecordSourceTypesTool {
     }
 
     @Test
+    void aSettingsCallGivingOnlyTheScopesRowsKeepsTheParkedRowsItLeavesOut() {
+        // Seen in chat 182: rows=[the group's two rows] with system_names dropped the feed's three other parked
+        // source types from the registry, and showed the table and the scope form again.
+        scoped("PEGA back end", List.of("PegaDB"));
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "Other");
+
+        final Map<String, Object> result = once(user.context(), Map.of("group", "PEGA back end",
+                "rows", List.of("PegaDB = PegaDB"), "system_names", Map.of("PegaDB", "Pega Database")));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .doesNotContainEntry("status", "needs_review")
+                .containsEntry("scope", List.of("PegaDB"));
+        assertThat(user.intros()).as("no form").isEmpty();
+        assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("PegaSecurityEvent",
+                "PegaIntegration", "PegaDB");
+        assertThat(rowNamed("PegaIntegration")).containsEntry("status", SourceTypeRegistry.PARKED);
+        assertThat(rowNamed("PegaDB")).containsEntry("system_name", "Pega Database");
+    }
+
+    @Test
+    void aParkedRowIsDroppedOnlyByRemove() {
+        final Map<String, Object> result = recorded(BuildToolCalls.context(), Map.of("rows",
+                List.of("PegaDB = PegaDB"), "remove", List.of("PegaIntegration")));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error");
+        assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("PegaSecurityEvent",
+                "PegaDB");
+    }
+
+    @Test
     void unchangedRowsGivenAgainOnceTheScopeIsRecordedAskNothing() {
         scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
         final GroupUser user = new GroupUser(List.of("PegaDB"), "Other");
