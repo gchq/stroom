@@ -103,8 +103,9 @@ public class ElasticEsqlService implements ElasticEsql {
 
     /// The oldest cluster version queried: ES|QL is generally available from 8.14.
     static final int[] MIN_VERSION = {8, 14};
-    // The first version that takes `allow_partial_results`, which is set false so a failed shard fails the query.
-    private static final int[] PARTIAL_RESULTS_VERSION = {8, 18};
+    // The first version that takes `allow_partial_results`, which is set false so a failed shard fails the query:
+    // 9.1 (and 8.19; 9.0, out beside 8.18, refuses it). The 9.x client can't reach an 8.x cluster.
+    private static final int[] PARTIAL_RESULTS_VERSION = {9, 1};
     private static final ObjectMapper MAPPER = new ObjectMapper();
     // An index name, pattern or list of them, as FROM takes it unquoted.
     private static final Pattern INDEX_NAME = Pattern.compile("[A-Za-z0-9.*][A-Za-z0-9._\\-*,:+]*");

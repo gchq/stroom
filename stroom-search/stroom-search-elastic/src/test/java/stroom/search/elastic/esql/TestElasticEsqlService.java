@@ -292,6 +292,27 @@ class TestElasticEsqlService {
     }
 
     @Test
+    void testPartialResultsNotAskedOfANineNoughtCluster() {
+        // 9.0 came out beside 8.18, before allow_partial_results (8.19, 9.1), and refuses it.
+        stubVersion("9.0.8");
+        stubQuery(GROUPED);
+
+        service.query(request(""));
+
+        assertThat(onlyQueryRequest().queryParameter("allow_partial_results").isPresent()).isFalse();
+    }
+
+    @Test
+    void testPartialResultsAskedOfANineOneCluster() {
+        stubVersion("9.1.0");
+        stubQuery(GROUPED);
+
+        service.query(request(""));
+
+        assertThat(onlyQueryRequest().queryParameter("allow_partial_results").isPresent()).isTrue();
+    }
+
+    @Test
     void testPartialResultsNotAskedOfOlderClusters() {
         stubVersion("8.14.0");
         stubQuery(GROUPED);
