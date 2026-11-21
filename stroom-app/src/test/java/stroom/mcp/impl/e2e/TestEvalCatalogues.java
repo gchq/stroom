@@ -16,12 +16,21 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueCheck;
+import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
+import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.validation.EventSchema;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -124,6 +133,62 @@ class TestEvalCatalogues {
     }
 
     @Test
+    void anEventTypesPlacementsAreItsRulesTypedEntriesBelowItsDetailAndTheCommonOnes() {
+        // The inbox rule's Name read by an xpath; Data, the TypeId, the Description and the fixed Action aside.
+        assertThat((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Create-InboxRule")
+                .get("placements")).containsExactly(
+                Map.of("path", "Configuration/Type", "value", "Inbox rule"),
+                Map.of("path", "Configuration/Name", "xpath",
+                        "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"));
+        // A group kept with its fields.
+        assertThat((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Send-Mail")
+                .get("placements")).extracting(placement -> placement.get("path"))
+                .containsExactly("Source/User/EmailAddress", "Destination/User", "Payload/Email/Id",
+                        "Payload/Email/Subject");
+        assertThat(((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Send-Mail")
+                .get("placements")).get(1))
+                .containsEntry("for_each", Map.of("array", "event.Item.Recipients"))
+                .containsEntry("fields", List.of(Map.of("path", "EmailAddress", "item", true)));
+        // The user authenticating and the outcome written in common, for each Authenticate event.
+        assertThat((List<Map<String, Object>>) type("01_csv_vpn", "Authenticate-Logon").get("placements"))
+                .containsExactly(Map.of("path", "User/Id", "field", "user"),
+                        Map.of("path", "Outcome/Success", "field", "result", "map",
+                                Map.of("success", "true", "failure", "false")));
+    }
+
+    @Test
+    void everyReferenceCatalogueFillsWhatTheSchemaRequiresAndItsPlacementsPassTheCheck() {
+        // catalogue_event_types's gate, as TestE2eEvalReference meets it, in seconds: each case's records read as
+        // its reference reads them (its own Data Splitter where it has one), its reference catalogue checked against
+        // event-logging 4.1.0 with nothing drafted. Every case: no element the schema requires left empty, no
+        // placement refused; where the records are read here (a Data Splitter the server infers aside), nothing
+        // refused at all.
+        final EventSchema schema = EventSchema.parse(resource("event-logging-v4.1.0.xsd"));
+        final List<String> refused = new ArrayList<>();
+        int read = 0;
+        for (final String id : EvalCases.IDS) {
+            final Map<String, Object> evalCase = EvalCases.load(id);
+            if (EvalCases.isQuestion(evalCase)) {
+                continue;
+            }
+            final Map<String, Object> reference = (Map<String, Object>) evalCase.get("reference");
+            final CatalogueSample sample = CatalogueSample.read(reading((Map<String, Object>) reference.get("mapping")),
+                    texts(evalCase), splitterOf(reference), LocalCheck.JSON_PARSER_CUT, null);
+            final CatalogueCheckResult check = CatalogueCheck.check(Catalogue.fromJson(EvalCatalogues.reference(
+                    evalCase)), sample, schema, CatalogueCheck.Drafted.NONE);
+            if (!sample.records().isEmpty()) {
+                read++;
+            }
+            check.unplaced().forEach(problem -> refused.add(id + " unplaced: " + problem.problem()));
+            check.problems().stream()
+                    .filter(problem -> !sample.records().isEmpty() || problem.problem().contains("placement '"))
+                    .forEach(problem -> refused.add(id + ": " + problem.problem()));
+        }
+        assertThat(read).isGreaterThan(40);
+        assertThat(refused).isEmpty();
+    }
+
+    @Test
     void noTwoEventTypesOfAReferenceCatalogueRecogniseOneSampleRecord() {
         // Each sample record read as the reference mapping reads it, its rule found with the rules in order and in
         // reverse (the catch-all last either way): a record two event types recognise falls into a different type's
@@ -161,6 +226,51 @@ class TestEvalCatalogues {
         }
         assertThat(read).isGreaterThan(10);
         assertThat(overlaps).isEmpty();
+    }
+
+    // How the reference mapping reads a record, as the eval hands catalogue_event_types its reading: its reading keys,
+    // with one rule.
+    private static TranslationMapping reading(final Map<String, Object> mapping) {
+        final Map<String, Object> reading = new LinkedHashMap<>();
+        for (final String key : List.of("input", "root", "record", "xml_namespace", "json_layout", "json_fields",
+                "xml_fields", "pairs", "extract", "nil_values", "for_each")) {
+            if (mapping.get(key) != null) {
+                reading.put(key, mapping.get(key));
+            }
+        }
+        reading.putIfAbsent("input", "data_splitter");
+        reading.put("events", List.of(Map.of("name", "reading", "fields", List.of(Map.of("path",
+                "EventDetail/TypeId", "value", "Reading")))));
+        return TranslationMapping.parse(reading);
+    }
+
+    // The Data Splitter the case's records are read with: its spec, its own converter (the CSV header splitter for
+    // csv_header), or none (one the server infers or profiles, not read here).
+    private static SplitterSpec splitterOf(final Map<String, Object> reference) {
+        if (reference.get("splitter") instanceof final Map<?, ?> spec) {
+            return SplitterSpec.fromMap((Map<String, ?>) spec);
+        }
+        if (!"DATA_SPLITTER".equals(reference.getOrDefault("converter_type", "DATA_SPLITTER"))
+            || !(reference.get("converter") instanceof final String converter)) {
+            return null;
+        }
+        if ("csv_header".equals(converter)) {
+            return SplitterSpec.ofConverter(resource("csv_splitter.xml"));
+        }
+        return converter.strip().startsWith("<")
+                ? SplitterSpec.ofConverter(converter)
+                : null;
+    }
+
+    private static String resource(final String name) {
+        try (final InputStream in = TestEvalCatalogues.class.getResourceAsStream(name)) {
+            if (in == null) {
+                throw new IllegalStateException("No test resource " + name);
+            }
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     // The mapping with its rules in reverse, the catch-all's kept last.

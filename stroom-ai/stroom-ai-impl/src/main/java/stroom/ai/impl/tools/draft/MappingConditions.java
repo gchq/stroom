@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XPathText;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,26 @@ public final class MappingConditions {
                     ? null
                     : List.of(extracted.get(field));
         }
+        // A path into a held field an extraction gives (`soap//CustomerId`, soap extracted and in xml_fields): read
+        // from the extracted value, as the record doesn't hold it.
+        final String held = derivedHolding(field);
+        if (held != null) {
+            return extracted == null || !extracted.containsKey(held)
+                    ? null
+                    : ConditionValues.heldValues(mapping, held, extracted.get(held), field);
+        }
         return ConditionValues.values(mapping, field, record);
+    }
+
+    // The extracted held field (xml_fields or json_fields) a field is a path below, or null.
+    private String derivedHolding(final String field) {
+        for (final String held : Arrays.asList(MappingFacts.heldXmlField(mapping.xmlFields(), field),
+                MappingFacts.heldJsonField(mapping.jsonFields(), field))) {
+            if (held != null && !held.equals(field) && derived.contains(held)) {
+                return held;
+            }
+        }
+        return null;
     }
 
     /// As [LocalCheck#holdsOver(TranslationMapping, Condition, List)].

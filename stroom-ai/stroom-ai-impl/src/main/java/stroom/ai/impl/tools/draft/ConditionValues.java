@@ -132,6 +132,21 @@ final class ConditionValues {
         return List.of();
     }
 
+    /// @param mapping The mapping.
+    /// @param held    A held field (one of its xml_fields or json_fields).
+    /// @param text    The held field's value.
+    /// @param field   A field below the held one (`soap//CustomerId`, `payload/User`).
+    /// @return The field's values in the held value, read as [#values] reads them from a record's held field.
+    static List<String> heldValues(final TranslationMapping mapping,
+                                   final String held,
+                                   final String text,
+                                   final String field) {
+        if (held.equals(MappingFacts.heldXmlField(mapping.xmlFields(), field))) {
+            return heldXmlValues(text, field.substring(held.length()));
+        }
+        return heldJsonValues(text, JsonFieldNames.keys(JsonFieldNames.below(held, field)));
+    }
+
     /// @param text A text.
     /// @return It as XPath's normalize-space() gives it: XML's white space (space, tab, new line, CR) trimmed and
     /// each run made one space.

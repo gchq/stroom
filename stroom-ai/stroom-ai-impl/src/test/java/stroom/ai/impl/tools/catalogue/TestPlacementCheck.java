@@ -217,6 +217,21 @@ class TestPlacementCheck {
     }
 
     @Test
+    void anElementTheDraftsCommonEntriesWriteBelowTheActionElementCounts() {
+        // Eval case 01: the user authenticating written in common, for every Authenticate event.
+        final EventType logon = new EventType("Authenticate-Logon", "Logon", null, "Authenticate", "Logon", null,
+                null, null, null, List.of(way("UserLoggedIn")), false, EventType.AGENT_KNOWLEDGE, "high", null,
+                EventType.PROPOSED);
+        final CatalogueCheck.Drafted inCommon = CatalogueCheck.Drafted.of(Map.of("common", List.of(
+                Map.of("path", "EventDetail/Authenticate/User/Id", "field", "event.UserId"))));
+
+        assertThat(said(check(logon).unplaced())).singleElement().asString()
+                .contains("EventDetail/Authenticate needs one of User, Device, Group");
+        assertThat(inCommon.commonPaths()).containsExactly("EventDetail/Authenticate/User/Id");
+        assertThat(CatalogueCheck.check(catalogue(logon), sample(), SCHEMA, inCommon).unplaced()).isEmpty();
+    }
+
+    @Test
     void mostFieldsKeptAsDataIsOnlyWorthALook() {
         final EventType view = type("View-MailItems", "View", "MailItemsAccessed", List.of(
                 placement("Email/Subject", "event.Subject")));
@@ -245,9 +260,10 @@ class TestPlacementCheck {
     @Test
     void aPlacementIsReadInTheMappingsFormAndOtherKeysAreRefused() {
         final ModelReader reader = new ModelReader();
-        assertThat(Placement.read(reader, Map.of("path", "Email/Subject", "xpath", "x"), List.of())).isNull();
+        assertThat(Placement.read(reader, Map.of("path", "Email/Subject", "field", "a", "data_name", "Subject"),
+                List.of())).isNull();
         assertThat(reader.errors()).singleElement().satisfies(error -> assertThat(error.message())
-                .contains("not xpath"));
+                .contains("not data_name"));
 
         final ModelReader twoInputs = new ModelReader();
         assertThat(Placement.read(twoInputs, Map.of("path", "Email/Subject", "field", "a", "value", "b"),
@@ -263,6 +279,85 @@ class TestPlacementCheck {
         assertThat(read.alsoData()).isTrue();
         assertThat(read.mappingEntry("Send")).containsEntry("path", "EventDetail/Send/Payload/Email/To")
                 .doesNotContainKey("also_data");
+    }
+
+    @Test
+    void aRequiredElementReadByAnXpathIsPlacedWithItsValuesSaidAsNotChecked() {
+        // Eval case 56: the inbox rule's Name read by an xpath out of the Parameters array.
+        final Map<String, Object> byXpath = new LinkedHashMap<>();
+        byXpath.put("path", "After/Object/Name");
+        byXpath.put("xpath", "*[@key='event']/*[@key='Subject']");
+        final EventType update = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(byXpath));
+
+        final CatalogueCheckResult check = check(update);
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.unplaced()).isEmpty();
+        assertThat(said(check.notChecked())).singleElement().asString()
+                .contains("placement 'After/Object/Name'", "values aren't checked here", "xpath");
+        assertThat(update.placements().getFirst().said()).startsWith("xpath *[@key='event']");
+        assertThat(update.placements().getFirst().mappingEntry("Update"))
+                .containsEntry("path", "EventDetail/Update/After/Object/Name")
+                .containsEntry("xpath", "*[@key='event']/*[@key='Subject']");
+    }
+
+    @Test
+    void anXpathPlacementsPathIsStillChecked() {
+        final Map<String, Object> byXpath = new LinkedHashMap<>();
+        byXpath.put("path", "After/Object/Heading");
+        byXpath.put("xpath", "*[@key='event']/*[@key='Subject']");
+        final Map<String, Object> toData = new LinkedHashMap<>();
+        toData.put("path", "After/Object/Data");
+        toData.put("xpath", "*[@key='event']/*[@key='Subject']");
+
+        final CatalogueCheckResult check = check(type("Update-InboxRule", "Update", "UpdateInboxRules",
+                List.of(byXpath, toData)));
+
+        assertThat(said(check.problems())).satisfiesExactlyInAnyOrder(
+                problem -> assertThat(problem).contains("After/Object/Heading", "has no child 'Heading'"),
+                problem -> assertThat(problem).contains("After/Object/Data is Data"));
+        assertThat(check.notChecked()).isEmpty();
+    }
+
+    @Test
+    void aLookupPlacementHasItsKeyFieldCheckedAndItsValuesSaidAsNotChecked() {
+        final EventType send = type("Send-Mail", "Send", "Send", List.of(
+                placement("Source/User/EmailAddress", "event.UserId"),
+                Map.of("path", "Destination/User/Id", "lookup", Map.of("map", "USER_TO_ID", "field",
+                        "event.UserId"))));
+        final EventType misspelt = type("Send-Mail", "Send", "Send", List.of(
+                placement("Source/User/EmailAddress", "event.UserId"),
+                Map.of("path", "Destination/User/Id", "lookup", Map.of("map", "USER_TO_ID", "field",
+                        "event.UsrId"))));
+
+        final CatalogueCheckResult check = check(send);
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.unplaced()).isEmpty();
+        assertThat(said(check.notChecked())).singleElement().asString()
+                .contains("placement 'Destination/User/Id'", "values aren't checked here");
+        assertThat(send.placements().get(1).inputs()).containsExactly("event.UserId");
+
+        assertThat(said(check(misspelt).problems())).singleElement().asString()
+                .contains("no record has the field event.UsrId", "event.UserId");
+    }
+
+    @Test
+    void anXpathOrALookupIsOneInputAmongTheOthers() {
+        final ModelReader both = new ModelReader();
+        assertThat(Placement.read(both, Map.of("path", "Email/Subject", "field", "a", "xpath", "b"), List.of()))
+                .isNull();
+        assertThat(both.errors()).singleElement().satisfies(error -> assertThat(error.message())
+                .contains("give one of", "xpath or lookup"));
+
+        final ModelReader badLookup = new ModelReader();
+        final Placement noMap = Placement.read(badLookup, Map.of("path", "Destination/User/Id", "lookup",
+                Map.of("field", "event.UserId")), List.of());
+        // Read as a placement; the mapping's own reading of it refuses the lookup without a map in the check.
+        assertThat(noMap).isNotNull();
+        assertThat(said(check(type("Send-Mail", "Send", "Send", List.of(
+                placement("Source/User/EmailAddress", "event.UserId"),
+                Map.of("path", "Destination/User/Id", "lookup", Map.of("field", "event.UserId"))))).problems()))
+                .singleElement().asString().contains("placement 'Destination/User/Id'", "map");
     }
 
     @Test
@@ -313,9 +408,15 @@ class TestPlacementCheck {
     }
 
     private static CatalogueCheckResult check(final EventType... types) {
-        return CatalogueCheck.check(new Catalogue(List.of(types), Catalogue.CatchAll.PROPOSED, Catalogue.Scope.NONE),
-                CatalogueSample.read(READING, String.join("\n", records()), null, LocalCheck.JSON_PARSER_CUT, null),
-                SCHEMA);
+        return CatalogueCheck.check(catalogue(types), sample(), SCHEMA);
+    }
+
+    private static Catalogue catalogue(final EventType... types) {
+        return new Catalogue(List.of(types), Catalogue.CatchAll.PROPOSED, Catalogue.Scope.NONE);
+    }
+
+    private static CatalogueSample sample() {
+        return CatalogueSample.read(READING, String.join("\n", records()), null, LocalCheck.JSON_PARSER_CUT, null);
     }
 
     private static List<String> said(final List<Problem> problems) {

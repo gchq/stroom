@@ -3722,8 +3722,10 @@ catalogue already, its `check` and `listing` come too.
 the catalogue is never sent whole. `change` gives only the keys that change. An event type has `type_id`, `title`,
 `description`, `event_detail`, `action`, `success`, `actor`, `affected`, `affected_as` (written out to its leaf,
 `User` as `User/Id`; read as one placement), `placements` (2026-11-21: each a mapping fields entry whose `path` is
-below `event_detail`, with `field` or a constant `value`, the mapping's `transform`, `time_format`, `timezone`, `map`,
-`default`, `repeat`, or a `for_each` group with `fields`; `also_data: true` keeps the field as Data too; a `change`
+below `event_detail`, with `field`, a constant `value`, `any_of`, `join`, an `xpath` or a `lookup` (2026-11-22: an
+element the schema requires is often read by an xpath, e.g. a value out of an array of name/value pairs; `data_name`
+and `data_parent` stay refused), the mapping's `transform`, `time_format`, `timezone`, `map`, `default`, `repeat`, or
+a `for_each` group with `fields`; `also_data: true` keeps the field as Data too; a `change`
 giving `placements` replaces the list), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
 when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`, `documentation`), `confidence`
 (high, medium, low), `one_type_because` and, optionally, `doubt` (why the agent is unsure of it: said to the user
@@ -3753,7 +3755,8 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
 * `several`: an event type whose records split by a field of their own (its conditions' fields aside) or come in
   clearly different shapes; blocking for the seed's (`basis: draft`) until it is split or says `one_type_because`.
 * `not_checked`: conditions the check can't evaluate here (an `xpath`, a dictionary, a record-scope test, a field an
-  extraction gives): said, not refused, never skipped silently.
+  extraction gives), and placements whose values it doesn't read (an `xpath`'s, a `lookup`'s; 2026-11-22): said, not
+  refused, never skipped silently.
 * `problems`: the catalogue's own (`CatalogueValidation`): a TypeId not Verb-Object
   (`^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters) or given twice; a title
   given twice, ignoring case; a way with no conditions, but for a sole event type of its source type or line format; a
@@ -3772,10 +3775,12 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   field no record has (the record fields it may have meant, by last name then by spelling); several values in a
   record where the element takes one, without `repeat` or `for_each`, or a `for_each` on an element the schema has
   once; values that, converted as the XSLT converts them (transform, map, default, time_format), the element's
-  enumeration, pattern or XSD type refuses, naming up to three and the fix.
+  enumeration, pattern or XSD type refuses, naming up to three and the fix. An `xpath`'s or a `lookup`'s values
+  aren't read here (said in `not_checked`, 2026-11-22); its path, repetition and a lookup's key field are checked.
 * `unplaced` (2026-11-21): elements the schema requires of an event type's action element (and of each element
   written below it: required children and required choices) that nothing the catalogue gives writes (placements, the
-  Action, the outcome, Authenticate's user from the actor or the draft's common user, Data). Recorded, but
+  Action, the outcome, Authenticate's user from the actor or the draft's common user, the draft's common entries
+  written below the action element (2026-11-22), Data). Recorded, but
   `confirm=true` refuses to put a set to the user (or the catch-all) until they are placed.
 * `typing` (2026-11-21): per event type in the sample, the fields typed and kept as Data (those every event shares
   aside), each placed field's fill rate in its records (`fill`), and `worth_a_look` when at least 5 and 80% of its

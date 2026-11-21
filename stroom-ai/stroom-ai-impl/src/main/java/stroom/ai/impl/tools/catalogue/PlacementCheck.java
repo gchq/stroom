@@ -59,6 +59,8 @@ import java.util.regex.Pattern;
 ///   record placed where one goes, without `repeat` or `for_each`, or a `for_each` writing an element the schema
 ///   has once; values that, converted as the translation converts them (transform, map, default, time_format), the
 ///   element's type, values or pattern refuse, named with the fix.
+/// * **Not checked** (said, never refused): the values of a placement read by an xpath or a lookup (2026-11-22),
+///   which only the translation reads; its path, and a lookup's key field, are checked as the others are.
 /// * **Unplaced** (refuses confirmation, never proposals): an element the schema requires of the action element (or
 ///   of an element placed below it) that nothing the catalogue gives writes, e.g. Update/After, Send/Destination,
 ///   the object View needs: derived from the schema, element by element.
@@ -106,6 +108,7 @@ final class PlacementCheck {
     private final UnaryOperator<String> missing;
     private final Set<String> common;
     private final String commonUser;
+    private final List<String> commonPaths;
     private final Set<String> nil;
     private final Catalogue catalogue;
     private final List<CatalogueCheck.Drafted.Rule> rules;
@@ -132,8 +135,10 @@ final class PlacementCheck {
         this.recognises = recognises;
         final TranslationMapping reading = index.sample().reading();
         this.common = new HashSet<>(drafted.commonFields());
+        final List<String> paths = new ArrayList<>(drafted.commonPaths());
         String user = drafted.commonUser();
         for (final FieldMapping entry : NullSafe.list(reading.common())) {
+            paths.add(ToolText.strip(entry.path(), "/"));
             if (entry.field() != null) {
                 this.common.add(entry.field());
                 if (user == null && "EventSource/User/Id".equals(ToolText.strip(entry.path(), "/"))) {
@@ -143,18 +148,21 @@ final class PlacementCheck {
             this.common.addAll(NullSafe.list(entry.anyOf()));
         }
         this.commonUser = user;
+        this.commonPaths = List.copyOf(paths);
         this.nil = new HashSet<>(NullSafe.list(reading.nilValues()));
     }
 
     /// @param type       An event type.
     /// @param recognised The records it recognises.
-    /// @return Its placements' problems, the schema's required elements nothing writes, and its typing.
+    /// @return Its placements' problems, the schema's required elements nothing writes, what isn't checked, and its
+    /// typing.
     Checked check(final EventType type, final BitSet recognised) {
         final List<String> problems = new ArrayList<>();
         final List<String> unplaced = new ArrayList<>();
+        final List<String> notChecked = new ArrayList<>();
         final String detail = detail(type);
         if (detail == null || type.drop()) {
-            return new Checked(problems, unplaced, null);
+            return new Checked(problems, unplaced, notChecked, null);
         }
         final String label = "event type " + type.typeId();
         final Map<String, String> fill = new LinkedHashMap<>();
@@ -173,6 +181,10 @@ final class PlacementCheck {
                     : "placement '" + placement.path() + "'");
             final int before = problems.size();
             placementProblems(said, detail, placement, recognised, problems);
+            if (problems.size() == before && placement.readElsewhere()) {
+                notChecked.add(said + ": its values aren't checked here (read by an xpath or a lookup, which only "
+                               + "the translation reads); its path is checked");
+            }
             if (problems.size() == before || implied) {
                 written.addAll(placement.writes(detail));
             }
@@ -184,7 +196,7 @@ final class PlacementCheck {
         written.addAll(givenElsewhere(type, detail));
         written.addAll(drafted(detail, recognised));
         unplaced.addAll(required(label, detail, written));
-        return new Checked(problems, unplaced, typing(type, recognised, fill));
+        return new Checked(problems, unplaced, notChecked, typing(type, recognised, fill));
     }
 
     // The action element, as the translation writes it; null for none, Unknown, or one the schema hasn't.
@@ -213,7 +225,8 @@ final class PlacementCheck {
     }
 
     // What the translation writes below the action element besides the placements: the Action, the outcome, the
-    // user authenticating (who acted, else the common user), and the Data left over.
+    // user authenticating (who acted, else the common user), the common entries written below it, and the Data left
+    // over.
     private List<String> givenElsewhere(final EventType type, final String detail) {
         final List<String> out = new ArrayList<>();
         out.add(DATA);
@@ -229,6 +242,11 @@ final class PlacementCheck {
         if ("Authenticate".equals(detail) && user != null) {
             out.add("User/Id");
         }
+        final String prefix = EVENT_DETAIL + detail + "/";
+        commonPaths.stream()
+                .filter(path -> path.startsWith(prefix))
+                .map(path -> path.substring(prefix.length()))
+                .forEach(out::add);
         return out;
     }
 
@@ -456,6 +474,9 @@ final class PlacementCheck {
                     values = List.of(ToolText.str(field.get(Placement.VALUE)));
                 } else if (Boolean.TRUE.equals(field.get("item")) && field.get(Placement.FIELD) == null) {
                     values = items;
+                } else if (field.get(Placement.XPATH) != null || field.get(Placement.LOOKUP) != null) {
+                    // Read by the translation only: said as not checked.
+                    continue;
                 } else if ("record".equals(field.get("scope"))
                            && field.get(Placement.FIELD) instanceof final String read) {
                     values = values(read, recognised, true);
@@ -480,7 +501,8 @@ final class PlacementCheck {
         } else if (entry.get("any_of") != null) {
             values = anyOf(JsonValues.strings(entry.get("any_of")), recognised);
         } else {
-            // A join's parts each a value of its own: not read here.
+            // A join's parts each a value of its own, an xpath's and a lookup's values the translation's: not read
+            // here.
             return Optional.empty();
         }
         final String problem = invalid(EVENT_DETAIL + detail + "/" + below, below, leaves.get(below), entry,
@@ -855,10 +877,11 @@ final class PlacementCheck {
 
     /// An event type's placements checked.
     ///
-    /// @param problems What is refused where the proposals bring it.
-    /// @param unplaced The schema's required elements nothing writes: refuse confirmation.
-    /// @param typing   How many fields are typed and kept as Data, or null when its records aren't in the sample.
-    record Checked(List<String> problems, List<String> unplaced, Typing typing) {
+    /// @param problems   What is refused where the proposals bring it.
+    /// @param unplaced   The schema's required elements nothing writes: refuse confirmation.
+    /// @param notChecked The placements whose values aren't checked here (an xpath's, a lookup's): said only.
+    /// @param typing     How many fields are typed and kept as Data, or null when its records aren't in the sample.
+    record Checked(List<String> problems, List<String> unplaced, List<String> notChecked, Typing typing) {
 
     }
 

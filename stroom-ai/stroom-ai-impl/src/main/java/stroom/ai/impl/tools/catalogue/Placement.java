@@ -31,7 +31,9 @@ import java.util.Set;
 /// One typed placement of an event type (its `placements`, decided by the user 2026-11-21): a field of its records
 /// (or a constant value) written to a schema path below the event type's action element, as a translation mapping's
 /// fields entry writes it, so the field is typed rather than kept as Data. The entry is the mapping's own form, its
-/// path below the action element (`Email/From/EmailAddress` under `Send`), with the mapping's conversions
+/// path below the action element (`Email/From/EmailAddress` under `Send`), read from a field, a constant, `any_of`,
+/// `join`, an `xpath` or a `lookup` (2026-11-22: an element the schema requires is often read by an xpath, e.g. a
+/// value out of an array of name/value pairs; its values aren't checked here), with the mapping's conversions
 /// (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and its repeated groups (`for_each` with
 /// `fields`, each reading the item with `item: true` or a key of it); `also_data: true` keeps the field as Data too.
 /// The agent places a field from what it knows of the source; nothing matches field names to schema names.
@@ -45,16 +47,21 @@ public record Placement(Map<String, Object> entry) {
     public static final String FIELD = "field";
     /// A placement's constant.
     public static final String VALUE = "value";
+    /// A placement's XPath, read relative to the record.
+    public static final String XPATH = "xpath";
+    /// A placement's reference data lookup.
+    public static final String LOOKUP = "lookup";
     /// A placement's repeated group's source.
     public static final String FOR_EACH = "for_each";
     /// A repeated group's fields.
     public static final String FIELDS = "fields";
     /// Keeps the placed field as Data too.
     public static final String ALSO_DATA = "also_data";
-    /// The keys a placement may have: the mapping's for a field or a constant, its conversions and its groups.
-    public static final List<String> KEYS = List.of(PATH, FIELD, VALUE, "any_of", "join", "separator", "transform",
-            "time_format", "timezone", "map", "default", "repeat", FOR_EACH, "as", FIELDS, "item", "scope",
-            ALSO_DATA);
+    /// The keys a placement may have: the mapping's for a field, a constant, an xpath or a lookup, its conversions
+    /// and its groups.
+    public static final List<String> KEYS = List.of(PATH, FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, "separator",
+            "transform", "time_format", "timezone", "map", "default", "repeat", FOR_EACH, "as", FIELDS, "item",
+            "scope", ALSO_DATA);
 
     private static final String EVENT_DETAIL = "EventDetail/";
 
@@ -63,9 +70,9 @@ public record Placement(Map<String, Object> entry) {
         entry = Collections.unmodifiableMap(new LinkedHashMap<>(entry));
     }
 
-    /// Reads one from JSON-like values: an object with a path, and a field, a value or a group (`for_each`); keys
-    /// the mapping writes otherwise (an xpath, a lookup, Data's name) refused, as a placement types a field of the
-    /// records and Data is what is left over.
+    /// Reads one from JSON-like values: an object with a path, and a field, a value, an xpath, a lookup or a group
+    /// (`for_each`); keys the mapping writes otherwise (Data's name, its parent) refused, as a placement types a
+    /// field of the records and Data is what is left over.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -94,10 +101,9 @@ public record Placement(Map<String, Object> entry) {
                 .filter(key -> !KEYS.contains(key))
                 .toList();
         if (!other.isEmpty()) {
-            return "a placement is a field (or a value) placed at a path, with the mapping's conversions "
-                   + "(transform, time_format, timezone, map, default, repeat) or a for_each group: not "
-                   + String.join(", ", other) + " (Data is what no placement takes; an xpath or a lookup is the "
-                   + "mapping's, after the draft)";
+            return "a placement is a field (or a value, an xpath or a lookup) placed at a path, with the mapping's "
+                   + "conversions (transform, time_format, timezone, map, default, repeat) or a for_each group: not "
+                   + String.join(", ", other) + " (Data is what no placement takes)";
         }
         if (!top && entry.containsKey(ALSO_DATA)) {
             return "also_data goes on the placement, not on a group's field";
@@ -116,7 +122,7 @@ public record Placement(Map<String, Object> entry) {
             }
             return null;
         }
-        final long inputs = List.of(FIELD, VALUE, "any_of", "join").stream()
+        final long inputs = List.of(FIELD, VALUE, "any_of", "join", XPATH, LOOKUP).stream()
                 .filter(entry::containsKey)
                 .count() + (entry.containsKey("item")
                 ? 1
@@ -124,7 +130,7 @@ public record Placement(Map<String, Object> entry) {
                 ? 1
                 : 0);
         if (inputs != 1) {
-            return "give one of field (a field of the records), value (a constant), any_of or join";
+            return "give one of field (a field of the records), value (a constant), any_of, join, xpath or lookup";
         }
         return null;
     }
@@ -173,13 +179,24 @@ public record Placement(Map<String, Object> entry) {
         return entry.containsKey(FOR_EACH);
     }
 
+    /// @return True if it, or a field of its group, is read by an xpath or a lookup: values the check doesn't read.
+    public boolean readElsewhere() {
+        return readElsewhere(entry);
+    }
+
+    private static boolean readElsewhere(final Map<String, Object> entry) {
+        return entry.get(XPATH) != null || entry.get(LOOKUP) != null
+               || JsonValues.maps(entry.get(FIELDS)).stream().anyMatch(Placement::readElsewhere);
+    }
+
     /// @return True if the field is kept as Data too.
     public boolean alsoData() {
         return JsonValues.truthy(entry.get(ALSO_DATA));
     }
 
-    /// @return The fields of the records it reads, each once: its field, any_of's and join's, or a group's sources
-    /// (for_each's) and its fields' that read the record (scope record); not a group item's keys.
+    /// @return The fields of the records it reads, each once: its field, any_of's, join's and a lookup's key field,
+    /// or a group's sources (for_each's) and its fields' that read the record (scope record); not a group item's
+    /// keys, nor what an xpath reads.
     public Set<String> inputs() {
         final Set<String> out = new LinkedHashSet<>();
         inputs(entry, true, out);
@@ -207,6 +224,9 @@ public record Placement(Map<String, Object> entry) {
         }
         out.addAll(JsonValues.strings(entry.get("any_of")));
         out.addAll(JsonValues.strings(entry.get("join")));
+        if (JsonValues.mapOrEmpty(entry.get(LOOKUP)).get(FIELD) instanceof final String key && !key.isBlank()) {
+            out.add(key);
+        }
     }
 
     /// @param detail The event type's action element.
@@ -252,6 +272,28 @@ public record Placement(Map<String, Object> entry) {
         }
     }
 
+    // What an entry reads, in words.
+    private static String input(final Map<String, Object> entry) {
+        if (entry.get(FIELD) != null) {
+            return String.valueOf(entry.get(FIELD));
+        }
+        if (entry.get(VALUE) != null) {
+            return "'" + entry.get(VALUE) + "'";
+        }
+        if (entry.get(XPATH) != null) {
+            return "xpath " + entry.get(XPATH);
+        }
+        if (entry.get(LOOKUP) != null) {
+            return "lookup in " + JsonValues.mapOrEmpty(entry.get(LOOKUP)).get("map");
+        }
+        if (Boolean.TRUE.equals(entry.get("item"))) {
+            return "the item";
+        }
+        return entry.get("any_of") != null
+                ? "any of " + JsonValues.strings(entry.get("any_of"))
+                : "join of " + JsonValues.strings(entry.get("join"));
+    }
+
     /// @return It in words for a reader: `event.Subject -> Email/Subject`, a group's source and fields.
     public String said() {
         return said(entry, path());
@@ -273,15 +315,7 @@ public record Placement(Map<String, Object> entry) {
             }
             return path + " for each of " + from + " (" + String.join("; ", inner) + ")";
         }
-        final String input = entry.get(FIELD) != null
-                ? String.valueOf(entry.get(FIELD))
-                : entry.get(VALUE) != null
-                        ? "'" + entry.get(VALUE) + "'"
-                        : Boolean.TRUE.equals(entry.get("item"))
-                                ? "the item"
-                                : entry.get("any_of") != null
-                                        ? "any of " + JsonValues.strings(entry.get("any_of"))
-                                        : "join of " + JsonValues.strings(entry.get("join"));
+        final String input = input(entry);
         final List<String> how = new ArrayList<>();
         for (final String key : List.of("transform", "time_format", "map")) {
             if (entry.get(key) != null) {

@@ -65,7 +65,8 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   (high, medium, low), optionally `doubt` (why you are unsure of it).
 - **Placements**: where the event type's fields go in the schema, from what you know of the source: each a mapping
   fields entry (An entry, below) whose `path` is below `event_detail` (`Email/Subject`, `After/Object/Name`,
-  `Source/User/EmailAddress`), with `field` or a constant `value`, and the entry's conversions (`transform`,
+  `Source/User/EmailAddress`), with `field`, a constant `value`, an `xpath` or a `lookup` (not `data_name`), and the
+  entry's conversions (`transform`,
   `time_format`, `timezone`, `map`, `default`, `repeat`); a list goes to an element that repeats with `for_each`
   (Groups, below), e.g. `{path: "Email/To", for_each: {array: "Recipients"}, fields: [{path: "EmailAddress", item:
   true}]}`. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
@@ -79,7 +80,8 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   fill rate in the type's records said in `typing`; a field holding several values in a record goes to an element that
   repeats (`repeat: true`) or a `for_each`; the values, converted as the translation converts them, are valid for the
   element's type, values or pattern (refused naming the values and the fix: transform, time_format, map, for_each, or
-  leaving the field as Data). A proposal bringing one of these is refused. An element the schema requires of the
+  leaving the field as Data); an xpath's or a lookup's values aren't checked (said in `not_checked`), its path is.
+  A proposal bringing one of these is refused. An element the schema requires of the
   action element (Update's After, Send's Source and Destination, the object View, Create or Delete is of,
   Authenticate's Action and user) that nothing is placed at is `unplaced`: the set isn't put to the user until it is.
   Most of a type's fields kept as Data is only worth a look (`typing`).

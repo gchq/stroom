@@ -615,6 +615,15 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             // nothing readable (damaged lines) is kept in the build's record, and cataloguing goes on without it.
             McpTestClient.text(client.call("survey_feed", args("feed", feed, "build", build, "stream_ids", raws)));
         }
+        final String converter = (String) reference.get("converter");
+        final boolean dataSplitter = converter != null && "DATA_SPLITTER".equals(reference.getOrDefault(
+                "converter_type", "DATA_SPLITTER"));
+        // The case's own Data Splitter saved in the build before its records are catalogued, as an agent saves it
+        // (catalogue_event_types reads the records with the build's saved Data Splitter: cases 06, 07 and 09 name
+        // fields only theirs gives); another type of converter is saved with the pipeline's.
+        final String splitterUuid = dataSplitter
+                ? saveConverter(build, feed, reference, samples)
+                : null;
         if (CATALOGUES) {
             confirmCatalogue(evalCase, score, build, raws, (Map<String, Object>) reference.get("mapping"));
         }
@@ -652,19 +661,11 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             references.add(Map.of("feed", referenceData(build, feed, (Map<String, Object>) referenceData, score)));
         }
         final List<Map<String, Object>> properties = new ArrayList<>();
-        final String converter = (String) reference.get("converter");
         final String replaceParser = (String) reference.get("replace_parser");
         if (converter != null) {
-            String code = "csv_header".equals(converter)
-                    ? CSV_SPLITTER
-                    : converter;
-            if ("profile".equals(converter)) {
-                // The server's own: the text converter profile_sample gives for the sample.
-                code = (String) map(json("profile_sample", args("sample", samples.getFirst())), "text_converter")
-                        .get("code");
-            }
-            final String converterUuid = uuidOf(agreed("save_text_converter", args("build", build, "name", feed,
-                    "converter_type", reference.getOrDefault("converter_type", "DATA_SPLITTER"), "code", code)));
+            final String converterUuid = splitterUuid != null
+                    ? splitterUuid
+                    : saveConverter(build, feed, reference, samples);
             final String parser = replaceParser != null
                     ? elementId(replaceParser)
                     : "dsParser";
@@ -761,6 +762,25 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         score.scoreForms(evalCase, formsAnswered());
         return built;
+    }
+
+    // The case's own text converter saved in the build (once): its code as given, the CSV header splitter, or the
+    // one profile_sample gives for the sample; its UUID.
+    private String saveConverter(final String build,
+                                 final String feed,
+                                 final Map<String, Object> reference,
+                                 final List<String> samples) {
+        final String converter = (String) reference.get("converter");
+        String code = "csv_header".equals(converter)
+                ? CSV_SPLITTER
+                : converter;
+        if ("profile".equals(converter)) {
+            // The server's own: the text converter profile_sample gives for the sample.
+            code = (String) map(json("profile_sample", args("sample", samples.getFirst())), "text_converter")
+                    .get("code");
+        }
+        return uuidOf(agreed("save_text_converter", args("build", build, "name", feed, "converter_type",
+                reference.getOrDefault("converter_type", "DATA_SPLITTER"), "code", code)));
     }
 
     // catalogue_event_types confirms the case's reference catalogue before the translation, as an agent and its user

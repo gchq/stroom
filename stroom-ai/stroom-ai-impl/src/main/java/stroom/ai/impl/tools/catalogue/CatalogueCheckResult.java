@@ -37,7 +37,8 @@ import java.util.Objects;
 /// @param several      Event types whose records may be several event types.
 /// @param problems     What is refused: the catalogue's own problems and those its records show.
 /// @param notChecked   `not_checked`: conditions the check can't evaluate here (an xpath, a dictionary, a
-///                     record-scope test, a field an extraction gives), said and not refused.
+///                     record-scope test, a field an extraction gives), and placements whose values it can't read (an
+///                     xpath's, a lookup's), said and not refused.
 /// @param order        The TypeIds in the catalogue's order (more specific first).
 /// @param unplaced     The elements the schema requires of an event type's action element that nothing the
 ///                     catalogue gives writes ([PlacementCheck]): they refuse confirmation, not proposals.

@@ -74,6 +74,30 @@ class TestMappingConditions extends DraftFixtures {
                 .containsExactly("quoted", "named", "rest", "rest");
     }
 
+    @Test
+    void aPathIntoAHeldFieldAnExtractionGivesIsReadFromTheExtractedValue() {
+        // Eval case 58: the SOAP envelope extracted out of the message, held XML (xml_fields), read by
+        // soap//CustomerId.
+        final TranslationMapping m = mapping(json("""
+                {"input": "json", "json_layout": "lines", "xml_fields": ["soap"],
+                 "extract": [{"field": "message", "regex": "^(Request|Response): (.*)$",
+                              "names": ["direction", "soap"], "flags": "s"}],
+                 "events": [{"name": "get", "when": [{"field": "soap//CustomerId", "equals": "C1"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "View-Customer"}]}]}"""));
+        final MappingConditions conditions = MappingConditions.of(m);
+        final Map<String, String> extracted = Map.of("direction", "Request", "soap",
+                "<Envelope><Body><GetCustomerRequest><CustomerId>C1</CustomerId></GetCustomerRequest></Body>"
+                + "</Envelope>");
+
+        assertThat(conditions.conditionValues("soap//CustomerId", Map.of("message", "x"), extracted))
+                .containsExactly("C1");
+        assertThat(conditions.conditionValues("soap/Envelope/Body/GetCustomerRequest/CustomerId",
+                Map.of("message", "x"), extracted)).containsExactly("C1");
+        // Not told where the extraction's values aren't known.
+        assertThat(conditions.conditionValues("soap//CustomerId", Map.of("message", "x"), null)).isNull();
+        assertThat(conditions.ruleOf(Map.of("message", "x"), extracted)).isEqualTo("get");
+    }
+
     // The transform the first entry reading the field gives it, among the unescapes, entry by entry.
     private static String firstUnescape(final TranslationMapping m, final String field) {
         return m.allEntries().stream()

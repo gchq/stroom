@@ -369,7 +369,7 @@ public final class CatalogueCheck {
             final List<Problem> unplaced = new ArrayList<>();
             final Map<String, CatalogueCheckResult.Typing> typing = new LinkedHashMap<>();
             if (schema != null) {
-                placements(problems, unplaced, typing);
+                placements(problems, unplaced, notChecked, typing);
             }
             final BitSet unparsedRecords = new BitSet(size);
             final Unparsed unparsed = unparsed(unparsedRecords);
@@ -380,9 +380,11 @@ public final class CatalogueCheck {
         }
 
         // Each event type's placements checked against the schema and its records, the elements the schema
-        // requires that nothing writes, and how many of its fields are typed ([PlacementCheck]).
+        // requires that nothing writes, the placements whose values aren't checked, and how many of its fields are
+        // typed ([PlacementCheck]).
         private void placements(final List<Problem> problems,
                                 final List<Problem> unplaced,
+                                final List<Problem> notChecked,
                                 final Map<String, CatalogueCheckResult.Typing> typing) {
             final PlacementCheck check = new PlacementCheck(schema, index, this::missing, catalogue, drafted,
                     when -> way(new Way(when, List.of())));
@@ -391,6 +393,7 @@ public final class CatalogueCheck {
                 final PlacementCheck.Checked checked = check.check(type, byType.get(t));
                 checked.problems().forEach(problem -> problems.add(new Problem(type.typeId(), -1, problem)));
                 checked.unplaced().forEach(problem -> unplaced.add(new Problem(type.typeId(), -1, problem)));
+                checked.notChecked().forEach(said -> notChecked.add(new Problem(type.typeId(), -1, said)));
                 if (checked.typing() != null) {
                     typing.put(keys.get(t), checked.typing());
                 }
@@ -960,21 +963,24 @@ public final class CatalogueCheck {
 
 
     /// What the draft writes, as far as the catalogue's check needs it: what every event writes in common (those
-    /// fields aren't an event type's Data, and its user is Authenticate's where an event type names no actor), and
+    /// fields aren't an event type's Data, its user is Authenticate's where an event type names no actor, and the
+    /// elements its entries write below an action element are written for each event of that element), and
     /// the draft's own rules, whose fields an event type's rule starts from (the one taking most of its records), as
     /// the translation writes them ([stroom.ai.impl.tools.draft.CatalogueTranslation]).
     ///
     /// @param commonFields The fields the common entries read.
     /// @param commonUser   The field EventSource/User/Id is read from, or null.
+    /// @param commonPaths  The paths the common entries write, below Event (`EventDetail/Authenticate/User/Id`).
     /// @param rules        The draft's own rules with conditions, in order.
-    public record Drafted(Set<String> commonFields, String commonUser, List<Rule> rules) {
+    public record Drafted(Set<String> commonFields, String commonUser, List<String> commonPaths, List<Rule> rules) {
 
         /// Nothing drafted.
-        public static final Drafted NONE = new Drafted(Set.of(), null, List.of());
+        public static final Drafted NONE = new Drafted(Set.of(), null, List.of(), List.of());
 
         /// Copies the parts.
         public Drafted {
             commonFields = Set.copyOf(Objects.requireNonNullElse(commonFields, Set.of()));
+            commonPaths = List.copyOf(Objects.requireNonNullElse(commonPaths, List.of()));
             rules = List.copyOf(Objects.requireNonNullElse(rules, List.of()));
         }
 
@@ -983,8 +989,10 @@ public final class CatalogueCheck {
         public static Drafted of(final Map<String, Object> mapping) {
             final Map<String, Object> json = NullSafe.map(mapping);
             final Set<String> fields = new LinkedHashSet<>();
+            final List<String> commonPaths = new ArrayList<>();
             String user = null;
             for (final Map<String, Object> entry : JsonValues.maps(json.get("common"))) {
+                commonPaths.add(ToolText.strip(String.valueOf(entry.get("path")), "/"));
                 if (entry.get("field") instanceof final String field && !field.isBlank()) {
                     fields.add(field);
                     if ("EventSource/User/Id".equals(ToolText.strip(String.valueOf(entry.get("path")), "/"))) {
@@ -1009,7 +1017,7 @@ public final class CatalogueCheck {
                     // A rule whose conditions don't read takes no records here.
                 }
             }
-            return new Drafted(fields, user, rules);
+            return new Drafted(fields, user, commonPaths, rules);
         }
 
 
