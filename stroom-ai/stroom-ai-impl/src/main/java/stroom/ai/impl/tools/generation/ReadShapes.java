@@ -74,6 +74,8 @@ public final class ReadShapes {
         out.put("map lookup, default", shape(XPathText.mapLookupText("$" + expr(1), expr(2), text(1))));
         out.put("map step", shape(XPathText.mapStepText(expr(1), text(1), text(2), expr(2))));
         out.put("default", shape(XPathText.defaultText(expr(1), expr(2), text(1))));
+        // A value cut to an entry's max_length: the value, and the length (an integer).
+        out.put("max length", shape(XPathText.capText(expr(1), expr(2))));
         out.put("group", shape(XPathText.groupText("(" + XPathText.partsText(expr(1), text(1), null) + ")", expr(2))));
         out.put("group, flags", shape(XPathText.groupText("(" + XPathText.partsText(expr(1), text(1), text(2)) + ")",
                 expr(2))));
@@ -124,7 +126,8 @@ public final class ReadShapes {
 
     private static Map<String, XPathNode> transforms() {
         final Map<String, XPathNode> out = new LinkedHashMap<>();
-        for (final String transform : List.of("lower", "upper", "trim", "strip_domain", "domain", "digits")) {
+        for (final String transform : List.of("lower", "upper", "trim", "strip_domain", "domain", "digits",
+                "clean")) {
             out.put(transform, shape(XPathText.transformExpression(transform, expr(1) + "[1]")));
         }
         return Collections.unmodifiableMap(out);

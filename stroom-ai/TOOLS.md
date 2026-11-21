@@ -5185,8 +5185,12 @@ generated without them.
   `system_name` is one name, a JSON object of each variant's, or, for a build whose scope is a group of several
   source types, a JSON object of each source type's (`SourceTypeSystemNames`: keys that are the scope's source types;
   one left out or another named is refused, as is a group whose source types aren't each told by exact values of a
-  record's own field). Then System/Name is written from the source type field (`field`, `transform: trim`, as the
-  group strips the value to tell its source type, and `map`, each row's value to its source type's name);
+  record's own field). Then System/Name is written from the source type field (`field`, `transform: clean`:
+  control characters out, then trimmed, as the group strips the value to tell its source type, and `map`, each
+  row's value, cleaned alike, to its source type's name; read with `trim` alone, a value with a bell or an ANSI
+  colour code's escapes matched its row but missed its name, and an Event with no System/Name isn't valid). A name
+  the user gives (here, one `system_name`, each variant's, or a source type's on record_source_types) goes into the
+  Event without control characters (`HeldText.clean`; user, 2026-11-22);
   build_translation_xslt puts them on the group's registry rows (`system_name`) when it saves the group, so the
   draft stays read-only. Unnamed, a note offers one name or each source type's own;
   `splitter` (a build_data_splitter spec, else inferred);
@@ -5572,9 +5576,23 @@ Rebuilds the mapping kept with a translation XSLT from the XSLT itself: when it 
 cleared; build_status says so) or no longer matches the XSLT (edited by hand in Stroom). The XSLT is read back as
 the generator writes it (`XsltReader.rebuild`). With the kept mapping, every element that still reads as it
 generates keeps its entry exactly and what differs becomes new or removed entries; without one, the mapping is read
-from the XSLT whole: fields, key=value extractions, maps, time formats, defaults, reference-data lookups,
-dictionaries, and the shared templates and functions of the XSLTs it imports (fetched by name as Stroom resolves
-the import, only when exactly one such XSLT is visible to the user); anything else is kept as an xpath entry.
+from the XSLT whole: fields, key=value extractions, maps, time formats, defaults, `max_length` caps, reference-data
+lookups, dictionaries, and the shared templates and functions of the XSLTs it imports (fetched by name as Stroom
+resolves the import, only when exactly one such XSLT is visible to the user); anything else is kept as an xpath
+entry.
+
+**A loop of one element per value** (`HandLoops`, 2026-11-22): an `xsl:for-each` with no variable holding its item
+(written by hand, or a `repeat` loop of the generator's) that writes one element with elements of its own, e.g. one
+`Email` per address, each with its `From/EmailAddress`, is read back as a `for_each` group on that element: its
+fields relative to it, the loop's current value (`.`) read as the item (`item: true`), its items a field's values
+(`array`) or `tokenize(field, 'separator')` (`split`, a literal separator; a split's pieces are trimmed and empty
+ones dropped, which the rebuild notes). Since `repeat: true` writes only the leaf or the element holding it a value
+each, where that element repeats in its own parent, a loop writing a higher element (Email repeats in Payload,
+From doesn't in Email) was read back as a `repeat` the generator now refuses; as a group it regenerates the same
+Events and validates. A loop reading below its value (a relative path, `@value`), writing a Data, a bare leaf or
+anything but that one element, or holding another loop or a template call, is still said not to be read. With the
+kept mapping, a `repeat` loop that still reads as it generates keeps its entry. A repeated Data entry's value
+transformed or cut (`substring(upper-case(.[1]), 1, 3)`) is read back with its `transform` and `max_length`.
 
 The XSLT regenerated from the rebuilt mapping is then stepped beside the XSLT over the sample (up to 200 records
 each way, `PROVE_RECORDS`) and the outputs compared path by path (`EventXml.fieldValues`). Only when every record's
@@ -7425,8 +7443,16 @@ input kind and inside groups and `repeat` loops alike. A positive whole number; 
 says it beside the transform (`` `body` (strip_control, first 4000 characters) ``). Asked for in chat 182: the
 `long_strings_note` told the agent to cap a long JSON body with an xpath, which it wrote as
 `substring(event.Body.Content, 1, 10000)`, selecting nothing for JSON input; the note now names `max_length`, and says
-the JSONParser still cuts (and warns) at its `stringTruncateLength` first. `rebuild_mapping` doesn't read the cap back
-from an XSLT (an entry with one is read as an xpath).
+the JSONParser still cuts (and warns) at its `stringTruncateLength` first. `rebuild_mapping` reads the cap back
+(`ReadIdioms.capped`, by the `max length` shape): the entry it cuts, with its `max_length`, for a plain, transformed,
+defaulted, repeated or group-item entry, so mapping → XSLT → rebuild gives the same mapping (2026-11-22; it was read
+as an xpath before).
+
+**`clean`** (a transform, 2026-11-22): control characters out (all but tab, new line and CR, and U+FFFD, as
+`HeldText.CONTROL`), then `trim` (`normalize-space`, which makes tab, new line and CR spaces): a value as the tools
+read it, which a source type group's `source-type` function tells its source type by. Unlike `strip_control`, an
+ANSI colour code keeps its parameters (`ESC[1m` gives `[1m`), as the tools' reading does. Written for the per-source
+type System/Name (draft_translation_mapping), read back by rebuild_mapping.
 
 **The generator** (`XsltGenerator.generate`, with `EventTrees` and `EventNode` for each rule's element tree and the
 checks): an XSLT with the right input namespace, a template per record that picks the event kind, elements in

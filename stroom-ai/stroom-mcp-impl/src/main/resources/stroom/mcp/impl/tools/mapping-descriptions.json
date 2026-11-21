@@ -231,7 +231,7 @@
    "model": null
   },
   "transform": {
-   "description": "Applied to the input value first: lower, upper, trim, strip_domain (DOMAIN\\user or user@domain -> user), domain (the DOMAIN or domain part), digits (digits only), unescape_quotes (a quoted CSV value's doubled quotes as one: Data Splitter keeps them doubled), unescape_backslashes (a quote or backslash escaped with a backslash as itself, in quoted key=value values: Data Splitter keeps the escape), strip_control (ANSI colour codes and other control characters out: a log written for a terminal).",
+   "description": "Applied to the input value first: lower, upper, trim, strip_domain (DOMAIN\\user or user@domain -> user), domain (the DOMAIN or domain part), digits (digits only), unescape_quotes (a quoted CSV value's doubled quotes as one: Data Splitter keeps them doubled), unescape_backslashes (a quote or backslash escaped with a backslash as itself, in quoted key=value values: Data Splitter keeps the escape), strip_control (ANSI colour codes and other control characters out: a log written for a terminal), clean (control characters out, then trim: a value as the tools read it, e.g. a source type's).",
    "model": null
   },
   "max_length": {

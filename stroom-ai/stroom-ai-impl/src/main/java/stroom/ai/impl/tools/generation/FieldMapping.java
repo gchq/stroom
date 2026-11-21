@@ -118,7 +118,7 @@ public record FieldMapping(String path,
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
-            "digits", "unescape_quotes", "unescape_backslashes", "strip_control");
+            "digits", "unescape_quotes", "unescape_backslashes", "strip_control", "clean");
 
     // What a group entry can't have: an input or conversion of its own.
     private static final List<String> GROUP_REFUSES = List.of("field", "any_of", "join", "value", "xpath", "meta",

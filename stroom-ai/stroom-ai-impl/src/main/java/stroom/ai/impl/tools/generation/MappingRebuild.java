@@ -49,6 +49,11 @@ final class MappingRebuild {
                                                   + "and fields)";
     // A path of XML names and attributes, as a field of an XML input is written.
     private static final Pattern XML_PATH = Pattern.compile("@?[A-Za-z_][A-Za-z0-9_.-]*(/@?[A-Za-z_][A-Za-z0-9_.-]*)*");
+    // What makes a regex more than its literal text.
+    private static final Pattern REGEX_SPECIAL = Pattern.compile("[\\\\^$.|?*+()\\[\\]{}]");
+    // What a repeated entry's value written of the current value may read as: its input, transformed or cut.
+    private static final Set<String> EACH_VALUE_KEYS = Set.of("path", "data_name", "data_parent", "field", "any_of",
+            "transform", "max_length");
     private static final String XSL = XmlTrees.XSL;
     private static final String EVT = XsltGenerator.EVT;
 
@@ -238,8 +243,10 @@ final class MappingRebuild {
         for (final LeafReading leaf : rule.leaves()) {
             final LeafReading previous = oldLeaves.get(leaf.key());
             final List<Object> form = leaf.form(reading.parser());
-            if (previous != null && previous.form(baseParser).equals(form) && old.effective().containsKey(leaf.key())) {
-                final FieldMapping same = old.effective().get(leaf.key());
+            final FieldMapping same = previous != null && previous.form(baseParser).equals(form)
+                    ? keptEntry(old, leaf)
+                    : null;
+            if (same != null) {
                 // A group's dump without its defaults: a group refuses repeat, even false.
                 entries.add(new Written(Arrays.asList(leaf.key(), form), same.toJson(same.isGroup()
                         ? DumpMode.COMPACT
@@ -265,6 +272,12 @@ final class MappingRebuild {
                 continue;
             }
             final ReadIdioms.Entry entry = idioms.entry(repeated(leaf));
+            if (leaf.repeatSelect() != null && leaf.expr() != null && !eachValueRead(entry)) {
+                out.problems().add("rule " + name + ": " + leaf.path() + " repeats (xsl:for-each), each value "
+                                   + "written as " + XsltReader.head(leaf.expr(), 120) + ", in a way no entry it had "
+                                   + "writes: " + NOT_A_LOOP_READ);
+                continue;
+            }
             if (leaf.repeatSelect() != null) {
                 entry.json().put("repeat", true);
             }
@@ -293,6 +306,22 @@ final class MappingRebuild {
             }
         }
         return keptOrder(entries, reused, old);
+    }
+
+    // The kept entry writing a leaf: by its key, or, for a repeat's loop (read as a group's, its element the one
+    // the repeat writes a value each), the one repeated entry below it. Null if there is none.
+    private static FieldMapping keptEntry(final Before old, final LeafReading leaf) {
+        final FieldMapping entry = old.effective().get(leaf.key());
+        if (entry != null || leaf.group() == null || !leaf.group().byHand()) {
+            return entry;
+        }
+        final List<FieldMapping> below = old.effective().values().stream()
+                .filter(each -> each.repeat() && !XsltReader.truthy(each.dataName())
+                                && ToolText.strip(each.path(), "/").startsWith(leaf.path() + "/"))
+                .toList();
+        return below.size() == 1
+                ? below.getFirst()
+                : null;
     }
 
     // --- repeated groups ----------------------------------------------------------------------------------------
@@ -404,6 +433,29 @@ final class MappingRebuild {
             if (!on.isEmpty()) {
                 source.put("on", on);
             }
+        } else if (group.byHand()) {
+            final XPathNode node = XsltReader.parseOrNull(group.items(), reading.parser());
+            final String on = tokenized(node);
+            final SourceField field = on != null
+                    ? sourceField(XPathTrees.unbracketed(XPathTrees.normal(node)).get(0), outer, false)
+                    : sourceField(handMembers(node), outer, false);
+            if (field == null) {
+                out.problems().add(where + ": a loop written by hand, one element per value, over "
+                                   + XsltReader.head(group.items(), 120) + ": not a field's values or "
+                                   + "tokenize(field, 'separator'), which a group's for_each reads; not read");
+                return null;
+            }
+            read.add(field);
+            source.put(on != null
+                    ? ItemSource.SPLIT
+                    : ItemSource.ARRAY, field.name());
+            if (on != null) {
+                source.put("on", on);
+            }
+            out.notes().add(where + ": a loop written by hand, one element per value, read as a for_each group on "
+                            + "that element, the value its item" + (on != null
+                    ? " (a split's pieces are trimmed, and empty ones dropped)"
+                    : ""));
         } else {
             final XPathNode node = XsltReader.parseOrNull(group.items(), reading.parser());
             final XPathMatch pieces = unify("pieces", node);
@@ -435,6 +487,38 @@ final class MappingRebuild {
             source.put("item", outer.get(at).variable());
         }
         return source;
+    }
+
+    // A loop's items written by hand as a field's values: a JSON array's members (its values, `field/*`, or as the
+    // generator selects them), else the input as it is.
+    private XPathNode handMembers(final XPathNode node) {
+        final XPathNode normal = node == null
+                ? null
+                : XPathTrees.normal(node);
+        if (normal != null && "json".equals(kind) && "/".equals(normal.symbol()) && normal.size() == 2
+            && "*".equals(normal.get(1).symbol()) && normal.get(1).size() == 0) {
+            return normal.get(0);
+        }
+        return members(node);
+    }
+
+    // A loop's items written by hand as tokenize(field, 'separator'): the separator, a literal (a regex of no special
+    // characters, or the q flag); null for any other.
+    private static String tokenized(final XPathNode node) {
+        final XPathNode top = node == null
+                ? null
+                : XPathTrees.unbracketed(XPathTrees.normal(node));
+        if (top == null || !"call".equals(top.symbol()) || !"tokenize".equals(top.valueText()) || top.size() < 2
+            || top.size() > 3 || !"(string)".equals(top.get(1).symbol())) {
+            return null;
+        }
+        final String on = top.get(1).valueText();
+        final boolean literal = top.size() == 3
+                ? "(string)".equals(top.get(2).symbol()) && "q".equals(top.get(2).valueText())
+                : !REGEX_SPECIAL.matcher(on).find();
+        return literal && !on.isEmpty()
+                ? on
+                : null;
     }
 
     private Map<String, Object> notASource(final String where, final String items) {
@@ -725,9 +809,10 @@ final class MappingRebuild {
         return !ReadShapes.SEPARATOR.containsKey(kind);
     }
 
-    // A Data entry the generator repeats, read as an entry over what its loop selects (the entry's input); any other
-    // reading as it is.
-    private static LeafReading repeated(final LeafReading leaf) {
+    // A Data entry the generator repeats, read as an entry over what its loop selects (the entry's input), each value
+    // as the loop writes it (transformed or cut, its first value, `.[1]`, put as the input's); any other reading as
+    // it is.
+    private LeafReading repeated(final LeafReading leaf) {
         if (leaf.repeatSelect() == null) {
             return leaf;
         }
@@ -735,8 +820,36 @@ final class MappingRebuild {
         final LeafReading over = new LeafReading(parent == null
                 ? leaf.path()
                 : withContainers(leaf.path(), parent), leaf.dataName());
-        over.setExpr(leaf.repeatSelect());
+        over.setExpr(leaf.expr() == null
+                ? leaf.repeatSelect()
+                : overInput(leaf.expr(), leaf.repeatSelect()));
         return over;
+    }
+
+    // A repeated entry's value written of the current value (`.[1]`, as scalar(entry, ".") writes it), put as of
+    // the loop's input: each `.[1]` its first value. As it is when it has none.
+    private String overInput(final String each, final String select) {
+        final XPathNode tree = XsltReader.parseOrNull(each, reading.parser());
+        if (tree == null) {
+            return each;
+        }
+        final List<XPathTrees.Replacement> found = new ArrayList<>();
+        for (final XPathNode node : tree.walk()) {
+            if ("[".equals(node.symbol()) && node.size() == 2 && ".".equals(node.get(0).symbol())
+                && XPathTrees.firstOf(node).isPresent()) {
+                found.add(new XPathTrees.Replacement(node.get(0), "(" + select + ")"));
+            }
+        }
+        return found.isEmpty()
+                ? each
+                : XPathTrees.splice(tree.text(), found);
+    }
+
+    // Whether a repeated entry's value written of the current value reads as an entry that writes it so: its input
+    // transformed or cut, nothing else.
+    private static boolean eachValueRead(final ReadIdioms.Entry entry) {
+        return !entry.raw() && (entry.json().containsKey("field") || entry.json().containsKey("any_of"))
+               && EACH_VALUE_KEYS.containsAll(entry.json().keySet());
     }
 
     // A Data entry's path with a container step before its last for each Data it is in, as XsltReader reads it.

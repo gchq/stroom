@@ -205,14 +205,127 @@ class TestXsltReaderGroups extends XsltRuns {
         final String edited = once(code, "</Send>", loop + "</Send>");
         assertThat(edited).isNotEqualTo(code);
 
+        // As an earlier generator wrote repeat there: kept so, it no longer generates.
+        final TranslationMapping earlier = sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""), entry("""
+                {"path": "EventDetail/Send/Payload/Email/From/EmailAddress", "repeat": true,
+                 "xpath": "tokenize(data[@name='recipients']/@value, ',')"}"""));
+        final XsltGenerator.Generated refused = XsltGenerator.generate(earlier, SCHEMA, "4.1.0");
+        assertThat(refused.ok()).isFalse();
+
         final RebuiltMapping lost = XsltReader.rebuild(edited, null, null);
         final RebuiltMapping kept = XsltReader.rebuild(edited, mapping, code);
+        final RebuiltMapping keptEarlier = XsltReader.rebuild(edited, earlier, refused.xslt());
 
-        for (final RebuiltMapping rebuilt : List.of(lost, kept)) {
+        for (final RebuiltMapping rebuilt : List.of(lost, kept, keptEarlier)) {
             assertThat(rebuilt.problems()).anySatisfy(problem -> assertThat(problem)
                     .contains("EventDetail/Send/Data repeats (xsl:for-each)", "not other loops (one written by hand",
                             "for_each, as and fields"));
         }
+    }
+
+    @Test
+    void aHandWrittenLoopOfAnElementAboveTheValueIsReadAsAGroupOnThatElement() {
+        // One Email per address, each with its From/EmailAddress: Email repeats in Payload, From doesn't in Email, so
+        // repeat on the EmailAddress is refused (a for_each on the Email suggested); the loop is that group.
+        final TranslationMapping mapping = sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""));
+        final String code = codeOf(mapping);
+        final String loop = "<Payload><xsl:for-each select=\"tokenize(data[@name='recipients']/@value, ',')\">"
+                            + "<Email><From><EmailAddress><xsl:value-of select=\".\"/></EmailAddress></From>"
+                            + "</Email></xsl:for-each></Payload>";
+        final String edited = once(code, "</Send>", loop + "</Send>");
+        assertThat(edited).isNotEqualTo(code);
+        final String records = """
+                <records xmlns="records:2">
+                <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="sender" value="jane"/>\
+                <data name="first_recipient" value="john"/><data name="recipients" value="a@x.org,b@y.org"/></record>
+                <record><data name="time" value="2026-09-28T10:01:00.000Z"/><data name="sender" value="jill"/>\
+                <data name="first_recipient" value="jack"/><data name="recipients" value="c@z.org"/></record>
+                </records>""";
+        assertThat(invalid(transform(edited, records), XSD)).isEmpty();
+
+        // As an earlier generator wrote repeat there: kept so, it no longer generates.
+        final TranslationMapping earlier = sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""), entry("""
+                {"path": "EventDetail/Send/Payload/Email/From/EmailAddress", "repeat": true,
+                 "xpath": "tokenize(data[@name='recipients']/@value, ',')"}"""));
+        final XsltGenerator.Generated refused = XsltGenerator.generate(earlier, SCHEMA, "4.1.0");
+        assertThat(refused.ok()).isFalse();
+
+        final RebuiltMapping lost = XsltReader.rebuild(edited, null, null);
+        final RebuiltMapping kept = XsltReader.rebuild(edited, mapping, code);
+        final RebuiltMapping keptEarlier = XsltReader.rebuild(edited, earlier, refused.xslt());
+
+        for (final RebuiltMapping rebuilt : List.of(lost, kept, keptEarlier)) {
+            assertThat(rebuilt.problems()).as("%s", rebuilt.summary()).isEmpty();
+            assertThat(rebuilt.notes()).anySatisfy(note -> assertThat(note)
+                    .contains("EventDetail/Send/Payload/Email", "a loop written by hand", "for_each group"));
+            final FieldMapping group = group(rebuilt.mapping());
+            assertThat(group.toJson(DumpMode.COMPACT)).isEqualTo(entry("""
+                    {"path": "EventDetail/Send/Payload/Email", "for_each": {"split": "recipients", "on": ","},
+                     "fields": [{"path": "From/EmailAddress", "item": true}]}"""));
+            assertThat(rebuilt.mapping().everyEntry()).noneMatch(FieldMapping::repeat);
+            final String regenerated = codeOf(rebuilt.mapping());
+            assertThat(invalid(transform(regenerated, records), XSD)).isEmpty();
+            assertThat(events(regenerated, records)).isEqualTo(events(edited, records));
+        }
+    }
+
+    @Test
+    void aRepeatOfTheElementHoldingALeafIsReadBackLostAsAGroupWritingTheSameEvents() {
+        // repeat on Destination/User/Id writes a User a value: its loop, read with the mapping lost, is a group on
+        // the User (no variable holding its item, so read as a loop written by hand); kept, the entry is kept.
+        final List<TranslationMapping> mappings = List.of(sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "rcpt", "repeat": true}""")),
+                sendMapping("json", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "rcpt", "repeat": true}""")));
+        final List<String> records = List.of("""
+                <records xmlns="records:2">
+                <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="sender" value="jane"/>\
+                <data name="rcpt" value="john"/><data name="rcpt" value="jack"/></record>
+                </records>""", """
+                <array xmlns="http://www.w3.org/2013/XSL/json"><map>
+                <string key="time">2026-09-28T10:00:00.000Z</string><string key="host">h</string>\
+                <string key="sender">jane</string>
+                <array key="rcpt"><string>john</string><string>jack</string></array></map></array>""");
+        for (int n = 0; n < mappings.size(); n++) {
+            final TranslationMapping mapping = mappings.get(n);
+            final String code = codeOf(mapping);
+
+            final RebuiltMapping lost = XsltReader.rebuild(code, null, null);
+            final RebuiltMapping kept = XsltReader.rebuild(code, mapping, code);
+
+            assertThat(lost.problems()).as("%s", lost.summary()).isEmpty();
+            assertThat(group(lost.mapping()).toJson(DumpMode.COMPACT)).isEqualTo(entry("""
+                    {"path": "EventDetail/Send/Destination/User", "for_each": {"array": "rcpt"},
+                     "fields": [{"path": "Id", "item": true}]}"""));
+            final String regenerated = codeOf(lost.mapping());
+            assertThat(events(regenerated, records.get(n))).isEqualTo(events(code, records.get(n)))
+                    .contains("john", "jack");
+            assertThat(invalid(transform(regenerated, records.get(n)), XSD)).isEmpty();
+            assertThat(kept.problems()).as("%s", kept.summary()).isEmpty();
+            assertThat(kept.added()).isEmpty();
+            assertThat(normalise(codeOf(kept.mapping()))).isEqualTo(normalise(code));
+        }
+    }
+
+    @Test
+    void aHandWrittenLoopReadingBelowItsValueIsSaidNotToBeRead() {
+        // The loop's value read as a node (its attribute): not a value an item is, so not read as a group.
+        final TranslationMapping mapping = sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""));
+        final String code = codeOf(mapping);
+        final String loop = "<Payload><xsl:for-each select=\"data[@name='recipients']\">"
+                            + "<Email><From><EmailAddress><xsl:value-of select=\"@value\"/></EmailAddress></From>"
+                            + "</Email></xsl:for-each></Payload>";
+        final String edited = once(code, "</Send>", loop + "</Send>");
+
+        final RebuiltMapping rebuilt = XsltReader.rebuild(edited, null, null);
+
+        assertThat(rebuilt.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("EventDetail/Send/Payload/Email repeats (xsl:for-each)", "not other loops"));
+        assertThat(rebuilt.mapping().everyEntry()).noneMatch(FieldMapping::isGroup);
     }
 
     @Test

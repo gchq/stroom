@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.generation.XsltNames;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeReading;
@@ -660,7 +661,7 @@ class SourceTypeGroups {
                 // Each source type's own System/Name, where the group writes it from the source type field: on its
                 // rows, so the registry's table shows it. Only the group's rows, and only that key, are changed.
                 final String systemName = SourceTypeRows.VALUE.equals(JsonValues.text(row.get("match")))
-                        ? namesByValue.get(JsonValues.text(row.get("value")))
+                        ? namesByValue.get(SourceTypeSystemNames.key(JsonValues.text(row.get("value"))))
                         : null;
                 if (systemName != null) {
                     row.put("system_name", systemName);
@@ -1457,14 +1458,16 @@ class SourceTypeGroups {
                 .map(JsonValues::text)
                 .filter(name -> !name.isBlank())
                 .forEach(named::add);
+        // As it goes into the Event: no control characters (user, 2026-11-22).
         if (named.size() == 1) {
-            return named.iterator().next();
+            return HeldText.clean(named.iterator().next());
         }
         return given.common().stream()
                 .filter(entry -> SYSTEM_NAME.equals(entry.strippedPath()) && entry.value() != null)
                 .map(FieldMapping::value)
                 .filter(name -> !name.strip().startsWith("TODO"))
                 .findFirst()
+                .map(HeldText::clean)
                 .orElse(null);
     }
 
@@ -1499,7 +1502,7 @@ class SourceTypeGroups {
         if (moving.contains("EventSource/System")) {
             // The feed's shared decisions: its Environment, and its System Name by default.
             replaceValue(commonEntries, ENVIRONMENT, JsonValues.text(state.get("environment")));
-            replaceValue(commonEntries, SYSTEM_NAME, JsonValues.text(state.get("system_name")));
+            replaceValue(commonEntries, SYSTEM_NAME, HeldText.clean(JsonValues.text(state.get("system_name"))));
         } else if (kept.stream().anyMatch(SourceTypeGroups::nameReadPerRecord)) {
             // The group's own System, its names read per record: the feed's Environment all the same.
             final List<Map<String, Object>> own = new ArrayList<>();

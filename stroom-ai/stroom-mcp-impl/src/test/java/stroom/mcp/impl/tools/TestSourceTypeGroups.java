@@ -158,6 +158,22 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aSystemNameTypedWithControlCharactersIsWrittenWithoutThem() {
+        // A source type's System Name recorded with control characters (a bell, a tab): the group's System/Name
+        // has none (user, 2026-11-22).
+        final Map<String, Object> state = new LinkedHashMap<>(registry().state());
+        state.put("rows", List.of(row("PegaSecurityEvent", "PEGA\u0007 Security\t"), row("PegaIntegration", null),
+                row("PegaDB", null)));
+        written.add(SourceTypeRegistry.render(state));
+
+        final Map<String, Object> saved = world.call(tool, args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(JsonValues.mapOrEmpty(saved.get("group"))).containsEntry("system_name", "PEGA Security");
+    }
+
+    @Test
     void aGroupIsSavedAsItsPipelinesXsltWithTheFeedsCommonModuleAndHelpers() {
         final Map<String, Object> saved = world.call(tool, args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));

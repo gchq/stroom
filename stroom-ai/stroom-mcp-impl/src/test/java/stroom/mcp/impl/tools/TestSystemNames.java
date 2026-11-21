@@ -72,6 +72,9 @@ class TestSystemNames {
         assertThat(String.valueOf(oneFormat.get("common"))).contains("System/Name");
         assertThat(SystemNames.single("Server Telemetry")).isEqualTo("Server Telemetry");
         assertThat(SystemNames.single("{\"cef\": \"A\"}")).isNull();
+        // As it goes into the Event: no control characters (user, 2026-11-22).
+        assertThat(SystemNames.single(" Server\u0007 Telemetry\t")).isEqualTo("Server Telemetry");
+        assertThat(SystemNames.single("\u0007")).isNull();
     }
 
     private static Map<String, Object> mapping() {

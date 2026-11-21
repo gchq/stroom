@@ -144,17 +144,20 @@ public final class LeafReading {
     }
 
     /// @param parser The parser of the XSLT it was read from.
-    /// @return What it writes, to compare with another reading's: its constant, its group's loop as read, its
-    /// repeat as written, or its expression whatever its spacing and brackets.
+    /// @return What it writes, to compare with another reading's: its repeat as written (a loop written by hand
+    /// read as a group's too), its group's loop as read, its constant, or its expression whatever its spacing and
+    /// brackets.
     public List<Object> form(final XPathTreeParser parser) {
+        // A loop written by hand read as a group's is known by the loop as written, as it was before it was read so:
+        // a kept entry the generator wrote it from (a repeat) is still the same.
+        if (repeat != null && !repeat.isEmpty()) {
+            return Arrays.asList("repeat", repeat);
+        }
         if (group != null) {
             return group.form(parser);
         }
         if (value != null) {
             return Arrays.asList("value", value);
-        }
-        if (repeat != null && !repeat.isEmpty()) {
-            return Arrays.asList("repeat", repeat);
         }
         return Arrays.asList("expr", XsltReader.keyOf(expr, parser));
     }

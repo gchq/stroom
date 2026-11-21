@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.JsonFieldNames;
 
 import java.util.List;
@@ -325,6 +326,9 @@ public final class XPathText {
             // can't make an ESC to match with (codepoints-to-string(27): "invalid XML character", seen in eval case
             // 51).
             case "strip_control" -> "replace(" + one + ", '\\p{Cc}\\[[0-9;]*[A-Za-z]|[\\p{Cc}-[\\t\\n\\r]]', '')";
+            // The tools' reading of a value (a source type's, HeldText.normalised): its control characters (but
+            // tab, new line and CR, which normalize-space makes spaces) taken out, then trimmed.
+            case "clean" -> "normalize-space(replace(" + one + ", " + literal(HeldText.CONTROL) + ", ''))";
             case "unescape_quotes" -> "replace(" + one + ", '\"\"', '\"')";
             // A quote or a backslash escaped with a backslash, as one: key=value values quoted so keep the escape in
             // Stroom (a backslash before anything else is the source's own, kept).
@@ -339,7 +343,14 @@ public final class XPathText {
     public static String capText(final String one, final Integer maxLength) {
         return maxLength == null
                 ? one
-                : "substring(" + one + ", 1, " + maxLength + ")";
+                : capText(one, String.valueOf(maxLength));
+    }
+
+    /// @param one       The value's expression.
+    /// @param maxLength The expression of the most characters kept (the cap's shape has a slot here).
+    /// @return The value cut to that many characters.
+    static String capText(final String one, final String maxLength) {
+        return "substring(" + one + ", 1, " + maxLength + ")";
     }
 
     /// @param path A path into XML held in a field (`/Envelope/Body/User`, `//User`, `/Login/@id`).

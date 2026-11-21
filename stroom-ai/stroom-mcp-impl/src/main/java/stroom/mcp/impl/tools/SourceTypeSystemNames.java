@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /// EventSource/System/Name per source type, for a build whose scope is a source type group of several source types
 /// (seen in chat 182: the user answered "as per source type", and only one name could be given). `system_name` is
@@ -45,11 +45,11 @@ import java.util.regex.Pattern;
 final class SourceTypeSystemNames {
 
     private static final String SYSTEM_NAME = "EventSource/System/Name";
-    // The transform the entry reads the field's value with: white space stripped from around it (and runs within it
-    // made one space), so a padded value its source type's row matches (the group's source-type function strips it)
-    // gets its name too.
-    private static final String TRIM = "trim";
-    private static final Pattern XML_SPACE = Pattern.compile("[ \t\n\r]+");
+    // The transform the entry reads the field's value with: control characters taken out, then white space
+    // stripped from around it (and runs within it made one space), so a value its source type's row matches with
+    // control characters or padding (the group's source-type function strips both) gets its name too, and a value
+    // written as it is carries no control character into the Event (user, 2026-11-22).
+    private static final String CLEAN = "clean";
 
     private SourceTypeSystemNames() {
         // Static only.
@@ -77,8 +77,12 @@ final class SourceTypeSystemNames {
         }
         final Map<String, String> out = new LinkedHashMap<>();
         map.forEach((type, name) -> {
-            if (name != null && !ToolText.isBlank(String.valueOf(name))) {
-                out.put(String.valueOf(type), ToolText.strip(String.valueOf(name)));
+            // A name as it goes into the Event: no control characters (user, 2026-11-22).
+            final String cleaned = name == null
+                    ? null
+                    : HeldText.clean(String.valueOf(name));
+            if (cleaned != null && !cleaned.isEmpty()) {
+                out.put(String.valueOf(type), cleaned);
             }
         });
         final List<String> missing = names.stream()
@@ -111,7 +115,8 @@ final class SourceTypeSystemNames {
 
     /// Writes EventSource/System/Name from the source type field's value: the common entry made a `field` and `map`
     /// entry of each value the scope's rows tell its source types by, to the source type's name, the value read
-    /// trimmed (`transform` `trim`), as the group's XSLT strips it to tell its source type.
+    /// cleaned (`transform` `clean`: control characters taken out, then trimmed), as the group's XSLT strips it to
+    /// tell its source type.
     ///
     /// @param mapping The draft's mapping.
     /// @param scope   The build's scope.
@@ -122,7 +127,7 @@ final class SourceTypeSystemNames {
         final Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("path", SYSTEM_NAME);
         entry.put("field", scope.field());
-        entry.put("transform", TRIM);
+        entry.put("transform", CLEAN);
         entry.put("map", new LinkedHashMap<>(byValue(scope, names)));
         final List<Object> common = new ArrayList<>(JsonValues.listOrEmpty(mapping.get("common")));
         boolean replaced = false;
@@ -141,9 +146,9 @@ final class SourceTypeSystemNames {
 
     /// @param scope The build's scope.
     /// @param names Each source type's name.
-    /// @return Each value the scope's rows tell the named source types by (as `trim` gives it: white space stripped
-    /// from around it, runs within it one space), to its name: the rows in order, a value the source type of its
-    /// first row (as the tools and the group's XSLT read it).
+    /// @return Each value the scope's rows tell the named source types by (as `clean` gives it, [#key]), to its
+    /// name: the rows in order, a value the source type of its first row (as the tools and the group's XSLT read
+    /// it).
     static Map<String, String> byValue(final SourceTypeScope scope, final Map<String, String> names) {
         final Map<String, String> out = new LinkedHashMap<>();
         final Set<String> seen = new HashSet<>();
@@ -151,12 +156,19 @@ final class SourceTypeSystemNames {
             if (!SourceTypeRows.VALUE.equals(row.match()) || row.value() == null) {
                 continue;
             }
-            final String key = XML_SPACE.matcher(row.value()).replaceAll(" ").strip();
+            final String key = key(row.value());
             if (seen.add(key) && names.containsKey(row.name())) {
                 out.put(key, names.get(row.name()));
             }
         }
         return out;
+    }
+
+    /// @param value A source type field's value, or a registry row's.
+    /// @return It as the System/Name entry looks it up in its map: as `clean` gives it (control characters taken
+    /// out, white space stripped from around it, runs within it one space).
+    static String key(final String value) {
+        return HeldText.clean(value);
     }
 
     // Why the scope's source types can't each be named from the source type field's values; empty when they can.

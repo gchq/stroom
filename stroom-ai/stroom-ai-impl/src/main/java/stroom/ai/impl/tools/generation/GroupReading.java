@@ -34,10 +34,13 @@ import java.util.Map;
 /// @param lists    For a zip: each list's variable, in order, to what it selects; else empty.
 /// @param leaves   What each item's element holds, paths relative to it (a Data group's Data entries as `Data`);
 ///                 a group inside it as a leaf with a group of its own.
+/// @param byHand   Whether the loop was written by hand ([HandLoops]): one element per value, the loop's current
+///                 value read through `variable`, its items as written rather than as the generator's.
 public record GroupReading(String items,
                            String variable,
                            Map<String, String> lists,
-                           List<LeafReading> leaves) {
+                           List<LeafReading> leaves,
+                           boolean byHand) {
 
     /// Copies the lists given.
     public GroupReading {
@@ -55,7 +58,9 @@ public record GroupReading(String items,
         for (final LeafReading leaf : leaves) {
             leafForms.add(Arrays.asList(leaf.key(), leaf.form(parser)));
         }
-        return Arrays.asList("group", XsltReader.keyOf(items, parser), variable, listForms, leafForms);
+        return byHand
+                ? Arrays.asList("group by hand", XsltReader.keyOf(items, parser), listForms, leafForms)
+                : Arrays.asList("group", XsltReader.keyOf(items, parser), variable, listForms, leafForms);
     }
 
     /// @return It as a map, for the reader's dumps: items, variable, lists, leaves.
@@ -65,6 +70,10 @@ public record GroupReading(String items,
         out.put("variable", variable);
         out.put("lists", lists);
         out.put("leaves", leaves.stream().map(LeafReading::toMap).toList());
+        if (byHand) {
+            // Only for a loop written by hand, so the generator's keep the keys the reader fixtures pin.
+            out.put("by_hand", true);
+        }
         return out;
     }
 }

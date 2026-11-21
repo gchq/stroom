@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -719,6 +720,7 @@ final class PlacementCheck {
                     : value;
             case "digits" -> NOT_DIGIT.matcher(value).replaceAll("");
             case "strip_control" -> CONTROL.matcher(value).replaceAll("");
+            case "clean" -> HeldText.clean(value);
             case "unescape_quotes" -> value.replace("\"\"", "\"");
             case "unescape_backslashes" -> ESCAPED.matcher(value).replaceAll("$1");
             default -> value;

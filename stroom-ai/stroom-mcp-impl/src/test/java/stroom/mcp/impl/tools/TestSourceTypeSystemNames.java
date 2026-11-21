@@ -109,10 +109,31 @@ class TestSourceTypeSystemNames {
 
         SourceTypeSystemNames.apply(mapping, scope("Workload", ROWS), Map.of("mail", "Mail", "chat", "Chat"));
 
-        // Read trimmed: a padded value, which the group's XSLT tells by its row, gets its name too.
+        // Read clean: a padded value, or one with control characters, which the group's XSLT tells by its row, gets
+        // its name too, and no control character goes into the Event.
         assertThat((List<?>) mapping.get("common")).hasSize(2).last().isEqualTo(Map.of("path",
-                "EventSource/System/Name", "field", "Workload", "transform", "trim", "map", Map.of("Exchange",
+                "EventSource/System/Name", "field", "Workload", "transform", "clean", "map", Map.of("Exchange",
                         "Mail", "Chat", "Chat", "Calls", "Chat")));
+    }
+
+    @Test
+    void namesAndValuesAreTakenAsTheEventHoldsThemWithoutControlCharacters() {
+        // A name typed with control characters (a tab, a bell, an ANSI colour code's escapes) goes into the Event
+        // without them (user, 2026-11-22).
+        final SourceTypeScope scope = scope("Workload", ROWS);
+        assertThat(SourceTypeSystemNames.of(Map.of("mail", " Mail\u0007\t", "chat", "\u001b[1mChat\u001b[0m"),
+                scope)).containsOnly(Map.entry("mail", "Mail"), Map.entry("chat", "[1mChat[0m"));
+        // Only control characters: no name.
+        assertThatThrownBy(() -> SourceTypeSystemNames.of(Map.of("mail", "Mail", "chat", "\u0007\u0000"), scope))
+                .isInstanceOf(ToolRefusal.class).hasMessageContaining("no name for ['chat']");
+
+        // A row's value keyed as the entry's clean transform reads the field: its control characters out, trimmed.
+        final List<SourceTypeRows.Row> rows = List.of(
+                new SourceTypeRows.Row("mail", SourceTypeRows.VALUE, "Ex\u0007change "),
+                new SourceTypeRows.Row("chat", SourceTypeRows.VALUE, "Chat\t\u001b"));
+        assertThat(SourceTypeSystemNames.byValue(scope("Workload", rows), Map.of("mail", "Mail", "chat", "Chat")))
+                .containsExactly(Map.entry("Exchange", "Mail"), Map.entry("Chat", "Chat"));
+        assertThat(SourceTypeSystemNames.key("\u001b[31m Pega  DB\u0007\t")).isEqualTo("[31m Pega DB");
     }
 
     private static SourceTypeScope scope(final String field, final List<SourceTypeRows.Row> rows) {

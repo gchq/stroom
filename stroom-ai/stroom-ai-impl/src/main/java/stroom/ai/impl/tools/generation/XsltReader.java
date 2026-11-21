@@ -478,6 +478,9 @@ public final class XsltReader {
             }
         } else if (child.is(XSL, "for-each") && groupLoop(child)) {
             readGroup(parent, child, path, scope, templates, rule, parser);
+        } else if (child.is(XSL, "for-each") && readHandLoop(child, path, scope, templates, rule, parser)) {
+            // Read as a group's loop.
+            return;
         } else if (child.is(XSL, "for-each")) {
             // A Data entry repeated in a named Data (data_parent): known by its Name, as its entry is. Elsewhere read
             // with no Data name.
@@ -488,9 +491,16 @@ public final class XsltReader {
                     : null;
             final LeafReading leaf = new LeafReading(join(path, firstEventName(child)), dataName);
             leaf.setRepeat(String.join(" ", words(XmlSerialiser.toXml(child))));
-            if (dataName != null && child.childElements().size() == 1 && eachValue(first)) {
-                // The generator's repeated Data entry: a Data of each value the loop selects.
+            final String each = dataName != null && child.childElements().size() == 1
+                    ? eachValue(first)
+                    : null;
+            if (each != null) {
+                // The generator's repeated Data entry: a Data of each value the loop selects, the value as it is or
+                // (transformed, cut) an expression of it, read by the rebuild.
                 leaf.setRepeatSelect(resolve(Objects.requireNonNullElse(child.get("select"), ""), scope, parser));
+                if (!".".equals(each)) {
+                    leaf.setExpr(each);
+                }
             }
             rule.leaves().add(leaf);
         } else if (!child.is(XSL, "variable")) {
@@ -543,7 +553,8 @@ public final class XsltReader {
 
     // A group's loop: the element written per item, and what each holds, read as the generator writes them. The
     // item's variable (and a zip's lists') stay unresolved inside, so the rebuild can tell the item's reads from the
-    // record's. A loop of any other shape (hand-written, say) is read as a repeat no entry writes, and said why.
+    // record's. A loop of any other shape is read as a repeat no entry writes, and said why (one written by hand
+    // writing one element per value is read as a group's, readHandLoop).
     private static void readGroup(final XmlElement parent,
                                   final XmlElement loop,
                                   final List<String> path,
@@ -569,6 +580,53 @@ public final class XsltReader {
         final Map<String, String> inner = new LinkedHashMap<>(scope);
         inner.remove(variable);
         lists.keySet().forEach(name -> inner.remove(name.substring(1)));
+        readItems(loop, element, path, variable, lists, inner, scope, false, templates, rule, parser);
+    }
+
+    // A loop written by hand writing one element per value (HandLoops): read as a group's loop, each read of its
+    // current value put as a read of an item variable, and said so. Not read so (false) when it writes anything
+    // else or reads below the current value.
+    private static boolean readHandLoop(final XmlElement loop,
+                                        final List<String> path,
+                                        final Map<String, String> scope,
+                                        final Map<String, XmlElement> templates,
+                                        final RuleReading rule,
+                                        final XPathTreeParser parser) {
+        final XmlElement element = HandLoops.element(loop);
+        final String variable = element == null
+                ? null
+                : HandLoops.variableFor(loop, scope);
+        final XmlElement itemised = variable == null || rule.groupDepth() >= FieldGroup.MAX_DEPTH
+                ? null
+                : HandLoops.itemise(element, variable, parser);
+        if (itemised == null) {
+            return false;
+        }
+        // The element's own variables, as they select there.
+        final Map<String, String> inner = new LinkedHashMap<>(scope);
+        for (final XmlElement declared : itemised.iterElements(XSL, "variable")) {
+            if (truthy(declared.get("name")) && truthy(declared.get("select"))) {
+                inner.put(declared.get("name"), declared.get("select"));
+            }
+        }
+        readItems(loop, itemised, path, variable, Map.of(), inner, scope, true, templates, rule, parser);
+        // Known by the loop as written, as a repeat is (LeafReading.form).
+        rule.leaves().getLast().setRepeat(String.join(" ", words(XmlSerialiser.toXml(loop))));
+        return true;
+    }
+
+    // A group's element read, item by item: what it holds, as a leaf of the rule with the loop's reading.
+    private static void readItems(final XmlElement loop,
+                                  final XmlElement element,
+                                  final List<String> path,
+                                  final String variable,
+                                  final Map<String, String> lists,
+                                  final Map<String, String> inner,
+                                  final Map<String, String> scope,
+                                  final boolean byHand,
+                                  final Map<String, XmlElement> templates,
+                                  final RuleReading rule,
+                                  final XPathTreeParser parser) {
         final RuleReading items = new RuleReading(rule.key(), rule.name(), null, false);
         items.setGroupDepth(rule.groupDepth() + 1);
         final boolean data = "Data".equals(element.localName());
@@ -588,7 +646,7 @@ public final class XsltReader {
                 ? element.get("Name")
                 : null);
         leaf.setGroup(new GroupReading(resolve(Objects.requireNonNullElse(loop.get("select"), ""), scope, parser),
-                variable, lists, items.leaves()));
+                variable, lists, items.leaves(), byHand));
         rule.leaves().add(leaf);
     }
 
@@ -937,17 +995,30 @@ public final class XsltReader {
                 .orElse(null);
     }
 
-    // A Data element whose Value is the loop's current value, as the generator writes it ({.} or xsl:attribute).
-    private static boolean eachValue(final XmlElement data) {
-        if (".".equals(ToolText.strip(Objects.requireNonNullElse(data.get("Value"), "").replaceAll("^\\{|}$", "")))
-            && data.childElements().isEmpty()) {
-            return true;
+    // A Data element's Value, as the generator writes a repeated entry's ({...} or xsl:attribute): its expression
+    // (the loop's current value, `.`, or an expression of it); null for a Data written any other way.
+    private static String eachValue(final XmlElement data) {
+        final String value;
+        if (data.get("Value") != null && data.childElements().isEmpty()) {
+            final String written = ToolText.strip(data.get("Value"));
+            final String inner = written.startsWith("{") && written.endsWith("}")
+                    ? written.substring(1, written.length() - 1)
+                    : written;
+            // One expression in braces (the generator's), or the dot as it is.
+            if (inner.contains("{") || inner.contains("}") || (inner.equals(written) && !".".equals(inner))) {
+                return null;
+            }
+            value = ToolText.strip(inner);
+        } else if (data.get("Value") == null && data.childElements().size() == 1
+                   && data.childElements().getFirst().is(XSL, "attribute")
+                   && "Value".equals(data.childElements().getFirst().get("name"))) {
+            value = ToolText.strip(Objects.requireNonNullElse(data.childElements().getFirst().get("select"), ""));
+        } else {
+            return null;
         }
-        return data.get("Value") == null && data.childElements().size() == 1
-               && data.childElements().getFirst().is(XSL, "attribute")
-               && "Value".equals(data.childElements().getFirst().get("name"))
-               && ".".equals(ToolText.strip(Objects.requireNonNullElse(data.childElements().getFirst().get("select"),
-                "")));
+        return value.isEmpty()
+                ? null
+                : value;
     }
 
     private static XmlElement firstEventElement(final XmlElement loop) {

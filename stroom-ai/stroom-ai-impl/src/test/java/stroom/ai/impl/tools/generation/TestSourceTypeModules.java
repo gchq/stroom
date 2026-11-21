@@ -215,6 +215,65 @@ class TestSourceTypeModules extends XsltRuns {
     }
 
     @Test
+    void aGroupNamedPerSourceTypeCleansEachValueOfControlCharactersBeforeLookingUpItsName() {
+        // The group's source-type function strips control characters as well as white space (as the tools read a
+        // value), so a value with a trailing tab, a bell or an ANSI colour code's escapes matches its row; read with
+        // trim alone it missed its name, and an Event with no System/Name isn't valid. Read clean, each gets it.
+        final Modules modules = modules();
+        final List<SourceTypeModule.Row> rows = new ArrayList<>(ROWS);
+        // As the tools read a value with an ANSI colour code: its escapes taken out, its parameters kept.
+        rows.add(new SourceTypeModule.Row("PegaColour", SourceTypeRows.VALUE, "[1mPegaColour[0m"));
+        final String records = "<?xml version=\"1.1\"?><map xmlns=\"http://www.w3.org/2013/XSL/json\">"
+                               + record("2026-11-10T00:00:01.000Z", "PegaDB\t", "tab")
+                               + record("2026-11-10T00:00:02.000Z", " PegaSecurityEvent  ", "spaces")
+                               + record("2026-11-10T00:00:03.000Z", "Pega&#x7;DB", "bell")
+                               + record("2026-11-10T00:00:04.000Z", "PegaDB&#x7;", "trailing bell")
+                               + record("2026-11-10T00:00:05.000Z", "&#x1b;[1mPegaColour&#x1b;[0m", "colour")
+                               + "</map>";
+
+        final List<String> cleaned = systemNames(modules, rows, "clean", records);
+        final List<String> trimmed = systemNames(modules, rows, "trim", records);
+
+        assertThat(cleaned).containsExactly("PEGA DB", "PEGA Security", "PEGA DB", "PEGA DB", "PEGA Colour");
+        assertThat(trimmed).containsExactly("PEGA DB", "PEGA Security", null, null, null);
+    }
+
+    // Each Event's EventSource/System/Name (null for none) as a group of three source types, its Name read with this
+    // transform and mapped, writes them from these records; the Events valid when every one has its Name.
+    private static List<String> systemNames(final Modules modules,
+                                            final List<SourceTypeModule.Row> rows,
+                                            final String transform,
+                                            final String records) {
+        final TranslationMapping mapping = TranslationMapping.fromJson(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/Generator", "value": "Pega"},
+                            {"path": "EventSource/System/Name", "field": "sourcetype", "transform": "%s",
+                             "map": {"PegaSecurityEvent": "PEGA Security", "PegaDB": "PEGA DB",
+                                     "[1mPegaColour[0m": "PEGA Colour"}},
+                            {"path": "EventSource/System/Environment", "value": "Prod"}],
+                 "ignored_fields": ["app", "sourcetype"],
+                 "events": [{"name": "line", "allow_unknown": "a test",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Line"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "message",
+                                         "field": "message"}]}]}""".formatted(transform)));
+        final TranslationMapping group = mapping.withModule(new SourceTypeModule(SourceTypeModule.GROUP,
+                "PEGA app", "pega_app", List.of("PegaSecurityEvent", "PegaDB", "PegaColour"), COMMON_HREF, null,
+                SourceTypeModule.commonParts(modules.commonMapping()), null, "sourcetype", rows));
+        final XsltGenerator.Generated generated = XsltGenerator.generate(group, SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+
+        final XmlElement events = transform(generated.xslt(), records, modules.imports(), new ArrayList<>());
+
+        final List<String> names = children(events, "Event").stream()
+                .map(event -> text(event, "EventSource/System/Name"))
+                .toList();
+        if (!names.contains(null)) {
+            assertThat(invalid(events, XSD)).isEmpty();
+        }
+        return names;
+    }
+
+    @Test
     void aRecordPassedOverHasItsNumberReadAsTheGroupsOwnAreRead() {
         // Stroom moves to a record's location only when one is read: a record passed over without reading it left
         // later log lines naming earlier records (seen with the dispatcher in the aggregated feed walks). Each record

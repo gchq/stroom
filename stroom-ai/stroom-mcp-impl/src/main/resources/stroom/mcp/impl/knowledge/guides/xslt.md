@@ -123,7 +123,7 @@ Each value has one source and optional modifiers:
 
 | Modifier | Meaning |
 | --- | --- |
-| `transform` | `lower`, `upper`, `trim`, `strip_domain` (`DOMAIN\user`, `user@domain` → `user`), `domain`, `digits`, `unescape_quotes` (a quoted CSV value's doubled quotes as one), `unescape_backslashes` (a quote or backslash escaped with a backslash as itself, in quoted key=value values), `strip_control` (ANSI colour codes and other control characters out, from a log written for a terminal) |
+| `transform` | `lower`, `upper`, `trim`, `strip_domain` (`DOMAIN\user`, `user@domain` → `user`), `domain`, `digits`, `unescape_quotes` (a quoted CSV value's doubled quotes as one), `unescape_backslashes` (a quote or backslash escaped with a backslash as itself, in quoted key=value values), `strip_control` (ANSI colour codes and other control characters out, from a log written for a terminal), `clean` (control characters out, then `trim`: a value as the tools read it, a source type's) |
 | `dictionary: name` | The value a Dictionary of key=value lines gives the field |
 | `map`, `default`, `time_format`, `timezone` | As before: a value map, a fallback, time parsing |
 

@@ -104,6 +104,7 @@ public final class HeldText {
     private static final Pattern SPACE_AROUND_PATTERN = Pattern.compile(SPACE_AROUND);
     // CONTROL in Java's dialect.
     private static final Pattern CONTROL_PATTERN = Pattern.compile("[[\\p{Cc}\uFFFD]&&[^\\t\\n\\r]]");
+    private static final Pattern XML_SPACE_RUN = Pattern.compile("[ \t\n\r]+");
     private static final Pattern PAIR_PATTERN = Pattern.compile(PAIR);
     private static final Pattern KEY_PATTERN = Pattern.compile(KEY);
     private static final Pattern SYSLOG_5424_PATTERN = Pattern.compile(SYSLOG_5424, Pattern.DOTALL);
@@ -170,6 +171,17 @@ public final class HeldText {
         // The empty branch first, then the shortest run before a separator: the first `key=` (Saxon's `??` doesn't
         // match where Java's does, so it isn't used).
         return "^(|.*?[ \\t\\n\\r,;])" + SourceTypeRows.escape(key) + "=(\"([^\"]*)\"|([^ \\t\\n\\r,;]*)).*$";
+    }
+
+    /// @param value A value, or null.
+    /// @return It as a mapping entry's `clean` transform gives it: stripped of control characters ([#CONTROL]), then
+    /// trimmed as `trim` is (XML's white space stripped from around it, each run within it one space), so no control
+    /// character is left; null for null.
+    public static String clean(final String value) {
+        if (value == null) {
+            return null;
+        }
+        return XML_SPACE_RUN.matcher(CONTROL_PATTERN.matcher(value).replaceAll("")).replaceAll(" ").strip();
     }
 
     /// @param value A value read, or null.

@@ -41,6 +41,10 @@ final class ReadIdioms {
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
     private static final Pattern NOT_WORD = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> PLAIN_SOURCES = Set.of("field", "any_of");
+    // What a max_length cap doesn't go with (FieldMapping refuses them with it), or doesn't cut (a default is
+    // written uncut, outside it).
+    private static final List<String> CAP_REFUSES = List.of("value", "map", "time_format", "fill_template",
+            "mask_names", "max_length", "default");
     // The tests of a value against a text, by shape, with the condition key each is read as.
     private static final Map<String, String> TEXT_TESTS = textTests();
     /// What the rebuild puts in place of a group's item ([MappingRebuild]), followed by its depth: read as a field
@@ -350,6 +354,10 @@ final class ReadIdioms {
     }
 
     private Map<String, Object> idiom(final XPathNode node, final String guard) {
+        final Map<String, Object> capped = capped(node);
+        if (capped != null) {
+            return capped;
+        }
         final Map<String, Object> found = sourceOf(node);
         if (found != null && !found.isEmpty()) {
             return found;
@@ -409,6 +417,33 @@ final class ReadIdioms {
             }
         }
         return converted(node);
+    }
+
+    // A value cut to its max_length (capText): the entry it cuts, with the length. Null when it isn't one, or what it
+    // cuts isn't an input max_length goes with (a value, a map, a time, a template or a mask, as FieldMapping
+    // refuses).
+    private Map<String, Object> capped(final XPathNode node) {
+        final XPathMatch match = unify("max length", node);
+        final XPathNode length = match == null
+                ? null
+                : XPathTrees.normal(match.expr(2));
+        if (length == null || !"(integer)".equals(length.symbol())
+            || !(length.value() instanceof final BigInteger cap) || cap.signum() <= 0
+            || cap.bitLength() >= Integer.SIZE) {
+            return null;
+        }
+        Map<String, Object> inner = idiom(match.expr(1), null);
+        final Optional<XPathNode> first = XPathTrees.firstOf(match.expr(1));
+        if ((inner == null || inner.isEmpty()) && first.isPresent()) {
+            // A lookup's (or a dictionary's) value: one value already, cut as the generator's first of it.
+            inner = idiom(first.get(), null);
+        }
+        if (inner == null || inner.isEmpty() || CAP_REFUSES.stream().anyMatch(inner::containsKey)) {
+            return null;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(inner);
+        out.put("max_length", cap.intValueExact());
+        return out;
     }
 
     // An input, transformed or not.

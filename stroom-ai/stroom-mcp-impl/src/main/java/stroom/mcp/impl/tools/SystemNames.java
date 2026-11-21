@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
@@ -45,9 +46,10 @@ final class SystemNames {
     /// @param given The `system_name` argument: a name, or a JSON object of each variant's name.
     /// @return The name for every event, or null when none, or one per variant, was given.
     static String single(final Object given) {
+        // A name as it goes into the Event: no control characters (user, 2026-11-22).
         final String text = given == null
                 ? null
-                : ToolText.strip(String.valueOf(given));
+                : HeldText.clean(String.valueOf(given));
         return text == null || text.isEmpty() || given instanceof Map || text.startsWith("{")
                 ? null
                 : text;
@@ -120,8 +122,11 @@ final class SystemNames {
         final Map<String, String> out = new LinkedHashMap<>();
         if (value instanceof final Map<?, ?> map) {
             map.forEach((variant, name) -> {
-                if (name != null && !ToolText.isBlank(String.valueOf(name))) {
-                    out.put(String.valueOf(variant), ToolText.strip(String.valueOf(name)));
+                final String cleaned = name == null
+                        ? null
+                        : HeldText.clean(String.valueOf(name));
+                if (cleaned != null && !cleaned.isEmpty()) {
+                    out.put(String.valueOf(variant), cleaned);
                 }
             });
         }
