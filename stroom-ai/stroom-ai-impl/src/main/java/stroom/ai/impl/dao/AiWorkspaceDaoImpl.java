@@ -95,9 +95,14 @@ public class AiWorkspaceDaoImpl implements AiWorkspaceDao {
                              final List<Chunk> chunks,
                              final long sizeBytes) {
         JooqUtil.transaction(aiDbConnProvider, context -> {
-            context.deleteFrom(AI_CHAT_FILE_CHUNK)
-                    .where(AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.eq(fileId))
-                    .execute();
+            // Only a file that has content has any to delete. Deleting none from a new file still locks the gap
+            // at the end of the index, so new files written at once (parallel tool calls) deadlocked on their
+            // inserts.
+            if (context.fetchExists(AI_CHAT_FILE_CHUNK, AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.eq(fileId))) {
+                context.deleteFrom(AI_CHAT_FILE_CHUNK)
+                        .where(AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.eq(fileId))
+                        .execute();
+            }
             for (int seq = 0; seq < chunks.size(); seq++) {
                 final Chunk chunk = chunks.get(seq);
                 context.insertInto(AI_CHAT_FILE_CHUNK)
