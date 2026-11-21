@@ -16,9 +16,8 @@
 
 # This is our java build image for building stroom
 # It also contains plantuml for plant uml image generation
-# Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
-# See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b
+# Use the same image tag/sha as in docker/Dockerfile so we can reuse the same layers
+FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396a4926f183b1d379934248b0d335567282417517
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared
@@ -41,7 +40,7 @@ ARG HOST_REPO_DIR
 # The name DOCKER_HOST is used by docker so don't use that.
 ARG DOCKER_HOST_IP
 
-ARG PLANTUML_VERSION=1.2026.8
+ARG PLANTUML_VERSION=1.2026.10
 
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID \
@@ -49,12 +48,9 @@ ENV CONTAINER_USER_ID=$USER_ID \
     DOCKER_HOST_IP=$DOCKER_HOST_IP \
     LANG=en_GB.UTF-8
 
-# Set tini as entrypoint
-#ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
-
 CMD [ "id" ]
 
-# graphviz, ttf-* for plantuml
+# graphviz and DejaVu fonts for PlantUML
 # rsync for gradle task :stroom-app:gwt:jakarta
 # As this container will be trying to use the docker cli to run/interact with other
 # containers we need to add our non-root user to the docker group i.e. the same gid as
@@ -62,56 +58,71 @@ CMD [ "id" ]
 # If we have the gid then find its name and add the user to it, if not create a group
 # with that gid then add the user.
 # We need this membership to have access to docker.sock.
-RUN apk add --no-cache \
+RUN set -eu; \
+    microdnf install -y \
       bash \
+      ca-certificates \
       curl \
-      docker-cli \
       git \
       graphviz \
+      procps-ng \
       rsync \
-      su-exec \
-      tini \
-      font-droid \
-      font-droid-nonlatin \
-    && curl \
+      shadow-utils \
+      fontconfig \
+      dejavu-sans-fonts; \
+    mkdir -p /etc/yum.repos.d; \
+    curl \
+      -fsSL \
+      https://download.docker.com/linux/centos/docker-ce.repo \
+      -o /etc/yum.repos.d/docker-ce.repo; \
+    microdnf install -y docker-ce-cli; \
+    curl \
       -Ls \
       https://github.com/plantuml/plantuml/releases/download/v$PLANTUML_VERSION/plantuml-$PLANTUML_VERSION.jar \
-      -o /builder/plantuml.jar \
-    && alias ll='ls -l' \
-    && echo "USER_ID: [$USER_ID]" \
-    && echo "GROUP_ID: [$GROUP_ID]" \
-    && echo "PLANTUML_VERSION: [$PLANTUML_VERSION]" \
-    && echo "DOCKER_GROUP_ID: [$DOCKER_GROUP_ID]" \
-    && echo \
-    && echo "Ensuring group exists for group id [${GROUP_ID}]" \
-    && group_name="$(cat /etc/group | grep ":${GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
-    && echo "group_name from /etc/group: [$group_name"] \
-    && if [ -n "${group_name}" ]; then echo "Found group [${group_name}] with id ${GROUP_ID}"; fi \
-    && if [ ! -n "${group_name}" ]; then echo "Creating group [builder] with id ${GROUP_ID}"; fi \
-    && if [ ! -n "${group_name}" ]; then addgroup -g "$GROUP_ID" -S builder; fi \
-    && if [ ! -n "${group_name}" ]; then group_name="builder"; fi \
-    && echo "group_name: [$group_name"] \
-    && echo \
-    && echo "Ensuring user exists for user id [${USER_ID}]" \
-    && user_name="$(getent passwd "$USER_ID" | cut -d: -f1)" \
-    && echo "user_name from passwd with id ${USER_ID}: [$user_name]" \
-    && if [ -n "${user_name}" ]; then echo "Found user [${user_name}] with id ${USER_ID}"; fi \
-    && if [ ! -n "${user_name}" ]; then echo "Creating user [builder] with id ${USER_ID}"; fi \
-    && if [ ! -n "${user_name}" ]; then adduser -u "$USER_ID" -S -s /bin/false -D -G "${group_name}" builder; fi \
-    && if [ ! -n "${user_name}" ]; then user_name="builder"; fi \
-    && echo "user_name: [$user_name]" \
-    && echo \
-    && echo "Ensuring group exists for docker group id [${DOCKER_GROUP_ID}]" \
-    && docker_group_name="$(cat /etc/group | grep ":${DOCKER_GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
-    && if [ -n "${docker_group_name}" ]; then echo "Found group [${docker_group_name}] with docker group id ${DOCKER_GROUP_ID}"; fi \
-    && if [ ! -n "${docker_group_name}" ]; then echo "Creating group [docker] with id ${DOCKER_GROUP_ID}"; fi \
-    && if [ ! -n "${docker_group_name}" ]; then addgroup -g $DOCKER_GROUP_ID -S docker; fi \
-    && if [ ! -n "${docker_group_name}" ]; then docker_group_name="docker"; fi \
-    && echo "docker_group_name: $docker_group_name" \
-    && echo "Adding user [builder] to docker group [${docker_group_name}]" \
-    && addgroup builder "${docker_group_name}" \
-    && mkdir -p /builder/shared \
-    && chown -R $USER_ID:$GROUP_ID /builder
+      -o /builder/plantuml.jar; \
+    alias ll='ls -l'; \
+    echo "USER_ID: [$USER_ID]"; \
+    echo "GROUP_ID: [$GROUP_ID]"; \
+    echo "PLANTUML_VERSION: [$PLANTUML_VERSION]"; \
+    echo "DOCKER_GROUP_ID: [$DOCKER_GROUP_ID]"; \
+    echo; \
+    echo "Ensuring group exists for group id [${GROUP_ID}]"; \
+    group_name="$(cat /etc/group | grep ":${GROUP_ID}:" | awk -F ":" '{ print $1 }')"; \
+    echo "group_name from /etc/group: [$group_name"]; \
+    if [ -n "${group_name}" ]; then echo "Found group [${group_name}] with id ${GROUP_ID}"; fi; \
+    if [ ! -n "${group_name}" ]; then echo "Creating group [builder] with id ${GROUP_ID}"; fi; \
+    if [ ! -n "${group_name}" ]; then groupadd --gid "$GROUP_ID" --system builder; fi; \
+    if [ ! -n "${group_name}" ]; then group_name="builder"; fi; \
+    echo "group_name: [$group_name"]; \
+    echo; \
+    echo "Ensuring user exists for user id [${USER_ID}]"; \
+    user_name="$(getent passwd "$USER_ID" | cut -d: -f1)"; \
+    echo "user_name from passwd with id ${USER_ID}: [$user_name]"; \
+    if [ -n "${user_name}" ]; then echo "Found user [${user_name}] with id ${USER_ID}"; fi; \
+    if [ ! -n "${user_name}" ]; then echo "Creating user [builder] with id ${USER_ID}"; fi; \
+    if [ ! -n "${user_name}" ]; then useradd --uid "$USER_ID" --system --gid "$GROUP_ID" --shell /sbin/nologin --no-create-home builder; fi; \
+    if [ ! -n "${user_name}" ]; then user_name="builder"; fi; \
+    echo "user_name: [$user_name]"; \
+    echo; \
+    echo "Ensuring group exists for docker group id [${DOCKER_GROUP_ID}]"; \
+    docker_group_name="$(getent group "${DOCKER_GROUP_ID}" | cut -d: -f1)"; \
+    echo "Group id [${DOCKER_GROUP_ID}] has group name [${docker_group_name}]"; \
+    if [ -n "${docker_group_name}" ]; then \
+      echo "Found group [${docker_group_name}] with docker group id ${DOCKER_GROUP_ID}"; \
+    elif getent group docker >/dev/null 2>&1; then \
+      docker_group_name="docker"; \
+      echo "Found existing docker group; changing its id to ${DOCKER_GROUP_ID}"; \
+      groupmod --gid "${DOCKER_GROUP_ID}" "${docker_group_name}"; \
+    else \
+      echo "Creating group [docker] with id ${DOCKER_GROUP_ID}"; \
+      groupadd --gid "${DOCKER_GROUP_ID}" --system docker; \
+      docker_group_name="docker"; \
+    fi; \
+    echo "docker_group_name: $docker_group_name"; \
+    echo "Adding user [builder] to docker group [${docker_group_name}]"; \
+    usermod --append --groups "${docker_group_name}" "${user_name}"; \
+    mkdir -p /builder/shared; \
+    chown -R $USER_ID:$GROUP_ID /builder
 
 COPY --chown=$USER_ID:$GROUP_ID *.sh /builder/
 

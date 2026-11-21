@@ -115,24 +115,24 @@ if [[ $# -lt 1 ]]; then
   echo -e "Commands/scripts with args must be quoted as a whole."
   exit 1
 else
-  if [[ $# -eq 1 ]] && [[ "$1" = "bash" ]]; then
-
+  func="$1"
+  if [[ $# -eq 1 ]] && [[ "${func}" = "bash" ]]; then
     run_cmd=( "bash" )
-  elif [[ $# -eq 1 ]] && [[ "$1" = "ERD" ]]; then
+  elif [[ $# -eq 1 ]] && [[ "${func}" = "ERD" ]]; then
     # Generate an entity relationship diagram from an existing DB
     run_cmd=( \
       "bash" \
       "-c"  \
       "./container_build/runPlantErd.sh" \
     )
-  elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_BUILD" ]]; then
+  elif [[ $# -eq 1 ]] && [[ "${func}" = "GRADLE_BUILD" ]]; then
     # Run the full CI gradle build
     run_cmd=( \
       "bash" \
       "-c"  \
       "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-1G}\" GWT_MAX_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
     )
-  elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_COMPILE" ]]; then
+  elif [[ $# -eq 1 ]] && [[ "${func}" = "GRADLE_COMPILE" ]]; then
     # Run the full CI gradle build
     run_cmd=( \
       "bash" \
@@ -147,7 +147,7 @@ else
       "-c"  \
       "pwd; export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" \
     )
-  elif [[ $# -ge 1 ]] && [[ "$1" = "SVG" ]]; then
+  elif [[ $# -ge 1 ]] && [[ "${func}" = "SVG" ]]; then
     run_cmd=( \
       "bash" \
       "-c"  \
@@ -157,7 +157,7 @@ else
     run_cmd=( \
       "bash" \
       "-c" \
-      "$1" \
+      "${func}" \
     )
   fi
 fi
@@ -203,7 +203,7 @@ docker_login
 # for an example of how to hash the build context so we can pull or push
 # depending on whether there is already an image for the hash.
 
-echo "::group::Building Building image ${image_tag}"
+echo "::group::Building docker image ${image_tag}"
 echo -e "${GREEN}Building image ${BLUE}${image_tag}${NC}"
 docker build \
   --tag "${image_tag}" \
@@ -217,6 +217,19 @@ echo "::endgroup::"
 
 
   #--workdir "${dest_dir}" \
+
+# Mount the whole repo into the container so we can run the build
+# The mount src is on the host file system
+# group-add gives the permission to interact with the docker cli
+# docker.sock allows use to interact with the docker cli
+# Need :exec on /tmp else LMDB complains with link errors
+# Need to pass in docker creds in case the container needs to do authenticated
+# pulls/pushes with dockerhub
+
+# shellcheck disable=SC2145
+echo "::group::Running docker image ${image_tag} for function ${func}"
+echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
+  "${BLUE}${run_cmd[*]}${NC}"
 
 if [ -t 1 ]; then
   # In a terminal
@@ -265,17 +278,6 @@ if [[ -n "${STROOM_USER_DIR:-}" ]]; then
   )
 fi
 
-# Mount the whole repo into the container so we can run the build
-# The mount src is on the host file system
-# group-add gives the permission to interact with the docker cli
-# docker.sock allows use to interact with the docker cli
-# Need :exec on /tmp else LMDB complains with link errors
-# Need to pass in docker creds in case the container needs to do authenticated
-# pulls/pushes with dockerhub
-# shellcheck disable=SC2145
-echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
-  "${BLUE}${run_cmd[@]}${NC}"
-
 docker run \
   "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
@@ -296,3 +298,4 @@ docker run \
   "${image_tag}" \
   "${run_cmd[@]}"
 
+echo "::endgroup::"
