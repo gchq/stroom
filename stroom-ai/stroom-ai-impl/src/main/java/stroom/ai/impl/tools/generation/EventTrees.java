@@ -701,7 +701,9 @@ final class EventTrees {
         final List<Child> allowed = schema.children(decl);
         final Map<Integer, List<String>> chosen = new LinkedHashMap<>();
         for (final EventNode kid : node.kids.values()) {
-            if (kid.child.choice() != null && !kid.child.repeatable()) {
+            // Only a one-of choice's members exclude each other: those of a choice that repeats, or sits in a
+            // sequence or group that does (event-logging 4.x's View holding a Folder and an Object), may be mixed.
+            if (kid.child.alternative()) {
                 chosen.computeIfAbsent(kid.child.choice(), ignored -> new ArrayList<>()).add(kid.child.name());
             }
         }

@@ -22,12 +22,17 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,6 +79,70 @@ class TestEventSchema {
         assertThat(SCHEMA.canRepeat("EventDetail/Unknown/Data")).isTrue();
         assertThat(SCHEMA.canRepeat("EventTime/TimeCreated")).isFalse();
         assertThat(SCHEMA.canRepeat("concat(a, b)")).isFalse();
+    }
+
+    @Test
+    void testAnElementInARepeatingGroupRepeats() {
+        // View's objects: a choice whose members are each maxOccurs 1, inside a reference to MultiObjectGroup with
+        // maxOccurs unbounded.
+        assertThat(child("EventDetail/View", "Folder").repeatable()).isTrue();
+        assertThat(child("EventDetail/Move/Source", "Email").repeatable()).isTrue();
+        assertThat(child("EventDetail/Authorise", "User").repeatable()).isTrue();
+        assertThat(SCHEMA.canRepeat("EventDetail/View/Folder/Path")).isTrue();
+    }
+
+    @Test
+    void testMembersOfAChoiceInARepeatingGroupMayBeMixed() {
+        final Child object = child("EventDetail/View", "Object");
+        final Child folder = child("EventDetail/View", "Folder");
+        assertThat(object.choice()).isNotNull().isEqualTo(folder.choice());
+        assertThat(object.alternative()).isFalse();
+        assertThat(folder.alternative()).isFalse();
+        assertThat(object.required()).isFalse();
+        // One of them is still needed.
+        assertThat(SCHEMA.requiredChoices().get(folder.choice())).contains("Object", "Folder");
+    }
+
+    @Test
+    void testMembersOfAOneOfChoiceAreAlternatives() {
+        // Network's Bind, Connect, Close...: a choice that occurs once, in nothing that repeats.
+        final Child connect = child("EventDetail/Network", "Connect");
+        final Child close = child("EventDetail/Network", "Close");
+        assertThat(connect.choice()).isNotNull().isEqualTo(close.choice());
+        assertThat(connect.alternative()).isTrue();
+        assertThat(close.alternative()).isTrue();
+        assertThat(connect.repeatable()).isFalse();
+        // Its Data may repeat, but is still one of the choice's members.
+        final Child data = child("EventDetail/Network", "Data");
+        assertThat(data.repeatable()).isTrue();
+        assertThat(data.alternative()).isTrue();
+        // EventDetail's actions too.
+        assertThat(child("EventDetail", "View").alternative()).isTrue();
+        assertThat(child("EventDetail", "View").repeatable()).isFalse();
+    }
+
+    @Test
+    void testAnElementThatOccursOnceInASequenceThatDoesNotRepeatOccursOnce() {
+        // View's Outcome follows the repeating objects in a sequence that occurs once.
+        final Child outcome = child("EventDetail/View", "Outcome");
+        assertThat(outcome.repeatable()).isFalse();
+        assertThat(outcome.choice()).isNull();
+        assertThat(outcome.alternative()).isFalse();
+        assertThat(child("EventTime", "TimeCreated").repeatable()).isFalse();
+        assertThat(SCHEMA.canRepeat("EventDetail/View/Outcome/Success")).isFalse();
+    }
+
+    @Test
+    void testAChoiceThatRepeatsItselfLetsItsMembersBeMixedIn352() {
+        // 3.5.2's View holds its objects in a choice with maxOccurs unbounded.
+        final EventSchema schema352 = EventSchema.parse(resource352());
+        final Child object = child(schema352, "EventDetail/View", "Object");
+        final Child folder = child(schema352, "EventDetail/View", "Folder");
+        assertThat(folder.repeatable()).isTrue();
+        assertThat(object.alternative()).isFalse();
+        assertThat(folder.alternative()).isFalse();
+        assertThat(child(schema352, "EventDetail/View", "Outcome").repeatable()).isFalse();
+        assertThat(child(schema352, "EventDetail", "View").alternative()).isTrue();
     }
 
     @Test
@@ -147,6 +216,26 @@ class TestEventSchema {
     void testAnXsdThatIsNotEventLoggingIsRefused() {
         assertThatThrownBy(() -> EventSchema.parse("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"/>"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static Child child(final String parent, final String name) {
+        return child(SCHEMA, parent, name);
+    }
+
+    private static Child child(final EventSchema schema, final String parent, final String name) {
+        return schema.children(schema.resolve(parent).getLast().decl()).stream()
+                .filter(child -> name.equals(child.name()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static String resource352() {
+        try (InputStream in = TestEventSchema.class.getResourceAsStream(
+                "/stroom/ai/impl/tools/generation/event-logging-v3.5.2.xsd")) {
+            return new String(Objects.requireNonNull(in).readAllBytes(), StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     // What the schema gives for every path below Event, four levels down: names, order, leaves, types, values,

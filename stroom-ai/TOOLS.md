@@ -429,7 +429,8 @@ Some types are read differently:
 * **Event-logging XMLSchema with `element`**: what the element takes (`EventElements.describe` over
   `HeldSchemas`), as JSON: `path`, `schema_version`, `description`, and for a leaf `type` and `values`, otherwise
   `children` (each with `required`, `repeatable`, `choice`, `type`, `values`, `description` as they apply) and
-  `choices`. The XSD itself is over 100 KB: an agent once spent twelve minutes reading it with PowerShell. With
+  `choices` (each `one_of` for a choice an element holds one member of, or `any_of` for one whose members may be
+  mixed and repeated, such as View's objects, and `one_required`). The XSD itself is over 100 KB: an agent once spent twelve minutes reading it with PowerShell. With
   `type='XMLSchema'` and no `uuid`, the newest event-logging version this Stroom holds is used. Without `element`,
   an XMLSchema is read as any document (its XSD, saved to the workspace when large).
 * **Processor filter UUID**: when the UUID isn't a document, it is tried as a processor filter: the pipeline it
@@ -7097,7 +7098,11 @@ The checks `check_xslt`, `check_events`, the translation build and the stepping 
   version for a check (given, declared, else newest), keeps the 8 most recently used schema models
   (`MAX_EVENT_SCHEMAS`), and reports schema locations Stroom doesn't hold. Errors are capped at 50 (`MAX_ERRORS`).
 * **`EventSchema`**: what the event-logging XSD allows below `Event` (element order, required elements, choices,
-  leaf types, patterns, enumerations, descriptions), read once from the XSD's text. Used by the checks and by the
+  leaf types, patterns, enumerations, descriptions), read once from the XSD's text. An element repeats when its own
+  maxOccurs or that of anything around it (a sequence, a choice, a group reference) allows more than one, and a
+  choice's members are alternatives only when neither it nor anything around it repeats: in 4.x, View's, Move's
+  Source's and Authorise's objects are a choice of elements each maxOccurs 1 inside `MultiObjectGroup` with maxOccurs
+  unbounded, so several Folders, or an Object and a Folder, go in one View (3.x has the choice itself unbounded). Used by the checks and by the
   translation generator (schema order, paths that don't exist with suggestions, constants against enumerations).
 * **`EventChecks`** and **`SchemaErrors`**: `check_events`' two checks. `SchemaErrors` validates against a compiled
   schema, giving each error's line, a path such as `/Events/Event[2]/EventTime/TimeCreated` (a position where the
@@ -7367,7 +7372,7 @@ conversion's key (`Conversion.repr`). A change to any of these shows in every go
 XSLT is held to the same by its fixtures.
 
 What the generator checks (problems, per mapping entry, before any XSLT is returned): unknown paths with
-suggestions, disallowed constants, alternatives of a choice used together, missing required elements, unquoted
+suggestions, disallowed constants, alternatives of a one-of choice used together, missing required elements, unquoted
 pattern letters, an xpath reading `$name` for an extract's name (it wouldn't compile), a path from the document root
 (`//x`: steps clean one record at a time but fails processing a whole stream), a refused function (`XsltSafety`: "the
 tools don't run or save it"), and an xpath Stroom's Saxon can't run (`StroomXPath`). Stroom runs Saxon-HE 9.9: XPath

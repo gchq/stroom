@@ -66,6 +66,23 @@ class TestEventElements {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void testAChoiceWhoseMembersMayBeMixedIsAnyOf() {
+        final Map<String, Object> view = EventElements.describe(held, "EventDetail/View", null, null);
+        final Map<String, Object> objects = ((List<Map<String, Object>>) view.get("choices")).getFirst();
+        assertThat(objects).doesNotContainKey("one_of");
+        assertThat((List<String>) objects.get("any_of")).contains("Object", "Folder");
+        assertThat(objects.get("one_required")).isEqualTo(true);
+        assertThat(children(view).get("Folder").get("repeatable")).isEqualTo(true);
+        assertThat(children(view).get("Outcome")).doesNotContainKey("repeatable");
+
+        final Map<String, Object> network = EventElements.describe(held, "EventDetail/Network", null, null);
+        final Map<String, Object> actions = ((List<Map<String, Object>>) network.get("choices")).getFirst();
+        assertThat((List<String>) actions.get("one_of")).contains("Connect", "Close");
+        assertThat(actions).doesNotContainKey("any_of");
+    }
+
+    @Test
     void testTheVersionChosenForTheBuildIsUsedWhereNoneIsGiven() {
         assertThatThrownBy(() -> EventElements.describe(held, "EventDetail", null, "3.5.2"))
                 .isInstanceOf(ToolRefusal.class)

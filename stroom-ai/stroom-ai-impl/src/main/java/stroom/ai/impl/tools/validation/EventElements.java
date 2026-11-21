@@ -22,9 +22,11 @@ import stroom.ai.impl.tools.validation.EventSchema.Child;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /// What an event-logging element takes, from the schema in this Stroom: its children in order, each with whether
 /// it is required or repeatable, whether it is one of a choice (and whether one of that choice must be given), and
@@ -60,7 +62,8 @@ public final class EventElements {
     /// @param version The schema's version, said in the result.
     /// @return `path` (from Event), `schema_version`, `description`; for a leaf `type` and `values`; otherwise
     /// `children` (each `name`, and as they apply `required`, `repeatable`, `choice`, `type`, `values` and
-    /// `description`) and `choices` (each `choice`, `one_of` and `one_required`).
+    /// `description`) and `choices` (each `choice`, `one_of` for a choice an element holds one member of, or `any_of`
+    /// for one whose members may be mixed and repeated, and `one_required`).
     /// @throws ToolRefusal if the schema has no such element, saying what is allowed where it stops.
     public static Map<String, Object> describe(final EventSchema schema, final String path, final String version) {
         final List<Child> chain;
@@ -92,6 +95,7 @@ public final class EventElements {
         }
         final List<Map<String, Object>> children = new ArrayList<>();
         final Map<Integer, List<String>> choices = new LinkedHashMap<>();
+        final Set<Integer> mixed = new HashSet<>();
         for (final Child child : schema.children(decl)) {
             final Map<String, Object> item = new LinkedHashMap<>();
             item.put("name", child.name());
@@ -104,6 +108,9 @@ public final class EventElements {
             if (child.choice() != null) {
                 item.put("choice", child.choice());
                 choices.computeIfAbsent(child.choice(), k -> new ArrayList<>()).add(child.name());
+                if (!child.alternative()) {
+                    mixed.add(child.choice());
+                }
             }
             if (schema.isLeaf(child.decl())) {
                 item.put("type", schema.baseType(child.decl()));
@@ -122,10 +129,12 @@ public final class EventElements {
         result.put("children", children);
         if (!choices.isEmpty()) {
             final List<Map<String, Object>> listed = new ArrayList<>();
-            choices.forEach((choice, oneOf) -> {
+            choices.forEach((choice, members) -> {
                 final Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("choice", choice);
-                entry.put("one_of", oneOf);
+                entry.put(mixed.contains(choice)
+                        ? "any_of"
+                        : "one_of", members);
                 entry.put("one_required", schema.requiredChoices().containsKey(choice));
                 listed.add(entry);
             });

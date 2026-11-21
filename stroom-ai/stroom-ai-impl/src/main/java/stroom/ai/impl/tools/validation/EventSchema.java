@@ -418,14 +418,18 @@ public final class EventSchema {
 
     /// An element a content model allows.
     ///
-    /// @param name       Its name.
-    /// @param decl       Its declaration (local, or the global one it refers to).
-    /// @param index      Its position in the parent's content model.
-    /// @param required   True if it must appear (not optional, not one of a choice).
-    /// @param repeatable True if it may appear more than once.
-    /// @param choice     The id of the one-of choice it belongs to, or null.
+    /// @param name        Its name.
+    /// @param decl        Its declaration (local, or the global one it refers to).
+    /// @param index       Its position in the parent's content model.
+    /// @param required    True if it must appear (not optional, not one of a choice).
+    /// @param repeatable  True if it may appear more than once: its own maxOccurs, or that of anything around it (a
+    ///                    sequence, a choice, a group reference), allows more than one.
+    /// @param choice      The id of the choice it belongs to, or null.
+    /// @param alternative True if that choice is one-of (neither it nor anything around it repeats), so an element
+    ///                    holds only one of its members; false for a member of a choice that repeats (its members
+    ///                    may be mixed, each any number of times) or an element in no choice.
     public record Child(String name, Element decl, int index, boolean required, boolean repeatable,
-                        Integer choice) {
+                        Integer choice, boolean alternative) {
 
     }
 
@@ -444,7 +448,8 @@ public final class EventSchema {
 
     }
 
-    private record Found(String name, Element decl, boolean required, boolean repeatable, Integer choice) {
+    private record Found(String name, Element decl, boolean required, boolean repeatable, Integer choice,
+                         boolean alternative) {
 
     }
 
@@ -497,7 +502,7 @@ public final class EventSchema {
             final Element multiObject = types.get("MultiObjectComplexType");
             if (multiObject != null) {
                 final List<Found> members = new ArrayList<>();
-                walkType(multiObject, members, null, false);
+                walkType(multiObject, members, null, false, false);
                 members.forEach(member -> objects.add(resolve(member.decl())));
             }
         }
@@ -549,14 +554,14 @@ public final class EventSchema {
             final List<Found> found = new ArrayList<>();
             final Element complexType = complex(resolved);
             if (complexType != null) {
-                walkType(complexType, found, null, false);
+                walkType(complexType, found, null, false, false);
             }
             final Set<String> seen = new HashSet<>();
             final List<Child> out = new ArrayList<>();
             for (final Found entry : found) {
                 if (seen.add(entry.name())) {
                     out.add(new Child(entry.name(), resolve(entry.decl()), out.size(), entry.required(),
-                            entry.repeatable(), entry.choice()));
+                            entry.repeatable(), entry.choice(), entry.alternative()));
                 }
             }
             final List<Child> children = List.copyOf(out);
@@ -642,60 +647,63 @@ public final class EventSchema {
             return null;
         }
 
+        // A complex type's particles: choice is the choice they are in (or null), optional whether something above
+        // them may be left out, and repeats whether something above them (a sequence, choice or group reference)
+        // may occur more than once.
         private void walkType(final Element complexType,
                               final List<Found> out,
                               final Integer choice,
-                              final boolean optional) {
+                              final boolean optional,
+                              final boolean repeats) {
             for (final Element node : XmlTrees.children(complexType)) {
                 final String tag = xsName(node);
                 if ("complexContent".equals(tag) || "simpleContent".equals(tag)) {
                     for (final Element derivation : XmlTrees.children(node)) {
                         final Element base = types.get(local(XmlTrees.attribute(derivation, "base")));
                         if ("extension".equals(xsName(derivation)) && base != null) {
-                            walkType(base, out, choice, optional);
+                            walkType(base, out, choice, optional, repeats);
                         }
-                        walkType(derivation, out, choice, optional);
+                        walkType(derivation, out, choice, optional, repeats);
                     }
                 } else if (List.of("sequence", "choice", "all", "group", "element").contains(tag)) {
-                    particle(node, out, choice, optional);
+                    particle(node, out, choice, optional, repeats);
                 }
             }
         }
 
+        // An element may occur more than once when its own maxOccurs allows it or when anything around it does: in
+        // event-logging 4.x, View's objects are a choice of elements each maxOccurs 1, inside a reference to
+        // MultiObjectGroup with maxOccurs unbounded, so each object may repeat and different ones may be mixed.
         private void particle(final Element node,
                               final List<Found> out,
                               final Integer choice,
-                              final boolean optional) {
+                              final boolean optional,
+                              final boolean repeats) {
             final boolean isOptional = optional || Integer.valueOf(0).equals(occurs(node, "minOccurs"));
+            final boolean isRepeated = repeats || occursMoreThanOnce(node);
             final String tag = xsName(node);
             if ("element".equals(tag)) {
                 final String name = node.hasAttribute("name")
                         ? node.getAttribute("name")
                         : local(node.getAttribute("ref"));
-                final Integer maximum = occurs(node, "maxOccurs");
-                out.add(new Found(name, node, !isOptional && choice == null, maximum == null || maximum > 1,
-                        choice));
+                out.add(new Found(name, node, !isOptional && choice == null, isRepeated, choice,
+                        choice != null && !repeats));
             } else if ("sequence".equals(tag) || "all".equals(tag)) {
                 for (final Element child : XmlTrees.children(node)) {
-                    particle(child, out, choice, isOptional);
+                    particle(child, out, choice, isOptional, isRepeated);
                 }
             } else if ("choice".equals(tag)) {
-                // One of (maxOccurs 1), or, when the choice repeats, any number of its members; either way a
-                // required choice needs at least one member, and no member is required on its own.
-                final boolean exclusive = Integer.valueOf(1).equals(occurs(node, "maxOccurs"));
-                final Integer id = exclusive || choice == null
+                // One of (a choice that occurs once, in nothing that repeats: its members are alternatives), or,
+                // when the choice or anything around it repeats, any number of its members, mixed (they are passed
+                // repeats); either way a required choice needs at least one member, and no member is required on
+                // its own. A group's choice is one node wherever the group is referred to, so whether its members
+                // are alternatives is worked out for each place, from repeats, not kept by its id.
+                final Integer id = !isRepeated || choice == null
                         ? choiceIds.computeIfAbsent(node, k -> choiceIds.size())
                         : choice;
                 final int before = out.size();
                 for (final Element child : XmlTrees.children(node)) {
-                    particle(child, out, id, isOptional);
-                }
-                if (!exclusive) {
-                    // Members of a repeating choice can each appear many times.
-                    for (int i = before; i < out.size(); i++) {
-                        final Found member = out.get(i);
-                        out.set(i, new Found(member.name(), member.decl(), false, true, member.choice()));
-                    }
+                    particle(child, out, id, isOptional, isRepeated);
                 }
                 if (!isOptional && choice == null) {
                     requiredChoices.put(id, out.subList(before, out.size()).stream().map(Found::name).toList());
@@ -708,7 +716,7 @@ public final class EventSchema {
                     for (final Element child : XmlTrees.children(group)) {
                         final String childTag = xsName(child);
                         if ("sequence".equals(childTag) || "choice".equals(childTag) || "all".equals(childTag)) {
-                            particle(child, out, choice, isOptional);
+                            particle(child, out, choice, isOptional, isRepeated);
                         }
                     }
                 }
@@ -763,6 +771,12 @@ public final class EventSchema {
                 end--;
             }
             return text.substring(0, end);
+        }
+
+        // True for maxOccurs unbounded or over 1.
+        private static boolean occursMoreThanOnce(final Element node) {
+            final Integer maximum = occurs(node, "maxOccurs");
+            return maximum == null || maximum > 1;
         }
 
         private static Integer occurs(final Element node, final String attribute) {

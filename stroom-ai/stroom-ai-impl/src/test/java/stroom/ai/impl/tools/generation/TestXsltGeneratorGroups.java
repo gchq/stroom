@@ -339,4 +339,129 @@ class TestXsltGeneratorGroups extends XsltRuns {
                 {"path": "Id", "item": true}"""))).hasMessageContaining("item reads a group's item");
     }
 
+    // A rule whose action holds these fields after its TypeId, over records:2 input.
+    private static TranslationMapping actionMapping(final String typeId, final Map<?, ?>... fields) {
+        final List<Object> all = new ArrayList<>(List.of(entry("{\"path\": \"EventDetail/TypeId\", \"value\": \""
+                                                               + typeId + "\"}")));
+        all.addAll(List.of(fields));
+        return mapping(with("input", "data_splitter", "events", List.of(rule("act", List.of(), all))));
+    }
+
+    private static final String VIEW_RECORDS = """
+            <records xmlns="records:2">
+            <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="user" value="jane"/>\
+            <data name="folders" value="/a,/b"/><data name="doc" value="report.pdf"/></record>
+            </records>""";
+
+    @Test
+    void aGroupOfFoldersAndAnObjectGoTogetherInOneViewAndValidate() {
+        // event-logging 4.x: View's objects are a choice (each member maxOccurs 1) inside MultiObjectGroup with
+        // maxOccurs unbounded, so Folder repeats and an Object may go beside the Folders (once refused as "the
+        // schema allows one Folder there" and "Folder and Object are alternatives").
+        final XsltGenerator.Generated result = generate(actionMapping("View", entry("""
+                {"path": "EventDetail/View/Object/Name", "field": "doc"}"""), entry("""
+                {"path": "EventDetail/View/Folder", "for_each": {"split": "folders", "on": ","},
+                 "fields": [{"path": "Path", "item": true}]}"""), entry("""
+                {"path": "EventDetail/View/Outcome/Success", "value": "true"}""")));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), VIEW_RECORDS);
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        final XmlElement view = find(children(events, "Event").getFirst(), "EventDetail/View");
+        assertThat(children(view, "Folder")).extracting(folder -> text(folder, "Path")).containsExactly("/a", "/b");
+        assertThat(children(view, "Object")).extracting(object -> text(object, "Name"))
+                .containsExactly("report.pdf");
+        // The objects in any order, and the Outcome after them all, as View's sequence puts it.
+        assertThat(view.childElements().getLast().localName()).isEqualTo("Outcome");
+    }
+
+    @Test
+    void anObjectAndAFolderGoTogetherInOneView() {
+        // Once refused as "Folder, Object are alternatives; an event has only one of them".
+        final XsltGenerator.Generated result = generate(actionMapping("View", entry("""
+                {"path": "EventDetail/View/Object/Name", "field": "doc"}"""), entry("""
+                {"path": "EventDetail/View/Folder/Path", "field": "folders"}""")));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), VIEW_RECORDS);
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        final XmlElement view = find(children(events, "Event").getFirst(), "EventDetail/View");
+        assertThat(text(view, "Folder/Path")).isEqualTo("/a,/b");
+        assertThat(text(view, "Object/Name")).isEqualTo("report.pdf");
+    }
+
+    @Test
+    void aGroupOfUsersInAnAuthoriseValidates() {
+        final XsltGenerator.Generated result = generate(actionMapping("Authorise", entry("""
+                {"path": "EventDetail/Authorise/User", "for_each": {"split": "users", "on": ","},
+                 "fields": [{"path": "Id", "item": true}]}"""), entry("""
+                {"path": "EventDetail/Authorise/Action", "value": "Modify"}""")));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), """
+                <records xmlns="records:2">
+                <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="user" value="jane"/>\
+                <data name="users" value="john,jack"/></record>
+                </records>""");
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        assertThat(children(find(children(events, "Event").getFirst(), "EventDetail/Authorise"), "User"))
+                .extracting(user -> text(user, "Id"))
+                .containsExactly("john", "jack");
+    }
+
+    @Test
+    void aGroupOfEmailsInAMovesSourceValidates() {
+        final XsltGenerator.Generated result = generate(actionMapping("Move", entry("""
+                {"path": "EventDetail/Move/Source/Email", "for_each": {"split": "folders", "on": ","},
+                 "fields": [{"path": "Subject", "item": true}]}"""), entry("""
+                {"path": "EventDetail/Move/Destination/Folder/Path", "field": "doc"}""")));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), VIEW_RECORDS);
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        assertThat(children(find(children(events, "Event").getFirst(), "EventDetail/Move/Source"), "Email"))
+                .hasSize(2);
+    }
+
+    @Test
+    void aGroupOfFoldersAndAnObjectInOneViewValidateIn352Too() {
+        // 3.5.2's View holds a choice of objects with maxOccurs unbounded: the same mapping is as valid there.
+        final XsltGenerator.Generated result = XsltGenerator.generate(actionMapping("View", entry("""
+                {"path": "EventDetail/View/Object/Name", "field": "doc"}"""), entry("""
+                {"path": "EventDetail/View/Folder", "for_each": {"split": "folders", "on": ","},
+                 "fields": [{"path": "Path", "item": true}]}""")), SCHEMA_352, "3.5.2");
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), VIEW_RECORDS);
+
+        assertThat(invalid(events, XSD_352)).isEmpty();
+        assertThat(children(find(children(events, "Event").getFirst(), "EventDetail/View"), "Folder")).hasSize(2);
+    }
+
+    @Test
+    void membersOfAOneOfChoiceAreStillAlternatives() {
+        // Network's Connect and Close are a choice that occurs once, in nothing that repeats.
+        final XsltGenerator.Generated result = generate(actionMapping("Network", entry("""
+                {"path": "EventDetail/Network/Connect/Source/Device/HostName", "field": "doc"}"""), entry("""
+                {"path": "EventDetail/Network/Close/Source/Device/HostName", "field": "doc"}""")));
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("[act] Event/EventDetail/Network", "are alternatives"));
+    }
+
+    @Test
+    void aGroupAtAnElementThatOccursOnceIsStillRefused() {
+        // View's Outcome is in a sequence that occurs once, after the repeating objects.
+        final XsltGenerator.Generated result = generate(actionMapping("View", entry("""
+                {"path": "EventDetail/View/Object/Name", "field": "doc"}"""), entry("""
+                {"path": "EventDetail/View/Outcome", "for_each": {"split": "folders", "on": ","},
+                 "fields": [{"path": "Description", "item": true}]}""")));
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("the schema allows one Outcome there"));
+    }
 }

@@ -65,11 +65,16 @@ class TestHandEditGate {
             "EventDetail/*/Resource/InboundSize");
     private static final Map<String, Object> VIEW_BYTES = field("http.request.body.bytes", "long",
             "EventDetail/View/Resource/InboundSize");
-    // The user's edit, in their own style: no xsl:if, and inside the request object the generator wrote.
+    // The user's edit, in their own style: no xsl:if, and inside the request object the generator wrote (by its
+    // one-value branch: a View may hold several Resources, so the method is written as an array when it has more).
     private static final String METHOD = "<string key=\"method\"><xsl:value-of "
-                                         + "select=\"EventDetail/*/Resource/HTTPMethod\"/></string>";
-    private static final String EDITED_IN = METHOD + "<map key=\"body\"><number key=\"bytes\"><xsl:value-of "
-                                            + "select=\"EventDetail/View/Resource/InboundSize\"/></number></map>";
+                                         + "select=\"$http_request_method\"/></string>";
+    // The same, where the XSLT was generated with no schema to say the method may repeat (written as one value).
+    private static final String ONE_METHOD = "<string key=\"method\"><xsl:value-of "
+                                             + "select=\"EventDetail/*/Resource/HTTPMethod\"/></string>";
+    private static final String BODY = "<map key=\"body\"><number key=\"bytes\"><xsl:value-of "
+                                       + "select=\"EventDetail/View/Resource/InboundSize\"/></number></map>";
+    private static final String EDITED_IN = METHOD + BODY;
     private static final String EVENTS = """
             <Events xmlns="event-logging:3"><Event StreamId="7" EventId="1">
             <EventTime><TimeCreated>2026-10-11T09:00:00.000Z</TimeCreated></EventTime>
@@ -137,7 +142,8 @@ class TestHandEditGate {
     void aFieldRemovedOrASourceChangedByHandIsKeptToo() {
         save(plan());
         final String url = code();
-        final int start = url.indexOf("<xsl:if test=\"EventDetail/*/Resource/URL\">");
+        final int start = url.indexOf("<xsl:variable name=\"url_original\" "
+                                      + "select=\"EventDetail/*/Resource/URL\"/>");
         editByHand(url.substring(start, url.indexOf("</xsl:if>", start) + "</xsl:if>".length()), "");
         assertThat(refused(save(plan(ACTION)))).containsPattern("writes map url again.*writes string original again");
         final List<Map<String, Object>> withoutUrl = FIELDS.stream()
@@ -176,7 +182,7 @@ class TestHandEditGate {
         // No plan to regenerate from: everything the XSLT writes and reads now must still be written and read.
         final String hand = SaveXsltTool.generated(stroom.ai.impl.tools.indexing.FieldPlan.fromJson(plan()));
         assertSaved(saveCode(hand));
-        editByHand(METHOD, EDITED_IN);
+        editByHand(ONE_METHOD, ONE_METHOD + BODY);
         assertThat(refused(saveCode(hand))).contains("no longer writes number bytes");
         assertSaved(saveCode(code().replace("<map key=\"url\">", "<map key=\"url\"><!-- kept -->")));
     }
