@@ -72,6 +72,24 @@ class TestStroomQlErrorHints {
     }
 
     @Test
+    void aFunctionInSortByOrHavingIsNamed() {
+        // Seen with Haiku and Sonnet in eval case 75: "Syntax exception, expected string" and "Expected field
+        // string" said nothing of why.
+        assertThat(StroomQlErrorHints.of("from E group by hr.Department sort by sum(Files) desc "
+                                         + "select hr.Department, sum(Files) as Files"))
+                .isEqualTo(StroomQlErrorHints.FIELD_NOT_FUNCTION);
+        assertThat(StroomQlErrorHints.of("from E group by UserId having count() > 1 select UserId"))
+                .isEqualTo(StroomQlErrorHints.FIELD_NOT_FUNCTION);
+        assertThat(StroomQlErrorHints.FIELD_NOT_FUNCTION)
+                .isEqualTo(" sort by and having take a field or a name given in eval or select, not a function, "
+                           + "e.g. eval n = count() ... sort by n desc.");
+        // A name, or a function elsewhere, is fine.
+        assertThat(StroomQlErrorHints.of("from E eval n = count() group by UserId sort by n desc having n > 1 "
+                                         + "select UserId, n")).isEmpty();
+        assertThat(StroomQlErrorHints.of("from E where EventTime > day() - 1d sort by EventTime select x")).isEmpty();
+    }
+
+    @Test
     void theHintsFollowTheErrorAsASentence() {
         assertThat(StroomQlErrorHints.appendTo("Unexpected token GROUP after SELECT", "from E select a group by a"))
                 .isEqualTo("Unexpected token GROUP after SELECT." + StroomQlErrorHints.CLAUSE_ORDER);

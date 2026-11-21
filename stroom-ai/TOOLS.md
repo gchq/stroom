@@ -1215,7 +1215,9 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
   unquoted `order by` (both seen with Haiku in eval cases 71 to 73, where Stroom's error named neither), and "Join
   lines go straight after from." for a join line after another clause, e.g. `where` (seen with Sonnet in case 71:
   "Unexpected token JOIN after WHERE"), and "between takes two values joined by and, e.g. …" for a `between` with
-  no `and` before the next clause (seen with Sonnet in cases 72 and 73: `between "a,b"`, "Expected between and").
+  no `and` before the next clause (seen with Sonnet in cases 72 and 73: `between "a,b"`, "Expected between and"), and "sort by and having take a
+  field or a name given in eval or select, not a function, …" for a function call in either (case 75: "Syntax
+  exception, expected string", "Expected field string").
 * **Joins hint** (`ToolCallGuard`, `QueriedSources`): a successful run_stroomql, esql_query or search_events of a data
   source other than one queried before (in the chat, in the current question; over `/mcp`, in the session within
   the last 10 minutes) ends with one line, "Joining these rows with those of an earlier query (<sources>)?

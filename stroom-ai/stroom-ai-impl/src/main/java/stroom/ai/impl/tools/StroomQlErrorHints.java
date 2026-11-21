@@ -24,19 +24,20 @@ import java.util.List;
 import java.util.Set;
 
 /// Hints for a StroomQL query Stroom refused, for SQL habits StroomQL doesn't share: a clause after select (StroomQL
-/// puts every clause but show before it; Sonnet wrote where after select in eval case 72), order by (StroomQL's is
-/// sort by), a join line after another clause (join lines go straight after from), and between with one value
-/// (Sonnet wrote `between "a,b"` in cases 72 and 73). Stroom's parser names only
-/// the token it stopped at, e.g. "Unexpected token GROUP after SELECT", "Syntax exception, expected AS" or
-/// "Unexpected token JOIN after WHERE" (seen with Haiku in eval cases 71 to 73, and Sonnet in 71). The query is
-/// read with Stroom's own tokeniser, so text in quotes never counts, and only the query's own clauses do, not a
-/// bracketed query's.
+/// puts every clause but show before it; Sonnet wrote where after select in eval case 72), order by (StroomQL's is sort
+/// by), a join line after another clause (join lines go straight after from), between with one value (Sonnet wrote
+/// `between "a,b"` in cases 72 and 73), and a function in sort by or having (case 75). Stroom's parser names only the
+/// token it stopped at, e.g. "Unexpected token GROUP after SELECT", "Syntax exception, expected AS" or "Unexpected
+/// token JOIN after WHERE" (seen with Haiku in eval cases 71 to 73, and Sonnet in 71). The query is read with Stroom's
+/// own tokeniser, so text in quotes never counts, and only the query's own clauses do, not a bracketed query's.
 final class StroomQlErrorHints {
 
     static final String CLAUSE_ORDER = " In StroomQL, every clause but show goes before select: from, join lines, "
                                        + "where, eval, window, filter, sort by, group by, having, limit, select, show.";
     static final String ORDER_BY = " StroomQL uses sort by, not order by.";
     static final String JOIN_AFTER_FROM = " Join lines go straight after from.";
+    static final String FIELD_NOT_FUNCTION = " sort by and having take a field or a name given in eval or select, "
+                                             + "not a function, e.g. eval n = count() ... sort by n desc.";
     static final String BETWEEN_AND = " between takes two values joined by and, e.g. EventTime between "
                                       + "\"2026-01-05T00:00:00Z\" and \"2026-01-12T00:00:00Z\".";
 
@@ -70,6 +71,7 @@ final class StroomQlErrorHints {
         boolean orderBy = false;
         boolean joinLate = false;
         // A between whose and hasn't come yet, and whether one never had it before the next clause.
+        boolean functionInSortOrHaving = false;
         boolean betweenOpen = false;
         boolean betweenWithoutAnd = false;
         TokenType lastClause = null;
@@ -100,6 +102,10 @@ final class StroomQlErrorHints {
                     betweenWithoutAnd = true;
                     betweenOpen = false;
                 }
+                if ((TokenType.SORT.equals(lastClause) || TokenType.HAVING.equals(lastClause))
+                    && isFunctionCall(tokens, i)) {
+                    functionInSortOrHaving = true;
+                }
                 if (isOrderBy(tokens, i)) {
                     orderBy = true;
                 }
@@ -111,6 +117,8 @@ final class StroomQlErrorHints {
                 ? ORDER_BY
                 : "") + (joinLate
                 ? JOIN_AFTER_FROM
+                : "") + (functionInSortOrHaving
+                ? FIELD_NOT_FUNCTION
                 : "") + (betweenWithoutAnd || betweenOpen
                 ? BETWEEN_AND
                 : "");
@@ -129,6 +137,18 @@ final class StroomQlErrorHints {
         return (stripped.endsWith(".")
                 ? stripped
                 : stripped + ".") + hints;
+    }
+
+    // A name followed straight by an opening bracket (a function call), or a token the tokeniser read as a function.
+    private static boolean isFunctionCall(final List<Token> tokens, final int index) {
+        final Token token = tokens.get(index);
+        if (TokenType.FUNCTION_NAME.equals(token.getTokenType())
+            || TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
+            return true;
+        }
+        return TokenType.STRING.equals(token.getTokenType())
+               && index + 1 < tokens.size()
+               && TokenType.OPEN_BRACKET.equals(tokens.get(index + 1).getTokenType());
     }
 
     // An unquoted 'order' followed by 'by', with only whitespace between.
