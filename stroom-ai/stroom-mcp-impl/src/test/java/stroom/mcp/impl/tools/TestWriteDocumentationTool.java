@@ -285,6 +285,28 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void longValuesTheUserChoseToCutAreRecordedAsAcceptedAndToBeSaidInOpenItems() {
+        // The user's choice holds after promotion, where the build's record no longer reaches the pipeline.
+        world.pipeline(BUILD, "Acme", "p");
+        world.facts.stages.put("p", "other");
+        world.world.records().rememberLongValues(BUILD, Map.of("choice", "cut", "longest", 25_486, "fields",
+                List.of("body"), "recorded", "2026-11-22"));
+
+        final Map<String, Object> made = world.call(tool, context, "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", "
+                                                                   + "\"markdown\": \"## Purpose and data\\n\\nx\\n"
+                                                                   + "\\n## Field mapping\\n\\nHand written.\\n\"}");
+
+        final String text = world.world.body(String.valueOf(made.get("uuid")));
+        assertThat(text).contains("- `any element`: String value truncated to length 10000, original length: 25486 "
+                                  + "(2026-11-22): the user chose to cut string values")
+                .contains("<!-- stroom-mcp accepted errors");
+        assertThat(AcceptedErrors.match(AcceptedErrors.readAccepted(text), "jsonParser",
+                "String value truncated to length 10000, original length: 31000")).isNotNull();
+        assertThat(String.valueOf(made.get("note"))).contains("are cut at 10000 characters, by the user's choice",
+                "Say so in Open items");
+    }
+
+    @Test
     void anErrorAlreadyRecordedAsBenignIsNotPutToTheUserAgain() {
         // Seen in eval case 61: the agent gave the same accept_errors in a later call that only widened field
         // descriptions, and the user was asked to record the same error as benign a second time.

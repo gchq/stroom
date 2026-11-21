@@ -280,6 +280,24 @@ final class SteppingWorld {
         return stepFrom(stream, part, record, "<records/>", output, schemaError);
     }
 
+    /// @return A step that found the record, its translation filter giving the output, and another element logging
+    /// a Warning.
+    static SteppingResult stepWarned(final long stream,
+                                     final long part,
+                                     final long record,
+                                     final String output,
+                                     final String element,
+                                     final String warning) {
+        final Map<String, SharedElementData> elements = new LinkedHashMap<>();
+        final Indicators indicators = new Indicators();
+        indicators.add(new StoredError(Severity.WARNING, new DefaultLocation(1, 1), new ElementId(element),
+                warning));
+        elements.put(element, new SharedElementData(null, null, indicators, false, false, false));
+        elements.put("translationFilter", new SharedElementData("<records/>", output, null, false, false, true));
+        return new SteppingResult("s", null, null, new StepLocation(stream, part, record),
+                new SharedStepData(null, elements), null, true, null, false, true);
+    }
+
     /// @return A step that found the record, its translation filter reading the input and giving the output.
     static SteppingResult stepFrom(final long stream,
                                    final long part,

@@ -16,11 +16,13 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.docstore.api.DocFinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
@@ -182,6 +184,45 @@ class TestStepSampleTool {
         Mockito.when(world.guard.tags(any())).thenReturn(Set.of());
         assertThat(stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}").get("verdict"))
                 .isEqualTo("clean");
+    }
+
+    @Test
+    void theJsonParsersCutIsBenignOnlyWhereTheUserChoseToCutLongValues() {
+        // Seen in user test chat 182: the user chose to cut long values, nothing kept it, and the parser's Warning
+        // kept every step from being clean, so the build could not be processed.
+        world.stepper = (stream, at) -> at.getRecordIndex() < 2
+                ? SteppingWorld.stepWarned(stream, 0, at.getRecordIndex(), AN_EVENT, "jsonParser",
+                "String value truncated to length 10000, original length: 25486")
+                : null;
+        final BuildProgressImpl progress = new BuildProgressImpl(() -> world.plan, () -> world.buildRecords);
+        final AcceptedErrors accepted = new AcceptedErrors(() -> Mockito.mock(DocFinder.class),
+                world.documentAccess, () -> Optional.of(progress));
+        Mockito.when(world.acceptedErrors.acceptedFor(anyString())).thenAnswer(inv -> accepted.acceptedFor(
+                inv.getArgument(0)));
+        Mockito.when(world.plan.buildOf(any())).thenReturn(Optional.of("acme-v1"));
+
+        // No choice recorded: for review, saying how to record the user's.
+        final Map<String, Object> undecided = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+        assertThat(undecided.get("verdict")).isEqualTo("review");
+        assertThat(groups(undecided).getFirst().get("reason")).asString().contains("draft_translation_mapping",
+                "long_values=cut");
+        Mockito.verify(world.buildRecords, Mockito.never()).recordPassed(any(), anyString(), any(), any());
+
+        // The user chose to keep them whole: still for review (the parser's limit is to be raised).
+        Mockito.when(world.buildRecords.longValues("acme-v1")).thenReturn(Optional.of(Map.of("choice", "whole",
+                "limit", 60_000, "recorded", "2026-11-22")));
+        assertThat(stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}").get("verdict"))
+                .isEqualTo("review");
+
+        // Cut, as the user chose: benign, saying so, and the clean step recorded.
+        Mockito.when(world.buildRecords.longValues("acme-v1")).thenReturn(Optional.of(Map.of("choice", "cut",
+                "longest", 25_486, "fields", List.of("body"), "recorded", "2026-11-22")));
+        final Map<String, Object> cut = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+        assertThat(cut.get("verdict")).isEqualTo("clean");
+        assertThat(groups(cut).getFirst()).containsEntry("class", "benign").containsEntry("accepted", true);
+        assertThat(groups(cut).getFirst().get("reason")).asString().contains("the user chose to cut string values",
+                "(body)", "2026-11-22", "long_values=cut");
+        Mockito.verify(world.buildRecords).recordPassed(any(), anyString(), any(), any());
     }
 
     @Test

@@ -528,9 +528,15 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                     NAME, "Record " + accepting.size() + " kind(s) of error as benign for pipeline '"
                           + pipeline.getName() + "', so they are not raised again", details));
         }
-        final List<AcceptedErrors.Entry> newEntries = accepting.stream()
+        final List<AcceptedErrors.Entry> newEntries = new ArrayList<>(accepting.stream()
                 .map(a -> entryOf(a, stamp))
-                .toList();
+                .toList());
+        // The user chose to cut long values: the JSON parser's Warning recorded as accepted, so the documentation
+        // says it and it holds after promotion, and Open items is told.
+        docs.longValuesAccepted(request.build())
+                .filter(entry -> !AcceptedErrors.recorded(recordedBefore, entry))
+                .ifPresent(newEntries::add);
+        docs.longValuesSaid(request.build()).ifPresent(noted::add);
         final List<Map<String, Object>> errors = docs.errorGroups(pipelineUuid, streamIds);
         final DocRef existing = placed.existing();
         final DocRef beside = placed.beside();

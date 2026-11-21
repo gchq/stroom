@@ -632,6 +632,16 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (!Boolean.TRUE.equals(generated.get("ok"))) {
             throw new AssertionError("mapping problems: " + generated.get("problems"));
         }
+        if (reference.get("long_values") != null) {
+            // The user's choice for string values longer than the JSON parser keeps (cut or whole), recorded for the
+            // build as an agent would once the user said it (user test chat 182: "Cut them"): draft with long_values.
+            final Map<String, Object> drafted = json("draft_translation_mapping", args("build", build, "stream_ids",
+                    raws, "splitter", splitter, "long_values", reference.get("long_values")));
+            if (drafted.get("long_values") == null) {
+                throw new AssertionError("long values not recorded: " + firstLines(String.valueOf(
+                        drafted.getOrDefault("error", drafted.get("notes")))));
+            }
+        }
         if (generated.get("sample_check") instanceof final Map<?, ?> check && check.get("warnings") != null
             && !((List<?>) check.get("warnings")).isEmpty()) {
             score.note("sample check: " + check.get("warnings"));

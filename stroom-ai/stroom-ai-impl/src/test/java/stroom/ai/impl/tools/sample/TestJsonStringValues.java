@@ -48,7 +48,8 @@ class TestJsonStringValues {
                 .contains("'body', 12000 characters, record 2")
                 .contains("cuts each at 10000 characters (its stringTruncateLength) and logs a Warning")
                 .contains("jsonParser.stringTruncateLength")
-                .contains("cap it in the mapping")
+                .contains("cap the field in the mapping")
+                .contains(JsonStringValues.CHOICE_ASKED)
                 .contains("Leave maxStringLength alone");
         assertThat(profile).doesNotContainKey(JsonStringValues.NUL_STRINGS);
     }
@@ -65,6 +66,53 @@ class TestJsonStringValues {
                           + "below it only shortens the value further")
                 .doesNotContain("substring(")
                 .doesNotContain("xpath");
+    }
+
+    @Test
+    void keptWholeTheParsersLimitHasRoomForLongerValues() {
+        // Twice the longest, rounded up to the default's multiple: eval case 56's 25,486 characters get 60,000.
+        assertThat(JsonStringValues.wholeLimit(25_486)).isEqualTo(60_000);
+        assertThat(JsonStringValues.wholeLimit(25_000)).isEqualTo(50_000);
+        assertThat(JsonStringValues.wholeLimit(10_001)).isEqualTo(30_000);
+        assertThat(JsonStringValues.wholeLimit(0)).isEqualTo(20_000);
+        // No more than the parser's own maxStringLength default.
+        assertThat(JsonStringValues.wholeLimit(Integer.MAX_VALUE)).isEqualTo(100_000_000);
+    }
+
+    @Test
+    void eachNoteOnTheUsersChoiceIsKnownAsTheNoteOnLongValues() {
+        final List<Map<String, Object>> longest = List.of(SampleProfiler.map("field", "body", "length", 25_486,
+                "record", 85));
+
+        assertThat(List.of(JsonStringValues.longStringsNote(longest, JsonStringValues.DEFAULT_TRUNCATE_LENGTH),
+                JsonStringValues.askNote(longest), JsonStringValues.wholeNote(longest, 60_000),
+                JsonStringValues.cutNote(longest)))
+                .allSatisfy(note -> assertThat(JsonStringValues.isLongStringsNote(note)).isTrue())
+                .allSatisfy(note -> assertThat(note).contains("'body', 25486 characters, record 85",
+                        "Leave maxStringLength alone"));
+        assertThat(JsonStringValues.isLongStringsNote("Values of body hold a NUL character")).isFalse();
+        assertThat(JsonStringValues.askNote(longest)).contains("Ask the user", "long_values=whole or long_values=cut")
+                .doesNotContain(JsonStringValues.CHOICE_ASKED);
+        assertThat(JsonStringValues.wholeNote(longest, 60_000)).contains("The user chose to keep them whole",
+                "jsonParser.stringTruncateLength to 60000").doesNotContain("Ask the user", "user's to say");
+        assertThat(JsonStringValues.wholeNote(longest, null)).contains("update_pipeline set_properties");
+        assertThat(JsonStringValues.cutNote(longest)).contains("The user chose to cut them", "benign",
+                "max_length").doesNotContain("Ask the user", "user's to say");
+        assertThat(JsonStringValues.longestLength(longest)).isEqualTo(25_486);
+        assertThat(JsonStringValues.longestLength(List.of())).isZero();
+    }
+
+    @Test
+    void theLongValuesOfAProfileOfSeveralFilesAreEachFilesLongestFirst() {
+        final Map<String, Object> profile = SampleProfiler.map("files", SampleProfiler.map(
+                "a.json", SampleProfiler.map(JsonStringValues.LONG_STRINGS, List.of(SampleProfiler.map("field", "a",
+                        "length", 11_000, "record", 1))),
+                "b.json", SampleProfiler.map(JsonStringValues.LONG_STRINGS, List.of(SampleProfiler.map("field", "b",
+                        "length", 30_000, "record", 4)))));
+
+        assertThat(JsonStringValues.longStringsOf(profile)).extracting(entry -> entry.get("field"))
+                .containsExactly("b", "a");
+        assertThat(JsonStringValues.longStringsOf(Map.of())).isEmpty();
     }
 
     @Test

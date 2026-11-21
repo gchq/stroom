@@ -49,6 +49,9 @@ class TestDraftTranslationMappingTool {
             2026-10-01T09:20:00+10:00,FW1,SYSTEM,WARNING,,,,,N/A,HIGH_CPU,0,0,0,,CPU over 85 percent
             """;
 
+    // The start of the question on values longer than the JSON parser keeps.
+    private static final String LONG_VALUES_QUESTION = "Some values are longer than Stroom's JSON parser keeps";
+
     private final TranslationWorld world = new TranslationWorld();
     private final DraftTranslationMappingTool tool = world.draftTool();
 
@@ -634,6 +637,94 @@ class TestDraftTranslationMappingTool {
         final Map<String, Object> refused = world.call(tool, Map.of("samples", List.of("C:\\logs\\acme.csv")));
 
         assertThat((String) refused.get("error")).contains("path");
+    }
+
+    @Test
+    void theUserIsAskedOnceWhetherToKeepLongValuesWholeOrCutThemAndTheChoiceIsRecorded() {
+        // Seen in user test chat 182: the user said "Cut them" in the chat, nothing kept it, and every clean step
+        // was refused for the JSON parser's Warning, so the build could not be processed.
+        longValues(21L, 25_000);
+        world.forms = true;
+        world.answers.put(LONG_VALUES_QUESTION, "Cut them at 10,000 characters");
+
+        final Map<String, Object> cut = world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1"));
+
+        assertThat(cut).doesNotContainKey("error");
+        assertThat(world.asked).filteredOn(asked -> asked.startsWith(LONG_VALUES_QUESTION)).singleElement()
+                .asString().contains("body", "25,000 characters");
+        assertThat(String.valueOf(world.formsShown.getLast())).contains(
+                "Keep them whole (raise the JSON parser's limit to 50,000 characters)",
+                "Cut them at 10,000 characters");
+        assertThat(world.world.records().longValues("acme-v1")).hasValueSatisfying(kept -> assertThat(kept)
+                .containsEntry("choice", "cut").containsEntry("longest", 25_000)
+                .containsEntry("fields", List.of("body")).containsEntry("how", "form"));
+        // Answered: the notes say the choice, not that it is still the user's to make.
+        assertThat(String.valueOf(cut.get("notes"))).contains("The user chose to cut them")
+                .doesNotContain("is the user's to say", "Ask the user whether");
+        assertThat(cut.get("long_values")).asString().contains("choice=cut");
+
+        // Recorded: not asked again.
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1"));
+        assertThat(world.asked).noneMatch(asked -> asked.startsWith(LONG_VALUES_QUESTION));
+        assertThat(String.valueOf(again.get("notes"))).contains("The user chose to cut them");
+
+        // Another choice than the user's is refused, unless the user changed their mind.
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1", "long_values", "whole")))
+                .extractingByKey("error").asString().contains("The user chose to cut long values", "user_changed");
+        final Map<String, Object> whole = world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1",
+                "long_values", "whole", "user_changed", true));
+        assertThat(String.valueOf(whole.get("notes"))).contains("The user chose to keep them whole",
+                "jsonParser.stringTruncateLength to 50000");
+        assertThat(world.world.records().longValues("acme-v1")).hasValueSatisfying(kept -> assertThat(kept)
+                .containsEntry("choice", "whole").containsEntry("limit", 50_000).containsEntry("how", "given"));
+        assertThat(world.asked).noneMatch(asked -> asked.startsWith(LONG_VALUES_QUESTION));
+    }
+
+    @Test
+    void withNoFormTheAgentIsToldToAskAndRecordLongValuesWithTheArgument() {
+        longValues(22L, 12_000);
+
+        final Map<String, Object> asked = world.call(tool, Map.of("stream_ids", List.of(22), "build", "acme-v1"));
+
+        assertThat(String.valueOf(asked.get("notes"))).contains("Ask the user whether to keep them whole or cut "
+                                                                + "them", "long_values=whole or long_values=cut");
+        assertThat(world.world.records().longValues("acme-v1")).isEmpty();
+
+        // The user's answer, passed by the agent.
+        final Map<String, Object> cut = world.call(tool, Map.of("stream_ids", List.of(22), "build", "acme-v1",
+                "long_values", "cut"));
+        assertThat(String.valueOf(cut.get("notes"))).contains("The user chose to cut them");
+        assertThat(world.world.records().longValues("acme-v1")).hasValueSatisfying(kept -> assertThat(kept)
+                .containsEntry("choice", "cut").containsEntry("how", "given"));
+
+        // Kept with a build, and one of the two choices.
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(22), "long_values", "cut")))
+                .extractingByKey("error").asString().contains("give build=");
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(22), "build", "acme-v1", "long_values", "trim")))
+                .extractingByKey("error").asString().contains("long_values is whole", "or cut");
+    }
+
+    @Test
+    void withoutABuildLongValuesAreOnlyNoted() {
+        longValues(23L, 12_000);
+        world.forms = true;
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(23)));
+
+        assertThat(draft).doesNotContainKey("error");
+        assertThat(world.asked).noneMatch(asked -> asked.startsWith(LONG_VALUES_QUESTION));
+        assertThat(String.valueOf(draft.get("notes"))).contains("is the user's to say",
+                "draft_translation_mapping with build= asks");
+    }
+
+    // JSON lines in the stream, the second record's body that long.
+    private void longValues(final long streamId, final int length) {
+        final String lines = "{\"time\": \"2026-10-01T10:00:00.000Z\", \"user\": \"bob\", \"body\": \"short\"}\n"
+                             + "{\"time\": \"2026-10-01T10:01:00.000Z\", \"user\": \"carol\", \"body\": \""
+                             + "x".repeat(length) + "\"}\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(streamId))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream " + streamId, lines), List.of()));
     }
 
     // A feed translated now by FG-V1.2, whose XSLT looks up GEOIP and loads its reference data.

@@ -24,6 +24,8 @@ user_knows: >
   over by the Messaging pipeline is expected; they are not errors. Promote the build, keeping its documents where
   the feed's other documents are. The system is Microsoft 365.
   Users' Ids stay whole, with their domain (sam.taylor@contoso.example), as Messaging writes them.
+  String values longer than Stroom's JSON parser keeps (mail and message bodies past 10,000 characters) may be
+  cut: the user is happy for them to be cut rather than kept whole.
 expected:
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
@@ -110,6 +112,8 @@ expected:
           |Update/After/Document/Id|Update/After/Object/Name|Update/After/Object/Id"]
       data_share_at_most: 0.6
 reference:
+  # The user chose to cut values longer than the JSON parser keeps (user_knows): recorded with the draft.
+  long_values: cut
   source_types:
     group: Messaging
     source_types: [OneDrive]

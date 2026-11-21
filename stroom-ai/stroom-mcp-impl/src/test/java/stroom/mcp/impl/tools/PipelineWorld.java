@@ -102,7 +102,7 @@ final class PipelineWorld {
 
     /// @return update_pipeline, on this world.
     UpdatePipelineTool updateTool() {
-        return new UpdatePipelineTool(writes, feeds.plan);
+        return new UpdatePipelineTool(writes, feeds.plan, world::records);
     }
 
     /// Adds a template, outside the workspace.
@@ -202,7 +202,7 @@ final class PipelineWorld {
 
     private static Map<String, Map<String, String>> declared() {
         final Map<String, Map<String, String>> declared = new LinkedHashMap<>();
-        declared.put("JSONParser", Map.of("addRootObject", "boolean"));
+        declared.put("JSONParser", Map.of("addRootObject", "boolean", "stringTruncateLength", "int"));
         declared.put("XMLParser", Map.of());
         declared.put("DSParser", Map.of("textConverter", "TextConverter"));
         declared.put("XMLFragmentParser", Map.of("textConverter", "TextConverter"));

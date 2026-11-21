@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,22 +53,56 @@ public class AcceptedErrors {
 
     private final Provider<DocFinder> docFinderProvider;
     private final DocumentAccess documentAccess;
+    private final Provider<Optional<BuildProgress>> buildProgressProvider;
 
+    /// With no build's choices (no build tools).
+    ///
     /// @param docFinderProvider Finds Documentation docs by name.
     /// @param documentAccess    Reads them, as the user.
-    @Inject
     public AcceptedErrors(final Provider<DocFinder> docFinderProvider, final DocumentAccess documentAccess) {
-        this.docFinderProvider = docFinderProvider;
-        this.documentAccess = documentAccess;
+        this(docFinderProvider, documentAccess, Optional::empty);
     }
 
-    /// Every accepted error recorded for a pipeline: in the Documentation docs named after it that the user can
-    /// view. Accepted errors are a courtesy: never a reason for triage to fail, so anything that goes wrong gives
-    /// none.
+    /// @param docFinderProvider     Finds Documentation docs by name.
+    /// @param documentAccess        Reads them, as the user.
+    /// @param buildProgressProvider The errors a build's recorded choices accept for its pipelines, where the build
+    ///                              tools are bound.
+    @Inject
+    public AcceptedErrors(final Provider<DocFinder> docFinderProvider,
+                          final DocumentAccess documentAccess,
+                          final Provider<Optional<BuildProgress>> buildProgressProvider) {
+        this.docFinderProvider = docFinderProvider;
+        this.documentAccess = documentAccess;
+        this.buildProgressProvider = buildProgressProvider;
+    }
+
+    /// Every accepted error recorded for a pipeline: those its build's recorded choices accept ([BuildProgress]),
+    /// then those in the Documentation docs named after it that the user can view. Accepted errors are a courtesy:
+    /// never a reason for triage to fail, so anything that goes wrong gives none.
     ///
     /// @param pipelineUuid The pipeline.
     /// @return The entries, newer replacing older for the same element and pattern.
     public List<Entry> acceptedFor(final String pipelineUuid) {
+        final List<Entry> byBuild = byBuild(pipelineUuid);
+        final List<Entry> documented = documented(pipelineUuid);
+        return byBuild.isEmpty()
+                ? documented
+                : merge(byBuild, documented);
+    }
+
+    // Those a build's recorded choices accept (the user chose to cut long values, say); none without build tools.
+    private List<Entry> byBuild(final String pipelineUuid) {
+        try {
+            return buildProgressProvider.get()
+                    .map(progress -> progress.acceptedErrors(pipelineUuid))
+                    .orElse(List.of());
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the errors pipeline {}'s build accepts", pipelineUuid, e);
+            return List.of();
+        }
+    }
+
+    private List<Entry> documented(final String pipelineUuid) {
         try {
             final String name = documentAccess.findDocRef(pipelineUuid)
                     .filter(docRef -> PipelineDoc.TYPE.equals(docRef.getType()))

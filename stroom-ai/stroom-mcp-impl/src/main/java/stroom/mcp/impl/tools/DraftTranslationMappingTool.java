@@ -172,10 +172,10 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                             + "types each source type's.")
                         .addStringProperty(ENVIRONMENT_ARG, "EventSource/System/Environment, if the user has said, "
                                                             + "e.g. Prod.")
-                        .addBooleanProperty(USER_CHANGED_ARG, "True when the user has changed the system_name or "
-                                                              + "environment they gave earlier for this build (the "
-                                                              + "draft keeps what they first gave, and refuses "
-                                                              + "others).")
+                        .addBooleanProperty(USER_CHANGED_ARG, "True when the user has changed the system_name, "
+                                                              + "environment or long_values they gave earlier for "
+                                                              + "this build (the draft keeps what they first gave, "
+                                                              + "and refuses others).")
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(SAMPLE_STREAMS))
                         .addProperty(SPLITTER_ARG, TranslationArgs.object("The Data Splitter spec the text is read "
                                                                           + "with (build_data_splitter's spec), "
@@ -213,6 +213,13 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                      + "IANA name or +10:00), or field:NAME / "
                                                                      + "meta:NAME for each record's own (|ZONE the "
                                                                      + "default); asked in a form when left out.")
+                        .addEnumProperty(LongValues.ARG, List.of(LongValues.WHOLE, LongValues.CUT), "JSON "
+                                                                  + "string values longer than Stroom's JSON "
+                                                                  + "parser keeps (10,000 characters): whole (its "
+                                                                  + "stringTruncateLength raised past them) or cut, "
+                                                                  + "as the user chose; recorded for the build "
+                                                                  + "(stepping and processing follow it); asked in a "
+                                                                  + "form when left out.")
                         .addIntegerProperty(CONTINUATION_LINES_ARG, "Records with stack traces: the most lines of "
                                                                     + "each its Event keeps, as the user chose (0: "
                                                                     + "all of it); asked in a form when left out.")
@@ -329,6 +336,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         if (read != null) {
             skippedLongStrings(result, mapping, read.skipped());
         }
+        // Values longer than the JSON parser keeps: kept whole or cut, as the user chooses, recorded for the build
+        // (seen in user test chat 182: "Cut them", said in the chat, kept nowhere).
+        if ("json".equals(mapping.get("input")) || ToolArgs.raw(call, LongValues.ARG) != null) {
+            LongValues.apply(call, context, consent, buildRecords.get(), build, result);
+        }
         // Records with no time, or times with no date: where they come from is the user's to say.
         final List<Map<String, String>> headers = streamIds.stream().map(sampleStreamTexts::receiptHeaders).toList();
         TimeSources.apply(call, context, consent, NAME, result, mapping, headerValues(headers, "RemoteFile"),
@@ -428,10 +440,15 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             return;
         }
         final Map<String, Object> left = new LinkedHashMap<>(Map.of("format", SampleProfiler.JSON_ARRAY));
+        if (result.get(JsonStringValues.LONG_STRINGS) != null) {
+            left.put(JsonStringValues.LONG_STRINGS, result.get(JsonStringValues.LONG_STRINGS));
+        }
         skipped.forEach(part -> JsonStringValues.addSkipped(left, part.name(), part.events()));
         if (!(left.get(JsonStringValues.LONG_STRINGS_NOTE) instanceof final String note)) {
             return;
         }
+        // The draft's own long values and those of the events left out, for the user's choice.
+        result.put(JsonStringValues.LONG_STRINGS, left.get(JsonStringValues.LONG_STRINGS));
         final List<Object> notes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
         if (notes.stream().noneMatch(said -> String.valueOf(said).contains("stringTruncateLength"))) {
             notes.add(note);

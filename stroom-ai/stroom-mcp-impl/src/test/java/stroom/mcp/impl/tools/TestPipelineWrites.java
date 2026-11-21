@@ -201,7 +201,7 @@ class TestPipelineWrites {
         assertThatThrownBy(() -> writes.typedProperties(TYPES, List.of(
                 PropertyValue.plain("jsonParser", "addRootObjects", false))))
                 .hasMessage("jsonParser (JSONParser) has no property 'addRootObjects'; its properties are "
-                            + "['addRootObject']");
+                            + "['addRootObject', 'stringTruncateLength']");
     }
 
     @Test

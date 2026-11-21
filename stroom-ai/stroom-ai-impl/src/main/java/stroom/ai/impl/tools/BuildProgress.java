@@ -17,6 +17,7 @@
 
 package stroom.ai.impl.tools;
 
+import java.util.List;
 import java.util.Optional;
 
 /// What Stroom's own tools need to know of the build a session is working on, where builds live with the build
@@ -35,4 +36,14 @@ public interface BuildProgress {
     /// @return Why, naming the plan's next step; empty when the session has no build, its indexing is verified (or
     /// it does none), or its state can't be read.
     Optional<String> beforeDashboard(ToolCallContext context);
+
+    /// The errors a build's recorded choices accept as benign for one of its pipelines, as the user's accepted
+    /// errors are ([AcceptedErrors]): e.g. the JSON parser's Warning that it cut a long value, where the user chose
+    /// to cut long values.
+    ///
+    /// @param pipelineUuid A pipeline.
+    /// @return The entries; empty when it is in no build, the build's choices accept nothing, or they can't be read.
+    default List<AcceptedErrors.Entry> acceptedErrors(final String pipelineUuid) {
+        return List.of();
+    }
 }

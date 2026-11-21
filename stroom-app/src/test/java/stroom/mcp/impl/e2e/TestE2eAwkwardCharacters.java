@@ -125,6 +125,57 @@ class TestE2eAwkwardCharacters extends AbstractE2eTest {
     }
 
     @Test
+    void longValuesTheUserChoseToCutStepCleanAreCutAndDocumented() {
+        // Seen in user test chat 182: the user said "Cut them", nothing kept it, and the parser's Warning kept every
+        // step from being clean, so the build couldn't be processed. Recorded with the draft, it is benign.
+        final List<Value> values = List.of(AwkwardValues.named("long"), AwkwardValues.named("xml_special"));
+        final String build = "aw-cut";
+        final String feed = "AW-CUT";
+        createFeed(build, feed);
+        final long raw = upload(feed, jsonLines(values));
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "build", build, "long_values", "cut"));
+        assertThat(String.valueOf(draft.get("notes"))).contains("The user chose to cut them");
+
+        final Walked walked = translate(build, feed, raw, JSON, mapping(draft, null, null), null, values);
+
+        final Map<String, Object> cut = list(walked.stepped(), "groups").stream()
+                .filter(group -> "jsonParser".equals(group.get("element"))).findFirst().orElseThrow();
+        assertThat(cut).containsEntry("class", "benign").containsEntry("accepted", true);
+        assertThat(String.valueOf(cut.get("reason"))).contains("the user chose to cut string values");
+        assertThat(walked.stored().get(values.getFirst().user())).as("cut by Stroom's jsonParser")
+                .hasSize(10_000);
+        final Map<String, Object> documented = agreed("write_documentation", args("build", build, "pipeline_uuid",
+                walked.pipeline(), "markdown", "## Purpose and data\n\nLong values.\n", "change", "Created",
+                "stream_ids", List.of(raw)));
+        assertThat(documentation(uuidOf(documented))).contains("the user chose to cut string values",
+                "<!-- stroom-mcp accepted errors");
+        assertThat(String.valueOf(documented.get("note"))).contains("Say so in Open items");
+    }
+
+    @Test
+    void longValuesTheUserChoseToKeepWholeAreKeptByThePipelinesParser() {
+        final List<Value> values = List.of(AwkwardValues.named("long"), AwkwardValues.named("xml_special"));
+        final String build = "aw-whole";
+        final String feed = "AW-WHOLE";
+        createFeed(build, feed);
+        final long raw = upload(feed, jsonLines(values));
+        // The form's first answer, as a user taking it: kept whole.
+        client.answeringWith(McpTestClient::agree);
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "build", build));
+        assertThat(formMessages()).anyMatch(message -> message.startsWith("Some values are longer than Stroom's "
+                                                                          + "JSON parser keeps"));
+        assertThat(String.valueOf(draft.get("notes"))).contains("The user chose to keep them whole",
+                "jsonParser.stringTruncateLength to 30000");
+
+        // create_pipeline sets the parser's limit: clean at once, and the value whole.
+        final Walked walked = translate(build, feed, raw, JSON, mapping(draft, null, null), null, values);
+
+        assertThat(walked.stored()).as("each value as Stroom stores it").isEqualTo(expected(values, text -> text));
+    }
+
+    @Test
     void xml11IsTranslatedCheckedAndFetchedWithItsCharacterReferences() {
         final List<Value> values = AwkwardValues.xmlSafe();
         final StringBuilder sample = new StringBuilder("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<records>\n");

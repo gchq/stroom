@@ -89,6 +89,33 @@ class TestUpdatePipelineTool {
     }
 
     @Test
+    void aPipelineMadeBeforeTheUserChoseToKeepLongValuesWholeIsRaisedToKeepThem() {
+        pipelines.buildPipeline("p", "Acme-Events", null, PipelineLayers.layer("p").chain("jsonParser",
+                "JSONParser", "translationFilter", "XSLTFilter"));
+        pipelines.xslt("x1", "Acme-Events", Map.of("input", "json", "json_layout", "lines"));
+        pipelines.world.records().rememberLongValues(PipelineWorld.BUILD, Map.of("choice", "whole", "limit", 60_000,
+                "recorded", "2026-11-22"));
+
+        final Map<String, Object> result = PipelineWorld.json(call("{\"pipeline_uuid\": \"p\", \"set_properties\": "
+                                                                   + "[{\"element\": \"translationFilter\", \"name\": "
+                                                                   + "\"xslt\", \"doc_uuid\": \"x1\", \"doc_type\": "
+                                                                   + "\"XSLT\"}]}"));
+
+        assertThat(result).containsEntry("set", List.of("translationFilter.xslt", "jsonParser.stringTruncateLength"));
+        assertThat(String.valueOf(result.get("long_values"))).startsWith("Also set jsonParser.stringTruncateLength "
+                                                                         + "60000");
+        assertThat(PipelineDocs.addedProperties(pipelines.pipelineDoc("p"))).contains(new PipelineProperty(
+                "jsonParser", "stringTruncateLength", new PipelinePropertyValue(60_000)));
+
+        // Raised already: left as it is.
+        final Map<String, Object> again = PipelineWorld.json(call("{\"pipeline_uuid\": \"p\", \"set_properties\": "
+                                                                  + "[{\"element\": \"translationFilter\", \"name\": "
+                                                                  + "\"xslt\", \"doc_uuid\": \"x1\", \"doc_type\": "
+                                                                  + "\"XSLT\"}]}"));
+        assertThat(again).containsEntry("set", List.of("translationFilter.xslt")).doesNotContainKey("long_values");
+    }
+
+    @Test
     void aPipelineOutsideTheBuildIsNotChanged() {
         pipelines.productionPipeline("prod", "Acme-Prod", null, PipelineLayers.layer("prod").chain("jsonParser",
                 "JSONParser"));

@@ -86,7 +86,10 @@ class TestErrorTriage {
         final ErrorTriage.Classified cut = RULES.classify("WARNING", "jsonParser", false,
                 "String value truncated to length 10000, original length: 10050");
         assertThat(cut.classification()).isEqualTo(ErrorTriage.REVIEW);
-        assertThat(cut.reason()).contains("stringTruncateLength").contains("10,000").contains("set_properties");
+        assertThat(cut.reason()).contains("stringTruncateLength").contains("10,000").contains("set_properties")
+                // With no choice of the user's recorded for the build, how to record it (seen in user test chat 182:
+                // "Cut them", said in the chat, kept nowhere).
+                .contains("draft_translation_mapping build=", "long_values=whole or long_values=cut");
     }
 
     @Test

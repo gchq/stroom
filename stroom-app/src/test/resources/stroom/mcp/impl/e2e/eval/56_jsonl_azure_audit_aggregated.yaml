@@ -21,6 +21,8 @@ user_knows: >
   SharePoint, OneDrive and AzureActiveDirectory are for later builds (parked). The other workloads' records being
   passed over by the Messaging pipeline is expected; they are not errors. The system is Microsoft 365.
   Users' Ids stay whole, with their domain (sam.taylor@contoso.example): don't split the domain off.
+  String values longer than Stroom's JSON parser keeps (mail and message bodies past 10,000 characters) may be
+  cut: the user is happy for them to be cut rather than kept whole.
 expected:
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
@@ -94,6 +96,8 @@ expected:
 files:
   - {name: m365-audit.json, resource: aggregated/azure-audit/azure-audit-1.json, lines: 400}
 reference:
+  # The user chose to cut values longer than the JSON parser keeps (user_knows): recorded with the draft.
+  long_values: cut
   source_types:
     field: Workload
     system_name: Microsoft 365

@@ -262,6 +262,23 @@ class BuildDocumentation {
                 : FieldDocs.readDescriptionSources(writes.text(previous));
     }
 
+    /// The JSON parser's Warning that it cut a long value, as an error accepted for the build's pipelines, where the
+    /// user chose to cut long values ([LongValues]): kept with the documentation's accepted errors, it holds after
+    /// promotion too.
+    ///
+    /// @param build The build.
+    /// @return The entry; empty when the user chose no such thing.
+    Optional<AcceptedErrors.Entry> longValuesAccepted(final String build) {
+        return LongValues.accepted(buildRecords, build);
+    }
+
+    /// @param build The build.
+    /// @return What the documentation is to say of the build's long values, by the user's choice; empty when none
+    /// is recorded.
+    Optional<String> longValuesSaid(final String build) {
+        return LongValues.documented(buildRecords, build);
+    }
+
     /// The error groups processing the streams gave, from the Error streams this pipeline wrote for them.
     ///
     /// @param pipelineUuid The pipeline.

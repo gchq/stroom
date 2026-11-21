@@ -115,6 +115,8 @@ public class BuildRecords {
     public static final String UNREADABLE_SURVEYS = "unreadable_surveys";
     // The EventSource/System/Name and Environment the user gave for the build's translation.
     private static final String SYSTEM = "system";
+    /// The record's key for the user's choice for JSON string values longer than Stroom's JSON parser keeps.
+    public static final String LONG_VALUES = "long_values";
     /// The kinds of work a build may be started as.
     public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference", "assessment");
 
@@ -383,6 +385,31 @@ public class BuildRecords {
             }
             state.put(SYSTEM, given);
         });
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The user's choice for JSON string values longer than Stroom's JSON parser keeps, as
+    /// [#rememberLongValues] kept it ([LongValues] reads it); empty when none was recorded (or `build` is null).
+    public Optional<Map<String, Object>> longValues(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(LONG_VALUES) instanceof final Map<?, ?> chosen
+                ? Optional.of(asMap(chosen))
+                : Optional.empty();
+    }
+
+    /// Records the user's choice for JSON string values longer than Stroom's JSON parser keeps (cut or kept whole),
+    /// so step_sample and processing follow it, and a later draft doesn't ask again (seen in user test chat 182: the
+    /// user said "Cut them" in the chat, nothing kept it, and every clean step was refused for the parser's
+    /// Warning).
+    ///
+    /// @param build  A build's name.
+    /// @param choice The choice, as [LongValues] writes it.
+    /// @return The record as saved.
+    public Map<String, Object> rememberLongValues(final String build, final Map<String, Object> choice) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(LONG_VALUES, new LinkedHashMap<>(choice)));
     }
 
     /// @param build A build's name.

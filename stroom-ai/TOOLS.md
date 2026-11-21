@@ -4265,7 +4265,10 @@ Shared behaviour:
   and Stroom's own) into blocking, review and benign groups, with up to three examples each, the errors the user
   accepted for the pipeline (`AcceptedErrors`) counted as benign. The JSON parser's cut of a string longer than its
   `stringTruncateLength` is for review, with the property to raise (it was a benign Warning from an inherited
-  element, so stepping was clean and the value lost; found testing awkward values, 2026-11-18). Output with no XML elements is a marker of its own
+  element, so stepping was clean and the value lost; found testing awkward values, 2026-11-18), unless the user
+  chose to cut long values for the pipeline's build (`draft_translation_mapping long_values=cut`, 2026-11-22): then
+  it is benign, accepted, its reason naming the choice and when it was recorded. With no choice recorded, the
+  review's reason says to ask the user and record it with `draft_translation_mapping build= long_values=`. Output with no XML elements is a marker of its own
   (`SteppingVerdicts.emptyOutput`): when no template matches (usually a wrong `xpath-default-namespace`), XSLT's
   built-in rules copy text through, nothing errors, and processing silently writes nothing. CEF lines and Kafka
   records are not empty output (`SteppingVerdicts.sendsOn`), nor is text that isn't only the input's own text (CSV
@@ -5175,10 +5178,14 @@ generated without them.
   draft stays read-only. Unnamed, a note offers one name or each source type's own;
   `splitter` (a build_data_splitter spec, else inferred);
   `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
-  this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose).
+  this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose);
+  `long_values` (`whole` or `cut`: the user's choice for JSON string values longer than the JSON parser keeps; with
+  `build` only; given otherwise than recorded, refused unless `user_changed=true`).
 * **Returns** (`schema_check.unfilled` says when rules' action elements need parts the draft couldn't fill):
   `mapping`, `source_notes`, `splitter`, `format`, `records`, `kinds`, `notes`, `unmapped_fields`,
-  `fields_seen`; `time_candidates` (when two times could each be the event's); `schema_check` (`ok`, each problem's first sentence cut near 220 characters, at most 6 warnings;
+  `fields_seen`; `long_strings` (JSON values longer than the JSON parser keeps, with those of events too long to
+  sample) and `long_values` (the user's choice: `choice`, `json_parser_stringTruncateLength` when kept whole, and
+  where it is kept); `time_candidates` (when two times could each be the event's); `schema_check` (`ok`, each problem's first sentence cut near 220 characters, at most 6 warnings;
   `ok: null` and `note` when the schema can't be read); `schema_version` and `schema_version_settled`;
   `current_translation` when the build's feed is already translated by a pipeline whose XSLT looks values up; for
   XML fragments, `xml_namespace` set to the namespace of the environment's wrapper; `hint`. Or the version question
@@ -5198,6 +5205,23 @@ generated without them.
   still to confirm (`The catalogue's N event type(s) and the catch-all for uncatalogued records are still to confirm:
   call catalogue_event_types build=... confirm=true ...`).
 * **Notes**:
+  * **Long values, the user's choice** (`LongValues`, 2026-11-22): where the sample's JSON holds string values longer
+    than the JSON parser's `stringTruncateLength` (10,000), a draft with `build` asks the user in a short form
+    ("Some values are longer than Stroom's JSON parser keeps (10,000 characters): <fields>, the longest N
+    characters. Keep them whole, or cut them?", answered "Keep them whole (raise the JSON parser's limit to L
+    characters)" or "Cut them at 10,000 characters"; L is twice the longest, rounded up to a multiple of 10,000),
+    or takes `long_values`, and keeps the answer in the build's record (`BuildRecords.rememberLongValues`:
+    `choice`, `limit`, `longest`, `fields`, `how`, `recorded`); a later draft follows it without asking, a longer
+    value raising a kept-whole limit. Whole: `create_pipeline` sets the build's JSON parser's
+    `stringTruncateLength` to L (`filled_from_build`), and `update_pipeline` does on a pipeline of the build made
+    before (`long_values` in its result), unless the call sets it. Cut: triage classes the parser's Warning benign
+    for the build's pipelines (`BuildProgress.acceptedErrors`, through `AcceptedErrors`), so a step can be clean
+    and processing go ahead, and `write_documentation` records it with the errors accepted (so it holds after
+    promotion) and says, in its `note`, to say so in Open items. Once chosen, the note says the choice, not to ask
+    (as for the time zone). Without forms, the note tells the agent to ask and draft again with `long_values`;
+    without a build, nothing is asked or kept. Seen in user test chat 182: the user said "Cut them" in the chat,
+    nothing kept it, and `create_processor_filter` was refused for want of a clean step; hidden until `step_sample`
+    stepped past each stream's head (eval cases 56, 60, 61: a 25,486-character value at record 85).
   * **Held XML, each node once** (`HeldXmlPaths`, 2026-11-21): a held XML field's element is read as
     `<field>/<path>` and as `<field>//<name>`, an attribute under both and as `<field>//@<name>` too (all still
     readable, and the note offers `//`); the draft maps each node by one of them: its full path when its name is found
@@ -7000,9 +7024,10 @@ fragment wrapper (`FragmentWrappers`).
   to 5 fields: `field` as a dotted path with `[]` for array items, `length`, `record`), which it cuts with a
   Warning, and the fields holding a NUL (`nul_strings`), which Stroom's XML writer takes for its escape switch
   (`preventEscapeSwitching` false by default), writing the text after it unescaped. Each comes with a note
-  (`long_strings_note`: ask the user, raise `jsonParser.stringTruncateLength` or cap the field in the mapping, leave
-  `maxStringLength` alone; `nul_strings_note`: `transform: strip_control`), which `draft_translation_mapping` adds
-  to its `notes`. Seen: audit mail bodies of 20,000 to 46,000 characters cut with a Warning, the agent lowering
+  (`long_strings_note`: the choice, whole or cut, is the user's, which `draft_translation_mapping` asks and records
+  (`long_values`); raise `jsonParser.stringTruncateLength` or cap the field in the mapping, leave `maxStringLength`
+  alone; `nul_strings_note`: `transform: strip_control`), which `draft_translation_mapping` adds to its `notes`
+  (replaced by the choice once made: `askNote`, `wholeNote`, `cutNote`). Seen: audit mail bodies of 20,000 to 46,000 characters cut with a Warning, the agent lowering
   `maxStringLength` instead (every body an Error), and NULs in them leaving `&nbsp;` and a form feed unescaped
   in the Events streams. The pipeline's own `stringTruncateLength` is not read: the draft has no pipeline.
 * **`TimePatterns`**: a `stroom:format-date` pattern inferred from a value, read left to right into pattern letters,

@@ -35,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -55,11 +56,13 @@ class UpdatePipelineTool extends AbstractBuiltInTool {
 
     private final PipelineWrites writes;
     private final BuildPlan plan;
+    private final Provider<BuildRecords> records;
 
     @Inject
-    UpdatePipelineTool(final PipelineWrites writes, final BuildPlan plan) {
+    UpdatePipelineTool(final PipelineWrites writes, final BuildPlan plan, final Provider<BuildRecords> records) {
         this.writes = writes;
         this.plan = plan;
+        this.records = records;
     }
 
     @Override
@@ -158,7 +161,40 @@ class UpdatePipelineTool extends AbstractBuiltInTool {
                                + "a JSON array, so each item is a record (with the parser's root map, the whole "
                                + "array was one).");
         }
+        // A pipeline made before the user chose to keep long values whole: its JSON parser raised to keep them.
+        final Optional<PropertyValue> limit = parserLimit(pipelineUuid, result, properties);
+        if (limit.isPresent()) {
+            final Map<String, Object> outcome = writes.setPipelineProperty(context, pipelineUuid, limit.get());
+            set.add(String.valueOf(outcome.get("set")));
+            result.put("long_values", "Also set " + limit.get().dotted() + " " + limit.get().value() + ": the user "
+                                      + "chose to keep string values longer than the JSON parser's default limit "
+                                      + "whole.");
+        }
         return result;
+    }
+
+    // The JSON parser's stringTruncateLength, raised where the user chose to keep long values whole and this call
+    // doesn't set it; a convenience on top of what was asked: never fail the update over it.
+    private Optional<PropertyValue> parserLimit(final String pipelineUuid,
+                                                final Map<String, Object> result,
+                                                final List<PropertyValue> properties) {
+        try {
+            final String build = plan.buildOf(new DocRef(PipelineDoc.TYPE, pipelineUuid,
+                    (String) result.get("name"))).orElse(null);
+            if (build == null) {
+                return Optional.empty();
+            }
+            final Layout merged = writes.layout(pipelineUuid);
+            return LongValues.parserLimit(records.get(), build, merged.elements(), merged.properties())
+                    .filter(limit -> properties.stream().noneMatch(property ->
+                            property.element().equals(limit.element()) && property.name().equals(limit.name())));
+        } catch (final RuntimeException e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Couldn't check pipeline {}'s JSON parser limit: {}",
+                    pipelineUuid,
+                    e.getMessage()));
+            return Optional.empty();
+        }
     }
 
     // The JSON parser's addRootObject, false, when the build's sample is a JSON array or the XSLT's mapping reads

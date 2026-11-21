@@ -224,6 +224,53 @@ class TestCreatePipelineTool {
     }
 
     @Test
+    void theJsonParserKeepsLongValuesWholeWhereTheUserChoseThat() {
+        // The user chose to keep long values whole (draft_translation_mapping long_values=whole): the JSON parser's
+        // limit raised past them, rather than the agent having to remember to.
+        pipelines.template(TEMPLATE, "Event Data (JSON)", PipelineLayers.layer(TEMPLATE).chain("jsonParser",
+                        "JSONParser", "translationFilter", "XSLTFilter", "streamAppender", "StreamAppender")
+                .property("streamAppender", "streamType", "Events"));
+        pipelines.xslt("x1", "Acme-Events", null);
+        pipelines.world.records().rememberLongValues(PipelineWorld.BUILD, Map.of("choice", "whole", "limit", 60_000,
+                "longest", 25_486, "fields", List.of("body"), "recorded", "2026-11-22"));
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"P\", "
+                                                                 + "\"template_uuid\": \"" + TEMPLATE + "\"}",
+                BuildToolCalls.answering(Map.of())));
+
+        assertThat(String.valueOf(made.get("filled_from_build"))).contains("jsonParser.stringTruncateLength = 60000 "
+                                                                          + "(the user chose to keep string values");
+        assertThat(PipelineDocs.addedProperties(pipelines.pipelineNamed("P"))).contains(
+                new PipelineProperty("jsonParser", "stringTruncateLength", new PipelinePropertyValue(60_000)));
+
+        // Set by the agent, it is the agent's.
+        final Map<String, Object> given = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"Q\", "
+                                                                  + "\"template_uuid\": \"" + TEMPLATE + "\", "
+                                                                  + "\"set_properties\": "
+                                                                  + "\"jsonParser.stringTruncateLength=90000\"}",
+                BuildToolCalls.answering(Map.of())));
+        assertThat(String.valueOf(given.get("filled_from_build"))).doesNotContain("stringTruncateLength");
+        assertThat(PipelineDocs.addedProperties(pipelines.pipelineNamed("Q"))).contains(
+                new PipelineProperty("jsonParser", "stringTruncateLength", new PipelinePropertyValue(90_000)));
+    }
+
+    @Test
+    void theJsonParserIsLeftAsItIsWhereTheUserChoseToCutLongValues() {
+        pipelines.template(TEMPLATE, "Event Data (JSON)", PipelineLayers.layer(TEMPLATE).chain("jsonParser",
+                        "JSONParser", "translationFilter", "XSLTFilter", "streamAppender", "StreamAppender")
+                .property("streamAppender", "streamType", "Events"));
+        pipelines.xslt("x1", "Acme-Events", null);
+        pipelines.world.records().rememberLongValues(PipelineWorld.BUILD, Map.of("choice", "cut", "longest", 25_486,
+                "recorded", "2026-11-22"));
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"P\", "
+                                                                 + "\"template_uuid\": \"" + TEMPLATE + "\"}",
+                BuildToolCalls.answering(Map.of())));
+
+        assertThat(String.valueOf(made.get("filled_from_build"))).doesNotContain("stringTruncateLength");
+    }
+
+    @Test
     void referenceDataIsAttachedForTheTranslationsLookups() {
         textTemplate();
         pipelines.textConverter("tc", "Acme-Splitter");

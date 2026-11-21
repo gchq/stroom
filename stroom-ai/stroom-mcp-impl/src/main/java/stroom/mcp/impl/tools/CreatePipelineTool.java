@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -406,6 +407,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             filled.add(property.element() + ".addRootObject = false (the sample is a JSON array: each item is a "
                        + "record)");
         });
+        // The user chose to keep long values whole: the JSON parser keeps them (unless set here already).
+        LongValues.parserLimit(records, build, elementTypes, setProperties(merged, properties))
+                .filter(limit -> properties.stream().noneMatch(property -> property.element().equals(limit.element())
+                                                                           && property.name().equals(limit.name())))
+                .ifPresent(limit -> {
+                    properties.add(limit);
+                    filled.add(limit.dotted() + " = " + limit.value() + " (the user chose to keep string values "
+                               + "longer than the JSON parser's default limit whole)");
+                });
         writes.ownDocuments(build, properties, request.reuseExistingDocs(), previous);
         // An aggregated feed's common module or helpers is never a pipeline's XSLT.
         refuseImportedModules(properties);
@@ -529,6 +539,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             result.put("reference_data", references.stream().map(MergedPipeline::describe).toList());
         }
         return plan.withNext(context, build, result);
+    }
+
+    // The properties the template sets and those about to be set, each by its element and name.
+    private static Map<ElementProperty, Object> setProperties(final Layout merged,
+                                                              final List<PropertyValue> properties) {
+        final Map<ElementProperty, Object> set = new LinkedHashMap<>(merged.properties());
+        properties.forEach(property -> set.put(new ElementProperty(property.element(), property.name()),
+                property.value()));
+        return set;
     }
 
     /// The schema group each schema filter of a translation pipeline needs, so that Stroom validates with the

@@ -1084,6 +1084,13 @@ public final class DraftMapping {
                 result.put(TIME_CANDIDATES, timeCandidates);
             }
             result.put("fields_seen", names);
+            if ("json".equals(mapping.get("input"))) {
+                // The values the JSONParser would cut, for the user's choice to keep them whole or cut them.
+                final List<Map<String, Object>> longStrings = JsonStringValues.longStringsOf(info);
+                if (!longStrings.isEmpty()) {
+                    result.put(JsonStringValues.LONG_STRINGS, longStrings);
+                }
+            }
             return result;
         }
 

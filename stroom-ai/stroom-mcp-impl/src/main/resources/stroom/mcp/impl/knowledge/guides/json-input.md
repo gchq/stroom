@@ -58,12 +58,14 @@ The JSONParser has two length properties; they do different things:
 | `maxStringLength` | 100000000 | is an Error |
 
 `profile_sample` and `draft_translation_mapping` name string values over 10,000 characters (`long_strings`: field,
-length, record). Ask the user whether the field must be kept whole. If it must, raise
-`jsonParser.stringTruncateLength` past the longest value (`update_pipeline` `set_properties`, `{"element":
-"jsonParser", "name": "stringTruncateLength", "value": 50000}`); if not, cap it in the mapping (`"max_length": 4000` on
-the field's entry; the parser still cuts at its limit first, so a cap at or below it only shortens further) and leave
-the parser's default. Never lower `maxStringLength`: it turns every long value
-into an Error.
+length, record). Keeping them whole or cutting them is the user's choice, kept for the build: `draft_translation_mapping`
+with `build` asks it in a short form, or takes `long_values=whole` or `long_values=cut` as the user said, and records
+it. Whole: `create_pipeline` sets `jsonParser.stringTruncateLength` past the longest value (and `update_pipeline` on
+a pipeline made before). Cut: the parser's Warning is benign when stepping and processing the build's pipelines, and
+`write_documentation` records it with the errors accepted; say in Open items that the values are cut by the user's
+choice. To cut shorter still, cap it in the mapping (`"max_length": 4000` on the field's entry; the parser still cuts
+at its limit first, so a cap at or below it only shortens further). Never lower `maxStringLength`: it turns every long
+value into an Error.
 
 A value holding a NUL (`\u0000` in the JSON, `nul_strings`) switches the XML writer's escaping off until the next
 NUL, so the Events stream is not well-formed: map the field with `transform: strip_control`.
