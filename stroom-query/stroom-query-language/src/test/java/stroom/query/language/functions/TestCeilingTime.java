@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.stream.Stream;
@@ -129,6 +130,18 @@ public class TestCeilingTime extends AbstractFunctionTest<CeilingTime> {
                         ValDate.create(crossDayExpectedMillis),
                         ValDate.create(crossDayInputMillis),
                         ValString.create("PT15M")
+                ),
+                TestCase.of(
+                        "Before 1970",
+                        ValDate.create(Instant.parse("1970-01-01T00:00:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-12-31T23:59:30Z").toEpochMilli()),
+                        ValString.create("PT1M")
+                ),
+                TestCase.of(
+                        "Before 1970 to the previous minute",
+                        ValDate.create(Instant.parse("1969-12-31T23:59:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-12-31T23:58:30Z").toEpochMilli()),
+                        ValString.create("PT1M")
                 )
         );
     }

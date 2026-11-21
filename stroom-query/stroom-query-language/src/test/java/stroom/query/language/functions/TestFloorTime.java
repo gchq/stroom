@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.stream.Stream;
@@ -129,6 +130,24 @@ public class TestFloorTime extends AbstractFunctionTest<FloorTime> {
                         ValDate.create(crossDayExpectedMillis),
                         ValDate.create(crossDayInputMillis),
                         ValString.create("PT15M")
+                ),
+                TestCase.of(
+                        "Before 1970",
+                        ValDate.create(Instant.parse("1969-12-31T23:59:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-12-31T23:59:30Z").toEpochMilli()),
+                        ValString.create("PT1M")
+                ),
+                TestCase.of(
+                        "Before 1970 on boundary",
+                        ValDate.create(Instant.parse("1969-12-31T23:59:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-12-31T23:59:00Z").toEpochMilli()),
+                        ValString.create("PT1M")
+                ),
+                TestCase.of(
+                        "Before 1970 to 10 minutes",
+                        ValDate.create(Instant.parse("1969-07-20T20:10:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-07-20T20:17:40Z").toEpochMilli()),
+                        ValString.create("PT10M")
                 )
         );
     }

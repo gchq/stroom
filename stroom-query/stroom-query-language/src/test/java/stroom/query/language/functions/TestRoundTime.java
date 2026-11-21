@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.stream.Stream;
@@ -128,6 +129,24 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
                         "Cross day boundary",
                         ValDate.create(crossDayExpectedMillis),
                         ValDate.create(crossDayInputMillis),
+                        ValString.create("PT15M")
+                ),
+                TestCase.of(
+                        "Before 1970 rounds down",
+                        ValDate.create(Instant.parse("1969-12-31T23:59:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-12-31T23:59:10Z").toEpochMilli()),
+                        ValString.create("PT1M")
+                ),
+                TestCase.of(
+                        "Before 1970 rounds up",
+                        ValDate.create(Instant.parse("1970-01-01T00:00:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-12-31T23:59:40Z").toEpochMilli()),
+                        ValString.create("PT1M")
+                ),
+                TestCase.of(
+                        "Before 1970 to 15 minutes",
+                        ValDate.create(Instant.parse("1969-07-20T20:15:00Z").toEpochMilli()),
+                        ValDate.create(Instant.parse("1969-07-20T20:17:40Z").toEpochMilli()),
                         ValString.create("PT15M")
                 )
         );
