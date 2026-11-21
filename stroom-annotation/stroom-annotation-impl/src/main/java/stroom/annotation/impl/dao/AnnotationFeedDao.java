@@ -129,7 +129,7 @@ class AnnotationFeedDao implements Clearable {
         try {
             return CompletableFuture.supplyAsync(supplier, executor).get();
         } catch (final InterruptedException e) {
-            throw new UncheckedInterruptedException(e);
+            throw UncheckedInterruptedException.create(e);
         } catch (final ExecutionException e) {
             if (e.getCause() instanceof RuntimeException) {
                 throw (RuntimeException) e.getCause();
