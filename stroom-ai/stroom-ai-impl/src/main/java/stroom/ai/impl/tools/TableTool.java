@@ -55,8 +55,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * {@code table} - filters, groups, aggregates and sorts a table in the workspace (an attached table, or a CSV or
@@ -193,6 +191,7 @@ class TableTool extends AbstractWorkspaceTool {
                         .addProperty("orderBy", ArraySchema.builder().items(order)
                                 .description("How to sort the result.").build())
                         .addIntegerProperty("limit", "The most rows to return.")
+                        .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .addProperty(JOIN_ARG, join)
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("A file in /outputs/ to write the result to: .csv, .tsv or .md.")
@@ -251,13 +250,14 @@ class TableTool extends AbstractWorkspaceTool {
         }
         final WorkspacePath path = pathArg(request, PATH_ARG);
         refuseUnlessATable(path);
-        // Its expressions' date functions (now(), day(), parseDate, formatDate) work in the call's zone.
+        // Its expressions' dates (now(), day(), floorDay, formatDate, parseDate...) are in the call's zone.
         final ToolTimeZone zone = timeZone(request, context);
         // Arguments in a shape that can't be read are refused here, before the query is run, so they don't count
         // as failures of the query towards the fallback (seen: aggregates given as a JSON string in two parallel
         // calls, the second refusal coming with an unasked-for summary of a column).
         final Query query = query(args, () -> columns(sessionWorkspace(context), path))
-                .withDateTimeSettings(zone.dateTimeSettings(System.currentTimeMillis()));
+                .withDateTimeSettings(zone.dateTimeSettings(System.currentTimeMillis()))
+                .withExpressions(expression -> DateFunctionZones.withZone(expression, zone));
         final WorkspacePath out = outArg(request);
         final Map<?, ?> join = joinArg(args.get(JOIN_ARG));
         try {
@@ -418,20 +418,15 @@ class TableTool extends AbstractWorkspaceTool {
     }
 
     /// @param query The query.
-    /// @param zone  The call's zone, which its expressions' date rounding and points work in.
+    /// @param zone  The call's zone, which its expressions' dates are in.
     /// @return What the result says of the zone: nothing for a query without expressions, whose cells are as the
-    /// table holds them; else e.g. " Its expressions' date rounding (floorDay, ceilHour...) and day() are in
-    /// Australia/Canberra (+11:00).", what formatDate and parseDate work in if it calls them, and the zone's note.
+    /// table holds them; else e.g. " Its expressions' dates are in Australia/Canberra (+11:00)." with the zone's
+    /// note, if any.
     static String zoneNote(final Query query, final ToolTimeZone zone) {
         if (!query.hasExpressions()) {
             return "";
         }
-        final String expressions = Stream.concat(query.eval().stream().map(Eval::expression),
-                        query.aggregates().stream().map(Aggregate::expression))
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining(" "));
-        return " Its expressions' date rounding (floorDay, ceilHour...) and day() are in " + zone.label() + "."
-               + zone.formatDateNote(expressions)
+        return " Its expressions' dates are in " + zone.label() + "."
                + (zone.note() == null
                 ? ""
                 : " " + zone.note());

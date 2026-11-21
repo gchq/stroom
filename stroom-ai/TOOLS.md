@@ -961,6 +961,7 @@ category, and its examples are checked to work.
   `<`, `<=`, `>`, `>=`, `contains`, `not_contains`, `starts_with`, `ends_with`, `matches`, `is_empty`,
   `not_empty`, `in`, `not_in`, the last two with their values as a list or separated by commas); `groupBy`; `aggregates` (`function` count, count_distinct, sum, min, max or avg, or an
   `expression`; `column`, `as`); `distinct`; `mask`; `orderBy` (`column`, `descending`); `limit` (at least 1);
+  `timeZone` (the zone its expressions' dates are in; see Time zones);
   `out` (`.csv`, `.tsv` or `.md`, written in the format its name gives, as for every tool that writes a table);
   `join` (`path`, `on`, `rightOn`, `keep` both or unmatched, `within` with `column`, `rightColumn`, `seconds` and
   `after`); `help`. `join` (`TableJoin`) joins another table first and the rest of the query is of the joined rows:
@@ -1043,7 +1044,7 @@ refused with the forms it takes. None touches the workspace.
 
 Classes: `UserTimeZones`, `ToolTimeZone`, `StroomQlDatePoints`, `ChatBrowserZones`
 
-`run_stroomql`, `sequence_query`, `esql_query`, `get_current_datetime` and `get_current_date` take `timeZone`
+`run_stroomql`, `sequence_query`, `esql_query`, `table`, `get_current_datetime` and `get_current_date` take `timeZone`
 ("Time zone for the times and results: local, UTC, a zone id or an offset; default the user's."): `local`, `UTC` or
 `GMT` (`Z`), a zone id (`Australia/Canberra`, in any case) or an offset (`+11:00`, `+11`, `UTC+11:00`). It decides
 what `day()` and a time without an offset mean in the call, and the zone its result's times are shown in. Without
@@ -1088,10 +1089,13 @@ offset, and the rows' dates) is in the zone too: esql_query gives `ElasticEsql.R
 (`Result.timeZone` null), and esql_query's result then says so. A `where` condition's time on a date field
 (esql_query, and sequence_query's Elastic steps; the StroomQL engine's run in the query's zone) is put in the zone
 as timeFrom is (`StroomQlDatePoints.conditionInZone`: each of a between's or an in's values), as Stroom's query
-builders read one in UTC. The table tool's expressions run in the call's zone (`TableEngine.Query.dateTimeSettings`):
-date rounding (`floorDay`, `ceilHour`...) and `day()`; a result with expressions says so. Stroom's `formatDate` and
-`parseDate` work in UTC unless given a zone (in StroomQL and dashboards too), so a run_stroomql or table result whose
-expressions call them, in a zone other than UTC, says so with an example (`ToolTimeZone.formatDateNote`).
+builders read one in UTC. The table tool takes `timeZone` too, and its expressions run in the call's zone
+(`TableEngine.Query.dateTimeSettings`: date rounding such as `floorDay`, and `day()`); a result with expressions
+says so. Stroom's `formatDate` and `parseDate` work in UTC unless given a zone as their third argument (in StroomQL
+and dashboards too), so run_stroomql and the table tool give each call without one the call's zone before it runs
+(`DateFunctionZones`, decided by the user 2026-11-21): `formatDate(EventTime, 'HH')` runs as
+`formatDate(EventTime, 'HH', 'Australia/Canberra')`, and `formatDate(EventTime)` with Stroom's default pattern too;
+strings and comments are left alone, and nothing changes in UTC.
 
 ## Search: data sources, queries and events
 

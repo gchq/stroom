@@ -70,14 +70,10 @@ class TestTableTool {
 
         assertThat(TableTool.zoneNote(plain, canberra)).isEmpty();
         assertThat(TableTool.zoneNote(computed, canberra))
-                .startsWith(" Its expressions' date rounding (floorDay, ceilHour...) and day() are in "
-                            + "Australia/Canberra (+1")
-                .endsWith(" formatDate and parseDate work in UTC unless given a zone, e.g. formatDate(EventTime, "
-                          + "'HH:mm', 'Australia/Canberra').");
+                .startsWith(" Its expressions' dates are in Australia/Canberra (+1");
         assertThat(TableTool.zoneNote(computed, new ToolTimeZone(ZoneOffset.UTC,
                 ToolTimeZone.Source.FALLBACK, UserTimeZones.DEVICE_NOT_KNOWN)))
-                .isEqualTo(" Its expressions' date rounding (floorDay, ceilHour...) and day() are in UTC. "
-                           + UserTimeZones.DEVICE_NOT_KNOWN);
+                .isEqualTo(" Its expressions' dates are in UTC. " + UserTimeZones.DEVICE_NOT_KNOWN);
     }
 
     @Test

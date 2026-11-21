@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /// Selects, filters, groups, aggregates and sorts the rows of a table in the workspace (CSV, TSV or a markdown
 /// table, such as an attached table), in code, so figures are exact. Nothing in a query is ever run as code: a
@@ -524,6 +525,19 @@ public final class TableEngine {
         /// @return This query with them.
         public Query withDateTimeSettings(final DateTimeSettings settings) {
             return new Query(eval, select, where, groupBy, aggregates, distinct, mask, orderBy, limit, settings);
+        }
+
+        /// @param change What to make of each expression (a computed column's, or an aggregate's).
+        /// @return This query with its expressions changed.
+        public Query withExpressions(final UnaryOperator<String> change) {
+            return new Query(eval.stream().map(one -> new Eval(one.as(), change.apply(one.expression()))).toList(),
+                    select, where, groupBy, aggregates.stream()
+                            .map(one -> one.expression() == null
+                                    ? one
+                                    : new Aggregate(one.function(), one.column(), one.as(),
+                                            change.apply(one.expression())))
+                            .toList(),
+                    distinct, mask, orderBy, limit, dateTimeSettings);
         }
 
         /// @return True if the query has expressions (computed columns or aggregates given as expressions).

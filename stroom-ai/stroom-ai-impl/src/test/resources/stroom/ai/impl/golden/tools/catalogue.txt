@@ -3360,6 +3360,10 @@ Value: err(), false(), formatIECByteSize, formatMetricByteSize, null(), true()
       },
       "type" : "array"
     },
+    "timeZone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
+      "type" : "string"
+    },
     "where" : {
       "description" : "Conditions every row must meet.",
       "items" : {

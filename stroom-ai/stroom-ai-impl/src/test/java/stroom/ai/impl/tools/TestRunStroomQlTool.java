@@ -119,7 +119,8 @@ class TestRunStroomQlTool {
         contexts.setBrowserZones(browserZones);
 
         tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
-                "{\"query\": \"from web where EventTime > day() eval D = day() select D\"}"), contexts.forChat(1));
+                "{\"query\": \"from web where EventTime > day() eval D = day() eval H = formatDate(EventTime, 'HH') "
+                + "select D, H\"}"), contexts.forChat(1));
 
         final ArgumentCaptor<QuerySearchRequest> captor = ArgumentCaptor.forClass(QuerySearchRequest.class);
         Mockito.verify(queryService).search(captor.capture());
@@ -127,7 +128,9 @@ class TestRunStroomQlTool {
         assertThat(settings.getTimeZone()).isEqualTo(UserTimeZone.fromId("Australia/Canberra"));
         assertThat(settings.getDateTimePattern()).isEqualTo(ToolTimeZone.DATE_TIME_PATTERN);
         assertThat(captor.getValue().getQuery()).contains("where EventTime > \"")
-                .contains("[Australia/Canberra]\"").contains("eval D = day()");
+                .contains("[Australia/Canberra]\"").contains("eval D = day()")
+                // Stroom's formatDate works in UTC unless given a zone, so it is given the call's.
+                .contains("formatDate(EventTime, 'HH', 'Australia/Canberra')");
     }
 
     @Test

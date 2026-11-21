@@ -207,7 +207,9 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         // The zone day(), a time without an offset and the results' times are in.
         final ToolTimeZone zone = timeZone(request, context);
         final long referenceTime = System.currentTimeMillis();
-        final String query = StroomQlDatePoints.inZone(limited.query(), zone, referenceTime);
+        // formatDate and parseDate calls without a zone get the call's too, as Stroom's work in UTC.
+        final String query = DateFunctionZones.withZone(StroomQlDatePoints.inZone(limited.query(), zone,
+                referenceTime), zone);
         // The times its conditions' date points stood for, said in the result: the Stroom UI works them out in UTC.
         final List<String> datePoints = StroomQlDatePoints.used(limited.query(), zone, referenceTime);
         final boolean changed = limited.change() != StroomQlLimit.Change.NONE || !query.equals(limited.query());
@@ -450,7 +452,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             final String profile = TableProfiler.profile(reader, out.path());
             final long rows = MarkdownTables.countRows(workspace.localFile(out));
             return "Ran the query. The results are in " + out + ". " + written.zone().stated()
-                   + datePointsNote(written.datePoints()) + written.zone().formatDateNote(given)
+                   + datePointsNote(written.datePoints())
                    + limitNote(limited, maxRows, rows)
                    + (warnings.isEmpty()
                     ? ""
