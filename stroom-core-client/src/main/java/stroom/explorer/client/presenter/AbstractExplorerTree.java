@@ -36,14 +36,26 @@ import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.DataTransfer;
+import com.google.gwt.dom.client.DataTransfer.DropEffect;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.DragEndEvent;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragStartEvent;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
@@ -54,10 +66,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class AbstractExplorerTree extends Composite implements Focus {
 
+    private static final String DROP_TARGET_CLASS_NAME = "explorerTree-dropTarget";
+    // How long a drag must hover over a closed folder before it is opened.
+    private static final int AUTO_EXPAND_DELAY_MS = 750;
+
     private final ExplorerTreeModel treeModel;
+    private final RestFactory restFactory;
+    private final TaskMonitorFactory taskMonitorFactory;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
     private final MaxScrollPanel scrollPanel;
     private final CellTable<ExplorerNode> cellTable;
@@ -72,10 +91,23 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private boolean showAlerts;
     private Consumer<FetchExplorerNodeResult> changeHandler = null;
 
+    // Drag and drop state, only used once a drop handler has been set.
+    private DropHandler dropHandler;
+    private List<ExplorerNode> draggedNodes;
+    private ExplorerDragPermissions dragPermissions;
+    private Element dropTargetElement;
+    private ExplorerNode autoExpandNode;
+    private Timer autoExpandTimer;
+    // A mouse down on an item that is already part of a multiple selection is not applied until the
+    // mouse up, so that the whole selection can be dragged. A drag start discards it.
+    private ExplorerNode pendingSelection;
+
     AbstractExplorerTree(final RestFactory restFactory,
                          final TaskMonitorFactory taskMonitorFactory,
                          final boolean allowMultiSelect,
                          final boolean showAlerts) {
+        this.restFactory = restFactory;
+        this.taskMonitorFactory = taskMonitorFactory;
         this.allowMultiSelect = allowMultiSelect;
         this.showAlerts = showAlerts;
 
@@ -302,6 +334,216 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         cellTable.setFocus(focused);
     }
 
+    /// Allows nodes to be dragged and dropped onto folders within this tree. Holding Ctrl (or Alt/Option)
+    /// when dropping requests a copy, otherwise a move is requested. The tree validates the drop against
+    /// the rows it is displaying and the user's permissions (fetched during the drag);
+    /// `dropHandler` is responsible for carrying it out.
+    ///
+    /// @param dropHandler Called with the dragged nodes and the destination folder when a valid drop occurs.
+    public void setDropHandler(final DropHandler dropHandler) {
+        Objects.requireNonNull(dropHandler);
+        if (this.dropHandler == null) {
+            explorerCell.setDraggable(true);
+            dragPermissions = new ExplorerDragPermissions(restFactory, taskMonitorFactory);
+            autoExpandTimer = new Timer() {
+                @Override
+                public void run() {
+                    treeModel.setItemOpen(autoExpandNode, true);
+                }
+            };
+            cellTable.addDomHandler(this::onDragStart, DragStartEvent.getType());
+            cellTable.addDomHandler(this::onDragOver, DragOverEvent.getType());
+            cellTable.addDomHandler(this::onDragLeave, DragLeaveEvent.getType());
+            cellTable.addDomHandler(this::onDrop, DropEvent.getType());
+            cellTable.addDomHandler(event -> endDrag(), DragEndEvent.getType());
+            cellTable.addDomHandler(this::onMouseUp, MouseUpEvent.getType());
+            cellTable.redraw();
+        }
+        this.dropHandler = dropHandler;
+    }
+
+    private void onDragStart(final DragStartEvent event) {
+        pendingSelection = null;
+        final ExplorerNode node = getNode(event.getNativeEvent());
+        final List<ExplorerNode> nodes = ExplorerDragDropRules.getDraggedNodes(
+                node,
+                selectionModel.getSelectedItems());
+        if (nodes.isEmpty()) {
+            event.preventDefault();
+        } else {
+            draggedNodes = nodes;
+            dragPermissions.start(nodes);
+            final DataTransfer dataTransfer = event.getDataTransfer();
+            // Some browsers (e.g. Firefox) won't start a drag unless some data is set.
+            dataTransfer.setData("text/plain", nodes.stream()
+                    .map(ExplorerNode::getName)
+                    .collect(Collectors.joining("\n")));
+            setEffectAllowed(dataTransfer, "copyMove");
+            setDragImage(dataTransfer, nodes);
+        }
+    }
+
+    private void setDragImage(final DataTransfer dataTransfer, final List<ExplorerNode> nodes) {
+        // The browser snapshots the drag image during dragstart, so it only needs to be in the document
+        // until then. Without this the whole row, including the expander and indent, is used.
+        final Element container = Document.get().createDivElement();
+        container.setInnerSafeHtml(explorerCell.renderDragImage(nodes));
+        final Element dragImage = container.getFirstChildElement();
+        Document.get().getBody().appendChild(dragImage);
+        dataTransfer.setDragImage(dragImage, 0, 0);
+        Scheduler.get().scheduleDeferred(dragImage::removeFromParent);
+    }
+
+    private boolean isAllowedDrop(final List<ExplorerNode> nodes,
+                                  final ExplorerNode target,
+                                  final boolean copy) {
+        return ExplorerDragDropRules.isValidDrop(rows, nodes, target, copy)
+               && dragPermissions.isPermitted(nodes, target, copy);
+    }
+
+    private void onDragOver(final DragOverEvent event) {
+        // Ignore drags that didn't start in this tree, e.g. files from the desktop.
+        if (draggedNodes != null) {
+            final NativeEvent nativeEvent = event.getNativeEvent();
+            final int row = getRowIndex(nativeEvent);
+            final ExplorerNode target = getNode(row);
+            final boolean copy = isCopy(nativeEvent);
+            if (isAllowedDrop(draggedNodes, target, copy)) {
+                // Cancelling dragover is what tells the browser a drop is allowed here.
+                event.preventDefault();
+                event.getDataTransfer().setDropEffect(copy
+                        ? DropEffect.COPY
+                        : DropEffect.MOVE);
+                setDropTargetElement(cellTable.getRowElement(row));
+            } else {
+                event.getDataTransfer().setDropEffect(DropEffect.NONE);
+                setDropTargetElement(null);
+            }
+            scheduleAutoExpand(target);
+        }
+    }
+
+    private void onDragLeave(final DragLeaveEvent event) {
+        // Drag leave fires every time the pointer crosses into a child element, so only reset when it
+        // leaves the table altogether.
+        final Element related = getElement(event.getNativeEvent().getRelatedEventTarget());
+        if (related == null || !cellTable.getElement().isOrHasChild(related)) {
+            setDropTargetElement(null);
+            scheduleAutoExpand(null);
+        }
+    }
+
+    private void onDrop(final DropEvent event) {
+        event.preventDefault();
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        final ExplorerNode target = getNode(nativeEvent);
+        final boolean copy = isCopy(nativeEvent);
+        final List<ExplorerNode> nodes = draggedNodes;
+        final boolean allowed = nodes != null && isAllowedDrop(nodes, target, copy);
+        endDrag();
+        if (allowed) {
+            dropHandler.onDrop(nodes, target, copy);
+        }
+    }
+
+    private void onMouseUp(final MouseUpEvent event) {
+        if (pendingSelection != null) {
+            final ExplorerNode node = pendingSelection;
+            pendingSelection = null;
+            doSelect(node, new SelectionType(
+                    doubleClickTest.test(node),
+                    false,
+                    allowMultiSelect,
+                    false,
+                    false));
+        }
+    }
+
+    private void endDrag() {
+        draggedNodes = null;
+        dragPermissions.clear();
+        setDropTargetElement(null);
+        scheduleAutoExpand(null);
+    }
+
+    private void setDropTargetElement(final Element element) {
+        if (!Objects.equals(dropTargetElement, element)) {
+            if (dropTargetElement != null) {
+                dropTargetElement.removeClassName(DROP_TARGET_CLASS_NAME);
+            }
+            dropTargetElement = element;
+            if (dropTargetElement != null) {
+                dropTargetElement.addClassName(DROP_TARGET_CLASS_NAME);
+            }
+        }
+    }
+
+    private void scheduleAutoExpand(final ExplorerNode node) {
+        if (!Objects.equals(autoExpandNode, node)) {
+            autoExpandTimer.cancel();
+            autoExpandNode = null;
+            final boolean isDragged = node != null
+                                      && draggedNodes != null
+                                      && draggedNodes.stream()
+                                              .anyMatch(dragged -> Objects.equals(dragged.getDocRef(),
+                                                      node.getDocRef()));
+            if (node != null && node.hasNodeFlag(NodeFlag.CLOSED) && !isDragged) {
+                autoExpandNode = node;
+                autoExpandTimer.schedule(AUTO_EXPAND_DELAY_MS);
+            }
+        }
+    }
+
+    private static boolean isCopy(final NativeEvent nativeEvent) {
+        // Ctrl is the copy modifier on Windows/Linux, Alt (Option) on macOS.
+        return nativeEvent.getCtrlKey() || nativeEvent.getAltKey();
+    }
+
+    private ExplorerNode getNode(final NativeEvent nativeEvent) {
+        return getNode(getRowIndex(nativeEvent));
+    }
+
+    private ExplorerNode getNode(final int row) {
+        final List<ExplorerNode> items = cellTable.getVisibleItems();
+        if (row >= 0 && row < items.size()) {
+            return items.get(row);
+        }
+        return null;
+    }
+
+    private int getRowIndex(final NativeEvent nativeEvent) {
+        Element element = getElement(nativeEvent.getEventTarget());
+        while (element != null && element != cellTable.getElement()) {
+            if (TableRowElement.is(element)) {
+                final int index = TableRowElement.as(element).getSectionRowIndex();
+                // Make sure it is one of the table's own rows rather than a row nested in a cell.
+                if (index >= 0
+                    && index < cellTable.getVisibleItemCount()
+                    && cellTable.getRowElement(index) == element) {
+                    return index;
+                }
+            }
+            element = element.getParentElement();
+        }
+        return -1;
+    }
+
+    private static Element getElement(final EventTarget eventTarget) {
+        if (eventTarget != null && Node.is(eventTarget)) {
+            final Node node = Node.as(eventTarget);
+            // Drag events can target text nodes.
+            if (Element.is(node)) {
+                return Element.as(node);
+            }
+            return node.getParentElement();
+        }
+        return null;
+    }
+
+    private static native void setEffectAllowed(final DataTransfer dataTransfer, final String effectAllowed) /*-{
+        dataTransfer.effectAllowed = effectAllowed;
+    }-*/;
+
     TickBoxSelectionModel getTickBoxSelectionModel() {
         return null;
     }
@@ -413,6 +655,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         @Override
         protected void onMouseDown(final CellPreviewEvent<ExplorerNode> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
+            pendingSelection = null;
             final int row = cellTable.getVisibleItems().indexOf(e.getValue());
             if (row >= 0) {
                 cellTable.setKeyboardSelectedRow(row, true);
@@ -424,8 +667,24 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 showMenu(e);
 
             } else if (MouseUtil.isPrimary(nativeEvent)) {
-                select(e);
+                if (isDeferredSelect(e)) {
+                    pendingSelection = e.getValue();
+                } else {
+                    select(e);
+                }
             }
+        }
+
+        private boolean isDeferredSelect(final CellPreviewEvent<ExplorerNode> e) {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final Element element = nativeEvent.getEventTarget().cast();
+            return dropHandler != null
+                   && allowMultiSelect
+                   && !nativeEvent.getCtrlKey()
+                   && !nativeEvent.getShiftKey()
+                   && selectionModel.getSelectedCount() > 1
+                   && selectionModel.isSelected(e.getValue())
+                   && !ElementUtil.hasClassName(element, expanderClassName, 5);
         }
 
         private void select(final CellPreviewEvent<ExplorerNode> e) {
@@ -458,5 +717,20 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 }
             }
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Receives drops of explorer nodes onto a folder in the tree.
+    public interface DropHandler {
+
+        /// Called when nodes are dropped onto a valid destination.
+        ///
+        /// @param nodes       The dropped nodes, never empty.
+        /// @param destination The folder (or `System` root) they were dropped onto.
+        /// @param copy        True if a copy was requested, false for a move.
+        void onDrop(List<ExplorerNode> nodes, ExplorerNode destination, boolean copy);
     }
 }

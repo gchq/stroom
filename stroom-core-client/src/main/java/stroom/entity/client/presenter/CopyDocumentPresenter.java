@@ -90,9 +90,19 @@ public class CopyDocumentPresenter
             getView().setName("");
         }
 
-        entityTreePresenter.setSelectedItem(firstChild);
+        // Select the requested destination (e.g. from a drag and drop) if there is one, otherwise the
+        // first item so that its parent folder becomes the default destination.
+        ExplorerNode initialSelection = firstChild;
+        if (event.getDestinationFolder() != null) {
+            // Make sure we reference the main node rather than the favourites' node.
+            initialSelection = event.getDestinationFolder()
+                    .copy()
+                    .rootNodeUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid())
+                    .build();
+        }
+        entityTreePresenter.setSelectedItem(initialSelection);
         entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(firstChild);
+        entityTreePresenter.getModel().setEnsureVisible(initialSelection);
         entityTreePresenter.getModel().refresh();
 
         // We want to select the parent folder, so we have a default dest to copy into.
