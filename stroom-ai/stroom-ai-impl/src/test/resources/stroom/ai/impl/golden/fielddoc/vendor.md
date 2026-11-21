@@ -15,7 +15,7 @@ Every event type writes these, from the same source. Sample values are what the 
 
 #### logon
 
-When `action` = login: 1 of the sample's 2 events.
+When `action` = login: 1 of the sample's 2 events. Below the action element: 3 typed, 1 kept as Data.
 
 | XPath | Description | From | Sample values |
 | --- | --- | --- | --- |
@@ -27,7 +27,7 @@ When `action` = login: 1 of the sample's 2 events.
 
 #### other
 
-Any other record: 1 of the sample's 2 events.
+Any other record: 1 of the sample's 2 events. Below the action element: 0 typed, 1 kept as Data.
 
 | XPath | Description | From | Sample values |
 | --- | --- | --- | --- |

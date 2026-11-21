@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.Placement;
 import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.util.shared.NullSafe;
@@ -85,7 +86,8 @@ final class CatalogueTables {
                           + cell(NullSafe.isBlankString(type.description())
                         ? "-"
                         : type.description()) + " | " + cell(recognisedBy(type)) + " | "
-                          + recordsKept(records.get(type.typeId())) + " | " + cell(translatedAs(type)) + " | "
+                          + recordsKept(records.get(type.typeId())) + " | " + cell(translatedAs(type)
+                                                                                  + placedAs(type)) + " | "
                           + cell(status(type)) + " |");
             }
             lines.add("");
@@ -217,6 +219,16 @@ final class CatalogueTables {
                     : " (" + type.affectedAs() + ")"));
         }
         return String.join(", ", parts);
+    }
+
+    /// @param type An event type.
+    /// @return Its typed placements in words, after what it is translated as (`; typed: event.Subject ->
+    /// Email/Subject, ...`); "" when it has none of its own.
+    static String placedAs(final EventType type) {
+        if (type.placements().isEmpty()) {
+            return "";
+        }
+        return "; typed: " + String.join("; ", type.placements().stream().map(Placement::said).toList());
     }
 
     // A count kept in the notes, said as the set's table says it.

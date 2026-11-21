@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.catalogue;
 
 import stroom.ai.impl.tools.generation.ModelReader;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,9 @@ import java.util.Objects;
 /// @param status         `proposed` or `confirmed`.
 /// @param doubt          Optional: why the agent is unsure of it (a medium or low confidence's reason), said to the
 ///                       user where the event type is worth a look; null when none was given.
+/// @param placements     `placements`: the fields (or constants) its records' events type below the action element
+///                       ([Placement]); empty when none are given. `affected` and `affected_as` are one more,
+///                       read as such ([#allPlacements()]).
 public record EventType(String typeId,
                         String title,
                         String description,
@@ -59,7 +63,8 @@ public record EventType(String typeId,
                         String confidence,
                         String oneTypeBecause,
                         String status,
-                        String doubt) {
+                        String doubt,
+                        List<Placement> placements) {
 
     /// The seed's, from the draft's rules: never the user's until the user confirms it.
     public static final String DRAFT = "draft";
@@ -79,13 +84,54 @@ public record EventType(String typeId,
     public static final String CONFIRMED = "confirmed";
     /// The statuses an event type (and the catch-all) may have.
     public static final List<String> STATUSES = List.of(PROPOSED, CONFIRMED);
+    /// The key of its placements.
+    public static final String PLACEMENTS = "placements";
 
-    /// Fills in an empty list for a null one, and null for a blank doubt.
+    /// Fills in empty lists for null ones, and null for a blank doubt.
     public EventType {
         recognisedBy = List.copyOf(Objects.requireNonNullElse(recognisedBy, List.of()));
+        placements = List.copyOf(Objects.requireNonNullElse(placements, List.of()));
         doubt = doubt == null || doubt.isBlank()
                 ? null
                 : doubt.strip();
+    }
+
+    /// An event type with no placements given (its `affected` and `affected_as` aside).
+    ///
+    /// @param typeId         Its TypeId, or null.
+    /// @param title          Its title.
+    /// @param description    What happened.
+    /// @param eventDetail    Its action element.
+    /// @param action         Its Action, or null.
+    /// @param success        Its outcome, or null.
+    /// @param actor          Who acted, or null.
+    /// @param affected       What was acted on, or null.
+    /// @param affectedAs     What that is under the action element, or null.
+    /// @param recognisedBy   The ways a record of it is told.
+    /// @param drop           True when its records are dropped.
+    /// @param basis          Where it came from.
+    /// @param confidence     `high`, `medium` or `low`.
+    /// @param oneTypeBecause Why records that look like several event types are one, or null.
+    /// @param status         `proposed` or `confirmed`.
+    /// @param doubt          Why the agent is unsure of it, or null.
+    public EventType(final String typeId,
+                     final String title,
+                     final String description,
+                     final String eventDetail,
+                     final String action,
+                     final String success,
+                     final String actor,
+                     final String affected,
+                     final String affectedAs,
+                     final List<Way> recognisedBy,
+                     final boolean drop,
+                     final String basis,
+                     final String confidence,
+                     final String oneTypeBecause,
+                     final String status,
+                     final String doubt) {
+        this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
+                drop, basis, confidence, oneTypeBecause, status, doubt, List.of());
     }
 
     /// An event type with no doubt given.
@@ -121,7 +167,7 @@ public record EventType(String typeId,
                      final String oneTypeBecause,
                      final String status) {
         this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
-                drop, basis, confidence, oneTypeBecause, status, null);
+                drop, basis, confidence, oneTypeBecause, status, null, List.of());
     }
 
     /// Reads one from JSON-like values, laxly (strings, booleans as words, defaults for what isn't given), every
@@ -151,7 +197,8 @@ public record EventType(String typeId,
                 fields.literal("confidence", "medium", CONFIDENCES),
                 fields.optionalString("one_type_because"),
                 fields.literal("status", PROPOSED, STATUSES),
-                fields.optionalString("doubt"));
+                fields.optionalString("doubt"),
+                fields.models(PLACEMENTS, (value, at) -> Placement.read(reader, value, at)));
         return fields.ok()
                 ? eventType
                 : null;
@@ -165,8 +212,8 @@ public record EventType(String typeId,
                 : fields.optionalString(key);
     }
 
-    /// @return It as JSON, in the catalogue's key order: every key, null ones too, but `doubt`, which is optional and
-    /// given only when the agent gave one.
+    /// @return It as JSON, in the catalogue's key order: every key, null ones too, but `doubt` and `placements`,
+    /// which are optional and given only when the agent gave them.
     public Map<String, Object> toJson() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("type_id", typeId);
@@ -187,6 +234,9 @@ public record EventType(String typeId,
         if (doubt != null) {
             out.put("doubt", doubt);
         }
+        if (!placements.isEmpty()) {
+            out.put(PLACEMENTS, placements.stream().map(Placement::entry).toList());
+        }
         return out;
     }
 
@@ -196,13 +246,13 @@ public record EventType(String typeId,
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, drop, DRAFT.equals(basis)
                 ? USER_CONFIRMED
-                : basis, confidence, oneTypeBecause, CONFIRMED, doubt);
+                : basis, confidence, oneTypeBecause, CONFIRMED, doubt, placements);
     }
 
     /// @return It dropped by the user, in the user's form: its records left untranslated, on the user's word.
     public EventType droppedByUser() {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED, doubt);
+                recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED, doubt, placements);
     }
 
     /// @return It confirmed.
@@ -214,6 +264,37 @@ public record EventType(String typeId,
     /// @return It with that TypeId.
     public EventType withTypeId(final String typeId) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt);
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements);
+    }
+
+    /// @param affectedAs Its new `affected_as`.
+    /// @return It with that `affected_as` (written out to its leaf, say).
+    public EventType withAffectedAs(final String affectedAs) {
+        return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements);
+    }
+
+    /// @param ways Its new ways of being recognised.
+    /// @return It recognised by those ways.
+    public EventType withRecognisedBy(final List<Way> ways) {
+        return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
+                ways, drop, basis, confidence, oneTypeBecause, status, doubt, placements);
+    }
+
+    /// Its placements, with what `affected` and `affected_as` say (the catalogue's form before placements, kept for
+    /// catalogues written then) as one more, last, unless a placement already writes that path.
+    ///
+    /// @return Its placements, `affected`'s included.
+    public List<Placement> allPlacements() {
+        if (affected == null || affected.isBlank() || affectedAs == null || affectedAs.isBlank()) {
+            return placements;
+        }
+        final Placement implied = Placement.affected(affected.strip(), affectedAs.strip());
+        if (placements.stream().anyMatch(placement -> placement.path().equals(implied.path()))) {
+            return placements;
+        }
+        final List<Placement> out = new ArrayList<>(placements);
+        out.add(implied);
+        return List.copyOf(out);
     }
 }

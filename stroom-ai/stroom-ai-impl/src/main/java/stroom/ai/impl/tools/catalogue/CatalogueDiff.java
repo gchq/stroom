@@ -82,6 +82,7 @@ public final class CatalogueDiff {
         parts.put("who acted", EventType::actor);
         parts.put("acted on", type -> Objects.toString(type.affected(), "") + "|"
                                       + Objects.toString(type.affectedAs(), ""));
+        parts.put("typed fields", type -> type.placements().stream().map(Placement::entry).toList());
         parts.put("dropped", EventType::drop);
         return parts;
     }

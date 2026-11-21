@@ -415,6 +415,7 @@ public final class EventFieldDocs {
             }
             said.add(line + ".");
         }
+        said.add(typedAndData(names, own));
         final List<String> lines = new ArrayList<>(List.of("#### " + MarkdownHtml.text(String.join(", ", names)), "",
                 String.join(" ", said), ""));
         lines.addAll(FieldDocs.head(head));
@@ -447,6 +448,33 @@ public final class EventFieldDocs {
         }
         lines.add("");
         return lines;
+    }
+
+    // How many elements each event type's rule types below its action element, and how many it keeps as Data
+    // (asked for by the user 2026-11-21, after chat 182's events typed almost nothing): `Below the action element:
+    // 5 typed, 3 kept as Data.`, by event type where the section has several.
+    private static String typedAndData(final List<String> names, final Map<String, List<FieldKey>> own) {
+        final List<String> counts = new ArrayList<>();
+        for (final String name : names) {
+            int typed = 0;
+            int data = 0;
+            for (final FieldKey key : own.getOrDefault(name, List.of())) {
+                final String path = key.path();
+                if (!path.startsWith("EventDetail/") || path.equals("EventDetail/TypeId")
+                    || path.equals("EventDetail/Description")) {
+                    continue;
+                }
+                if (path.endsWith("/Data") || path.contains("/Data/") || path.contains("/Data[")) {
+                    data++;
+                } else {
+                    typed++;
+                }
+            }
+            counts.add((names.size() > 1
+                    ? name + " "
+                    : "") + typed + " typed, " + data + " kept as Data");
+        }
+        return "Below the action element: " + String.join("; ", counts) + ".";
     }
 
     // A field's row: its path, description, source, and with a sample the values written.

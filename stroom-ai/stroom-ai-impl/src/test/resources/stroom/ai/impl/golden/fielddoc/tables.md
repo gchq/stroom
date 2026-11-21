@@ -17,7 +17,7 @@ Left untranslated on purpose: `keepalive` (`action` = keepalive).
 
 #### logon
 
-When `action` in login, logon.
+When `action` in login, logon. Below the action element: 3 typed, 1 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ When `action` in login, logon.
 
 #### other
 
-Any other record.
+Any other record. Below the action element: 0 typed, 1 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |

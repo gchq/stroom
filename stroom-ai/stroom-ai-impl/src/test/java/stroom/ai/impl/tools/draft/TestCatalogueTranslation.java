@@ -69,6 +69,22 @@ class TestCatalogueTranslation extends DraftFixtures {
             "You won"}]}]
             """;
 
+    // Microsoft 365 audit records, as JSON lines (chat 182): AppAccessContext.IssuedAtTime empty in every one.
+    private static final String M365 = """
+            {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Send", "UserId": "jo@acme.example", \
+            "Recipients": "al@acme.example;bo@acme.example", "Subject": "Report", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "Send", "UserId": "al@acme.example", \
+            "Recipients": "jo@acme.example", "Subject": "Re: Report", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "FolderBind", "UserId": "jo@acme.example", \
+            "FolderPath": "\\\\Inbox", "Size": "12 KB", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            {"CreationTime": "2026-11-01T10:03:00Z", "Operation": "FolderBind", "UserId": "bo@acme.example", \
+            "FolderPath": "\\\\Sent Items", "Size": "40 KB", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            """;
+
     @Test
     void aRulePerWayOfRecognisingEachEventTypeInTheCataloguesOrderThenTheCatchAll() {
         final Map<String, Object> draft = draft(CODES, notes(List.of(
@@ -423,6 +439,65 @@ class TestCatalogueTranslation extends DraftFixtures {
                 .doesNotContain(RARE_REJECT_FIELD);
         assertThat(dataNames(rules.get("receive_reject"))).contains(RARE_REJECT_FIELD)
                 .doesNotContain(RARE_DELIVER_FIELD);
+    }
+
+    @Test
+    void placementsAreTypedEntriesOfTheRuleAndTheFieldsLeftOverAreDataOnce() {
+        // Decided by the user 2026-11-21 (chat 182: almost every field of the M365 audit events kept as Data).
+        final Map<String, Object> send = type("Send-Mail", "Send mail", "Send", null, null,
+                way(eq("Operation", "Send")));
+        send.put("placements", List.of(
+                Map.of("path", "Source/User/EmailAddress", "field", "UserId"),
+                Map.of("path", "Destination/User", "for_each", Map.of("split", "Recipients", "on", ";"),
+                        "fields", List.of(Map.of("path", "EmailAddress", "item", true))),
+                Map.of("path", "Payload/Email/Subject", "field", "Subject"),
+                // One field typed in two places.
+                Map.of("path", "Payload/Email/From/EmailAddress", "field", "UserId")));
+        final Map<String, Object> view = type("View-Folder", "View folder", "View", null, null,
+                way(eq("Operation", "FolderBind")));
+        view.put("placements", List.of(
+                Map.of("path", "Folder/Path", "field", "FolderPath", "also_data", true),
+                Map.of("path", "Folder/Size", "field", "Size", "transform", "digits")));
+        final Map<String, Object> draft = draft(M365, notes(List.of(send, view), true));
+
+        final Map<String, Map<String, Object>> rules = rules(draft);
+        final Map<String, Map<String, Object>> sent = fields(rules.get("send_mail"));
+        assertThat(sent.get("EventDetail/Send/Source/User/EmailAddress")).containsEntry("field", "UserId");
+        assertThat(sent.get("EventDetail/Send/Payload/Email/Subject")).containsEntry("field", "Subject");
+        assertThat(sent.get("EventDetail/Send/Payload/Email/From/EmailAddress")).containsEntry("field", "UserId");
+        assertThat(sent.get("EventDetail/Send/Destination/User")).containsKey("for_each");
+        // The placed fields aren't Data too; the rest are, each once; the vendor's code always.
+        final List<String> sentData = dataNames(rules.get("send_mail"));
+        assertThat(sentData).doesNotContain("UserId", "Subject", "Recipients").contains("Operation", "Workload")
+                .doesNotHaveDuplicates();
+        final Map<String, Map<String, Object>> viewed = fields(rules.get("view_folder"));
+        assertThat(viewed.get("EventDetail/View/Folder/Path")).containsEntry("field", "FolderPath")
+                .doesNotContainKey("also_data");
+        assertThat(viewed.get("EventDetail/View/Folder/Size")).containsEntry("transform", "digits");
+        // also_data keeps the placed field as Data too.
+        assertThat(dataNames(rules.get("view_folder"))).contains("FolderPath").doesNotContain("Size")
+                .doesNotHaveDuplicates();
+        // Generates, but for the device these records don't name (the agent's to map).
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void aFieldEmptyInEverySampledRecordIsLeftOutOfTheRulesAndSaid() {
+        // Chat 182: AppAccessContext.IssuedAtTime, empty in all 1,547 sampled records, drafted into several rules
+        // as Data, each then warned of.
+        final Map<String, Object> draft = draft(M365, notes(List.of(
+                type("Send-Mail", "Send mail", "Send", null, null, way(eq("Operation", "Send"))),
+                type("View-Folder", "View folder", "View", null, null, way(eq("Operation", "FolderBind")))),
+                true));
+
+        for (final Map<String, Object> rule : rules(draft).values()) {
+            assertThat(JsonValues.maps(rule.get("fields"))).as(String.valueOf(rule.get("name")))
+                    .noneMatch(field -> String.valueOf(field.get("field")).endsWith("IssuedAtTime")
+                                        || String.valueOf(field.get("data_name")).endsWith("IssuedAtTime"));
+        }
+        assertThat(notes(draft)).anyMatch(note -> note.contains("empty in every sampled record")
+                                                  && note.contains("AppAccessContext.IssuedAtTime"));
     }
 
     private static Map<String, Object> draft(final String sample, final Map<String, Object> notes) {

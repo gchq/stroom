@@ -50,6 +50,8 @@ import java.util.Set;
 ///   in a small set every element is lone and the summary names each type already;
 /// * it has no description of its own: its records' Description then comes only from a message they hold, and
 ///   records without one have none;
+/// * most of its fields are kept as Data, few typed by its placements (never a refusal: the schema may have no home
+///   for them);
 /// * its records are dropped (not translated);
 /// * the agent said why it doubts it (`doubt`);
 /// * it is of a medium or low set: each of those is doubtful by its confidence, so every one is worth a look, with
@@ -245,6 +247,12 @@ final class CatalogueSummary {
             }
             if (NullSafe.isBlankString(type.description())) {
                 why.add("no description of its own");
+            }
+            final CatalogueCheckResult.Typing typing = check == null
+                    ? null
+                    : check.typing().get(type.typeId());
+            if (typing != null && typing.note() != null) {
+                why.add(typing.note());
             }
             if (!why.isEmpty()) {
                 out.add(new Unusual(type, List.copyOf(why)));

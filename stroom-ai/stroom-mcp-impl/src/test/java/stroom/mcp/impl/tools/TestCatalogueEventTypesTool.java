@@ -149,15 +149,70 @@ class TestCatalogueEventTypesTool {
                 "Authenticate-Logoff", "Export-Report", "Delete-Records");
         assertThat(kept.catchAll().confirmed()).isFalse();
         final String doc = notesText();
-        // Every row, how each is recognised in words and its records: the full table the summary refers to.
+        // Every row, how each is recognised in words and its records: the full table the summary refers to, each
+        // type's placements typed (decided by the user 2026-11-21: recorded row by row in the source notes).
         assertThat(doc).contains("## Event types", "### Authenticate", "### Delete", CatalogueTables.NOTES_HEADER,
                 "| `Authenticate-Logon` Authenticate Logon | Test: Authenticate-Logon | action is login | 8 | "
-                + "Authenticate Logon, who acted: user | proposed; high; from the agent's knowledge |",
-                "| `Delete-Records` Delete Records | Test: Delete-Records | action is purge | 1 | Delete | proposed; "
-                + "low; from the agent's knowledge |");
+                + "Authenticate Logon, who acted: user; typed: 'Logon' -> Action; user -> User/Id | proposed; high; "
+                + "from the agent's knowledge |",
+                "| `Delete-Records` Delete Records | Test: Delete-Records | action is purge | 1 | Delete; typed: user "
+                + "-> Object/Id | proposed; low; from the agent's knowledge |");
         final List<String> rows = doc.lines().filter(line -> line.startsWith("| ")).toList();
         assertThat(rows.getLast()).startsWith("| `Unknown` Uncatalogued records | - | records no event type "
                                               + "recognises | 0 | Unknown events, their fields kept as Data |");
+    }
+
+    @Test
+    void placementsAreCheckedWithTheProposalsAndKeptInTheSourceNotesRowByRow() {
+        // Decided by the user 2026-11-21 (chat 182: affected given as a field the records spell otherwise, accepted
+        // unchecked).
+        final Map<String, Object> misspelt = propose(List.of(withKeys(type("Delete-Records", "Delete", "low",
+                "purge"), "placements", List.of(Map.of("path", "Document/Title", "field", "objet")))));
+
+        assertThat(misspelt).containsEntry("recorded", false);
+        assertThat(String.valueOf(misspelt.get("hint"))).contains("Nothing recorded",
+                "no record has the field objet (the records have object)");
+
+        final Map<String, Object> wrongPath = propose(List.of(withKeys(type("Delete-Records", "Delete", "low",
+                "purge"), "placements", List.of(Map.of("path", "Document/Heading", "field", "object")))));
+        assertThat(wrongPath).containsEntry("recorded", false);
+        assertThat(String.valueOf(wrongPath.get("hint"))).contains("has no child 'Heading'");
+
+        final Map<String, Object> placed = propose(List.of(withKeys(type("Delete-Records", "Delete", "low",
+                "purge"), "placements", List.of(Map.of("path", "Document/Title", "field", "object")))));
+        assertThat(placed).containsEntry("recorded", true);
+        assertThat(map(map(map(placed.get("check")).get("typing")).get("Delete-Records")).get("fill"))
+                .isEqualTo(Map.of("object", "1 of 1"));
+        assertThat(SourceNotes.catalogue(notes()).eventType("Delete-Records").toJson().get("placements"))
+                .isEqualTo(List.of(Map.of("path", "Document/Title", "field", "object")));
+        assertThat(notesText()).contains("| Delete; typed: object -> Document/Title |");
+    }
+
+    @Test
+    void aSetLeavingAnElementTheSchemaRequiresEmptyIsNotPutToTheUserUntilPlaced() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                withKeys(type("Delete-Records", "Delete", "low", "purge"), "placements", List.of())));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+
+        // The high set, whose event types place what the schema requires, is put to the user as before.
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context()))
+                .containsEntry("status", "needs_showing");
+        final Map<String, Object> afterHigh = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(afterHigh).containsEntry("status", "needs_placements")
+                .containsEntry("confirmed_now", List.of("Authenticate-Logon"));
+        assertThat(String.valueOf(afterHigh.get("unplaced"))).contains("EventDetail/Delete needs one of");
+
+        // The low set waits: refused naming the element, and nothing shown to the user.
+        final int shown = user.shown().size();
+        assertThat(text(Map.of("build", BUILD, "confirm", true), user.context()))
+                .startsWith("Not put to the user").contains("event type Delete-Records: EventDetail/Delete needs "
+                                                             + "one of", "give a placement");
+        assertThat(user.shown()).hasSize(shown);
+
+        propose(List.of(Map.of("op", "change", "type_id", "Delete-Records", "placements",
+                List.of(Map.of("path", "Document/Id", "field", "object")))));
+        confirmAll(user);
+        assertThat(SourceNotes.catalogue(notes()).eventType("Delete-Records").confirmed()).isTrue();
     }
 
     @Test
@@ -310,7 +365,9 @@ class TestCatalogueEventTypesTool {
                 Map.of("stream 8", loggers()), List.of()));
         final Map<String, Object> checked = call(Map.of("build", BUILD, "stream_ids", List.of(8), "proposals",
                 List.of(Map.of("op", "add", "type_id", "Process-SecurityLogger", "title", "Security logger",
-                        "event_detail", "Process", "basis", "draft", "confidence", "low", "recognised_by",
+                        "event_detail", "Process", "basis", "draft", "confidence", "low", "placements",
+                        List.of(Map.of("path", "Action", "value", "Execute"), Map.of("path", "Type", "value",
+                                "Application"), Map.of("path", "Command", "field", "logger")), "recognised_by",
                         List.of(Map.of("when", List.of(Map.of("field", "logger", "equals",
                                 "com.acme.SecurityLogger")), "names", List.of()))))), plain());
         assertThat(list(map(checked.get("check")).get("several"))).singleElement()
@@ -461,7 +518,8 @@ class TestCatalogueEventTypesTool {
                     List.of(Map.of("when", List.of(Map.of("field", "code", "equals", "c%02d".formatted(k))),
                             "names", List.of()))));
         }
-        call(Map.of("build", BUILD, "stream_ids", List.of(9), "proposals", proposals), plain());
+        assertThat(call(Map.of("build", BUILD, "stream_ids", List.of(9), "proposals", proposals), plain()))
+                .as("recorded").containsEntry("recorded", true);
 
         final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
         confirmAll(user);
@@ -563,7 +621,8 @@ class TestCatalogueEventTypesTool {
                     .containsEntry("title", "Authenticate Logon")
                     .containsEntry("description", "Test: Authenticate-Logon")
                     .containsEntry("recognised_by", "action is login")
-                    .containsEntry("translated_as", "Authenticate Logon, who acted: user")
+                    .containsEntry("translated_as", "Authenticate Logon, who acted: user; typed: 'Logon' -> Action; "
+                                                    + "user -> User/Id")
                     .containsEntry("records", 8)
                     .containsEntry("status", "proposed, in the set put to the user");
             assertThat(list(one.get("examples"))).hasSize(CatalogueEventTypesTool.EXAMPLES_GIVEN)
@@ -866,11 +925,31 @@ class TestCatalogueEventTypesTool {
         out.put("event_detail", eventDetail);
         out.put("basis", "agent_knowledge");
         out.put("confidence", confidence);
+        // What the schema requires of the action element, placed (decided by the user 2026-11-21: a set isn't put to
+        // the user while an event type leaves one empty).
+        required(eventDetail, out);
         if (action != null) {
             out.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action", "equals", action)),
                     "names", List.of())));
         }
         return out;
+    }
+
+    // The placements (and Action) the schema requires of an action element, for the tests whose subject is
+    // something else: the user field every sample has as the object.
+    private static void required(final String eventDetail, final Map<String, Object> type) {
+        switch (String.valueOf(eventDetail)) {
+            case "Authenticate" -> type.put("placements", List.of(Map.of("path", "Action", "value", "Logon"),
+                    Map.of("path", "User/Id", "field", "user")));
+            case "View", "Create", "Delete" -> type.put("placements", List.of(Map.of("path", "Object/Id", "field",
+                    "user")));
+            case "Update" -> type.put("placements", List.of(Map.of("path", "After/Object/Id", "field", "user")));
+            case "Process" -> type.put("placements", List.of(Map.of("path", "Action", "value", "Execute"),
+                    Map.of("path", "Type", "value", "Application"), Map.of("path", "Command", "value", "code")));
+            default -> {
+                // Nothing required.
+            }
+        }
     }
 
     // An event type recognised by the number an extraction reads from the record's object (by its start: an equals
@@ -899,7 +978,10 @@ class TestCatalogueEventTypesTool {
     }
 
     private Map<String, Object> call(final Map<String, Object> arguments, final ToolCallContext context) {
-        return BuildToolCalls.json(text(arguments, context));
+        final String text = text(arguments, context);
+        // A refusal is text, not JSON: said as the failure.
+        assertThat(text).as("a JSON result").startsWith("{");
+        return BuildToolCalls.json(text);
     }
 
     private String text(final Map<String, Object> arguments, final ToolCallContext context) {

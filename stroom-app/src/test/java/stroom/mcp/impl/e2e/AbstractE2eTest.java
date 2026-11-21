@@ -603,6 +603,17 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return CatalogueSteps.confirmedCatalogue(client, build);
     }
 
+    /// What the schema requires of a Process event placed as constants, for the tests whose subject is something
+    /// else (decided by the user 2026-11-21: a set isn't put to the user while an event type leaves an element the
+    /// schema requires empty).
+    ///
+    /// @param proposal An event type proposed under Process.
+    /// @return It with its Action, Type and Command placed.
+    static Map<String, Object> processPlaced(final Map<String, Object> proposal) {
+        return withKeys(proposal, "placements", List.of(args("path", "Action", "value", "Execute"),
+                args("path", "Type", "value", "Application"), args("path", "Command", "value", "e2e")));
+    }
+
     /// An event type as the agent proposes it: added, with its meaning and its ways of being recognised.
     ///
     /// @param typeId      Its TypeId (null for the default).

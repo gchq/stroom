@@ -121,6 +121,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     static final String NEEDS_SHOWING = "needs_showing";
     /// A result's status: a set for a client without forms to show, then confirm with its review id.
     static final String NEEDS_REVIEW = "needs_review";
+    /// A result's status: the next set leaves an element the schema requires empty, for the agent to place first.
+    static final String NEEDS_PLACEMENTS = "needs_placements";
     /// A result's status: every event type and the catch-all confirmed.
     static final String CONFIRMED = "confirmed";
     /// A result's status: event types or groups explained, for the agent to answer the user's question with.
@@ -280,9 +282,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                         .addProperty(PROPOSALS_ARG, ArraySchema.builder()
                                 .description("Changes to the catalogue: {op: add|change|remove, type_id, ...the "
                                              + "event type's keys: title, description, event_detail, action, "
-                                             + "success, actor, affected, affected_as, recognised_by [{when: "
-                                             + "[conditions], names}], basis, confidence, one_type_because}. "
-                                             + "change gives only the keys that change.")
+                                             + "success, actor, recognised_by [{when: [conditions], names}], "
+                                             + "placements [{path (below event_detail), field or value, "
+                                             + "transform, time_format, map, for_each...}: the mapping's fields "
+                                             + "entries], basis, confidence, one_type_because}. change gives only "
+                                             + "the keys that change.")
                                 .items(ObjectSchema.builder()
                                         .addStringProperty(CatalogueProposals.OP, "add, change or remove.")
                                         .addStringProperty(CatalogueProposals.TYPE_ID, "Verb-Object, e.g. "
@@ -484,11 +488,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         result.put("catalogue", compact(calling.catalogue()));
         result.put(HINT, "Propose the source's event types (proposals=[{op: add, type_id, title, description, "
-                         + "event_detail, action, actor, affected, affected_as, recognised_by, basis, "
-                         + "confidence}]) from this evidence and what you know of the product: a type is what "
-                         + "happened, recognised by conditions on the records' fields (stroom://guide/mapping). The "
-                         + "seed is the draft's own rules, for you to correct: add only what you keep. "
-                         + "A Data Splitter part is a line format, not an event type.");
+                         + "event_detail, action, actor, recognised_by, placements, basis, confidence}]) from this "
+                         + "evidence and what you know of the product: a type is what happened, recognised by "
+                         + "conditions on the records' fields; its placements type its fields below the action "
+                         + "element, whatever is left being Data (stroom://guide/mapping). The seed is the draft's "
+                         + "own rules, for you to correct: add only what you keep. A Data Splitter part is a line "
+                         + "format, not an event type.");
         result.put("next", next(calling.build(), Map.of(PROPOSALS_ARG, "<the event types>"),
                 "checks them against every record; then confirm=true puts them to the user"));
         return result;
@@ -594,7 +599,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     .toList());
         }
         final List<EventType> next = nextSet(kept);
-        if (recorded && !check.refused() && !next.isEmpty()) {
+        if (recorded && !check.refused() && !next.isEmpty() && check.unplacedOf(typeIds(next)).isEmpty()) {
             // The set the user confirms next, as the chat will show it.
             result.put(TABLE, shownSet(calling, next, check, confirmingNow));
         }
@@ -605,6 +610,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                   + NAME + " confirm=true puts the set to the user again."
                 : proposedHint(recorded, brought, applied, check));
         result.put("next", (recorded || amendmentSent) && !check.refused()
+                           && check.unplacedOf(typeIds(next)).isEmpty()
                 ? next(calling.build(), Map.of(CONFIRM_ARG, true), "puts the next set of event types to the user: "
                                                                    + "its table shown in the chat, then a short form")
                 : next(calling.build(), Map.of(PROPOSALS_ARG, "<corrections>"), "checks the catalogue again"));
@@ -638,6 +644,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             said.add("Some conditions can't be checked against the records here (check.not_checked): their records "
                      + "aren't counted; tell them by a field's value where you can.");
         }
+        if (!check.unplaced().isEmpty()) {
+            said.add(check.unplaced().size() + " element(s) the schema requires that nothing is placed at "
+                     + "(check.unplaced), e.g. " + said(check.unplaced().getFirst()) + ": give those event types "
+                     + "placements (op: change, placements) before their set is put to the user.");
+        }
         if (check.uncatalogued().records() > 0) {
             said.add(check.uncatalogued().records() + " record(s) no event type recognises (check.uncatalogued, by "
                      + "shape): the catch-all translates them as Unknown; propose event types for those that are "
@@ -666,10 +677,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     type.affectedAs()).path();
             types.add(leaf == null || leaf.equals(type.affectedAs())
                     ? type
-                    : new EventType(type.typeId(), type.title(), type.description(), type.eventDetail(),
-                            type.action(), type.success(), type.actor(), type.affected(), leaf,
-                            type.recognisedBy(), type.drop(), type.basis(), type.confidence(),
-                            type.oneTypeBecause(), type.status(), type.doubt()));
+                    : type.withAffectedAs(leaf));
         }
         return catalogue.withEventTypes(types);
     }
@@ -677,7 +685,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     // The catalogue's check over the scope's records.
     private CatalogueCheckResult check(final Calling calling, final Catalogue catalogue, final Records read) {
         final EventSchema schema = notes.schemaOrNull(calling.context(), calling.build());
-        return CatalogueCheck.check(catalogue, read.sample(), schema);
+        // What the draft writes: for every event (not an event type's Data, its user Authenticate's), and by its own
+        // rules, which the translation's rules start from.
+        return CatalogueCheck.check(catalogue, read.sample(), schema, CatalogueCheck.Drafted.of(
+                JsonValues.mapOrEmpty(read.draft().get("mapping"))));
     }
 
     // The full listing (the catalogue and its check, in full) saved to the session's workspace: its path, or empty
@@ -724,6 +735,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final List<EventType> set = nextSet(catalogue);
         if (set.isEmpty() && catalogue.catchAll().confirmed()) {
             return done(calling, catalogue, check, List.of(), false);
+        }
+        final List<CatalogueValidation.Problem> unplaced = check.unplacedOf(typeIds(set));
+        if (!unplaced.isEmpty()) {
+            throw new ToolRefusal(notPlaced(unplaced));
         }
         final boolean catchAll = set.isEmpty();
         final String shown = catchAll
@@ -817,6 +832,22 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         if (next.isEmpty() && now.catchAll().confirmed()) {
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), now, confirming);
             return done(calling, now, check, confirmedNow, false);
+        }
+        final List<CatalogueValidation.Problem> unplaced = check.unplacedOf(typeIds(next));
+        if (!unplaced.isEmpty()) {
+            // The next set leaves an element the schema requires empty: not shown until it is placed.
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), now, confirming);
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put(STATUS, NEEDS_PLACEMENTS);
+            if (!confirmedNow.isEmpty()) {
+                out.put("confirmed_now", confirmedNow);
+            }
+            out.put("unplaced", unplaced.stream().map(CatalogueValidation.Problem::toJson).toList());
+            out.put("catalogue", compact(now));
+            out.put(HINT, notPlaced(unplaced));
+            out.put("next", next(calling.build(), Map.of(PROPOSALS_ARG, "<placements>"), "places them; then "
+                                                                                          + "confirm=true"));
+            return out;
         }
         final String shown = next.isEmpty()
                 ? catchAllShown(check, now)
@@ -1155,6 +1186,17 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
     // Why the catalogue can't be put to the user as it is: overlaps, event types that may be several (the seed's),
     // problems.
+    // The set's event types leaving an element the schema requires empty: why the set isn't put to the user.
+    private static String notPlaced(final List<CatalogueValidation.Problem> unplaced) {
+        // Each said with its event type already.
+        final List<String> said = unplaced.stream().limit(5).map(CatalogueValidation.Problem::problem).toList();
+        return "Not put to the user: " + unplaced.size() + " element(s) the schema requires are left empty: "
+               + String.join("; ", said) + (unplaced.size() > said.size()
+                ? "; and " + (unplaced.size() - said.size()) + " more (check.unplaced)"
+                : "") + ". Give those event types placements (op: change, placements: [{path below event_detail, "
+               + "field or value}], from what you know of the source; stroom://guide/mapping), then confirm again.";
+    }
+
     private static String notConfirmable(final CatalogueCheckResult check) {
         final List<String> said = new ArrayList<>();
         check.overlaps().stream().limit(5).forEach(overlap -> said.add("record " + overlap.record() + " is "
@@ -1365,7 +1407,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                 ? "none of its own: its records' Description comes only from a message they hold"
                 : type.description());
         out.put("recognised_by", CatalogueTables.recognisedBy(type));
-        out.put("translated_as", CatalogueTables.translatedAs(type));
+        out.put("translated_as", CatalogueTables.translatedAs(type) + CatalogueTables.placedAs(type));
         final CatalogueCheckResult.Count count = check.counts().get(type.typeId());
         out.put("records", count == null
                 ? 0

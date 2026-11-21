@@ -2578,7 +2578,17 @@ public final class DraftMapping {
         private List<String> withNotes(final Map<String, Object> applied, final List<String> rest) {
             final List<String> appliedFields = (List<String>) applied.get(FIELDS);
             final List<String> appliedEvents = (List<String>) applied.getOrDefault(EVENTS, List.of());
-            final List<String> unread = (List<String>) applied.getOrDefault("unread_fields", List.of());
+            final List<String> said = (List<String>) applied.getOrDefault("unread_fields", List.of());
+            final String emptySuffix = ": " + CatalogueTranslation.EMPTY_EVERYWHERE;
+            final List<String> empty = said.stream()
+                    .filter(field -> field.endsWith(emptySuffix))
+                    .map(field -> field.substring(0, field.length() - emptySuffix.length()))
+                    .toList();
+            final List<String> unread = said.stream().filter(field -> !field.endsWith(emptySuffix)).toList();
+            if (!empty.isEmpty()) {
+                notes.add("Left out of the rules, as Data and typed alike, being empty in every sampled record: "
+                          + String.join(", ", empty) + ".");
+            }
             if (!unread.isEmpty()) {
                 notes.add("The catalogue names what the draft couldn't use: " + String.join("; ", unread)
                           + ". The fields are " + reprs(names) + ": correct the event type (catalogue_event_types "

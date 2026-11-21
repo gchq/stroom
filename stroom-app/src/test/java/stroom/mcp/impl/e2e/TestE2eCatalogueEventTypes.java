@@ -84,7 +84,10 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 withKeys(eventType("Authenticate-Logoff", "Authenticate", "high", when("action", "equals", "logout")),
                         "action", "Logoff", "actor", "user"),
                 eventType("Export-Report", "Export", "medium", when("action", "equals", "export")),
-                eventType("Delete-Records", "Delete", "low", when("action", "equals", "purge"))));
+                // What was deleted placed (decided by the user 2026-11-21: a set isn't put to the user while one of
+                // its event types leaves an element the schema requires empty).
+                withKeys(eventType("Delete-Records", "Delete", "low", when("action", "equals", "purge")),
+                        "placements", List.of(args("path", "Document/Id", "field", "object")))));
         assertThat(checked).containsEntry("status", "checked");
         assertThat(countsOf(checked)).containsEntry("Authenticate-Logon", 8L).containsEntry("Authenticate-Logoff", 8L)
                 .containsEntry("Export-Report", 8L).containsEntry("Delete-Records", 1L);
@@ -166,8 +169,8 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         json(CATALOGUE, args("build", build, "stream_ids", raw));
         final List<Map<String, Object>> seed = new ArrayList<>();
         for (final String logger : List.of("com.acme.audit.SecurityLogger", "com.acme.web.RequestLogger")) {
-            seed.add(withKeys(eventType(null, "Process", "low", when("logger", "equals", logger)), "basis",
-                    "draft", "title", logger));
+            seed.add(withKeys(processPlaced(eventType(null, "Process", "low", when("logger", "equals", logger))),
+                    "basis", "draft", "title", logger));
         }
         final Map<String, Object> seeded = proposed(build, raw, seed);
         final List<Map<String, Object>> several = severalOf(seeded);
@@ -187,14 +190,16 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
 
         // Split by op: three event types, each told by the logger and its op; any other said to be one.
         final String logger = "com.acme.audit.SecurityLogger";
+        // Each placing what was updated, which the schema requires (Update/After).
+        final List<Map<String, Object>> after = List.of(args("path", "After/User/Id", "field", "user"));
         final Map<String, Object> split = proposed(build, raw, List.of(
                 args("op", "remove", "type_id", security),
-                eventType("Update-Password", "Update", "high", when("logger", "equals", logger, "op", "equals",
-                        "password_change")),
-                eventType("Update-Group", "Update", "high", when("logger", "equals", logger, "op", "equals",
-                        "group_change")),
-                eventType("Unlock-Ruleset", "Update", "high", when("logger", "equals", logger, "op", "equals",
-                        "ruleset_unlock"))));
+                withKeys(eventType("Update-Password", "Update", "high", when("logger", "equals", logger, "op",
+                        "equals", "password_change")), "placements", after),
+                withKeys(eventType("Update-Group", "Update", "high", when("logger", "equals", logger, "op",
+                        "equals", "group_change")), "placements", after),
+                withKeys(eventType("Unlock-Ruleset", "Update", "high", when("logger", "equals", logger, "op",
+                        "equals", "ruleset_unlock")), "placements", after)));
         assertThat(countsOf(split)).containsEntry("Update-Password", 4L).containsEntry("Update-Group", 4L)
                 .containsEntry("Unlock-Ruleset", 4L).doesNotContainKey(security);
         final List<Map<String, Object>> because = new ArrayList<>();
@@ -445,9 +450,9 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         final List<Long> raw = surveyedSample(build, "E2E-CAT-MANY", String.join("\n", lines) + "\n");
         final List<Map<String, Object>> proposals = new ArrayList<>();
         for (int k = 0; k < 25; k++) {
-            proposals.add(eventType("Process-Code%02d".formatted(k), "Process", k < 5
+            proposals.add(processPlaced(eventType("Process-Code%02d".formatted(k), "Process", k < 5
                     ? "high"
-                    : "medium", when("event_type", "equals", "code%02d".formatted(k))));
+                    : "medium", when("event_type", "equals", "code%02d".formatted(k)))));
         }
         proposed(build, raw, proposals);
         final int formsBefore = client.forms().size();

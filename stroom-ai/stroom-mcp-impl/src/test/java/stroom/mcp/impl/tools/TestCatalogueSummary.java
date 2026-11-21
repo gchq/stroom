@@ -116,6 +116,25 @@ class TestCatalogueSummary {
     }
 
     @Test
+    void mostFieldsKeptAsDataIsWorthALookNeverARefusal() {
+        // Decided by the user 2026-11-21: a high share of Data is a note, never a refusal.
+        final List<EventType> set = List.of(type("View-MailItems", "View", null), type("Send-Mail", "Send", null));
+        final CatalogueCheckResult plain = check(set, Map.of("View-MailItems", 3, "Send-Mail", 3));
+        final String note = "most of its fields are kept as Data (17 of 19; typed: 2): placements would type those "
+                            + "the schema has homes for";
+        final CatalogueCheckResult check = new CatalogueCheckResult(plain.counts(), List.of(), plain.uncatalogued(),
+                plain.unparsed(), List.of(), List.of(), List.of(), plain.order(), List.of(), Map.of(
+                "View-MailItems", new CatalogueCheckResult.Typing(2, 17, Map.of(), note),
+                "Send-Mail", new CatalogueCheckResult.Typing(6, 3, Map.of(), null)));
+
+        assertThat(check.refused()).isFalse();
+        assertThat(CatalogueSummary.unusual(set, check)).singleElement().satisfies(one -> {
+            assertThat(one.type().typeId()).isEqualTo("View-MailItems");
+            assertThat(one.why()).contains(note);
+        });
+    }
+
+    @Test
     void aLoneActionElementIsWorthALookOnlyInALargeSet() {
         // In a small set every element is lone, and the summary names each type already.
         final List<EventType> set = List.of(type("Authenticate-Logon", "Authenticate", "Logon"),

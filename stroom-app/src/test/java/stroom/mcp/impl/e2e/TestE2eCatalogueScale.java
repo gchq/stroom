@@ -63,7 +63,8 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
         for (int from = 0; from < TYPES; from += BATCH) {
             final List<Map<String, Object>> batch = new ArrayList<>();
             for (int k = from; k < from + BATCH; k++) {
-                batch.add(eventType(typeId(k), "Process", confidence(k), when("code", "equals", code(k))));
+                batch.add(processPlaced(eventType(typeId(k), "Process", confidence(k), when("code", "equals",
+                        code(k)))));
             }
             final Map<String, Object> given = client.jsonAsGiven(CATALOGUE, args("build", build, "stream_ids", raw,
                     "proposals", batch));

@@ -15,7 +15,7 @@ Every event type writes these, from the same source.
 
 #### logon
 
-When `concat(action, '-', a/b)` = login-x.
+When `concat(action, '-', a/b)` = login-x. Below the action element: 3 typed, 1 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |

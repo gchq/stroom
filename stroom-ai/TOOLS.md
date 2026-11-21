@@ -3721,7 +3721,10 @@ catalogue already, its `check` and `listing` come too.
 **Proposals** (`proposals=`, `status: checked`) add, change or remove event types by TypeId (compared ignoring case);
 the catalogue is never sent whole. `change` gives only the keys that change. An event type has `type_id`, `title`,
 `description`, `event_detail`, `action`, `success`, `actor`, `affected`, `affected_as` (written out to its leaf,
-`User` as `User/Id`), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
+`User` as `User/Id`; read as one placement), `placements` (2026-11-21: each a mapping fields entry whose `path` is
+below `event_detail`, with `field` or a constant `value`, the mapping's `transform`, `time_format`, `timezone`, `map`,
+`default`, `repeat`, or a `for_each` group with `fields`; `also_data: true` keeps the field as Data too; a `change`
+giving `placements` replaces the list), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
 when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`, `documentation`), `confidence`
 (high, medium, low), `one_type_because` and, optionally, `doubt` (why the agent is unsure of it: said to the user
 among those worth a look; 2026-11-20). A proposal with no TypeId gets the default (`TypeIds.defaultTypeId`: the
@@ -3764,7 +3767,20 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value of a
   field with at least 3 values written alike, the named one among them, differing only in a part that varies (a message holding an object's id; masked
   as the survey's shapes are), refused with `starts_with` or `matches` with a named group suggested; a code (`Login`,
-  `4624`) never (2026-11-20).
+  `4624`) never (2026-11-20); and each placement's (`PlacementCheck`, 2026-11-21): a path the schema hasn't below
+  the action element (what it allows named), one under Data or to an element holding others (its leaves named); a
+  field no record has (the record fields it may have meant, by last name then by spelling); several values in a
+  record where the element takes one, without `repeat` or `for_each`, or a `for_each` on an element the schema has
+  once; values that, converted as the XSLT converts them (transform, map, default, time_format), the element's
+  enumeration, pattern or XSD type refuses, naming up to three and the fix.
+* `unplaced` (2026-11-21): elements the schema requires of an event type's action element (and of each element
+  written below it: required children and required choices) that nothing the catalogue gives writes (placements, the
+  Action, the outcome, Authenticate's user from the actor or the draft's common user, Data). Recorded, but
+  `confirm=true` refuses to put a set to the user (or the catch-all) until they are placed.
+* `typing` (2026-11-21): per event type in the sample, the fields typed and kept as Data (those every event shares
+  aside), each placed field's fill rate in its records (`fill`), and `worth_a_look` when at least 5 and 80% of its
+  fields are Data: said among the set's worth-a-look reasons, never refused (compact: only types with placements or
+  a note).
 * `order`: the catalogue's.
 
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
@@ -3774,7 +3790,8 @@ against), and the notes doc's "Event types" part, for people (2026-11-20): a sec
 the summaries' groups in their order), each a table `| Event type | What happened | Recognised by | Records | Translated as | Status |`
 (TypeId and title; the description, or `-`; conditions in words; the records as last checked, kept in the
 confirmation, left blank after a hand edit read back; the event detail, action, who acted and acted on, as the set's
-table says it, the column back by the user's decision of 2026-11-20; `confirmed` or `proposed`, the confidence and
+table says it, the column back by the user's decision of 2026-11-20, then `; typed: ` and each placement in words,
+`event.Subject -> Email/Subject`, 2026-11-21; `confirmed` or `proposed`, the confidence and
 where it came from), the uncatalogued records (the catch-all) last in a section of their own; written together in one place (`RecordSourceNotesTool.textWithCatalogue`) so the table never goes stale. The
 field dictionary, documents and references stay as record_source_notes keeps them. The build's one notes doc is
 used, else `<source> source notes` is made. Every result carries `catalogue`, compact (each `type_id`, `title`,
@@ -3850,7 +3867,9 @@ and removed since (`CatalogueDiff`).
   `proposals` (`[{op: add | change | remove, type_id, ...}]`); `confirm`; `catch_all` (`{allow_unknown}` with
   confirm; `{translation: {type_id, event_detail, action, description}}`, what the uncatalogued records become in the
   user's words); `reviewed` (with confirm, for a client without forms).
-* **Returns**: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`, `confirmed`);
+* **Returns**: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`,
+  `needs_placements` (2026-11-21: a set confirmed, the next one leaving an element the schema requires empty, with
+  `unplaced`), `confirmed`);
   `catalogue`; listing: `evidence` (`fields`, `shapes`, `examples`, `seed`), and with a catalogue `check` and
   `listing`; proposals: `recorded`, `source_notes`, `refused`, `check`, `not_in_sample`, `table` (the next set's),
   `listing`; confirmation: `table` (and `review_id`), `confirmed_now`, `amendments` and `amended`, `check`; `read_with`,
@@ -5105,9 +5124,13 @@ names, addresses kept), then takes what the catalogue says:
   event type tests for its code is still Data of this one's records.
 * **Description**: the record's own message, alone, where the records carry one; else the event type's description
   (the vendor documentation's text, or the agent's) as fixed text.
-* The action element's Action and outcome, who acted (a field naming a person, not an address), what was acted on
-  (`affected_as`), the user authenticating for Authenticate; then the fields left over that the way's own records
-  hold, as Data of the action element.
+* The action element's Action and outcome, who acted (a field naming a person, not an address), the type's
+  placements as typed entries (`affected`'s included; one reading a field the records haven't is left out and named
+  in `unread_fields`), the user authenticating for Authenticate; then the fields left over that the way's own records
+  hold, as Data of the action element. Each field once: the draft rule's entries below the action element reading a
+  placed field are taken out, and a placed field is Data too only with `also_data` (the vendor's code is always Data).
+* A field empty in every sampled record is left out of every rule (typed and Data alike, unless a placement names
+  it), listed in `unread_fields` as "empty in every sampled record" and in a note (2026-11-21, chat 182).
 
 With variants (mixed lines, alternatives, a saved converter), a way goes into the variants whose sampled records it
 recognises (evaluated, not guessed from its last condition), prefixed with the variant's condition; each variant's
@@ -5973,7 +5996,9 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
     (`BuildDocumentation.rawParents`).
   * **How the Field mapping is laid out**: event types grouped on what they write besides their Data, an object's
     side ignored, Data every type writes alike as common fields, extractions left to the XSLT; an index's common
-    fields only those every event has, each section naming its TypeIds. See `EventFieldDocs` and `IndexFieldDocs`
+    fields only those every event has, each section naming its TypeIds; an event type's section says how many
+    elements below the action element its rule types and keeps as Data (`Below the action element: 5 typed, 3 kept
+    as Data.`, 2026-11-21). See `EventFieldDocs` and `IndexFieldDocs`
     under "Field-mapping documentation and the CEF mapping".
   * **Field descriptions**: each field is described by what it means for this source (`Descriptions`): a
     `needs_descriptions` round asks for those not yet described. A Data name read from the same source under

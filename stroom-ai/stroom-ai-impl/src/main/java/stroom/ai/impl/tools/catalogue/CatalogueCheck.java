@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.catalogue;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.ByField;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Count;
@@ -119,7 +120,24 @@ public final class CatalogueCheck {
     public static CatalogueCheckResult check(final Catalogue catalogue,
                                              final CatalogueSample sample,
                                              final EventSchema schema) {
-        return new Run(catalogue, new RecordIndex(sample), schema).result();
+        return check(catalogue, sample, schema, Drafted.NONE);
+    }
+
+    /// As [#check(Catalogue, CatalogueSample, EventSchema)], knowing what the draft writes ([Drafted]): its common
+    /// fields aren't counted as an event type's Data, its common user is Authenticate's where an event type names no
+    /// actor, and what its own rule taking most of a type's records writes below the action element counts for the
+    /// elements the schema requires, as the translation writes them all.
+    ///
+    /// @param catalogue The catalogue.
+    /// @param sample    The scope's records, as processing reads them.
+    /// @param schema    The event-logging schema, or null to skip the schema's checks.
+    /// @param drafted   What the draft writes: in common, and its own rules.
+    /// @return What the check found.
+    public static CatalogueCheckResult check(final Catalogue catalogue,
+                                             final CatalogueSample sample,
+                                             final EventSchema schema,
+                                             final Drafted drafted) {
+        return new Run(catalogue, new RecordIndex(sample), schema, drafted).result();
     }
 
     /// A few records of each event type given, from the scope's records as processing reads them, for the user who
@@ -134,7 +152,7 @@ public final class CatalogueCheck {
                                                       final List<EventType> types,
                                                       final int most) {
         final RecordIndex index = new RecordIndex(sample);
-        final Run run = new Run(new Catalogue(types, null, null), index, null);
+        final Run run = new Run(new Catalogue(types, null, null), index, null, Drafted.NONE);
         final Map<String, List<Example>> out = new LinkedHashMap<>();
         for (int t = 0; t < types.size(); t++) {
             final EventType type = types.get(t);
@@ -300,9 +318,14 @@ public final class CatalogueCheck {
         // By field: how many of its values are written each way, their variable parts masked (uniqueValues).
         private final Map<String, Map<String, Integer>> writtenAlike = new HashMap<>();
         private final Predicate<String> onSourceType;
+        private final Drafted drafted;
 
-        private Run(final Catalogue catalogue, final RecordIndex index, final EventSchema schema) {
+        private Run(final Catalogue catalogue,
+                    final RecordIndex index,
+                    final EventSchema schema,
+                    final Drafted drafted) {
             this.catalogue = catalogue;
+            this.drafted = drafted;
             this.index = index;
             this.schema = schema;
             this.types = catalogue.eventTypes();
@@ -343,11 +366,35 @@ public final class CatalogueCheck {
                 counts.put(key, new Count(all.cardinality(), ways.stream().map(BitSet::cardinality).toList()));
             }
             problems.addAll(soleOfLineFormat());
+            final List<Problem> unplaced = new ArrayList<>();
+            final Map<String, CatalogueCheckResult.Typing> typing = new LinkedHashMap<>();
+            if (schema != null) {
+                placements(problems, unplaced, typing);
+            }
             final BitSet unparsedRecords = new BitSet(size);
             final Unparsed unparsed = unparsed(unparsedRecords);
             return new CatalogueCheckResult(counts, overlaps(), uncatalogued(unparsedRecords), unparsed, several(),
                     distinct(problems), distinct(notChecked),
-                    CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList());
+                    CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList(), distinct(unplaced),
+                    typing);
+        }
+
+        // Each event type's placements checked against the schema and its records, the elements the schema
+        // requires that nothing writes, and how many of its fields are typed ([PlacementCheck]).
+        private void placements(final List<Problem> problems,
+                                final List<Problem> unplaced,
+                                final Map<String, CatalogueCheckResult.Typing> typing) {
+            final PlacementCheck check = new PlacementCheck(schema, index, this::missing, catalogue, drafted,
+                    when -> way(new Way(when, List.of())));
+            for (int t = 0; t < types.size(); t++) {
+                final EventType type = types.get(t);
+                final PlacementCheck.Checked checked = check.check(type, byType.get(t));
+                checked.problems().forEach(problem -> problems.add(new Problem(type.typeId(), -1, problem)));
+                checked.unplaced().forEach(problem -> unplaced.add(new Problem(type.typeId(), -1, problem)));
+                if (checked.typing() != null) {
+                    typing.put(keys.get(t), checked.typing());
+                }
+            }
         }
 
         // An event type's key in the counts: its TypeId, or its place where it has none (or shares one).
@@ -905,6 +952,81 @@ public final class CatalogueCheck {
                 out.put("values", values);
             }
             return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What the draft writes, as far as the catalogue's check needs it: what every event writes in common (those
+    /// fields aren't an event type's Data, and its user is Authenticate's where an event type names no actor), and
+    /// the draft's own rules, whose fields an event type's rule starts from (the one taking most of its records), as
+    /// the translation writes them ([stroom.ai.impl.tools.draft.CatalogueTranslation]).
+    ///
+    /// @param commonFields The fields the common entries read.
+    /// @param commonUser   The field EventSource/User/Id is read from, or null.
+    /// @param rules        The draft's own rules with conditions, in order.
+    public record Drafted(Set<String> commonFields, String commonUser, List<Rule> rules) {
+
+        /// Nothing drafted.
+        public static final Drafted NONE = new Drafted(Set.of(), null, List.of());
+
+        /// Copies the parts.
+        public Drafted {
+            commonFields = Set.copyOf(Objects.requireNonNullElse(commonFields, Set.of()));
+            rules = List.copyOf(Objects.requireNonNullElse(rules, List.of()));
+        }
+
+        /// @param mapping A draft's mapping (JSON): `common` and `events`, or null.
+        /// @return What it writes.
+        public static Drafted of(final Map<String, Object> mapping) {
+            final Map<String, Object> json = NullSafe.map(mapping);
+            final Set<String> fields = new LinkedHashSet<>();
+            String user = null;
+            for (final Map<String, Object> entry : JsonValues.maps(json.get("common"))) {
+                if (entry.get("field") instanceof final String field && !field.isBlank()) {
+                    fields.add(field);
+                    if ("EventSource/User/Id".equals(ToolText.strip(String.valueOf(entry.get("path")), "/"))) {
+                        user = field;
+                    }
+                }
+                JsonValues.strings(entry.get("any_of")).forEach(fields::add);
+            }
+            final List<Rule> rules = new ArrayList<>();
+            for (final Map<String, Object> rule : JsonValues.maps(json.get("events"))) {
+                final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
+                if (when.isEmpty()) {
+                    continue;
+                }
+                try {
+                    final List<Condition> conditions = when.stream().map(Condition::fromJson).toList();
+                    final List<String> paths = JsonValues.maps(rule.get("fields")).stream()
+                            .map(entry -> ToolText.strip(String.valueOf(entry.get("path")), "/"))
+                            .toList();
+                    rules.add(new Rule(conditions, paths));
+                } catch (final IllegalArgumentException e) {
+                    // A rule whose conditions don't read takes no records here.
+                }
+            }
+            return new Drafted(fields, user, rules);
+        }
+
+
+        // --------------------------------------------------------------------------------
+
+
+        /// One of the draft's own rules.
+        ///
+        /// @param when  Its conditions.
+        /// @param paths The paths its fields write, below Event.
+        public record Rule(List<Condition> when, List<String> paths) {
+
+            /// Copies the lists.
+            public Rule {
+                when = List.copyOf(when);
+                paths = List.copyOf(paths);
+            }
         }
     }
 }

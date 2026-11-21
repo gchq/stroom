@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,6 +39,10 @@ import java.util.Objects;
 /// @param notChecked   `not_checked`: conditions the check can't evaluate here (an xpath, a dictionary, a
 ///                     record-scope test, a field an extraction gives), said and not refused.
 /// @param order        The TypeIds in the catalogue's order (more specific first).
+/// @param unplaced     The elements the schema requires of an event type's action element that nothing the
+///                     catalogue gives writes ([PlacementCheck]): they refuse confirmation, not proposals.
+/// @param typing       How many of each event type's fields are typed and kept as Data, by TypeId (those in the
+///                     sample only).
 public record CatalogueCheckResult(Map<String, Count> counts,
                                    List<Overlap> overlaps,
                                    Uncatalogued uncatalogued,
@@ -45,7 +50,9 @@ public record CatalogueCheckResult(Map<String, Count> counts,
                                    List<Several> several,
                                    List<Problem> problems,
                                    List<Problem> notChecked,
-                                   List<String> order) {
+                                   List<String> order,
+                                   List<Problem> unplaced,
+                                   Map<String, Typing> typing) {
 
     /// The most overlaps the compact form lists.
     public static final int OVERLAPS_SHOWN = 10;
@@ -72,12 +79,47 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         problems = List.copyOf(Objects.requireNonNullElse(problems, List.of()));
         notChecked = List.copyOf(Objects.requireNonNullElse(notChecked, List.of()));
         order = List.copyOf(Objects.requireNonNullElse(order, List.of()));
+        unplaced = List.copyOf(Objects.requireNonNullElse(unplaced, List.of()));
+        typing = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(typing, Map.of())));
+    }
+
+    /// A check with no placements checked (nothing unplaced, no typing).
+    ///
+    /// @param counts       The records each event type recognises.
+    /// @param overlaps     Records two event types recognise.
+    /// @param uncatalogued The records no event type recognises.
+    /// @param unparsed     The records whose held values don't parse.
+    /// @param several      Event types whose records may be several.
+    /// @param problems     What is refused.
+    /// @param notChecked   Conditions not checked.
+    /// @param order        The TypeIds in the catalogue's order.
+    public CatalogueCheckResult(final Map<String, Count> counts,
+                                final List<Overlap> overlaps,
+                                final Uncatalogued uncatalogued,
+                                final Unparsed unparsed,
+                                final List<Several> several,
+                                final List<Problem> problems,
+                                final List<Problem> notChecked,
+                                final List<String> order) {
+        this(counts, overlaps, uncatalogued, unparsed, several, problems, notChecked, order, List.of(), Map.of());
     }
 
     /// @return True if the catalogue can't be confirmed as it is: a problem, an overlap, or a type that may be
-    /// several whose warning blocks it. What is not checked doesn't refuse it.
+    /// several whose warning blocks it. What is not checked doesn't refuse it, nor a high share of fields kept as
+    /// Data; an element the schema requires that nothing is placed at refuses only its event type's set
+    /// ([#unplacedOf]).
     public boolean refused() {
         return !problems.isEmpty() || !overlaps.isEmpty() || several.stream().anyMatch(Several::blocking);
+    }
+
+    /// @param typeIds Event types (a set put to the user), compared ignoring case.
+    /// @return The elements the schema requires of their action elements that nothing is placed at: none when the
+    /// set can be put to the user.
+    public List<Problem> unplacedOf(final Collection<String> typeIds) {
+        return unplaced.stream()
+                .filter(problem -> typeIds.stream().anyMatch(typeId -> typeId != null
+                                                                       && typeId.equalsIgnoreCase(problem.typeId())))
+                .toList();
     }
 
     /// @return The check as the tool's result gives it: counts and problems, the lists cut short.
@@ -111,6 +153,18 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         out.put("problems", problems.stream().map(Problem::toJson).toList());
         if (!notChecked.isEmpty()) {
             out.put("not_checked", notChecked.stream().map(Problem::toJson).toList());
+        }
+        if (!unplaced.isEmpty()) {
+            out.put("unplaced", unplaced.stream().map(Problem::toJson).toList());
+        }
+        final Map<String, Object> typed = new LinkedHashMap<>();
+        typing.forEach((typeId, one) -> {
+            if (full || one.note() != null || !one.fill().isEmpty()) {
+                typed.put(typeId, one.toJson());
+            }
+        });
+        if (!typed.isEmpty()) {
+            out.put("typing", typed);
         }
         out.put("order", order);
         return out;
@@ -373,6 +427,38 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("signature", signature);
             out.put("records", records);
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How an event type's records are written: how many of their fields are typed (its placements, who acted, its
+    /// outcome) and how many kept as Data (the rest its records hold, but those common to every event).
+    ///
+    /// @param typed The fields typed.
+    /// @param data  The fields kept as Data.
+    /// @param fill  Each placed field's fill rate in the type's records, e.g. `7 of 9`.
+    /// @param note  Why it is worth a look (most of its fields kept as Data), or null: never a refusal.
+    public record Typing(int typed, int data, Map<String, String> fill, String note) {
+
+        /// Copies the fill rates, in order.
+        public Typing {
+            fill = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(fill, Map.of())));
+        }
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("typed", typed);
+            out.put("data", data);
+            if (!fill.isEmpty()) {
+                out.put("fill", fill);
+            }
+            if (note != null) {
+                out.put("worth_a_look", note);
+            }
             return out;
         }
     }

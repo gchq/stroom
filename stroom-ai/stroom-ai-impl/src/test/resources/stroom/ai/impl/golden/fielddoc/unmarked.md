@@ -15,7 +15,7 @@ Every event type writes these, from the same source. Sample values are what the 
 
 #### logon, logoff
 
-When `action` = login (logon): 1 of the sample's 2 events. When `action` = logout (logoff): none in the sample.
+When `action` = login (logon): 1 of the sample's 2 events. When `action` = logout (logoff): none in the sample. Below the action element: logon 3 typed, 1 kept as Data; logoff 3 typed, 1 kept as Data.
 
 | XPath | Description | From | Sample values |
 | --- | --- | --- | --- |
@@ -29,7 +29,7 @@ When `action` = login (logon): 1 of the sample's 2 events. When `action` = logou
 
 #### other
 
-Any other record: 1 of the sample's 2 events.
+Any other record: 1 of the sample's 2 events. Below the action element: 0 typed, 1 kept as Data.
 
 | XPath | Description | From | Sample values |
 | --- | --- | --- | --- |

@@ -31,7 +31,7 @@ Left untranslated on purpose: `nothing` (`what` empty).
 
 #### logon
 
-When `what` in dictionary `Logons` and `ok` present.
+When `what` in dictionary `Logons` and `ok` present. Below the action element: 4 typed, 1 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |
@@ -44,7 +44,7 @@ When `what` in dictionary `Logons` and `ok` present.
 
 #### rest
 
-Any other record.
+Any other record. Below the action element: 0 typed, 1 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |

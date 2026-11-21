@@ -116,9 +116,7 @@ final class VendorCodeKept {
     // The event type recognised by one of its ways alone, its TypeId as the whole type's (a default TypeId reads
     // the first way).
     private static EventType oneWay(final EventType type, final String typeId, final Way way) {
-        return new EventType(typeId, type.title(), type.description(), type.eventDetail(), type.action(),
-                type.success(), type.actor(), type.affected(), type.affectedAs(), List.of(way), type.drop(),
-                type.basis(), type.confidence(), type.oneTypeBecause(), type.status(), type.doubt());
+        return type.withTypeId(typeId).withRecognisedBy(List.of(way));
     }
 
     // True when the rule (or common) carries the field as Data: an entry reading it as Data, one of the Data name

@@ -60,9 +60,29 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   not what happened: one logger often writes several event types, told apart by another field or its message.
 - **An event type**: `type_id` Verb-Object (`Update-Password`; the vendor's code is written as Data, so keep it out
   of the TypeId), `title`, `description` (fixed text, no record values: the record's own message is used where it
-  has one), `event_detail` (`Authenticate`, `Update`, `Network/Permit`...), `action`, `success`, `actor` and
-  `affected` (fields), `affected_as` (User, File, Document, Group...), `basis` (`agent_knowledge`, `documentation`,
-  or `draft` for the seed's), `confidence` (high, medium, low), optionally `doubt` (why you are unsure of it).
+  has one), `event_detail` (`Authenticate`, `Update`, `Network/Permit`...), `action`, `success`, `actor` (a
+  field), `placements`, `basis` (`agent_knowledge`, `documentation`, or `draft` for the seed's), `confidence`
+  (high, medium, low), optionally `doubt` (why you are unsure of it).
+- **Placements**: where the event type's fields go in the schema, from what you know of the source: each a mapping
+  fields entry (An entry, below) whose `path` is below `event_detail` (`Email/Subject`, `After/Object/Name`,
+  `Source/User/EmailAddress`), with `field` or a constant `value`, and the entry's conversions (`transform`,
+  `time_format`, `timezone`, `map`, `default`, `repeat`); a list goes to an element that repeats with `for_each`
+  (Groups, below), e.g. `{path: "Email/To", for_each: {array: "Recipients"}, fields: [{path: "EmailAddress", item:
+  true}]}`. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
+  GroupChat, Document...: `read_document type=XMLSchema element=EventDetail/<element>` lists them. The draft writes
+  each as a typed entry of the event type's rule; every field no placement takes is kept as Data, each field once
+  (`also_data: true` keeps a placed one as Data too; the vendor's code is always Data too). `affected` with
+  `affected_as` is one placement (the affected field at that object's Id, Name, Path or Title), checked as the others
+  are.
+- **What placements are checked for**: the path is the schema's below the action element, to a leaf, not Data; the
+  field is one the type's sampled records hold (a misspelt one is named with the record fields it may have meant), its
+  fill rate in the type's records said in `typing`; a field holding several values in a record goes to an element that
+  repeats (`repeat: true`) or a `for_each`; the values, converted as the translation converts them, are valid for the
+  element's type, values or pattern (refused naming the values and the fix: transform, time_format, map, for_each, or
+  leaving the field as Data). A proposal bringing one of these is refused. An element the schema requires of the
+  action element (Update's After, Send's Source and Destination, the object View, Create or Delete is of,
+  Authenticate's Action and user) that nothing is placed at is `unplaced`: the set isn't put to the user until it is.
+  Most of a type's fields kept as Data is only worth a look (`typing`).
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no

@@ -2986,6 +2986,7 @@ The build's source notes hold the catalogue, an ordered list of event types. Eac
 | --- | --- | --- |
 | **Identity** | `type_id` | Verb-Object (`Authenticate-Logon`, `Update-Password`, `Process-SOAPRequest`; `^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters), unique in the build ignoring case: two event types with one TypeId are refused. A default is suggested (below). Titles are unique ignoring case. |
 | **Meaning** | `title`, `description`, `event_detail`, `action`, `success`/outcome, `actor`, `affected`, `affected_as` | What happened, with the schema checks (`EventMeaning`: an action element taking Data, its Action enumeration, its outcome; `affected_as` written out to its leaf, `User` as `User/Id`). |
+| **Placements** | `placements` (decided by the user 2026-11-21) | Where its fields go in the schema: each a mapping fields entry (`Placement`), its `path` below `event_detail` (`Email/Subject`, `After/Object/Name`), a `field` or a constant `value`, the mapping's conversions (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and repeated groups (`for_each` with `fields`); `also_data: true` keeps the field as Data too. From the agent's knowledge of the source: no field-name-to-schema-name matching anywhere. `affected` with `affected_as` is read as one more placement (the affected field at the object's leaf), checked the same way, so catalogues written before keep working; `placements` is written only when given. |
 | **Recognition** | `recognised_by`: one or more ways, each conditions (`when`) and `names` | How a record of the type is told (below). More than one way when a type is written in more than one way (two log formats, two loggers): one event type, not two. A feed is taken to name its event fields consistently (decided by the user 2026-11-20, for now): an event type's fields are read under one spelling, not per way. A type from documentation may have none in the sample (said, not dropped). |
 | **Provenance** | `basis`, `confidence`, `one_type_because`, `status` | `basis`: `draft` (the seed's), `agent_knowledge`, `documentation` or `user_confirmed`; `confidence` high, medium or low; `status` proposed or confirmed. |
 | | `drop` | True for an event type whose records are dropped (the user's word only), written as a `drop_when` rule. |
@@ -3034,6 +3035,29 @@ before fewer, ties kept as given), an event type recognised by every record last
 
 **A splitter part is a line format, not an event type** (chat 166): event types within a format are told by
 conditions, never by a splitter variant each; the guide and hints say so.
+
+**Placement checks** (`PlacementCheck`, in the catalogue's check, against the schema of the build's version and the
+records as the catalogue reads them). Refused where a proposal brings them (`problems`): a path the schema hasn't
+below the action element (with what it allows), under Data, or to an element holding others (its leaves named); a
+field no record has (checked only for an event type with sampled records) (the record fields it may have meant: by
+last name, `MailboxOwnerUPN` → `event.MailboxOwnerUPN`, then by spelling); several values in a record where the
+element is one value, without `repeat` or `for_each`, or a `for_each` on an element the schema has once; values that,
+converted as the XSLT converts them (transform, map, default, time_format), the element's enumeration, pattern or XSD
+type refuses, naming the values and the fix (map, time_format, transform, for_each, or leaving the field as Data).
+Each placed field's fill rate in the type's records is given (`typing.fill`).
+
+**The gate.** Confirmation (putting a set to the user, the catch-all's too) is refused while an event type leaves
+an element the schema requires empty (`unplaced`): derived from the schema element by element, from the action
+element down through every element written (its required children and required choices: Update's After, Send's
+Source and Destination, the object View, Create, Delete or Authorise is of, Authenticate's Action and user, Process's
+Type and Command), against what the catalogue's translation writes there (placements, the Action, the outcome,
+Authenticate's user from the actor or the draft's common user, Data). Proposals are recorded with gaps, so the agent
+can give placements a type at a time. A high share of fields kept as Data (at least 5, and 80% of the type's fields,
+those every event shares aside) is only worth a look (`typing`, and the set's worth-a-look reasons), never refused.
+
+**Where placements are kept.** The set summary the user confirms is unchanged (names and counts); placements are
+in the catalogue's JSON block and, row by row, in the source notes' Event types table (`Translated as ...; typed:
+event.Subject -> Email/Subject`), and in `explain`.
 
 #### Fields and values
 
@@ -3181,8 +3205,13 @@ build plan's step, `catalogue` (was `classify`), is done when every event type a
 * `draft_translation_mapping` makes one rule per (event type, way of recognising it), in catalogue order, then the
   catch-all (left out after a sole event type); dropped event types become `drop_when` rules. A rule's fields start
   from the draft's own rule that took the way's records in the sample (`CatalogueTranslation`), plus TypeId, the
-  vendor-code Data, the Description in its order, the action, who acted and what was acted on, and the remaining
-  fields its own records hold as Data. The catalogue comes first and the XSLT follows from it.
+  vendor-code Data, the Description in its order, the action, who acted, the type's placements as typed entries
+  (`affected`'s included), and the remaining fields its own records hold as Data. Each field is written once: the
+  draft rule's entries reading a placed field below the action element are taken out, and a placed field is not
+  Data too unless the placement says `also_data` (the vendor's code is always Data too, so searching by it works).
+  A field empty in every sampled record is left out of the rules, typed and Data alike, unless a placement names
+  it, and said in the draft's notes (decided by the user 2026-11-21, chat 182). The catalogue comes first and the
+  XSLT follows from it.
 * **No catalogue yet**: the draft keeps its own rules, its last rule (for the records the others leave) flagged
   `catch_all`, and says the source is to be catalogued before building; with event types or the catch-all still to
   confirm it refuses.
@@ -4482,6 +4511,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | 2026-11-21 | A mapping entry's `max_length` cuts its value to that many characters after any transform (`substring(…, 1, N)`, every input kind, groups and repeat too; refused with value, map, time_format, fill_template, mask_names and on group entries); the JSON long-strings note names it in place of an xpath, and says the JSONParser cuts at its stringTruncateLength first (seen in chat 182: `substring(event.Body.Content, 1, 10000)` selected nothing for JSON input, and the agent dropped the cap the user chose). build_translation_xslt warns (never refuses) of a rule writing the same input to two places as Data and Data or Data and an element, with the `changes` removing one; two typed elements are not warned of. The draft maps each node of held XML once: its full path, or `//name` only for a name found at several depths, an attribute only under its element's path (chat 182: a Teams body's values written two or three times). | TOOLS.md (build_translation_xslt, draft_translation_mapping, Composite keys and rendered values) |
 | 2026-11-21 | record_source_types keeps every registry row a call leaves out of `rows`, parked ones too; only `remove` drops one (seen in chat 182: rows naming only the group's two source types, given to record their System Names, dropped the feed's three other parked source types, and asked the table and scope form again). | TOOLS.md (record_source_types) |
 | 2026-11-21 | EventSource/System/Name per source type (approved by the user after chat 182, where "as per source type" couldn't be expressed): in a build whose scope is a group of several source types, draft_translation_mapping's `system_name` may be keyed by source type; the draft writes Name from the source type field (`field` and `map`), build_translation_xslt puts the names on the group's registry rows when it saves the group (only `system_name` of those rows; the draft stays read-only), and an unnamed group's note offers one name or each its own. A System/Name read per record stays in its group's own System part, never the feed's common module (in chat 182 a map there left a later group's records with no System/Name). Refused for source types not told by exact values of a record's own field (pattern, list item, no value, held readings, combinations, a part's meta). | Translation; Aggregated feeds |
+| 2026-11-21 | Typed placements are decided in the catalogue (decided by the user, after chat 182: Azure M365 audit events with almost no typed elements, `affected` set once, wrongly, and accepted unchecked, then stand-ins): an event type may carry `placements`, mapping fields entries below its action element (field or constant, the mapping's conversions and `for_each`), from the agent's knowledge, with no name matching anywhere; `affected`/`affected_as` is read as one. The catalogue's check refuses, where proposals bring them, a path the schema hasn't below the element, a field the records haven't (the nearest record fields named), repetition that doesn't fit, and values the element's type, values or pattern refuses once converted (the fix named); confirmation is refused while an element the schema requires of the action element is left empty (`unplaced`, derived from the schema); a high share of Data is only worth a look. The draft writes placements as typed entries, each field once, the rest as Data; fields empty in every sampled record are left out of the rules. Placements are in the source notes row by row; the set summary is unchanged. | Event type catalogue |
 | 2026-11-21 | The query tools' times are in the user's time zone (decided by the user): run_stroomql, sequence_query, esql_query, get_current_datetime and get_current_date take `timeZone` (local, UTC, a zone id or an offset), else the user's Stroom time zone preference, as the UI applies it; `local`, and a preference for the browser's zone, are the browser's zone, which the chat sends with each question, and over `/mcp` the preference's zone, or UTC said in the result; every result states the zone. Applied without core changes: the query's `DateTimeSettings`, the conditions' date points put in the zone by the tool (Stroom works them out in UTC), UTC result times shown in the zone, timeFrom/timeTo resolved in the zone; ES|QL's own date functions stay UTC (needs a `time_zone` from `ElasticEsqlService`). | TOOLS.md (Time zones) |
 | 2026-11-21 | The query tools' default time zone is the user's device's (decided by the user, replacing the Stroom preference): the zone the chat's browser sends, unless the user names one (`timeZone`); over `/mcp`, which has no device zone, UTC with a note; the preference read (`UserTimeZonePreference`) is removed. Results say what their relative times stood for (run_stroomql: "In its conditions day() = …"; sequence_query and esql_query: timeFrom/timeTo as ISO times, in UTC too), as the Stroom UI works `day()` out in UTC. | TOOLS.md (Time zones) |
 | 2026-11-21 | ES|QL's own date work follows the call's zone (decided by the user, a core change): `ElasticEsql.Request.timeZone` is sent by `ElasticEsqlService` as Elasticsearch's `time_zone`, so `DATE_TRUNC`, `BUCKET`, `DATE_EXTRACT`, dates without an offset and the rows' dates are in it; a cluster that refuses it runs the query again in UTC (`Result.timeZone` null) and esql_query says so. | TOOLS.md (Time zones, esql_query) |

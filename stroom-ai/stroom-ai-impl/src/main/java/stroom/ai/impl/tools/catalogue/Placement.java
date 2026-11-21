@@ -1,0 +1,297 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.catalogue;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.generation.ModelReader;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/// One typed placement of an event type (its `placements`, decided by the user 2026-11-21): a field of its records
+/// (or a constant value) written to a schema path below the event type's action element, as a translation mapping's
+/// fields entry writes it, so the field is typed rather than kept as Data. The entry is the mapping's own form, its
+/// path below the action element (`Email/From/EmailAddress` under `Send`), with the mapping's conversions
+/// (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and its repeated groups (`for_each` with
+/// `fields`, each reading the item with `item: true` or a key of it); `also_data: true` keeps the field as Data too.
+/// The agent places a field from what it knows of the source; nothing matches field names to schema names.
+///
+/// @param entry The entry as given (its path below the action element, or from `EventDetail/<element>/`).
+public record Placement(Map<String, Object> entry) {
+
+    /// A placement's path.
+    public static final String PATH = "path";
+    /// A placement's field.
+    public static final String FIELD = "field";
+    /// A placement's constant.
+    public static final String VALUE = "value";
+    /// A placement's repeated group's source.
+    public static final String FOR_EACH = "for_each";
+    /// A repeated group's fields.
+    public static final String FIELDS = "fields";
+    /// Keeps the placed field as Data too.
+    public static final String ALSO_DATA = "also_data";
+    /// The keys a placement may have: the mapping's for a field or a constant, its conversions and its groups.
+    public static final List<String> KEYS = List.of(PATH, FIELD, VALUE, "any_of", "join", "separator", "transform",
+            "time_format", "timezone", "map", "default", "repeat", FOR_EACH, "as", FIELDS, "item", "scope",
+            ALSO_DATA);
+
+    private static final String EVENT_DETAIL = "EventDetail/";
+
+    /// Copies the entry, in its order.
+    public Placement {
+        entry = Collections.unmodifiableMap(new LinkedHashMap<>(entry));
+    }
+
+    /// Reads one from JSON-like values: an object with a path, and a field, a value or a group (`for_each`); keys
+    /// the mapping writes otherwise (an xpath, a lookup, Data's name) refused, as a placement types a field of the
+    /// records and Data is what is left over.
+    ///
+    /// @param reader The reader, collecting the errors.
+    /// @param input  The value given.
+    /// @param loc    Where it is.
+    /// @return It, or null (with the errors noted) if it doesn't read.
+    public static Placement read(final ModelReader reader, final Object input, final List<Object> loc) {
+        final ModelReader.Fields fields = reader.fields(input, loc, "Placement");
+        if (fields == null) {
+            return null;
+        }
+        final String path = fields.requiredString(PATH);
+        if (!fields.ok()) {
+            return null;
+        }
+        final String problem = formProblem(fields.input(), true);
+        if (problem != null) {
+            fields.valueError("placement '" + path + "': " + problem);
+            return null;
+        }
+        return new Placement(JsonValues.deepCopy(fields.input()));
+    }
+
+    // Why an entry (or a group's field) isn't a placement's form; null when it is.
+    private static String formProblem(final Map<String, Object> entry, final boolean top) {
+        final List<String> other = entry.keySet().stream()
+                .filter(key -> !KEYS.contains(key))
+                .toList();
+        if (!other.isEmpty()) {
+            return "a placement is a field (or a value) placed at a path, with the mapping's conversions "
+                   + "(transform, time_format, timezone, map, default, repeat) or a for_each group: not "
+                   + String.join(", ", other) + " (Data is what no placement takes; an xpath or a lookup is the "
+                   + "mapping's, after the draft)";
+        }
+        if (!top && entry.containsKey(ALSO_DATA)) {
+            return "also_data goes on the placement, not on a group's field";
+        }
+        if (entry.containsKey(FOR_EACH)) {
+            final List<Map<String, Object>> inner = JsonValues.maps(entry.get(FIELDS));
+            if (inner.isEmpty()) {
+                return "a for_each group writes its element once per item, each holding its fields: give fields, "
+                       + "e.g. [{\"path\": \"EmailAddress\", \"item\": true}]";
+            }
+            for (final Map<String, Object> field : inner) {
+                final String problem = formProblem(field, false);
+                if (problem != null) {
+                    return problem;
+                }
+            }
+            return null;
+        }
+        final long inputs = List.of(FIELD, VALUE, "any_of", "join").stream()
+                .filter(entry::containsKey)
+                .count() + (entry.containsKey("item")
+                ? 1
+                : 0) - (entry.containsKey("item") && entry.containsKey(FIELD)
+                ? 1
+                : 0);
+        if (inputs != 1) {
+            return "give one of field (a field of the records), value (a constant), any_of or join";
+        }
+        return null;
+    }
+
+    /// The placement an event type's `affected` and `affected_as` express (the catalogue's form before
+    /// placements): the affected field at that path.
+    ///
+    /// @param field The affected field.
+    /// @param path  Its path below the action element (its leaf, as the catalogue writes `affected_as` out).
+    /// @return The placement.
+    public static Placement affected(final String field, final String path) {
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put(PATH, path);
+        entry.put(FIELD, field);
+        return new Placement(entry);
+    }
+
+    /// @return Its path as given, without slashes at either end.
+    public String path() {
+        return ToolText.strip(ToolText.str(entry.get(PATH)).strip(), "/");
+    }
+
+    /// @param detail The event type's action element, e.g. `Send` or `Network/Permit`.
+    /// @return Its path below the action element: as given, or without `EventDetail/<element>/`; null when given
+    /// from EventDetail but under another element.
+    public String pathBelow(final String detail) {
+        final String path = path();
+        if (!path.startsWith(EVENT_DETAIL)) {
+            return path;
+        }
+        final String own = EVENT_DETAIL + ToolText.strip(detail.strip(), "/") + "/";
+        return path.startsWith(own)
+                ? path.substring(own.length())
+                : null;
+    }
+
+    /// @return Its field, or null for a constant or a group.
+    public String field() {
+        return entry.get(FIELD) instanceof final String field && !field.isBlank()
+                ? field
+                : null;
+    }
+
+    /// @return True if it is a repeated group (`for_each`).
+    public boolean group() {
+        return entry.containsKey(FOR_EACH);
+    }
+
+    /// @return True if the field is kept as Data too.
+    public boolean alsoData() {
+        return JsonValues.truthy(entry.get(ALSO_DATA));
+    }
+
+    /// @return The fields of the records it reads, each once: its field, any_of's and join's, or a group's sources
+    /// (for_each's) and its fields' that read the record (scope record); not a group item's keys.
+    public Set<String> inputs() {
+        final Set<String> out = new LinkedHashSet<>();
+        inputs(entry, true, out);
+        return out;
+    }
+
+    private static void inputs(final Map<String, Object> entry, final boolean top, final Set<String> out) {
+        if (entry.containsKey(FOR_EACH)) {
+            final Map<String, Object> source = JsonValues.mapOrEmpty(entry.get(FOR_EACH));
+            for (final String key : List.of("split", "array")) {
+                if (source.get(key) instanceof final String field && !field.isBlank()) {
+                    out.add(field);
+                }
+            }
+            JsonValues.mapOrEmpty(source.get("zip")).values().forEach(field -> out.add(ToolText.str(field)));
+            JsonValues.maps(entry.get(FIELDS)).forEach(field -> inputs(field, false, out));
+            return;
+        }
+        if (!top && !"record".equals(entry.get("scope"))) {
+            // A group's field reads the item.
+            return;
+        }
+        if (entry.get(FIELD) instanceof final String field && !field.isBlank()) {
+            out.add(field);
+        }
+        out.addAll(JsonValues.strings(entry.get("any_of")));
+        out.addAll(JsonValues.strings(entry.get("join")));
+    }
+
+    /// @param detail The event type's action element.
+    /// @return It as the translation mapping's fields entry: its path from `EventDetail/<element>/`, without
+    /// `also_data`.
+    public Map<String, Object> mappingEntry(final String detail) {
+        final Map<String, Object> out = new LinkedHashMap<>(JsonValues.deepCopy(entry));
+        out.remove(ALSO_DATA);
+        final String below = pathBelow(detail);
+        out.put(PATH, EVENT_DETAIL + ToolText.strip(detail.strip(), "/") + "/" + (below == null
+                ? path()
+                : below));
+        return out;
+    }
+
+    /// @param detail The event type's action element.
+    /// @return The paths it writes below the action element: its own, or a group's path with each of its fields'
+    /// paths below it.
+    public List<String> writes(final String detail) {
+        final String below = pathBelow(detail);
+        if (below == null) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>();
+        writes(entry, below, out);
+        return out;
+    }
+
+    private static void writes(final Map<String, Object> entry, final String path, final List<String> out) {
+        if (!entry.containsKey(FOR_EACH)) {
+            out.add(path);
+            return;
+        }
+        final List<Map<String, Object>> inner = JsonValues.maps(entry.get(FIELDS));
+        if (inner.isEmpty()) {
+            out.add(path);
+        }
+        for (final Map<String, Object> field : inner) {
+            final String own = ToolText.strip(ToolText.str(field.get(PATH)).strip(), "/");
+            writes(field, own.isEmpty()
+                    ? path
+                    : path + "/" + own, out);
+        }
+    }
+
+    /// @return It in words for a reader: `event.Subject -> Email/Subject`, a group's source and fields.
+    public String said() {
+        return said(entry, path());
+    }
+
+    private static String said(final Map<String, Object> entry, final String path) {
+        if (entry.containsKey(FOR_EACH)) {
+            final Map<String, Object> source = JsonValues.mapOrEmpty(entry.get(FOR_EACH));
+            final String from = source.get("split") != null
+                    ? source.get("split") + " split on '" + source.get("on") + "'"
+                    : source.get("array") != null
+                            ? String.valueOf(source.get("array"))
+                            : String.join(", ", JsonValues.mapOrEmpty(source.get("zip")).values().stream()
+                                    .map(String::valueOf).toList());
+            final List<String> inner = new ArrayList<>();
+            for (final Map<String, Object> field : JsonValues.maps(entry.get(FIELDS))) {
+                final String own = ToolText.strip(ToolText.str(field.get(PATH)).strip(), "/");
+                inner.add(said(field, own));
+            }
+            return path + " for each of " + from + " (" + String.join("; ", inner) + ")";
+        }
+        final String input = entry.get(FIELD) != null
+                ? String.valueOf(entry.get(FIELD))
+                : entry.get(VALUE) != null
+                        ? "'" + entry.get(VALUE) + "'"
+                        : Boolean.TRUE.equals(entry.get("item"))
+                                ? "the item"
+                                : entry.get("any_of") != null
+                                        ? "any of " + JsonValues.strings(entry.get("any_of"))
+                                        : "join of " + JsonValues.strings(entry.get("join"));
+        final List<String> how = new ArrayList<>();
+        for (final String key : List.of("transform", "time_format", "map")) {
+            if (entry.get(key) != null) {
+                how.add(key);
+            }
+        }
+        return input + " -> " + path + (how.isEmpty()
+                ? ""
+                : " (" + String.join(", ", how) + ")") + (JsonValues.truthy(entry.get(ALSO_DATA))
+                ? ", also as Data"
+                : "");
+    }
+}

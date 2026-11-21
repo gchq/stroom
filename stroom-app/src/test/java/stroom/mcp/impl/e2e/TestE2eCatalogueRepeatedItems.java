@@ -71,8 +71,10 @@ class TestE2eCatalogueRepeatedItems extends AbstractE2eTest {
         final Map<String, Object> reading = args("input", "json", "json_layout", "array", "for_each", "alerts");
         final List<Map<String, Object>> proposals = new ArrayList<>();
         for (final Map.Entry<String, String> type : TYPE_IDS.entrySet()) {
+            // The alert's type, which the schema requires, placed (decided by the user 2026-11-21).
             proposals.add(withKeys(eventType(type.getValue(), "Alert", "high", when("tags", "equals",
-                    type.getKey())), "actor", "recipient"));
+                    type.getKey())), "actor", "recipient", "placements", List.of(args("path", "Type", "value",
+                    "Other"))));
         }
         final Map<String, Object> checked = json(CATALOGUE, args("build", BUILD, "stream_ids", raw, "reading",
                 reading, "proposals", proposals));
@@ -128,25 +130,12 @@ class TestE2eCatalogueRepeatedItems extends AbstractE2eTest {
     }
 
     // The draft with what the schema needs and the draft can't know, as the agent adds it: the device (the batch's
-    // gateway) and each alert's type.
+    // gateway); each alert's type the catalogue placed.
     private static Map<String, Object> completed(final Map<String, Object> drafted) {
         final Map<String, Object> mapping = new LinkedHashMap<>(drafted);
         final List<Map<String, Object>> common = new ArrayList<>(list(mapping, "common"));
         common.add(args("path", "EventSource/Device/HostName", "field", "gateway", "scope", "record"));
         mapping.put("common", common);
-        final List<Map<String, Object>> rules = new ArrayList<>();
-        for (final Map<String, Object> rule : list(mapping, "events")) {
-            final Map<String, Object> completedRule = new LinkedHashMap<>(rule);
-            final List<Map<String, Object>> fields = new ArrayList<>(list(rule, "fields"));
-            final boolean alert = fields.stream()
-                    .anyMatch(field -> String.valueOf(field.get("path")).startsWith("EventDetail/Alert/"));
-            if (alert) {
-                fields.add(args("path", "EventDetail/Alert/Type", "value", "Other"));
-            }
-            completedRule.put("fields", fields);
-            rules.add(completedRule);
-        }
-        mapping.put("events", rules);
         return mapping;
     }
 }

@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueOrder;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.Placement;
 import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
@@ -41,6 +42,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -70,6 +72,8 @@ final class CatalogueTranslation {
     /// The catch-all's agreement when the catch-all was confirmed with no reason of its own.
     static final String CATCH_ALL_AGREED = "records no event type recognises (uncatalogued records): the catch-all "
                                           + "confirmed with the catalogue";
+    /// Why a field is left out of every rule.
+    static final String EMPTY_EVERYWHERE = "empty in every sampled record, so left out of the rules";
 
     private static final String EVENT_DETAIL = "EventDetail/";
     private static final String TYPE_ID = "EventDetail/TypeId";
@@ -161,6 +165,8 @@ final class CatalogueTranslation {
         // Each rule writes its own TypeId: not one read from a field for every record.
         common.removeIf(entry -> TYPE_ID.equals(entry.get(PATH)));
         captured();
+        // The fields empty in every sampled record, each said once among those not read.
+        List.copyOf(names).forEach(this::emptyEverywhere);
         final List<String> rest = rest(common);
         final List<Map<String, Object>> rules = new ArrayList<>();
         final List<Map<String, Object>> drops = new ArrayList<>(JsonValues.maps(mapping.get("drop_when")));
@@ -259,6 +265,12 @@ final class CatalogueTranslation {
                 if (TYPE_ID.equals(path)) {
                     continue;
                 }
+                if (field.get(FIELD) instanceof final String read && emptyEverywhere(read)
+                    && !placedByType(type, read)) {
+                    // Empty in every sampled record: nothing to write (seen in chat 182, a time field empty in all
+                    // 1,547 records drafted into several rules, each then warned of and removed by hand).
+                    continue;
+                }
                 if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2
                     && !path.startsWith(prefix)) {
                     // Under another action element (Unknown, or the draft's guess): its Data move to the event type's;
@@ -289,12 +301,7 @@ final class CatalogueTranslation {
                     ? " isn't a field of the records"
                     : " holds addresses, not a user"));
         }
-        final String affected = field(type.affected());
-        if (affected != null && NullSafe.isNonBlankString(type.affectedAs())) {
-            put(fields, entry(PATH, prefix + type.affectedAs(), FIELD, affected));
-        } else if (NullSafe.isNonBlankString(type.affected()) && affected == null) {
-            unread.add(typeId + ": affected '" + type.affected() + "' isn't a field of the records");
-        }
+        final Set<String> placed = placements(type, typeId, detail, fields);
         final String user = actor != null
                 ? actor
                 : common.stream()
@@ -303,7 +310,10 @@ final class CatalogueTranslation {
                         .map(entry -> ToolText.str(entry.get(FIELD)))
                         .findFirst()
                         .orElse(null);
-        if ("Authenticate".equals(detail) && user != null && !hasPath(fields, "EventDetail/Authenticate/User/Id")) {
+        if ("Authenticate".equals(detail) && user != null && !hasPath(fields, "EventDetail/Authenticate/User/Id")
+            && fields.stream().map(field -> ToolText.str(field.get(PATH))).noneMatch(path -> Stream.of("User/",
+                "Device/", "Group/").anyMatch(object -> path.startsWith(prefix + object)))) {
+            // Unless a placement gives who (or what) authenticated: one of the schema's choice.
             // The schema wants the user authenticating: the one the event is about.
             fields.add(entry(PATH, "EventDetail/Authenticate/User/Id", FIELD, user));
         }
@@ -313,6 +323,7 @@ final class CatalogueTranslation {
                 .toList());
         // The vendor's code, as Data named after its field, so searching by it still works.
         final Set<String> read = readBy(fields);
+        read.addAll(placed);
         for (final String code : vendorCodeFields(way)) {
             final String dataName = vendorCodeName(code, "json".equals(mapping.get("input"))
                                                           || MappingFacts.heldJsonField(
@@ -327,9 +338,17 @@ final class CatalogueTranslation {
         final List<String> leftOver = new ArrayList<>(heldBy(own, rest));
         way.names().stream().filter(name -> !leftOver.contains(name)).forEach(leftOver::add);
         for (final String name : leftOver) {
-            if (!read.contains(name)) {
+            if (!read.contains(name) && !emptyEverywhere(name)) {
                 fields.add(entry(PATH, prefix + "Data", DATA_NAME, name, FIELD, name));
                 read.add(name);
+            }
+        }
+        // A placed field the placement keeps as Data too (also_data), once.
+        for (final Placement placement : type.allPlacements()) {
+            final String kept = placement.field();
+            if (placement.alsoData() && !UNKNOWN.equals(detail) && kept != null && field(kept) != null
+                && fields.stream().noneMatch(field -> kept.equals(field.get(FIELD)) && field.get(DATA_NAME) != null)) {
+                fields.add(entry(PATH, prefix + "Data", DATA_NAME, kept, FIELD, kept));
             }
         }
         final Map<String, Object> rule = new LinkedHashMap<>();
@@ -362,7 +381,7 @@ final class CatalogueTranslation {
         }
         final int fixed = fields.size();
         for (final String name : names) {
-            if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name))) {
+            if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name)) && !emptyEverywhere(name)) {
                 fields.add(entry(PATH, data, DATA_NAME, name, FIELD, name));
             }
         }
@@ -378,6 +397,80 @@ final class CatalogueTranslation {
         }
         rule.put("catch_all", true);
         return rule;
+    }
+
+    // The event type's typed placements ([Placement]), `affected`'s included, as entries of the rule in place of any
+    // with their paths; the entries of other sources reading a placed field below the action element (the draft's
+    // Data of it, say) taken out, as each field is written once (kept as Data too only where the placement says
+    // also_data). A placement reading a field the records haven't is left out, said. The fields placed (not also
+    // kept as Data) are returned.
+    private Set<String> placements(final EventType type,
+                                   final String typeId,
+                                   final String detail,
+                                   final List<Map<String, Object>> fields) {
+        final Set<String> placed = new LinkedHashSet<>();
+        if (UNKNOWN.equals(detail)) {
+            return placed;
+        }
+        final String prefix = EVENT_DETAIL + detail + "/";
+        final Set<Map<String, Object>> written = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (final Placement placement : type.allPlacements()) {
+            if (placement.pathBelow(detail) == null) {
+                continue;
+            }
+            if (placement.field() != null && field(placement.field()) == null) {
+                unread.add(typeId + ": " + (type.placements().contains(placement)
+                        ? "placement '" + placement.path() + "' reads '" + placement.field() + "', which"
+                        : "affected '" + placement.field() + "'") + " isn't a field of the records");
+                continue;
+            }
+            final Map<String, Object> entry = placement.mappingEntry(detail);
+            final Set<String> inputs = placement.inputs();
+            // Another placement of the same field is kept: a field may be typed in two places.
+            fields.removeIf(existing -> {
+                final String path = ToolText.str(existing.get(PATH));
+                return path.equals(entry.get(PATH))
+                       || !written.contains(existing) && path.startsWith(prefix)
+                          && existing.get(FIELD) instanceof final String read && inputs.contains(read)
+                          && !(placement.alsoData() && path.endsWith("/Data"));
+            });
+            fields.add(entry);
+            written.add(entry);
+            if (!placement.alsoData()) {
+                placed.addAll(inputs);
+            }
+        }
+        return placed;
+    }
+
+    // Whether a placement of the event type names the field.
+    private static boolean placedByType(final EventType type, final String field) {
+        return type.allPlacements().stream().anyMatch(placement -> placement.inputs().contains(field));
+    }
+
+    // Whether the field is empty in every sampled record (no value, or only the mapping's nil_values): left out of the
+    // rules, said once among the fields not read (asked for by the user 2026-11-21, chat 182).
+    private boolean emptyEverywhere(final String name) {
+        if (!values.containsKey(name)) {
+            // A name an extraction gives: its values aren't known here.
+            return false;
+        }
+        // A value the mapping reads as none is no value: its nil_values, and JSON's null (which the draft's records
+        // hold as the text null, and processing reads as no value).
+        final Set<String> nil = new LinkedHashSet<>(JsonValues.strings(mapping.get("nil_values")));
+        if ("json".equals(mapping.get("input"))) {
+            nil.add("null");
+        }
+        final Predicate<Object> held = value -> hasText(value) && !nil.contains(ToolText.strip(ToolText.str(value)));
+        final boolean empty = values.get(name).stream().noneMatch(held)
+                              && records.stream().noneMatch(record -> held.test(record.get(name)));
+        if (empty) {
+            final String said = name + ": " + EMPTY_EVERYWHERE;
+            if (!unread.contains(said)) {
+                unread.add(said);
+            }
+        }
+        return empty;
     }
 
     // The Description: the records' own message where they carry one (in common, the covering rule, or a field of

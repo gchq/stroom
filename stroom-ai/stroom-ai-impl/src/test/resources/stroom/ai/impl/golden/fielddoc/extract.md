@@ -17,7 +17,7 @@ Left untranslated on purpose: `unparsed` (`ts` empty).
 
 #### logon, logoff
 
-When `action` = LOGIN (logon). When `action` = LOGOUT (logoff).
+When `action` = LOGIN (logon). When `action` = LOGOUT (logoff). Below the action element: logon 2 typed, 0 kept as Data; logoff 2 typed, 0 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |

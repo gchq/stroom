@@ -1546,7 +1546,11 @@ public final class LocalCheck {
         return null;
     }
 
-    private static List<Pattern> schemaPatterns(final EventSchema schema, final String path) {
+    /// @param schema The event-logging schema.
+    /// @param path   A leaf's path below Event.
+    /// @return The schema's patterns for its value, compiled as the checks run them (any one must match); empty when
+    /// it has none, or the schema doesn't know the path.
+    public static List<Pattern> schemaPatterns(final EventSchema schema, final String path) {
         final List<EventSchema.Child> chain;
         try {
             chain = schema.resolve(path);
