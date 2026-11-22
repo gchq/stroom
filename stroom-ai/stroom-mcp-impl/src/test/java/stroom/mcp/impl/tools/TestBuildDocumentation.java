@@ -16,7 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
+import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +49,72 @@ class TestBuildDocumentation {
         few.of("one", "EventSource/User/Id", List.of("alice"), "");
         assertThat(String.valueOf(BuildDocumentation.needsDescriptions(few, List.of()).get("hint")))
                 .doesNotContain("the rest follow");
+    }
+
+    @Test
+    void aRoundOfLongFieldsHasNoMoreThanTheChatGivesInFull() {
+        // Seen in chats 184 to 186: 25 fields of 7,000 to 8,000 characters, cut at 4,000 in the chat's stub 11
+        // times, and the rest read back from the saved result 30 times.
+        final Descriptions described = Descriptions.asking(true);
+        for (int i = 0; i < 40; i++) {
+            described.of("EventDetail/View/Folder/Path" + i, "the item; for each item (each item of `event.Folders`) "
+                                                           + "(view_mailitems)",
+                    List.of("AAMk32B9462D427DC07FB8B6CF8503817067\\Drafts<37fd1f4c-f7fe-d8",
+                            "AAMkAF14180BDCE651C572BC988992027D95\\Archive<0a55edf9-fbb9-2",
+                            "AAMk7100073D470F0A1BBF8570BEB49C1F88\\Archive<5552a874-257e-6"),
+                    "The full system file path.");
+        }
+
+        final Map<String, Object> round = BuildDocumentation.needsDescriptions(described, List.of());
+
+        final List<?> fields = (List<?>) round.get("fields");
+        assertThat(fields).hasSizeBetween(15, BuildDocumentation.DESCRIPTIONS_ROUND - 1);
+        assertThat(String.valueOf(round.get("hint"))).contains("the first " + fields.size() + " of the 40 to "
+                                                               + "describe");
+        final String path = "/outputs/turn-1/call-2.txt";
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(round, false)), path,
+                null);
+        assertThat(stub).contains("\"field\":\"EventDetail/View/Folder/Path" + (fields.size() - 1) + "\"")
+                .doesNotContain("more: read them from " + path)
+                .doesNotContain("\"field\":\"EventDetail/View/Folder/Path" + fields.size() + "\"");
+    }
+
+    @Test
+    void aFieldLongerThanARoundsRoomIsARoundOfItsOwn() {
+        final Descriptions described = Descriptions.asking(true);
+        // Its name alone past the room (no part of a field is cut so far).
+        described.of("Data/" + "a".repeat(BuildDocumentation.DESCRIPTIONS_ROUND_CHARS), "`type`", List.of("a"), "");
+        described.of("Description", "the description", List.of("b"), "");
+
+        final Map<String, Object> round = BuildDocumentation.needsDescriptions(described, List.of());
+
+        assertThat((List<?>) round.get("fields")).hasSize(1);
+        assertThat(String.valueOf(round.get("hint"))).contains("the first 1 of the 2 to describe");
+    }
+
+    @Test
+    void aFromListingEveryRuleIsCutToItsFirstLines() {
+        // Seen in eval case 68 (300 event types): a TypeId's and a Description's from each listing 300 rules, each
+        // then a round of its own, and the round after the sixth still asking.
+        final Descriptions described = Descriptions.asking(true);
+        final StringBuilder from = new StringBuilder();
+        for (int i = 0; i < 300; i++) {
+            from.append("\"Process-Code").append(i).append("\" (process_code").append(i).append(")\n");
+        }
+        described.of("EventDetail/TypeId", from.toString().strip(), List.of("Process-Code1"), "");
+        described.of("EventDetail/Description", from.toString().strip(), List.of("Code 1 was run"), "");
+        described.of("EventSource/User/Id", "`user`", List.of("alice"), "");
+
+        final Map<String, Object> round = BuildDocumentation.needsDescriptions(described, List.of());
+
+        final List<Map<String, Object>> fields = JsonValues.maps(round.get("fields"));
+        assertThat(fields).hasSize(3);
+        final String typeIdFrom = String.valueOf(fields.getFirst().get("from"));
+        assertThat(typeIdFrom).startsWith("\"Process-Code0\" (process_code0)\n")
+                .endsWith(" more line(s) like these")
+                .doesNotContain("Process-Code299");
+        assertThat(typeIdFrom.length()).isLessThanOrEqualTo(BuildDocumentation.FROM_MOST + 50);
+        assertThat(fields.getLast()).containsEntry("from", "`user`");
     }
 
     @Test

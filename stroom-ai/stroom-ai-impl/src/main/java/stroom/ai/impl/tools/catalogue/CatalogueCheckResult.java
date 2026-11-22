@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /// What the catalogue's check found ([CatalogueCheck]), as the contract's check JSON writes it: compact for the
 /// tool's result ([#toJson()]), or in full for the listing the tool saves to the workspace ([#toFullJson()]).
@@ -74,6 +75,9 @@ public record CatalogueCheckResult(Map<String, Count> counts,
     public static final int WHY_SHOWN = 5;
     /// The most values of a field the compact form lists for a type that may be several.
     public static final int VALUES_SHOWN = 10;
+    /// The compact form's key for the schema's elements every event type that could type more has open
+    /// (`schema`), said once in place of in each one's `could_type.schema`.
+    public static final String COULD_TYPE_ALL = "could_type_all";
 
     /// Copies the parts.
     public CatalogueCheckResult {
@@ -163,7 +167,9 @@ public record CatalogueCheckResult(Map<String, Count> counts,
                 .toList();
     }
 
-    /// @return The check as the tool's result gives it: counts and problems, the lists cut short.
+    /// @return The check as the tool's result gives it: counts and problems, the lists cut short, and the schema's
+    /// elements every event type that could type more has open said once ([#COULD_TYPE_ALL]), not in each one's
+    /// `could_type`.
     public Map<String, Object> toJson() {
         return json(false);
     }
@@ -201,17 +207,47 @@ public record CatalogueCheckResult(Map<String, Count> counts,
         if (!worthALook.isEmpty()) {
             out.put("worth_a_look", worthALook.stream().map(Problem::toJson).toList());
         }
-        final Map<String, Object> typed = new LinkedHashMap<>();
+        final Map<String, Typing> shown = new LinkedHashMap<>();
         typing.forEach((typeId, one) -> {
             if (full || one.note() != null || !one.fill().isEmpty()) {
-                typed.put(typeId, one.toJson());
+                shown.put(typeId, one);
             }
         });
+        final List<String> shared = full
+                ? List.of()
+                : sharedHomes(shown.values());
+        if (!shared.isEmpty()) {
+            final Map<String, Object> all = new LinkedHashMap<>();
+            all.put("schema", String.join("; ", shared));
+            all.put("said", "The schema's elements every event type in typing could still type, said once here in "
+                            + "place of in each one's could_type.schema: homes for each one's fields too.");
+            out.put(COULD_TYPE_ALL, all);
+        }
+        final Set<String> saidOnce = Set.copyOf(shared);
+        final Map<String, Object> typed = new LinkedHashMap<>();
+        shown.forEach((typeId, one) -> typed.put(typeId, one.toJson(saidOnce)));
         if (!typed.isEmpty()) {
             out.put("typing", typed);
         }
         out.put("order", order);
         return out;
+    }
+
+    // The schema's homes every event type that could type more has open, in the first one's order, when two or
+    // more could (seen in chats 184 to 186: EventSource's elements and the Outcome, some 370 characters, repeated
+    // in each of 7 event types' could_type, and the typing cut after the first two in the chat's stub).
+    private static List<String> sharedHomes(final Collection<Typing> shown) {
+        final List<CouldType> could = shown.stream()
+                .map(Typing::couldType)
+                .filter(Objects::nonNull)
+                .toList();
+        if (could.size() < 2) {
+            return List.of();
+        }
+        return could.getFirst().homes().stream()
+                .filter(home -> could.stream().allMatch(one -> one.homes().contains(home)))
+                .distinct()
+                .toList();
     }
 
     static String excerpt(final String text, final boolean full) {
@@ -505,7 +541,8 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             this(typed, data, fill, note, null);
         }
 
-        Map<String, Object> toJson() {
+        // As JSON, the schema's homes said once for every event type ([#COULD_TYPE_ALL]) left out.
+        Map<String, Object> toJson(final Set<String> saidOnce) {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("typed", typed);
             out.put("data", data);
@@ -516,7 +553,7 @@ public record CatalogueCheckResult(Map<String, Count> counts,
                 out.put("worth_a_look", note);
             }
             if (couldType != null) {
-                out.put("could_type", couldType.toJson());
+                out.put("could_type", couldType.toJson(saidOnce));
             }
             return out;
         }
@@ -547,10 +584,16 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             arrays = List.copyOf(Objects.requireNonNullElse(arrays, List.of()));
         }
 
-        Map<String, Object> toJson() {
+        // As JSON, the homes said once for every event type left out (and the schema with them, when that is all).
+        Map<String, Object> toJson(final Set<String> saidOnce) {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("data", data);
-            out.put("schema", String.join("; ", homes));
+            final List<String> own = homes.stream()
+                    .filter(home -> !saidOnce.contains(home))
+                    .toList();
+            if (!own.isEmpty()) {
+                out.put("schema", String.join("; ", own));
+            }
             if (!arrays.isEmpty()) {
                 out.put("arrays", arrays);
             }

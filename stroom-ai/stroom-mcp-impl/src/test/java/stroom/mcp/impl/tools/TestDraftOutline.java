@@ -297,6 +297,47 @@ class TestDraftOutline {
     }
 
     @Test
+    void theChatsStubOfALargeDraftCarriesItsSchemaCheckOnce() {
+        // Seen in chats 184 to 186: the schema check's problems, unfilled and warnings read from the saved draft 17
+        // times, as only the draft's top-level problems were among the parts given in full.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = largeDraft();
+        final List<String> problems = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            problems.add("Rule process_code" + i + ": EventDetail/Process needs one of Command, Executable "
+                         + "(what the event is of), and nothing the draft gives is written there.");
+        }
+        final Map<String, Object> schemaCheck = new LinkedHashMap<>();
+        schemaCheck.put("ok", false);
+        schemaCheck.put("problems", problems);
+        schemaCheck.put("unfilled", "Some rules' action elements need parts the draft couldn't fill (problems says "
+                                    + "which): fill each before build_translation_xslt.");
+        schemaCheck.put("warnings", List.of("[process_code0, process_code1] required ['EventTime'] are left out "
+                                            + "when their input fields are empty."));
+        result.put("schema_check", schemaCheck);
+
+        final Map<String, Object> outline = LargeResults.forCaller(ToolCaller.STROOM_AI_CHAT, result,
+                (caller, said, limit) -> DraftOutline.outlineIfLarge(caller, said,
+                        Optional.of(new SessionWorkspace(chats, 1)), "acme-v1", limit));
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)),
+                "/outputs/turn-1/call-2.txt", outline);
+
+        final String actOn = stub.substring(stub.indexOf("What it says to act on"), stub.indexOf("The tool's outline"));
+        assertThat(actOn)
+                .contains("schema_check.problems:\n- Rule process_code0: EventDetail/Process needs one of")
+                .contains("- Rule process_code7: ")
+                .contains("schema_check.unfilled:\nSome rules' action elements need parts")
+                .contains("schema_check.warnings:\n- [process_code0, process_code1] required ['EventTime']");
+        // In the order given: the draft's notes, then what its schema check refuses, then its warnings.
+        assertThat(actOn.indexOf("notes:")).isLessThan(actOn.indexOf("schema_check.problems:"));
+        assertThat(actOn.indexOf("schema_check.unfilled:")).isLessThan(actOn.indexOf("schema_check.warnings:"));
+        // Said once: given in full above, they are left out of the outline.
+        assertThat(stub.split("Rule process_code7: ", -1)).hasSize(2);
+        assertThat(stub.split("need parts the draft couldn't fill", -1)).hasSize(2);
+        assertThat(stub.split("are left out when their input fields are empty", -1)).hasSize(2);
+    }
+
+    @Test
     void withoutAWorkspaceTheDraftIsGivenWhole() {
         final Map<String, Object> result = drafted();
 

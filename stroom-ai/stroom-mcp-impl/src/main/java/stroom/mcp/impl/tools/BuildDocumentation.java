@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.DocumentAccess;
@@ -39,6 +40,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -398,15 +400,23 @@ class BuildDocumentation {
     ///
     /// @param described The descriptions, with those wanted.
     /// @param unmatched The keys this call gave that described no field.
-    /// @return The round: what to do first (it may be cut short), then the fields, each with its sample values and
-    /// what the schemas say cut short (seen: 28,000 characters for 75 fields, moved to a file, its instructions cut
-    /// mid-sentence where the agent read them).
+    /// @return The round: what to do first (it may be cut short), then the fields (up to [#DESCRIPTIONS_ROUND], and
+    /// no more than come to [#DESCRIPTIONS_ROUND_CHARS] as Stroom AI's chat lists them, but always one), each with its
+    /// sample values, what the schemas say cut short (seen: 28,000 characters for 75 fields, moved to a file, its
+    /// instructions cut mid-sentence where the agent read them), and where it comes from cut to its first lines past
+    /// [#FROM_MOST].
     static Map<String, Object> needsDescriptions(final Descriptions described, final List<String> unmatched) {
         final List<Map<String, Object>> fields = new ArrayList<>();
         final int wanted = described.wanted().size();
         // A round at a time (seen in testing: 75 fields asked for at once, and the agent tried again and again to
-        // send every description, with the markdown, in one call, which its context couldn't hold).
-        described.wanted().values().stream().limit(DESCRIPTIONS_ROUND).forEach(field -> {
+        // send every description, with the markdown, in one call, which its context couldn't hold), and no more
+        // than fit the room Stroom AI's chat gives a round's fields in full (seen in chats 184 to 186: 25 fields of
+        // 7,000 to 8,000 characters cut at 4,000, and the rest read back from the saved result 30 times).
+        int chars = 0;
+        for (final Map<String, Object> field : described.wanted().values()) {
+            if (fields.size() >= DESCRIPTIONS_ROUND) {
+                break;
+            }
             final Map<String, Object> compact = new LinkedHashMap<>(field);
             if (compact.get("schemas_say") instanceof final Map<?, ?> says) {
                 final Map<String, Object> cut = new LinkedHashMap<>();
@@ -414,8 +424,15 @@ class BuildDocumentation {
                         SAID_MOST)));
                 compact.put("schemas_say", cut);
             }
+            if (compact.get(FROM) instanceof final String from && from.length() > FROM_MOST) {
+                compact.put(FROM, fromHead(from));
+            }
+            chars += listedLength(compact);
+            if (!fields.isEmpty() && chars > DESCRIPTIONS_ROUND_CHARS) {
+                break;
+            }
             fields.add(compact);
-        });
+        }
         final boolean shared = fields.stream().anyMatch(field -> JsonValues.truthy(field.get("under")));
         final Map<String, Object> round = new LinkedHashMap<>();
         round.put("status", "needs_descriptions");
@@ -452,8 +469,45 @@ class BuildDocumentation {
 
     // The most fields asked to be described in one round.
     static final int DESCRIPTIONS_ROUND = 25;
+    // The most characters a round's fields come to, as Stroom AI's chat lists them in full in a large result's stub
+    // (a round has one field however long it is).
+    static final int DESCRIPTIONS_ROUND_CHARS = ToolOutputs.MAX_FIELDS_TO_DESCRIBE_CHARS;
+    // What a listed field's line holds besides its JSON: "- " and the line's end.
+    private static final int LISTED_LINE_CHARS = 3;
+    // Where a field's value comes from, and the most of it shown with a field asked for: a value set by each rule
+    // lists every rule (seen in eval case 68, 300 event types: a TypeId's and a Description's 300 lines each, some
+    // 23,000 characters, each a round of its own once rounds were sized to fit the chat).
+    private static final String FROM = "from";
+    static final int FROM_MOST = 1_000;
     // The most of each schema's words shown with a field asked for.
     private static final int SAID_MOST = 160;
+
+    // A long from's first lines within FROM_MOST (its start, where its first line is longer), saying how many more.
+    private static String fromHead(final String from) {
+        final List<String> lines = from.lines().toList();
+        final StringBuilder head = new StringBuilder();
+        int shown = 0;
+        for (final String line : lines) {
+            if (head.length() + line.length() + 1 > FROM_MOST) {
+                break;
+            }
+            head.append(line).append('\n');
+            shown++;
+        }
+        if (shown == lines.size()) {
+            return from;
+        }
+        if (shown == 0) {
+            return ToolText.head(from, FROM_MOST) + "…";
+        }
+        return head + "… and " + (lines.size() - shown) + " more line(s) like these";
+    }
+
+    // The characters a field to describe takes in Stroom AI's chat's stub of a large round: a line of compact JSON
+    // after "- ".
+    private static int listedLength(final Map<String, Object> field) {
+        return JsonUtil.writeValueAsString(field, false).length() + LISTED_LINE_CHARS;
+    }
 
     /// The doc's new text: its version control rows as they were, and this change pending until the build is promoted,
     /// when the build's changes become one row.

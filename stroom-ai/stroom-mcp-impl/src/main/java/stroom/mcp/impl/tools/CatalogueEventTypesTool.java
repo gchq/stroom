@@ -668,7 +668,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     ? " (and " + (couldType.size() - 5) + " more)"
                     : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, the schema's "
                      + "elements below the action element and in EventSource, and the arrays of objects a for_each "
-                     + "group could type). " + SHOULD_BE_TYPED
+                     + "group could type; the schema's elements every one of them has open said once, in "
+                     + "check." + CatalogueCheckResult.COULD_TYPE_ALL + "). " + SHOULD_BE_TYPED
                      + typingExample(couldType.getFirst()));
         }
         if (check.uncatalogued().records() > 0) {

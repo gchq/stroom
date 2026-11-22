@@ -65,11 +65,14 @@ public final class LargeResults {
     /// The parts of a result that say what the agent must act on (a part within a part by its dotted path), in the
     /// order the stub of a large result in Stroom AI's chat repeats them, each in full but capped. An outline never
     /// cuts them, but for the few that can be long and that the tools outline themselves (notes, warnings,
-    /// check.typing). Seen in chat 183: a draft's notes, a catalogue check's problems, unplaced fields and typing
-    /// (what an event type could type), and a build's warnings, each fished out of the saved result with jq, some in
-    /// four rounds.
+    /// check.typing, schema_check.warnings). Seen in chat 183: a draft's notes, a catalogue check's problems,
+    /// unplaced fields and typing (what an event type could type), and a build's warnings, each fished out of the
+    /// saved result with jq, some in four rounds; in chats 184 to 186, a draft's schema check (its problems, what it
+    /// couldn't fill and its warnings), read 17 times, and the schema homes every event type of a check has open
+    /// (`check.could_type_all`, said once for them all).
     public static final List<String> ACT_ON = List.of("error", "refused", "notes", "user_chose", "problems",
-            "unplaced", "check.problems", "check.unplaced", "check.typing", "warnings", "user_actions", "review_id");
+            "unplaced", "check.problems", "check.unplaced", "schema_check.problems", "schema_check.unfilled",
+            "check.could_type_all", "check.typing", "warnings", "schema_check.warnings", "user_actions", "review_id");
     /// By a result's status, the further parts it says to act on: a `needs_descriptions` round's fields to describe
     /// (write_documentation's, which its hint says to describe; a result's `fields` is otherwise often only an
     /// inventory).
@@ -88,8 +91,9 @@ public final class LargeResults {
     private static final int FEWEST_CHARS = 300;
     private static final Pattern PLAIN = Pattern.compile("[^A-Za-z0-9._-]");
     // Of ACT_ON, those an outline may still cut: they can be long, and the tools that give them outline them (a
-    // draft's notes, each to its start; a build's warnings, without their examples).
-    private static final Set<String> OUTLINED_ACT_ON = Set.of("check.typing", "notes", "warnings");
+    // draft's notes, each to its start; a build's or a draft's schema check's warnings, without their examples).
+    private static final Set<String> OUTLINED_ACT_ON = Set.of("check.typing", "notes", "warnings",
+            "schema_check.warnings");
     // Always kept: what the agent must act on, and what the user chose (seen in chat 183: told it only in part, the
     // agent asked the user again).
     private static final Set<String> ALWAYS_KEPT = alwaysKept();

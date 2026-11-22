@@ -300,11 +300,15 @@ workspace calls fishing out a draft's notes, a catalogue check's problems, unpla
 write_documentation's fields). The chat saves any result over 4,000 characters whole to
 `/outputs/turn-<t>/call-<m>.txt` and gives the model a stub. The stub gives, before anything else, `next` and `hint`
 and the parts that say what to act on, in full but capped (a draft's notes at 8,000 characters, as they hold the
-decisions to take, seen in chat 184; each other part at 4,000; 12,000 in all; a list an entry a line, then `… N more`
-and the jq query for the rest), in this order: error, refused, notes, user_chose, problems, unplaced,
-`check.problems`, `check.unplaced`, `check.typing` (with `could_type`), warnings, user_actions and review_id
-(`LargeResults.ACT_ON`, the same list an outline never cuts, but for notes, warnings and the check's typing), and a
-`needs_descriptions` round's `fields`. Where the tool outlines its large results (the six tools above), it also
+decisions to take, seen in chat 184; a `needs_descriptions` round's fields at 8,000 and a check's typing at 12,000,
+2026-11-22; each other part at 4,000; 24,000 in all, room for a check's problems, unplaced and typing together; a
+list an entry a line, then `… N more` and the jq query for the rest; `ToolOutputs.LONG_PART_CHARS`), in this order:
+error, refused, notes, user_chose, problems, unplaced, `check.problems`, `check.unplaced`, `schema_check.problems`,
+`schema_check.unfilled` (a draft's schema check, 2026-11-22; seen in chats 184 to 186: read from the saved draft 17
+times), `check.could_type_all`, `check.typing` (with `could_type`), warnings, `schema_check.warnings`, user_actions
+and review_id (`LargeResults.ACT_ON`, the same list an outline never cuts, but for notes, warnings, the check's
+typing and the schema check's warnings), and a `needs_descriptions` round's `fields`. A part given in full is left
+out of the outline below it, a part within a part too (`schema_check.problems` from the outline's `schema_check`). Where the tool outlines its large results (the six tools above), it also
 outlines a copy for the chat against 10,000 characters (`LargeResults.CHAT_OUTLINE_CHARS`), saving its own copy to
 `/outputs/<tool>/<key>.json` as for a client outside Stroom, and the stub gives that outline (less what it says above
 it) in place of the preview of the result's first 30 lines. A result the user must be shown as it is (`needs_review`,
@@ -3856,7 +3860,12 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   `arrays` (2026-11-22, chat 184: TeamMemberAdded's members, each with UPN and DisplayName, stayed Data), the fields
   of `data` whose values are arrays of objects, each with its items' keys (at most 4, 6 keys each), the first saying a
   `for_each` group on an element the schema repeats types each (`event.Members: items with UPN, DisplayName, Role —
-  a for_each group on an element the schema repeats types each`). The hint says these fields should be typed (each one the schema has a home
+  a for_each group on an element the schema repeats types each`). Where two or more event types have a
+  `could_type`, the `schema` entries every one of them has (e.g. EventSource's and the Outcome's) are said once, in
+  the compact check's `could_type_all` (`schema`, and `said`), and left out of each one's `schema` (dropped where
+  nothing else is left); the listing saved whole keeps each event type's as it is (2026-11-22, seen in chats 184 to
+  186: some 370 characters of the same homes in each of 7 event types, and the typing cut in the chat's stub 29
+  times). The hint says these fields should be typed (each one the schema has a home
   for belongs in a placement, not in Data, from what the agent knows of the source; only what has no home stays as
   Data), with an example call for the first such event type; nothing is refused or paused, and no field is matched
   to an element by its name.
@@ -6178,8 +6187,12 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
   the agent to check it was written), `link` and an open-document action, `field_mapping` (the generated section;
   `reference_maps` instead for a reference data pipeline),
   `note`, the build's `next`; for a promoted pipeline `working_copy_of` and a `next` about promote_build. Or
-  `needs_descriptions` (nothing written yet): the fields not yet described, 25 a round (the rest follow once those
-  are given; its hint asks for no code meaning the values or source notes don't show, and whose an Id is only where
+  `needs_descriptions` (nothing written yet): the fields not yet described, 25 a round, fewer when their entries are
+  long: no more than come to 8,000 characters as Stroom AI's chat lists them (`BuildDocumentation.
+  DESCRIPTIONS_ROUND_CHARS`, the room its stub gives a round's fields in full; always at least one; 2026-11-22, seen
+  in chats 184 to 186: 25 fields of 7,000 to 8,000 characters cut at 4,000, and the rest read back 30 times), a
+  field's `from` past 1,000 characters cut to its first lines, saying how many more (a value each rule sets lists
+  every rule: eval case 68's TypeId and Description, 300 lines each) (the rest follow once those are given; its hint asks for no code meaning the values or source notes don't show, and whose an Id is only where
   its name or the notes say, 2026-11-22), each with where it comes from, sample values, `schemas_say` (the vendor notes and the schemas), `under`
   for a Data name, `was` for one whose source changed.
 * **Large, outside Stroom** (`DocumentationOutline`, 2026-11-20; cases 35, 36, 56: 73k–88k): `field_mapping` (or

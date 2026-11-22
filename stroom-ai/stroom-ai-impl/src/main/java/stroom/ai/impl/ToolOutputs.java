@@ -45,7 +45,8 @@ import java.util.Set;
 /// A JSON result's `next` and `hint`, which say what to do next and which a tool often puts last, are repeated in
 /// its stub: the preview, from its start, would not reach them. So are the parts that say what the agent must act
 /// on ([LargeResults#ACT_ON]: problems, refusals, notes, warnings, what the user chose), each in full up to
-/// [#MAX_ACT_ON_PART_CHARS], all of them up to [#MAX_ACT_ON_CHARS]. Where the tool outlines its large results
+/// [#MAX_ACT_ON_PART_CHARS] (those that are often longer, up to their own [#LONG_PART_CHARS]), all of them up to
+/// [#MAX_ACT_ON_CHARS]. Where the tool outlines its large results
 /// ([LargeResults#chatOutline]), the stub gives that outline (up to [LargeResults#CHAT_OUTLINE_CHARS]) in place of
 /// the preview of the result's first lines.
 public final class ToolOutputs {
@@ -81,15 +82,34 @@ public final class ToolOutputs {
     /// The most characters of a result's `next` repeated in its stub.
     static final int MAX_NEXT_CHARS = 1_500;
     /// The most characters of each part of a result that says what to act on ([LargeResults#ACT_ON]) repeated in
-    /// its stub, but its notes ([#MAX_NOTES_CHARS]).
+    /// its stub, but those given more room ([#LONG_PART_CHARS]).
     static final int MAX_ACT_ON_PART_CHARS = 4_000;
     /// The most characters of a result's notes repeated in its stub: a draft's notes are the decisions to take
     /// (seen in chat 184: 13 notes cut after 11 at 4,000 characters, the one offering a System/Name per source type
     /// among those cut).
     static final int MAX_NOTES_CHARS = 8_000;
-    /// The most characters of all the parts that say what to act on repeated in a stub.
-    static final int MAX_ACT_ON_CHARS = 12_000;
-    private static final String NOTES = "notes";
+    /// The most characters of a `needs_descriptions` round's fields to describe repeated in its stub, and so the
+    /// most a round's fields come to (write_documentation sizes each round to fit, see its `needsDescriptions`; seen
+    /// in chats 184 to 186: 25 fields of 7,000 to 8,000 characters cut at 4,000 eleven times, and 30 reads of the
+    /// rest from the saved result).
+    public static final int MAX_FIELDS_TO_DESCRIBE_CHARS = 8_000;
+    /// The most characters of a catalogue check's typing (`check.typing`, an event type a line) repeated in its
+    /// stub: a typical set of event types, each with what it could type (seen in chats 184 to 186: 7 event types of
+    /// 1,200 to 1,450 characters each, once the schema homes every one has open are said once, cut after the first
+    /// two at 4,000, 29 times).
+    static final int MAX_TYPING_CHARS = 12_000;
+    /// The parts given more room than [#MAX_ACT_ON_PART_CHARS] in a stub, each with its most characters.
+    static final Map<String, Integer> LONG_PART_CHARS = Map.of(
+            "notes", MAX_NOTES_CHARS,
+            "fields", MAX_FIELDS_TO_DESCRIBE_CHARS,
+            "check.typing", MAX_TYPING_CHARS);
+    /// The most characters of all the parts that say what to act on repeated in a stub: room for a catalogue
+    /// check's problems, unplaced elements (4,000 each), the homes its event types share and their typing
+    /// ([#MAX_TYPING_CHARS]) together, or a draft's notes ([#MAX_NOTES_CHARS]), problems and schema check, as each
+    /// would otherwise be read back from the saved result with a call of its own, which costs the same characters
+    /// and a call more (seen in chat 186: all three of a check's read back, round after round). A result has only
+    /// some of these parts, so most stubs come to far less.
+    static final int MAX_ACT_ON_CHARS = 24_000;
     // Less room than this left for the parts to act on, the rest are only named.
     private static final int FEWEST_ACT_ON_CHARS = 200;
     // Numbers are kept as they were written.
@@ -219,15 +239,13 @@ public final class ToolOutputs {
         if (parts.isEmpty()) {
             return "";
         }
-        final StringBuilder sb = new StringBuilder("What it says to act on, in full (notes up to " + MAX_NOTES_CHARS
-                                                   + " characters, each other part up to " + MAX_ACT_ON_PART_CHARS
-                                                   + "):\n");
+        final StringBuilder sb = new StringBuilder("What it says to act on, in full (").append(budgets(parts))
+                .append("):\n");
         final int start = sb.length();
         final List<String> notShown = new ArrayList<>();
         for (final String part : parts) {
-            final int room = Math.min(NOTES.equals(part)
-                    ? MAX_NOTES_CHARS
-                    : MAX_ACT_ON_PART_CHARS, MAX_ACT_ON_CHARS - (sb.length() - start));
+            final int room = Math.min(LONG_PART_CHARS.getOrDefault(part, MAX_ACT_ON_PART_CHARS),
+                    MAX_ACT_ON_CHARS - (sb.length() - start));
             if (room < FEWEST_ACT_ON_CHARS) {
                 notShown.add(part);
             } else {
@@ -240,6 +258,20 @@ public final class ToolOutputs {
                     .append(notShown.getFirst()).append("`.)\n");
         }
         return sb.append('\n').toString();
+    }
+
+    // Each part's most characters, as the stub says them: those of the parts given more room first.
+    private static String budgets(final List<String> parts) {
+        final List<String> said = new ArrayList<>();
+        parts.stream()
+                .filter(LONG_PART_CHARS::containsKey)
+                .forEach(part -> said.add(part + " up to " + LONG_PART_CHARS.get(part) + " characters"));
+        said.add((said.isEmpty()
+                ? "each part"
+                : "each other part") + " up to " + MAX_ACT_ON_PART_CHARS + (said.isEmpty()
+                ? " characters"
+                : ""));
+        return String.join(", ", said);
     }
 
     // The parts to act on the result has (not empty), in the order they are given.

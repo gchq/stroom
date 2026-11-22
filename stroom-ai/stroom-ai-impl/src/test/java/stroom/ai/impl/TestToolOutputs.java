@@ -406,7 +406,8 @@ class TestToolOutputs {
         result.put("status", "checked");
         result.put("error", "e".repeat(10_000));
         result.put("problems", problems);
-        result.put("check", Map.of("typing", typing));
+        result.put("unplaced", problems);
+        result.put("check", Map.of("problems", problems, "unplaced", problems, "typing", typing));
         // Short enough to leave room for the problems' cut list (notes come first, up to MAX_NOTES_CHARS).
         result.put("notes", List.of("n".repeat(3_000)));
         result.put("warnings", problems);
