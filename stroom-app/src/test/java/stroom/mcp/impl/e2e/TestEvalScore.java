@@ -761,6 +761,35 @@ class TestEvalScore {
     }
 
     @Test
+    void aNameValueListsPairNamesHeldTypedFailNotTyped() {
+        // Chat 187: each {Name, Value} pair of the mail read's OperationProperties typed as an object, its name in
+        // Object/Name and its value in Description; a pair's name belongs in a Data Name.
+        final String objects = event("", "<TypeId>View-MailItems</TypeId><View><Object><Name>MailAccessType</Name>"
+                                         + "<Description>Bind</Description></Object>"
+                                         + data("Operation", "MailItemsAccessed") + "</View>");
+        final String asData = event("", "<TypeId>View-MailItems</TypeId><View><Folder><Path>\\Inbox</Path></Folder>"
+                                        + data("MailAccessType", "Bind") + data("Operation", "MailItemsAccessed")
+                                        + "</View>");
+        final Map<String, Object> expected = expecting(Map.of("records", 1, "typed", List.of(Map.of("select",
+                Map.of("text", "MailItemsAccessed"), "paths", List.of(), "not_typed",
+                List.of("MailAccessType", "IsThrottled")))));
+
+        final EvalScore typed = new EvalScore("c");
+        typed.scoreEvents(expected, List.of(objects), List.of(true), null);
+        final EvalScore data = new EvalScore("c");
+        data.scoreEvents(expected, List.of(asData), List.of(true), null);
+
+        assertThat(typed.stage1()).isFalse();
+        assertThat((List<String>) typed.toMap().get("problems")).containsExactly(
+                "the events of {text=MailItemsAccessed} (TypeIds [View-MailItems]) hold 'MailAccessType' typed, at "
+                + "[View/Object/Name] (expected as a Data Name)");
+        assertThat((List<String>) data.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) data.toMap().get("typed_checks")).containsExactly(
+                Map.of("check", "not typed {text=MailItemsAccessed} 'MailAccessType'", "passed", true),
+                Map.of("check", "not typed {text=MailItemsAccessed} 'IsThrottled'", "passed", true));
+    }
+
+    @Test
     void typedAtLeastCountsTheDistinctTypedLeafPathsTheSelectedEventsHoldBetweenThem() {
         // Two moves: the first types the source folder's Id and Path and the destination's Path, the second the
         // destination's Id; Data (named as a typed element too), the TypeId and the Description don't count.

@@ -212,6 +212,32 @@ class TestListFields extends DraftFixtures {
     }
 
     @Test
+    void aNameValueListIsDraftedAsADataPerPairWithItsNamesNoted() {
+        // Decided by the user (2026-11-23, from chat 187): a list of settings is Data, each named by its pair's
+        // name, not a Data per object holding Data named Name and Value.
+        final String text = """
+                [{"time": "2026-10-01T08:00:00Z", "action": "rule", "host": "mx01", "user": "jo",
+                  "Parameters": [{"Name": "Name", "Value": "FW to personal"}, {"Name": "From", "Value": "a@b.org"}]},
+                 {"time": "2026-10-01T08:05:00Z", "action": "rule", "host": "mx01", "user": "al",
+                  "Parameters": [{"Name": "Name", "Value": "Tidy"}, {"Name": "MoveToFolder", "Value": "Old"}]},
+                 {"time": "2026-10-01T08:07:00Z", "action": "rule", "host": "mx01", "user": "bo",
+                  "Parameters": [{"Name": "Name", "Value": "Junk"}, {"Name": "From", "Value": "c@d.org"}]}]
+                """;
+        final Map<String, Object> draft = draft(Map.of("rules.json", text), "Mail");
+
+        assertThat(groups(draft)).isEmpty();
+        assertThat(String.valueOf(mappingOf(draft)))
+                .contains("pair={list=Parameters, name_key=Name, value_key=Value}");
+        assertThat(notes(draft)).anySatisfy(note -> assertThat(note)
+                .startsWith("'Parameters' (names Name (3), From (2), MoveToFolder (1)) is a name/value list: "
+                            + "drafted as a Data per pair, each named by its pair's name.")
+                .contains("Never put a value in an element that means something else"));
+        final XsltGenerator.Generated result = generated(draft);
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+        assertThat(result.xslt()).contains("<xsl:attribute name=\"Name\" select=\"string(*[@key='Name'])\"/>");
+    }
+
+    @Test
     void anArrayOfValuesIsADataPerValue() {
         // Decided by the user (2026-11-20, from eval case 69): Stroom's JSON as XML runs an array's values together
         // as its text, so a Data of the whole array reads "vpnoffice"; a Data per value, as the reference does.

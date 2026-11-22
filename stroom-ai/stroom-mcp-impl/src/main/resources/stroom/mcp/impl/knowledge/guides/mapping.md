@@ -18,7 +18,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   (Device, Client, Server, User and their Location: city, country, latitude, longitude) as well as the action element
   (a URL, an HTTP method, a response code, a rule): the draft's `data_placement` lists each rule's Data entries beside
   the elements available, and `read_document type=XMLSchema element=` says what each takes. Don't wait for the user
-  to ask.
+  to ask. Never put a value in an element that means something else (a setting's value in a Description).
 - A field that no element of the schema means (a rule id, a byte count, a vendor code) is carried as Data of the action
   element (see Data below): never invent an element for it, and never leave the event Unknown because of it.
   `read_document type=XMLSchema element=` says what an element takes (`EventDetail` for the action elements,
@@ -76,9 +76,12 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   entry's conversions (`transform`,
   `time_format`, `timezone`, `map`, `default`, `repeat`); a list goes to an element that repeats with `for_each`
   (Groups, below), e.g. `{path: "Email/To", for_each: {array: "Recipients"}, fields: [{path: "EmailAddress", item:
-  true}]}`; a field whose items have fields of their own (an array of `{Name, Value}`) goes to a `for_each` group
-  with `fields`, each reading a key of the item (`{path: "Name", field: "Name"}`; `item: true` writes it whole), or
-  one item is picked by an `xpath`, never to a leaf. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
+  true}]}`; a field whose items are things with fields of their own (members, each `{UPN, DisplayName}`) goes to a
+  `for_each` group with `fields`, each reading a key of the item (`{path: "Name", field: "Name"}`; `item: true`
+  writes it whole), never to a leaf. A **name/value list** (items each a setting's name and its value, `[{"Name":
+  "From", "Value": "..."}]`, told by shape and named in `could_type`) is not one thing: its pairs are Data, each named
+  by its pair's name, and a pair whose name means an element is placed by name, `{path: "Configuration/Name", pair:
+  {list: "event.Parameters", name: "Name"}}` (never a group). The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
   GroupChat, Document...: `read_document type=XMLSchema element=EventDetail/<element>` lists them. The draft writes
   each as a typed entry of the event type's rule; every field no placement takes is kept as Data, each field once
   (`also_data: true` keeps a placed one as Data too; the vendor's code is always Data too). `affected` with
@@ -89,12 +92,16 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   fill rate in the type's records said in `typing`; a field holding several values in a record goes to an element that
   repeats (`repeat: true`) or a `for_each`; the values, converted as the translation converts them, are valid for the
   element's type, values or pattern (refused naming the values and the fix: transform, time_format, map, for_each, or
-  leaving the field as Data); items with fields of their own aren't placed at a leaf; an xpath's or a lookup's values aren't checked (said in `not_checked`), its path is.
+  leaving the field as Data); items with fields of their own aren't placed at a leaf; a pair's list is a name/value
+  list holding that name (else refused naming its names); an xpath's or a lookup's values aren't checked (said in
+  `not_checked`), its path is.
   A proposal bringing one of these is refused. An element the schema requires of the
   action element (Update's After, Send's Source and Destination, the object View, Create or Delete is of,
   Authenticate's Action and user) that nothing is placed at is `unplaced`: the set isn't put to the user until it is.
   Most of a type's fields kept as Data is only worth a look (`typing`); its `could_type` lists those fields and the
-  schema's elements below the action element and in EventSource that nothing writes yet: place those that have a home there, from what you know of the source.
+  schema's elements below the action element and in EventSource that nothing writes yet, the arrays of things and the
+  name/value lists with their pairs' names: place each field at the element that means it, from what you know of the
+  source.
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no
@@ -163,6 +170,7 @@ varies; `not: true` for
 | `xpath` | A computed value, relative to the record (never starting `//` or `/`) |
 | `meta` | A stream meta attribute |
 | `lookup: {map, field}` | A reference data lookup; `key_fields: [a, b]` in place of `field` for a key of several fields (reference-data guide) |
+| `pair: {list, name, name_key, value_key}` | One pair of a JSON name/value list, by its name: `name_key` holds each pair's name, `value_key` its value (`*`: each item's one other key, as `{"name": "IS_ADMIN", "boolValue": true}`); the draft and the catalogue give the keys |
 
 | Modifier | |
 | --- | --- |
@@ -238,6 +246,10 @@ completion of a dateless time (it moves a time later than the stream's creation 
 A field no element means is carried as `Data`: a path ending `/Data` with `data_name`, under the element it describes
 (`EventDetail/Network/Permit/Source/Data`) or the action element. `data_parent` groups entries in a named Data. A
 rule's `"data": ["rule_id", "bytes"]` is short for Data entries of its action element, each named after its field.
+A name/value list is drafted as a Data per pair, `{"path": "EventDetail/Create/Data", "pair": {"list":
+"event.Parameters", "name_key": "Name", "value_key": "Value"}}` (no `name`): each Data named by its pair's name,
+holding its value, but the pairs the event's other entries read by `pair` (written there once; a Data entry reading
+one by name keeps it as Data too).
 
 ## Groups: arrays of objects
 

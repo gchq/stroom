@@ -18,6 +18,8 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.NameValueLists;
+import stroom.ai.impl.tools.sample.NameValueLists.NameValueList;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.ToolJson;
 
@@ -28,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -95,6 +98,7 @@ final class ListFields {
                                 final boolean json) {
         final Map<String, Split> splits = new LinkedHashMap<>();
         final Map<String, List<String>> arrays = new LinkedHashMap<>();
+        final Map<String, NameValueList> pairLists = new LinkedHashMap<>();
         final Set<String> repeated = new LinkedHashSet<>();
         // Each field examined once, though many rules carry its Data.
         final Set<String> examined = new HashSet<>();
@@ -105,10 +109,15 @@ final class ListFields {
             final String field = (String) entry.get(FIELD);
             final List<String> held = values.getOrDefault(field, List.of());
             if (examined.add(field)) {
-                final List<String> keys = json
+                final Optional<NameValueList> pairs = json
+                        ? NameValueLists.detect(held)
+                        : Optional.empty();
+                final List<String> keys = json && pairs.isEmpty()
                         ? arrayKeys(held)
                         : List.of();
-                if (!keys.isEmpty()) {
+                if (pairs.isPresent()) {
+                    pairLists.put(field, pairs.get());
+                } else if (!keys.isEmpty()) {
                     arrays.put(field, keys);
                 } else if (json && valueArrays(held)) {
                     repeated.add(field);
@@ -119,7 +128,9 @@ final class ListFields {
                     }
                 }
             }
-            if (arrays.containsKey(field)) {
+            if (pairLists.containsKey(field)) {
+                replace(entry, dataPerPair((String) entry.get(PATH), field, pairLists.get(field)));
+            } else if (arrays.containsKey(field)) {
                 replace(entry, arrayGroup((String) entry.get(PATH), field, arrays.get(field)));
             } else if (repeated.contains(field)) {
                 // Stroom's JSON as XML runs an array's values together as its text: a Data per value.
@@ -137,6 +148,9 @@ final class ListFields {
                     ? " holds a list"
                     : " hold lists") + " of values (a JSON array): a Data per value (repeat), not one Data of the "
                       + "values run together.");
+        }
+        if (!pairLists.isEmpty()) {
+            notes.add(pairNote(pairLists));
         }
         if (!arrays.isEmpty()) {
             notes.add(arrayNote(arrays));
@@ -493,6 +507,24 @@ final class ListFields {
         return group(path, field, forEach, itemName(field), fields);
     }
 
+    /// A name/value list's Data per pair: each pair a Data named by its name, holding its value
+    /// ([stroom.ai.impl.tools.generation.ListPair]).
+    ///
+    /// @param path  The Data entry's path (ending Data).
+    /// @param field The list field.
+    /// @param pairs The list's keys.
+    /// @return The entry.
+    static Map<String, Object> dataPerPair(final String path, final String field, final NameValueList pairs) {
+        final Map<String, Object> pair = new LinkedHashMap<>();
+        pair.put("list", field);
+        pair.put("name_key", pairs.nameKey());
+        pair.put("value_key", pairs.valueKey());
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put(PATH, path);
+        entry.put("pair", pair);
+        return entry;
+    }
+
     private static Map<String, Object> group(final String path,
                                              final String field,
                                              final Map<String, Object> forEach,
@@ -544,6 +576,25 @@ final class ListFields {
                + "\"as\": \"recipient\", \"fields\": [{\"path\": \"Id\", \"item\": true, \"transform\": "
                + "\"strip_domain\"}, {\"path\": \"Domain\", \"item\": true, \"transform\": \"domain\"}]}; "
                + "hosts as Device elements.";
+    }
+
+    // The name/value lists, each with its names (capped): the pairs whose names mean an element are the agent's to
+    // place, by name.
+    private static String pairNote(final Map<String, NameValueList> lists) {
+        final List<String> said = new ArrayList<>();
+        lists.forEach((field, pairs) -> said.add(ToolText.repr(field) + " (names " + NameValueLists.said(
+                pairs.names(), NameValueLists.NAMES_SHOWN) + ")"));
+        final boolean one = lists.size() == 1;
+        final Map.Entry<String, NameValueList> example = lists.entrySet().iterator().next();
+        return String.join(", ", said) + " " + (one
+                ? "is a name/value list"
+                : "are name/value lists") + ": drafted as a Data per pair, each named by its pair's name. A pair "
+               + "whose name means an element is placed there by name (an event type's placement, or the rule's "
+               + "entry, with name_key and value_key), e.g. {\"path\": \"EventDetail/Create/Configuration/Name\", "
+               + "\"pair\": {\"list\": \"" + example.getKey() + "\", \"name\": \"<its name>\", \"name_key\": \""
+               + example.getValue().nameKey() + "\", \"value_key\": \"" + example.getValue().valueKey() + "\"}}, "
+               + "and is then not written as Data too. Never put a "
+               + "value in an element that means something else (a setting's value in a Description).";
     }
 
     private static String arrayNote(final Map<String, List<String>> arrays) {

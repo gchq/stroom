@@ -1430,6 +1430,10 @@ public final class XsltGenerator {
             emitDataGroup(parent, entry);
             return;
         }
+        if (entry.dataPerPair()) {
+            emitDataPerPair(parent, entry);
+            return;
+        }
         final XmlElement holder;
         if (entry.repeat()) {
             warnOfRendered(parent, entry);
@@ -1473,6 +1477,16 @@ public final class XsltGenerator {
                 element.addElement(XSL, "attribute", "name", "Value", "select", expression);
             }
         }
+    }
+
+    // A name/value list's Data per pair (ListPair, 2026-11-23): a loop over the pairs it writes, each a Data named by
+    // its pair's name, holding its value.
+    private void emitDataPerPair(final XmlElement parent, final FieldMapping entry) {
+        final ListPair pair = entry.pair();
+        final XmlElement loop = parent.addElement(XSL, "for-each", "select", source(null, entry.xpath(), null));
+        final XmlElement element = loop.addElement(ns, "Data");
+        element.addElement(XSL, "attribute", "name", "Name", "select", pair.nameOfItem());
+        element.addElement(XSL, "attribute", "name", "Value", "select", pair.valueOfItem());
     }
 
     // A Data entry written out in full, as a template would hold it: equal tokens write the same Data.

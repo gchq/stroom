@@ -279,7 +279,8 @@ class TestPlacementCheck {
         // Who acted and the subject.
         assertThat(typing.typed()).isEqualTo(2);
         assertThat(typing.data()).isGreaterThanOrEqualTo(PlacementCheck.DATA_FIELDS_NOTED);
-        assertThat(typing.note()).startsWith("most of its fields are kept as Data");
+        assertThat(typing.note()).startsWith("most of its fields are kept as Data")
+                .endsWith("place each whose meaning an element carries at the element that means it");
     }
 
     @Test
@@ -449,7 +450,7 @@ class TestPlacementCheck {
         assertThat(Placement.read(both, Map.of("path", "Email/Subject", "field", "a", "xpath", "b"), List.of()))
                 .isNull();
         assertThat(both.errors()).singleElement().satisfies(error -> assertThat(error.message())
-                .contains("give one of", "xpath or lookup"));
+                .contains("give one of", "xpath, lookup or pair"));
 
         final ModelReader badLookup = new ModelReader();
         final Placement noMap = Placement.read(badLookup, Map.of("path", "Destination/User/Id", "lookup",
@@ -613,6 +614,123 @@ class TestPlacementCheck {
 
         assertThat(said(CatalogueCheck.check(catalogue(ok), clientSample(), SCHEMA).problems()))
                 .noneMatch(problem -> problem.contains("fields of their own"));
+    }
+
+    @Test
+    void whatCouldBeTypedListsANameValueListApartWithItsPairsNames() {
+        // Chat 187: each {Name, Value} pair of event.Parameters typed as an object, its value in a Description, as
+        // the group suggestion said each item could be typed.
+        final EventType rule = type("Create-InboxRule", "Create", "New-InboxRule", List.of());
+
+        final Map<String, Object> couldType = couldType(CatalogueCheck.check(catalogue(rule), ruleSample(), SCHEMA),
+                "Create-InboxRule");
+
+        assertThat(strings(couldType.get("arrays"))).as(ToolJson.dumps(couldType)).containsExactly(
+                "event.Members: items with UPN, DisplayName, Role — a for_each group on an element the schema "
+                + "repeats types each",
+                "event.Parameters: a name/value list; names: Name (4), From (4), MoveToFolder (2) — its pairs are "
+                + "Data, each named by its pair's name; a pair whose name means an element goes there by name, "
+                + "e.g. {path: 'Configuration/Name', pair: {list: '<list>', name: '<name>'}}");
+    }
+
+    @Test
+    void aPairReadByItsNameIsAcceptedItsValuesCheckedAndItsNameNoLongerListed() {
+        final EventType rule = type("Create-InboxRule", "Create", "New-InboxRule", List.of(Map.of(
+                "path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name"))));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(rule), ruleSample(), SCHEMA);
+
+        assertThat(said(check.problems())).isEmpty();
+        assertThat(strings(couldType(check, "Create-InboxRule").get("arrays")))
+                .anyMatch(line -> line.startsWith("event.Parameters: a name/value list; names: From (4), "
+                                                  + "MoveToFolder (2) —"));
+    }
+
+    @Test
+    void aPairIsReadByItsNameWhereTheSampleIsTooSmallToTellTheListByShape() {
+        // One inbox rule in the sample (as eval case 61's shown lines): its list read as the pair's name says.
+        final EventType rule = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(Map.of(
+                "path", "After/Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name"))));
+        final EventType missing = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(Map.of(
+                "path", "After/Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Title"))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(rule), clientSample(), SCHEMA).problems())).isEmpty();
+        assertThat(said(CatalogueCheck.check(catalogue(missing), clientSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("isn't a name/value list holding a pair named 'Title'");
+    }
+
+    @Test
+    void aPairOfAnEventTypeWithNoSampledRecordHasOnlyItsFormChecked() {
+        // Eval case 60: a later build's scope holding no inbox rule, its catalogue's pair placement kept from case 56.
+        final EventType rule = type("Create-InboxRule", "Create", "New-InboxRule", List.of(Map.of(
+                "path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name"))));
+        final EventType badPath = type("Create-InboxRule", "Create", "New-InboxRule", List.of(Map.of(
+                "path", "Configuration/Nom", "pair", Map.of("list", "event.Parameters", "name", "Name"))));
+
+        assertThat(said(check(rule).problems())).isEmpty();
+        assertThat(said(check(badPath).problems())).singleElement().asString().contains("Nom");
+    }
+
+    @Test
+    void aPairTheListHasntOrAListOfThingsIsRefusedNamingWhatItHas() {
+        final EventType unknownName = type("Create-InboxRule", "Create", "New-InboxRule", List.of(Map.of(
+                "path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "RuleName"))));
+        final EventType things = type("Create-InboxRule", "Create", "New-InboxRule", List.of(Map.of(
+                "path", "Configuration/Name", "pair", Map.of("list", "event.Members", "name", "Al"))));
+        final EventType wrongKeys = type("Create-InboxRule", "Create", "New-InboxRule", List.of(Map.of(
+                "path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name",
+                        "name_key", "Value", "value_key", "Name"))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(unknownName), ruleSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.Parameters has no pair named 'RuleName'", "Name (4), From (4), MoveToFolder (2)");
+        assertThat(said(CatalogueCheck.check(catalogue(things), ruleSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("event.Members isn't a name/value list");
+        assertThat(said(CatalogueCheck.check(catalogue(wrongKeys), ruleSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("named by Name and hold their values in Value");
+    }
+
+    @Test
+    void aGroupOverANameValueListIsRefusedWithThePairFormSuggested() {
+        // Chat 187: {path: 'Object', for_each: {array: OperationProperties}, fields: [Name <- Name, Description <-
+        // Value]}: a setting's value written as an object's description.
+        final EventType rule = type("Create-InboxRule", "Create", "New-InboxRule", List.of(
+                Map.of("path", "Object", "for_each", Map.of("array", "event.Parameters"),
+                        "fields", List.of(Map.of("path", "Name", "field", "Name"),
+                                Map.of("path", "Description", "field", "Value")))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(rule), ruleSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.Parameters is a name/value list", "element meaning something else",
+                        "pair: {list: 'event.Parameters', name: 'Name'}");
+    }
+
+    @Test
+    void aNameValueListPlacedAtALeafIsRefusedWithThePairFormSuggested() {
+        final EventType rule = type("Create-InboxRule", "Create", "New-InboxRule", List.of(
+                placement("Configuration/Name", "event.Parameters")));
+
+        assertThat(said(CatalogueCheck.check(catalogue(rule), ruleSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.Parameters is a name/value list",
+                        "{path: 'Configuration/Name', pair: {list: 'event.Parameters', name: 'Name'}}");
+    }
+
+    // Four inbox rules created, each with its parameters (a name/value list) and the members told (a list of things),
+    // and fields enough kept as Data for what could be typed to be said.
+    private static CatalogueSample ruleSample() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 4; n++) {
+            final List<Object> parameters = new ArrayList<>(List.of(parameter("Name", "Rule " + n),
+                    parameter("From", "boss" + n + "@acme.com")));
+            if (n % 2 == 0) {
+                parameters.add(parameter("MoveToFolder", "Folder " + n));
+            }
+            lines.add(line("New-InboxRule", "UserId", "jo@acme.com", "ClientIP", "10.0.0." + n, "Workload",
+                    "Exchange", "OrganizationId", "o1", "ResultStatus", "True", "RecordType", "1", "Parameters",
+                    parameters, "Members", List.of(member("al" + n + "@acme.com", "Al " + n))));
+        }
+        return CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
     }
 
     // --------------------------------------------------------------------------------

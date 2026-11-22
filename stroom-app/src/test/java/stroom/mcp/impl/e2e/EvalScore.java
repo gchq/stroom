@@ -67,8 +67,11 @@ import javax.xml.parsers.ParserConfigurationException;
 ///   `data`, Data fields and their values, as `type_ids.same`'s selectors are. An entry may give its own
 ///   `typed_at_least`, the fewest distinct typed leaf paths below EventDetail the events it selects hold between them
 ///   (an element outside Data with its own text, e.g. `Move/Source/Folder/Path`; Data, TypeId, Description,
-///   Classification and Purpose not counted), and its own `data_share_at_most`, for the events it selects. An entry
-///   selecting no event is a problem.
+///   Classification and Purpose not counted), its own `data_share_at_most`, for the events it selects, and
+///   `not_typed`, texts no element of theirs outside Data may hold as its own text (2026-11-23, chat 187: a
+///   name/value list's pair names, e.g. `MailAccessType`, written as a typed object's Name when each pair was typed
+///   as an object, its value in a Description; a pair's name is a Data Name). An entry selecting no event is a
+///   problem.
 ///   ```yaml
 ///   typed:
 ///     - select: {text: MoveToDeletedItems}
@@ -314,6 +317,16 @@ final class EvalScore {
             if (entry.get("typed_at_least") != null) {
                 held = typedPathsHeld(selector, ids, selected, least(entry.get("typed_at_least"))) && held;
             }
+            for (final String text : strings(entry.get("not_typed"))) {
+                final List<String> at = new ArrayList<>();
+                selected.forEach(event -> named(event, "EventDetail").forEach(detail -> typedAt(detail, text, "",
+                        at)));
+                held = at.isEmpty() && held;
+                typedCheck("not typed " + selector + " '" + text + "'", at.isEmpty(), "the events of " + selector
+                                                                                     + " (TypeIds " + ids + ") hold '"
+                                                                                     + text + "' typed, at " + at
+                                                                                     + " (expected as a Data Name)");
+            }
             if (entry.get("data_share_at_most") != null) {
                 final DetailValues values = selected.stream()
                         .map(EvalScore::detailValues)
@@ -440,6 +453,22 @@ final class EvalScore {
             }
         }
         return false;
+    }
+
+    // The paths below EventDetail (outside Data) of the elements whose own text is the text given.
+    private static void typedAt(final Element element, final String text, final String path, final List<String> out) {
+        for (final Element child : children(element)) {
+            if (DATA.equals(child.getLocalName())) {
+                continue;
+            }
+            final String at = path.isEmpty()
+                    ? child.getLocalName()
+                    : path + "/" + child.getLocalName();
+            if (text.equals(directText(child).strip()) && !out.contains(at)) {
+                out.add(at);
+            }
+            typedAt(child, text, at, out);
+        }
     }
 
     // Whether an element outside Data has a value: its own text, or a child (not Data) with one.

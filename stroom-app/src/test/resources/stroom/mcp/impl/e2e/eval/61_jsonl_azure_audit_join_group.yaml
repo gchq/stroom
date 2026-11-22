@@ -72,6 +72,9 @@ expected:
     - select: {text: MailItemsAccessed}
       paths: ["View/Folder/Path|View/Folder/Id|View/Folder/Name|View/Object/Id|View/Object/Name|View/Email/Id"]
       typed_at_least: 4
+      # Its OperationProperties, a name/value list: Data named by each pair's name, never a typed object per pair
+      # (test chat 187, 2026-11-23: View/Object Name=MailAccessType, Description=Bind).
+      not_typed: [MailAccessType, IsThrottled]
     - select: {text: Send}
       paths:
         - "Send/Source/User/Id|Send/Source/User/EmailAddress|Send/Payload/Email/From/Id\
@@ -83,6 +86,9 @@ expected:
     - select: {text: New-InboxRule}
       paths: ["Create/Configuration/Name|Create/Object/Name|Update/After/Configuration/Name|Update/After/Object/Name"]
       typed_at_least: 2
+      # Its Parameters, a name/value list: the Name pair typed (above), the others Data named by their pairs' names,
+      # never a Criteria or Object per pair (test chat 187).
+      not_typed: [SubjectContainsWords, MoveToFolder, StopProcessingRules, ForwardTo]
     - select: {text: MoveToDeletedItems}
       paths:
         - "Move/Source/Folder/Path|Move/Source/Folder/Id|Move/Source/Folder/Name|Delete/Folder/Path|Delete/Folder/Id\
@@ -138,8 +144,8 @@ reference:
           - {path: EventDetail/TypeId, value: View-MailItems}
           - {path: EventDetail/Description, value: Mail items were accessed}
           - {path: EventDetail/View/Data, data_name: Operation, field: Operation}
-          - {path: EventDetail/View/Data, data_name: MailAccessType,
-             xpath: "*[@key='event']/*[@key='OperationProperties']/*[*[@key='Name'] = 'MailAccessType']/*[@key='Value']"}
+          # The mail read's properties, a name/value list: a Data per pair, named by its pair's name.
+          - {path: EventDetail/View/Data, pair: {list: event.OperationProperties, name_key: Name, value_key: Value}}
           # The tools write one object, so one Folder (a group may only repeat an element the schema repeats on
           # its own): the first folder accessed.
           - {path: EventDetail/View/Folder/Type, value: Mail folder}
@@ -171,10 +177,10 @@ reference:
           - {path: EventDetail/Description, value: An inbox rule was created}
           - {path: EventDetail/Create/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Create/Configuration/Type, value: Inbox rule}
+          # The rule's parameters, a name/value list: its Name pair is the rule's name, the others a Data per pair.
           - {path: EventDetail/Create/Configuration/Name,
-             xpath: "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"}
-          - {path: EventDetail/Create/Configuration/Data, data_name: SubjectContainsWords,
-             xpath: "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'SubjectContainsWords']/*[@key='Value']"}
+             pair: {list: event.Parameters, name: Name, name_key: Name, value_key: Value}}
+          - {path: EventDetail/Create/Data, pair: {list: event.Parameters, name_key: Name, value_key: Value}}
           # The mailbox the rule is on.
           - {path: EventDetail/Create/User/EmailAddress, field: event.MailboxOwnerUPN}
       - name: mail_deleted

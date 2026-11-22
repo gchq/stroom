@@ -35,7 +35,9 @@ import java.util.Set;
 /// `join`, an `xpath` or a `lookup` (2026-11-22: an element the schema requires is often read by an xpath, e.g. a
 /// value out of an array of name/value pairs; its values aren't checked here), with the mapping's conversions
 /// (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and its repeated groups (`for_each` with
-/// `fields`, each reading the item with `item: true` or a key of it); `also_data: true` keeps the field as Data too.
+/// `fields`, each reading the item with `item: true` or a key of it), or (2026-11-23) one pair of a name/value list
+/// read by its name, `pair: {list, name}` (its keys filled from the sample by the check, the list's other pairs Data
+/// named by their names); `also_data: true` keeps the field as Data too.
 /// The agent places a field from what it knows of the source; nothing matches field names to schema names. A path
 /// starting `EventSource/` (2026-11-22: `EventSource/Client/Name` for a field naming the client application) is
 /// written by the event type's rule in its EventSource, checked the same way.
@@ -59,11 +61,13 @@ public record Placement(Map<String, Object> entry) {
     public static final String FIELDS = "fields";
     /// Keeps the placed field as Data too.
     public static final String ALSO_DATA = "also_data";
-    /// The keys a placement may have: the mapping's for a field, a constant, an xpath or a lookup, its conversions
-    /// and its groups.
+    /// A placement's pair of a name/value list, read by its name (2026-11-23).
+    public static final String PAIR = "pair";
+    /// The keys a placement may have: the mapping's for a field, a constant, an xpath, a lookup or a pair, its
+    /// conversions and its groups.
     public static final List<String> KEYS = List.of(PATH, FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, "separator",
             "transform", "time_format", "timezone", "map", "default", "repeat", FOR_EACH, "as", FIELDS, "item",
-            "scope", ALSO_DATA);
+            "scope", ALSO_DATA, PAIR);
 
     /// A placement's path starting here is in the event's EventSource, not below its action element (2026-11-22).
     public static final String EVENT_SOURCE = "EventSource/";
@@ -106,8 +110,9 @@ public record Placement(Map<String, Object> entry) {
                 .filter(key -> !KEYS.contains(key))
                 .toList();
         if (!other.isEmpty()) {
-            return "a placement is a field (or a value, an xpath or a lookup) placed at a path, with the mapping's "
-                   + "conversions (transform, time_format, timezone, map, default, repeat) or a for_each group: not "
+            return "a placement is a field (or a value, an xpath, a lookup or a pair) placed at a path, with the "
+                   + "mapping's conversions (transform, time_format, timezone, map, default, repeat) or a for_each "
+                   + "group: not "
                    + String.join(", ", other) + " (Data is what no placement takes)";
         }
         if (!top && entry.containsKey(ALSO_DATA)) {
@@ -127,7 +132,19 @@ public record Placement(Map<String, Object> entry) {
             }
             return null;
         }
-        final long inputs = List.of(FIELD, VALUE, "any_of", "join", XPATH, LOOKUP).stream()
+        if (entry.containsKey(PAIR)) {
+            if (!top) {
+                return "pair reads a list of the record, so it goes on a placement, not on a group's field";
+            }
+            final Map<String, Object> pair = JsonValues.mapOrEmpty(entry.get(PAIR));
+            if (!(pair.get("list") instanceof final String list) || list.isBlank()
+                || !(pair.get("name") instanceof final String name) || name.isBlank()) {
+                return "pair reads one pair of a name/value list by its name: {\"list\": \"<the list field>\", "
+                       + "\"name\": \"<the pair's name>\"} (the list's other pairs are Data, each named by its "
+                       + "pair's name)";
+            }
+        }
+        final long inputs = List.of(FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, PAIR).stream()
                 .filter(entry::containsKey)
                 .count() + (entry.containsKey("item")
                 ? 1
@@ -135,7 +152,8 @@ public record Placement(Map<String, Object> entry) {
                 ? 1
                 : 0);
         if (inputs != 1) {
-            return "give one of field (a field of the records), value (a constant), any_of, join, xpath or lookup";
+            return "give one of field (a field of the records), value (a constant), any_of, join, xpath, lookup or "
+                   + "pair (one pair of a name/value list, by its name)";
         }
         return null;
     }
@@ -186,6 +204,29 @@ public record Placement(Map<String, Object> entry) {
         return entry.get(FIELD) instanceof final String field && !field.isBlank()
                 ? field
                 : null;
+    }
+
+    /// @return Its pair, `{list, name}` (with `name_key` and `value_key` where given), or null for none.
+    public Map<String, Object> pair() {
+        return entry.get(PAIR) instanceof final Map<?, ?> given
+                ? JsonValues.mapOrEmpty(given)
+                : null;
+    }
+
+    /// @param nameKey  The list's items' key holding each pair's name.
+    /// @param valueKey The key holding its value.
+    /// @return It with its pair's keys (as the mapping's entry reads them, [stroom.ai.impl.tools.generation.ListPair]);
+    /// itself if it has no pair.
+    public Placement withPairKeys(final String nameKey, final String valueKey) {
+        if (pair() == null) {
+            return this;
+        }
+        final Map<String, Object> pair = new LinkedHashMap<>(pair());
+        pair.put("name_key", nameKey);
+        pair.put("value_key", valueKey);
+        final Map<String, Object> out = new LinkedHashMap<>(entry);
+        out.put(PAIR, pair);
+        return new Placement(out);
     }
 
     /// @return True if it is a repeated group (`for_each`).
@@ -319,6 +360,10 @@ public record Placement(Map<String, Object> entry) {
         }
         if (Boolean.TRUE.equals(entry.get("item"))) {
             return "the item";
+        }
+        if (entry.get(PAIR) != null) {
+            final Map<String, Object> pair = JsonValues.mapOrEmpty(entry.get(PAIR));
+            return pair.get("list") + "'s pair " + pair.get("name");
         }
         return entry.get("any_of") != null
                 ? "any of " + JsonValues.strings(entry.get("any_of"))

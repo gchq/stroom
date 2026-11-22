@@ -207,7 +207,10 @@ class TestCatalogueEventTypesTool {
         // Haiku went on past the softer wording in eval case 56).
         assertThat(String.valueOf(checked.get("hint"))).contains("Most fields of Delete-Records are kept as Data",
                 "check.typing.<TypeId>.could_type", "These fields should be typed",
-                "belongs in a placement, not in Data", "only what has no home stays as Data",
+                // One test (decided by the user 2026-11-23, chat 187): the element that means it.
+                "belongs in a placement at the element that means it", "the rest stay as Data",
+                "Never put a value in an element that means something else (e.g. a setting's value in a "
+                + "Description)", "a name/value list's pair by its name",
                 "E.g. catalogue_event_types proposals=[{\"op\": \"change\", \"type_id\": \"Delete-Records\", "
                 + "\"placements\": [{\"path\": ");
         // The set summary the user is shown is unchanged.

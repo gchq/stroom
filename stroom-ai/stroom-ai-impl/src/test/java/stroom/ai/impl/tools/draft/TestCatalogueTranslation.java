@@ -85,6 +85,19 @@ class TestCatalogueTranslation extends DraftFixtures {
             "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
             """;
 
+    // Inbox rules created, each with its parameters (a name/value list), as M365's audit log nests them.
+    private static final String RULES = """
+            {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "New-InboxRule", "UserId": "jo@acme.example", \
+            "Workload": "Exchange", "event": {"MailboxOwnerUPN": "jo@acme.example", \
+            "Parameters": [{"Name": "Name", "Value": "FW to personal"}, {"Name": "From", "Value": "a@b.example"}]}}
+            {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "New-InboxRule", "UserId": "al@acme.example", \
+            "Workload": "Exchange", "event": {"MailboxOwnerUPN": "al@acme.example", \
+            "Parameters": [{"Name": "Name", "Value": "Tidy"}, {"Name": "MoveToFolder", "Value": "Old"}]}}
+            {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "New-InboxRule", "UserId": "bo@acme.example", \
+            "Workload": "Exchange", "event": {"MailboxOwnerUPN": "bo@acme.example", \
+            "Parameters": [{"Name": "Name", "Value": "Junk"}, {"Name": "From", "Value": "c@d.example"}]}}
+            """;
+
     @Test
     void aRulePerWayOfRecognisingEachEventTypeInTheCataloguesOrderThenTheCatchAll() {
         final Map<String, Object> draft = draft(CODES, notes(List.of(
@@ -478,6 +491,32 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(dataNames(rules.get("view_folder"))).contains("FolderPath").doesNotContain("Size")
                 .doesNotHaveDuplicates();
         // Generates, but for the device these records don't name (the agent's to map).
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void aPairPlacedByItsNameIsATypedEntryAndTheListsOtherPairsAreDataPerPair() {
+        // Decided by the user 2026-11-23 (chat 187): the rule's name pair typed, the rest of its settings Data named
+        // by their pairs' names; a pair kept as Data too (also_data) written as its own named Data.
+        final Map<String, Object> create = type("Create-InboxRule", "Create inbox rule", "Create", null, null,
+                way(eq("Operation", "New-InboxRule")));
+        create.put("placements", List.of(
+                Map.of("path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name")),
+                Map.of("path", "Configuration/Description", "pair", Map.of("list", "event.Parameters", "name", "From"),
+                        "also_data", true)));
+        final Map<String, Object> draft = draft(RULES, notes(List.of(create), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("create_inboxrule").get("fields"));
+        final Map<String, Object> keys = Map.of("list", "event.Parameters", "name", "Name", "name_key", "Name",
+                "value_key", "Value");
+        assertThat(fields).anySatisfy(field -> assertThat(field)
+                .containsEntry("path", "EventDetail/Create/Configuration/Name").containsEntry("pair", keys));
+        assertThat(fields).anySatisfy(field -> assertThat(field).containsEntry("path", "EventDetail/Create/Data")
+                .containsEntry("pair", Map.of("list", "event.Parameters", "name_key", "Name", "value_key", "Value")));
+        assertThat(fields).anySatisfy(field -> assertThat(field).containsEntry("path", "EventDetail/Create/Data")
+                .containsEntry("data_name", "From"));
+        assertThat(dataNames(rules(draft).get("create_inboxrule"))).doesNotContain("event.Parameters");
         assertThat(generate(mappingOf(draft)).problems()).as("generates")
                 .allMatch(problem -> problem.contains("EventSource/Device is required"));
     }

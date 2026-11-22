@@ -3575,7 +3575,8 @@ from a SEG mail gateway's `recipients="a@x,b@y"`, each recipient wanted as one `
   `;`, found with `indexOf`; at most 50 pieces a value and 200 values looked at; each piece tested alone with short
   anchored patterns: mail, IPv4, integer, name/id/host token, all one kind) becomes a Data group splitting it, an
   inner Data per piece; a JSON key holding arrays of objects becomes an array Data group, a Data per scalar key (a key
-  holding an array is left out, as read whole its values would run together). Deeper levels stay as they were.
+  holding an array is left out, as read whole its values would run together), but a name/value list, which is a
+  Data per pair (Name/value lists, below). Deeper levels stay as they were.
 * **Index plans** (`GroupedFields`, applied by `draft_index_mapping` from the mapping kept with the translation that
   wrote the Events): two or more planned fields read from one group's element become, in Elasticsearch, one `object`
   field (not `nested`) whose description says a query on two of an item's fields can match values from different
@@ -3586,6 +3587,57 @@ from a SEG mail gateway's `recipients="a@x,b@y"`, each recipient wanted as one `
   array or zip, `as`, item and record reads, nested to the depth cap; built 2026-11-13); a loop of any other shape,
   or a field reading two items, is reported as not read, never guessed. With the mapping lost, `as` comes back in
   the generator's naming style.
+
+### Name/value lists (built 2026-11-23)
+
+A JSON array whose items are settings, each a name and its value (`event.Parameters: [{"Name": "From", "Value":
+"..."}, ...]`), is not a list of things the schema has an element for: chat 187 (qwen) typed each pair as a
+`View/Object` (Name the pair's name, Description its value) and `Create/Criteria`, schema-valid and wrong, as the
+typing check offered a for_each group for it and the hint said a field the schema "has a home for" belongs in a
+placement. Decided by the user:
+
+* **Detection by shape** (`NameValueLists`, sample package, used by the catalogue's check, the catalogue's
+  translation and the draft; no key names): every item an object of two keys; over the sample at least 2 lists hold
+  items; the name key's values are text, distinct within each list (one pair per name), mostly words or identifiers
+  (a letter, two characters at least: not a number or a one-letter code), at most half as many distinct as there are
+  items, and fewer distinct than the values; and the values vary by name (some name with two values, or some value
+  under two names: two keys naming one thing, a user's address and display name, are one to one). Where both keys
+  qualify, the one with fewer distinct values is the name, else the first. A list whose items share only the name's
+  key, each holding its value under a key of its own kind (`{"name": "IS_ADMIN", "boolValue": true}`,
+  `{"name": "GROUPS", "multiValue": ["a", "b"]}`), is one too (its value key `*`), each value a scalar or a list of
+  scalars. Pinned by the azure-audit samples: OperationProperties, Parameters, ExtendedProperties and
+  DeviceProperties are; Actor and Target (`{ID, Type}`, Type a numeric code), Body.Mentions (users) and
+  Folders.FolderItems (things, both keys all distinct) aren't. A three-key item (a name with its old and new values)
+  is never one (separate follow-up).
+* **Pair form** (`ListPair`, a mapping entry's `pair`): `{list, name, name_key, value_key}` reads one pair's value
+  (as the xpath `<list>/*[*[@key=K] = 'N']/*[@key=V]`, held in the entry's xpath, so every reader of xpaths sees it;
+  `value_key: "*"` reads the item's one other key, a list's values joined with `, `); without `name`, at a path ending
+  Data, it is a Data per pair (`<xsl:for-each>` over the pairs with a name and a value, each `<Data Name=<its name>
+  Value=<its value>>`), but the pairs the event's other entries (its rule's and the common ones) read by `pair` from
+  the same list (`TranslationMapping.withListPairsExcepted`): each pair written once, a Data entry reading one by name
+  keeping it as Data too (how `also_data` is written for a pair). JSON input only (the records' own lists, not JSON
+  held in a field); in groups refused. The mapping keeps the pair form (`toJson` writes `pair`, not its xpath).
+  Why a pair form, not `data_name_field` on a Data group: a Data group writes a container per item, and a per-pair
+  Data needs both its Name and Value from the item and the placed pairs left out, which one entry says and checks.
+* **Placements** take `{path, pair: {list, name}}`: the check (`PlacementCheck`) refuses a pair for another input, a
+  list no record has, one that isn't a name/value list, keys that aren't the items', or a name no pair has (naming
+  the names it has), fills in the keys, and checks the pair's values as a field's; a sample too small to tell the
+  list by shape (a list or two) reads it as the pair's name says (`NameValueLists.forPair`: two-key items, the key
+  holding that name its name key), and an event type with no sampled record has only the pair's form checked (eval
+  case 60's scope holds no inbox rule, its catalogue's pair kept from case 56); a `for_each` group over a
+  name/value list is refused with the pair form suggested, as is the list placed at a leaf.
+* **Typing check**: `could_type.arrays` lists a name/value list apart, `<list>: a name/value list; names: Name (198),
+  From (40), … N more` (items holding each name in the type's records, at most 10; names the type's placements read
+  left out), the group suggestion kept for arrays of things only.
+* **Draft**: `draft_translation_mapping` (`ListFields`) writes a name/value list's Data as a Data per pair under the
+  rule's action element, with a note naming the lists and their names (capped) and the pair form, for the agent to
+  place those whose names mean an element. A catalogue placement by pair becomes the rule's entry with its keys
+  (`CatalogueTranslation`); the list's Data per pair stays and leaves it out.
+* **Wording**: one test everywhere, "the element that means it", never "a home for": the hint (`SHOULD_BE_TYPED`),
+  the typing note, the example, the mapping guide, adding "never put a value in an element that means something else
+  (e.g. a setting's value in a Description)".
+* **Eval**: a typed entry's `not_typed` (`EvalScore`) lists texts no element outside Data may hold, cases 56 and 61
+  naming the pair names of OperationProperties and Parameters; their references read the lists by the pair form.
 
 ### Saxon limits (built)
 
@@ -4522,6 +4574,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | --- | --- | --- |
 | 2026-11-23 | A variable placed just in time (`XsltGenerator.justInTime`) is placed by the reads under its own parent only, so a loop's variable never leaves its loop: two groups in one element, each with the default loop variable `item`, took each other's reads and were both moved out of their loops, so each group read the record (seen in user test chat 187: `View/Folder/Id` held the record's Id, `View/Folder/Path` was never written, and `View/Object` from the operation's properties was alike) | Translation XSLT generation |
 | 2026-11-23 | Two fixes from chat 187 (qwen). (1) The workspace `jq` tool takes `slurp` (as jq -s: every JSON value in the file in one array, the query run once), and a query that fails on one value of a file holding several says how many it holds, which failed, that the query ran on each on its own, and to give `slurp: true` (seen: `group_by(.Operation)` and `[.[] \| select(...)]` on 600 fetched records saved one per line failed per record, and the agent gave up for grep). (2) write_documentation without `pipeline_uuid` or `index_uuid` continues the session's one documentation waiting for descriptions, as if named, its result saying so (`continued`); none or several waiting is refused, several each named (seen: a second round with `build` and `field_descriptions` only was refused). Rounds are otherwise unchanged. | TOOLS.md (jq, write_documentation) |
+| 2026-11-23 | Name/value lists (chat 187: each `{Name, Value}` pair typed as a View/Object, its value in Description): told by shape (`NameValueLists`: two-key items, a text name unique per list, words not codes, recurring, values varying by name; the varying-value-key variant too), never by key names; `could_type.arrays` lists them apart with their pairs' names (capped at 10); a placement and a mapping entry read one pair by name (`pair: {list, name}`, keys filled from the sample, checked), a group over one refused; the draft writes a Data per pair (`pair` without name) leaving out the pairs read elsewhere; "the element that means it" is the one test in the hint, note, example and guide; eval cases 56 and 61 check `not_typed`. | Name/value lists; TOOLS.md (catalogue_event_types, draft_translation_mapping) |
 | 2026-11-22 | A draft's other answers are the build's as its zone is: where records with no time or date take it from (`time_source`, `date_source`) and how many lines of a stack trace to keep (`continuation_lines`), given or answered, are kept in the build's record (`draft_choices`) and used by its redrafts without asking (found by the review of the zone fix: only the zone, the schema version and long values were kept, so these would be asked again on a redraft) | Translation mapping drafts |
 | 2026-11-22 | From mining the stored chats: the tool a result's `next.call` names has its group turned on at once, so it is offered from the next step (seen in chats 182 to 186: step_sample after create_pipeline, and others, refused as their group was off and called again, six calls); and each summary of earlier steps is kept in the question's debug detail, to see what the agent carried on from (seen in chat 186: after a summary the agent said it had stated results without reading them, and checked them again in some 15 calls) | Context management; tool groups |
 | 2026-11-22 | Two fixes from stored chats 184-186 (Haiku), where the model queried saved workspace files blindly. (1) read_document's kept mapping saved to `/documents/<uuid>/mapping.json` as too large says the file's layout, made from the object saved (`SavedJsonLayout`: top-level keys, each nested object's parts by path, lists' sizes and items' keys, and a jq query that works on it, e.g. `.mapping.events[] \| {name, fields: [.fields[] \| .path]}`), as the mapping is under `.mapping` there, not at the top level as in a draft's file (seen: some 15 jq queries of `.events[]` and `.common[]`, eight failing or empty); the translation, pipeline and survey sections saved as too large say theirs too. (2) build_translation_xslt's large result names each rule's first 12 Data (`data_names`, then `… N more`) beside their count, and its outline says them in each rule's line (12, else 6 or 3, else counted only, to fit), its warnings now outlined before its rules so that the room their examples took is left for the names (seen: 13 reads of the saved result for which fields each rule kept as Data). | TOOLS.md (read_document kept mapping, build_translation_xslt large result) |

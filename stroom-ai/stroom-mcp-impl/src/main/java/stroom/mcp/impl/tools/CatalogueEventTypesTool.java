@@ -163,11 +163,14 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String ASKED_BY = "asked_by";
     private static final String DIGEST = "digest";
     private static final String AMENDED = "amended";
-    // What the agent is told of fields kept as Data that the schema has homes for (asked for by the user
-    // 2026-11-22: worded more strongly, with an example of the call).
-    private static final String SHOULD_BE_TYPED = "These fields should be typed: each one the schema has a home for "
-                                                  + "belongs in a placement, not in Data, from what you know of the "
-                                                  + "source; only what has no home stays as Data. ";
+    // What the agent is told of fields kept as Data whose meaning an element carries (asked for by the user
+    // 2026-11-22: worded more strongly, with an example of the call; 2026-11-23, chat 187: one test, the element that
+    // means it, as a setting's value was put in a Description the schema "had a home for").
+    private static final String SHOULD_BE_TYPED = "These fields should be typed: each one whose meaning an element "
+                                                  + "carries belongs in a placement at the element that means it, "
+                                                  + "from what you know of the source; the rest stay as Data. Never "
+                                                  + "put a value in an element that means something else (e.g. a "
+                                                  + "setting's value in a Description). ";
     private static final String STREAMS = "streams";
     // What the proposals changed since the set was shown (the user's amendments, from the form or the chat), kept
     // until the set is confirmed: the amended event types are worth a look when it is shown again.
@@ -667,8 +670,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                      + (couldType.size() > 5
                     ? " (and " + (couldType.size() - 5) + " more)"
                     : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, the schema's "
-                     + "elements below the action element and in EventSource, and the arrays of objects a for_each "
-                     + "group could type; the schema's elements every one of them has open said once, in "
+                     + "elements below the action element and in EventSource, the arrays of objects a for_each "
+                     + "group could type, and the name/value lists with their pairs' names; the schema's elements "
+                     + "every one of them has open said once, in "
                      + "check." + CatalogueCheckResult.COULD_TYPE_ALL + "). " + SHOULD_BE_TYPED
                      + typingExample(couldType.getFirst()));
         }
@@ -1794,7 +1798,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return "E.g. " + NAME + " proposals=[{\"op\": \"change\", \"type_id\": \"" + typeId + "\", "
                + "\"placements\": [{\"path\": \"Folder/Path\", \"field\": \"<the field holding the folder's "
                + "path>\"}]}] (the path below the action element, or from EventSource/ as EventSource/Client/Name, one "
-               + "placement per field with a home).";
+               + "placement per field, at the element that means it; a name/value list's pair by its name, "
+               + "{\"path\": \"Configuration/Name\", \"pair\": {\"list\": \"<the list>\", \"name\": \"<the "
+               + "pair's name>\"}}).";
     }
 
     // The confirmation's marks cleared (no set shown or amended), the streams kept.

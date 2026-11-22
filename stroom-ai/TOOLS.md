@@ -3770,8 +3770,16 @@ the catalogue is never sent whole. `change` gives only the keys that change. An 
 below `event_detail`, or (2026-11-22) from `EventSource/`, e.g. `{path: "EventSource/Client/Name", field:
 "event.ClientInfoString"}`, written in the event type's rule, not in common, with `field`, a constant `value`, `any_of`, `join`, an `xpath` or a `lookup` (2026-11-22: an
 element the schema requires is often read by an xpath, e.g. a value out of an array of name/value pairs; `data_name`
-and `data_parent` stay refused), the mapping's `transform`, `time_format`, `timezone`, `map`, `default`, `repeat`, or
-a `for_each` group with `fields`; `also_data: true` keeps the field as Data too; a `change`
+and `data_parent` stay refused), or (2026-11-23) a `pair` of a name/value list read by its name, `{path:
+"Configuration/Name", pair: {list: "event.Parameters", name: "Name"}}` (the list told by shape, `NameValueLists`;
+the tool fills the items' `name_key` and `value_key` from the sample, and refuses a list that isn't one, a key that
+isn't the items', or a name no pair has, naming the names it has; the pair's values are checked as a field's are;
+a sample too small to tell the list by shape reads it as the pair's name says, and an event type with no sampled
+record has only the pair's form checked),
+the mapping's `transform`, `time_format`, `timezone`, `map`, `default`, `repeat`, or
+a `for_each` group with `fields` (refused over a name/value list, 2026-11-23: each setting would be one element, its
+value in an element meaning something else, as chat 187 wrote View/Object Name=MailAccessType, Description=Bind;
+the pair form is suggested); `also_data: true` keeps the field (a pair: as a Data of its name) as Data too; a `change`
 giving `placements` replaces the list), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
 when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`, `documentation`), `confidence`
 (high, medium, low), `one_type_because` and, optionally, `doubt` (why the agent is unsure of it: said to the user
@@ -3865,15 +3873,23 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   `arrays` (2026-11-22, chat 184: TeamMemberAdded's members, each with UPN and DisplayName, stayed Data), the fields
   of `data` whose values are arrays of objects, each with its items' keys (at most 4, 6 keys each), the first saying a
   `for_each` group on an element the schema repeats types each (`event.Members: items with UPN, DisplayName, Role —
-  a for_each group on an element the schema repeats types each`). Where two or more event types have a
+  a for_each group on an element the schema repeats types each`); a name/value list (2026-11-23) listed after them,
+  apart, with its pairs' names and how many of the type's items hold each (at most 10, `… N more`; those the type's
+  placements read left out), the first saying its pairs are Data named by their names, a pair whose name means an
+  element placed by name (`event.Parameters: a name/value list; names: Name (30), SubjectContainsWords (30), … —
+  its pairs are Data, each named by its pair's name; a pair whose name means an element goes there by name, e.g.
+  {path: 'Configuration/Name', pair: {list: '<list>', name: '<name>'}}`). A list field placed at a leaf is refused
+  with the pair form suggested where it is a name/value list (else a group or an xpath, as before). Where two or more event types have a
   `could_type`, the `schema` entries every one of them has (e.g. EventSource's and the Outcome's) are said once, in
   the compact check's `could_type_all` (`schema`, and `said`), and left out of each one's `schema` (dropped where
   nothing else is left); the listing saved whole keeps each event type's as it is (2026-11-22, seen in chats 184 to
   186: some 370 characters of the same homes in each of 7 event types, and the typing cut in the chat's stub 29
-  times). The hint says these fields should be typed (each one the schema has a home
-  for belongs in a placement, not in Data, from what the agent knows of the source; only what has no home stays as
-  Data), with an example call for the first such event type; nothing is refused or paused, and no field is matched
-  to an element by its name.
+  times). The hint says these fields should be typed (2026-11-23, one test everywhere: each one whose meaning an
+  element carries belongs in a placement at the element that means it, from what the agent knows of the source; the
+  rest stay as Data; never a value in an element that means something else, e.g. a setting's value in a
+  Description), with an example call for the first such event type (and the pair form); the note itself says
+  "place each whose meaning an element carries at the element that means it"; nothing is refused or paused, and no
+  field is matched to an element by its name.
 * `order`: the catalogue's.
 
 **Storage.** The catalogue is the source notes' JSON block (`event_types`, `catch_all` with its `status` and
@@ -5223,6 +5239,13 @@ the leaf elements below EventSource and the rule's action element (from the sche
 place each in the element that means it before building (asked for by the user: Netskope's city, coordinates, URL,
 method and status code stayed Data until the user asked); the mapping guide says the same, for EventSource as well
 as the action element. No field names are matched in code: the agent decides.
+A name/value list (2026-11-23, told by shape, `NameValueLists`: see DESIGN.md, Name/value lists) is drafted as a
+Data per pair, `{"path": "EventDetail/<action>/Data", "pair": {"list": "event.Parameters", "name_key": "Name",
+"value_key": "Value"}}` (each Data named by its pair's name, holding its value), not a Data group of Name and Value
+Data, with a note naming each list and its names (at most 10) and the pair form, `{"path": ..., "pair": {"list":
+..., "name": "<its name>", "name_key": ..., "value_key": ...}}`, for the pairs whose names mean an element; a pair
+read so is left out of the list's Data per pair. A mapping entry's `pair` is JSON input only, outside groups, and
+names both keys (`value_key: "*"` for items holding their values under keys of their own).
 Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
 (1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Before
 cataloguing, a naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values,

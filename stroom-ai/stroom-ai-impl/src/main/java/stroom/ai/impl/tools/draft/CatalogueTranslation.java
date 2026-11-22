@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.tools.sample.NameValueLists;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -433,7 +434,13 @@ final class CatalogueTranslation {
                         : "affected '" + placement.field() + "'") + " isn't a field of the records");
                 continue;
             }
-            final Map<String, Object> entry = placement.mappingEntry(detail);
+            final Placement keyed = withPairKeys(placement);
+            if (keyed == null) {
+                unread.add(typeId + ": placement '" + placement.path() + "' reads a pair of '"
+                           + placement.pair().get("list") + "', which isn't a name/value list of the records");
+                continue;
+            }
+            final Map<String, Object> entry = keyed.mappingEntry(detail);
             final Set<String> inputs = placement.inputs();
             // Another placement of the same field is kept: a field may be typed in two places.
             fields.removeIf(existing -> {
@@ -445,11 +452,28 @@ final class CatalogueTranslation {
             });
             fields.add(entry);
             written.add(entry);
+            if (keyed.pair() != null && placement.alsoData()) {
+                // The pair kept as Data too, named by its name: the list's Data per pair leaves it out.
+                fields.add(entry(PATH, prefix + "Data", DATA_NAME, ToolText.str(keyed.pair().get(NAME)), "pair",
+                        keyed.pair()));
+            }
             if (!placement.alsoData()) {
                 placed.addAll(inputs);
             }
         }
         return placed;
+    }
+
+    // A placement with its pair's keys as the records' list has them (the mapping's entry names them); as it is
+    // without a pair; null where the list isn't a name/value list of the records.
+    private Placement withPairKeys(final Placement placement) {
+        if (placement.pair() == null) {
+            return placement;
+        }
+        return NameValueLists.forPair(values.getOrDefault(ToolText.str(placement.pair().get("list")), List.of()),
+                        ToolText.str(placement.pair().get(NAME)))
+                .map(pairs -> placement.withPairKeys(pairs.nameKey(), pairs.valueKey()))
+                .orElse(null);
     }
 
     // The paths the entries write.

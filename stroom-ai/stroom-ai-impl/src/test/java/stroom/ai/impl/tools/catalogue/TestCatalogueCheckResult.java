@@ -161,8 +161,8 @@ class TestCatalogueCheckResult {
         final List<String> arrays = List.of("event.Item.AttachmentDetails: items with Name, ContentType, "
                                             + "SizeInBytes — a for_each group on an element the schema repeats "
                                             + "types each");
-        return new Typing(0, 26, Map.of(), "most of its fields are kept as Data (26 of 26; typed: 0): placements "
-                                           + "would type those the schema has homes for",
+        return new Typing(0, 26, Map.of(), "most of its fields are kept as Data (26 of 26; typed: 0): place each "
+                                           + "whose meaning an element carries at the element that means it",
                 new CouldType(data, homes, arrays));
     }
 }

@@ -289,6 +289,10 @@
   "fields": {
    "description": "A group's fields: entries with paths relative to the group's element, read from each item (a key with field, the item with item: true, the record with scope: record); groups may nest, 16 deep at most.",
    "model": "FieldMapping"
+  },
+  "pair": {
+   "description": "JSON input: one pair of a name/value list (items each a setting's name and its value) read by its name; without name, at a path ending Data, a Data per pair named by its pair's name, but those the event's other entries read by pair.",
+   "model": "ListPair"
   }
  },
  "Lookup": {
@@ -468,6 +472,24 @@
   },
   "name": {
    "description": "With lookup: an item's name, e.g. '@Name'.",
+   "model": null
+  }
+ },
+ "ListPair": {
+  "list": {
+   "description": "The list field, e.g. 'event.Parameters'.",
+   "model": null
+  },
+  "name": {
+   "description": "The pair read, by its name, e.g. 'Name'; omit for a Data per pair.",
+   "model": null
+  },
+  "name_key": {
+   "description": "The items' key holding each pair's name, e.g. 'Name'.",
+   "model": null
+  },
+  "value_key": {
+   "description": "The items' key holding its value, e.g. 'Value'; '*' where each item holds it under a key of its own (value, boolValue, multiValue...).",
    "model": null
   }
  }

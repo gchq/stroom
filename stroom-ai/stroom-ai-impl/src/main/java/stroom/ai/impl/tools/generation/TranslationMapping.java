@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /// A translation mapping: which input field (or constant) goes to which event-logging path, per kind of event,
 /// from which [XsltGenerator] writes the translation XSLT. Its JSON is kept in the XSLT doc's description, so its
@@ -172,7 +173,69 @@ public record TranslationMapping(String input,
             fields.valueError(catchAllProblem);
             return null;
         }
-        return mapping.withPairsAsExtract().withDataNamesInStyle();
+        final String pairProblem = mapping.listPairProblem();
+        if (pairProblem != null) {
+            fields.valueError(pairProblem);
+            return null;
+        }
+        return mapping.withPairsAsExtract().withDataNamesInStyle().withListPairsExcepted();
+    }
+
+    // A pair (ListPair) reads a list of the JSON input's records: not another input's, nor JSON a field holds as
+    // text. Null when every pair does.
+    private String listPairProblem() {
+        final List<FieldMapping> entries = new ArrayList<>(common);
+        events.forEach(rule -> entries.addAll(rule.fields()));
+        for (final FieldMapping entry : entries) {
+            final ListPair pair = entry.pair();
+            if (pair == null) {
+                continue;
+            }
+            if (!"json".equals(input)) {
+                return "'" + entry.path() + "': pair reads a name/value list of a JSON input's records; this "
+                       + "mapping's input is " + input + ": read the pair with an xpath";
+            }
+            if (MappingFacts.heldJsonField(jsonFields, pair.list()) != null || jsonFields.contains(pair.list())) {
+                return "'" + entry.path() + "': pair reads a list of the records themselves, and " + pair.list()
+                       + " is in JSON a field holds as text (json_fields): read the pair with an xpath over "
+                       + "json-to-xml()";
+            }
+        }
+        return null;
+    }
+
+    // Each Data per pair (ListPair) without the pairs its event's other entries (its rule's and the common ones)
+    // read from the same list by name: each pair written once (decided by the user 2026-11-23).
+    private TranslationMapping withListPairsExcepted() {
+        final boolean any = Stream.concat(common.stream(), events.stream().flatMap(rule -> rule.fields().stream()))
+                .anyMatch(FieldMapping::dataPerPair);
+        if (!any) {
+            return this;
+        }
+        final List<EventRule> rules = events.stream()
+                .map(rule -> rule.withFields(excepted(rule.fields(), rule.fields())))
+                .toList();
+        return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
+                extract, forEach, nilValues, dropWhen, excepted(common, List.of()), rules, unmatched,
+                ignoredFields, logUnmappedFields, style, imports, shared, functions, module, seenSourceTypes);
+    }
+
+    private List<FieldMapping> excepted(final List<FieldMapping> entries, final List<FieldMapping> others) {
+        final List<FieldMapping> all = new ArrayList<>(common);
+        all.addAll(others);
+        return entries.stream()
+                .map(entry -> {
+                    if (!entry.dataPerPair()) {
+                        return entry;
+                    }
+                    final Set<String> read = new LinkedHashSet<>();
+                    all.stream()
+                            .filter(other -> other.pair() != null && !other.dataPerPair()
+                                             && other.pair().list().equals(entry.pair().list()))
+                            .forEach(other -> read.add(other.pair().name()));
+                    return entry.withPairsExcept(read);
+                })
+                .toList();
     }
 
     // The catch-all rule (catch_all) is one at most, and last: it takes what every rule before it leaves. A line

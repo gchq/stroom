@@ -29,6 +29,8 @@ import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.JsonFieldNames;
+import stroom.ai.impl.tools.sample.NameValueLists;
+import stroom.ai.impl.tools.sample.NameValueLists.NameValueList;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -43,12 +45,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -63,7 +67,9 @@ import java.util.regex.Pattern;
 ///   the record fields it may have meant (by its last name, then by spelling); a field holding several values in a
 ///   record placed where one goes, without `repeat` or `for_each`, or a `for_each` writing an element the schema
 ///   has once; values that, converted as the translation converts them (transform, map, default, time_format), the
-///   element's type, values or pattern refuse, named with the fix.
+///   element's type, values or pattern refuse, named with the fix; a pair (2026-11-23) of a list that isn't a
+///   name/value list ([NameValueLists]) or has no pair of its name (naming those it has), and a for_each group over a
+///   name/value list (each setting would be one element, its value in an element meaning something else).
 /// * **Not checked** (said, never refused): the values of a placement read by an xpath or a lookup (2026-11-22),
 ///   which only the translation reads; its path, and a lookup's key field, are checked as the others are.
 /// * **Unplaced** (refuses confirmation, never proposals): an element the schema requires of the action element (or
@@ -134,6 +140,8 @@ final class PlacementCheck {
     private final List<CatalogueCheck.Drafted.Rule> rules;
     private final Function<List<Condition>, BitSet> recognises;
     private List<BitSet> byRule;
+    // Each list field told a name/value list (or not), over every record holding it.
+    private final Map<String, Optional<NameValueList>> nameValueLists = new HashMap<>();
 
     /// @param schema    The event-logging schema.
     /// @param index     The scope's records.
@@ -341,7 +349,15 @@ final class PlacementCheck {
                          + "'EventSource/Client/Name')");
             return;
         }
-        final String form = formProblem(placement, detail);
+        if (placement.pair() != null && !recognised.isEmpty()) {
+            // No sampled record of it: its pair's list can't be looked for here (its form is checked).
+            final String pairProblem = pairProblem(placement);
+            if (pairProblem != null) {
+                problems.add(said + ": " + pairProblem);
+                return;
+            }
+        }
+        final String form = formProblem(completed(placement), detail);
         if (form != null) {
             problems.add(said + ": " + form);
             return;
@@ -387,6 +403,11 @@ final class PlacementCheck {
             return;
         }
         if (placement.group()) {
+            final String pairs = groupOfPairsProblem(below, placement);
+            if (pairs != null) {
+                problems.add(said + ": " + pairs);
+                return;
+            }
             final String items = groupItemsProblem(below, placement, recognised);
             if (items != null) {
                 problems.add(said + ": " + items);
@@ -493,6 +514,14 @@ final class PlacementCheck {
         final ItemKeys found = itemKeys(field, recognised, false);
         if (found == null) {
             return null;
+        }
+        final Optional<NameValueList> pairs = nameValueList(field);
+        if (pairs.isPresent()) {
+            return field + " is a name/value list (" + namesSaid(pairs.get().names()) + "): " + below + " takes one "
+                   + "value, so each pair would be written as its name and value run together: read the pair whose "
+                   + "name means " + below + " by its name, e.g. {path: '" + below + "', pair: {list: '" + field
+                   + "', name: '" + pairs.get().names().keySet().iterator().next() + "'}}, or leave it as Data (a "
+                   + "Data per pair, each named by its pair's name)";
         }
         final Map<?, ?> first = found.first();
         final List<String> named = found.keys();
@@ -729,6 +758,8 @@ final class PlacementCheck {
             values = values(placement.field(), recognised, JsonValues.truthy(entry.get("repeat")));
         } else if (entry.get("any_of") != null) {
             values = anyOf(JsonValues.strings(entry.get("any_of")), recognised);
+        } else if (placement.pair() != null) {
+            values = pairValues(placement, recognised);
         } else {
             // A join's parts each a value of its own, an xpath's and a lookup's values the translation's: not read
             // here.
@@ -1124,7 +1155,13 @@ final class PlacementCheck {
             return null;
         }
         final Set<String> typed = new LinkedHashSet<>();
-        type.allPlacements().forEach(placement -> typed.addAll(placement.inputs()));
+        type.allPlacements().forEach(placement -> {
+            typed.addAll(placement.inputs());
+            if (placement.pair() != null) {
+                // One pair of a list typed: counted as a field typed, the list's other pairs still Data.
+                typed.add(placement.pair().get("list") + " (" + placement.pair().get("name") + ")");
+            }
+        });
         if (NullSafe.isNonBlankString(type.actor())) {
             typed.add(type.actor());
         }
@@ -1149,12 +1186,12 @@ final class PlacementCheck {
         final String note = data.size() >= DATA_FIELDS_NOTED && total > 0
                             && (double) data.size() / total >= DATA_SHARE_NOTED
                 ? "most of its fields are kept as Data (" + data.size() + " of " + total + "; typed: "
-                  + typedCount + "): placements would type those the schema has homes for"
+                  + typedCount + "): place each whose meaning an element carries at the element that means it"
                 : null;
         final CouldType couldType = note == null
                 ? null
                 : new CouldType(dataFields(data, codes, recognised), homes(detail, written, sourceWritten),
-                        arraysOfObjects(data, codes, recognised));
+                        arraysOfObjects(type, data, codes, recognised));
         return new Typing(typedCount, data.size(), fill, note, couldType);
     }
 
@@ -1194,10 +1231,18 @@ final class PlacementCheck {
 
     // The fields kept as Data whose values are arrays of objects, each with its items' keys (capped): a for_each
     // group types each item where the schema repeats an element for it. Chat 184: TeamMemberAdded's members, each
-    // with UPN and DisplayName, stayed Data, as nothing said a group could type them.
-    private List<String> arraysOfObjects(final Set<String> data, final Set<String> codes, final BitSet recognised) {
+    // with UPN and DisplayName, stayed Data, as nothing said a group could type them. A name/value list is listed
+    // apart, with its pairs' names (2026-11-23, chat 187: each {Name, Value} pair written as a View/Object, its value
+    // in Description, as the group suggestion said each item could be typed): its pairs are Data, each named by its
+    // pair's name, but those whose names mean an element, read by the pair form.
+    private List<String> arraysOfObjects(final EventType type,
+                                         final Set<String> data,
+                                         final Set<String> codes,
+                                         final BitSet recognised) {
         final List<String> out = new ArrayList<>();
+        final List<String> pairLists = new ArrayList<>();
         int found = 0;
+        boolean groupSaid = false;
         for (final String field : data) {
             if (codes.contains(field)) {
                 continue;
@@ -1207,16 +1252,173 @@ final class PlacementCheck {
                 continue;
             }
             found++;
-            if (out.size() < ARRAYS_SHOWN) {
-                out.add(field + ": items with " + cappedTo(items.keys(), ITEM_KEYS_SHOWN) + (out.isEmpty()
-                        ? " — a for_each group on an element the schema repeats types each"
-                        : ""));
+            if (out.size() + pairLists.size() >= ARRAYS_SHOWN) {
+                continue;
             }
+            final Optional<NameValueList> pairs = nameValueList(field);
+            if (pairs.isPresent()) {
+                final Map<String, Integer> names = new LinkedHashMap<>(NameValueLists.namesIn(heldBy(field,
+                        recognised), pairs.get().nameKey()));
+                placedPairs(type, field).forEach(names::remove);
+                if (!names.isEmpty()) {
+                    pairLists.add(field + ": a name/value list; names: " + namesSaid(names));
+                }
+                continue;
+            }
+            out.add(field + ": items with " + cappedTo(items.keys(), ITEM_KEYS_SHOWN) + (groupSaid
+                    ? ""
+                    : " — a for_each group on an element the schema repeats types each"));
+            groupSaid = true;
+        }
+        if (!pairLists.isEmpty()) {
+            pairLists.set(0, pairLists.getFirst() + " — its pairs are Data, each named by its pair's name; a pair "
+                             + "whose name means an element goes there by name, e.g. {path: 'Configuration/Name', "
+                             + "pair: {list: '<list>', name: '<name>'}}");
+            out.addAll(pairLists);
         }
         if (found > ARRAYS_SHOWN) {
             out.add("… " + (found - ARRAYS_SHOWN) + " more");
         }
         return out;
+    }
+
+    // The names of a list's pairs the event type's placements read.
+    private static List<String> placedPairs(final EventType type, final String field) {
+        return type.allPlacements().stream()
+                .map(Placement::pair)
+                .filter(pair -> pair != null && field.equals(pair.get("list")))
+                .map(pair -> ToolText.str(pair.get("name")))
+                .toList();
+    }
+
+    private static String namesSaid(final Map<String, Integer> names) {
+        return NameValueLists.said(names, NameValueLists.NAMES_SHOWN);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Pairs of name/value lists
+
+    // A field told a name/value list over every record holding it, or empty.
+    private Optional<NameValueList> nameValueList(final String field) {
+        return nameValueLists.computeIfAbsent(field, key -> {
+            final BitSet all = new BitSet();
+            all.set(0, index.sample().records().size());
+            return NameValueLists.detect(heldBy(key, all));
+        });
+    }
+
+    // The field's values in the records given (those holding it).
+    private List<Object> heldBy(final String field, final BitSet recognised) {
+        final List<Object> records = index.sample().records();
+        final List<Object> out = new ArrayList<>();
+        for (int n = recognised.nextSetBit(0); n >= 0 && n < records.size(); n = recognised.nextSetBit(n + 1)) {
+            if (records.get(n) instanceof final Map<?, ?> record && record.get(field) != null) {
+                out.add(record.get(field));
+            }
+        }
+        return out;
+    }
+
+    // Why a placement's pair can't be read: the input isn't JSON's own, the list no record has, isn't a name/value
+    // list, its keys aren't the items', or no pair has the name. Null when it reads.
+    private String pairProblem(final Placement placement) {
+        final Map<String, Object> pair = placement.pair();
+        final String list = ToolText.str(pair.get("list"));
+        final String name = ToolText.str(pair.get("name"));
+        final TranslationMapping reading = index.sample().reading();
+        if (!"json".equals(reading.input()) || NullSafe.list(reading.jsonFields()).stream()
+                .anyMatch(held -> list.equals(held) || list.startsWith(held + "."))) {
+            return "pair reads a name/value list of a JSON input's records; " + list + " isn't one (read a value "
+                   + "of it with an xpath)";
+        }
+        if (!index.untold(list) && !index.anyHas(list)) {
+            return nearest(list);
+        }
+        final Optional<NameValueList> found = pairList(list, name);
+        if (found.isEmpty()) {
+            return list + " isn't a name/value list holding a pair named '" + name + "' (its items aren't each a "
+                   + "name and its value): place its items with a for_each group, or read one with an xpath";
+        }
+        final NameValueList pairs = found.get();
+        final Object nameKey = pair.get("name_key");
+        final Object valueKey = pair.get("value_key");
+        if (nameKey != null && !pairs.nameKey().equals(nameKey) || valueKey != null && !pairs.valueKey().equals(
+                valueKey)) {
+            return list + "'s pairs are named by " + pairs.nameKey() + " and hold their values in "
+                   + pairs.valueKey() + ": give those as name_key and value_key, or leave them out";
+        }
+        if (!pairs.names().containsKey(name)) {
+            final List<String> close = CloseMatches.closeMatches(name, pairs.names().keySet(), SHOWN,
+                    CloseMatches.DEFAULT_CUTOFF);
+            return list + " has no pair named '" + name + "' in the sample" + (close.isEmpty()
+                    ? ""
+                    : " (did you mean " + String.join(", ", close) + "?)") + "; its names: "
+                   + namesSaid(pairs.names());
+        }
+        return null;
+    }
+
+    // The list a pair by its name reads: told by shape, else (a sample too small to tell) by its name.
+    private Optional<NameValueList> pairList(final String list, final String name) {
+        final Optional<NameValueList> told = nameValueList(list);
+        if (told.isPresent()) {
+            return told;
+        }
+        final BitSet all = new BitSet();
+        all.set(0, index.sample().records().size());
+        return NameValueLists.forPair(heldBy(list, all), name);
+    }
+
+    // The placement with its pair's keys, as the list's items have them (as given where they can't be read here: no
+    // record holds the list, the form alone checked, with stand-in keys where none are given).
+    private Placement completed(final Placement placement) {
+        final Map<String, Object> pair = placement.pair();
+        if (pair == null) {
+            return placement;
+        }
+        return pairList(ToolText.str(pair.get("list")), ToolText.str(pair.get("name")))
+                .map(pairs -> placement.withPairKeys(pairs.nameKey(), pairs.valueKey()))
+                .orElseGet(() -> placement.withPairKeys(Objects.toString(pair.get("name_key"), "name"),
+                        Objects.toString(pair.get("value_key"), "value")));
+    }
+
+    // A for_each group over a name/value list: why it is refused, or null. Chat 187: each {Name, Value} pair written
+    // as a View/Object, Name the pair's name and Description its value, a setting's value in an element meaning
+    // something else.
+    private String groupOfPairsProblem(final String below, final Placement placement) {
+        final Object array = JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array");
+        if (!(array instanceof final String field) || field.isBlank()) {
+            return null;
+        }
+        return nameValueList(field)
+                .map(pairs -> field + " is a name/value list (" + namesSaid(pairs.names()) + "): each item is a "
+                              + "setting, named by its " + pairs.nameKey() + ", not one thing " + below + " means, "
+                              + "so a group would put each setting's value in an element meaning something else. "
+                              + "Read the pair whose name means an element by its name, e.g. {path: '<element>', "
+                              + "pair: {list: '" + field + "', name: '" + pairs.names().keySet().iterator().next()
+                              + "'}}; the other pairs are Data, each named by its pair's name")
+                .orElse(null);
+    }
+
+    // The values of a placement's pair in the records given.
+    private List<String> pairValues(final Placement placement, final BitSet recognised) {
+        final String list = ToolText.str(placement.pair().get("list"));
+        final String name = ToolText.str(placement.pair().get("name"));
+        final Optional<NameValueList> found = pairList(list, name);
+        if (found.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> out = new LinkedHashSet<>();
+        for (final Object value : heldBy(list, recognised)) {
+            for (final Map<?, ?> item : objects(value)) {
+                final String held = NameValueLists.valueOf(item, found.get().nameKey(), found.get().valueKey());
+                if (name.equals(item.get(found.get().nameKey())) && held != null && !held.isBlank()
+                    && !nil.contains(ToolText.strip(held)) && out.size() < VALUES_READ) {
+                    out.add(held);
+                }
+            }
+        }
+        return List.copyOf(out);
     }
 
     // The share of all the source's records (every event type's) that hold a value of the field.

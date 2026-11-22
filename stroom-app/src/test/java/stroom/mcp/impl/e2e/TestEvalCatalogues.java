@@ -134,12 +134,13 @@ class TestEvalCatalogues {
 
     @Test
     void anEventTypesPlacementsAreItsRulesTypedEntriesBelowItsDetailAndTheCommonOnes() {
-        // The inbox rule's Name read by an xpath; Data, the TypeId, the Description and the fixed Action aside.
+        // The inbox rule's Name read by its pair; Data, the TypeId, the Description and the fixed Action aside.
         assertThat((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Create-InboxRule")
                 .get("placements")).containsExactly(
                 Map.of("path", "Configuration/Type", "value", "Inbox rule"),
-                Map.of("path", "Configuration/Name", "xpath",
-                        "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']"),
+                // One pair of a name/value list read by its name (2026-11-23).
+                Map.of("path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name",
+                        "name_key", "Name", "value_key", "Value")),
                 Map.of("path", "User/EmailAddress", "field", "event.MailboxOwnerUPN"));
         // A group kept with its fields.
         assertThat((List<Map<String, Object>>) type("56_jsonl_azure_audit_aggregated", "Send-Mail")
