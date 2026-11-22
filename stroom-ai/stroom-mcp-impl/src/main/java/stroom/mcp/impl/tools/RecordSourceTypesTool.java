@@ -304,7 +304,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             return proposed.early();
         }
         // The registry's translated and placed rows are kept unless removed; changing or removing one is the user's.
-        final Edits edits = edits(call, context, proposed.rows(), before);
+        final Edits edits = inRegistryOrder(edits(call, context, proposed.rows(), before), before);
         final Rows rows = new Rows(edits.rows(), null);
         final List<String> problems = SourceTypeRows.problems(rows.rows(), values.keySet(),
                 SourceTypeReading.partsOf(field));
@@ -343,7 +343,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         // the group's name and for the per-source-type settings).
         final Optional<Map<String, Object>> recorded = recordedScope(build, before, sources);
         if (recorded.isPresent() && edits.rows().equals(SourceTypeRegistry.rows(before))
-            && stringListArg(call, REMOVE_ARG).isEmpty() && stringListArg(call, DROPPED_ARG).isEmpty()
+            && stringListArg(call, REMOVE_ARG).isEmpty() && droppedAlready(call, before)
             && keepsSourceTypes(call, registry, recorded.get())) {
             return kept(call, context, new Recorded(build, feed, field, existing, surveyDoc, survey, sources),
                     registry, recorded.get(), table);
@@ -498,15 +498,41 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 .findFirst();
     }
 
-    // The group the call names: the recorded one where it names none, an existing group's own name where it names
-    // one (any case), else as given.
+    // The group the call names: the recorded one where it names none, or names it in another case (no rename for
+    // the user to confirm); an existing group's own name where it names one (any case); else as given.
     private String namedGroup(final ToolCall call,
                               final Map<String, Object> registry,
                               final String recorded) {
         final String given = NullSafe.string(stringArg(call, GROUP_ARG)).strip();
-        return given.isEmpty() || given.equals(recorded)
+        return given.isEmpty() || given.equalsIgnoreCase(recorded)
                 ? recorded
                 : groupNamed(registryGroups(registry), given);
+    }
+
+    // The rows in the registry's order where they are its own rows in another, each matching a value exactly (or
+    // none): the order only says which row a record is where rows overlap (patterns, list items), so a call giving
+    // them in another order is no change (seen in chat 182: the agent gave back the rows of the user's group, and
+    // was shown the table and the scope form again, answered the same).
+    private static Edits inRegistryOrder(final Edits edits, final Map<String, Object> before) {
+        final List<SourceTypeRows.Row> registered = SourceTypeRegistry.rows(before);
+        final boolean exact = edits.rows().stream()
+                .allMatch(row -> SourceTypeRows.VALUE.equals(row.match()) || SourceTypeRows.NONE.equals(row.match()));
+        if (!exact || edits.rows().size() != registered.size()
+            || !new LinkedHashSet<>(edits.rows()).equals(new LinkedHashSet<>(registered))) {
+            return edits;
+        }
+        return new Edits(registered, edits.confirmations());
+    }
+
+    // Whether every source type the call drops is one the registry has dropped already (any case): the user's
+    // choice given again, not a change; true when it drops none.
+    private static boolean droppedAlready(final ToolCall call, final Map<String, Object> before) {
+        final Set<String> dropped = JsonValues.maps(before.get("rows")).stream()
+                .filter(row -> SourceTypeRegistry.DROPPED.equals(row.get("status")))
+                .map(row -> JsonValues.text(row.get("name")).toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+        return stringListArg(call, DROPPED_ARG).stream()
+                .allMatch(name -> dropped.contains(name.strip().toLowerCase(Locale.ROOT)));
     }
 
     // Whether the call leaves the recorded scope's source types as they are: it names no other existing group (that

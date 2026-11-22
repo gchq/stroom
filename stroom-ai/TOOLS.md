@@ -3558,6 +3558,14 @@ field, the feed's Environment and default System Name (as given, else the regist
 `promote_build`), the build's `scope`, and each row's match, System Name, status, decision, group, `group_xslt`,
 pipeline, output feed, `references` and profile. A registry recorded again (a later build) carries all of these
 over. The review is bound to the table (`Consent.wasReviewed`): other rows, or changed profiles, show it again.
+Once the build's scope is recorded, a call that leaves it as it is shows neither the table nor the scope form, but
+writes the call's settings (System Names, Environment) and says the scope stands: its rows come to the registry's
+(rows it leaves out kept; exact-value rows in any order, as their order matches no record differently), it names the
+recorded group or none (any case: no rename to confirm), no `remove`, `dropped` naming only source types dropped
+already, and `scope`, if given, coming to the same source types (seen in chats 178 and 182: the scope form asked again
+and answered the same, for calls recording the System Names and Environment). Another group name is a rename the user
+confirms; other rows, or pattern and list rows in another order, are reviewed again; other source types ask the
+scope form again.
 
 * **Arguments**: `feed` (required), `build`, `reviewed`, `rows` (the `rows` a `needs_review` reply gave back, or as
   the user says), `remove` (rows to remove, by name, on the user's word), `patterns` (no forms, or its form couldn't
@@ -5165,7 +5173,12 @@ reads, its messages split into key=value and text parts, queue ids not tied (int
 records over several lines, sessions not tied (the key isn't key=value); ModSecurity reads as keyed sections. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
 offset gets no `timezone` from the draft; the user is asked (UTC, a zone a field names, or the offset the gap between
 the latest time and the stream's `ReceivedTime` suggests, rounded to a quarter hour, within 15 hours), or `timezone=`
-gives it; `build_translation_xslt` warns of any still unset. A zone read record by record
+gives it; `build_translation_xslt` warns of any still unset. With a build, the zone chosen (in the form, or given) is
+kept in the build's record (`time_zone`: `zone`, `how`, `recorded`; `BuildRecords.rememberTimeZone`), as the schema
+version and the long values choice are, so a redraft of the build reads its times in it without asking, its note
+saying it is the zone the user chose earlier for this build and that `timezone=` changes it (seen in chats 185 and
+186: a redraft with the System/Name asked the zone again, answered UTC both times); `timezone=` given wins and is kept
+in its place; another build asks its own. A zone read record by record
 (`ZoneSource`: `timezone` as `{field|meta, map, default}`, offered where the draft finds a field of zone names, or
 `timezone=field:NAME|ZONE`) is written as `stroom:format-date(value, pattern, mcp:zone(...))`: mapped, plain offsets
 normalised (`+5:30`), the default where blank; `LocalCheck` names the sample's zones Stroom's `getZoneId` won't read. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked

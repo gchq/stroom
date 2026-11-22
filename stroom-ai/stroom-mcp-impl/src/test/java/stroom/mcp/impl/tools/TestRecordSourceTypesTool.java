@@ -643,6 +643,83 @@ class TestRecordSourceTypesTool {
     }
 
     @Test
+    void theScopeFormIsAskedOnceThroughTheCallsOfChats178And182() {
+        // Seen in chats 178 and 182: the scope form answered, then asked again with the identical answer when the
+        // agent called again to record the System Names and Environment (the rows given whole, or only the
+        // group's), with and without reviewed=.
+        replayed(List.of("Alpha", "Bravo", "Charlie", "Delta", "Echo"));
+        final GroupUser user = new GroupUser(List.of("Bravo", "Delta"), "Messaging");
+        final List<String> all = List.of("Alpha = Alpha", "Bravo = Bravo", "Charlie = Charlie", "Delta = Delta",
+                "Echo = Echo");
+        final Map<String, Object> shown = once(user.context(), Map.of());
+        assertThat(shown).containsEntry("status", "needs_review");
+        final Map<String, Object> chosen = once(user.context(), Map.of("rows", all, "reviewed",
+                shown.get("review_id"), "group", "Audit"));
+        assertThat(chosen).as("%s", chosen).containsEntry("group", "Messaging")
+                .containsEntry("scope", List.of("Bravo", "Delta"));
+        assertThat(user.intros()).hasSize(1);
+
+        final List<Map<String, Object>> calls = List.of(
+                Map.of("environment", "Prod", "group", "Messaging", "rows", List.of("Bravo = Bravo",
+                        "Delta = Delta"), "system_names", Map.of("Bravo", "Bravo Online")),
+                Map.of("environment", "Prod", "group", "Messaging", "rows", List.of("Bravo = Bravo",
+                        "Delta = Delta"), "reviewed", "0ef9b1b587d1", "system_names", Map.of("Bravo",
+                        "Bravo Online")),
+                Map.of("environment", "Test", "group", "Messaging", "rows", all, "system_names",
+                        Map.of("Delta", "Delta")),
+                Map.of("environment", "Test", "group", "Messaging", "rows", all, "reviewed",
+                        shown.get("review_id"), "system_names", Map.of("Delta", "Delta")));
+        for (final Map<String, Object> call : calls) {
+            final Map<String, Object> again = once(user.context(), call);
+            assertThat(again).as("%s for %s", again, call).doesNotContainKey("error")
+                    .doesNotContainEntry("status", "needs_review")
+                    .containsEntry("group", "Messaging")
+                    .containsEntry("scope", List.of("Bravo", "Delta"));
+            assertThat(user.intros()).as("asked again for %s", call).hasSize(1);
+        }
+        assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("Alpha", "Bravo",
+                "Charlie", "Delta", "Echo");
+    }
+
+    @Test
+    void aCallRepeatingTheRecordedScopeInOtherWordsAsksNothing() {
+        // The group's name in another case, the exact rows in another order, and source types dropped before named
+        // again: the scope the user chose, not a change to put to them again.
+        replayed(List.of("Alpha", "Bravo", "Charlie", "Delta", "Echo"));
+        final GroupUser user = new GroupUser(List.of("Bravo", "Delta"), "Messaging");
+        final Map<String, Object> shown = once(user.context(), Map.of());
+        once(user.context(), Map.of("rows", shown.get("rows"), "reviewed", shown.get("review_id"), "group", "Audit",
+                "dropped", List.of("Echo"), "drop_reason", "heartbeats only"));
+        assertThat(user.intros()).hasSize(1);
+
+        final List<Map<String, Object>> calls = List.of(
+                Map.of("group", "messaging", "environment", "Prod"),
+                Map.of("group", "Messaging", "rows", List.of("Delta = Delta", "Bravo = Bravo")),
+                Map.of("group", "MESSAGING", "dropped", List.of("echo"), "drop_reason", "heartbeats only"),
+                Map.of("scope", List.of("Bravo", "Delta"), "group", "Messaging", "reviewed", "0ef9b1b587d1"));
+        for (final Map<String, Object> call : calls) {
+            final Map<String, Object> again = once(user.context(), call);
+            assertThat(again).as("%s for %s", again, call).doesNotContainKey("error")
+                    .doesNotContainEntry("status", "needs_review")
+                    .doesNotContainKey("renamed_from")
+                    .containsEntry("group", "Messaging")
+                    .containsEntry("scope", List.of("Bravo", "Delta"));
+            assertThat(user.intros()).as("asked again for %s", call).hasSize(1);
+        }
+        // Kept as the user left them: the registry's order, the dropped source type's reason.
+        assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("Alpha", "Bravo",
+                "Charlie", "Delta", "Echo");
+        assertThat(rowNamed("Echo")).containsEntry("status", SourceTypeRegistry.DROPPED);
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))
+                .containsEntry("group", "Messaging");
+
+        // A pattern row's order is how records are matched: rows in another order are a change, reviewed again.
+        assertThat(once(user.context(), Map.of("group", "Messaging", "rows", List.of("Delta = Delta",
+                "Alpha = Alpha", "Bravo = Bravo", "Charlie = Charlie", "Echo ~ ^E")))).containsEntry("status",
+                "needs_review");
+    }
+
+    @Test
     void aParkedRowIsDroppedOnlyByRemove() {
         final Map<String, Object> result = recorded(BuildToolCalls.context(), Map.of("rows",
                 List.of("PegaDB = PegaDB"), "remove", List.of("PegaIntegration")));
@@ -972,6 +1049,36 @@ class TestRecordSourceTypesTool {
                 "at", "then"));
         Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.of(new SourceTypeRegistries.Found(
                 new SurveyRecord("r", "PEGA source types", ""), false, state)));
+    }
+
+    // A survey of these values and no registry yet; the registry and survey written are read back, as a build's
+    // later calls read them.
+    private void replayed(final List<String> values) {
+        final Map<String, Object> counted = new LinkedHashMap<>();
+        values.forEach(value -> counted.put(value, Map.of("records", 100)));
+        surveyed("Workload", counted);
+        final List<String> surveys = new ArrayList<>();
+        Mockito.when(surveyDocuments.load(BUILD, FEED)).thenAnswer(inv -> {
+            final Map<String, Object> survey = new LinkedHashMap<>(Map.of("feed", FEED, "format", "json lines",
+                    "streams_read", List.of(1), "surveys", List.of(), "shapes", Map.of()));
+            final Map<String, Object> sources = new LinkedHashMap<>();
+            sources.put(SourceTypeProfiles.FIELD, "Workload");
+            sources.put(SourceTypeProfiles.BY, "user");
+            sources.put(SourceTypeProfiles.VALUES, counted);
+            sources.put("records", 500);
+            survey.put(SourceTypeProfiles.STATE_KEY, sources);
+            return Optional.of(new SurveyRecord("s", "PEGA - Survey", surveys.isEmpty()
+                    ? SurveyDoc.render(survey)
+                    : surveys.getLast()));
+        });
+        Mockito.when(surveyDocuments.write(any(), any(), anyString())).thenAnswer(inv -> {
+            surveys.add(inv.getArgument(2));
+            return new SurveyRecord("s", "PEGA - Survey", inv.getArgument(2));
+        });
+        Mockito.when(registries.registry(BUILD, FEED)).thenAnswer(inv -> written.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new SourceTypeRegistries.Found(new SurveyRecord("r", "PEGA source types",
+                        written.getLast()), false, SourceTypeRegistry.read(written.getLast()))));
     }
 
     // The tool called once, with these args.
