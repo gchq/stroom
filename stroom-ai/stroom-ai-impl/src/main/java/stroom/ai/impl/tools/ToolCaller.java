@@ -24,10 +24,20 @@ public record ToolCaller(Kind kind, String name) {
 
     /// Stroom AI's own chat agent.
     public static final ToolCaller STROOM_AI_CHAT = new ToolCaller(Kind.STROOM_AI_CHAT, "Stroom AI chat");
+    /// What a result too large for Stroom AI's chat to give its model whole is outlined for: the stub the model is
+    /// given in its place ([LargeResults#chatOutline]).
+    public static final ToolCaller CHAT_STUB = new ToolCaller(Kind.CHAT_STUB, "Stroom AI chat's stub");
 
     /// @return True if the caller is Stroom AI's own chat agent.
     public boolean isStroomAiChat() {
         return kind == Kind.STROOM_AI_CHAT;
+    }
+
+    /// @return True if a result too large for the caller is given to it in outline ([LargeResults]): a client
+    /// outside Stroom, or the stub of Stroom AI's chat. Stroom AI's chat itself gets every result whole, and keeps
+    /// a large one in its workspace.
+    public boolean takesOutlines() {
+        return kind == Kind.EXTERNAL_CLIENT || kind == Kind.CHAT_STUB;
     }
 
     /// The kinds of caller.
@@ -35,6 +45,8 @@ public record ToolCaller(Kind kind, String name) {
         /// Stroom AI's own chat agent.
         STROOM_AI_CHAT,
         /// A client outside Stroom, e.g. an agent connected over MCP.
-        EXTERNAL_CLIENT
+        EXTERNAL_CLIENT,
+        /// The stub Stroom AI's chat gives its model in place of a large result: an outline of it, made on a copy.
+        CHAT_STUB
     }
 }

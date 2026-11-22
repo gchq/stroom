@@ -16,11 +16,14 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.LargeResults;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -261,6 +264,184 @@ class TestToolOutputs {
         assertThat(stub).doesNotContain("Its next:").doesNotContain("Its hint:").doesNotContain("what to do next");
         assertThat(ToolOutputs.stub("[\"next\", \"" + "x".repeat(5_000) + "\"]", "/p"))
                 .doesNotContain("Its next:");
+    }
+
+    @Test
+    void aDraftsNotesAreGivenWholeAndFirst() {
+        // Seen in chat 184: 13 notes of a draft cut after 11 ("… 2 more"), the one offering a System/Name per source
+        // type among those cut; the agent asked the user for one name.
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "drafted");
+        final List<String> notes = new ArrayList<>();
+        for (int i = 0; i < 13; i++) {
+            notes.add("Note " + i + ": " + "a decision the agent has to take before building. ".repeat(8));
+        }
+        result.put("notes", notes);
+        result.put("problems", List.of("a problem"));
+        result.put("filler", "x".repeat(20_000));
+        final String saved = ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false));
+
+        final String stub = ToolOutputs.stub(saved, "/outputs/turn-1/call-2.txt");
+
+        assertThat(stub).contains("Note 12: ").doesNotContain("… 1 more", "… 2 more", "query `.notes[");
+        assertThat(stub.indexOf("notes:\n")).as("notes before problems").isLessThan(stub.indexOf("problems:\n"));
+    }
+
+    @Test
+    void theStubOfAResultWithoutAnOutlineStillCarriesWhatToActOn() {
+        // Seen in chat 183: a catalogue check's problems and unplaced fields, and a draft's notes, past the preview's
+        // lines, read from the workspace with jq in 60 calls.
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "checked");
+        for (int i = 0; i < 60; i++) {
+            result.put("field" + i, "value " + i);
+        }
+        final Map<String, Object> check = new LinkedHashMap<>();
+        check.put("counts", Map.of("Authenticate-Logon", 2));
+        check.put("problems", List.of(Map.of("type_id", "Authenticate-Logon", "problem", "its regex never matches")));
+        check.put("unplaced", List.of(Map.of("field", "src_port", "problem", "not placed in any event type")));
+        check.put("typing", Map.of("Process-Run", Map.of("typed", 2, "data", 9,
+                "could_type", Map.of("fields", List.of("pid -> Process/Id")))));
+        result.put("check", check);
+        result.put("notes", List.of("Ask the user for EventSource/System/Name.", "Decide the action element."));
+        result.put("warnings", List.of("EventTime is left out when time is empty."));
+        result.put("refused", false);
+        result.put("problems", List.of());
+        result.put("filler", "x".repeat(5_000));
+        final String saved = ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false));
+        assertThat(saved.indexOf("\"check\"")).isGreaterThan(ToolOutputs.PREVIEW_CHARS);
+
+        final String stub = ToolOutputs.stub(saved, "/outputs/turn-1/call-2.txt");
+
+        assertThat(stub)
+                .contains("What it says to act on, in full")
+                .containsPattern("check.problems:\n- \\{[^\n]*\"problem\":\"its regex never matches\"")
+                .containsPattern("check.unplaced:\n- \\{[^\n]*\"field\":\"src_port\"")
+                .contains("check.typing:\n- Process-Run: {")
+                .contains("\"could_type\":{\"fields\":[\"pid -> Process/Id\"]}")
+                .contains("notes:\n- Ask the user for EventSource/System/Name.\n- Decide the action element.")
+                .contains("warnings:\n- EventTime is left out when time is empty.")
+                // Empty or false parts aren't said.
+                .doesNotContain("refused:")
+                .doesNotContain("\nproblems:")
+                // Still the preview, as there is no outline.
+                .contains("It starts with these");
+    }
+
+    @Test
+    void aNeedsDescriptionsRoundCarriesItsFieldsToDescribe() {
+        final Map<String, Object> round = new LinkedHashMap<>();
+        round.put("status", "needs_descriptions");
+        round.put("written", false);
+        round.put("hint", "NOT WRITTEN. Call write_documentation again with field_descriptions.");
+        round.put("markdown", "m".repeat(5_000));
+        final Map<String, Object> field = new LinkedHashMap<>();
+        field.put("field", "src_ip");
+        field.put("from", "Source/Device/IPAddress");
+        round.put("fields", List.of(field));
+        final Map<String, Object> other = new LinkedHashMap<>(round);
+        other.put("status", "ok");
+
+        assertThat(ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(round, false)), "/p"))
+                .contains("fields:\n- {\"field\":\"src_ip\",\"from\":\"Source/Device/IPAddress\"}");
+        // A result's fields are otherwise often only an inventory.
+        assertThat(ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(other, false)), "/p"))
+                .doesNotContain("What it says to act on");
+    }
+
+    @Test
+    void theToolsOutlineTakesThePlaceOfThePreview() {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", Map.of("events", "x".repeat(20_000)));
+        result.put("notes", List.of("Ask the user for EventSource/System/Name."));
+        result.put("hint", "Build it as drafted.");
+        final Map<String, Object> outline = new LinkedHashMap<>();
+        outline.put("whole_result", Map.of("saved", "/outputs/a_tool/acme.json", "outlined", List.of("mapping")));
+        outline.put("mapping_outline", Map.of("events", List.of(Map.of("name", "Authenticate-Logon"))));
+        outline.put("notes", List.of("Ask the user for EventSource/System/Name."));
+        outline.put("hint", "The draft is too large to show whole here. Build it as drafted.");
+
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)),
+                "/outputs/turn-1/call-2.txt", outline);
+
+        assertThat(stub)
+                .contains("The tool's outline of it, in place of its first lines")
+                .contains("\"mapping_outline\":{\"events\":[{\"name\":\"Authenticate-Logon\"}]}")
+                .contains("\"saved\":\"/outputs/a_tool/acme.json\"")
+                .contains("the whole is also in /outputs/turn-1/call-2.txt")
+                // The outline's hint, which says how its parts are outlined.
+                .contains("Its hint: The draft is too large to show whole here. Build it as drafted.")
+                .contains("notes:\n- Ask the user for EventSource/System/Name.")
+                .doesNotContain("It starts with these")
+                .doesNotContain("x".repeat(100));
+        // Said once: the notes above, not again in the outline.
+        assertThat(stub.split("Ask the user for EventSource", -1)).hasSize(2);
+    }
+
+    @Test
+    void aResultToShowTheUserIsStubbedAsBeforeWithoutAnOutline() {
+        final String output = reply("needs_review", "dev_tools", "x".repeat(ToolOutputs.MAX_SHOWN_IN_FULL_CHARS),
+                "review_id", "0123456789ab", "problems", "a problem", "hint", "Show the user this template.");
+        final String saved = ToolOutputs.forSaving(output);
+
+        final String stub = ToolOutputs.stub(saved, "/p", Map.of("dev_tools", "an outline", "review_id", "r"));
+
+        assertThat(stub).isEqualTo(ToolOutputs.stub(saved, "/p"))
+                .doesNotContain("What it says to act on")
+                .doesNotContain("outline")
+                .contains("It starts with these");
+        // Given in full under the cap, as before.
+        assertThat(ToolOutputs.isLarge(reply("needs_review", "dev_tools", "x".repeat(10_000)))).isFalse();
+    }
+
+    @Test
+    void hugePartsToActOnAreCappedSayingHowManyMoreAndWhere() {
+        final List<String> problems = new ArrayList<>();
+        final Map<String, Object> typing = new LinkedHashMap<>();
+        for (int i = 0; i < 2_000; i++) {
+            problems.add("problem " + i + ": the regex of Process-Code" + i + " never matches");
+            typing.put("Process-Code" + i, Map.of("typed", 1, "data", 12));
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "checked");
+        result.put("error", "e".repeat(10_000));
+        result.put("problems", problems);
+        result.put("check", Map.of("typing", typing));
+        // Short enough to leave room for the problems' cut list (notes come first, up to MAX_NOTES_CHARS).
+        result.put("notes", List.of("n".repeat(3_000)));
+        result.put("warnings", problems);
+        result.put("user_chose", List.of("Process"));
+        final String path = "/outputs/turn-1/call-2.txt";
+
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)), path);
+
+        final String actOn = stub.substring(stub.indexOf("What it says to act on"), stub.indexOf("It starts with"));
+        assertThat(actOn.length()).isLessThanOrEqualTo(ToolOutputs.MAX_ACT_ON_CHARS + 1_000);
+        assertThat(actOn)
+                .contains("error:\n" + "e".repeat(ToolOutputs.MAX_ACT_ON_PART_CHARS) + "… (cut: the rest is in "
+                          + path + ", jq query `.error` with raw true)")
+                .containsPattern("… \\d+ more: read them from " + path
+                                 + " with the jq tool, query `\\.problems\\[\\d+:]`")
+                .contains("(Also to act on, not shown here for room: ")
+                .contains("user_chose")
+                .doesNotContain("e".repeat(ToolOutputs.MAX_ACT_ON_PART_CHARS + 1));
+    }
+
+    @Test
+    void anOutlinePastItsBudgetIsCutSayingWhere() {
+        final Map<String, Object> outline = new LinkedHashMap<>();
+        for (int i = 0; i < 200; i++) {
+            outline.put("rule" + i, "r".repeat(200));
+        }
+        final String output = "{\"rules\":\"" + "x".repeat(50_000) + "\"}";
+
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(output), "/p", outline);
+
+        assertThat(stub).contains("… (the outline is cut here, at " + LargeResults.CHAT_OUTLINE_CHARS
+                                  + " characters: the rest of the result is in /p)")
+                .contains("\"rule0\"")
+                .doesNotContain("\"rule199\"");
+        assertThat(stub.length()).isLessThan(LargeResults.CHAT_OUTLINE_CHARS + 2_000);
     }
 
     // A JSON object of the given status and field name/value pairs, on one line, as an MCP server gives it.

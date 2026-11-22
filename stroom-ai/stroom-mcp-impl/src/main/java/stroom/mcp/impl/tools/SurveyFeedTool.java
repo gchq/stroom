@@ -415,10 +415,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final Map<String, Object> result = new LinkedHashMap<>(request.build() == null || request.find() != null
                     ? surveyed
                     : plan.get().withNext(context, request.build(), surveyed));
-            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-            SurveyOutline.outlineIfLarge(context.caller(), context.workspace(), LargeResults.keyOf(
-                    request.build(), feed), result, LargeResults.WHOLE_RESULT_CHARS);
-            return JsonResults.of(result);
+            // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself,
+            // and gives its model the outline in the result's stub.
+            final String key = LargeResults.keyOf(request.build(), feed);
+            final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), result,
+                    (caller, said, limit) -> SurveyOutline.outlineIfLarge(caller, context.workspace(), key, said,
+                            limit));
+            return JsonResults.of(result).withChatOutline(chatOutline);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {

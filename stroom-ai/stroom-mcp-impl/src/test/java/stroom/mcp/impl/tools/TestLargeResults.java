@@ -245,6 +245,40 @@ class TestLargeResults {
         return chats;
     }
 
+    @Test
+    void stroomAisChatIsGivenAnOutlineOfACopyAgainstItsBudget() {
+        final ChatWorkspace chats = writable();
+        final Map<String, Object> result = large();
+        final Map<String, Object> before = new LinkedHashMap<>(result);
+        assertThat(LargeResults.length(result)).isGreaterThan(LargeResults.CHAT_OUTLINE_CHARS);
+        assertThat(LargeResults.length(result)).isLessThan(LargeResults.WHOLE_RESULT_CHARS);
+
+        final Map<String, Object> outline = LargeResults.forCaller(ToolCaller.STROOM_AI_CHAT, result,
+                (caller, said, limit) -> plan().apply(caller, Optional.of(new SessionWorkspace(chats, 1)), said,
+                        limit));
+
+        assertThat(result).isEqualTo(before);
+        assertThat(outline).isNotNull().containsKey(LargeResults.WHOLE_RESULT)
+                .containsEntry("rules", Map.of("rules", 400));
+        assertThat(LargeResults.length(outline)).isLessThanOrEqualTo(LargeResults.CHAT_OUTLINE_CHARS);
+    }
+
+    @Test
+    void noChatOutlineForAnotherCallerASmallResultOrOneToShowTheUser() {
+        final ChatWorkspace chats = writable();
+        final LargeResults.Outline outline = (caller, said, limit) -> plan().apply(caller,
+                Optional.of(new SessionWorkspace(chats, 1)), said, limit);
+
+        final Map<String, Object> forClient = large();
+        assertThat(LargeResults.chatOutline(CLIENT, forClient, outline)).isNull();
+        final Map<String, Object> small = new LinkedHashMap<>(Map.of("status", "ok", "rules", List.of()));
+        assertThat(LargeResults.chatOutline(ToolCaller.STROOM_AI_CHAT, small, outline)).isNull();
+        final Map<String, Object> review = large();
+        review.put("status", "needs_review");
+        assertThat(LargeResults.chatOutline(ToolCaller.STROOM_AI_CHAT, review, outline)).isNull();
+        Mockito.verifyNoInteractions(chats);
+    }
+
     static String written(final ChatWorkspace chats, final String path) {
         final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<WorkspacePath> paths = ArgumentCaptor.forClass(WorkspacePath.class);

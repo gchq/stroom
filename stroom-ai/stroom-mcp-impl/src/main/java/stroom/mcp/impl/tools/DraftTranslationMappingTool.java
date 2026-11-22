@@ -238,7 +238,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
-            return JsonResults.of(draft(call, context));
+            return draft(call, context);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final PatternTimeoutException e) {
@@ -247,7 +247,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         }
     }
 
-    private Map<String, Object> draft(final ToolCall call, final ToolCallContext context) {
+    private ToolResult draft(final ToolCall call, final ToolCallContext context) {
         final Object given = ToolArgs.raw(call, SAMPLES_ARG);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
         final String build = stringArg(call, BUILD_ARG);
@@ -258,7 +258,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final EventVersions.Target target = eventVersions.target(call, context, stringArg(call, SCHEMA_VERSION_ARG),
                 build);
         if (target.version() == null) {
-            return target.question();
+            return JsonResults.of(target.question());
         }
         final String version = target.version();
         // An aggregated feed's build with a scope: its source types, which the System/Name may be given for each.
@@ -381,10 +381,13 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
                            + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
                            + "the time formats, and how changes= merges.");
-        // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-        DraftOutline.outlineIfLarge(context.caller(), result, context.workspace(), build,
-                SourceNotes.catalogue(sourceNotes), LargeResults.WHOLE_RESULT_CHARS);
-        return result;
+        // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself, and
+        // gives its model the outline in the result's stub.
+        final Catalogue catalogue = SourceNotes.catalogue(sourceNotes);
+        final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), result,
+                (caller, said, limit) -> DraftOutline.outlineIfLarge(caller, said, context.workspace(), build,
+                        catalogue, limit));
+        return JsonResults.of(result).withChatOutline(chatOutline);
     }
 
     // Records with stack traces: how much of each the Events keep, as the user chooses (asked for by the user,

@@ -305,17 +305,21 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         if (askedFor > maxRecords) {
             sayCapped(result, firstRecord, askedFor, maxRecords, out != null);
         }
+        Map<String, Object> chatOutline = null;
         if (workspace != null) {
             writeRecords(workspace, out, result, segmented
                     ? streamId
                     : null, firstRecord);
         } else {
-            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-            FetchEventsOutline.outlineIfLarge(context.caller(), context.workspace(),
-                    new FetchEventsOutline.Read(streamId, part, childType, segmented), result,
-                    LargeResults.WHOLE_RESULT_CHARS);
+            // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself,
+            // and gives its model the outline in the result's stub.
+            final FetchEventsOutline.Read read = new FetchEventsOutline.Read(streamId, part, childType, segmented);
+            chatOutline = LargeResults.forCaller(context.caller(), result,
+                    (caller, said, most) -> FetchEventsOutline.outlineIfLarge(caller, context.workspace(), read,
+                            said, most));
         }
-        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result)
+                .withChatOutline(chatOutline);
     }
 
     /// Says in the result that fewer records were read than asked for, because of the most a call reads, and where

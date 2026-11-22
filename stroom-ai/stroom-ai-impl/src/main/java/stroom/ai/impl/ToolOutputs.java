@@ -16,6 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.LargeResults;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -28,6 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /// Decides when a tool's output is too large to give the model in full, and what to give it instead: a short stub
@@ -40,11 +43,15 @@ import java.util.Set;
 /// stubbed too, and the stub says plainly what the user must be shown and how to get it.
 ///
 /// A JSON result's `next` and `hint`, which say what to do next and which a tool often puts last, are repeated in
-/// its stub: the preview, from its start, would not reach them.
+/// its stub: the preview, from its start, would not reach them. So are the parts that say what the agent must act
+/// on ([LargeResults#ACT_ON]: problems, refusals, notes, warnings, what the user chose), each in full up to
+/// [#MAX_ACT_ON_PART_CHARS], all of them up to [#MAX_ACT_ON_CHARS]. Where the tool outlines its large results
+/// ([LargeResults#chatOutline]), the stub gives that outline (up to [LargeResults#CHAT_OUTLINE_CHARS]) in place of
+/// the preview of the result's first lines.
 public final class ToolOutputs {
 
     /// Outputs longer than this are saved to the workspace and the model is given a stub.
-    static final int MAX_INLINE_CHARS = 4_000;
+    public static final int MAX_INLINE_CHARS = 4_000;
     /// The most lines of a large output shown in its stub.
     static final int PREVIEW_LINES = 30;
     /// The most characters of a large output shown in its stub.
@@ -62,8 +69,8 @@ public final class ToolOutputs {
     /// `summary` and `details`), before the agent calls the tool again with the result's id; or content to show
     /// with no id to send back (`needs_showing`, e.g. catalogue_event_types' `table`; seen: a table of ten proposals
     /// saved to the workspace, and retyped by the agent, shortened and restyled).
-    static final Set<String> SHOWN_TO_USER_STATUSES = Set.of("needs_review", "needs_confirmation", "needs_approval",
-            "needs_showing");
+    public static final Set<String> SHOWN_TO_USER_STATUSES = Set.of("needs_review", "needs_confirmation",
+            "needs_approval", "needs_showing");
     /// The fields of such a result that are for the agent, not to be shown to the user, in the order looked for.
     static final List<String> ID_FIELDS = List.of("review_id", "confirmation_id", "approval_id");
     static final String HINT_FIELD = "hint";
@@ -73,6 +80,18 @@ public final class ToolOutputs {
     static final int MAX_HINT_CHARS = 2_000;
     /// The most characters of a result's `next` repeated in its stub.
     static final int MAX_NEXT_CHARS = 1_500;
+    /// The most characters of each part of a result that says what to act on ([LargeResults#ACT_ON]) repeated in
+    /// its stub, but its notes ([#MAX_NOTES_CHARS]).
+    static final int MAX_ACT_ON_PART_CHARS = 4_000;
+    /// The most characters of a result's notes repeated in its stub: a draft's notes are the decisions to take
+    /// (seen in chat 184: 13 notes cut after 11 at 4,000 characters, the one offering a System/Name per source type
+    /// among those cut).
+    static final int MAX_NOTES_CHARS = 8_000;
+    /// The most characters of all the parts that say what to act on repeated in a stub.
+    static final int MAX_ACT_ON_CHARS = 12_000;
+    private static final String NOTES = "notes";
+    // Less room than this left for the parts to act on, the rest are only named.
+    private static final int FEWEST_ACT_ON_CHARS = 200;
     // Numbers are kept as they were written.
     private static final ObjectMapper MAPPER = JsonMapper.builder()
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
@@ -122,7 +141,7 @@ public final class ToolOutputs {
     /// @return The output as it is saved to the workspace. JSON, which tools often give on one line, is indented
     /// with a field or item per line, so that it can be read and searched in parts, as reading or searching a
     /// file is done by line.
-    static String forSaving(final String output) {
+    public static String forSaving(final String output) {
         final JsonNode json = readJson(output);
         if (json == null) {
             return output;
@@ -138,6 +157,16 @@ public final class ToolOutputs {
     /// @param path   Where it has been saved in the workspace.
     /// @return What to give the model instead of the whole output.
     static String stub(final String output, final String path) {
+        return stub(output, path, null);
+    }
+
+    /// @param output  The whole output, as saved (see [#forSaving(String)]).
+    /// @param path    Where it has been saved in the workspace.
+    /// @param outline The tool's outline of the output ([LargeResults#chatOutline]), or null if it has none.
+    /// @return What to give the model instead of the whole output: what it says to do next and to act on, then the
+    /// tool's outline of it, else its first lines. A result the user must be shown as it is gets no outline, nor
+    /// the parts to act on: the stub says how to get its content, which must be shown whole.
+    public static String stub(final String output, final String path, final Map<String, Object> outline) {
         final String[] lines = output.split("\n", -1);
         final int lineCount = output.endsWith("\n")
                 ? lines.length - 1
@@ -156,19 +185,191 @@ public final class ToolOutputs {
             shown++;
         }
         final JsonNode json = readJson(output);
+        final boolean object = json != null && json.isObject();
+        final boolean shownToUser = object && isShownToUser(json);
+        final JsonNode outlined = shownToUser
+                ? null
+                : toJson(outline);
         return "The result was too large to show in full (" + output.length() + " characters, " + lineCount
                + " lines), so it has been saved to the workspace file " + path + ". "
-               + (json != null && json.isObject() && isShownToUser(json)
+               + (shownToUser
                 ? shownToUserNote(json, path)
                 : "")
-               + (json != null && json.isObject()
-                ? nextSteps(json)
+               + (object
+                ? nextSteps(outlined != null
+                        ? outlined
+                        : json)
                 : "")
-               + "It starts with these " + shown + " line(s):\n\n"
-               + preview.toString().stripTrailing()
+               + (object && !shownToUser
+                ? actOn(json, path)
+                : "")
+               + (outlined != null
+                ? outlineSection(json, outlined, path)
+                : "It starts with these " + shown + " line(s):\n\n" + preview.toString().stripTrailing())
                + "\n\n" + jsonShape(json)
                + "If you need more of it, read it from the workspace file with the workspace tools, if you "
                + "have them.";
+    }
+
+    // The parts of the result that say what to act on, each in full but capped, so that they need not be read
+    // from the workspace (seen in chat 183: 60 workspace calls, most to find a draft's notes and a catalogue
+    // check's problems).
+    private static String actOn(final JsonNode json, final String path) {
+        final List<String> parts = actOnParts(json);
+        if (parts.isEmpty()) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("What it says to act on, in full (notes up to " + MAX_NOTES_CHARS
+                                                   + " characters, each other part up to " + MAX_ACT_ON_PART_CHARS
+                                                   + "):\n");
+        final int start = sb.length();
+        final List<String> notShown = new ArrayList<>();
+        for (final String part : parts) {
+            final int room = Math.min(NOTES.equals(part)
+                    ? MAX_NOTES_CHARS
+                    : MAX_ACT_ON_PART_CHARS, MAX_ACT_ON_CHARS - (sb.length() - start));
+            if (room < FEWEST_ACT_ON_CHARS) {
+                notShown.add(part);
+            } else {
+                sb.append(part).append(":\n").append(partText(at(json, part), part, path, room)).append('\n');
+            }
+        }
+        if (!notShown.isEmpty()) {
+            sb.append("(Also to act on, not shown here for room: ").append(String.join(", ", notShown))
+                    .append(". Read them from ").append(path).append(" with the jq tool, e.g. query `.")
+                    .append(notShown.getFirst()).append("`.)\n");
+        }
+        return sb.append('\n').toString();
+    }
+
+    // The parts to act on the result has (not empty), in the order they are given.
+    private static List<String> actOnParts(final JsonNode json) {
+        final List<String> parts = new ArrayList<>(LargeResults.ACT_ON);
+        parts.addAll(LargeResults.ACT_ON_BY_STATUS.getOrDefault(json.path(STATUS_FIELD).asText(), List.of()));
+        return parts.stream()
+                .filter(part -> hasContent(at(json, part)))
+                .toList();
+    }
+
+    private static boolean hasContent(final JsonNode value) {
+        if (value == null || value.isNull() || value.isMissingNode()) {
+            return false;
+        }
+        if (value.isBoolean()) {
+            return value.asBoolean();
+        }
+        if (value.isTextual()) {
+            return !value.asText().isBlank();
+        }
+        return !value.isContainerNode() || !value.isEmpty();
+    }
+
+    // The value at a dotted path, or null.
+    private static JsonNode at(final JsonNode json, final String path) {
+        JsonNode value = json;
+        for (final String key : path.split("\\.")) {
+            if (value == null || !value.isObject()) {
+                return null;
+            }
+            value = value.get(key);
+        }
+        return value;
+    }
+
+    // A part as text within its room: a list an entry a line, an object a key a line, so far as they fit, then how
+    // many more and how to read them; a long text cut, saying where the rest is.
+    private static String partText(final JsonNode value, final String part, final String path, final int room) {
+        if (!value.isContainerNode()) {
+            final String text = plain(value);
+            return text.length() <= room
+                    ? text
+                    : text.substring(0, room) + "… (cut: the rest is in " + path + ", jq query `." + part
+                      + "` with raw true)";
+        }
+        final List<String> lines = new ArrayList<>();
+        if (value.isArray()) {
+            value.forEach(item -> lines.add("- " + plain(item)));
+        } else {
+            value.properties().forEach(entry -> lines.add("- " + entry.getKey() + ": " + plain(entry.getValue())));
+        }
+        final StringBuilder sb = new StringBuilder();
+        int shown = 0;
+        for (final String line : lines) {
+            if (sb.length() + line.length() + 1 > room) {
+                if (shown == 0) {
+                    sb.append(line, 0, Math.max(0, room - 1)).append("…\n");
+                    shown++;
+                }
+                break;
+            }
+            sb.append(line).append('\n');
+            shown++;
+        }
+        if (shown < lines.size()) {
+            sb.append("… ").append(lines.size() - shown).append(" more: read them from ").append(path)
+                    .append(" with the jq tool, query `.").append(part).append(value.isArray()
+                            ? "[" + shown + ":]"
+                            : " | to_entries[" + shown + ":]")
+                    .append("`\n");
+        }
+        return sb.toString().stripTrailing();
+    }
+
+    // A text as it is, anything else as compact JSON.
+    private static String plain(final JsonNode value) {
+        return value.isTextual()
+                ? value.asText()
+                : value.toString();
+    }
+
+    // The tool's outline, in place of the result's first lines, without what is said above it (next, hint and the
+    // parts to act on), cut to its budget a line at a time.
+    private static String outlineSection(final JsonNode json, final JsonNode outline, final String path) {
+        final ObjectNode rest = outline.deepCopy();
+        rest.remove(List.of(NEXT_FIELD, HINT_FIELD));
+        for (final String part : actOnParts(json)) {
+            final int dot = part.lastIndexOf('.');
+            final JsonNode parent = dot < 0
+                    ? rest
+                    : at(rest, part.substring(0, dot));
+            if (parent instanceof final ObjectNode parentObject) {
+                parentObject.remove(part.substring(dot + 1));
+            }
+        }
+        final String[] lines = LargeResults.readable(MAPPER.convertValue(rest, Map.class), false).split("\n");
+        final StringBuilder sb = new StringBuilder();
+        int shown = 0;
+        for (final String line : lines) {
+            if (sb.length() + line.length() + 1 > LargeResults.CHAT_OUTLINE_CHARS) {
+                if (shown == 0) {
+                    sb.append(line, 0, LargeResults.CHAT_OUTLINE_CHARS).append('…');
+                }
+                sb.append("\n… (the outline is cut here, at ").append(LargeResults.CHAT_OUTLINE_CHARS)
+                        .append(" characters: the rest of the result is in ").append(path).append(')');
+                break;
+            }
+            sb.append(line).append('\n');
+            shown++;
+        }
+        return "The tool's outline of it, in place of its first lines (what is said above is left out of it; its "
+               + LargeResults.WHOLE_RESULT + " says which parts are outlined or cut, and where the tool saved the "
+               + "result too, a list's entries a line; the whole is also in " + path + "):\n\n"
+               + sb.toString().stripTrailing();
+    }
+
+    // A tool's outline as JSON, or null if there is none.
+    private static JsonNode toJson(final Map<String, Object> outline) {
+        if (outline == null || outline.isEmpty()) {
+            return null;
+        }
+        try {
+            final JsonNode json = MAPPER.valueToTree(outline);
+            return json != null && json.isObject()
+                    ? json
+                    : null;
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static boolean isShownToUser(final JsonNode json) {

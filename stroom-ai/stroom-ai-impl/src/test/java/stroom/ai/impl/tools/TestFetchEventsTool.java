@@ -395,15 +395,22 @@ class TestFetchEventsTool {
         final Map<String, Object> small = runJson(external(), "{\"streamId\":7,\"recordCount\":3}");
         assertThat(small).doesNotContainKey(LargeResults.WHOLE_RESULT);
         assertThat(records(small)).isEqualTo(events.subList(0, 3));
-        // Stroom AI's own chat keeps a large result in its workspace itself.
-        final Map<String, Object> chat = runJson(ToolCalls.inChat(1, fixture.workspace), args);
-        assertThat(chat).doesNotContainKey(LargeResults.WHOLE_RESULT);
-        assertThat(records(chat)).isEqualTo(events);
         // A client outside Stroom without a workspace.
         final Map<String, Object> noWorkspace = runJson(ToolCalls.outsideChat(), args);
         assertThat(noWorkspace).doesNotContainKey(LargeResults.WHOLE_RESULT);
         assertThat(records(noWorkspace)).isEqualTo(events);
         assertThat(fixture.written).isEmpty();
+        // Stroom AI's own chat keeps a large result in its workspace itself: given whole, with the outline of a copy
+        // beside it for the stub its model is given (saved as for a client outside Stroom).
+        final ToolResult chatResult = tool.run(ToolTestFixture.request(FetchEventsTool.NAME, args),
+                ToolCalls.inChat(1, fixture.workspace));
+        final Map<String, Object> chat = JsonUtil.readValue(chatResult.text(), Map.class);
+        assertThat(chat).doesNotContainKey(LargeResults.WHOLE_RESULT);
+        assertThat(records(chat)).isEqualTo(events);
+        assertThat(chatResult.chatOutline()).containsKey(LargeResults.WHOLE_RESULT);
+        assertThat(LargeResults.length(chatResult.chatOutline()))
+                .isLessThanOrEqualTo(LargeResults.CHAT_OUTLINE_CHARS);
+        assertThat(fixture.written).containsOnlyKeys("/outputs/fetch_events/stream-7-from-0.json");
     }
 
     // A client outside Stroom with a workspace.

@@ -295,6 +295,22 @@ failed write: the result whole, as before. Test clients read an outlined result 
 shortened (all of it what the agent acts on) is given whole, still with `whole_result` first, saying plainly so: it
 is past the client's limit, so the client shows only its start, and the note there says where Stroom saved it.
 
+**Large results, in Stroom AI's chat** (`ToolOutputs`, `LargeResults.chatOutline`, 2026-11-22; seen in chat 183: 60
+workspace calls fishing out a draft's notes, a catalogue check's problems, unplaced fields and typing, and
+write_documentation's fields). The chat saves any result over 4,000 characters whole to
+`/outputs/turn-<t>/call-<m>.txt` and gives the model a stub. The stub gives, before anything else, `next` and `hint`
+and the parts that say what to act on, in full but capped (a draft's notes at 8,000 characters, as they hold the
+decisions to take, seen in chat 184; each other part at 4,000; 12,000 in all; a list an entry a line, then `… N more`
+and the jq query for the rest), in this order: error, refused, notes, user_chose, problems, unplaced,
+`check.problems`, `check.unplaced`, `check.typing` (with `could_type`), warnings, user_actions and review_id
+(`LargeResults.ACT_ON`, the same list an outline never cuts, but for notes, warnings and the check's typing), and a
+`needs_descriptions` round's `fields`. Where the tool outlines its large results (the six tools above), it also
+outlines a copy for the chat against 10,000 characters (`LargeResults.CHAT_OUTLINE_CHARS`), saving its own copy to
+`/outputs/<tool>/<key>.json` as for a client outside Stroom, and the stub gives that outline (less what it says above
+it) in place of the preview of the result's first 30 lines. A result the user must be shown as it is (`needs_review`,
+`needs_confirmation`, `needs_approval`, `needs_showing`) is given whole up to 64,000 characters and stubbed past
+that as before, with neither.
+
 ## Choosing between tools that overlap
 
 Several tools cover neighbouring ground. Which does what:

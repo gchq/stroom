@@ -53,16 +53,17 @@ final class BuiltRulesTrim {
     }
 
     /// Counts each rule's Data in the result's `events`, and leaves out the sample check's warnings the result's
-    /// warnings repeat, when the caller is a client outside Stroom and the result is past the limit; Stroom AI's own
-    /// chat, which keeps a large result in its workspace itself, gets it whole.
+    /// warnings repeat, when the caller takes outlines ([ToolCaller#takesOutlines]) and the result is past the limit;
+    /// Stroom AI's own chat, which keeps a large result in its workspace itself, gets it whole.
     ///
     /// @param caller Who called the tool.
     /// @param result The build's result, changed in place.
     /// @param limit  The most characters a result is given whole in ([LargeResults#WHOLE_RESULT_CHARS]).
-    static void trimIfLarge(final ToolCaller caller, final Map<String, Object> result, final int limit) {
-        if (caller.kind() != ToolCaller.Kind.EXTERNAL_CLIENT || !(result.get(EVENTS) instanceof List<?>)
+    /// @return True if it was trimmed.
+    static boolean trimIfLarge(final ToolCaller caller, final Map<String, Object> result, final int limit) {
+        if (!caller.takesOutlines() || !(result.get(EVENTS) instanceof List<?>)
             || JsonUtil.writeValueAsString(result, false).length() <= limit) {
-            return;
+            return false;
         }
         final List<Map<String, Object>> rules = new ArrayList<>();
         for (final Map<String, Object> rule : JsonValues.maps(result.get(EVENTS))) {
@@ -86,6 +87,7 @@ final class BuiltRulesTrim {
                                   + "show whole): the mapping lists them, the fields each rule carries as Data of "
                                   + "its action element.");
         sampleWarningsOnce(result);
+        return true;
     }
 
     /// Gives a build_translation_xslt result in outline when it is still too large for the caller once trimmed

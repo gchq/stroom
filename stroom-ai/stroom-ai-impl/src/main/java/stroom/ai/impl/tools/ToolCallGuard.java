@@ -525,7 +525,8 @@ public class ToolCallGuard {
         final ToolResult base = result.isError()
                 ? ToolResult.error(text)
                 : ToolResult.text(text);
-        ToolResult copy = base.withStructuredContent(result.structuredContent()).withResources(result.resources());
+        ToolResult copy = base.withStructuredContent(result.structuredContent()).withResources(result.resources())
+                .withChatOutline(result.chatOutline());
         for (final ToolUserAction action : result.userActions()) {
             copy = copy.withUserAction(action);
         }

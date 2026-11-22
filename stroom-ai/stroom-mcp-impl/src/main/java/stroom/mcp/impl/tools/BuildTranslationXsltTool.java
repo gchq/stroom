@@ -444,10 +444,17 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
             final Map<String, Object> result = new LinkedHashMap<>(build(call, context));
-            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-            BuiltRulesTrim.outlineIfLarge(context.caller(), context.workspace(), LargeResults.keyOf(
-                    stringArg(call, BUILD_ARG), stringArg(call, NAME_ARG)), result, LargeResults.WHOLE_RESULT_CHARS);
-            return JsonResults.of(result);
+            // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself,
+            // and gives its model the outline in the result's stub.
+            final String key = LargeResults.keyOf(stringArg(call, BUILD_ARG), stringArg(call, NAME_ARG));
+            final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), result,
+                    (caller, said, limit) -> {
+                        // Each rule's Data counted first, then the rest outlined if still too large.
+                        final boolean trimmed = BuiltRulesTrim.trimIfLarge(caller, said, limit);
+                        return BuiltRulesTrim.outlineIfLarge(caller, context.workspace(), key, said, limit)
+                               || trimmed;
+                    });
+            return JsonResults.of(result).withChatOutline(chatOutline);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final PatternTimeoutException e) {
@@ -572,7 +579,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         b.result.put("warnings", MappingCompaction.grouped(TranslationBuilds.warnings(b.result)));
         b.result.put("problems", MappingCompaction.grouped(TranslationBuilds.problems(b.result)));
-        BuiltRulesTrim.trimIfLarge(context.caller(), b.result, LargeResults.WHOLE_RESULT_CHARS);
         return b.result;
     }
 

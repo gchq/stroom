@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.json.JsonUtil;
@@ -41,7 +42,10 @@ import java.util.regex.Pattern;
 /// the Haiku evals of 2026-11-20: survey_feed results of 52,000 to 109,000 characters, write_documentation's of
 /// 73,000 to 88,000, catalogue_event_types's of 61,000 to 93,000). Stroom AI's own chat keeps a large result in its
 /// workspace itself, so gets every result whole; so does a session without a workspace, or one the file can't be
-/// written to.
+/// written to. For the chat, the same outline is made on a copy of a result too large for the chat's model
+/// ([#chatOutline]), against the chat's smaller budget ([#CHAT_OUTLINE_CHARS]): the chat gives it to the model in
+/// the result's stub, in place of the stub's preview of the result's first lines (seen in chat 183: 60 workspace
+/// calls to find a draft's notes and a catalogue check's problems, which the preview didn't reach).
 ///
 /// A tool says, in order, the steps that make its result smaller ([#outline], [#step]), each run only while the
 /// result is still past the limit, and the parts the agent must act on, never cut ([#keep]): status, hint, next,
@@ -55,6 +59,21 @@ public final class LargeResults {
     public static final String WHOLE_RESULT = "whole_result";
     /// The folder results too large to give whole are saved in, a folder a tool.
     public static final String FOLDER = "/outputs/";
+    /// The most characters of a result's outline Stroom AI's chat gives its model in the stub of a result too large
+    /// to give whole ([#chatOutline]).
+    public static final int CHAT_OUTLINE_CHARS = 10_000;
+    /// The parts of a result that say what the agent must act on (a part within a part by its dotted path), in the
+    /// order the stub of a large result in Stroom AI's chat repeats them, each in full but capped. An outline never
+    /// cuts them, but for the few that can be long and that the tools outline themselves (notes, warnings,
+    /// check.typing). Seen in chat 183: a draft's notes, a catalogue check's problems, unplaced fields and typing
+    /// (what an event type could type), and a build's warnings, each fished out of the saved result with jq, some in
+    /// four rounds.
+    public static final List<String> ACT_ON = List.of("error", "refused", "notes", "user_chose", "problems",
+            "unplaced", "check.problems", "check.unplaced", "check.typing", "warnings", "user_actions", "review_id");
+    /// By a result's status, the further parts it says to act on: a `needs_descriptions` round's fields to describe
+    /// (write_documentation's, which its hint says to describe; a result's `fields` is otherwise often only an
+    /// inventory).
+    public static final Map<String, List<String>> ACT_ON_BY_STATUS = Map.of("needs_descriptions", List.of("fields"));
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LargeResults.class);
 
@@ -68,10 +87,12 @@ public final class LargeResults {
     private static final int FEWEST_ENTRIES = 3;
     private static final int FEWEST_CHARS = 300;
     private static final Pattern PLAIN = Pattern.compile("[^A-Za-z0-9._-]");
+    // Of ACT_ON, those an outline may still cut: they can be long, and the tools that give them outline them (a
+    // draft's notes, each to its start; a build's warnings, without their examples).
+    private static final Set<String> OUTLINED_ACT_ON = Set.of("check.typing", "notes", "warnings");
     // Always kept: what the agent must act on, and what the user chose (seen in chat 183: told it only in part, the
     // agent asked the user again).
-    private static final Set<String> ALWAYS_KEPT = Set.of(WHOLE_RESULT, "status", "hint", "next", "ok", "done",
-            "problems", "refused", "error", "review_id", "user_actions", "user_chose");
+    private static final Set<String> ALWAYS_KEPT = alwaysKept();
 
     private final String tool;
     private final String key;
@@ -195,16 +216,60 @@ public final class LargeResults {
         return true;
     }
 
+    /// The outline Stroom AI's chat gives its model of a result too large to give whole: the tool's own outline
+    /// ([Outline]), made on a copy of the result for [ToolCaller#CHAT_STUB] against [#CHAT_OUTLINE_CHARS]; the
+    /// result itself is left whole, for the chat to keep in its workspace. None for any other caller, for a result
+    /// the chat gives whole (within [ToolOutputs#MAX_INLINE_CHARS]), for one whose content the user must be shown
+    /// as it is (given whole, see [ToolOutputs#mustShowInFull]), or when the outline shortens nothing.
+    ///
+    /// @param caller  Who called the tool.
+    /// @param result  The tool's result, left as it is.
+    /// @param outline How the tool outlines a result of its.
+    /// @return The outline, or null if there is none.
+    public static Map<String, Object> chatOutline(final ToolCaller caller,
+                                                  final Map<String, Object> result,
+                                                  final Outline outline) {
+        if (!caller.isStroomAiChat()
+            || ToolOutputs.SHOWN_TO_USER_STATUSES.contains(String.valueOf(result.get("status")))
+            || length(result) <= ToolOutputs.MAX_INLINE_CHARS) {
+            return null;
+        }
+        final Map<String, Object> copy = JsonValues.deepCopy(new LinkedHashMap<>(result));
+        if (!outline.apply(ToolCaller.CHAT_STUB, copy, CHAT_OUTLINE_CHARS) || copy.equals(result)) {
+            return null;
+        }
+        // Given whole (nothing could be shortened), it is no outline: the stub says what to act on instead.
+        final Map<String, Object> note = JsonValues.map(copy.get(WHOLE_RESULT));
+        return note != null && !note.containsKey("outlined") && !note.containsKey("cut")
+                ? null
+                : copy;
+    }
+
+    /// Gives a result in outline for the caller, as the tool outlines it: in place, for a client outside Stroom
+    /// past [#WHOLE_RESULT_CHARS]; on a copy, for Stroom AI's chat ([#chatOutline]).
+    ///
+    /// @param caller  Who called the tool.
+    /// @param result  The tool's result, changed in place for a client outside Stroom.
+    /// @param outline How the tool outlines a result of its.
+    /// @return The outline for Stroom AI's chat, or null if there is none.
+    public static Map<String, Object> forCaller(final ToolCaller caller,
+                                                final Map<String, Object> result,
+                                                final Outline outline) {
+        outline.apply(caller, result, WHOLE_RESULT_CHARS);
+        return chatOutline(caller, result, outline);
+    }
+
     /// @param caller    Who called the tool.
     /// @param workspace The session's workspace, if it has one.
     /// @param result    The tool's result.
     /// @param limit     The most characters it is given whole in.
-    /// @return True if the result is past the limit for a client outside Stroom, with a workspace to save it in.
+    /// @return True if the result is past the limit for a caller that takes outlines ([ToolCaller#takesOutlines]),
+    /// with a workspace to save it in.
     public static boolean tooLarge(final ToolCaller caller,
                             final Optional<SessionWorkspace> workspace,
                             final Map<String, Object> result,
                             final int limit) {
-        return caller.kind() == ToolCaller.Kind.EXTERNAL_CLIENT && workspace.isPresent() && length(result) > limit;
+        return caller.takesOutlines() && workspace.isPresent() && length(result) > limit;
     }
 
     /// @param tool The tool.
@@ -330,6 +395,15 @@ public final class LargeResults {
                 : value;
     }
 
+    // What says what the result is and what comes next, and what the agent must act on but for what may be outlined.
+    private static Set<String> alwaysKept() {
+        final Set<String> kept = new LinkedHashSet<>(List.of(WHOLE_RESULT, "status", "hint", "next", "ok", "done"));
+        ACT_ON.stream()
+                .filter(part -> !OUTLINED_ACT_ON.contains(part))
+                .forEach(kept::add);
+        return Set.copyOf(kept);
+    }
+
     // The parts not kept cut, each by half again until the result fits, from what they were before the first cut.
     private boolean cut(final Map<String, Object> result, final Room room) {
         final Map<String, Object> uncut = new LinkedHashMap<>(result);
@@ -437,6 +511,17 @@ public final class LargeResults {
 
     // --------------------------------------------------------------------------------
 
+
+    /// How a tool gives a result of its in outline (e.g. its `outlineIfLarge`).
+    @FunctionalInterface
+    public interface Outline {
+
+        /// @param caller Who the result is outlined for (it is left whole for a caller that doesn't take outlines).
+        /// @param result The result, changed in place.
+        /// @param limit  The most characters it is given whole in.
+        /// @return True if it was given in outline.
+        boolean apply(ToolCaller caller, Map<String, Object> result, int limit);
+    }
 
     /// Gives a part of a result in outline.
     @FunctionalInterface

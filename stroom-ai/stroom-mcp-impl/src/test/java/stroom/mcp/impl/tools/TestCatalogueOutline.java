@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.catalogue.EventType;
@@ -137,6 +139,42 @@ class TestCatalogueOutline {
         assertThat(CatalogueOutline.outlineIfLarge(TestLargeResults.CLIENT, Optional.empty(), "acme-v1",
                 noWorkspace, LIMIT)).isFalse();
         assertThat(noWorkspace).isEqualTo(noWorkspaceBefore);
+    }
+
+    @Test
+    void theChatsStubOfACheckCarriesItsProblemsUnplacedAndWhatItCouldType() {
+        // Seen in chat 183: a check's problems, unplaced fields and typing read with jq, in four rounds.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = checked(120, 10);
+        result.put("status", "checked");
+        final Map<String, Object> check = asMap(result.get("check"));
+        final Map<String, Object> unplaced = new LinkedHashMap<>();
+        unplaced.put("field", "src_port");
+        unplaced.put("problem", "placed in no event type");
+        check.put("unplaced", List.of(unplaced));
+        check.put("typing", Map.of("Process-Code007", Map.of("typed", 2, "data", 9,
+                "could_type", Map.of("fields", List.of("pid -> Process/Id")))));
+        final Map<String, Object> before = JsonValues.deepCopy(result);
+
+        final Map<String, Object> outline = LargeResults.forCaller(ToolCaller.STROOM_AI_CHAT, result,
+                (caller, said, limit) -> CatalogueOutline.outlineIfLarge(caller,
+                        Optional.of(new SessionWorkspace(chats, 1)), "acme-v1", said, limit));
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)),
+                "/outputs/turn-1/call-2.txt", outline);
+
+        assertThat(result).isEqualTo(before);
+        assertThat(outline).isNotNull().containsKey(LargeResults.WHOLE_RESULT);
+        assertThat(stub)
+                .contains("refused:\n- {")
+                .containsPattern("check.problems:\n- \\{[^\n]*\"problem\":\"a regex too long\"")
+                .contains("check.unplaced:\n- {\"field\":\"src_port\",\"problem\":\"placed in no event type\"}")
+                .contains("check.typing:\n- Process-Code007: {")
+                .contains("\"could_type\":{\"fields\":[\"pid -> Process/Id\"]}")
+                .contains("The tool's outline of it")
+                .contains("Its next: {\"call\":{")
+                .doesNotContain("It starts with these");
+        // The problems said once, above the outline.
+        assertThat(stub.split("a regex too long", -1)).hasSize(2);
     }
 
     @SuppressWarnings("unchecked")

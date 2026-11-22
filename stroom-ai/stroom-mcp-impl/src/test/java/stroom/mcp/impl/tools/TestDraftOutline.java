@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCaller;
@@ -266,12 +267,64 @@ class TestDraftOutline {
     }
 
     @Test
+    void theChatsStubOfALargeDraftCarriesItsNotesAndItsOutline() {
+        // Seen in chat 183: a 61 KB draft stubbed with its first 30 lines, its notes read with jq.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = largeDraft();
+        final Map<String, Object> before = JsonValues.deepCopy(result);
+        assertThat(LargeResults.length(result)).isBetween(50_000, 80_000);
+
+        final Map<String, Object> outline = LargeResults.forCaller(ToolCaller.STROOM_AI_CHAT, result,
+                (caller, said, limit) -> DraftOutline.outlineIfLarge(caller, said,
+                        Optional.of(new SessionWorkspace(chats, 1)), "acme-v1", limit));
+        final String path = "/outputs/turn-1/call-2.txt";
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)), path,
+                outline);
+
+        // The result itself whole, for the chat to save.
+        assertThat(result).isEqualTo(before);
+        assertThat(outline).containsKeys("mapping_outline", "mapping_saved").doesNotContainKey("mapping");
+        assertThat(LargeResults.length(outline)).isLessThan(LargeResults.length(result) / 3);
+        assertThat(stub)
+                .contains("saved to the workspace file " + path)
+                .contains("notes:\n- Ask the user for EventSource/System/Name and Environment.")
+                .contains("- Decide the action element of Process-Code59.")
+                .contains("The tool's outline of it")
+                .contains("\"mapping_outline\"")
+                .contains("\"mapping_saved\": \"/outputs/drafts/acme-v1.json\"")
+                .doesNotContain("It starts with these");
+        assertThat(stub.length()).isLessThan(LargeResults.CHAT_OUTLINE_CHARS + ToolOutputs.MAX_INLINE_CHARS * 4);
+    }
+
+    @Test
     void withoutAWorkspaceTheDraftIsGivenWhole() {
         final Map<String, Object> result = drafted();
 
         DraftOutline.outlineIfLarge(CLIENT, result, Optional.empty(), "acme-v1", 100);
 
         assertThat(result).containsKey("mapping").doesNotContainKey("mapping_outline");
+    }
+
+    // A draft of 60 event types, its notes long, as chat 183's was (61 KB).
+    private static Map<String, Object> largeDraft() {
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        final List<String> notes = new ArrayList<>();
+        notes.add("Ask the user for EventSource/System/Name and Environment.");
+        for (int i = 0; i < 60; i++) {
+            rules.add(Map.of("name", "process_code" + i,
+                    "when", List.of(Map.of("field", "code", "equals", "EV" + i)),
+                    "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Process-Code" + i),
+                            Map.of("path", "EventDetail/Description", "value", "Code " + i + " was run. "
+                                                                                 .repeat(70)),
+                            Map.of("path", "EventDetail/Process/Data", "data_name", "code", "field", "code"))));
+            notes.add("Decide the action element of Process-Code" + i + ".");
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", new LinkedHashMap<>(Map.of("input", "json", "events", rules)));
+        result.put("notes", notes);
+        result.put("schema_version", "4.1.0");
+        result.put("hint", "Decide what the notes ask, then build_translation_xslt.");
+        return result;
     }
 
     private static Map<String, Object> drafted() {

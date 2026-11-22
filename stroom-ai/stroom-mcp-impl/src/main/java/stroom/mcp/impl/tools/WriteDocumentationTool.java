@@ -267,11 +267,14 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
             final Map<String, Object> result = new LinkedHashMap<>(document(call, context));
-            // A client outside Stroom takes only so much of a result (Stroom AI's chat keeps large results itself).
-            DocumentationOutline.outlineIfLarge(context.caller(), context.workspace(), LargeResults.keyOf(
-                    stringArg(call, BUILD_ARG), stringArg(call, PIPELINE_UUID_ARG),
-                    stringArg(call, INDEX_UUID_ARG)), result, LargeResults.WHOLE_RESULT_CHARS);
-            return UserActionEntries.withActions(JsonResults.of(result), result);
+            // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself,
+            // and gives its model the outline in the result's stub.
+            final String key = LargeResults.keyOf(stringArg(call, BUILD_ARG), stringArg(call, PIPELINE_UUID_ARG),
+                    stringArg(call, INDEX_UUID_ARG));
+            final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), result,
+                    (caller, said, limit) -> DocumentationOutline.outlineIfLarge(caller, context.workspace(), key,
+                            said, limit));
+            return UserActionEntries.withActions(JsonResults.of(result).withChatOutline(chatOutline), result);
         } catch (final ToolRefusal | PipelineUnreadableException e) {
             return JsonResults.refused(e.getMessage());
         }

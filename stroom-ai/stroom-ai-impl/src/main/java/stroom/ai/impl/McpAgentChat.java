@@ -771,8 +771,9 @@ class McpAgentChat {
         final String path = large
                 ? saveOutput(chatId, callMessage, saved)
                 : null;
+        // The stub carries the tool's own outline of the result, where it gives one (LargeResults.chatOutline).
         final String forModel = path != null
-                ? ToolOutputs.stub(saved, path)
+                ? ToolOutputs.stub(saved, path, toolResult.chatOutline())
                 : result;
         final boolean error = isError(result);
         // Steps that are the user's, checked, to show as buttons. The model is not told about them: the steps are

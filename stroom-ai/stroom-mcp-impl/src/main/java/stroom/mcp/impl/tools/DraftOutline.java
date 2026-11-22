@@ -82,20 +82,22 @@ final class DraftOutline {
     /// `data_placement` lists each action element's elements once ([DataPlacements#compact]). An
     /// outline itself past the limit says less of each rule (no other paths), then lists only the rules that fit.
     /// The server keeps the draft for the session either way, so the first save sends only what changes. Given
-    /// whole to Stroom AI's own chat (which keeps a large result in its workspace itself), when there is no workspace,
-    /// or when the file can't be written.
+    /// whole to Stroom AI's own chat (which keeps a large result in its workspace itself, and gives its model this
+    /// outline of a copy, see [LargeResults#chatOutline]), when there is no workspace, or when the file can't be
+    /// written.
     ///
     /// @param caller    Who called the tool.
     /// @param result    The draft's result, changed in place.
     /// @param workspace The session's workspace, if it has one.
     /// @param build     The build, or null.
     /// @param limit     The most characters a result is given whole in ([LargeResults#WHOLE_RESULT_CHARS]).
-    static void outlineIfLarge(final ToolCaller caller,
-                               final Map<String, Object> result,
-                               final Optional<SessionWorkspace> workspace,
-                               final String build,
-                               final int limit) {
-        outlineIfLarge(caller, result, workspace, build, null, limit);
+    /// @return True if the result was given in outline.
+    static boolean outlineIfLarge(final ToolCaller caller,
+                                  final Map<String, Object> result,
+                                  final Optional<SessionWorkspace> workspace,
+                                  final String build,
+                                  final int limit) {
+        return outlineIfLarge(caller, result, workspace, build, null, limit);
     }
 
     /// As [#outlineIfLarge(ToolCaller, Map, Optional, String, int)], the vendor's code each rule writes read as the
@@ -107,20 +109,21 @@ final class DraftOutline {
     /// @param build     The build, or null.
     /// @param catalogue The build's catalogue (its scope names the source type field), or null.
     /// @param limit     The most characters a result is given whole in ([LargeResults#WHOLE_RESULT_CHARS]).
-    static void outlineIfLarge(final ToolCaller caller,
-                               final Map<String, Object> result,
-                               final Optional<SessionWorkspace> workspace,
-                               final String build,
-                               final Catalogue catalogue,
-                               final int limit) {
+    /// @return True if the result was given in outline.
+    static boolean outlineIfLarge(final ToolCaller caller,
+                                  final Map<String, Object> result,
+                                  final Optional<SessionWorkspace> workspace,
+                                  final String build,
+                                  final Catalogue catalogue,
+                                  final int limit) {
         final Map<String, Object> mapping = JsonValues.map(result.get(MAPPING));
-        if (caller.kind() != ToolCaller.Kind.EXTERNAL_CLIENT || mapping == null || workspace.isEmpty()
+        if (!caller.takesOutlines() || mapping == null || workspace.isEmpty()
             || length(result) <= limit) {
-            return;
+            return false;
         }
         final String path = savedPath(build);
         if (!LargeResults.save(workspace, path, mapping, false)) {
-            return;
+            return false;
         }
         result.remove(MAPPING);
         result.put(SAVED, path);
@@ -161,6 +164,7 @@ final class DraftOutline {
                 fitRules(result, limit);
             }
         }
+        return true;
     }
 
     /// @param build The build, or null.
