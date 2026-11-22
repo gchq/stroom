@@ -516,6 +516,13 @@ class TestReadDocumentTool {
                 .contains("/documents/xslt-uuid/mapping.json")
                 .contains("jq tool")
                 .doesNotContain("EventSource/Generator");
+        // Seen in chats 184-186: the agent queried the saved file's .events[] and .common[] at the top level, as a
+        // draft's file holds them, some 15 jq queries, eight failing or empty; here the mapping is under .mapping.
+        assertThat(result)
+                .contains("Its top-level keys: kind, schema_version, mapping.")
+                .contains(".mapping.common[] (6 items, each {path, field, value, default})")
+                .contains(".mapping.events[] (2 items, each {name, when, fields})")
+                .contains("A query that works on it: `.mapping.events[] | {name, fields: [.fields[] | .path]}`.");
     }
 
     @Test

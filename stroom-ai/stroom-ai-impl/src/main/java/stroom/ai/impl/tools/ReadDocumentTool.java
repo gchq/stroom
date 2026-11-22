@@ -479,7 +479,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         final WorkspacePath path = documentPath(docRef, fileName);
         sessionWorkspace(context).writeDocument(path, json, docRef.getUuid());
         return "\n\n## " + heading + "\n" + what + " is too large to show (" + size(json.length()) + "), so it "
-               + "has been saved to " + path + ".";
+               + "has been saved to " + path + ": pick out the parts you need of it with the jq tool. "
+               + SavedJsonLayout.describe(content);
     }
 
     // A Documentation doc's passages that mention something.
@@ -679,19 +680,22 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             KeptMapping.pendingChanges(changes).forEach(change -> sb.append("- ").append(change).append('\n'));
         });
         kept.ifPresent(mapping -> {
-            final String json = JsonUtil.writeValueAsString(KeptMapping.summary(mapping, docRef.getUuid(), whole),
-                    true);
+            final Map<String, Object> summary = KeptMapping.summary(mapping, docRef.getUuid(), whole);
+            final String json = JsonUtil.writeValueAsString(summary, true);
             sb.append("\n\n## Kept mapping\n");
             if (json.length() <= limit / 2) {
                 sb.append(json);
                 return;
             }
             // As a large part is: saved, not put in the reply (seen: a CEF plan's 15 KB, its not-sent list mostly,
-            // shown whole on top of the XSLT's parts saved to the workspace).
+            // shown whole on top of the XSLT's parts saved to the workspace). Its layout is said, as the mapping is
+            // under .mapping here, not at the top level as in a draft's file (seen in chats 184-186: some 15 jq
+            // queries of .events[] and .common[], eight failing or empty).
             final WorkspacePath path = documentPath(docRef, "mapping.json");
             workspace.writeDocument(path, json, docRef.getUuid());
             sb.append("It is too large to show (").append(size(json.length())).append("), so it has been saved to ")
-                    .append(path).append(": pick out the parts you need of it with the jq tool.");
+                    .append(path).append(": pick out the parts you need of it with the jq tool. ")
+                    .append(SavedJsonLayout.describe(summary));
         });
         return sb.toString().stripTrailing() + lost;
     }
