@@ -548,9 +548,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // True when it can't be told.
     private boolean holdsMore(final String feed, final String streamType, final int count) {
         try {
+            // Deleted streams left out, as the survey reads none (seen in chat 183: a feed of 2 streams surveyed 2 a
+            // call asked the user to agree to fewer, its 4 deleted streams counted).
             final ExpressionOperator terms = ExpressionOperator.builder().op(Op.AND)
                     .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
                     .addTextTerm(MetaFields.TYPE, Condition.EQUALS, streamType)
+                    .addOperator(FeedSampling.notDeleted())
                     .build();
             return find(terms, count + 1, true).size() > count;
         } catch (final RuntimeException e) {

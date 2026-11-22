@@ -137,6 +137,30 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void fewerStreamsAreNotAskedAboutWhenTheFeedHoldsNoMoreThanThoseLeftUndeleted() {
+        // Seen in chat 183: a feed of 2 streams surveyed 2 a call was put to the user ("only 2 stream(s) a call, the
+        // default is 10"), its 4 deleted streams counted as more to read.
+        Mockito.when(streamReader.find(any(), anyInt(), anyBoolean())).thenAnswer(find -> {
+            final int limit = find.getArgument(1);
+            if (limit != 3) {
+                // The survey's own reading: nothing more is needed here.
+                return ResultPage.empty();
+            }
+            // Whether the feed holds more than 2: only with its deleted streams counted.
+            final int held = String.valueOf((Object) find.getArgument(0)).contains("Deleted")
+                    ? 2
+                    : 6;
+            return new ResultPage<>(IntStream.range(0, Math.min(held, limit))
+                    .mapToObj(n -> new MetaRow(meta(100 + n, "ACME-VPN", 0), null, Map.of()))
+                    .toList());
+        });
+
+        // Without a form a fewer-streams survey is refused; with 2 left undeleted there is nothing to agree to.
+        assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 2}", BuildToolCalls.context()).text())
+                .isEqualTo("No Raw Events streams in feed 'ACME-VPN'");
+    }
+
+    @Test
     void theDefaultOrALargerSampleIsNotAskedAbout() {
         for (final int count : List.of(10, 40)) {
             assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": " + count + "}").text())
