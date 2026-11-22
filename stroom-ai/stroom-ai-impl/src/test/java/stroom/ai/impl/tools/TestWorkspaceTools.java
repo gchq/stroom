@@ -454,6 +454,54 @@ class TestWorkspaceTools {
     }
 
     @Test
+    void testJqOnJsonLines() {
+        // Seen in chat 187: group_by run on a JSON lines file of fetched records failed on each record, and the
+        // error never said the file held many values.
+        workspace.write(chatId, WorkspacePath.parse("/outputs/raw.jsonl"),
+                "{\"Operation\":\"Send\",\"Workload\":\"Exchange\"}\n"
+                + "{\"Operation\":\"Read\",\"Workload\":\"Exchange\"}\n"
+                + "{\"Operation\":\"Send\",\"Workload\":\"Teams\"}\n", null);
+
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/raw.jsonl\","
+                                             + "\"query\":\"group_by(.Operation) | length\"}"))
+                .startsWith("Error: The jq query failed:")
+                .endsWith("The file holds 3 JSON values (e.g. one per line) and the query ran on each on its own; "
+                          + "it failed on value 1. Give slurp: true to run it once on all of them as an array.");
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/raw.jsonl\","
+                                             + "\"query\":\"[.[] | select(.Workload == \\\"Exchange\\\")] | length\"}"))
+                .contains("The input is a JSON object with the fields Operation, Workload.")
+                .contains("The file holds 3 JSON values");
+
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/raw.jsonl\",\"slurp\":true,"
+                                             + "\"query\":\"group_by(.Operation) | map({op: .[0].Operation, "
+                                             + "n: length}) | .[]\"}"))
+                .isEqualTo("{\"op\":\"Read\",\"n\":1}\n{\"op\":\"Send\",\"n\":2}");
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/raw.jsonl\",\"slurp\":true,"
+                                             + "\"query\":\"[.[] | select(.Workload == \\\"Exchange\\\")] | length\"}"))
+                .isEqualTo("2");
+
+        // One value: the error is as before, with no count.
+        workspace.write(chatId, WorkspacePath.parse("/outputs/one.json"), "{\"Operation\":\"Send\"}", null);
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/one.json\",\"query\":\"group_by(.Operation)\"}"))
+                .startsWith("Error: The jq query failed:")
+                .doesNotContain("JSON values");
+        // Slurp of one value is a one-item array.
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/one.json\",\"slurp\":true,"
+                                             + "\"query\":\"length\"}"))
+                .isEqualTo("1");
+        // A failure on a later value names it.
+        workspace.write(chatId, WorkspacePath.parse("/outputs/mixed.jsonl"), "{\"a\":[1]}\n{\"a\":\"x\"}\n", null);
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/mixed.jsonl\",\"query\":\".a[]\"}"))
+                .contains("The file holds 2 JSON values")
+                .contains("it failed on value 2.");
+        // A query stopped for its work isn't one slurp would help.
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/raw.jsonl\",\"query\":\"[range(6000000)] | "
+                                             + "length\"}"))
+                .contains("did too much work")
+                .doesNotContain("JSON values");
+    }
+
+    @Test
     void testXPath() {
         workspace.write(chatId, WorkspacePath.parse("/outputs/events.xml"), """
                 <Events xmlns="event-logging:3">

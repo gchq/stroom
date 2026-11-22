@@ -1106,6 +1106,10 @@ Runs a jq query on a JSON file in the workspace (one JSON value, or one per line
     "raw" : {
       "description" : "True to give string results without quotes.",
       "type" : "boolean"
+    },
+    "slurp" : {
+      "description" : "True to read every JSON value in the file into one array and run the query once on it (as jq -s).",
+      "type" : "boolean"
     }
   },
   "required" : [ "path", "query" ],

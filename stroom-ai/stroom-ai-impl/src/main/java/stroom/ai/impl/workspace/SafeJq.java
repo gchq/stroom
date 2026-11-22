@@ -52,6 +52,8 @@ import java.util.regex.Pattern;
 ///   do, so a query that loops or builds something huge is stopped.
 public final class SafeJq {
 
+    /// How the message of a query that failed on its input starts (not one stopped for its work or recursion).
+    public static final String FAILED = "The jq query failed: ";
     /// The most built-in function calls and outputs a query may make.
     static final long MAX_OPERATIONS = 5_000_000;
     /// The longest a query may be, in characters: long enough for a query that rebuilds a large document.
@@ -224,7 +226,7 @@ public final class SafeJq {
                 output.emit(value);
             });
         } catch (final JsonQueryException e) {
-            throw new WorkspaceException("The jq query failed: " + e.getMessage() + pathAdvice(e.getMessage()));
+            throw new WorkspaceException(FAILED + e.getMessage() + pathAdvice(e.getMessage()));
         } catch (final StackOverflowError e) {
             throw new WorkspaceException("The jq query recursed too deeply and was stopped.");
         } finally {

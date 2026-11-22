@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import jakarta.inject.Inject;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Output;
@@ -53,6 +54,7 @@ class JqTool extends AbstractWorkspaceTool {
     static final String NAME = "jq";
     static final String QUERY_ARG = "query";
     static final String RAW_ARG = "raw";
+    static final String SLURP_ARG = "slurp";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Inject
@@ -83,6 +85,8 @@ class JqTool extends AbstractWorkspaceTool {
                         .addStringProperty(PATH_ARG, "The JSON file.")
                         .addStringProperty(QUERY_ARG, "The jq query.")
                         .addBooleanProperty(RAW_ARG, "True to give string results without quotes.")
+                        .addBooleanProperty(SLURP_ARG, "True to read every JSON value in the file into one "
+                                                       + "array and run the query once on it (as jq -s).")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("A file in /outputs/ to write the results to.")
                                 .build())
@@ -97,6 +101,7 @@ class JqTool extends AbstractWorkspaceTool {
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final JsonQuery query = SafeJq.compile(rawArg(request, QUERY_ARG));
         final boolean raw = booleanArg(request, RAW_ARG, false);
+        final boolean slurp = booleanArg(request, SLURP_ARG, false);
         final WorkspacePath out = outArg(request);
         final Path file = workspace.localFile(path);
 
@@ -109,20 +114,31 @@ class JqTool extends AbstractWorkspaceTool {
                 final BufferedWriter writer = temp != null
                         ? Files.newBufferedWriter(temp, StandardCharsets.UTF_8)
                         : null) {
-            while (inputs.hasNextValue()) {
-                ToolDeadline.check();
-                final JsonNode input = inputs.nextValue();
-                runOn(query, input, value -> {
-                    total[0]++;
-                    final String line = raw && value.isTextual()
-                            ? value.asText()
-                            : value.toString();
-                    if (writer != null) {
-                        write(writer, line);
-                    } else if (results.size() < limits(context).getMaxLinesPerRead()) {
-                        results.add(line);
+            final Output output = value -> {
+                total[0]++;
+                final String line = raw && value.isTextual()
+                        ? value.asText()
+                        : value.toString();
+                if (writer != null) {
+                    write(writer, line);
+                } else if (results.size() < limits(context).getMaxLinesPerRead()) {
+                    results.add(line);
+                }
+            };
+            if (slurp) {
+                runOn(query, slurp(inputs), output);
+            } else {
+                long values = 0;
+                while (inputs.hasNextValue()) {
+                    ToolDeadline.check();
+                    final JsonNode input = inputs.nextValue();
+                    values++;
+                    try {
+                        runOn(query, input, output);
+                    } catch (final WorkspaceException e) {
+                        throw withValueCount(e, inputs, values);
                     }
-                });
+                }
             }
             if (writer != null) {
                 writer.close();
@@ -139,6 +155,48 @@ class JqTool extends AbstractWorkspaceTool {
                 ChatWorkspace.deleteQuietly(temp);
             }
         }
+    }
+
+    // Every JSON value of the file in one array, as jq -s reads them.
+    private static ArrayNode slurp(final MappingIterator<JsonNode> inputs) throws IOException {
+        final ArrayNode all = MAPPER.createArrayNode();
+        while (inputs.hasNextValue()) {
+            ToolDeadline.check();
+            all.add(inputs.nextValue());
+        }
+        return all;
+    }
+
+    // A query that failed on one value of a file holding several says so, as the query ran on each on its own and
+    // a query written for all of them (group_by, .[]) fails on any one. Seen in chat 187: group_by on a JSON
+    // lines file of fetched records, then grep in its place.
+    private static WorkspaceException withValueCount(final WorkspaceException e,
+                                                     final MappingIterator<JsonNode> inputs,
+                                                     final long failedValue) {
+        if (!e.getMessage().startsWith(SafeJq.FAILED)) {
+            // Stopped for too much work or too deep a recursion: running it once over all of them won't help.
+            return e;
+        }
+        long values = failedValue;
+        boolean counted = true;
+        try {
+            while (inputs.hasNextValue()) {
+                ToolDeadline.check();
+                inputs.nextValue();
+                values++;
+            }
+        } catch (final IOException | RuntimeException countError) {
+            // A later value that can't be read, or the time limit: say how many were read.
+            counted = false;
+        }
+        if (values < 2) {
+            return e;
+        }
+        return new WorkspaceException(e.getMessage() + " The file holds " + (counted
+                ? ""
+                : "at least ") + values + " JSON values (e.g. one per line) and the query ran on each on its "
+                                      + "own; it failed on value " + failedValue + ". Give " + SLURP_ARG
+                                      + ": true to run it once on all of them as an array.");
     }
 
     private static void write(final BufferedWriter writer, final String line) {
