@@ -218,6 +218,41 @@ class TestPlacementCheck {
     }
 
     @Test
+    void anElementRequiredBelowAChoiceTheCatalogueTookNamesTheOtherChoicesThere() {
+        // Seen in chat 185 (Haiku): a Move's folder placed through Association, whose required Objects was said to
+        // be empty one level deeper each round, for 4 rounds, when Move/Source offers Folder itself.
+        final EventType move = type("Move-Folder", "Move", "FolderBind", List.of(
+                placement("Source/Association/Objects/Association/Name", "event.Subject"),
+                placement("Destination/Folder/Path", "event.Subject")));
+
+        final List<String> unplaced = said(check(move).unplaced());
+
+        assertThat(unplaced).singleElement().asString()
+                .contains("EventDetail/Move/Source/Association/Objects/Association/Objects is required by the "
+                          + "schema")
+                .contains("Source takes one of: Association, Banner, Chat, Configuration, Criteria, Document, "
+                          + "Email, File, Folder,")
+                .contains("Resource; a placement there may go straight to the one the value is (e.g. "
+                          + "Source/<that element>/Id), not through Association")
+                .doesNotContain("Source/Banner");
+        // The message stays short: the choices capped.
+        assertThat(unplaced.getFirst()).hasSizeLessThan(1_200);
+
+        // A placement one level up: the same choices named, those of the shallowest choice the placements took.
+        final EventType deeper = type("Move-Folder", "Move", "FolderBind", List.of(
+                placement("Source/Association/Name", "event.Subject"),
+                placement("Destination/Folder/Path", "event.Subject")));
+        assertThat(said(check(deeper).unplaced())).singleElement().asString()
+                .contains("Source/Association/Objects", "Source takes one of: Association,");
+
+        // A placement straight to the object: nothing required is left.
+        final EventType direct = type("Move-Folder", "Move", "FolderBind", List.of(
+                placement("Source/Folder/Path", "event.Subject"),
+                placement("Destination/Folder/Path", "event.Subject")));
+        assertThat(check(direct).unplaced()).isEmpty();
+    }
+
+    @Test
     void anElementTheDraftsCommonEntriesWriteBelowTheActionElementCounts() {
         // Eval case 01: the user authenticating written in common, for every Authenticate event.
         final EventType logon = new EventType("Authenticate-Logon", "Logon", null, "Authenticate", "Logon", null,

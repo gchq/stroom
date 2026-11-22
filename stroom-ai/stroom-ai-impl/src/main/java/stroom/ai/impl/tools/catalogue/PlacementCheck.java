@@ -89,6 +89,8 @@ final class PlacementCheck {
     private static final int VALUES_READ = 2_000;
     private static final int SHOWN = 3;
     private static final int LEAVES_SHOWN = 8;
+    // The most of a choice's members named where an element required below one of them is left empty.
+    private static final int CHOICES_SHOWN = 20;
     // What could be typed: the most Data fields listed, the longest example, the most groups of the schema's
     // elements, and the most elements in one.
     private static final int COULD_TYPE_FIELDS = 12;
@@ -963,15 +965,17 @@ final class PlacementCheck {
         }
         final List<String> out = new ArrayList<>();
         final Element decl = schema.resolve(EVENT_DETAIL + detail).getLast().decl();
-        walk(label, EVENT_DETAIL + detail, decl, root, out);
+        walk(label, EVENT_DETAIL + detail, decl, root, out, new HashSet<>());
         return out;
     }
 
+    // hinted: the choices whose other members were named already in this check, so each is named once.
     private void walk(final String label,
                       final String at,
                       final Element decl,
                       final Node node,
-                      final List<String> out) {
+                      final List<String> out,
+                      final Set<String> hinted) {
         if (schema.isLeaf(decl)) {
             return;
         }
@@ -981,7 +985,7 @@ final class PlacementCheck {
                 out.add(label + ": " + at + "/" + child.name() + " is required by the schema, and nothing the "
                         + "catalogue gives is written there: give a placement (e.g. {path: '"
                         + below(at + "/" + child.name()) + example(child.decl()) + "', field: <the field that "
-                        + "holds it>}) from what the records hold");
+                        + "holds it>}) from what the records hold" + otherChoices(at, hinted));
             }
         }
         for (final Map.Entry<Integer, List<String>> choice : schema.requiredChoices().entrySet()) {
@@ -994,15 +998,66 @@ final class PlacementCheck {
                         .filter(child -> child.name().equals(choice.getValue().getFirst()))
                         .findFirst()
                         .map(Child::decl)
-                        .orElse(null)) + "', field: <the field that holds it>})");
+                        .orElse(null)) + "', field: <the field that holds it>})" + otherChoices(at, hinted));
             }
         }
         for (final Child child : allowed) {
             final Node kid = node.kids.get(child.name());
             if (kid != null && !DATA.equals(child.name())) {
-                walk(label, at + "/" + child.name(), child.decl(), kid, out);
+                walk(label, at + "/" + child.name(), child.decl(), kid, out, hinted);
             }
         }
+    }
+
+    // Where an element required at or below `at` is left empty below a member of a choice the catalogue's
+    // placements took: the choice's other members, at the shallowest such choice below the action element, so a
+    // placement can go straight to one (seen in chat 185: a Move's folder placed through Source/Association, whose
+    // required Objects was said to be empty one level deeper each round, when Move/Source offers Folder itself).
+    // "" where no choice the placements took is on the path, or its members were named already.
+    private String otherChoices(final String at, final Set<String> hinted) {
+        final String rest = below(at);
+        if (rest.isEmpty()) {
+            return "";
+        }
+        final List<Child> chain = schema.resolve(at);
+        final String[] steps = rest.split("/");
+        final int first = chain.size() - steps.length;
+        for (int i = Math.max(first, 1); i < chain.size(); i++) {
+            final Child taken = chain.get(i);
+            if (taken.choice() == null) {
+                continue;
+            }
+            final List<Child> members = schema.children(chain.get(i - 1).decl()).stream()
+                    .filter(child -> taken.choice().equals(child.choice()))
+                    .toList();
+            final String parent = String.join("/", Arrays.copyOfRange(steps, 0, i - first));
+            if (members.size() < 2 || parent.isEmpty() || !hinted.add(parent)) {
+                return "";
+            }
+            final List<String> names = members.stream().map(Child::name).toList();
+            // No example member: the first that needs nothing more (Banner, for a folder) only misled.
+            final String other = members.stream()
+                    .anyMatch(child -> !child.name().equals(taken.name()) && needsNothingMore(child.decl()))
+                    ? "; a placement there may go straight to the one the value is (e.g. " + parent
+                      + "/<that element>/Id), not through " + taken.name()
+                    : "";
+            return ". " + parent + " takes one of: " + String.join(", ", names.subList(0, Math.min(CHOICES_SHOWN,
+                    names.size()))) + (names.size() > CHOICES_SHOWN
+                    ? " and " + (names.size() - CHOICES_SHOWN) + " more"
+                    : "") + other;
+        }
+        return "";
+    }
+
+    // True for an element one leaf below it fills: it is a leaf, or it requires no element and no choice of its own.
+    private boolean needsNothingMore(final Element decl) {
+        if (decl == null || schema.isLeaf(decl)) {
+            return true;
+        }
+        final List<Child> children = schema.children(decl);
+        return children.stream().noneMatch(Child::required)
+               && schema.requiredChoices().keySet().stream()
+                       .noneMatch(id -> children.stream().anyMatch(child -> id.equals(child.choice())));
     }
 
     // A path below the action element, for an example: what follows `EventDetail/<element>/`.
@@ -1026,10 +1081,17 @@ final class PlacementCheck {
                 return "/" + leaf;
             }
         }
-        final Child first = children.stream()
+        // One that needs nothing more first: the first of a multi-object choice is Association, which needs objects
+        // of its own, so an example through it led one level deeper each round (seen in chat 185).
+        final List<Child> candidates = children.stream()
                 .filter(child -> !DATA.equals(child.name()) && !"Meta".equals(child.name()))
+                .toList();
+        final Child first = candidates.stream()
+                .filter(child -> needsNothingMore(child.decl()))
                 .findFirst()
-                .orElse(null);
+                .orElse(candidates.isEmpty()
+                        ? null
+                        : candidates.getFirst());
         return first == null
                 ? ""
                 : "/" + first.name() + example(first.decl());

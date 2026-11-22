@@ -3818,7 +3818,16 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   written below it: required children and required choices) that nothing the catalogue gives writes (placements, the
   Action, the outcome, Authenticate's user from the actor or the draft's common user, the draft's common entries
   written below the action element (2026-11-22), Data). Recorded, but
-  `confirm=true` refuses to put a set to the user (or the catch-all) until they are placed.
+  `confirm=true` refuses to put a set to the user (or the catch-all) until they are placed. Where the element left
+  empty is below a member of a schema choice the placements took (2026-11-22, seen in chat 185 on Haiku: a Move's
+  folder placed at `Source/Association/Objects/Association/...`, whose required `Objects` was said to be empty one
+  level deeper each round for 4 rounds, when `Move/Source` offers `Folder` itself), the message names that choice's
+  members, at the shallowest such choice below the action element and once a check, at most 20 (`… and N more`):
+  `Source takes one of: Association, Banner, ...; a placement there may go straight to the one the value is (e.g.
+  Source/<that element>/Id), not through Association` (no member is given as the example: the first needing nothing
+  more, Banner, would suggest a banner for a folder). The schema's model gives the members (`EventSchema.Child.choice`), nothing is listed by hand. An example
+  path into an element now goes through a child needing nothing more of its own first (not Association, the first
+  of a multi-object choice, whose own `Objects` an example through it left empty again).
 * `typing` (2026-11-21): per event type in the sample, the fields typed and kept as Data (those every event shares
   aside), each placed field's fill rate in its records (`fill`), and `worth_a_look` when at least 5 and 80% of its
   fields are Data: said among the set's worth-a-look reasons, never refused (compact: only types with placements or
@@ -5487,7 +5496,13 @@ scope keeps its own); the sample check reads theirs alone. A build with a whole-
 unaffected. Saving: the helpers (made, or written again when this
 generator writes them otherwise) and common module first, then the group importing the common module by UUID, and the
 registry's rows for the group's source types set `translated` with `group` and `group_xslt`, and its `modules` the
-versions saved (the feed's newest, for a new group to import). The modules a group has are those its XSLT imports
+versions saved. A group's new XSLT is named for the group, as its pipeline is (`SourceTypeGroups.xsltName`: the
+registry's pipeline name for the group, else `SourceTypeGroups.pipelineName`, `<feed> <group> V1.0`), whatever `name`
+the agent passes (seen in chat 185: saved as the agent's `Azure-Audit-V1.0-Events` beside a pipeline create_pipeline
+named for the group); where it replaces a name given, `name_note` says so and to use the uuid from then on. No form
+shows the XSLT's name, so nothing is asked; an XSLT the group has already (the registry's) keeps its name. A later
+call naming the group finds its XSLT by the registry where the build has none of the name given
+(`savedName`: changes=, and what the user agreed to) (the feed's newest, for a new group to import). The modules a group has are those its XSLT imports
 (`SourceTypeGroups.modules`: its common module by the module's mark, and the helpers that module imports; the
 build's copy of the group's XSLT where it has one), so groups may import different versions; a new group takes the
 registry's.
