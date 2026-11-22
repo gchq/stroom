@@ -17,10 +17,13 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.LocalCheck.QualifiedIds;
 import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.ItemSource;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.EventSchema.Child;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -127,6 +130,12 @@ final class DomainSplits {
         entries(map.get("events")).forEach(rule -> entries.addAll(entries(rule.get("fields"))));
         for (final Map<String, Object> entry : entries) {
             final String path = String.valueOf(entry.get("path"));
+            final String grouped = splitGroupField(entry);
+            if (grouped != null && fields.contains(grouped)) {
+                // A repeated Id split in a group over the field's values.
+                answers.add(SPLIT);
+                continue;
+            }
             if (!path.endsWith("User/Id") || !fields.contains(String.valueOf(entry.get("field")))) {
                 continue;
             }
@@ -195,7 +204,12 @@ final class DomainSplits {
         final List<Map<String, Object>> out = new ArrayList<>();
         for (final Map<String, Object> entry : entries) {
             final String path = String.valueOf(entry.get("path"));
-            if (path.endsWith("User/Id") && "strip_domain".equals(entry.get("transform"))) {
+            final String grouped = splitGroupField(entry);
+            if (grouped != null) {
+                out.add(repeatOf(entry, grouped));
+                record(done, path + "/Id: written whole");
+                record(done, path + "/Domain: taken out");
+            } else if (path.endsWith("User/Id") && "strip_domain".equals(entry.get("transform"))) {
                 final Map<String, Object> whole = new LinkedHashMap<>(entry);
                 whole.remove("transform");
                 out.add(whole);
@@ -231,11 +245,24 @@ final class DomainSplits {
                 out.add(entry);
                 continue;
             }
+            final String domainPath = domainPath((String) path);
+            final boolean domainFree = !mapped(entries, domainPath) && !mapped(also, domainPath)
+                                       && inSchema(schema, domainPath);
+            final String holder = repeatedHolder(entry, schema);
+            if (holder != null && domainFree) {
+                // A repeat writes its User once per value, so nothing else may be mapped below it: a group over the
+                // field's values writes each User with both (seen, chat 183: a Domain beside a repeated recipient's
+                // Id, which the build's own check refused).
+                out.add(group(entry, holder, found.field()));
+                record(done, path + ": a for_each group over '" + found.field() + "' at " + holder + ", each "
+                             + lastName(holder) + " with its Id (strip_domain) and Domain (domain), in place of the "
+                             + "repeat");
+                continue;
+            }
             final Map<String, Object> id = new LinkedHashMap<>(entry);
             id.put("transform", "strip_domain");
             out.add(id);
-            final String domainPath = domainPath((String) path);
-            if (mapped(entries, domainPath) || mapped(also, domainPath) || !inSchema(schema, domainPath)) {
+            if (!domainFree) {
                 record(done, path + ": strip_domain");
                 continue;
             }
@@ -247,6 +274,90 @@ final class DomainSplits {
             record(done, path + ": strip_domain, and " + domainPath + " from '" + found.field() + "' (domain)");
         }
         return out;
+    }
+
+    // The element a repeat entry writes once per value, where it holds the Id (a User, which may occur more than
+    // once in its parent, the Id itself not): null for an entry that isn't a repeat, or whose Id itself repeats.
+    private static String repeatedHolder(final Map<String, Object> entry, final EventSchema schema) {
+        if (!Boolean.TRUE.equals(entry.get("repeat"))) {
+            return null;
+        }
+        final String path = ToolText.strip(String.valueOf(entry.get("path")), "/");
+        final List<Child> chain;
+        try {
+            chain = schema.resolve(path);
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
+        if (chain.size() < 2 || chain.getLast().repeatable() || !chain.get(chain.size() - 2).repeatable()) {
+            return null;
+        }
+        return path.substring(0, path.lastIndexOf('/'));
+    }
+
+    // A group over the field's values at the element holding the Id: the Id from each value with strip_domain (the
+    // entry's other settings kept), the Domain from it with domain.
+    private static Map<String, Object> group(final Map<String, Object> entry,
+                                             final String holder,
+                                             final String field) {
+        final Map<String, Object> id = new LinkedHashMap<>(entry);
+        id.remove("field");
+        id.remove("repeat");
+        id.put("path", "Id");
+        id.put("item", true);
+        id.put("transform", "strip_domain");
+        final Map<String, Object> domain = new LinkedHashMap<>();
+        domain.put("path", "Domain");
+        domain.put("item", true);
+        domain.put("transform", "domain");
+        final Map<String, Object> group = new LinkedHashMap<>();
+        group.put("path", holder);
+        group.put("for_each", Map.of(ItemSource.ARRAY, field));
+        group.put("fields", List.of(id, domain));
+        return group;
+    }
+
+    // The field a group made by a split is over ([#group]), or null for any other entry.
+    private static String splitGroupField(final Map<String, Object> entry) {
+        if (!(entry.get("for_each") instanceof final Map<?, ?> forEach) || forEach.size() != 1
+            || !(forEach.get(ItemSource.ARRAY) instanceof final String field)) {
+            return null;
+        }
+        final List<Map<String, Object>> fields = entries(entry.get("fields"));
+        if (fields.size() != 2 || !String.valueOf(entry.get("path")).endsWith("User")) {
+            return null;
+        }
+        final boolean split = fields.stream().anyMatch(each -> isItem(each, "Id", "strip_domain"))
+                              && fields.stream().anyMatch(each -> isItem(each, "Domain", "domain"));
+        return split
+                ? field
+                : null;
+    }
+
+    private static boolean isItem(final Map<String, Object> entry, final String path, final String transform) {
+        return path.equals(entry.get("path")) && Boolean.TRUE.equals(entry.get("item"))
+               && transform.equals(entry.get("transform"));
+    }
+
+    // A split group as the repeat it was made from: the Id written whole from each value of the field.
+    private static Map<String, Object> repeatOf(final Map<String, Object> group, final String field) {
+        final Map<String, Object> id = new LinkedHashMap<>(entries(group.get("fields")).stream()
+                .filter(each -> "Id".equals(each.get("path")))
+                .findFirst()
+                .orElseThrow());
+        id.remove("path");
+        id.remove("item");
+        id.remove("transform");
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("path", group.get("path") + "/Id");
+        out.put("field", field);
+        out.putAll(id);
+        out.put("repeat", true);
+        return out;
+    }
+
+    private static String lastName(final String path) {
+        return path.substring(path.lastIndexOf('/') + 1);
     }
 
     // The Domain beside an Id.

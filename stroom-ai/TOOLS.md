@@ -288,7 +288,8 @@ to `/outputs/<tool>/<build, else a stable key>.json` (a list's entries one a lin
 and given with its large parts outlined, each tool's own steps in order while it is still too large, then the parts
 not kept cut (a list says how many more, `(N more in the saved file ...)`). `whole_result` says where (`saved`), what
 was `outlined` or `cut`, `text_lines`, and how to read a part with jq. Never outlined: status, hint, next, problems
-and refusals, review ids and forms, saved documents. Stroom AI's chat, a result within the limit, no workspace or a
+and refusals, review ids and forms, saved documents, and `user_chose` (what the user chose in a form; seen in chat
+183: told it only in part, the agent asked again). Stroom AI's chat, a result within the limit, no workspace or a
 failed write: the result whole, as before. Test clients read an outlined result back whole (`WholeResults`).
 `fetch_events` reads of a stream are outlined the same way (`FetchEventsOutline`). A result nothing in which can be
 shortened (all of it what the agent acts on) is given whole, still with `whole_result` first, saying plainly so: it
@@ -431,7 +432,8 @@ Some types are read differently:
   `children` (each with `required`, `repeatable`, `choice`, `type`, `values`, `description` as they apply) and
   `choices` (each `one_of` for a choice an element holds one member of, or `any_of` for one whose members may be
   mixed and repeated, such as View's objects, and `one_required`). The XSD itself is over 100 KB: an agent once spent twelve minutes reading it with PowerShell. With
-  `type='XMLSchema'` and no `uuid`, the newest event-logging version this Stroom holds is used. Without `element`,
+  `type='XMLSchema'` (or no `type`) and no `uuid`, the newest event-logging version this Stroom holds is used (seen
+  in chats 182 and 183: `element` alone refused for want of a uuid); `elements` is read as `element`. Without `element`,
   an XMLSchema is read as any document (its XSD, saved to the workspace when large).
 * **Processor filter UUID**: when the UUID isn't a document, it is tried as a processor filter: the pipeline it
   runs (as a link, with its path), whether it is deleted, what it selects, its state (enabled, priority, progress)
@@ -449,14 +451,14 @@ its Documentation tab, or edited so it doesn't parse) gets `## Kept mapping` `{"
 XSLT is now treated as hand-written and that `rebuild_mapping` recovers it (`DocumentAnalyses.lostMapping`, which
 checks the XSLT's kept-mapping tag through `XsltSaves`).
 
-* **Arguments**: `uuid` (optional only with `type='XMLSchema'` and `element`); `part` (one part by name, or `own`
+* **Arguments**: `uuid` (optional only with `element`, and `type` `XMLSchema` or none); `part` (one part by name, or `own`
   for a dictionary); `type` (checked against the document); `find` and `contextLines` (Documentation only; several
   terms separated by `|`; context default 8, at most 60); `mapping` (XSLT only: the kept mapping whole); `element`
   (event-logging XMLSchema only, e.g. `EventDetail/Authenticate`).
 * **Returns**: text: `<Type> '<name>', <folder path>.`, the parts or the files they were saved to, then the
   sections above. `find` and `element` return JSON (also as structured content). Files written are attached to the
   result as resources.
-* **Refuses**: no `uuid` (unless the XMLSchema case); not viewable, or not a filter the user may see (one message;
+* **Refuses**: no `uuid` (unless `element` is given with `type` `XMLSchema` or none); not viewable, or not a filter the user may see (one message;
   without Manage Processors it adds that a processor filter needs it, said whatever the UUID is, so it doesn't tell
   whether it is one); a `type` that doesn't match; a `part` the document hasn't got (listing those it has); a
   dictionary `part` other than `own`; `element` on anything but an event-logging XMLSchema, or an element the schema
@@ -3547,7 +3549,12 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
   (`type`, `uuid`, `name`), `rows` (each `name`, `match`, `status`, `reason`, `records_read`, `share_percent`,
   `suggested_category`, `confidence`), `table`, `scope`, `group`, `joins` (an existing group named), `coverage_restarted`,
   `unseen_source_types` (rows nominated, or in the group, with no record read and not dropped: the hint offers the
-  user a stream id they know, or a search, both `survey_feed find=`), `hint`, `next`.
+  user a stream id they know, or a search, both `survey_feed find=`), `hint`, `next`. A scope just chosen also gives
+  `chosen_by: user` and, first in the result and first in its hint, `user_chose`: what the user chose, said plainly,
+  with how it differs from the agent's suggestion ("The user chose in the form: source types [ExchangeOnline,
+  MicrosoftTeams] in group 'Messaging' (you suggested group 'Azure Audit' and source types [...]). Don't ask them
+  again."), or "as you gave it from the chat" without a form; seen in chat 183, where the agent, given `chosen_by`
+  and a hint in a result saved to the workspace, said it saw no form and asked the user again.
 * **Refuses**: no `feed`; another build open on the feed (one open build per aggregated feed, under
   `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
   `name = value`, `name ~ ^pattern`, `name ∈ item` (`name in item`) nor `(no value)`; rows that can't be used (`These rows can't be used: ...`); a patterns answer
@@ -5292,6 +5299,14 @@ in the build folder (Create) or changed (Edit) · changes only its build · take
 `BuildTranslationXsltTool`, `TranslationBuilds`, `TranslationDocs`, `MappingSampleCheck`, `MappingProblems`,
 `DomainSplits`, `PlaceholderChoices`, `UnsavedChoices`, `SentMappings`, `RequiredImports`, `CurrentTranslations`,
 `Consent`, `XsltGenerator`, `MappingChanges`, `ConfirmedEventTypes`, `CatalogueKept`
+
+A split Id written with `repeat` (a User the schema lets repeat, its Id not) becomes a `for_each: {array: <field>}`
+group at the User, its fields `Id` (`item: true`, `transform: strip_domain`, the entry's other settings kept) and
+`Domain` (`item: true`, `transform: domain`), in place of the repeat (seen in chat 183: a Domain put beside a
+repeated recipient's Id, which the build's own check refused, and the agent's removal of it refused too); Keep turns
+such a group back into the repeat, and a group like it answers Split for the field. The sample check reads a repeat
+entry's JSON array values one by one for the domain question (a two-recipient array was never found, a one-recipient
+one gave `["sam@acme.example"]`).
 
 `domain_split` (Split / Keep as is) is the user's latest answer to splitting the domain off users' Ids, and wins over
 one recorded earlier; Keep also removes a split the mapping already has, as does a change removing the Domain a split

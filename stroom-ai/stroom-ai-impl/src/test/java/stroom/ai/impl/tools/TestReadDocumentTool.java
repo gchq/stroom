@@ -597,6 +597,29 @@ class TestReadDocumentTool {
 
     @Test
     @SuppressWarnings("unchecked")
+    void anElementAloneIsReadFromTheEventSchema() {
+        // Seen in chats 182 and 183: read_document {"element": "EventDetail"}, no uuid or type, refused for want of
+        // a uuid.
+        assertThat(toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"element\":\"EventDetail\"}"), ToolCalls.inChat(1, workspace)).structuredContent())
+                .containsEntry("path", "Event/EventDetail")
+                .containsEntry("schema_version", "4.1.0");
+        // elements, as the result names them, too.
+        final Map<String, Object> elements = (Map<String, Object>) toolWithSchemas().execute(new ToolCall(null,
+                ReadDocumentTool.NAME, "{\"elements\":[\"EventSource/User\", \"EventDetail/Authenticate\"]}"),
+                ToolCalls.inChat(1, workspace)).structuredContent().get("elements");
+        assertThat(elements).containsOnlyKeys("EventSource/User", "EventDetail/Authenticate");
+        // Another type named, or nothing to read: a uuid is still wanted.
+        assertThat(toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"type\":\"XSLT\",\"element\":\"EventDetail\"}"), ToolCalls.inChat(1, workspace)).text())
+                .contains("Give the document's uuid");
+        assertThat(toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME, "{}"),
+                ToolCalls.inChat(1, workspace)).text())
+                .contains("Give the document's uuid");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void severalElementsAreDescribedInOneCallEachUnderItsPath() {
         // Seen: the schema read one element a call, 22 calls over about 12 turns.
         final ToolResult result = toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,

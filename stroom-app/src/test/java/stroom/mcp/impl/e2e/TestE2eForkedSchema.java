@@ -447,6 +447,11 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                 .containsEntry("namespace", FORK_NS)
                 .containsEntry("schema_version", VERSION);
         assertThat(jsonOf(charge.get("children"))).contains("Account", "Amount");
+        // element alone, no uuid or type (seen in chats 182 and 183: refused for want of a uuid): event-logging's
+        // newest, the fork named for its own elements.
+        final Map<String, Object> detail = json("read_document", args("element", "EventDetail"));
+        assertThat(detail).containsEntry("path", "Event/EventDetail");
+        assertThat(String.valueOf(detail.get("forks"))).contains(fork.uuid());
 
         // ### 4. A hand edit carried into the mapping: rebuilt, still the fork's.
         final String code = readXslt(xsltUuid).getData();

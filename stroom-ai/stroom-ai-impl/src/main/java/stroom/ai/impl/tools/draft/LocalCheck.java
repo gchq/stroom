@@ -1351,7 +1351,7 @@ public final class LocalCheck {
                 continue;
             }
             final Set<String> found = new LinkedHashSet<>();
-            for (final String value : values.of(entry)) {
+            for (final String value : eachValue(entry, values.of(entry))) {
                 if (value != null && DOMAIN_QUALIFIED.matcher(ToolText.strip(value)).matches()) {
                     found.add(ToolText.strip(value));
                 }
@@ -1368,6 +1368,37 @@ public final class LocalCheck {
         paths.forEach((field, into) -> out.add(new QualifiedIds(field, List.copyOf(into),
                 qualified.get(field).stream().limit(3).toList())));
         return out;
+    }
+
+    // A repeat entry's values one by one, a JSON array's text read as its values (seen, chat 183: recipients held
+    // in an array, read whole as its text, so two recipients were never found as domain-qualified); any other
+    // entry's values as they are.
+    private static List<String> eachValue(final FieldMapping entry, final List<String> values) {
+        if (!entry.repeat()) {
+            return values;
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String value : values) {
+            final Object parsed = value != null && value.startsWith("[")
+                    ? parsedOrNull(value)
+                    : null;
+            if (parsed instanceof final List<?> list) {
+                list.forEach(item -> out.add(item == null
+                        ? null
+                        : JsonValues.jsonText(item)));
+            } else {
+                out.add(value);
+            }
+        }
+        return out;
+    }
+
+    private static Object parsedOrNull(final String text) {
+        try {
+            return ToolJson.loads(text);
+        } catch (final ToolJson.JsonDecodeException e) {
+            return null;
+        }
     }
 
     /// Values the sample's records hold in the fields the mapping writes, that look like stand-ins for none (`-`,

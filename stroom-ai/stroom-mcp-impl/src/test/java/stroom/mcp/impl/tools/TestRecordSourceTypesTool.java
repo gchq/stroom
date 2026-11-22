@@ -393,8 +393,34 @@ class TestRecordSourceTypesTool {
         final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA back end"));
 
         assertThat(result).as("%s", result).containsEntry("chosen_by", "user");
-        assertThat(String.valueOf(result.get("hint"))).contains("the scope the user chose", "Don't ask them again",
-                "stay parked until the group is built");
+        assertThat(String.valueOf(result.get("hint"))).contains("The user chose in the form", "Don't ask them again",
+                "parked until the group is built");
+    }
+
+    @Test
+    void whatTheUserChoseOtherwiseThanSuggestedIsSaidFirstAndKeptInAnOutline() {
+        // Seen in chat 183: the agent suggested group 'Azure Audit' with all its source types, the user picked two
+        // and renamed the group; told chosen_by and a hint, the agent said it saw no form and asked again.
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "PEGA back end");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA all", "scope",
+                List.of("PegaDB", "PegaIntegration")));
+
+        final String said = "The user chose in the form: source types [PegaDB] in group 'PEGA back end' (you "
+                            + "suggested group 'PEGA all' and source types [PegaDB, PegaIntegration]). Don't ask "
+                            + "them again.";
+        assertThat(result).as("%s", result).containsEntry("user_chose", said);
+        assertThat(result.keySet().iterator().next()).isEqualTo("user_chose");
+        assertThat(String.valueOf(result.get("hint"))).startsWith(said);
+    }
+
+    @Test
+    void whatTheUserChoseAsSuggestedIsSaidWithNothingToDiffer() {
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "PEGA back end");
+
+        assertThat(called(user.context(), Map.of("group", "PEGA back end")))
+                .containsEntry("user_chose", "The user chose in the form: source types [PegaDB] in group 'PEGA back "
+                                             + "end'. Don't ask them again.");
     }
 
     @Test

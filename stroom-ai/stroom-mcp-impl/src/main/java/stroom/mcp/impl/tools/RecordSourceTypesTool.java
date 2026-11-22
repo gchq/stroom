@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,6 +83,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     static final String PATTERNS_ARG = "patterns";
     static final String SCOPE_ARG = "scope";
     static final String GROUP_ARG = "group";
+    /// The result's field saying what the user chose for the scope, kept in an outline of a large result.
+    static final String USER_CHOSE = "user_chose";
     /// The scope's key for the name of the build's source type group.
     static final String SCOPE_GROUP = "group";
     static final String REASON_ARG = "reason";
@@ -432,15 +435,54 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         }
         // Seen in chat 181: told only "the scope recorded", with the chosen source types still `parked` until their
         // group is built, the agent took the user's form answer for a choice made without them, and asked again.
+        // Seen in chat 183: told that too, in a result saved to the workspace, the agent said it saw no form and
+        // asked again: what the user chose comes first, said plainly, with how it differs from the suggestion.
+        final String chose = userChose(scope.get(), stringArg(call, GROUP_ARG), stringListArg(call, SCOPE_ARG));
         result.put("chosen_by", "user");
-        result.put("hint", "The registry is written with the scope the user chose (in the form, or as they said): "
-                           + "source type group '" + scope.get().group() + "', " + groupTypes + ". Don't ask them "
-                           + "again. Its source types stay parked until the group is built. build_translation_xslt "
-                           + "builds "
-                           + "it (group and source_types default to these); a build makes one group, so another "
-                           + "is a later build's, after this one is promoted. Carry on with the plan (next).");
+        result.put(USER_CHOSE, chose);
+        result.put("hint", chose + " The registry is written: group '" + scope.get().group() + "' holds "
+                           + groupTypes + ", parked until the group is built. "
+                           + "build_translation_xslt builds it (group and source_types default to these); a build "
+                           + "makes one group, so another is a later build's, after this one is promoted. Carry on "
+                           + "with the plan (next).");
         offerToFind(result, build, feed, unseen(registry, before, groupTypes));
-        return plan.withNext(context, build, result);
+        // First, so a preview of a large result starts with it.
+        final Map<String, Object> first = new LinkedHashMap<>();
+        first.put(USER_CHOSE, chose);
+        first.putAll(result);
+        return plan.withNext(context, build, first);
+    }
+
+    // What the user chose, said plainly: in the form (with how it differs from the group and source types the agent
+    // suggested), or as the agent gave it from the chat; and not to ask them again.
+    private static String userChose(final Scope scope, final String suggestedGroup, final List<String> suggestedTypes) {
+        final String chosen = scope.chosen().isEmpty()
+                ? "group '" + scope.group() + "' alone, no source types added"
+                : "source types " + listed(scope.chosen()) + " in group '" + scope.group() + "'";
+        if (!scope.fromForm()) {
+            return "The user chose, as you gave it from the chat: " + chosen + ". Don't ask them again.";
+        }
+        final List<String> differs = new ArrayList<>();
+        final String group = NullSafe.string(suggestedGroup).strip();
+        if (!group.isEmpty() && !group.equalsIgnoreCase(scope.group())) {
+            differs.add("group '" + group + "'");
+        }
+        if (!suggestedTypes.isEmpty() && !lowerCased(suggestedTypes).equals(lowerCased(scope.chosen()))) {
+            differs.add("source types " + listed(suggestedTypes));
+        }
+        return "The user chose in the form: " + chosen + (differs.isEmpty()
+                ? ""
+                : " (you suggested " + String.join(" and ", differs) + ")") + ". Don't ask them again.";
+    }
+
+    private static String listed(final List<String> names) {
+        return "[" + names.stream().map(String::strip).collect(Collectors.joining(", ")) + "]";
+    }
+
+    private static Set<String> lowerCased(final List<String> names) {
+        return names.stream()
+                .map(name -> name.strip().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     // The scope this build recorded: the registry's, else the survey state's (written together); empty when this
@@ -1121,7 +1163,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                       + group + "' is a new one: a new group needs one or more source types. Ask "
                                       + "the user which go in it" + groupsSaid(groups) + ". Nothing was written.");
             }
-            return Optional.of(new Scope(List.of(), NullSafe.string(stringArg(call, REASON_ARG)).strip(), group));
+            return Optional.of(new Scope(List.of(), NullSafe.string(stringArg(call, REASON_ARG)).strip(), group,
+                    false));
         }
         // scope is the user's answer said in the chat, only where no form can be shown, or the scope form couldn't
         // be (seen: 65 source types, the form too large, and the scope given as the user said refused for ever):
@@ -1140,7 +1183,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                            + names)));
             }
             return Optional.of(new Scope(List.copyOf(new LinkedHashSet<>(chosen)), NullSafe.string(stringArg(call,
-                    REASON_ARG)).strip(), groupNamed(groups, suggested)));
+                    REASON_ARG)).strip(), groupNamed(groups, suggested), false));
         }
         if (context.userQuestions().canAsk() && suggested.isEmpty() && !names.isEmpty()) {
             throw new ToolRefusal("Give " + GROUP_ARG + ": a name you suggest for this build's source type group "
@@ -1162,7 +1205,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             return Optional.empty();
         }
         final String named = NullSafe.nonBlankStringElse(answers.get().text(), suggested).strip();
-        return Optional.of(new Scope(answers.get().chosen(), "", groupNamed(groups, named)));
+        return Optional.of(new Scope(answers.get().chosen(), "", groupNamed(groups, named), true));
     }
 
     // True when the call gives scope as an empty list: an answer (no source type added), not a scope left out.
@@ -1387,10 +1430,11 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
 
     /// The scope the user chose.
     ///
-    /// @param chosen The source types of the build's source type group.
-    /// @param reason Why the others wait, in their words.
-    /// @param group  The group's name: an existing group's adds the source types to it.
-    private record Scope(List<String> chosen, String reason, String group) {
+    /// @param chosen   The source types of the build's source type group.
+    /// @param reason   Why the others wait, in their words.
+    /// @param group    The group's name: an existing group's adds the source types to it.
+    /// @param fromForm True if the user chose it in the form, false if the agent gave it as they said in the chat.
+    private record Scope(List<String> chosen, String reason, String group, boolean fromForm) {
 
     }
 

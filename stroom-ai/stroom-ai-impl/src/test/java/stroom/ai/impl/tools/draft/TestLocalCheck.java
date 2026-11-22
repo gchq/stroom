@@ -550,6 +550,24 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void aRepeatedIdsArrayValuesAreCheckedOneByOne() {
+        // Seen (chat 183): recipients held in a JSON array, written with repeat, were read as the array's text, so
+        // a record with two recipients was never found and one with a single one gave '["sam@acme.example"]'.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [
+                              {"path": "EventDetail/Send/Destination/User/Id", "field": "recipients",
+                               "repeat": true}]}]}"""));
+        final List<Object> records = List.of(map("recipients", List.of("sam@acme.example", "jo@acme.example")),
+                map("recipients", List.of("alice")));
+
+        assertThat(LocalCheck.domainQualifiedIds(mapping, records, SCHEMA)).containsExactly(new LocalCheck.QualifiedIds(
+                "recipients", List.of("EventDetail/Send/Destination/User/Id"),
+                List.of("sam@acme.example", "jo@acme.example")));
+    }
+
+    @Test
     void theIdsCheckedAreTheSchemasUsersButNotAnEmailsAddressees() {
         // Asked for by the user: every element of the schema's user type (RunAs, Send/Destination/User), not only
         // those named User; an email's From, To, Cc and Bcc hold email addresses, the domain part of them.

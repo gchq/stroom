@@ -68,9 +68,10 @@ public final class LargeResults {
     private static final int FEWEST_ENTRIES = 3;
     private static final int FEWEST_CHARS = 300;
     private static final Pattern PLAIN = Pattern.compile("[^A-Za-z0-9._-]");
-    // Always kept: what the agent must act on.
+    // Always kept: what the agent must act on, and what the user chose (seen in chat 183: told it only in part, the
+    // agent asked the user again).
     private static final Set<String> ALWAYS_KEPT = Set.of(WHOLE_RESULT, "status", "hint", "next", "ok", "done",
-            "problems", "refused", "error", "review_id", "user_actions");
+            "problems", "refused", "error", "review_id", "user_actions", "user_chose");
 
     private final String tool;
     private final String key;

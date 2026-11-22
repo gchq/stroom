@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.draft.LocalCheck.QualifiedIds;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.util.json.JsonUtil;
 
@@ -101,6 +102,55 @@ class TestDomainSplits {
         // Nothing split: nothing done.
         assertThat(DomainSplits.unsplit(MAPPING).done()).isEmpty();
         assertThat(DomainSplits.unsplit(MAPPING).mapping()).isSameAs(MAPPING);
+    }
+
+    @Test
+    void aRepeatedIdIsSplitInAGroupOverTheFieldsValues() {
+        // Seen (chat 183): the split put a Domain beside a repeat entry, which writes its User once per value, so
+        // the tool's own check refused it and the agent rewrote both rules as groups by hand.
+        @SuppressWarnings("unchecked")
+        final TranslationMapping mapping = TranslationMapping.fromJson((Map<String, Object>) ToolJson.loads("""
+                {"input": "json",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
+                            {"path": "EventSource/System/Name", "value": "Acme"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "mail"},
+                            {"path": "EventSource/Device/HostName", "value": "mail01"}],
+                 "events": [{"name": "send_mail", "fields": [
+                              {"path": "EventDetail/TypeId", "value": "Send"},
+                              {"path": "EventDetail/Send/Source/User/Id", "field": "user"},
+                              {"path": "EventDetail/Send/Destination/User/Id", "field": "recipients",
+                               "repeat": true}]}]}"""));
+        final QualifiedIds recipients = new QualifiedIds("recipients",
+                List.of("EventDetail/Send/Destination/User/Id"), List.of("sam.lee@acme.example"));
+
+        final DomainSplits.Split split = DomainSplits.split(mapping, recipients, TranslationWorld.SCHEMA);
+
+        final String json = JsonUtil.writeValueAsString(split.mapping().toJson(DumpMode.COMPACT), false);
+        assertThat(json).contains("{\"path\":\"EventDetail/Send/Destination/User\","
+                                  + "\"for_each\":{\"array\":\"recipients\"},\"fields\":["
+                                  + "{\"path\":\"Id\",\"transform\":\"strip_domain\",\"item\":true},"
+                                  + "{\"path\":\"Domain\",\"transform\":\"domain\",\"item\":true}]}")
+                .doesNotContain("\"repeat\"", "\"path\":\"EventDetail/Send/Destination/User/Domain\"")
+                // Another field's Id is left alone.
+                .contains("{\"path\":\"EventDetail/Send/Source/User/Id\",\"field\":\"user\"}");
+        assertThat(split.done()).containsExactly("EventDetail/Send/Destination/User/Id: a for_each group over "
+                                                 + "'recipients' at EventDetail/Send/Destination/User, each User "
+                                                 + "with its Id (strip_domain) and Domain (domain), in place of "
+                                                 + "the repeat");
+        // The mapping it gives is valid: its events are checked as the build checks them.
+        assertThat(XsltGenerator.generate(split.mapping(), TranslationWorld.SCHEMA, TranslationWorld.VERSION)
+                .problems()).isEmpty();
+        // The group answers the question as split, and is undone back to the repeat.
+        assertThat(DomainSplits.answersIn(split.mapping().toJson(DumpMode.COMPACT), Set.of("recipients")))
+                .containsExactly(DomainSplits.SPLIT);
+        final DomainSplits.Split unsplit = DomainSplits.unsplit(split.mapping());
+        assertThat(JsonUtil.writeValueAsString(unsplit.mapping().toJson(DumpMode.COMPACT), false))
+                .contains("{\"path\":\"EventDetail/Send/Destination/User/Id\",\"field\":\"recipients\","
+                          + "\"repeat\":true}")
+                .doesNotContain("for_each");
+        assertThat(unsplit.done()).containsExactly("EventDetail/Send/Destination/User/Id: written whole",
+                "EventDetail/Send/Destination/User/Domain: taken out");
     }
 
     @Test

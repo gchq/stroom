@@ -884,6 +884,52 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aRepeatedUsersIdIsSplitInAGroupAndSavedWithNoAgentWork() {
+        // Seen (chat 183): "Split" answered, the tool put a Domain beside a repeated recipient's Id; its own check
+        // refused the User written once per value with two elements below it, and the agent rewrote the rule as a
+        // group by hand.
+        final Map<String, Object> mapping = JsonUtil.readValue("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
+                            {"path": "EventSource/System/Name", "value": "Acme"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "acme"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "send_mail",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Send"},
+                                        {"path": "EventDetail/Send/Source/Device/HostName", "field": "host"},
+                                        {"path": "EventDetail/Send/Destination/User/Id", "field": "recipients",
+                                         "repeat": true}]}]}""", Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "mx01", "recipients": ["sam@acme.example", "jo@acme.ex"]}
+                """;
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+
+        final Map<String, Object> split = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+
+        assertThat(world.asked).singleElement().asString().startsWith("Split the domain off the users' Ids from "
+                + "'recipients' (EventDetail/Send/Destination/User/Id)? E.g. sam@acme.example: the Id sam, the "
+                + "Domain acme.example.");
+        assertThat(split).as(String.valueOf(split)).containsKey("saved");
+        assertThat(list(split.get("problems"))).isEmpty();
+        assertThat(list(split.get("changes_applied"))).containsExactly("the domain split off 'recipients', as the "
+                + "user chose: EventDetail/Send/Destination/User/Id: a for_each group over 'recipients' at "
+                + "EventDetail/Send/Destination/User, each User with its Id (strip_domain) and Domain (domain), in "
+                + "place of the repeat");
+        final String uuid = String.valueOf(map(split.get("saved")).get("uuid"));
+        assertThat(keptJson(uuid)).contains("\"path\":\"EventDetail/Send/Destination/User\","
+                                            + "\"for_each\":{\"array\":\"recipients\"}");
+
+        // Asked once: the whole mapping sent again with the repeat is split again, as the user chose.
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid, "sample",
+                sample));
+        assertThat(again).as(String.valueOf(again)).containsKey("saved");
+        assertThat(world.asked).hasSize(1);
+    }
+
+    @Test
     void theUsersLatestWordOnTheDomainWinsOverTheAnswerKept() {
         // Seen in an eval: "Split" answered in the form, the user then said in the chat to keep the Ids whole; the
         // agent's changes took the split out, and the answer kept with the XSLT split them again on every save.

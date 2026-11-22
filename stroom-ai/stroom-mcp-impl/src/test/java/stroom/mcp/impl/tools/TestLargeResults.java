@@ -142,6 +142,26 @@ class TestLargeResults {
     }
 
     @Test
+    void whatTheUserChoseIsKeptWhole() {
+        // Seen in chat 183: record_source_types' result said what the user chose in the form, and the agent, told it
+        // only in part, asked them again.
+        final ChatWorkspace chats = writable();
+        final Map<String, Object> result = large();
+        final String chose = "The user chose in the form: source types " + lines("Type", 60) + ". Don't ask them "
+                             + "again.";
+        result.put("user_chose", chose);
+
+        // Outlined no further than the rules: the rest is cut.
+        LargeResults.of("a_tool", "acme v1")
+                .outline("rules", (value, room) -> Map.of("rules", ((List<?>) value).size()))
+                .apply(CLIENT, Optional.of(new SessionWorkspace(chats, 1)), result, LIMIT);
+
+        assertThat(((Map<?, ?>) result.get(LargeResults.WHOLE_RESULT)).get("cut")).asList().contains("notes");
+        assertThat(result).containsEntry("user_chose", chose);
+        assertThat(chose.length()).isGreaterThan(300);
+    }
+
+    @Test
     void aResultWithANullPartIsSavedAndOutlined() {
         // Seen in eval cases 36 and 68: build_translation_xslt's field_mapping is null, and the save threw, so the
         // result was given whole.
