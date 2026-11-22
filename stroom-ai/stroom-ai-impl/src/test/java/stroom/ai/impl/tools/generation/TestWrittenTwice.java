@@ -37,6 +37,10 @@ class TestWrittenTwice {
                         {"path": "Data", "data_name": "Value", "field": "Value"}]}""";
 
     private static List<String> warnings(final List<Map<String, Object>> rules) {
+        return warnings(List.of(), rules);
+    }
+
+    private static List<String> warnings(final List<String> moreCommon, final List<Map<String, Object>> rules) {
         final Map<String, Object> json = new LinkedHashMap<>(GenerationFixtures.json("""
                 {"input": "json",
                  "common": [{"path": "EventTime/TimeCreated", "field": "time"},
@@ -45,6 +49,9 @@ class TestWrittenTwice {
                             {"path": "EventSource/Generator", "value": "Exchange"},
                             {"path": "EventSource/Device/HostName", "value": "exchange"},
                             {"path": "EventSource/User/Id", "field": "UserId"}]}"""));
+        final List<Object> common = new ArrayList<>((List<?>) json.get("common"));
+        moreCommon.forEach(entry -> common.add(GenerationFixtures.json(entry)));
+        json.put("common", common);
         json.put("events", rules);
         final XsltGenerator.Generated generated = XsltGenerator.generate(TranslationMapping.fromJson(json),
                 GenerationFixtures.SCHEMA, "4.1.0");
@@ -124,6 +131,68 @@ class TestWrittenTwice {
                 .contains("'Subject' as EventDetail/Send/Data[@Name='subject'] and as "
                           + "EventDetail/Send/Data[@Name='Subject']")
                 .contains("\"data_name\": \"Subject\", \"remove\": true");
+    }
+
+    @Test
+    void aCommonEntryAndARulesEntryWritingTheSameInputAsDataAreWarnedOf() {
+        // A common entry is written in every rule's events: a rule's Data of the same input says it again.
+        final List<String> warnings = warnings(List.of(
+                "{\"path\": \"EventSource/Device/Data\", \"data_name\": \"ClientIP\", \"field\": \"ClientIP\"}"),
+                List.of(rule("view", DOCUMENT,
+                        "{\"path\": \"EventDetail/View/Data\", \"data_name\": \"client\", \"field\": "
+                        + "\"ClientIP\"}")));
+
+        assertThat(warnings).singleElement().asString()
+                .startsWith("[view] the same input is written twice: 'ClientIP' as "
+                            + "EventSource/Device/Data[@Name='ClientIP'] and as EventDetail/View/Data[@Name='client']")
+                // The rule's, not the common one every rule's events hold, is the one to remove.
+                .endsWith("e.g. changes={\"events\": [{\"name\": \"view\", \"fields\": [{\"path\": "
+                          + "\"EventDetail/View/Data\", \"data_name\": \"client\", \"remove\": true}]}]}");
+    }
+
+    @Test
+    void aCommonDataBesideARulesTypedElementIsWarnedOfAsTheCommonOneToRemove() {
+        // In a group (so not the top-level element-and-Data case EventTrees words itself), the common Data is the one
+        // to remove, from common, unless another rule needs it.
+        final List<String> warnings = warnings(List.of(
+                "{\"path\": \"EventSource/Device/Data\", \"data_name\": \"To\", \"for_each\": {\"array\": \"To\"}, "
+                + "\"fields\": [{\"path\": \"Data\", \"data_name\": \"Address\", \"field\": \"Address\"}]}"),
+                List.of(rule("send",
+                        "{\"path\": \"EventDetail/Send/Source/User/Id\", \"field\": \"UserId\"}",
+                        "{\"path\": \"EventDetail/Send/Destination/User\", \"for_each\": {\"array\": \"To\"},"
+                        + " \"fields\": [{\"path\": \"Id\", \"field\": \"Address\"}]}")));
+
+        assertThat(warnings).singleElement().asString()
+                .contains("'Address' (of each item of `To`) as EventSource/Device/Data[@Name='To']"
+                          + "/Data[@Name='Address'] and as EventDetail/Send/Destination/User/Id")
+                .contains("a common entry, written in every rule's events: remove it only if no other rule needs it")
+                .endsWith("e.g. changes={\"common\": [{\"path\": \"EventSource/Device/Data\", \"data_name\": \"To\", "
+                          + "\"remove\": true}]}");
+    }
+
+    @Test
+    void aRepeatedDataAndAGroupOverTheSameFieldAreTheSameInput() {
+        // repeat writes each value of To, as the group over To does with its item.
+        final List<String> warnings = warnings(List.of(rule("send",
+                "{\"path\": \"EventDetail/Send/Source/User/Id\", \"field\": \"UserId\"}",
+                "{\"path\": \"EventDetail/Send/Destination/User\", \"for_each\": {\"array\": \"To\"},"
+                + " \"fields\": [{\"path\": \"Id\", \"item\": true}]}",
+                "{\"path\": \"EventDetail/Send/Data\", \"data_name\": \"To\", \"field\": \"To\", "
+                + "\"repeat\": true}")));
+
+        assertThat(warnings).singleElement().asString()
+                .contains("as EventDetail/Send/Destination/User/Id and as EventDetail/Send/Data[@Name='To']")
+                .contains("\"path\": \"EventDetail/Send/Data\", \"data_name\": \"To\", \"remove\": true");
+
+        // A group over another field, or read another way, is another input.
+        assertThat(warnings(List.of(rule("send",
+                "{\"path\": \"EventDetail/Send/Source/User/Id\", \"field\": \"UserId\"}",
+                "{\"path\": \"EventDetail/Send/Destination/User\", \"for_each\": {\"array\": \"Cc\"},"
+                + " \"fields\": [{\"path\": \"Id\", \"item\": true}]}",
+                "{\"path\": \"EventDetail/Send/Data\", \"data_name\": \"To\", \"field\": \"To\", "
+                + "\"repeat\": true}",
+                "{\"path\": \"EventDetail/Send/Data\", \"data_name\": \"Cc\", \"field\": \"Cc\", "
+                + "\"repeat\": true, \"transform\": \"lower\"}")))).isEmpty();
     }
 
     @Test

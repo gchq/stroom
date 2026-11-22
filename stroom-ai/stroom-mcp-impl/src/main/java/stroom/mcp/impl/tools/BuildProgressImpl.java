@@ -58,4 +58,13 @@ class BuildProgressImpl implements BuildProgress {
                 .map(List::of)
                 .orElse(List.of());
     }
+
+    @Override
+    public List<AcceptedErrors.Entry> explainedErrors(final String pipelineUuid) {
+        // The user chose to keep long values whole for the build, and the JSON parser still cut one.
+        return planProvider.get().buildOf(new DocRef(PipelineDoc.TYPE, pipelineUuid))
+                .flatMap(build -> LongValues.stillCut(recordsProvider.get(), build))
+                .map(List::of)
+                .orElse(List.of());
+    }
 }

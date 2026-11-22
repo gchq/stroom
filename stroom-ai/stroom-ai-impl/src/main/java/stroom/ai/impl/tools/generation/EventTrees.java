@@ -569,7 +569,7 @@ final class EventTrees {
         }
         conditionalByRule.put(rule.name(), List.copyOf(conditional));
         writtenTwice(rule);
-        WrittenTwice.warnings(rule).forEach(warning -> note(warnings, warning));
+        WrittenTwice.warnings(m.common(), rule).forEach(warning -> note(warnings, warning));
         if (!conditional.isEmpty()) {
             note(warnings, "[" + rule.name() + "] required " + ToolText.list(conditional) + " are left out when "
                            + "their input fields are empty, which makes the event invalid. Fine if those fields are "

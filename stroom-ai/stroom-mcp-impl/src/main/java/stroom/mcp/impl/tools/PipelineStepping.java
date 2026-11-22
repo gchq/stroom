@@ -556,12 +556,13 @@ class PipelineStepping {
     /// @param pipeline    The pipeline stepped.
     /// @param recordCount How many records were stepped, or null if not known.
     /// @return The markers triaged by the environment's rules and Stroom's own, with the errors the user accepted
-    /// as benign for the pipeline: `verdict`, `groups_by_class` and `groups`.
+    /// as benign for the pipeline and those its build explains: `verdict`, `groups_by_class` and `groups`.
     Map<String, Object> triage(final List<ErrorTriage.Marker> markers,
                                final SteppedPipeline pipeline,
                                final Integer recordCount) {
         return streamSummaries.errorTriage().triage(markers, pipeline.own(), recordCount, EXAMPLES,
-                acceptedErrors.acceptedFor(pipeline.doc().getUuid()));
+                acceptedErrors.acceptedFor(pipeline.doc().getUuid()),
+                acceptedErrors.explainedFor(pipeline.doc().getUuid()));
     }
 
     /// @param pipeline The pipeline about to be walked.

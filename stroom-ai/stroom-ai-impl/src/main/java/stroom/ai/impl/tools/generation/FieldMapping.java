@@ -627,6 +627,14 @@ public record FieldMapping(String path,
                 zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength);
     }
 
+    /// @return This entry (a `repeat` of a field) as a group's field reads the same values: the group's own item,
+    /// with no field and no repeat, the group being over the field's values (`for_each: {array: <field>}`).
+    FieldMapping asGroupItem() {
+        return new FieldMapping(path, null, anyOf, value, xpath, meta, lookup, dictionary, transform, false, scope,
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
+                zoneSource, metaFallback, group, "", fillTemplate, maskNames, maxLength);
+    }
+
     /// @param path The path.
     /// @return This entry at that path.
     public FieldMapping withPath(final String path) {

@@ -247,7 +247,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         }
         final RebuiltMapping rebuilt = XsltReader.rebuild(code, base, baseCode, base == null
                 ? imported(code)
-                : Map.of());
+                : Map.of(), schema);
         // Nothing new or removed: the XSLT reads as the mapping, written by an earlier generator, not changed by
         // hand.
         final boolean upgraded = base != null && rebuilt.added().isEmpty() && rebuilt.removed().isEmpty()

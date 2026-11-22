@@ -972,6 +972,8 @@ public final class DraftMapping {
         // The headers' fields around the source's own (a relay's, a collector's): their times last.
         private Set<String> relayFields = Set.of();
         private final List<Map<String, Object>> timeCandidates = new ArrayList<>();
+        // The other paths of each held-XML node, beside the one the draft maps it by (HeldXmlPaths.leftOut).
+        private final Set<String> heldXmlOtherPaths = new HashSet<>();
 
         /// @param read       The sample as the draft reads it.
         /// @param sourceName The source's name.
@@ -1295,6 +1297,7 @@ public final class DraftMapping {
             // Each node mapped once, by one of the paths it is read by (chat 182: a value written three times).
             final Set<String> otherPaths = HeldXmlPaths.leftOut(names, xmlFields);
             taken.addAll(otherPaths);
+            heldXmlOtherPaths.addAll(otherPaths);
             final List<String> allXml = new ArrayList<>(already);
             allXml.addAll(xmlFields);
             mapping.put("xml_fields", allXml);
@@ -1633,7 +1636,10 @@ public final class DraftMapping {
         private String time() {
             containerFields = EventTimes.containerFields(spec);
             relayFields = EventTimes.relayFields(spec);
-            final List<String> stamps = names.stream().filter(n -> type(n).startsWith(TIMESTAMP)).toList();
+            // A time held in XML once, by the path it is drafted by, not by each it is read by.
+            final List<String> stamps = names.stream()
+                    .filter(n -> type(n).startsWith(TIMESTAMP) && !heldXmlOtherPaths.contains(n))
+                    .toList();
             stamps.stream().filter(n -> EventTimes.rank(timeKey(n)) != EventTimes.Rank.OBJECT)
                     .sorted(Comparator.comparingInt(this::timeOrder))
                     .forEach(usableTimes::add);

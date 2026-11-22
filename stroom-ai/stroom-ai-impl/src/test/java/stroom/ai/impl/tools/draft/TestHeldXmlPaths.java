@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
@@ -122,6 +123,27 @@ class TestHeldXmlPaths {
         // The note still offers the anywhere form.
         assertThat(DraftFixtures.notes(draft)).anySatisfy(note -> assertThat(note)
                 .contains("'<field>//<name>' for one anywhere below"));
+    }
+
+    @Test
+    void eachTimeHeldInXmlIsATimeCandidateOnce() {
+        // Two times in held XML, each as likely the event's: put to the agent by the path each is drafted by, not
+        // also by `<field>//<name>` (the same node, read another way).
+        final String lines = Stream.of(0, 1, 2)
+                .map(n -> ToolJson.dumps(Map.of("user", "u" + n, "event", Map.of("Body", Map.of("Content",
+                        "<audit><ts>2026-11-20T10:0" + n + ":00Z</ts><logged_at>2026-11-20T11:0" + n
+                        + ":30Z</logged_at></audit>")))))
+                .collect(Collectors.joining("\n"));
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(lines), "Audit", null, null, null, null, null);
+
+        final List<Map<String, Object>> candidates = JsonValues.maps(draft.get(DraftMapping.TIME_CANDIDATES));
+        assertThat(candidates).singleElement().satisfies(candidate -> assertThat(JsonValues.maps(
+                candidate.get("fields")).stream().map(field -> field.get("field")).toList())
+                .containsExactlyInAnyOrder(FIELD + "/audit/ts", FIELD + "/audit/logged_at"));
+        // The timestamp fields the notes list, each once too.
+        assertThat(DraftFixtures.notes(draft)).filteredOn(note -> note.startsWith("Timestamp fields: "))
+                .allSatisfy(note -> assertThat(note).doesNotContain(FIELD + "//"));
     }
 
     // Every field the mapping's entries (common, the rules', the groups') read, conditions left out.

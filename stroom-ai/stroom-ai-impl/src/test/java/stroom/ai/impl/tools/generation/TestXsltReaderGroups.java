@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -199,9 +200,10 @@ class TestXsltReaderGroups extends XsltRuns {
         final TranslationMapping mapping = sendMapping("data_splitter", entry("""
                 {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""));
         final String code = codeOf(mapping);
-        // A loop written by hand: no variable holding its item, as no generated loop of a group is.
+        // A loop written by hand: no variable holding its item, as no generated loop of a group is, and a Data
+        // named by its value, as no repeated entry's is.
         final String loop = "<xsl:for-each select=\"tokenize(data[@name='recipients']/@value, ',')\"><Data "
-                            + "Name=\"recipient\" Value=\"{.}\"/></xsl:for-each>";
+                            + "Name=\"{.}\" Value=\"recipient\"/></xsl:for-each>";
         final String edited = once(code, "</Send>", loop + "</Send>");
         assertThat(edited).isNotEqualTo(code);
 
@@ -308,6 +310,116 @@ class TestXsltReaderGroups extends XsltRuns {
             assertThat(kept.added()).isEmpty();
             assertThat(normalise(codeOf(kept.mapping()))).isEqualTo(normalise(code));
         }
+    }
+
+    @Test
+    void aRepeatedDataOutsideANamedDataIsReadBackAsItsEntry() {
+        // The remaining problem in reader golden 108: a repeat Data entry written straight into its element (no
+        // data_parent) was read with no Data name, so a rebuild said no entry writes it, lost or kept.
+        final String records = """
+                <array xmlns="http://www.w3.org/2013/XSL/json"><map>
+                <string key="time">2026-09-28T10:00:00.000Z</string><string key="host">h</string>\
+                <string key="sender">jane</string>
+                <array key="rcpt"><string>john</string><string>jack</string></array></map></array>""";
+        for (final String repeated : List.of("""
+                {"path": "EventDetail/Send/Data", "data_name": "recipient", "field": "rcpt", "repeat": true}""", """
+                {"path": "EventDetail/Send/Data", "data_name": "recipient", "field": "rcpt", "repeat": true,
+                 "transform": "upper"}""")) {
+            final TranslationMapping mapping = sendMapping("json", entry("""
+                    {"path": "EventDetail/Send/Destination/User/Id", "field": "sender"}"""), entry(repeated));
+            final String code = codeOf(mapping);
+
+            final RebuiltMapping lost = XsltReader.rebuild(code, null, null);
+            final RebuiltMapping kept = XsltReader.rebuild(code, mapping, code);
+
+            assertThat(lost.problems()).as("%s", lost.summary()).isEmpty();
+            assertThat(lost.mapping().everyEntry()).filteredOn(FieldMapping::repeat).singleElement()
+                    .satisfies(entry -> assertThat(entry.toJson(DumpMode.COMPACT)).isEqualTo(entry(repeated)));
+            assertThat(events(codeOf(lost.mapping()), records)).isEqualTo(events(code, records));
+            assertThat(kept.problems()).as("%s", kept.summary()).isEmpty();
+            assertThat(kept.added()).isEmpty();
+            assertThat(normalise(codeOf(kept.mapping()))).isEqualTo(normalise(code));
+        }
+
+        // Reader golden 108 (a common repeat and a rule's repeated Data of the same field) reads back whole, lost or
+        // kept.
+        final Path golden = ReadingFixtures.golden(".xslt").stream()
+                .filter(path -> path.getFileName().toString().startsWith("108-"))
+                .findFirst()
+                .orElseThrow();
+        final String goldenCode = ReadingFixtures.read(golden);
+        final Map<String, Object> goldenJson = json(ReadingFixtures.read(golden.resolveSibling(
+                golden.getFileName().toString().replace(".xslt", ".json"))));
+        final TranslationMapping goldenMapping = TranslationMapping.parse(goldenJson.get("mapping"));
+        for (final RebuiltMapping rebuilt : List.of(XsltReader.rebuild(goldenCode, null, null),
+                XsltReader.rebuild(goldenCode, goldenMapping, goldenCode))) {
+            assertThat(rebuilt.problems()).as("%s", rebuilt.summary()).isEmpty();
+            final Map<String, Object> repeated = json("""
+                    {"path": "EventDetail/Unknown/Data", "field": "roles", "transform": "upper", "repeat": true,
+                     "data_name": "role"}""");
+            assertThat(rebuilt.mapping().events()).filteredOn(rule -> !rule.drop()).singleElement()
+                    .satisfies(rule -> assertThat(rule.fields()).filteredOn(FieldMapping::repeat).singleElement()
+                            .satisfies(entry -> assertThat(entry.toJson(DumpMode.COMPACT)).isEqualTo(repeated)));
+        }
+
+        // A loop written by hand in the generator's shape reads back alike.
+        final TranslationMapping mapping = sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""));
+        final String edited = once(codeOf(mapping), "</Send>", "<xsl:for-each select=\"tokenize("
+                + "data[@name='recipients']/@value, ',')\"><Data Name=\"recipient\" Value=\"{.}\"/></xsl:for-each>"
+                + "</Send>");
+        final RebuiltMapping byHand = XsltReader.rebuild(edited, null, null);
+        assertThat(byHand.problems()).as("%s", byHand.summary()).isEmpty();
+        assertThat(byHand.mapping().everyEntry()).filteredOn(FieldMapping::repeat).singleElement()
+                .satisfies(entry -> assertThat(entry.dataName()).isEqualTo("recipient"));
+    }
+
+    @Test
+    void aBareLeafALoopWritesAValueEachIsARepeatWhereTheLeafRepeatsInItsParent() {
+        // A Tag may occur more than once in Tags: repeat writes one a value, its loop a bare leaf, read back as the
+        // repeat (with the schema to tell), and the same Events regenerated.
+        assertThat(SCHEMA.repeatsInPlace("EventSource/System/Tags/Tag")).isTrue();
+        final String records = """
+                <array xmlns="http://www.w3.org/2013/XSL/json"><map>
+                <string key="time">2026-09-28T10:00:00.000Z</string><string key="host">h</string>\
+                <string key="sender">jane</string>
+                <array key="tags"><string>prod</string><string>eu</string></array></map></array>""";
+        for (final String repeated : List.of("""
+                {"path": "EventSource/System/Tags/Tag", "field": "tags", "repeat": true}""", """
+                {"path": "EventSource/System/Tags/Tag", "field": "tags", "repeat": true, "transform": "upper"}""")) {
+            final TranslationMapping mapping = sendMapping("json", entry("""
+                    {"path": "EventDetail/Send/Destination/User/Id", "field": "sender"}"""), entry(repeated));
+            final String code = codeOf(mapping);
+
+            final RebuiltMapping lost = XsltReader.rebuild(code, null, null, Map.of(), SCHEMA);
+
+            assertThat(lost.problems()).as("%s", lost.summary()).isEmpty();
+            assertThat(lost.mapping().everyEntry()).filteredOn(FieldMapping::repeat).singleElement()
+                    .satisfies(entry -> assertThat(entry.toJson(DumpMode.COMPACT)).isEqualTo(entry(repeated)));
+            assertThat(events(codeOf(lost.mapping()), records)).isEqualTo(events(code, records))
+                    .containsIgnoringCase("<Tag>prod</Tag>").containsIgnoringCase("<Tag>eu</Tag>");
+            // Without the schema, nothing tells it may repeat there: still said not to be read.
+            assertThat(XsltReader.rebuild(code, null, null).problems()).anySatisfy(problem -> assertThat(problem)
+                    .contains("EventSource/System/Tags/Tag repeats (xsl:for-each)", "not other loops"));
+        }
+    }
+
+    @Test
+    void aBareLeafALoopWritesAValueEachIsStillAProblemWhereTheLeafCannotRepeat() {
+        // An EmailAddress a value in one User: the schema allows one in a User, so no repeat writes it.
+        final TranslationMapping mapping = sendMapping("data_splitter", entry("""
+                {"path": "EventDetail/Send/Destination/User/Id", "field": "first_recipient"}"""));
+        final String edited = once(codeOf(mapping), "</Send>", "<Destination><User><xsl:for-each select=\"tokenize("
+                + "data[@name='recipients']/@value, ',')\"><EmailAddress><xsl:value-of select=\".\"/>"
+                + "</EmailAddress>"
+                + "</xsl:for-each></User></Destination></Send>");
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Send/Destination/User/EmailAddress")).isFalse();
+
+        final RebuiltMapping rebuilt = XsltReader.rebuild(edited, null, null, Map.of(), SCHEMA);
+
+        assertThat(rebuilt.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("EventDetail/Send/Destination/User/EmailAddress repeats (xsl:for-each)",
+                        "the schema allows one EmailAddress in its parent", "not other loops"));
     }
 
     @Test

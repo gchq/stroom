@@ -233,6 +233,26 @@ public final class ErrorTriage {
     /// @param recordCount How many records were stepped or processed, or null if not known.
     /// @param examples    The most different examples kept per group.
     /// @param accepted    The errors the user accepted as benign for the pipeline.
+    /// @return As [#triage(List, Set, Integer, int, List, List)] with none explained.
+    public Map<String, Object> triage(final List<Marker> markers,
+                                      final Set<String> ownElements,
+                                      final Integer recordCount,
+                                      final int examples,
+                                      final List<AcceptedErrors.Entry> accepted) {
+        return triage(markers, ownElements, recordCount, examples, accepted, List.of());
+    }
+
+    /// Groups markers by (severity, element, normalised message) and classifies each group, as
+    /// [#triage(List, Set, Integer, int, List)] does, a group the pipeline's build explains (not accepted, still
+    /// blocking or for review) taking the build's reason in place of its rule's.
+    ///
+    /// @param markers     The markers.
+    /// @param ownElements The elements the pipeline itself adds or configures.
+    /// @param recordCount How many records were stepped or processed, or null if not known.
+    /// @param examples    The most different examples kept per group.
+    /// @param accepted    The errors the user accepted as benign for the pipeline.
+    /// @param explained   The errors the pipeline's build explains better than a rule can (the user chose to keep
+    ///                    long values whole, and the parser still cut one), each with its reason.
     /// @return `verdict` (blocking, review or clean), `groups_by_class` and `groups`. A group of rejected
     /// documents says, in `listed_only`, when its count leaves out documents Stroom rejected without listing them.
     /// A group whose rule marks it as a cause (text a parser lost, so what it read next was misread) comes first in
@@ -242,7 +262,8 @@ public final class ErrorTriage {
                                       final Set<String> ownElements,
                                       final Integer recordCount,
                                       final int examples,
-                                      final List<AcceptedErrors.Entry> accepted) {
+                                      final List<AcceptedErrors.Entry> accepted,
+                                      final List<AcceptedErrors.Entry> explained) {
         final Map<List<String>, Group> groups = new LinkedHashMap<>();
         long unlisted = 0;
         String listedPerBatch = null;
@@ -290,6 +311,12 @@ public final class ErrorTriage {
                 // The user said this kind of error is benign for this pipeline: reported, not raised again.
                 classified = new Classified(BENIGN, "Accepted as benign by the user (" + known.accepted() + "): "
                                                     + known.reason());
+            } else if (!BENIGN.equals(classified.classification())) {
+                final AcceptedErrors.Entry why = AcceptedErrors.match(explained, group.element, firstMessage);
+                if (why != null) {
+                    // The build says more of it than the rule can: the rule's class, the build's reason.
+                    classified = new Classified(classified.classification(), why.reason(), classified.cause());
+                }
             }
             final Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("class", classified.classification());

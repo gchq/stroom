@@ -36,6 +36,7 @@ public final class LeafReading {
     private String expr;
     private String repeat;
     private String repeatSelect;
+    private boolean leafLoop;
     private String guard;
     private GroupReading group;
 
@@ -109,8 +110,8 @@ public final class LeafReading {
         this.repeat = repeat;
     }
 
-    /// @return For a Data entry the generator repeats (one per value its xsl:for-each selects, each the current
-    /// value), what the loop selects, its variables replaced; else null.
+    /// @return For a Data entry the generator repeats, or a bare leaf a loop writes (one per value its xsl:for-each
+    /// selects, each the current value), what the loop selects, its variables replaced; else null.
     public String repeatSelect() {
         return repeatSelect;
     }
@@ -118,6 +119,17 @@ public final class LeafReading {
     /// @param repeatSelect What the loop repeating it selects, for a Data entry of each value.
     void setRepeatSelect(final String repeatSelect) {
         this.repeatSelect = repeatSelect;
+    }
+
+    /// @return True for a bare leaf element written a value each by its loop (not a Data): read back as a repeat
+    /// only where the schema lets the leaf repeat in its own parent.
+    public boolean leafLoop() {
+        return leafLoop;
+    }
+
+    /// @param leafLoop True for a bare leaf element written a value each by its loop.
+    void setLeafLoop(final boolean leafLoop) {
+        this.leafLoop = leafLoop;
     }
 
     /// @param guard The test of the innermost xsl:if around it.

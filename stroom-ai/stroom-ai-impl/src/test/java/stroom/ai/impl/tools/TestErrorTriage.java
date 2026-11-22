@@ -507,6 +507,38 @@ class TestErrorTriage {
                 .isEqualTo("review");
     }
 
+    @Test
+    void anErrorTheBuildExplainsKeepsItsClassWithTheBuildsReason() {
+        // The user chose to keep long values whole and the parser still cut one: still for review, but the reason
+        // says what the build chose, rather than the generic one telling the agent to ask the user.
+        final List<AcceptedErrors.Entry> explained = List.of(AcceptedErrors.entry(null,
+                "String value truncated to length 10000, original length: 25486", "The build keeps them whole",
+                "2026-11-22", "String value truncated to length *"));
+        final List<Marker> markers = List.of(
+                ErrorTriage.marker("WARNING", "jsonParser",
+                        "String value truncated to length 60000, original length: 70123", null),
+                ErrorTriage.marker("ERROR", "decorationFilter", "Lookup failed: no map named HR", null));
+
+        final List<Map<String, Object>> groups = groups(RULES.triage(markers, Set.of(), null, 3, List.of(),
+                explained));
+
+        final Map<String, Object> cut = byMessage(groups, "String value truncated to length 60000, original length: "
+                                                          + "70123");
+        assertThat(cut.get("class")).isEqualTo("review");
+        assertThat(cut).doesNotContainKey("accepted");
+        assertThat(cut.get("reason")).isEqualTo("The build keeps them whole");
+        assertThat((String) byMessage(groups, "Lookup failed: no map named HR").get("reason"))
+                .isNotEqualTo("The build keeps them whole");
+
+        // An error the user accepted stays accepted.
+        final List<AcceptedErrors.Entry> accepted = List.of(AcceptedErrors.entry(null, "x", "Cut, as chosen",
+                "2026-11-22", "String value truncated to length *"));
+        assertThat(byMessage(groups(RULES.triage(markers, Set.of(), null, 3, accepted, explained)),
+                "String value truncated to length 60000, original length: 70123"))
+                .containsEntry("class", "benign")
+                .containsEntry("accepted", true);
+    }
+
     @ParameterizedTest
     @MethodSource("refusals")
     void elasticsearchRefusingTheAccountNamesThePrivilegesAndTheIndexNameFirst(final Map<String, Object> error,

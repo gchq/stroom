@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.util.shared.NullSafe;
@@ -482,22 +483,30 @@ public final class XsltReader {
             // Read as a group's loop.
             return;
         } else if (child.is(XSL, "for-each")) {
-            // A Data entry repeated in a named Data (data_parent): known by its Name, as its entry is. Elsewhere read
-            // with no Data name.
+            // A repeated Data entry: known by its Name, as its entry is; in a named Data (data_parent) whatever its
+            // Name, elsewhere where it is the generator's (a constant Name, a Value of each value). Else read with
+            // no Data name.
             final XmlElement first = firstEventElement(child);
             final boolean inContainer = path.stream().anyMatch(step -> step.startsWith(LeafReading.CONTAINER));
-            final String dataName = inContainer && first != null && "Data".equals(first.localName())
+            final boolean one = child.childElements().size() == 1 && first == child.childElements().getFirst();
+            final boolean data = first != null && "Data".equals(first.localName());
+            final String dataName = data && (inContainer || (one && constantName(first) && eachValue(first) != null))
                     ? first.get("Name")
                     : null;
             final LeafReading leaf = new LeafReading(join(path, firstEventName(child)), dataName);
             leaf.setRepeat(String.join(" ", words(XmlSerialiser.toXml(child))));
             final String each = dataName != null && child.childElements().size() == 1
                     ? eachValue(first)
-                    : null;
+                    : one && !data
+                            ? HandLoops.leafValue(first, parser)
+                            : null;
             if (each != null) {
                 // The generator's repeated Data entry: a Data of each value the loop selects, the value as it is or
-                // (transformed, cut) an expression of it, read by the rebuild.
+                // (transformed, cut) an expression of it, read by the rebuild. Or a bare leaf a value (a repeat of
+                // one that may repeat in its own parent, or a loop written by hand), which the rebuild reads as a
+                // repeat where the schema lets the leaf repeat there.
                 leaf.setRepeatSelect(resolve(Objects.requireNonNullElse(child.get("select"), ""), scope, parser));
+                leaf.setLeafLoop(!data);
                 if (!".".equals(each)) {
                     leaf.setExpr(each);
                 }
@@ -913,11 +922,29 @@ public final class XsltReader {
                                          final TranslationMapping kept,
                                          final String keptCode,
                                          final Map<String, String> imported) {
+        return rebuild(code, kept, keptCode, imported, null);
+    }
+
+    /// @param code     The XSLT as it is.
+    /// @param kept     The mapping kept with it before, or null (lost).
+    /// @param keptCode What the kept mapping generates now, or null.
+    /// @param imported The XSLTs it imports, by href (as Stroom resolves an import by name): where its shared
+    ///                 templates and functions come from, for a lost mapping.
+    /// @param schema   The event-logging schema the XSLT writes to, or null: a loop writing a bare leaf a value
+    ///                 (not a Data) is read back as a `repeat` only where it lets the leaf repeat in its own parent
+    ///                 ([EventSchema#repeatsInPlace]); without it, such a loop is said not to be read.
+    /// @return A mapping for this XSLT: the kept mapping where the XSLT still reads as it generates, the
+    /// generator's idioms read from the XSLT elsewhere.
+    public static RebuiltMapping rebuild(final String code,
+                                         final TranslationMapping kept,
+                                         final String keptCode,
+                                         final Map<String, String> imported,
+                                         final EventSchema schema) {
         // An environment's fork of the event-logging schema is read as event-logging:3, imports too.
         final Map<String, String> standard = new LinkedHashMap<>();
         NullSafe.map(imported).forEach((href, text) -> standard.put(href, ForkedEvents.asStandard(text)));
-        return new MappingRebuild(ForkedEvents.asStandard(code), kept, ForkedEvents.asStandard(keptCode), standard)
-                .run();
+        return new MappingRebuild(ForkedEvents.asStandard(code), kept, ForkedEvents.asStandard(keptCode), standard,
+                schema).run();
     }
 
     /// @param code   A translation XSLT.
@@ -1019,6 +1046,12 @@ public final class XsltReader {
         return value.isEmpty()
                 ? null
                 : value;
+    }
+
+    // Whether a Data element's Name is a constant (no attribute value template).
+    private static boolean constantName(final XmlElement data) {
+        final String name = data.get("Name");
+        return truthy(name) && !name.contains("{") && !name.contains("}");
     }
 
     private static XmlElement firstEventElement(final XmlElement loop) {

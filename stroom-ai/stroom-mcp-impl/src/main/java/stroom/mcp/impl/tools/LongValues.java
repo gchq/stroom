@@ -237,6 +237,40 @@ final class LongValues {
                         String.valueOf(kept.get(RECORDED)), CUT_WARNING + " *"));
     }
 
+    /// The JSON parser's Warning that it cut a value, explained for a build whose user chose to keep long values
+    /// whole: the parser still cut one, so it is still for review, but the reason says the build keeps them whole,
+    /// the limit recorded for it (if any), the longest value seen, and how to raise the pipeline's limit.
+    ///
+    /// @param records The build records.
+    /// @param build   The pipeline's build, or null.
+    /// @return The entry; empty when the user chose no such thing (or the pipeline is in no build).
+    static Optional<AcceptedErrors.Entry> stillCut(final BuildRecords records, final String build) {
+        return recorded(records, build)
+                .filter(kept -> WHOLE.equals(kept.get(CHOICE)))
+                .map(kept -> AcceptedErrors.entry(null, CUT_WARNING + " " + JsonStringValues.DEFAULT_TRUNCATE_LENGTH
+                                                        + ", original length: " + kept.getOrDefault(LONGEST, "N"),
+                        stillCutReason(build, kept), String.valueOf(kept.get(RECORDED)), CUT_WARNING + " *"));
+    }
+
+    // Why the parser still cuts a value the user chose to keep whole, and what to do.
+    private static String stillCutReason(final String build, final Map<String, Object> kept) {
+        final String limit = kept.get(LIMIT) instanceof final Number number
+                ? "the limit recorded for it is " + grouped(number.intValue()) + " characters (create_pipeline sets "
+                  + "it)"
+                : "no limit is recorded for it (the longest value seen was within the parser's default)";
+        final String longest = kept.get(LONGEST) instanceof final Number number
+                ? ", and the longest value seen in its samples was " + grouped(number.intValue()) + " characters"
+                : "";
+        return "Build '" + build + "' keeps string values longer than the JSON parser's default limit whole, by the "
+               + "user's choice (draft_translation_mapping long_values=whole, recorded " + kept.get(RECORDED) + "): "
+               + limit + longest + ". The parser still cut this value: it is longer than the pipeline's "
+               + PARSER_PROPERTY + " (its message gives both lengths), or that limit was never set on this pipeline "
+               + "(one made before the choice, or set back). Raise it past this value's original length with "
+               + "update_pipeline set_properties [{element: <the JSON parser>, name: " + PARSER_PROPERTY + ", value: "
+               + "<a size>}], then step and process the streams again. draft_translation_mapping raises the "
+               + "recorded limit when its sample holds a longer value, and update_pipeline then sets it.";
+    }
+
     /// @param records The build records.
     /// @param build   A build, or null.
     /// @return What the documentation says of the build's long values, for its Open items; empty when no choice is

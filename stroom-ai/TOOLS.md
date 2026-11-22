@@ -4283,7 +4283,13 @@ Shared behaviour:
   element, so stepping was clean and the value lost; found testing awkward values, 2026-11-18), unless the user
   chose to cut long values for the pipeline's build (`draft_translation_mapping long_values=cut`, 2026-11-22): then
   it is benign, accepted, its reason naming the choice and when it was recorded. With no choice recorded, the
-  review's reason says to ask the user and record it with `draft_translation_mapping build= long_values=`. Output with no XML elements is a marker of its own
+  review's reason says to ask the user and record it with `draft_translation_mapping build= long_values=`. Where the
+  user chose to keep them whole and the parser still cut one (a value longer than the limit set, or the limit never
+  set on the pipeline), it stays for review, but with the build's reason in place of the rule's
+  (`BuildProgress.explainedErrors`, through `AcceptedErrors.explainedFor`; `LongValues.stillCut`, 2026-11-22): the
+  build keeps long values whole, the limit recorded for it (if any) and the longest value seen, to raise the
+  pipeline's limit past this value with `update_pipeline set_properties`, and that `draft_translation_mapping`
+  raises the recorded limit when its sample holds a longer value. Output with no XML elements is a marker of its own
   (`SteppingVerdicts.emptyOutput`): when no template matches (usually a wrong `xpath-default-namespace`), XSLT's
   built-in rules copy text through, nothing errors, and processing silently writes nothing. CEF lines and Kafka
   records are not empty output (`SteppingVerdicts.sendsOn`), nor is text that isn't only the input's own text (CSV
@@ -4858,7 +4864,9 @@ version's catalogue of event types starts from the promoted one (`source_notes` 
   Stroom's standard Event Data templates are (`EVENTS_CHAIN`: the parser the build's sample needs, record counts,
   one Event a split, the translation XSLT, the schema filter on the EVENTS group, Events written to the stream's
   feed). Refused until a sample is uploaded or the feed surveyed; `set_properties` must give
-  `translationFilter.xslt` (and the parser's `textConverter` where it has one).
+  `translationFilter.xslt` (and the parser's `textConverter` where it has one). Where the user chose to keep long
+  values whole, its JSON parser's `stringTruncateLength` is set to the build's limit, as one from a template is
+  (`LongValues.parserLimit`; unless `set_properties` sets it; 2026-11-22).
 * `standalone` with `template` or `version_of` is refused.
 
 * **Arguments**: `name` (required, but for a group's pipeline: `<feed> <group>` by default); `group` (an aggregated
@@ -5246,7 +5254,9 @@ generated without them.
     readable, and the note offers `//`); the draft maps each node by one of them: its full path when its name is found
     at one depth, `//<name>` only when found at several, never both, and an attribute only under its element's chosen
     path (the others are taken, so not drafted as Data). Seen in chat 182: a Teams message body's `//p` and `/div/p`,
-    `//@alt`, `//emoji/@alt` and `/div/p/emoji/@alt`, each value written two or three times.
+    `//@alt`, `//emoji/@alt` and `/div/p/emoji/@alt`, each value written two or three times. A time held in XML is a
+    time field once, by the same path (2026-11-22): `time_candidates`, the time chosen and the timestamp fields note
+    list it as the draft maps it, not also by its other paths.
   * The draft is kept for the session (`SentMappings`, as `draft:<build>` and, with a build, `draft:`), so the
     first save sends `changes=` only: a 50 KB draft written out whole in one call never reached the tool in
     testing. With a build it is also kept with the build in the user's own workspace, so a new MCP session of the
@@ -5518,7 +5528,13 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
     Send/Source/User/Id) and the same Data in two rules are not warned of; a top-level field written as it is to an
     element and as Data keeps its own warning ("the Data entry says it again"). Seen in chat 182 (rule
     update_inboxrule): `event.Parameters`' items as Data of `Update/After/Object` and of `Update`, the draft's copy left
-    in as the agent's removal named another path.
+    in as the agent's removal named another path. The mapping's common entries are checked against each rule's too
+    (2026-11-22; two common entries alike are not, as they would be said for every rule): a common entry and a
+    rule's writing the same input as Data and Data, or Data and a typed element (but a top-level field as it is,
+    which keeps its own warning), the rule's suggested for removal unless the common one is the Data beside a typed
+    element, then `changes={"common": [...]}`, saying every rule's events hold it. A `repeat` entry and a group over
+    the same field (`for_each: {array: <field>}`, its field the item) are the same input: each writes the field's
+    values one by one.
   * **The vendor's code kept** (`VendorCodeKept`, 2026-11-20): a confirmed event type whose rule no longer writes its
     vendor-code Data is warned of in `sample_check` (`sample: …`), naming the event type, rule, field and Data; the
     XSLT is still built. Not for the catch-all, drop rules or event types not confirmed.
@@ -5591,10 +5607,22 @@ fields relative to it, the loop's current value (`.`) read as the item (`item: t
 ones dropped, which the rebuild notes). Since `repeat: true` writes only the leaf or the element holding it a value
 each, where that element repeats in its own parent, a loop writing a higher element (Email repeats in Payload,
 From doesn't in Email) was read back as a `repeat` the generator now refuses; as a group it regenerates the same
-Events and validates. A loop reading below its value (a relative path, `@value`), writing a Data, a bare leaf or
-anything but that one element, or holding another loop or a template call, is still said not to be read. With the
+Events and validates. A loop reading below its value (a relative path, `@value`), writing anything but that one
+element (a Data or a bare leaf is read as below), or holding another loop or a template call, is still said not to
+be read. With the
 kept mapping, a `repeat` loop that still reads as it generates keeps its entry. A repeated Data entry's value
 transformed or cut (`substring(upper-case(.[1]), 1, 3)`) is read back with its `transform` and `max_length`.
+
+**A repeated Data outside a named Data** (2026-11-22): a loop writing one Data a value straight into its element
+(no `data_parent`; a constant Name, the Value the current value or an expression of it, as the generator writes a
+`repeat` Data entry, or a loop written by hand alike) is read back as that entry, by its Name, lost or kept; it was
+read with no Data name, so no entry wrote it (the remaining problem in reader golden 108). A JSON array's members
+(`*[@key='x']/*`) are read as the field `x`, as a group's items are. A Data named from its value (`Name="{.}"`) is
+still not read. **A bare leaf a value** (2026-11-22): a loop writing one leaf element a value (one `xsl:value-of` of
+the current value; the generator's `repeat` on a leaf that may occur more than once in its own parent, or a loop
+written by hand) is read back as a `repeat: true` entry where the schema lets that leaf repeat in its own parent
+(`EventSchema.repeatsInPlace`, e.g. `EventSource/System/Tags/Tag`; rebuild_mapping passes the kept schema), else it
+stays a problem, saying the schema allows one there.
 
 The XSLT regenerated from the rebuilt mapping is then stepped beside the XSLT over the sample (up to 200 records
 each way, `PROVE_RECORDS`) and the outputs compared path by path (`EventXml.fieldValues`). Only when every record's

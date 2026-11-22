@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.validation.XmlTrees;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /// A loop written by hand that writes one element per value (an `xsl:for-each` with no variable holding its item, as
@@ -75,6 +76,36 @@ final class HandLoops {
         }
         return holds
                 ? element
+                : null;
+    }
+
+    /// The value a bare leaf element written once per value by a loop holds: the leaf's one `xsl:value-of`, reading
+    /// the loop's current value (`.`, as it is or in an expression of it, e.g. `upper-case(.[1])`), nothing below it.
+    ///
+    /// @param element The one element a loop writes per value, or null.
+    /// @param parser  The parser of the XSLT.
+    /// @return The `xsl:value-of`'s select; null for anything else: a Data, an element with attributes, text or
+    /// elements of its own, or a value read below the current value (or not of it at all).
+    static String leafValue(final XmlElement element, final XPathTreeParser parser) {
+        if (element == null || !EVT.equals(element.namespace()) || "Data".equals(element.localName())
+            || element.attributes().stream().anyMatch(attribute -> attribute.namespace() == null)
+            || !Objects.requireNonNullElse(element.text(), "").isBlank()) {
+            return null;
+        }
+        final List<XmlElement> body = element.childElements();
+        if (body.size() != 1 || !body.getFirst().is(XSL, "value-of")) {
+            return null;
+        }
+        final String select = Objects.requireNonNullElse(body.getFirst().get("select"), "").strip();
+        final XPathNode tree = select.isEmpty()
+                ? null
+                : XsltReader.parseOrNull(select, parser);
+        if (tree == null) {
+            return null;
+        }
+        final List<XPathTrees.Replacement> dots = new ArrayList<>();
+        return visit(tree, true, dots, "item") && !dots.isEmpty()
+                ? select
                 : null;
     }
 

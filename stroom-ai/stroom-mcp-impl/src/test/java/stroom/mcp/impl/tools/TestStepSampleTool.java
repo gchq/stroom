@@ -199,6 +199,8 @@ class TestStepSampleTool {
                 world.documentAccess, () -> Optional.of(progress));
         Mockito.when(world.acceptedErrors.acceptedFor(anyString())).thenAnswer(inv -> accepted.acceptedFor(
                 inv.getArgument(0)));
+        Mockito.when(world.acceptedErrors.explainedFor(anyString())).thenAnswer(inv -> accepted.explainedFor(
+                inv.getArgument(0)));
         Mockito.when(world.plan.buildOf(any())).thenReturn(Optional.of("acme-v1"));
 
         // No choice recorded: for review, saying how to record the user's.
@@ -210,9 +212,16 @@ class TestStepSampleTool {
 
         // The user chose to keep them whole: still for review (the parser's limit is to be raised).
         Mockito.when(world.buildRecords.longValues("acme-v1")).thenReturn(Optional.of(Map.of("choice", "whole",
-                "limit", 60_000, "recorded", "2026-11-22")));
-        assertThat(stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}").get("verdict"))
-                .isEqualTo("review");
+                "limit", 60_000, "longest", 25_486, "recorded", "2026-11-22")));
+        final Map<String, Object> whole = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+        assertThat(whole.get("verdict")).isEqualTo("review");
+        // Saying the build keeps them whole, its limit and the longest value seen, and how to raise the limit; not
+        // to ask the user again.
+        assertThat(groups(whole).getFirst().get("reason")).asString()
+                .contains("keeps string values longer than the JSON parser's default limit whole",
+                        "long_values=whole, recorded 2026-11-22", "60,000 characters", "25,486 characters",
+                        "update_pipeline set_properties", "draft_translation_mapping raises the recorded limit")
+                .doesNotContain("ask the user");
 
         // Cut, as the user chose: benign, saying so, and the clean step recorded.
         Mockito.when(world.buildRecords.longValues("acme-v1")).thenReturn(Optional.of(Map.of("choice", "cut",

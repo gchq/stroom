@@ -31,7 +31,10 @@ import java.util.Map;
 /// in the same groups (their for_each): the same value. A warning, never a problem, as a copy may be kept on purpose;
 /// one written to two typed elements (UserId as EventSource/User/Id and Send/Source/User/Id) is the schema's own
 /// shape and not warned of, nor is a top-level field written as it is to an element and as Data, which
-/// [EventTrees] warns of in its own words.
+/// [EventTrees] warns of in its own words. The mapping's common entries are written in every rule's events, so each
+/// is checked against the rule's entries too (two common entries alike would be said once per rule, so they are
+/// not). A `repeat` entry writes its field's values one by one, as a group over the field (`for_each: {array:
+/// <field>}`) does with its item: the same input.
 final class WrittenTwice {
 
     private static final String TYPE_ID = "EventDetail/TypeId";
@@ -40,14 +43,17 @@ final class WrittenTwice {
         // Static only.
     }
 
-    /// @param rule A rule.
-    /// @return A warning for each pair of the rule's entries writing the same input twice, naming the rule, the
-    /// inputs, both places and the change removing one.
-    static List<String> warnings(final EventRule rule) {
+    /// @param common The mapping's common entries, written in every rule's events.
+    /// @param rule   A rule.
+    /// @return A warning for each pair of the rule's entries (or of a common entry and one of the rule's) writing
+    /// the same input twice, naming the rule, the inputs, both places and the change removing one.
+    static List<String> warnings(final List<FieldMapping> common, final EventRule rule) {
         final List<Placed> placed = new ArrayList<>();
-        for (int top = 0; top < rule.fields().size(); top++) {
-            final FieldMapping entry = rule.fields().get(top);
-            collect(entry, top, entry, "", List.of(), placed);
+        final List<FieldMapping> entries = new ArrayList<>(common);
+        entries.addAll(rule.fields());
+        for (int top = 0; top < entries.size(); top++) {
+            final FieldMapping entry = entries.get(top);
+            collect(entry, top, top < common.size(), entry, "", List.of(), placed);
         }
         // Each pair of top-level entries once, the inputs they both write listed.
         final Map<List<Integer>, List<String>> pairs = new LinkedHashMap<>();
@@ -58,6 +64,7 @@ final class WrittenTwice {
                 final Placed second = placed.get(j);
                 if (!first.input().equals(second.input()) || first.place().equals(second.place())
                     || !(first.data() || second.data())
+                    || (first.common() && second.common())
                     || elementAndData(first, second)) {
                     continue;
                 }
@@ -77,6 +84,7 @@ final class WrittenTwice {
     // Every entry that writes an input, below the groups it is in, with the place it writes it.
     private static void collect(final FieldMapping entry,
                                 final int top,
+                                final boolean common,
                                 final FieldMapping holder,
                                 final String parent,
                                 final List<ItemSource> groups,
@@ -86,7 +94,7 @@ final class WrittenTwice {
             final List<ItemSource> inner = new ArrayList<>(groups);
             inner.add(entry.group().forEach());
             for (final FieldMapping field : entry.group().fields()) {
-                collect(field, top, holder, place, List.copyOf(inner), out);
+                collect(field, top, common, holder, place, List.copyOf(inner), out);
             }
             return;
         }
@@ -94,8 +102,17 @@ final class WrittenTwice {
             // A constant is no input; a TypeId is what tells kinds apart, not a copy of what it is read from.
             return;
         }
-        final FieldMapping input = entry.withPath("").withDataName(null).withDataParent(null);
-        out.add(new Placed(top, holder, new Input(groups, input), place, entry.dataName() != null, entry));
+        final Input input = entry.repeat() && entry.field() != null && groups.isEmpty()
+                // Each value of the field, as a group over its values reads its item.
+                ? new Input(List.of(new ItemSource(null, null, entry.field(), null, null, null)),
+                        written(entry.asGroupItem()))
+                : new Input(groups, written(entry));
+        out.add(new Placed(top, common, holder, input, place, entry.dataName() != null, entry));
+    }
+
+    // The entry but for where it is written.
+    private static FieldMapping written(final FieldMapping entry) {
+        return entry.withPath("").withDataName(null).withDataParent(null);
     }
 
     // Where an entry writes its value: its path below its group's place, each Data named.
@@ -117,13 +134,18 @@ final class WrittenTwice {
         return out.append("[@Name='").append(entry.dataName()).append("']").toString();
     }
 
-    // The one to suggest removing: the Data beside a typed element, else the Data less deep (the more general
-    // place), else the later.
+    // The one to suggest removing: the Data beside a typed element, else the rule's beside a common entry (which
+    // other rules' events hold too), else the Data less deep (the more general place), else the later.
     private static Placed toRemove(final Placed first, final Placed second) {
         if (first.data() != second.data()) {
             return first.data()
                     ? first
                     : second;
+        }
+        if (first.common() != second.common()) {
+            return first.common()
+                    ? second
+                    : first;
         }
         return depth(first.place()) < depth(second.place())
                 ? first
@@ -163,11 +185,19 @@ final class WrittenTwice {
             removal.put("data_name", holder.dataName());
         }
         removal.put("remove", true);
-        final Map<String, Object> change = new LinkedHashMap<>();
-        change.put("name", rule.name());
-        change.put("fields", List.of(removal));
-        final String changes = ToolJson.dumps(Map.of("events", List.of(change)));
-        return said + (remove.topLevel()
+        final String changes;
+        if (remove.common()) {
+            changes = ToolJson.dumps(Map.of("common", List.of(removal)));
+        } else {
+            final Map<String, Object> change = new LinkedHashMap<>();
+            change.put("name", rule.name());
+            change.put("fields", List.of(removal));
+            changes = ToolJson.dumps(Map.of("events", List.of(change)));
+        }
+        return said + (remove.common()
+                ? " (the one removed here is a common entry, written in every rule's events: remove it only if no "
+                  + "other rule needs it, else remove the rule's)"
+                : "") + (remove.topLevel()
                 ? ""
                 : " (the one removed here is in the group " + holder.path() + ": if the group's other fields are "
                   + "wanted, send the group again without it instead)") + ", e.g. changes=" + changes;
@@ -183,9 +213,16 @@ final class WrittenTwice {
 
     }
 
-    // An entry writing an input: the index of the rule's top-level entry holding it and that entry (the entry itself,
-    // or the group it is in), the input, the place it writes it, whether that is a Data, and the entry itself.
-    private record Placed(int top, FieldMapping holder, Input input, String place, boolean data, FieldMapping entry) {
+    // An entry writing an input: the index of the top-level entry holding it (common entries first, then the rule's),
+    // whether that is a common entry, and that entry (the entry itself, or the group it is in), the input, the place
+    // it writes it, whether that is a Data, and the entry itself.
+    private record Placed(int top,
+                          boolean common,
+                          FieldMapping holder,
+                          Input input,
+                          String place,
+                          boolean data,
+                          FieldMapping entry) {
 
         boolean topLevel() {
             return holder == entry;

@@ -90,6 +90,23 @@ public class AcceptedErrors {
                 : merge(byBuild, documented);
     }
 
+    /// The errors a pipeline's build explains, though they are not benign: each with a reason saying more than
+    /// the triage rule's can (the user chose to keep long values whole, and the JSON parser still cut one). A
+    /// courtesy, as accepted errors are: anything that goes wrong gives none.
+    ///
+    /// @param pipelineUuid The pipeline.
+    /// @return The entries; empty without build tools or where its build explains nothing.
+    public List<Entry> explainedFor(final String pipelineUuid) {
+        try {
+            return buildProgressProvider.get()
+                    .map(progress -> progress.explainedErrors(pipelineUuid))
+                    .orElse(List.of());
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the errors pipeline {}'s build explains", pipelineUuid, e);
+            return List.of();
+        }
+    }
+
     // Those a build's recorded choices accept (the user chose to cut long values, say); none without build tools.
     private List<Entry> byBuild(final String pipelineUuid) {
         try {

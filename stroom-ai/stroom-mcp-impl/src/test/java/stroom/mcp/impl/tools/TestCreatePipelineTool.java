@@ -700,6 +700,37 @@ class TestCreatePipelineTool {
     }
 
     @Test
+    void anEventsPipelineOfItsOwnKeepsLongValuesWholeWhereTheUserChoseThat() {
+        // The user chose to keep long values whole (draft_translation_mapping long_values=whole): the last-resort
+        // pipeline's JSON parser takes the build's limit too, as one from a template does.
+        pipelines.feeds.facts.ownRaw = List.of(7L);
+        pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("json lines");
+        pipelines.xslt("x1", "Acme-Events", Map.of());
+        pipelines.world.records().rememberLongValues(PipelineWorld.BUILD, Map.of("choice", "whole", "limit", 60_000,
+                "longest", 25_486, "fields", List.of("body"), "recorded", "2026-11-22"));
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
+                                                                 + "\"Acme-V1-Events\", \"standalone\": \"events\", "
+                                                                 + "\"set_properties\": \"translationFilter.xslt=x1\"}",
+                BuildToolCalls.answering(Map.of())));
+
+        assertThat(String.valueOf(made.get("sets"))).contains("jsonParser.stringTruncateLength");
+        assertThat(PipelineDocs.addedProperties(pipelines.pipelineNamed("Acme-V1-Events"))).contains(
+                new PipelineProperty("jsonParser", "stringTruncateLength", new PipelinePropertyValue(60_000)));
+
+        // Set by the agent, it is the agent's.
+        PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"Acme-V2-Events\", \"standalone\": "
+                                + "\"events\", \"set_properties\": [\"translationFilter.xslt=x1\", "
+                                + "\"jsonParser.stringTruncateLength=90000\"]}",
+                BuildToolCalls.answering(Map.of())));
+        assertThat(PipelineDocs.addedProperties(pipelines.pipelineNamed("Acme-V2-Events")))
+                .contains(new PipelineProperty("jsonParser", "stringTruncateLength",
+                        new PipelinePropertyValue(90_000)))
+                .doesNotContain(new PipelineProperty("jsonParser", "stringTruncateLength",
+                        new PipelinePropertyValue(60_000)));
+    }
+
+    @Test
     void anEventsPipelineOfItsOwnIsRefusedWhileATemplateCanBeInherited() {
         pipelines.feeds.facts.ownRaw = List.of(7L);
         pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("delimited");

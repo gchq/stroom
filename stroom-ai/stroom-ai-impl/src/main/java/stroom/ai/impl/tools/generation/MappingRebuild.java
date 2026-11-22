@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
@@ -61,6 +62,7 @@ final class MappingRebuild {
     private final TranslationMapping kept;
     private final String keptCode;
     private final Map<String, String> imported;
+    private final EventSchema schema;
     private XsltReading reading;
     private RebuiltMapping out;
     // The input: data_splitter, json, xml or xml_fragments.
@@ -70,14 +72,19 @@ final class MappingRebuild {
     /// @param kept     The mapping kept with it before, or null.
     /// @param keptCode What the kept mapping generates now, or null.
     /// @param imported The XSLTs it imports, by href.
+    /// @param schema   The event-logging schema the XSLT writes to, or null: what a bare leaf written a value each
+    ///                 is read back by (a repeat where it may repeat in its own parent); without it, such a loop is
+    ///                 not read.
     MappingRebuild(final String code,
                    final TranslationMapping kept,
                    final String keptCode,
-                   final Map<String, String> imported) {
+                   final Map<String, String> imported,
+                   final EventSchema schema) {
         this.code = code;
         this.kept = kept;
         this.keptCode = keptCode;
         this.imported = imported;
+        this.schema = schema;
     }
 
     /// @return The mapping read back, and how it was come by.
@@ -269,6 +276,15 @@ final class MappingRebuild {
             if (XsltReader.truthy(leaf.repeat()) && leaf.repeatSelect() == null) {
                 out.problems().add("rule " + name + ": " + leaf.path() + " repeats (xsl:for-each) in a way no entry "
                                    + "it had writes: " + NOT_A_LOOP_READ);
+                continue;
+            }
+            if (leaf.leafLoop() && (schema == null || !schema.repeatsInPlace(leaf.path()))) {
+                // A bare leaf a value is a repeat only where the leaf may occur more than once in its own parent.
+                out.problems().add("rule " + name + ": " + leaf.path() + " repeats (xsl:for-each) in a way no entry "
+                                   + "it had writes" + (schema == null
+                        ? ""
+                        : " (the schema allows one " + leaf.path().substring(leaf.path().lastIndexOf('/') + 1)
+                          + " in its parent, so it is no repeat)") + ": " + NOT_A_LOOP_READ);
                 continue;
             }
             final ReadIdioms.Entry entry = idioms.entry(repeated(leaf));
@@ -820,10 +836,24 @@ final class MappingRebuild {
         final LeafReading over = new LeafReading(parent == null
                 ? leaf.path()
                 : withContainers(leaf.path(), parent), leaf.dataName());
+        final String input = repeatedInput(leaf.repeatSelect());
         over.setExpr(leaf.expr() == null
-                ? leaf.repeatSelect()
-                : overInput(leaf.expr(), leaf.repeatSelect()));
+                ? input
+                : overInput(leaf.expr(), input));
         return over;
+    }
+
+    // What a repeat's loop selects, as its entry's input: a JSON array's members (`field/*`, or as the generator
+    // selects them) its field's, as a group's items are read (handMembers); anything else as it is.
+    private String repeatedInput(final String select) {
+        final XPathNode node = XsltReader.parseOrNull(select, reading.parser());
+        if (node == null || !"json".equals(kind)) {
+            return select;
+        }
+        final XPathNode members = handMembers(node);
+        return members == node
+                ? select
+                : members.text();
     }
 
     // A repeated entry's value written of the current value (`.[1]`, as scalar(entry, ".") writes it), put as of

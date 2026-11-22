@@ -46,4 +46,15 @@ public interface BuildProgress {
     default List<AcceptedErrors.Entry> acceptedErrors(final String pipelineUuid) {
         return List.of();
     }
+
+    /// The errors a build's recorded choices explain for one of its pipelines without making them benign, each
+    /// with the reason triage gives in place of its rule's: e.g. the JSON parser's Warning that it cut a long value,
+    /// where the user chose to keep long values whole.
+    ///
+    /// @param pipelineUuid A pipeline.
+    /// @return The entries; empty when it is in no build, the build's choices explain nothing, or they can't be
+    /// read.
+    default List<AcceptedErrors.Entry> explainedErrors(final String pipelineUuid) {
+        return List.of();
+    }
 }

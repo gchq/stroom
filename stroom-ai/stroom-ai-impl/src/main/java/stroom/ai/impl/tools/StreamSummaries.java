@@ -184,6 +184,7 @@ public class StreamSummaries {
         final List<ErrorTriage.Marker> markers = new ArrayList<>();
         final Set<String> own = new HashSet<>();
         final List<AcceptedErrors.Entry> accepted = new ArrayList<>();
+        final List<AcceptedErrors.Entry> explained = new ArrayList<>();
         final List<String> unread = new ArrayList<>();
         final Set<String> pipelinesRead = new HashSet<>();
         for (final Meta errorStream : errorStreams) {
@@ -203,10 +204,11 @@ public class StreamSummaries {
                 MergedPipeline.load(documentAccess, pipelineUuid)
                         .ifPresent(layers -> own.addAll(layers.ownElements()));
                 accepted.addAll(acceptedErrors.acceptedFor(pipelineUuid));
+                explained.addAll(acceptedErrors.explainedFor(pipelineUuid));
             }
         }
         result.put("error_streams", errorStreams.stream().map(Meta::getId).toList());
-        result.putAll(triage.triage(markers, own, null, 3, accepted));
+        result.putAll(triage.triage(markers, own, null, 3, accepted, explained));
         if (!unread.isEmpty()) {
             result.put("unread", unread);
             if ("clean".equals(result.get("verdict"))) {

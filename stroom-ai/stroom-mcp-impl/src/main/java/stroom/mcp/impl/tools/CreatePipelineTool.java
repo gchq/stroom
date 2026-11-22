@@ -544,7 +544,14 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     // The properties the template sets and those about to be set, each by its element and name.
     private static Map<ElementProperty, Object> setProperties(final Layout merged,
                                                               final List<PropertyValue> properties) {
-        final Map<ElementProperty, Object> set = new LinkedHashMap<>(merged.properties());
+        return setProperties(merged.properties(), properties);
+    }
+
+    // The properties already set (a template's; none for a pipeline of its own) and those about to be set, each by
+    // its element and name.
+    private static Map<ElementProperty, Object> setProperties(final Map<ElementProperty, Object> already,
+                                                              final List<PropertyValue> properties) {
+        final Map<ElementProperty, Object> set = new LinkedHashMap<>(already);
         properties.forEach(property -> set.put(new ElementProperty(property.element(), property.name()),
                 property.value()));
         return set;
@@ -722,6 +729,12 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 .filter(property -> !fixed.contains(property.dotted()))
                 .forEach(properties::add);
         writes.jsonArrayParser(types, properties, writes.sampleIsArray(build)).ifPresent(properties::add);
+        // The user chose to keep long values whole: the JSON parser keeps them, as one from a template does (unless
+        // set here already).
+        LongValues.parserLimit(records, build, types, setProperties(Map.of(), properties))
+                .filter(limit -> properties.stream().noneMatch(property -> property.element().equals(limit.element())
+                                                                           && property.name().equals(limit.name())))
+                .ifPresent(properties::add);
         writes.ownDocuments(build, properties, reuse);
         return withoutTemplate(call, context, new OwnPipeline(build, proposed, description, types, properties,
                 "none: this Stroom has no translation template, so a pipeline of its own (a last resort), made as "
