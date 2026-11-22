@@ -33,10 +33,12 @@ import stroom.util.shared.NullSafe;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /// Where the time of records that give none, or the date of times that have none, comes from: the user's choice,
@@ -113,13 +115,14 @@ final class TimeSources {
                 ? List.of()
                 : rulesOf(mapping, String.valueOf(dateless.get("variant_field")),
                         ((Map<String, String>) dateless.get("variants")).keySet().stream().toList());
+        final DraftChoices kept = new DraftChoices(records, build);
         if (!datelessRules.isEmpty()) {
-            dates(call, context, consent, action, dateless, datelessRules, fileNames, notes);
+            dates(call, context, consent, action, kept, dateless, datelessRules, fileNames, notes);
         }
         final List<Map<String, Object>> timeless = new ArrayList<>(withoutTime(mapping));
         timeless.removeAll(datelessRules);
         if (!timeless.isEmpty()) {
-            times(call, context, consent, action, mapping, timeless, notes);
+            times(call, context, consent, action, kept, mapping, timeless, notes);
         }
         zones(call, context, consent, action, new ZoneRecord(records, build), result, mapping, received, notes);
         result.put("notes", notes);
@@ -299,6 +302,7 @@ final class TimeSources {
                               final ToolCallContext context,
                               final Consent consent,
                               final String action,
+                              final DraftChoices kept,
                               final Map<String, Object> dateless,
                               final List<Map<String, Object>> rules,
                               final List<String> fileNames,
@@ -309,7 +313,7 @@ final class TimeSources {
         answers.put("The date the stream was created in Stroom", CREATED);
         named.ifPresent(name -> answers.put("The date in the file's name (e.g. " + name + ")", FILE_NAME));
         answers.put("Leave it: I'll say where", NONE);
-        final String chosen = chosen(call, context, consent, action, DATE_SOURCE_ARG, DATE_QUESTION, answers);
+        final String chosen = chosen(call, context, consent, action, kept, DATE_SOURCE_ARG, DATE_QUESTION, answers);
         if (chosen == null || NONE.equals(chosen)) {
             notes.add("The times of " + names(rules) + " have no date and no header gives it: ask the user where it "
                       + "comes from (the date Stroom received or created the stream" + (named.isPresent()
@@ -339,7 +343,7 @@ final class TimeSources {
             case FILE_NAME -> "the date in the file's name (RemoteFile)";
             case CREATED -> "the date the stream was created in Stroom";
             default -> "the date Stroom received the stream";
-        } + ", as the user chose, a day added past midnight (rollover).");
+        } + ", as the user chose" + kept.earlierNote(DATE_SOURCE_ARG) + ", a day added past midnight (rollover).");
     }
 
     // The time of records that give none: the stream's received or created time, an approximation.
@@ -348,6 +352,7 @@ final class TimeSources {
                               final ToolCallContext context,
                               final Consent consent,
                               final String action,
+                              final DraftChoices kept,
                               final Map<String, Object> mapping,
                               final List<Map<String, Object>> rules,
                               final List<Object> notes) {
@@ -355,7 +360,7 @@ final class TimeSources {
         answers.put("When Stroom received the stream (an approximation)", RECEIVED);
         answers.put("When the stream was created in Stroom (an approximation)", CREATED);
         answers.put("Leave it: I'll say which field", NONE);
-        final String chosen = chosen(call, context, consent, action, TIME_SOURCE_ARG, TIME_QUESTION, answers);
+        final String chosen = chosen(call, context, consent, action, kept, TIME_SOURCE_ARG, TIME_QUESTION, answers);
         if (chosen == null || NONE.equals(chosen)) {
             notes.add(names(rules) + " write no EventTime/TimeCreated: ask the user what it should be (when Stroom "
                       + "received or created the stream, both approximations, or a field of their own), and draft "
@@ -375,15 +380,18 @@ final class TimeSources {
         }
         notes.add(names(rules) + " take the time " + (CREATED.equals(chosen)
                 ? "the stream was created in Stroom"
-                : "Stroom received the stream") + ", as the user chose: an approximation of when the events "
-                  + "happened.");
+                : "Stroom received the stream") + ", as the user chose" + kept.earlierNote(TIME_SOURCE_ARG)
+                  + ": an approximation of when the events happened.");
     }
 
     // The answer given as the argument, else asked in a form; null when neither (no forms).
+    // As given, else as the user chose for the build in an earlier draft (seen: a redraft asked again what the
+    // user had answered, as the zone was), else asked in a form; given or answered, kept for the build's later drafts.
     private static String chosen(final ToolCall call,
                                  final ToolCallContext context,
                                  final Consent consent,
                                  final String action,
+                                 final DraftChoices kept,
                                  final String argument,
                                  final String question,
                                  final Map<String, String> answers) {
@@ -393,11 +401,21 @@ final class TimeSources {
             if (!answers.containsValue(value)) {
                 throw new ToolRefusal(argument + " is one of " + String.join(", ", answers.values()));
             }
+            kept.remember(argument, value);
             return value;
         }
-        return consent.choose(call, context, action, question, List.copyOf(answers.keySet()), null)
+        final Optional<String> earlier = kept.get(argument).filter(answers::containsValue);
+        if (earlier.isPresent()) {
+            kept.usedEarlier(argument);
+            return earlier.get();
+        }
+        final String answered = consent.choose(call, context, action, question, List.copyOf(answers.keySet()), null)
                 .map(answers::get)
                 .orElse(null);
+        if (answered != null && !NONE.equals(answered)) {
+            kept.remember(argument, answered);
+        }
+        return answered;
     }
 
     // The rules that write no TimeCreated, where common doesn't either.
@@ -492,6 +510,59 @@ final class TimeSources {
                 LOGGER.debug(() -> LogUtil.message("Couldn't keep the time zone in build {}'s record: {}", build,
                         e.getMessage()), e);
             }
+        }
+    }
+
+    // The other answers kept in a build's record for its later drafts (where records with no time or date take it
+    // from): read and written there, nothing for a draft with no build (or one whose record can't be read or
+    // written).
+    private static final class DraftChoices {
+
+        private final BuildRecords records;
+        private final String build;
+        private final Set<String> usedEarlier = new HashSet<>();
+
+        private DraftChoices(final BuildRecords records, final String build) {
+            this.records = records;
+            this.build = build;
+        }
+
+        private Optional<String> get(final String argument) {
+            if (records == null || NullSafe.isBlankString(build)) {
+                return Optional.empty();
+            }
+            try {
+                return records.draftChoice(build, argument)
+                        .filter(value -> value instanceof final String text && !text.isBlank())
+                        .map(String::valueOf);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Couldn't read build {}'s {}: {}", build, argument,
+                        e.getMessage()));
+                return Optional.empty();
+            }
+        }
+
+        private void remember(final String argument, final String value) {
+            if (records == null || NullSafe.isBlankString(build) || get(argument).filter(value::equals).isPresent()) {
+                return;
+            }
+            try {
+                records.rememberDraftChoice(build, argument, value);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Couldn't keep {} in build {}'s record: {}", argument, build,
+                        e.getMessage()), e);
+            }
+        }
+
+        private void usedEarlier(final String argument) {
+            usedEarlier.add(argument);
+        }
+
+        // How a note says the choice was the user's for the build before, if it was.
+        private String earlierNote(final String argument) {
+            return usedEarlier.contains(argument)
+                    ? " earlier for this build (" + argument + "= changes it)"
+                    : "";
         }
     }
 }

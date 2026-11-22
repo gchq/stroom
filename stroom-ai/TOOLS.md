@@ -5178,7 +5178,10 @@ kept in the build's record (`time_zone`: `zone`, `how`, `recorded`; `BuildRecord
 version and the long values choice are, so a redraft of the build reads its times in it without asking, its note
 saying it is the zone the user chose earlier for this build and that `timezone=` changes it (seen in chats 185 and
 186: a redraft with the System/Name asked the zone again, answered UTC both times); `timezone=` given wins and is kept
-in its place; another build asks its own. A zone read record by record
+in its place; another build asks its own. The other answers a draft asks, `time_source`, `date_source` and
+`continuation_lines`, are kept the same way (`draft_choices` in the build's record, by argument;
+`BuildRecords.rememberDraftChoice`): given or answered (not "Leave it"), a redraft of the build uses them without
+asking, its note saying the user chose it earlier for this build and that the argument changes it. A zone read record by record
 (`ZoneSource`: `timezone` as `{field|meta, map, default}`, offered where the draft finds a field of zone names, or
 `timezone=field:NAME|ZONE`) is written as `stroom:format-date(value, pattern, mcp:zone(...))`: mapped, plain offsets
 normalised (`+5:30`), the default where blank; `LocalCheck` names the sample's zones Stroom's `getZoneId` won't read. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked

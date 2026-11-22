@@ -333,7 +333,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             notes.addAll(sharedNotes);
             result.put("notes", notes);
         }
-        traceLines(call, context, result, mapping);
+        traceLines(call, context, build, result, mapping);
         if (read != null) {
             skippedLongStrings(result, mapping, read.skipped());
         }
@@ -395,16 +395,27 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     // the whole trace by default).
     private void traceLines(final ToolCall call,
                             final ToolCallContext context,
+                            final String build,
                             final Map<String, Object> result,
                             final Map<String, Object> mapping) {
         if (!NullSafe.list((List<?>) result.get("fields_seen")).contains(SplitterSpec.CONTINUATION)) {
             return;
         }
+        // As given, else as the user chose for the build in an earlier draft, else asked; kept for its later drafts
+        // (seen: a redraft asked again what the user had answered, as the zone was).
         Integer lines = intArg(call, CONTINUATION_LINES_ARG);
+        boolean earlier = false;
+        if (lines == null) {
+            lines = keptTraceLines(build);
+            earlier = lines != null;
+        }
         if (lines == null) {
             lines = consent.choose(call, context, NAME, TRACE_QUESTION, List.copyOf(TRACE_ANSWERS.keySet()), null)
                     .map(TRACE_ANSWERS::get)
                     .orElse(null);
+        }
+        if (lines != null && !earlier) {
+            keepTraceLines(build, lines);
         }
         final List<Object> notes = new ArrayList<>(NullSafe.list((List<?>) result.get("notes")));
         if (lines == null) {
@@ -412,9 +423,38 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                       + "user whether its Events should keep less, and draft again with continuation_lines= the "
                       + "most lines to keep.");
         } else if (DraftMapping.withContinuationLines(mapping, lines) > 0) {
-            notes.add("Each record's stack trace is cut to its first " + lines + " line(s), as the user chose.");
+            notes.add("Each record's stack trace is cut to its first " + lines + " line(s), as the user chose"
+                      + (earlier
+                    ? " earlier for this build (" + CONTINUATION_LINES_ARG + "= changes it)"
+                    : "") + ".");
         }
         result.put("notes", notes);
+    }
+
+    // The most lines of a stack trace the user chose for the build in an earlier draft, or null.
+    private Integer keptTraceLines(final String build) {
+        try {
+            return buildRecords.get().draftChoice(build, CONTINUATION_LINES_ARG)
+                    .filter(Number.class::isInstance)
+                    .map(value -> ((Number) value).intValue())
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Couldn't read build {}'s {}: {}", build, CONTINUATION_LINES_ARG,
+                    e.getMessage()));
+            return null;
+        }
+    }
+
+    private void keepTraceLines(final String build, final int lines) {
+        if (NullSafe.isBlankString(build) || Objects.equals(keptTraceLines(build), lines)) {
+            return;
+        }
+        try {
+            buildRecords.get().rememberDraftChoice(build, CONTINUATION_LINES_ARG, lines);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Couldn't keep {} in build {}'s record: {}", CONTINUATION_LINES_ARG,
+                    build, e.getMessage()), e);
+        }
     }
 
     // The field an alternatives splitter writes each record's variant in, or null for one of one format.

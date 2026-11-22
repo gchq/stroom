@@ -245,6 +245,42 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aRedraftInTheSameBuildUsesTheTimeSourceAndTraceLinesTheUserChose() {
+        // As the zone (seen in chats 185 and 186): the other answers a draft asks are the build's too, so a redraft
+        // doesn't ask them again.
+        final String traced = "2026-10-11 22:14:01.000 INFO [w1] Request 1 served\n"
+                              + "user=bob action=logout session=s1\n"
+                              + "2026-10-11 22:14:03.123 ERROR [w3] Request 3 failed\n"
+                              + "java.lang.IllegalStateException: request 3 rejected\n"
+                              + "\tat com.example.Service.handle(Service.java:10)\n"
+                              + "\tat com.example.Main.main(Main.java:3)\n"
+                              + "user=carol action=logout session=s2\n"
+                              + "2026-10-11 22:14:04.456 INFO [w4] Request 4 served\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(14L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 14", traced), List.of()));
+        world.forms = true;
+        world.answers.put(DraftTranslationMappingTool.TRACE_QUESTION, "Its first 20 lines");
+        world.answers.put(TimeSources.TIME_QUESTION, "When Stroom received the stream (an approximation)");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+
+        world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-v1"));
+        assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION, TimeSources.TIME_QUESTION);
+
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-v1",
+                "system_name", "Acme"));
+        assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION, TimeSources.TIME_QUESTION);
+        assertThat(String.valueOf(again.get("mapping"))).contains("[position() le 20]", "meta=ReceivedTime");
+        assertThat(String.valueOf(again.get("notes"))).contains("earlier for this build (continuation_lines= changes "
+                                                                + "it)", "earlier for this build (time_source= "
+                                                                         + "changes it)");
+
+        // Another build is asked its own.
+        world.call(tool, Map.of("stream_ids", List.of(14), "build", "other-v1"));
+        assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION, TimeSources.TIME_QUESTION);
+    }
+
+    @Test
     void eachRecordsZoneMayBeReadFromAField() {
         // Asked for by the user: a field naming each record's zone, read record by record rather than one zone.
         final String zoned = "time,tz,user,action\n2026-10-01 10:00:00,Australia/Sydney,bob,login\n"

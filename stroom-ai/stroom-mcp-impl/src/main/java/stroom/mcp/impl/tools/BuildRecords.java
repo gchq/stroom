@@ -119,6 +119,9 @@ public class BuildRecords {
     public static final String LONG_VALUES = "long_values";
     /// The record's key for the zone the user said the source writes times with no zone or offset in.
     public static final String TIME_ZONE = "time_zone";
+    /// The record's key for the other answers the user gave a draft of the build (where records with no time or
+    /// date take it from, how many lines of a stack trace to keep), by the draft's argument name.
+    public static final String DRAFT_CHOICES = "draft_choices";
     /// The kinds of work a build may be started as.
     public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference", "assessment");
 
@@ -437,6 +440,37 @@ public class BuildRecords {
     public Map<String, Object> rememberTimeZone(final String build, final Map<String, Object> choice) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(TIME_ZONE, new LinkedHashMap<>(choice)));
+    }
+
+    /// @param build    A build's name, or null.
+    /// @param argument The draft's argument the answer stands for (e.g. `time_source`).
+    /// @return The answer the user gave a draft of the build, as [#rememberDraftChoice] kept it; empty when none
+    /// was kept (or `build` is null).
+    public Optional<Object> draftChoice(final String build, final String argument) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(DRAFT_CHOICES) instanceof final Map<?, ?> choices
+                ? Optional.ofNullable(choices.get(argument))
+                : Optional.empty();
+    }
+
+    /// Records an answer the user gave a draft of the build, so a later draft of the build uses it rather than
+    /// asking again, as the zone is ([#rememberTimeZone]).
+    ///
+    /// @param build    A build's name.
+    /// @param argument The draft's argument the answer stands for (e.g. `time_source`).
+    /// @param value    The answer, as the argument takes it.
+    /// @return The record as saved.
+    public Map<String, Object> rememberDraftChoice(final String build, final String argument, final Object value) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> choices = state.get(DRAFT_CHOICES) instanceof final Map<?, ?> kept
+                    ? new LinkedHashMap<>(asMap(kept))
+                    : new LinkedHashMap<>();
+            choices.put(argument, value);
+            state.put(DRAFT_CHOICES, choices);
+        });
     }
 
     /// @param build A build's name.
