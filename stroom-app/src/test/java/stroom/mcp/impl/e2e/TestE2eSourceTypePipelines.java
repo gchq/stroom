@@ -182,8 +182,9 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         final Map<String, Map<String, Object>> rows = rows(uuidOf(map(integration, "registry")));
         assertThat((Map<String, Object>) rows.get("PegaIntegration").get("pipeline"))
                 .containsEntry("name", integrationName).containsEntry("uuid", own);
+        // The group's XSLT is named for the group, as its pipeline is (chat 185).
         assertThat(rows.get("PegaIntegration")).containsEntry("output_feed", outputFeed)
-                .containsEntry("group_xslt", Map.of("uuid", integrationUuid, "name", INTEGRATION));
+                .containsEntry("group_xslt", Map.of("uuid", integrationUuid, "name", integrationName));
         assertThat((Map<String, Object>) rows.get("PegaSecurityEvent").get("pipeline"))
                 .containsEntry("name", securityName).containsEntry("uuid", main);
         assertThat(rows.get("PegaSecurityEvent")).doesNotContainKey("output_feed");

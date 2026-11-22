@@ -111,7 +111,7 @@ class TranslationBuilds {
     }
 
     /// The mapping changes= apply to: the one last sent for the XSLT, else the one kept with it (uuid, or the
-    /// build's XSLT of that name, a source type group's named after the group), else the latest draft
+    /// build's XSLT of that name, a source type group's named for its pipeline), else the latest draft
     /// draft_translation_mapping made for the build, in this session or an earlier one of the user's (with or without
     /// a name; see [SentMappings]). Seen
     /// in testing: a first save from a 50 KB draft had to send it whole, which the agent couldn't write out in one

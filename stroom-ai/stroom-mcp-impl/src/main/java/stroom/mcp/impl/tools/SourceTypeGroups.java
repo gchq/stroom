@@ -493,7 +493,7 @@ class SourceTypeGroups {
         return versionOf(original.uuid(), VersionNames.nextModule(base, names), build);
     }
 
-    /// The XSLT a group is saved in: the build's own (the one the registry names, or of the group's name), else a
+    /// The XSLT a group is saved in: the build's own (the one the registry names, or of the name given), else a
     /// new version of the group's promoted XSLT made now, promoted beside its predecessor (a promoted group's code is
     /// never changed in place: decided by the user, 2026-11-17). It imports the build's copies of the feed's modules,
     /// so the chain stays the build's. A copy made before (an older build's working copy) is used as it is.
@@ -610,6 +610,45 @@ class SourceTypeGroups {
         return VersionNames.token(name, List.of(feed, group)).isPresent()
                 ? name
                 : name + " " + PromotionLayout.FIRST_VERSION;
+    }
+
+    /// The name a new XSLT of a group is saved with: its pipeline's, so the two documents a group adds are named
+    /// alike, whatever name the agent passed (seen in chat 185: the XSLT was saved under the agent's own name, not
+    /// the group's, and create_pipeline then proposed the group's pipeline name beside it).
+    ///
+    /// @param plan The group's plan.
+    /// @return The name the registry's rows of the group give its pipeline (the user may have changed it in
+    /// create_pipeline's form), else [#pipelineName]'s.
+    static String xsltName(final Plan plan) {
+        return groupRows(plan.registry().found().state(), plan.group()).stream()
+                .map(row -> JsonValues.text(JsonValues.mapOrEmpty(row.get(PIPELINE)).get("name")))
+                .filter(NullSafe::isNonBlankString)
+                .findFirst()
+                .orElseGet(() -> pipelineName(plan.feed(), plan.group()));
+    }
+
+    /// @param build A build.
+    /// @param feeds The feeds given, or none: then the feed whose registry the build holds.
+    /// @param group A source type group.
+    /// @return The name of the build's own XSLT that the registry names for the group; empty where there is none
+    /// (no registry, no such group, an XSLT not saved yet, or one promoted beside the feed).
+    Optional<String> groupXsltNameInBuild(final String build, final List<String> feeds, final String group) {
+        if (build == null || group == null) {
+            return Optional.empty();
+        }
+        final Registry registry;
+        try {
+            registry = registry(build, feeds);
+        } catch (final ToolRefusal e) {
+            LOGGER.debug(() -> LogUtil.message("No registry for group {} in build {}: {}", group, build,
+                    e.getMessage()));
+            return Optional.empty();
+        }
+        final String uuid = groupXslt(registry.found().state(), group);
+        if (uuid.isEmpty() || !inBuild(build, uuid)) {
+            return Optional.empty();
+        }
+        return Optional.of(nameOf(uuid)).filter(NullSafe::isNonBlankString);
     }
 
     /// Saves the group in the registry: its rows set `translated`, naming the group, its XSLT, its pipeline (by the

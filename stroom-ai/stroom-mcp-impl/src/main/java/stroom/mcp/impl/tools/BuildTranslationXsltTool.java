@@ -376,7 +376,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                       + "and return the document instead of the code: the XSLT "
                                                       + "never has to pass through you. With name for a new XSLT.")
                         .addStringProperty(NAME_ARG, "With build: the new XSLT's name, following the environment's "
-                                                     + "naming.")
+                                                     + "naming. A source type group's new XSLT is named for the "
+                                                     + "group, as its pipeline is ('<feed> <group>', with ' V1.0' "
+                                                     + "where neither has a version), whatever is given here.")
                         .addStringProperty(UUID_ARG, "Replace an XSLT the agent created (the one an earlier call "
                                                      + "saved) with the code generated now; build is then not "
                                                      + "needed.")
@@ -601,12 +603,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                          + MappingProblems.ESCAPING);
                 }
             }
-            // A source type group's XSLT is named after the group.
-            final String named = NullSafe.isNonBlankString(request.name())
-                    ? request.name()
-                    : request.group();
             final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), keptFrom(request),
-                    request.build(), named);
+                    request.build(), savedName(request));
             b.basedOn = base.basedOn();
             b.fromAnEarlierSession = base.fromAnEarlierSession();
             if (changes instanceof final Map<?, ?> none && none.isEmpty()) {
@@ -661,6 +659,20 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         } catch (final MappingValidationException e) {
             return Optional.of(refusedMapping(given, e, unknownKeys, request));
         }
+    }
+
+    // The name the call's XSLT has in its build: the name given, else the group's. A source type group's XSLT is
+    // named for the group's pipeline, whatever name is given (chat 185), so where the build has no XSLT of the name
+    // given, the one the registry names for the group is the call's.
+    private String savedName(final Request request) {
+        final String given = NullSafe.isNonBlankString(request.name())
+                ? request.name()
+                : request.group();
+        if (request.uuid() != null || request.group() == null || !NullSafe.isNonBlankString(request.build())
+            || groups.xsltNamed(request.build(), given).isPresent()) {
+            return given;
+        }
+        return groups.groupXsltNameInBuild(request.build(), request.feeds(), request.group()).orElse(given);
     }
 
     // The XSLT whose kept mapping a call starts from: the build's working copy (or new version) of a promoted XSLT
@@ -1231,10 +1243,19 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             if (request.includeXslt()) {
                 b.result.put("xslt", xslt);
             }
-            name = NullSafe.nonBlankStringElse(name, b.group.group());
+            // A group's new XSLT is named for the group, as its pipeline is, whatever name the agent passed (seen in
+            // chat 185: saved under the agent's own name, beside the pipeline create_pipeline named for the group).
+            name = SourceTypeGroups.xsltName(b.group);
             if (target == null || !groups.isInBuild(b.build, target)) {
                 // A group's promoted XSLT given as uuid is changed through the build's copy of it, never in place.
                 target = groups.groupTarget(context, b.build, b.group, name).orElse(null);
+            }
+            if (target == null && NullSafe.isNonBlankString(request.name()) && !name.equals(request.name())) {
+                b.result.put("name_note", "Saved as '" + name + "', named for source type group '"
+                                          + b.group.group() + "' as its pipeline is (create_pipeline proposes the "
+                                          + "same name), not '" + request.name() + "': a group's new XSLT is named "
+                                          + "for the group, whatever name is passed. Use the uuid this result "
+                                          + "gives from now on.");
             }
         }
         Map<String, Object> saved;
@@ -1616,7 +1637,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         List<EventRule> kept = MappingFacts.keptUnknown(b.mapping);
         final Map<String, String> agreedBefore = kept.isEmpty()
                 ? Map.of()
-                : builds.unknownAgreed(request.uuid(), request.build(), request.name());
+                : builds.unknownAgreed(request.uuid(), request.build(), savedName(request));
         final String catchAllAgreed = kept.isEmpty()
                 ? null
                 : catchAllAgreed(buildOf(request));
@@ -1956,7 +1977,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // the XSLT may not have been saved with yet (see UnsavedChoices).
     private Map<String, String> agreedSoFar(final ToolCallContext context, final Request request, final String block) {
         final Map<String, String> agreed = new LinkedHashMap<>(builds.agreed(block, request.uuid(), request.build(),
-                request.name()));
+                savedName(request)));
         agreed.putAll(UnsavedChoices.recalled(context, request.target(), block));
         return agreed;
     }
@@ -2177,7 +2198,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
 
         /// @return The XSLT the mapping is sent for: its uuid, `build/name`, a source type group's given no name
-        /// `build/group` (its XSLT is saved under the group's name), or "".
+        /// `build/group` (its XSLT is saved under the group's pipeline's name), or "".
         String target() {
             if (uuid != null) {
                 return uuid;
