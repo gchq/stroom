@@ -70,6 +70,39 @@ class TestXsltGeneratorGroups extends XsltRuns {
     }
 
     @Test
+    void twoGroupsInOneElementEachReadTheirOwnItems() {
+        // Seen in chat 187: two groups in View with no `as`, each loop's `item` variable named alike; placed just in
+        // time, both were moved out of their loops to View's start, so each read the record (Folder/Id the record's
+        // Id, Folder/Path never written).
+        final TranslationMapping mapping = sendMapping("json", entry("""
+                {"path": "EventDetail/Send/Destination/User", "for_each": {"array": "recipients"},
+                 "fields": [{"path": "Id", "field": "local"}, {"path": "Domain", "field": "domain"}]}"""), entry("""
+                {"path": "EventDetail/Send/Payload/Email", "for_each": {"array": "mails"},
+                 "fields": [{"path": "Id", "field": "id"}, {"path": "Name", "field": "subject"}]}"""));
+        final XsltGenerator.Generated result = generate(mapping);
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), """
+                <array xmlns="http://www.w3.org/2013/XSL/json"><map>
+                <string key="time">2026-09-28T10:00:00.000Z</string><string key="host">h</string>\
+                <string key="sender">jane</string><string key="id">the-record</string>
+                <array key="recipients">\
+                <map><string key="local">john</string><string key="domain">mail.com</string></map>\
+                <map><string key="local">jack</string><string key="domain">gmail.com</string></map></array>
+                <array key="mails">\
+                <map><string key="id">m1</string><string key="subject">Hello</string></map>\
+                <map><string key="id">m2</string><string key="subject">Again</string></map></array>
+                </map></array>""");
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        final XmlElement event = children(events, "Event").getFirst();
+        assertThat(users(event)).containsExactly("john|mail.com", "jack|gmail.com");
+        assertThat(children(find(event, "EventDetail/Send/Payload"), "Email"))
+                .extracting(email -> text(email, "Id") + "|" + text(email, "Name"))
+                .containsExactly("m1|Hello", "m2|Again");
+    }
+
+    @Test
     void anArrayOfObjectsGivesAUserPerObjectEachWithItsOwnKeys() {
         final TranslationMapping mapping = sendMapping("json", entry("""
                 {"path": "EventDetail/Send/Destination/User", "for_each": {"array": "recipients"}, "as": "recipient",

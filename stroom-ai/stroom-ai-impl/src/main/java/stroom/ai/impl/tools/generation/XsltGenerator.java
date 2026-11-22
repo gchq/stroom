@@ -3426,10 +3426,12 @@ public final class XsltGenerator {
             final XmlElement variable = variables.get(v);
             final Pattern pattern = Pattern.compile("\\$" + Pattern.quote(or(variable.get("name"), ""))
                                                     + "(?![\\w.-])", Pattern.UNICODE_CHARACTER_CLASS);
+            // Only the reads under its parent: another variable of the same
+            // name elsewhere has reads of its own (seen in chat 187: two groups' `item` in one View, each taking the
+            // other's reads, both moved out of their loops, so each read the record).
             final List<XmlElement> reads = new ArrayList<>();
-            for (final XmlElement el : template.iterElements()) {
-                if (el != variable && el.attributes().stream()
-                        .anyMatch(attribute -> pattern.matcher(attribute.value()).find())) {
+            for (final XmlElement el : inScope(variable)) {
+                if (el.attributes().stream().anyMatch(attribute -> pattern.matcher(attribute.value()).find())) {
                     reads.add(el);
                 }
             }
@@ -3480,6 +3482,20 @@ public final class XsltGenerator {
             variable.parent().remove(variable);
             parent.insert(parent.indexOf(child), variable);
         }
+    }
+
+    // The elements a variable's reads are looked for in: everything under its parent (not only after it: a styled
+    // template's variables are put at its start in reverse order before being placed), but not under another
+    // parent, so a loop's variable is never taken out of its loop by another loop's reads of the same name.
+    private static List<XmlElement> inScope(final XmlElement variable) {
+        final XmlElement parent = variable.parent();
+        if (parent == null) {
+            return List.of();
+        }
+        final List<XmlElement> out = new ArrayList<>(parent.iterElements());
+        out.remove(parent);
+        out.remove(variable);
+        return out;
     }
 
     // Whether the element is the ancestor or the element itself.
