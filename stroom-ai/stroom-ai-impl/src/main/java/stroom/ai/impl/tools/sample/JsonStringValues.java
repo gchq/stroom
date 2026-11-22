@@ -277,12 +277,12 @@ public final class JsonStringValues {
     }
 
     /// @param fields The fields holding a NUL character.
-    /// @return What the XML writer does with it and what to do.
+    /// @return What Stroom does with it: nothing to map.
     static String nulStringsNote(final List<String> fields) {
+        // Stroom's XML writer removes a NUL and keeps escaping on (stroom#6036, in 7.14): before that it switched
+        // escaping off, and this note had the agent add strip_control.
         return "Values of " + String.join(", ", fields) + " hold a NUL character (\\u0000 in the JSON). Stroom's "
-               + "JSONParser passes it on, and the XML writer takes it to switch output escaping off: the text "
-               + "after it is written unescaped, so an & or < in it makes the Events stream not well-formed. Map "
-               + "these fields with transform strip_control, which takes control characters out.";
+               + "XML writer removes it from the Events, escaping kept on: no transform is needed for it.";
     }
 
     private static void walk(final Object value, final String path, final int depth, final StringVisitor visitor) {

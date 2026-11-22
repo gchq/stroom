@@ -182,9 +182,23 @@ class TestJsonStringValues {
 
         assertThat(lines).contains("\\u0000");
         assertThat(profile.get(JsonStringValues.NUL_STRINGS)).isEqualTo(List.of("body"));
+        // Stroom's XML writer removes a NUL and keeps escaping on (stroom#6036, in 7.14): nothing to map, and no
+        // transform asked for (seen in chat 182 and 183: the agent spent calls adding strip_control for it).
         assertThat((String) profile.get(JsonStringValues.NUL_STRINGS_NOTE))
                 .contains("body")
-                .contains("transform strip_control");
+                .contains("removes")
+                .doesNotContain("strip_control", "escaping off", "not well-formed");
+    }
+
+    @Test
+    void theDraftLeavesANulUnsaid() {
+        final String lines = line(SampleProfiler.map("time", "2026-11-10T00:00:03Z", "op", "Send", "body",
+                "<p>before" + (char) 0 + "after</p>")) + "\n"
+                             + line(SampleProfiler.map("time", "2026-11-10T00:00:04Z", "op", "Send", "body", "plain"));
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(lines), "", null, null, null, null, null);
+
+        assertThat(String.valueOf(draft.get("notes"))).doesNotContain("NUL", "strip_control");
     }
 
     @Test

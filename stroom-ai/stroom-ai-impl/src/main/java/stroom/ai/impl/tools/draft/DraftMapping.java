@@ -1169,13 +1169,11 @@ public final class DraftMapping {
                 }
             }
             if ("json".equals(mapping.get("input"))) {
-                // Read by Stroom's JSONParser: what it would cut, or the XML writer leave unescaped, is said here
-                // before processing, not found in a Warning or a stream that isn't well-formed after it.
-                for (final String key : List.of(JsonStringValues.LONG_STRINGS_NOTE,
-                        JsonStringValues.NUL_STRINGS_NOTE)) {
-                    if (info.get(key) instanceof final String note) {
-                        notes.add(note);
-                    }
+                // Read by Stroom's JSONParser: what it would cut is said here before processing, not found in a
+                // Warning after it. A NUL isn't said: Stroom's XML writer removes it (stroom#6036), so there is
+                // nothing to map (seen in chats 182 and 183: the agent spent calls adding strip_control for it).
+                if (info.get(JsonStringValues.LONG_STRINGS_NOTE) instanceof final String note) {
+                    notes.add(note);
                 }
             }
         }

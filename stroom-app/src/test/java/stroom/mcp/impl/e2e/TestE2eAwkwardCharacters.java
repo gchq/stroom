@@ -107,19 +107,18 @@ class TestE2eAwkwardCharacters extends AbstractE2eTest {
     }
 
     @Test
-    void aNulInJsonIsReportedAndTakenOutAsTheDraftSays() {
+    void aNulInJsonNeedsNothingAsStroomsWriterRemovesIt() {
         final List<Value> values = List.of(AwkwardValues.named("nul"), AwkwardValues.named("xml_special"));
         final String build = "aw-nul";
         final String feed = "AW-NUL";
         createFeed(build, feed);
         final long raw = upload(feed, jsonLines(values));
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw)));
-        // Known since chat 177 (Stroom's XML writer takes a NUL for its switch of escaping, writing what follows
-        // unescaped): reported before processing, with strip_control the way round it.
-        assertThat(String.valueOf(draft.get("notes"))).contains("NUL", "strip_control");
-        // Taken: the NUL is out before Stroom's writer sees it, so the Events are valid and the rest is kept.
-        final Walked walked = translate(build, feed, raw, JSON, mapping(draft, "msg", "strip_control"), null,
-                values);
+        // Since stroom#6036 (in 7.14) Stroom's XML writer removes a NUL and keeps escaping on: the draft asks for
+        // nothing (chats 182 and 183: its old note had the agent add strip_control).
+        assertThat(String.valueOf(draft.get("notes"))).doesNotContain("NUL", "strip_control");
+        // With no transform, the Events are valid, the NUL gone and the rest kept, escaped.
+        final Walked walked = translate(build, feed, raw, JSON, mapping(draft, null, null), null, values);
         assertThat(walked.stored()).containsEntry(values.getFirst().user(), "beforeafter <b> & c")
                 .containsEntry(values.get(1).user(), "a < b && c > d");
     }

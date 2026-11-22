@@ -67,8 +67,8 @@ choice. To cut shorter still, cap it in the mapping (`"max_length": 4000` on the
 at its limit first, so a cap at or below it only shortens further). Never lower `maxStringLength`: it turns every long
 value into an Error.
 
-A value holding a NUL (`\u0000` in the JSON, `nul_strings`) switches the XML writer's escaping off until the next
-NUL, so the Events stream is not well-formed: map the field with `transform: strip_control`.
+A value holding a NUL (`\u0000` in the JSON, `nul_strings`) needs nothing: Stroom's XML writer removes it, with
+escaping kept on.
 
 ## Addressing fields
 
