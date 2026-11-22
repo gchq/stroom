@@ -204,9 +204,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention, with "
                                                      + "its version (e.g. 'Acme-V1.0-Events': promotion files it "
-                                                     + "under that version; for a source type group, '<feed> "
-                                                     + "<group>' by default, with ' V1.0' where neither has a "
-                                                     + "version).")
+                                                     + "under that version). A source type group's new "
+                                                     + "pipeline is proposed with the group's pipeline name, as "
+                                                     + "build_translation_xslt named it, whatever is given here.")
                         .addStringProperty(GROUP_ARG, "An aggregated feed's source type group whose pipeline this "
                                                       + "is (build_translation_xslt group= saved it): its XSLT is "
                                                       + "the pipeline's.")
@@ -314,9 +314,14 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 throw new ToolRefusal("standalone is for when there is no template: give it, or a template, not "
                                       + "both");
             }
-            return "events".equals(stringArg(call, STANDALONE_ARG))
-                    ? standaloneEvents(call, context, build, proposed, description, given, reuse)
-                    : standaloneKafka(call, context, build, proposed, description, given, reuse);
+            if (!"events".equals(stringArg(call, STANDALONE_ARG))) {
+                return standaloneKafka(call, context, build, proposed, description, given, reuse);
+            }
+            // A group's Events pipeline of its own is named for the group too, as one from a template is.
+            final Optional<String> groupName = group.flatMap(SourceTypeGroups.GroupRun::pipelineToMake)
+                    .filter(named -> !named.equals(proposed));
+            return standaloneEvents(call, context, build, groupName.orElse(proposed), description, given, reuse,
+                    groupName.map(named -> groupNameNote(group.get(), named, proposed)).orElse(null));
         }
         final Object keeping = ToolArgs.raw(call, KEEP_REFERENCES_ARG);
         final Boolean keepReferences = keeping == null
@@ -346,7 +351,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                                      final ToolCallContext context,
                                      final FromTemplate request) {
         final String build = request.build();
-        final String proposed = request.name();
         final List<PropertyValue> given = request.properties();
         final String description = request.description();
         final String replaceParser = request.replaceParser();
@@ -421,6 +425,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         refuseImportedModules(properties);
         // A source type group's pipeline: its output feed and the reference data the group looks up.
         final Optional<SourceTypeGroups.GroupRun> group = groupRun(build, properties);
+        // A group's new pipeline is named as build_translation_xslt named it, whatever name the agent passed (seen
+        // in chat 184: the agent's own name was kept); the user can still change it in the form.
+        final Optional<String> groupName = previous == null
+                ? group.flatMap(SourceTypeGroups.GroupRun::pipelineToMake)
+                : Optional.empty();
+        final String proposed = groupName.orElse(request.name());
+        final String replaced = groupName.isPresent() && !groupName.get().equals(request.name())
+                ? request.name()
+                : null;
         final List<ReferenceRequest> requested = new ArrayList<>(ReferenceRequest.contextFeedsFilled(
                 request.references(), group.map(run -> List.of(run.feed())).orElseGet(() -> plan.inputFeeds(build))));
         if (group.isPresent()) {
@@ -439,7 +452,10 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final List<String> sets = properties.stream().map(PropertyValue::dotted).toList();
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
-        details.put("pipeline name", proposed);
+        details.put("pipeline name", replaced == null
+                ? proposed
+                : proposed + " (group '" + group.get().group() + "''s pipeline name, in place of '" + replaced
+                  + "')");
         details.put("template", template.getName());
         if (previous != null) {
             details.put("new version of", previous.getName());
@@ -512,6 +528,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             result.put("group", group.get().group());
             result.put("source_types", groupsProvider.get().pipelineMade(context, build, group.get().group(),
                     new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName())));
+            if (replaced != null && proposed.equals(name)) {
+                result.put("name_note", groupNameNote(group.get(), proposed, replaced));
+            }
         }
         if (previous != null) {
             result.put("version_of", previous.getName());
@@ -674,7 +693,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                                                  final String proposed,
                                                  final String description,
                                                  final List<PropertyValue> given,
-                                                 final boolean reuse) {
+                                                 final boolean reuse,
+                                                 final String nameNote) {
         final List<String> existing = templateNames("translation");
         if (!existing.isEmpty()) {
             throw new ToolRefusal("standalone='events' is only for a Stroom with no translation template, and this "
@@ -741,7 +761,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 + "Stroom's standard Event Data templates are", "translation",
                 "A pipeline of its own: it inherits nothing, so a change to the environment's templates never "
                 + "reaches it. Tell the user, and if a translation template is added later, a next version can "
-                + "inherit it."));
+                + "inherit it." + (nameNote == null
+                        ? ""
+                        : " " + nameNote)));
     }
 
     /// @param stage A stage (translation, discovery, ...).
@@ -831,6 +853,16 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                                   + "): leave it out of set_properties, and group= sets it");
         }
         return Optional.of(run);
+    }
+
+    // What the result says of a group's pipeline named for the group in place of the name the agent passed.
+    private static String groupNameNote(final SourceTypeGroups.GroupRun group,
+                                        final String named,
+                                        final String given) {
+        return "Proposed as '" + named + "', the pipeline name of source type group '" + group.group() + "' (as "
+               + BuildTranslationXsltTool.NAME + " named it), not '" + given + "': a group's pipeline is named for "
+               + "the group, whatever name is passed (the user can change it in the form). Use the name this "
+               + "result gives from now on.";
     }
 
     // The source type group whose XSLT the properties set, if any.

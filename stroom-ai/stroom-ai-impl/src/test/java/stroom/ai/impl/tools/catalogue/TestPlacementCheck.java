@@ -520,6 +520,56 @@ class TestPlacementCheck {
     }
 
     @Test
+    void aGroupWritingItsItemsWholeWhereTheyHaveFieldsOfTheirOwnIsRefusedWithAKeySuggested() {
+        // Chat 184: after the leaf placement was refused, the agent read each {Name, Value} item whole with
+        // item: true, and Configuration/Name got "NameFW to personal" again.
+        final EventType rule = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(
+                Map.of("path", "After/Configuration", "for_each", Map.of("array", "event.Parameters"),
+                        "fields", List.of(Map.of("path", "Name", "item", true)))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(rule), clientSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.Parameters's items have fields of their own (Name, Value)",
+                        "{path: 'Name', item: true} writes each item whole at After/Configuration/Name",
+                        "{path: 'Name', field: 'Name'}");
+    }
+
+    @Test
+    void aGroupWritingItsItemsWholeIsAcceptedWhereTheItemsAreValues() {
+        final EventType rule = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(
+                Map.of("path", "After/Configuration", "for_each", Map.of("array", "event.Names"),
+                        "fields", List.of(Map.of("path", "Name", "item", true)))));
+        final CatalogueSample names = CatalogueSample.read(READING, line("UpdateInboxRules", "UserId", "jo@acme.com",
+                "Names", List.of("FW to personal", "Archive")), null, LocalCheck.JSON_PARSER_CUT, null);
+
+        assertThat(said(CatalogueCheck.check(catalogue(rule), names, SCHEMA).problems()))
+                .noneMatch(problem -> problem.contains("fields of their own"));
+    }
+
+    @Test
+    void whatCouldBeTypedListsTheArraysOfObjectsKeptAsDataWithTheirKeys() {
+        // Chat 184: TeamMemberAdded's members, each with UPN and DisplayName, stayed Data: nothing said a for_each
+        // group could type them.
+        final EventType added = type("Update-TeamMember", "Update", "MemberAdded", List.of());
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 2; n++) {
+            lines.add(line("MemberAdded", "UserId", "jo@acme.com", "TeamName", "Sales " + n, "ClientIP", "10.0.0.9",
+                    "Workload", "MicrosoftTeams", "OrganizationId", "o1", "CommunicationType", "Team", "Members",
+                    List.of(member("al@acme.com", "Al"), member("bo@acme.com", "Bo")), "Tags", List.of("a", "b")));
+        }
+        final CatalogueSample members = CatalogueSample.read(READING, String.join("\n", lines), null,
+                LocalCheck.JSON_PARSER_CUT, null);
+
+        final Map<String, Object> couldType = couldType(CatalogueCheck.check(catalogue(added), members, SCHEMA),
+                "Update-TeamMember");
+
+        // A list of plain values (event.Tags) isn't one.
+        assertThat(strings(couldType.get("arrays"))).as(ToolJson.dumps(couldType)).containsExactly(
+                "event.Members: items with UPN, DisplayName, Role — a for_each group on an element the schema "
+                + "repeats types each");
+    }
+
+    @Test
     void anArrayOfObjectsReadByAGroupIsAccepted() {
         final EventType ok = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(
                 Map.of("path", "After/Configuration", "for_each", Map.of("array", "event.Parameters"),
@@ -614,6 +664,15 @@ class TestPlacementCheck {
                 line("UpdateInboxRules", "UserId", "jo@acme.com", "Parameters", List.of(
                         parameter("Name", "FW to personal"), parameter("Enabled", "True"))));
         return CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    // A team member, its keys in that order.
+    private static Map<String, Object> member(final String upn, final String name) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("UPN", upn);
+        out.put("DisplayName", name);
+        out.put("Role", "Member");
+        return out;
     }
 
     // A name/value item, its keys in that order.

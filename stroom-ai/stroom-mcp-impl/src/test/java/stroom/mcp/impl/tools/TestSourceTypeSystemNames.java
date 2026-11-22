@@ -96,8 +96,8 @@ class TestSourceTypeSystemNames {
         assertThatThrownBy(() -> SourceTypeSystemNames.of(both, scope("event>logger", ROWS)))
                 .isInstanceOf(ToolRefusal.class).hasMessageContaining("held values");
         // Nor offered when unnamed; offered where they can be.
-        assertThat(SourceTypeSystemNames.unnamedNote(scope("Workload", pattern))).isEmpty();
-        assertThat(SourceTypeSystemNames.unnamedNote(scope("Workload", ROWS))).hasValueSatisfying(note ->
+        assertThat(SourceTypeSystemNames.unnamedOffer(scope("Workload", pattern))).isEmpty();
+        assertThat(SourceTypeSystemNames.unnamedOffer(scope("Workload", ROWS))).hasValueSatisfying(note ->
                 assertThat(note).contains("chat, mail", "one name for the group or each source type's own"));
     }
 

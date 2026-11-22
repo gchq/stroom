@@ -666,8 +666,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             said.add("Most fields of " + String.join(", ", couldType.subList(0, Math.min(5, couldType.size())))
                      + (couldType.size() > 5
                     ? " (and " + (couldType.size() - 5) + " more)"
-                    : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, and the schema's "
-                     + "elements below the action element and in EventSource). " + SHOULD_BE_TYPED
+                    : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, the schema's "
+                     + "elements below the action element and in EventSource, and the arrays of objects a for_each "
+                     + "group could type). " + SHOULD_BE_TYPED
                      + typingExample(couldType.getFirst()));
         }
         if (check.uncatalogued().records() > 0) {

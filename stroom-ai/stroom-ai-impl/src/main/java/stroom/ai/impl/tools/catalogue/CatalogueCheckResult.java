@@ -533,20 +533,27 @@ public record CatalogueCheckResult(Map<String, Count> counts,
     ///
     /// @param data  The fields kept as Data, most filled first (capped), each with its fill rate and an example
     ///              value, e.g. `event.Subject (3/3, e.g. 'Report 1')`.
-    /// @param homes The schema's elements below the action element: those under the objects the event type writes,
-    ///              then its action element's other children (capped), e.g. `Email: Id, Subject, From/EmailAddress`.
-    public record CouldType(List<String> data, List<String> homes) {
+    /// @param homes  The schema's elements below the action element: those under the objects the event type writes,
+    ///               then its action element's other children (capped), e.g. `Email: Id, Subject, From/EmailAddress`.
+    /// @param arrays The fields kept as Data whose values are arrays of objects, with their items' keys (capped;
+    ///               added 2026-11-22, chat 184: a team's members stayed Data), e.g. `event.Members: items with UPN,
+    ///               DisplayName — a for_each group on an element the schema repeats types each`.
+    public record CouldType(List<String> data, List<String> homes, List<String> arrays) {
 
         /// Copies the lists.
         public CouldType {
             data = List.copyOf(Objects.requireNonNullElse(data, List.of()));
             homes = List.copyOf(Objects.requireNonNullElse(homes, List.of()));
+            arrays = List.copyOf(Objects.requireNonNullElse(arrays, List.of()));
         }
 
         Map<String, Object> toJson() {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("data", data);
             out.put("schema", String.join("; ", homes));
+            if (!arrays.isEmpty()) {
+                out.put("arrays", arrays);
+            }
             return out;
         }
     }

@@ -390,6 +390,71 @@ class TestEventFieldDocs {
     }
 
     @Test
+    void aTypeIdsFromSaysItIsTheEventTypeAndWhatRecognisesIt() {
+        // Chat 184: the TypeId row's From was the constant "Send-Item", which said nothing of where it came from.
+        final TranslationMapping mapping = TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "timestamp"},
+                 {"path": "EventSource/System/Name", "value": "FW"},
+                 {"path": "EventSource/System/Environment", "value": "Prod"},
+                 {"path": "EventSource/Generator", "value": "FW"},
+                 {"path": "EventSource/Device/HostName", "field": "device"}],
+                 "events": [{"name": "send", "when": [{"field": "Operation", "equals": "Send"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Send-Item"},
+                                        {"path": "EventDetail/Send/Payload/Email/Subject", "field": "subject"}]},
+                            {"name": "login", "when": [{"field": "Operation", "equals": "UserLoggedIn"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                            {"name": "login_2", "when": [{"field": "Operation", "equals": "SignIn"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                            {"name": "logoff", "when": [{"field": "Operation", "equals": "UserLoggedOff"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logoff"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logoff"}]},
+                            {"name": "uncatalogued", "allow_unknown": "records no event type recognises",
+                             "catch_all": true,
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Unknown"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "colour",
+                                         "field": "colour"}]}]}"""));
+
+        final String text = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA);
+
+        assertThat(typeIdRow(text, "#### send")).endsWith("| event type Send-Item, recognised by `Operation` = Send |");
+        // Rows of several rules merged: each event type with its ways joined by "or", and its rules named.
+        assertThat(typeIdRow(text, "#### login, login_2, logoff")).endsWith("| event type Logon, recognised by "
+                + "`Operation` = UserLoggedIn or `Operation` = SignIn (login, login_2)<br>event type Logoff, "
+                + "recognised by `Operation` = UserLoggedOff (logoff) |");
+        assertThat(typeIdRow(text, "#### uncatalogued")).endsWith("| event type Unknown, for the records no event "
+                                                                  + "type recognises |");
+    }
+
+    @Test
+    void aTypeIdOfARuleWithNoConditionsIsJustTheEventType() {
+        final TranslationMapping mapping = TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "timestamp"},
+                 {"path": "EventSource/System/Name", "value": "FW"},
+                 {"path": "EventSource/System/Environment", "value": "Prod"},
+                 {"path": "EventSource/Generator", "value": "FW"},
+                 {"path": "EventSource/Device/HostName", "field": "device"}],
+                 "events": [{"name": "login",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]}]}"""));
+
+        assertThat(typeIdRow(EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA), "#### login"))
+                .endsWith("| event type Logon |");
+    }
+
+    // The TypeId row of an event type section.
+    private static String typeIdRow(final String text, final String heading) {
+        assertThat(text).as(text).contains(heading + "\n");
+        return text.split(heading + "\n", 2)[1].lines()
+                .filter(line -> line.startsWith("| `EventDetail/TypeId` |"))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    @Test
     void aDataNameIsAskedOnceAndASharedRowByItsOwnPath() {
         // Seen (Delinea SecretServer): 224 fields asked, 18 Data names once per action element, and rows of event
         // types shown together asked under the first type's path (Process/Action's values as Authenticate/Action).

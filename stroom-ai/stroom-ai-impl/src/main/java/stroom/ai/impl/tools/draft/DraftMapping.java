@@ -232,6 +232,19 @@ public final class DraftMapping {
         // Static only.
     }
 
+    /// The note asking for EventSource/System/Name and Environment, where the draft has placeholders for them.
+    ///
+    /// @param offer What else may be given for System/Name, said in the note itself (a group of source types'
+    ///              name each, so a cut list of notes can't drop it), or null for nothing more.
+    /// @return The note.
+    public static String systemNote(final String offer) {
+        return "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give "
+               + "them): the draft has placeholders, which saving refuses. " + (offer == null
+                ? ""
+                : offer + " ") + "Both are required: if the user doesn't know one, use a value they agree to (such "
+               + "as Unknown) and record it as an open item, rather than stopping.";
+    }
+
     private static Map<String, Object> dict(final Object... keysAndValues) {
         return JsonValues.dict(keysAndValues);
     }
@@ -2120,10 +2133,7 @@ public final class DraftMapping {
             common.add(dict(PATH, "EventSource/System/Environment", VALUE, firstText(environment, null,
                     ENVIRONMENT_PLACEHOLDER)));
             if (!LocalCheck.hasText(systemName) || !LocalCheck.hasText(environment)) {
-                notes.add("Ask the user for EventSource/System/Name and Environment (unless the standing "
-                          + "instructions give them): the draft has placeholders, which saving refuses. Both are "
-                          + "required: if the user doesn't know one, use a value they agree to (such as Unknown) and "
-                          + "record it as an open item, rather than stopping.");
+                notes.add(systemNote(null));
             }
         }
 

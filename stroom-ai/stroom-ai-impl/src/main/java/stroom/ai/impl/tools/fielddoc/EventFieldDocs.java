@@ -58,7 +58,8 @@ public final class EventFieldDocs {
     private static final List<String> ALL_SECTIONS = List.of("EventTime", "EventSource", "EventDetail");
     private static final List<String> SOURCE_SECTIONS = List.of("EventTime", "EventSource");
     private static final List<String> DETAIL = List.of("EventDetail");
-    private static final Set<String> TYPE_AND_DESCRIPTION = Set.of("EventDetail/TypeId", "EventDetail/Description");
+    private static final String TYPE_ID = "EventDetail/TypeId";
+    private static final Set<String> TYPE_AND_DESCRIPTION = Set.of(TYPE_ID, "EventDetail/Description");
     private static final String NOT_MAPPED = "not in the mapping (added by hand, or by a later step)";
     private static final Comparator<FieldKey> BY_PATH_AND_NAME = Comparator.comparing(FieldKey::path)
             .thenComparing(k -> Objects.requireNonNullElse(k.name(), ""));
@@ -461,7 +462,8 @@ public final class EventFieldDocs {
         for (final List<Member> members : rows.values()) {
             if (names.size() == 1) {
                 final Member member = members.getFirst();
-                lines.add(row(c, member.key(), member.entry(), sample.eventsOf(member.name())));
+                lines.add(row(c, member.key(), member.entry(), sample.eventsOf(member.name()),
+                        typeFrom(c, List.of(member), 1)));
             } else {
                 lines.add(mergedRow(c, members, names.size()));
             }
@@ -597,13 +599,21 @@ public final class EventFieldDocs {
 
     private static String row(final Context c, final FieldKey key, final FieldMapping entry,
                               final List<XmlElement> events) {
+        return row(c, key, entry, events, null);
+    }
+
+    // A field's row, its From cell the one given where it isn't null (a TypeId's, typeFrom).
+    private static String row(final Context c, final FieldKey key, final FieldMapping entry,
+                              final List<XmlElement> events, final String from) {
         final String source = entry != null
                 ? c.source(entry)
                 : NOT_MAPPED;
         final Values values = valuesOf(events, key);
         final List<String> cells = new ArrayList<>(List.of("`" + key.xpath() + "`", c.described().of(key.xpath(),
                 source, values.values(), Descriptions.eventLogging(described(c.schema(), key)), key.xpath(),
-                readFrom(entry), List.of(), null), source));
+                readFrom(entry), List.of(), null), from != null
+                ? from
+                : source));
         if (c.sample().sampled()) {
             cells.add(orWhyNone(FieldDocs.shown(values.values(), true), events.size(), 1) + (values.several()
                     ? "\n(several per event)"
@@ -639,19 +649,67 @@ public final class EventFieldDocs {
         final List<String> paths = members.stream().map(m -> m.key().xpath()).toList();
         final String shown = FieldDocs.combinedPath(paths);
         final List<String> names = members.stream().flatMap(m -> readFrom(m.entry()).stream()).toList();
+        final String from = typeFrom(c, members, grouped);
         // Asked by the row's own path, not its first type's: seen, Process/Action's values asked as Authenticate/
         // Action's, and Create's and Delete's Object as View/Object.
         final List<String> cells = new ArrayList<>(List.of(("`" + shown + "`").replace("\n", "`\n`"),
                 c.described().of(shown.replace("\n", " | "), source, values,
                         Descriptions.eventLogging(described(c.schema(), first)), first.xpath(), names,
                         new ArrayList<>(new LinkedHashSet<>(paths)), sources.stream().map(s -> s[1]).toList()),
-                source));
+                from != null
+                        ? from
+                        : source));
         if (c.sample().sampled()) {
             cells.add(orWhyNone(FieldDocs.shown(values, true), sampled, members.size()) + (several
                     ? "\n(several per event)"
                     : ""));
         }
         return FieldDocs.row(cells);
+    }
+
+    // The From of a TypeId row written as a constant: the event type and what recognises it, from each rule's own
+    // conditions (asked for by the user, chat 184: the From was the constant "Send-Item", which said nothing of
+    // where it came from), e.g. `event type Send-Item, recognised by `Operation` = Send`. The rules of one event
+    // type are its ways, joined with "or"; a row of several event types (or not all its rules') names each line's
+    // rules, as a merged row names its sources. Null for any other row, or a TypeId read from the record.
+    private static String typeFrom(final Context c, final List<Member> members, final int grouped) {
+        if (members.isEmpty() || !TYPE_ID.equals(members.getFirst().key().path())) {
+            return null;
+        }
+        final Map<String, List<EventRule>> byType = new LinkedHashMap<>();
+        for (final Member member : members) {
+            if (member.entry() == null || member.entry().value() == null) {
+                return null;
+            }
+            final EventRule rule = c.rules().stream()
+                    .filter(r -> r.name().equals(member.name()))
+                    .findFirst()
+                    .orElse(null);
+            if (rule == null) {
+                return null;
+            }
+            byType.computeIfAbsent(member.entry().value(), x -> new ArrayList<>()).add(rule);
+        }
+        final boolean named = byType.size() > 1 || members.size() < grouped;
+        final List<String> lines = new ArrayList<>();
+        byType.forEach((type, rules) -> {
+            final List<String> ways = new ArrayList<>(new LinkedHashSet<>(rules.stream()
+                    .filter(rule -> !rule.catchAll())
+                    .map(rule -> FieldDocs.conditionsText(rule.when()))
+                    .filter(way -> !way.isEmpty())
+                    .toList()));
+            final String catchAll = rules.stream().anyMatch(EventRule::catchAll)
+                    ? (ways.isEmpty()
+                            ? ","
+                            : ", or") + " for the records no event type recognises"
+                    : "";
+            lines.add("event type " + MarkdownHtml.text(type) + (ways.isEmpty()
+                    ? ""
+                    : ", recognised by " + String.join(" or ", ways)) + catchAll + (named
+                    ? " (" + rules.stream().map(EventRule::name).collect(Collectors.joining(", ")) + ")"
+                    : ""));
+        });
+        return String.join("\n", lines);
     }
 
     // The EventSource and EventTime table, compact.

@@ -371,6 +371,70 @@ class TestCreatePipelineTool {
     }
 
     @Test
+    void aGroupsPipelineIsProposedWithTheGroupsNameWhateverNameTheAgentPasses() {
+        // Seen in chat 184: build_translation_xslt named the group's pipeline '<feed> <group> V1.0', the agent
+        // passed a name of its own with no group=, and the tool found the group by its XSLT but kept the agent's
+        // name.
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("g1", "ACME mail", Map.of());
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        tool.setGroups(() -> groups);
+        final Map<String, Object> row = new java.util.LinkedHashMap<>();
+        row.put("name", "MailIn");
+        row.put("group", "ACME mail");
+        row.put("pipeline", Map.of("name", "ACME ACME mail V1.0"));
+        final SourceTypeGroups.GroupRun mail = new SourceTypeGroups.GroupRun("ACME", "ACME mail", "g1",
+                List.of(row));
+        Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
+        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any()))
+                .thenReturn(List.of("MailIn"));
+        final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"template_uuid\": \""
+                                 + TEMPLATE + "\"}";
+
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of());
+        final Map<String, Object> made = PipelineWorld.json(call(arguments, user.context()));
+
+        assertThat(user.forms()).singleElement().satisfies(form -> {
+            assertThat(form.get("summary")).isEqualTo("Create pipeline 'ACME ACME mail V1.0' from template 'Event "
+                                                      + "Data (Text)'");
+            assertThat(String.valueOf(((Map<?, ?>) form.get("details")).get("pipeline name")))
+                    .isEqualTo("ACME ACME mail V1.0 (group 'ACME mail''s pipeline name, in place of "
+                               + "'Acme-V1-Events')");
+        });
+        assertThat(made).containsEntry("name", "ACME ACME mail V1.0").containsEntry("group", "ACME mail");
+        assertThat(String.valueOf(made.get("name_note"))).contains("'ACME ACME mail V1.0'", "group 'ACME mail'",
+                "not 'Acme-V1-Events'");
+        assertThat(pipelines.pipelineNamed("Acme-V1-Events")).isNull();
+    }
+
+    @Test
+    void theUserCanStillNameAGroupsPipelineInTheForm() {
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("g1", "ACME mail", Map.of());
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        tool.setGroups(() -> groups);
+        final Map<String, Object> row = new java.util.LinkedHashMap<>();
+        row.put("name", "MailIn");
+        row.put("group", "ACME mail");
+        final SourceTypeGroups.GroupRun mail = new SourceTypeGroups.GroupRun("ACME", "ACME mail", "g1",
+                List.of(row));
+        Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
+        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any()))
+                .thenReturn(List.of("MailIn"));
+
+        // No pipeline in the registry yet: named as build_translation_xslt names it, then changed by the user.
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
+                                                                 + "\"Acme-V1-Events\", \"template_uuid\": \""
+                                                                 + TEMPLATE + "\"}",
+                BuildToolCalls.answering(Map.of("name", "Mail-V1.0-Events"))));
+
+        assertThat(made).containsEntry("name", "Mail-V1.0-Events").doesNotContainKey("name_note");
+        assertThat(pipelines.pipelineNamed("Mail-V1.0-Events")).isNotNull();
+    }
+
+    @Test
     void aGroupsPipelineIsRefusedUntilItsOutputFeedIsMade() {
         textTemplate();
         pipelines.textConverter("tc", "Acme-Splitter");

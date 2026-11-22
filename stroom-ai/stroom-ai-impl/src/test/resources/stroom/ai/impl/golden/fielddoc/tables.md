@@ -21,7 +21,7 @@ When `action` in login, logon. Below the action element: 3 typed, 1 kept as Data
 
 | XPath | Description | From |
 | --- | --- | --- |
-| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | "Logon" |
+| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | event type Logon, recognised by `action` in login, logon |
 | `EventSource/Client/IPAddress` | The network IP address of the client. | `ip` |
 | `EventDetail/Authenticate/Action` | The authentication action that was performed, e.g. Logon, Logoff. | "Logon" |
 | `EventDetail/Authenticate/User/Id` | An identifier for the user. | `user` |

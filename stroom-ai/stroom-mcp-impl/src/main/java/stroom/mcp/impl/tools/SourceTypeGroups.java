@@ -1847,6 +1847,19 @@ class SourceTypeGroups {
             return out;
         }
 
+        /// @return The name the group's pipeline is to be made with, while it isn't made yet: the registry's
+        /// (build_translation_xslt names it when it saves the group), else [SourceTypeGroups#pipelineName]'s; empty
+        /// once the registry names a pipeline made (or promoted) for the group, whose next version is named for
+        /// its version.
+        Optional<String> pipelineToMake() {
+            final Map<String, Object> pipeline = pipeline();
+            if (pipeline.get("uuid") != null || pipeline.get(NEW_VERSION) != null) {
+                return Optional.empty();
+            }
+            return Optional.of(NullSafe.nonBlankStringElse(JsonValues.text(pipeline.get("name")),
+                    SourceTypeGroups.pipelineName(feed, group)));
+        }
+
         /// @return The pipeline the registry names for the group (`name`, `uuid` once made), or empty.
         Map<String, Object> pipeline() {
             return rows.stream()

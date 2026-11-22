@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeReading;
@@ -102,15 +103,35 @@ final class SourceTypeSystemNames {
     }
 
     /// @param scope The build's scope, or null.
-    /// @return The note for a group of several source types given no name: one name, or each source type's own;
-    /// empty where the scope isn't such a group, or its source types can't be named each.
-    static Optional<String> unnamedNote(final SourceTypeScope scope) {
+    /// @return What the System/Name note offers a group of several source types given no name: one name, or each
+    /// source type's own; empty where the scope isn't such a group, or its source types can't be named each.
+    static Optional<String> unnamedOffer(final SourceTypeScope scope) {
         if (!severalTypes(scope) || unsupported(scope).isPresent()) {
             return Optional.empty();
         }
         return Optional.of("The build's source type group holds " + scope.said() + ": its EventSource/System/Name "
                            + "can be one name for the group or each source type's own. Ask the user which; give "
                            + "system_name=\"<name>\", or system_name={\"<source type>\": \"<name>\"} for each.");
+    }
+
+    /// Offers a group of several source types given no name one name or each source type's own, in the draft's
+    /// System/Name note itself, not a note of its own (seen in chat 184: a client's cut list of notes dropped the
+    /// offer, which came last, and the agent asked for one name); a note of its own only where the draft has no
+    /// System/Name note.
+    ///
+    /// @param scope The build's scope, or null.
+    /// @param notes The draft's notes, changed in place.
+    static void offerInNote(final SourceTypeScope scope, final List<Object> notes) {
+        final Optional<String> offer = unnamedOffer(scope);
+        if (offer.isEmpty()) {
+            return;
+        }
+        final int at = notes.indexOf(DraftMapping.systemNote(null));
+        if (at < 0) {
+            notes.add(offer.get());
+        } else {
+            notes.set(at, DraftMapping.systemNote(offer.get()));
+        }
     }
 
     /// Writes EventSource/System/Name from the source type field's value: the common entry made a `field` and `map`

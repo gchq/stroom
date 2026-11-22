@@ -189,6 +189,42 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void aGroupWritingItemsWithFieldsOfTheirOwnWholeIsWarnedOfWithAKeySuggested() {
+        // Chat 184: each {Name, Value} item read whole with item: true, written to Configuration/Name as
+        // "NameFW to personal".
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"},
+                  {"path": "EventDetail/Update/After/Configuration", "for_each": {"array": "event.Parameters"},
+                   "fields": [{"path": "Name", "item": true}]},
+                  {"path": "EventDetail/Update/Data", "data_name": "params", "field": "event.Parameters"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"event": {"Parameters": [{"Name": "Name", "Value": "FW to personal"}, {"Name": "Enabled", \
+                "Value": "True"}]}}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records)))
+                .filteredOn(warning -> warning.contains("fields of their own"))
+                .singleElement().asString()
+                .startsWith("EventDetail/Update/After/Configuration/Name: the items of 'event.Parameters' have "
+                            + "fields of their own (Name, Value)")
+                .contains("item: true", "{\"path\": \"Name\", \"field\": \"Name\"}");
+    }
+
+    @Test
+    void aGroupWritingPlainItemsWholeIsNotWarnedOf() {
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"},
+                  {"path": "EventDetail/Update/After/Configuration", "for_each": {"array": "event.Names"},
+                   "fields": [{"path": "Name", "item": true}]}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"event": {"Names": ["FW to personal", "Archive"]}}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records)))
+                .noneMatch(warning -> warning.contains("fields of their own"));
+    }
+
+    @Test
     void aFieldEmptyInEveryRecordIsSaidToBeEmptyNotMissing() {
         // Seen in an eval: "field 'AppAccessContext.IssuedAtTime' is in none of the 72 sample records; did you mean
         // ['AppAccessContext.IssuedAtTime', ...]", of a field null in every record.

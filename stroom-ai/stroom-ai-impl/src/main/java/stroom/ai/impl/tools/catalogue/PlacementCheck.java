@@ -98,8 +98,9 @@ final class PlacementCheck {
     // EventSource's objects listed (those partly written first), and the most leaves of each.
     private static final int SOURCE_GROUPS = 4;
     private static final int SOURCE_LEAVES_SHOWN = 8;
-    // The most of an item's keys named.
+    // The most of an item's keys named, and the most arrays of objects kept as Data listed.
     private static final int ITEM_KEYS_SHOWN = 6;
+    private static final int ARRAYS_SHOWN = 4;
     private static final List<String> PREFERRED_LEAVES = List.of("Id", "Name", "EmailAddress", "Path", "Title",
             "HostName", "IPAddress");
     private static final Pattern DATE_TIME = Pattern.compile(
@@ -383,7 +384,13 @@ final class PlacementCheck {
         if (!inputsOk) {
             return;
         }
-        if (!placement.group()) {
+        if (placement.group()) {
+            final String items = groupItemsProblem(below, placement, recognised);
+            if (items != null) {
+                problems.add(said + ": " + items);
+                return;
+            }
+        } else {
             final String items = itemsProblem(below, placement, recognised);
             if (items != null) {
                 problems.add(said + ": " + items);
@@ -481,33 +488,12 @@ final class PlacementCheck {
         if (field == null) {
             return null;
         }
-        // Read from the records as they are: the index's values are each item's text (its fields' run together).
-        final List<Object> records = index.sample().records();
-        final Set<String> keys = new LinkedHashSet<>();
-        Map<?, ?> first = null;
-        int objects = 0;
-        int held = 0;
-        for (int n = recognised.nextSetBit(0); n >= 0 && n < records.size() && held < VALUES_READ;
-             n = recognised.nextSetBit(n + 1)) {
-            if (!(records.get(n) instanceof final Map<?, ?> record) || record.get(field) == null) {
-                continue;
-            }
-            held++;
-            final List<Map<?, ?>> items = objects(record.get(field));
-            if (!items.isEmpty()) {
-                objects++;
-                for (final Map<?, ?> item : items) {
-                    item.keySet().forEach(key -> keys.add(String.valueOf(key)));
-                    if (first == null && !item.isEmpty()) {
-                        first = item;
-                    }
-                }
-            }
-        }
-        if (first == null || objects * 2 <= held) {
+        final ItemKeys found = itemKeys(field, recognised, false);
+        if (found == null) {
             return null;
         }
-        final List<String> named = new ArrayList<>(keys);
+        final Map<?, ?> first = found.first();
+        final List<String> named = found.keys();
         final int slash = below.lastIndexOf('/');
         final String parent = slash < 0
                 ? below
@@ -523,6 +509,95 @@ final class PlacementCheck {
                + "group with fields, e.g. " + group + ", or an xpath picking one item" + (pick == null
                 ? " (e.g. the item whose " + key + " is '" + ToolText.str(first.get(key)) + "')"
                 : ", e.g. {path: '" + below + "', xpath: \"" + pick + "\"}") + ", or leave it as Data";
+    }
+
+    // A group's field reading its item whole (item: true) where the group's items are objects with fields of their
+    // own: why it is refused, or null. Chat 184: after the leaf placement was refused, the agent wrote
+    // {path: 'Configuration', for_each: {array: 'event.Parameters'}, fields: [{path: 'Name', item: true}]}, and
+    // each {Name, Value} item was written to Configuration/Name as its fields' text run together again.
+    private String groupItemsProblem(final String below, final Placement placement, final BitSet recognised) {
+        final Map<String, Object> entry = placement.entry();
+        final Object array = JsonValues.mapOrEmpty(entry.get(Placement.FOR_EACH)).get("array");
+        if (!(array instanceof final String field) || field.isBlank()) {
+            return null;
+        }
+        final List<String> whole = JsonValues.maps(entry.get(Placement.FIELDS)).stream()
+                .filter(PlacementCheck::readsItemWhole)
+                .map(inner -> ToolText.strip(ToolText.str(inner.get(Placement.PATH)).strip(), "/"))
+                .toList();
+        if (whole.isEmpty()) {
+            return null;
+        }
+        final ItemKeys found = itemKeys(field, recognised, true);
+        if (found == null) {
+            return null;
+        }
+        final String leaf = whole.getFirst();
+        final String at = leaf.isEmpty()
+                ? below
+                : below + "/" + leaf;
+        final String key = keyFor(leaf, found.keys());
+        return field + "'s items have fields of their own (" + cappedTo(found.keys(), ITEM_KEYS_SHOWN) + "): "
+               + "{path: '" + leaf + "', item: true} writes each item whole at " + at + ", its fields' text run "
+               + "together: read a key of the item instead, e.g. {path: '" + leaf + "', field: '" + key + "'}, a "
+               + "field of the group for each key the schema has a home for, or leave the rest as Data";
+    }
+
+    // A group's field that reads its own item whole: item: true, no key of it, no group of its own, not the record.
+    private static boolean readsItemWhole(final Map<String, Object> field) {
+        return Boolean.TRUE.equals(field.get("item")) && !(field.get(Placement.FIELD) instanceof String)
+               && !field.containsKey(Placement.FOR_EACH) && !"record".equals(field.get("scope"));
+    }
+
+    // The item's key to read at a leaf, for an example: the one of the leaf's name (any case), else the first.
+    private static String keyFor(final String leaf, final List<String> keys) {
+        final String name = leaf.substring(leaf.lastIndexOf('/') + 1);
+        return keys.stream()
+                .filter(key -> key.equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(keys.getFirst());
+    }
+
+    // The keys of a field's items where most of the recognised records holding it hold objects (arrays of them only,
+    // where arrays is true): read from the records as they are, as the index's values are each item's text (its
+    // fields' run together); null where they don't.
+    private ItemKeys itemKeys(final String field, final BitSet recognised, final boolean arrays) {
+        final List<Object> records = index.sample().records();
+        final Set<String> keys = new LinkedHashSet<>();
+        Map<?, ?> first = null;
+        int objects = 0;
+        int held = 0;
+        for (int n = recognised.nextSetBit(0); n >= 0 && n < records.size() && held < VALUES_READ;
+             n = recognised.nextSetBit(n + 1)) {
+            if (!(records.get(n) instanceof final Map<?, ?> record) || record.get(field) == null) {
+                continue;
+            }
+            held++;
+            final Object value = record.get(field);
+            if (arrays && !isArray(value)) {
+                continue;
+            }
+            final List<Map<?, ?>> items = objects(value);
+            if (!items.isEmpty()) {
+                objects++;
+                for (final Map<?, ?> item : items) {
+                    item.keySet().forEach(key -> keys.add(String.valueOf(key)));
+                    if (first == null && !item.isEmpty()) {
+                        first = item;
+                    }
+                }
+            }
+        }
+        if (first == null || objects * 2 <= held) {
+            return null;
+        }
+        return new ItemKeys(new ArrayList<>(keys), first);
+    }
+
+    // A list as read, or JSON text holding one.
+    private static boolean isArray(final Object value) {
+        return value instanceof List<?>
+               || value instanceof final String text && ToolText.strip(text).startsWith("[");
     }
 
     // The objects a value holds: itself, or an array's items that are objects (as read, or JSON text holding
@@ -1016,7 +1091,8 @@ final class PlacementCheck {
                 : null;
         final CouldType couldType = note == null
                 ? null
-                : new CouldType(dataFields(data, codes, recognised), homes(detail, written, sourceWritten));
+                : new CouldType(dataFields(data, codes, recognised), homes(detail, written, sourceWritten),
+                        arraysOfObjects(data, codes, recognised));
         return new Typing(typedCount, data.size(), fill, note, couldType);
     }
 
@@ -1050,6 +1126,33 @@ final class PlacementCheck {
                 });
         if (fills.size() > COULD_TYPE_FIELDS) {
             out.add("… " + (fills.size() - COULD_TYPE_FIELDS) + " more");
+        }
+        return out;
+    }
+
+    // The fields kept as Data whose values are arrays of objects, each with its items' keys (capped): a for_each
+    // group types each item where the schema repeats an element for it. Chat 184: TeamMemberAdded's members, each
+    // with UPN and DisplayName, stayed Data, as nothing said a group could type them.
+    private List<String> arraysOfObjects(final Set<String> data, final Set<String> codes, final BitSet recognised) {
+        final List<String> out = new ArrayList<>();
+        int found = 0;
+        for (final String field : data) {
+            if (codes.contains(field)) {
+                continue;
+            }
+            final ItemKeys items = itemKeys(field, recognised, true);
+            if (items == null) {
+                continue;
+            }
+            found++;
+            if (out.size() < ARRAYS_SHOWN) {
+                out.add(field + ": items with " + cappedTo(items.keys(), ITEM_KEYS_SHOWN) + (out.isEmpty()
+                        ? " — a for_each group on an element the schema repeats types each"
+                        : ""));
+            }
+        }
+        if (found > ARRAYS_SHOWN) {
+            out.add("… " + (found - ARRAYS_SHOWN) + " more");
         }
         return out;
     }
@@ -1244,6 +1347,12 @@ final class PlacementCheck {
 
 
     // --------------------------------------------------------------------------------
+
+
+    // The keys a field's items have, each once, in the order first seen, and the first item with any.
+    private record ItemKeys(List<String> keys, Map<?, ?> first) {
+
+    }
 
 
     // An element written, by its children's names.

@@ -77,7 +77,8 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   `time_format`, `timezone`, `map`, `default`, `repeat`); a list goes to an element that repeats with `for_each`
   (Groups, below), e.g. `{path: "Email/To", for_each: {array: "Recipients"}, fields: [{path: "EmailAddress", item:
   true}]}`; a field whose items have fields of their own (an array of `{Name, Value}`) goes to a `for_each` group
-  with `fields`, or one item is picked by an `xpath`, never to a leaf. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
+  with `fields`, each reading a key of the item (`{path: "Name", field: "Name"}`; `item: true` writes it whole), or
+  one item is picked by an `xpath`, never to a leaf. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
   GroupChat, Document...: `read_document type=XMLSchema element=EventDetail/<element>` lists them. The draft writes
   each as a typed entry of the event type's rule; every field no placement takes is kept as Data, each field once
   (`also_data: true` keeps a placed one as Data too; the vendor's code is always Data too). `affected` with

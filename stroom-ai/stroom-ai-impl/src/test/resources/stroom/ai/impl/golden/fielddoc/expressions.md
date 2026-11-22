@@ -19,7 +19,7 @@ When `concat(action, '-', a/b)` = login-x. Below the action element: 3 typed, 1 
 
 | XPath | Description | From |
 | --- | --- | --- |
-| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | "Logon" |
+| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | event type Logon, recognised by `concat(action, '-', a/b)` = login-x |
 | `EventDetail/Authenticate/Action` | The authentication action that was performed, e.g. Logon, Logoff. | "Logon" |
 | `EventDetail/Authenticate/User/Id` | An identifier for the user. | `user` |
 | `EventDetail/Authenticate/Outcome/Success` | If the outcome of an event was successful then 'true', 'false' otherwise. | `result`: ok -> true, fail -> false |

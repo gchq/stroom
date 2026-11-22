@@ -3809,7 +3809,11 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   naming their keys, with a `for_each` group with `fields` and (JSON input) an `xpath` picking one item suggested
   (2026-11-22, chat 183: an array of `{Name, Value}` at `Configuration/Name`, each item written as
   `NameFW to personal`); `build_translation_xslt`'s mapping check warns of a typed entry (not Data, not a group)
-  reading such a field.
+  reading such a field. A `for_each` group over such an array whose field reads the item whole (`item: true`, no key
+  of it) is refused alike, naming the keys and suggesting `{path: <leaf>, field: <key>}` (the key of the leaf's name,
+  else the first; 2026-11-22, chat 184: `{path: 'Configuration', for_each: {array: 'event.Parameters'}, fields:
+  [{path: 'Name', item: true}]}` wrote `NameFW to personal` again); the mapping check (`LocalCheck.checkGroupItems`)
+  warns of it.
 * `unplaced` (2026-11-21): elements the schema requires of an event type's action element (and of each element
   written below it: required children and required choices) that nothing the catalogue gives writes (placements, the
   Action, the outcome, Authenticate's user from the actor or the draft's common user, the draft's common entries
@@ -3826,7 +3830,11 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   the objects of a collection by name, then (2026-11-22) EventSource's elements nothing writes yet for the event type
   (the common entries, its placements there, the draft's rule): each object's open leaves, those partly written first
   (`EventSource/Client: Id, Name, HostName, ...` beside a Client/IPAddress written), objects with the same open leaves
-  together (`EventSource/{Device,Server}: ...`), at most 4, then EventSource's own leaves; not System (the draft's). The hint says these fields should be typed (each one the schema has a home
+  together (`EventSource/{Device,Server}: ...`), at most 4, then EventSource's own leaves; not System (the draft's);
+  `arrays` (2026-11-22, chat 184: TeamMemberAdded's members, each with UPN and DisplayName, stayed Data), the fields
+  of `data` whose values are arrays of objects, each with its items' keys (at most 4, 6 keys each), the first saying a
+  `for_each` group on an element the schema repeats types each (`event.Members: items with UPN, DisplayName, Role —
+  a for_each group on an element the schema repeats types each`). The hint says these fields should be typed (each one the schema has a home
   for belongs in a placement, not in Data, from what the agent knows of the source; only what has no home stays as
   Data), with an example call for the first such event type; nothing is refused or paused, and no field is matched
   to an element by its name.
@@ -4871,7 +4879,14 @@ Events go to an output feed of its own, every StreamAppender's `feed` is set to 
 not made yet is refused (`create_feed ... stream_type=Events group=<the group> first`). Without `references`, the
 reference data the group looks up (kept in the registry by `build_translation_xslt references=`) is loaded. Once made,
 the registry's rows of the group name the pipeline (`pipeline`: `name`, `uuid`); a working copy of a promoted pipeline
-leaves them naming the original.
+leaves them naming the original. A group's new pipeline (the registry names none made yet, and no `version_of`) is
+proposed with the group's pipeline name, the one `build_translation_xslt` named (the registry's, else
+`SourceTypeGroups.pipelineName`), whatever `name` the agent passes and whether the group is given or found by its XSLT
+(`GroupRun.pipelineToMake`; 2026-11-22, chat 184: the form announced `Azure-Audit-V1.0-EVENTS Messaging V1.0`, the
+agent passed `Azure-Audit-V1.0-Events`, and that was made). The form says so (`pipeline name`: the group's name, in
+place of the agent's) and the user can still change it; kept, `name_note` in the result says the pipeline was named for
+the group, not as passed (a standalone Events pipeline for a group alike, in its `note`). `create_indexing_pipeline`
+names no group pipeline (its `name` is required and an indexing XSLT is no group's), so it is unchanged.
 
 **A production pipeline's next version** (`version_of`): a child of that pipeline's template (unless `template` is
 given), with the build's new XSLT (its translation written anew; to keep the XSLT and change only parts, use
@@ -4905,13 +4920,14 @@ version's catalogue of event types starts from the promoted one (`source_notes` 
   (`LongValues.parserLimit`; unless `set_properties` sets it; 2026-11-22).
 * `standalone` with `template` or `version_of` is refused.
 
-* **Arguments**: `name` (required, but for a group's pipeline: `<feed> <group>` by default); `group` (an aggregated
+* **Arguments**: `name` (required, but for a group's pipeline: the group's pipeline name, proposed whatever is given); `group` (an aggregated
   feed's source type group whose pipeline it is); `template_uuid` or `template` (UUID or exact name); `build`
   (default the session's current build); `set_properties`; `description` (kept on the pipeline doc); `replace_parser`;
   `references`; `reuse_existing_docs`; `accept_parser_mismatch`; `standalone` (`kafka` | `events`); `version_of`;
   `keep_references` (only with `version_of`).
 * **Returns**: `type`, `uuid`, `name`, `template`, `group` and `source_types` (a source type group's pipeline: the
-  group, and the registry rows now naming it), `version_of`, `set_in_<previous>_not_here`, `sets`,
+  group, and the registry rows now naming it; `name_note` where it was named for the group, not as passed),
+  `version_of`, `set_in_<previous>_not_here`, `sets`,
   `filled_from_build`, `still_to_set` with `hint`, `reference_data`, and `next`; a standalone pipeline adds
   `note` (what to tell the user).
 * **Refuses**: no `name`; no template; the refusals in the steps above; `keep_references` without `version_of`;
@@ -5239,7 +5255,10 @@ generated without them.
   the user gives (here, one `system_name`, each variant's, or a source type's on record_source_types) goes into the
   Event without control characters (`HeldText.clean`; user, 2026-11-22);
   build_translation_xslt puts them on the group's registry rows (`system_name`) when it saves the group, so the
-  draft stays read-only. Unnamed, a note offers one name or each source type's own;
+  draft stays read-only. Unnamed, the System/Name note itself offers one name or each source type's own, listing the
+  source types (`SourceTypeSystemNames.offerInNote`, `DraftMapping.systemNote`; 2026-11-22, chat 184: a note of its
+  own after it, cut from the client's list of notes, and the agent asked for one name), a note of its own only where
+  the draft has no System/Name note;
   `splitter` (a build_data_splitter spec, else inferred);
   `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
   this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose);
@@ -6160,7 +6179,11 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
     side ignored, Data every type writes alike as common fields, extractions left to the XSLT; an index's common
     fields only those every event has, each section naming its TypeIds; an event type's section says how many
     elements below the action element its rule types and keeps as Data (`Below the action element: 5 typed, 3 kept
-    as Data.`, 2026-11-21). See `EventFieldDocs` and `IndexFieldDocs`
+    as Data.`, 2026-11-21). A constant TypeId's From says it is the event type and what recognises it, from its
+    rule's conditions (`event type Send-Item, recognised by `Operation` = Send`; a type's several rules joined with
+    "or"; the catch-all `for the records no event type recognises`; a rule with no conditions `event type X`); a row
+    of several event types names each line's rules (2026-11-22, chat 184: the From was the bare `"Send-Item"`;
+    `EventFieldDocs.typeFrom`). See `EventFieldDocs` and `IndexFieldDocs`
     under "Field-mapping documentation and the CEF mapping".
   * **Field descriptions**: each field is described by what it means for this source (`Descriptions`): a
     `needs_descriptions` round asks for those not yet described. A Data name read from the same source under

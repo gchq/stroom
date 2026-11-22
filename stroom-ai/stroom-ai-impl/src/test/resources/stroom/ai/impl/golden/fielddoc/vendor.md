@@ -19,7 +19,7 @@ When `action` = login: 1 of the sample's 2 events. Below the action element: 3 t
 
 | XPath | Description | From | Sample values |
 | --- | --- | --- | --- |
-| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | "Logon" | `Logon` |
+| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | event type Logon, recognised by `action` = login | `Logon` |
 | `EventDetail/Authenticate/Action` | The authentication action that was performed, e.g. Logon, Logoff. | "Logon" | `Logon` |
 | `EventDetail/Authenticate/User/Id` | Login of the account that signed in. | `user` | `o'neil` |
 | `EventDetail/Authenticate/Outcome/Success` | If the outcome of an event was successful then 'true', 'false' otherwise. | `result`: ok -> true, fail -> false | `false` |

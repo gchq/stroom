@@ -398,6 +398,22 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void theOfferOfEachSourceTypesOwnNameIsInTheSystemNameNoteItself() {
+        // Chat 184: the offer was a note of its own after the System/Name note, the client's cut list of notes
+        // dropped it, and the agent asked for one name.
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+
+        final List<String> notes = JsonValues.listOrEmpty(draft.get("notes")).stream().map(String::valueOf).toList();
+        assertThat(notes).filteredOn(note -> note.contains("EventSource/System/Name")).singleElement().asString()
+                .startsWith("Ask the user for EventSource/System/Name and Environment")
+                .contains("one name for the group or each source type's own", "db, web",
+                        "system_name={\"<source type>\": \"<name>\"}", "Both are required");
+    }
+
+    @Test
     void namesPerSourceTypeThatLeaveOneOutOrNameAnotherAreRefused() {
         scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
                 new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));

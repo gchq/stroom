@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.generation.ItemSource;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.ZoneSource;
@@ -1936,35 +1937,79 @@ public final class LocalCheck {
         // refuses such a placement.
         private void checkItemFields() {
             for (final FieldMapping entry : mapping.allEntries()) {
-                if (!hasText(entry.field()) || hasText(entry.dataName()) || entry.group() != null
-                    || derived.contains(entry.field())) {
+                if (entry.group() != null) {
+                    checkGroupItems(entry);
                     continue;
                 }
-                int held = 0;
-                int objects = 0;
-                final Set<String> keys = new LinkedHashSet<>();
-                for (final Object record : where(entry.scope())) {
-                    if (!(record instanceof final Map<?, ?> map) || map.get(entry.field()) == null) {
-                        continue;
-                    }
-                    held++;
-                    final Object value = map.get(entry.field());
-                    final List<?> items = value instanceof final List<?> list
-                            ? list
-                            : List.of(value);
-                    if (items.stream().anyMatch(Map.class::isInstance)) {
-                        objects++;
-                        items.stream().filter(Map.class::isInstance)
-                                .forEach(item -> ((Map<?, ?>) item).keySet().forEach(k -> keys.add(String.valueOf(k))));
-                    }
+                if (!hasText(entry.field()) || hasText(entry.dataName()) || derived.contains(entry.field())) {
+                    continue;
                 }
-                if (objects > 0 && objects * 2 > held) {
+                final List<String> keys = itemKeys(entry.field(), entry.scope());
+                if (!keys.isEmpty()) {
                     warnings.add(entry.path() + ": field '" + entry.field() + "' holds items with fields of their "
                                  + "own (" + String.join(", ", keys.stream().limit(6).toList()) + "): each item is "
                                  + "written as its fields' text run together; read them with a for_each group with "
                                  + "fields, or an xpath picking one item");
                 }
             }
+        }
+
+        // A group over a record's array whose field reads the item whole (item: true) where the items are objects
+        // with fields of their own: each is written as its fields' text run together. Seen in chat 184:
+        // {path: 'Configuration', for_each: {array: 'event.Parameters'}, fields: [{path: 'Name', item: true}]}
+        // wrote each {Name, Value} item to Configuration/Name as "NameFW to personal".
+        private void checkGroupItems(final FieldMapping entry) {
+            final ItemSource source = entry.group().forEach();
+            if (source == null || !hasText(source.array()) || source.item() != null
+                || derived.contains(source.array())) {
+                return;
+            }
+            for (final FieldMapping field : entry.group().fields()) {
+                if (!"".equals(field.item()) || hasText(field.field()) || field.group() != null
+                    || hasText(field.dataName())) {
+                    continue;
+                }
+                final List<String> keys = itemKeys(source.array(), entry.scope());
+                if (keys.isEmpty()) {
+                    return;
+                }
+                final String leaf = field.strippedPath();
+                final String name = leaf.substring(leaf.lastIndexOf('/') + 1);
+                final String key = keys.stream()
+                        .filter(each -> each.equalsIgnoreCase(name))
+                        .findFirst()
+                        .orElse(keys.getFirst());
+                warnings.add(entry.path() + "/" + leaf + ": the items of '" + source.array() + "' have fields of "
+                             + "their own (" + String.join(", ", keys.stream().limit(6).toList()) + "), and item: "
+                             + "true writes each whole, its fields' text run together; read a key of the item "
+                             + "instead, e.g. {\"path\": \"" + leaf + "\", \"field\": \"" + key + "\"}");
+            }
+        }
+
+        // The keys of a field's items where most of the records (or items) holding it hold objects, each once in the
+        // order first seen; none where they don't.
+        private List<String> itemKeys(final String field, final String scope) {
+            int held = 0;
+            int objects = 0;
+            final Set<String> keys = new LinkedHashSet<>();
+            for (final Object record : where(scope)) {
+                if (!(record instanceof final Map<?, ?> map) || map.get(field) == null) {
+                    continue;
+                }
+                held++;
+                final Object value = map.get(field);
+                final List<?> items = value instanceof final List<?> list
+                        ? list
+                        : List.of(value);
+                if (items.stream().anyMatch(Map.class::isInstance)) {
+                    objects++;
+                    items.stream().filter(Map.class::isInstance)
+                            .forEach(item -> ((Map<?, ?>) item).keySet().forEach(k -> keys.add(String.valueOf(k))));
+                }
+            }
+            return objects > 0 && objects * 2 > held
+                    ? List.copyOf(keys)
+                    : List.of();
         }
 
         // A time whose zone a field gives (asked for by the user): the sample's zones Stroom wouldn't read, mapped

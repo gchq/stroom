@@ -353,7 +353,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             SystemNames.apply(mapping, variantField, system.systemName(), systemNotes);
             if (variantField == null && SystemNames.single(system.systemName()) == null) {
                 // A group of several source types: one name, or each source type's own (seen in chat 182).
-                SourceTypeSystemNames.unnamedNote(groupScope).ifPresent(systemNotes::add);
+                SourceTypeSystemNames.offerInNote(groupScope, systemNotes);
             }
         } else {
             // Kept on the registry's rows when the group is saved (build_translation_xslt): the draft writes nothing.

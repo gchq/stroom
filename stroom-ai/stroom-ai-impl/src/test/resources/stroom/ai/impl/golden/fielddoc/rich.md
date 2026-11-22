@@ -35,7 +35,7 @@ When `what` in dictionary `Logons` and `ok` present. Below the action element: 4
 
 | XPath | Description | From |
 | --- | --- | --- |
-| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | "Logon" |
+| `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | event type Logon, recognised by `what` in dictionary `Logons` and `ok` present |
 | `EventDetail/Authenticate/Action` | The authentication action that was performed, e.g. Logon, Logoff. | "Logon" |
 | `EventDetail/Authenticate/User/Id` | An identifier for the user. | lookup `USERS` by `user` -> `name` |
 | `EventDetail/Authenticate/Outcome/Success` | If the outcome of an event was successful then 'true', 'false' otherwise. | `ok`: yes -> true, no -> false; otherwise false |
