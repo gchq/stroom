@@ -424,6 +424,57 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void aRoundWithoutThePipelineContinuesTheOneDocumentationWaitingForDescriptions() {
+        // Seen in chat 187: the second round gave build and field_descriptions without pipeline_uuid and was
+        // refused, though only one documentation was waiting for them.
+        world.pipeline(BUILD, "Acme", "p");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("index", Map.of())));
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    final Descriptions described = inv.getArgument(6);
+                    described.of("EventSource/Generator", "src", List.of("v"), "schema words");
+                    return "section";
+                });
+        final Map<String, Object> first = world.call(tool, context, "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", "
+                                                                    + "\"change\": \"Created\", \"stream_ids\": [5], "
+                                                                    + "\"markdown\": \"## Purpose and data\\n\\n"
+                                                                    + "Mail.\\n\"}");
+        assertThat(first).containsEntry("status", "needs_descriptions");
+
+        final Map<String, Object> written = world.call(tool, context, "{\"build\": \"bb\", \"stream_ids\": [5], "
+                                                                      + "\"field_descriptions\": "
+                                                                      + "{\"EventSource/Generator\": "
+                                                                      + "\"The mailer.\"}}");
+
+        assertThat(written).containsKey("uuid").doesNotContainKey("status");
+        assertThat(String.valueOf(written.get("continued")))
+                .startsWith("Continued the documentation of pipeline 'Acme' (p) waiting for descriptions")
+                .contains("pipeline_uuid was left out");
+        assertThat(world.world.body(String.valueOf(written.get("uuid")))).contains("Mail.", "The mailer.");
+        assertThat(world.pendingDocs.warning(context.session())).isEmpty();
+
+        // None waiting now: refused as before.
+        assertThat(world.refusal(tool, context, "{\"build\": \"bb\", \"field_descriptions\": "
+                                                + "{\"EventSource/Generator\": \"The mailer.\"}}"))
+                .startsWith("Give pipeline_uuid (or index_uuid)")
+                .contains("Nothing was written.");
+    }
+
+    @Test
+    void aRoundWithoutThePipelineIsRefusedWhenSeveralDocumentationsWait() {
+        world.pendingDocs.remember(context.session(), "p1", "Acme", "## Purpose and data\n\nx\n", Map.of());
+        world.pendingDocs.rememberIndex(context.session(), "i1", "Acme-Index", "## Purpose and data\n\ny\n",
+                Map.of());
+
+        assertThat(world.refusal(tool, context, "{\"build\": \"bb\", \"field_descriptions\": "
+                                                + "{\"EventSource/Generator\": \"The mailer.\"}}"))
+                .startsWith("Give pipeline_uuid (or index_uuid)")
+                .contains("pipeline 'Acme' (p1)", "index 'Acme-Index' (i1)", "Nothing was written.");
+        // Both still wait.
+        assertThat(world.pendingDocs.of(context.session())).hasSize(2);
+    }
+
+    @Test
     void anXsltEditedSinceItsMappingIsDocumentedAsItRunsEvenWithTheAgentsOwnSection() {
         // Seen: TWITTER's XSLT saved by hand (save_xslt) with mentions and links in Data arrays, and the Field
         // mapping section generated from the mapping kept before them: links left out, mentions shown joined. The

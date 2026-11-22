@@ -60,8 +60,8 @@ class PendingDocumentation {
                   final String pipelineName,
                   final String markdown,
                   final Map<String, String> descriptions) {
-        pending.put(key(session, pipelineUuid), new Pending(pipelineUuid, "pipeline '" + pipelineName + "'",
-                markdown, Map.copyOf(descriptions)));
+        pending.put(key(session, pipelineUuid), new Pending(pipelineUuid, false,
+                "pipeline '" + pipelineName + "'", markdown, Map.copyOf(descriptions)));
     }
 
     /// Remembers what a call gave for an existing index's doc that wasn't written (seen in testing: its
@@ -77,8 +77,8 @@ class PendingDocumentation {
                        final String indexName,
                        final String markdown,
                        final Map<String, String> descriptions) {
-        pending.put(key(session, indexUuid), new Pending(indexUuid, "index '" + indexName + "'", markdown,
-                Map.copyOf(descriptions)));
+        pending.put(key(session, indexUuid), new Pending(indexUuid, true, "index '" + indexName + "'",
+                markdown, Map.copyOf(descriptions)));
     }
 
     /// @param session The session.
@@ -134,10 +134,11 @@ class PendingDocumentation {
     /// A doc not yet written.
     ///
     /// @param uuid         The pipeline or index.
+    /// @param index        True if it is an index's doc (given as index_uuid), false for a pipeline's.
     /// @param label        What it is, as the warning names it: `pipeline 'name'` or `index 'name'`.
     /// @param markdown     The markdown last given.
     /// @param descriptions The descriptions given so far.
-    record Pending(String uuid, String label, String markdown, Map<String, String> descriptions) {
+    record Pending(String uuid, boolean index, String label, String markdown, Map<String, String> descriptions) {
 
     }
 }

@@ -266,11 +266,20 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
-            final Map<String, Object> result = new LinkedHashMap<>(document(call, context));
+            final Optional<PendingDocumentation.Pending> continued = continuedPending(call, context);
+            final ToolCall effective = continued
+                    .map(pending -> withUuid(call, pending))
+                    .orElse(call);
+            final Map<String, Object> result = new LinkedHashMap<>(document(effective, context));
+            continued.ifPresent(pending -> result.put("continued", "Continued the documentation of "
+                                                                   + pending.label() + " (" + pending.uuid()
+                                                                   + ") waiting for descriptions: "
+                                                                   + uuidArg(pending) + " was left out, and "
+                                                                   + "it is the only one waiting."));
             // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself,
             // and gives its model the outline in the result's stub.
-            final String key = LargeResults.keyOf(stringArg(call, BUILD_ARG), stringArg(call, PIPELINE_UUID_ARG),
-                    stringArg(call, INDEX_UUID_ARG));
+            final String key = LargeResults.keyOf(stringArg(effective, BUILD_ARG),
+                    stringArg(effective, PIPELINE_UUID_ARG), stringArg(effective, INDEX_UUID_ARG));
             final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), result,
                     (caller, said, limit) -> DocumentationOutline.outlineIfLarge(caller, context.workspace(), key,
                             said, limit));
@@ -278,6 +287,42 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         } catch (final ToolRefusal | PipelineUnreadableException e) {
             return JsonResults.refused(e.getMessage());
         }
+    }
+
+    // A call naming neither a pipeline nor an index continues the one documentation waiting for descriptions, as
+    // if it had been named (seen in chat 187: a second round gave build and field_descriptions without
+    // pipeline_uuid and was refused). None waiting: refused below as before; several: refused here, naming them.
+    // Not for an evaluation report, which is a doc of its own.
+    private Optional<PendingDocumentation.Pending> continuedPending(final ToolCall call,
+                                                                    final ToolCallContext context) {
+        if (stringArg(call, PIPELINE_UUID_ARG) != null
+            || stringArg(call, INDEX_UUID_ARG) != null
+            || ToolArgs.flag(call, EVALUATION_ARG)) {
+            return Optional.empty();
+        }
+        final List<PendingDocumentation.Pending> waiting = pendingDocs.of(context.session());
+        if (waiting.size() > 1) {
+            throw new ToolRefusal("Give " + PIPELINE_UUID_ARG + " (or " + INDEX_UUID_ARG + "): the documentation "
+                                  + "of " + String.join(", ", waiting.stream()
+                    .map(pending -> pending.label() + " (" + pending.uuid() + ")")
+                    .toList()) + " is waiting for descriptions, so which one this call is for isn't known. "
+                                  + "Nothing was written.");
+        }
+        return waiting.stream().findFirst();
+    }
+
+    // The call as if it had named the pending documentation's pipeline or index.
+    private static ToolCall withUuid(final ToolCall call, final PendingDocumentation.Pending pending) {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        argsMap(call).forEach((key, value) -> args.put(String.valueOf(key), value));
+        args.put(uuidArg(pending), pending.uuid());
+        return new ToolCall(call.id(), call.name(), ToolJson.dumpsCompact(args));
+    }
+
+    private static String uuidArg(final PendingDocumentation.Pending pending) {
+        return pending.index()
+                ? INDEX_UUID_ARG
+                : PIPELINE_UUID_ARG;
     }
 
     private Map<String, Object> document(final ToolCall call, final ToolCallContext context) {

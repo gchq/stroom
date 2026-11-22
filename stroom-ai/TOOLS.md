@@ -955,7 +955,12 @@ or builds something huge is stopped; queries are at most 10,000 characters. The 
 (`test`, `match`, `capture`, `sub`, `gsub`...) take Java regular expressions of up to 200 characters, matched so a
 backtracking pattern is stopped at the time limit.
 
-* **Arguments**: `path`, `query` (required); `raw`; `out`.
+* **Arguments**: `path`, `query` (required); `raw`; `slurp` (as jq -s: every JSON value in the file read into one
+  array and the query run once on it); `out`.
+* **Fails**: a query failing on one value of a file holding several (without `slurp`; not one stopped for its
+  work) says how many the file holds, which one it failed on, that the query ran on each on its own, and to give
+  `slurp: true` (2026-11-23, chat 187: `group_by` on a JSON lines file of fetched records failed per record, and the
+  agent fell back to grep).
 * **Refuses**: a file that isn't JSON ("is not JSON that can be read: ..."); a blocked function, or a query too long.
 
 ### `xpath`
@@ -6179,7 +6184,9 @@ processing instruction or CDATA section becomes `&lt;`. The tools' own `<br>` li
 `<!-- stroom-mcp … -->` blocks (to the first `-->`, as a browser ends a comment) and autolinks are kept. Seen in
 the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section in a subject.
 
-* **Arguments**: `build` (required); `pipeline_uuid` or `index_uuid`; `markdown`; `change`; `stream_ids`;
+* **Arguments**: `build` (required); `pipeline_uuid` or `index_uuid` (both left out: the session's one
+  documentation waiting for descriptions, as if named, with a `continued` note saying so; 2026-11-23, chat 187: a
+  second round without `pipeline_uuid` was refused); `markdown`; `change`; `stream_ids`;
   `accept_errors` (a list of `{element, example, reason, matches}`, one object, or JSON text); `field_descriptions`
   (`{field: description}`, or JSON text); `field_mapping_layout` (`by_event_type` or `compact`; else an AGENTS
   doc's Documentation section, else by event type); `index_itself`; `document_missing_fields`; `evaluation`.
@@ -6198,7 +6205,8 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
 * **Large, outside Stroom** (`DocumentationOutline`, 2026-11-20; cases 35, 36, 56: 73k–88k): `field_mapping` (or
   `reference_maps`) given by size and headings, written to the doc as generated, saved whole a line an entry to
   `/outputs/write_documentation/<build>.json`.
-* **Refuses**: no `build`; empty markdown; neither `pipeline_uuid` nor `index_uuid`; an unknown layout; an update
+* **Refuses**: no `build`; empty markdown; neither `pipeline_uuid` nor `index_uuid` with none or several
+  documentations waiting for descriptions (several: each named, label and uuid); an unknown layout; an update
   without `change` ("give change, one line for its version control"); accepting `EventDetail/Unknown` events as a
   benign error (Unknown is agreed per rule in build_translation_xslt); `accept_errors` with `index_uuid`; an
   accepted error without `example` or `reason` (`accept_errors[0].example is required`); a kept mapping with no
