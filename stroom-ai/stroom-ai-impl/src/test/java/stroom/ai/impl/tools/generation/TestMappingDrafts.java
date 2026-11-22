@@ -86,8 +86,23 @@ class TestMappingDrafts extends GenerationFixtures {
                 "[a] required ['EventTime', 'EventDetail/TypeId'] are left out when empty.",
                 "[b] required ['EventTime', 'EventDetail/Update/After'] are left out when empty.",
                 "[c] something else")))
-                .containsExactly("[a, b] required ['EventTime', 'EventDetail/TypeId', 'EventDetail/Update/After'] are "
-                                 + "left out when empty.", "[c] something else");
+                .containsExactly("[a, b] required ['EventTime', 'EventDetail/TypeId', 'EventDetail/Update/After'] "
+                                 + "(EventDetail/TypeId: a only; EventDetail/Update/After: b only) are left out when "
+                                 + "empty.", "[c] something else");
+    }
+
+    @Test
+    void groupedWarningsNameEachElementOnlyWithTheRulesThatLeaveItOut() {
+        // Seen in chat 185: eight rules' lists merged into one, so a View rule was said to leave Send/Source,
+        // Move/Source and Update/After out; the agent asked the user about all of them and put 'Unknown' in each.
+        assertThat(MappingCompaction.grouped(List.of(
+                "[view] required ['EventSource/System/Name'] are left out when empty.",
+                "[send] required ['EventSource/System/Name', 'EventDetail/Send/Source'] are left out when empty.",
+                "[chat] required ['EventSource/System/Name', 'EventDetail/Send/Source'] are left out when empty.",
+                "[move] required ['EventSource/System/Name', 'EventDetail/Move/Source'] are left out when empty.")))
+                .containsExactly("[view, send, chat, move] required ['EventSource/System/Name', "
+                                 + "'EventDetail/Send/Source', 'EventDetail/Move/Source'] (EventDetail/Send/Source: "
+                                 + "send, chat only; EventDetail/Move/Source: move only) are left out when empty.");
     }
 
     @Test

@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /// A translation mapping checked against the sample's records before anything is generated or stepped (on [LocalCheck]
 /// and [XPathChecks]): fields no record has, time formats the values don't fit, schema values a constant or map gives,
@@ -68,6 +69,10 @@ final class MappingSampleCheck {
     /// The key the contradictions of the event types not yet confirmed go under ([SourceNotes#checkMapping]),
     /// taken out by the caller.
     static final String CATALOGUE_CONTRADICTIONS = "catalogue_contradictions";
+    /// The key the required elements every sample record of their rule fills go under, by rule
+    /// ([LocalCheck#requiredFilled]), for the caller to drop from the warning that they may be left out; taken out
+    /// by the caller.
+    static final String REQUIRED_FILLED = "required_filled";
     /// The key what the check read and worked out goes under ([Earlier]), for the caller to take out and give the
     /// check of the same sample again, once the user's answers have changed the mapping.
     static final String EARLIER = "earlier";
@@ -198,9 +203,10 @@ final class MappingSampleCheck {
                          + "(step_records at the survey's locations), or give a sample that holds them");
         }
         // The required elements the sample's records leave out, counted.
-        warnings.addAll(LocalCheck.requiredLeftEmpty(checked,
-                XsltGenerator.generate(mapping, schema, NullSafe.nonBlankStringElse(schema.version(), "4.1.0"))
-                        .requiredOnInput()));
+        final Map<String, List<String>> requiredOnInput = XsltGenerator.generate(mapping, schema,
+                NullSafe.nonBlankStringElse(schema.version(), "4.1.0")).requiredOnInput();
+        warnings.addAll(LocalCheck.requiredLeftEmpty(checked, requiredOnInput));
+        final Map<String, Set<String>> requiredFilled = LocalCheck.requiredFilled(checked, requiredOnInput);
         warnings.addAll(checkXPaths(mapping, samples, splitter));
         warnings.addAll(checkSeveralValues(mapping, samples, splitter));
         final boolean extractionsAlike = reused != null && same.extractions() != null
@@ -231,6 +237,7 @@ final class MappingSampleCheck {
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
         check.put(PLACEHOLDERS, placeholders);
+        check.put(REQUIRED_FILLED, requiredFilled);
         check.put(CONFIRMED_LOST, ConfirmedEventTypes.lost(checked, catalogue, scope, schema));
         check.put(CATALOGUE_CONTRADICTIONS, SourceNotes.checkMapping(checked, catalogue));
         final List<String> notChecked = ConfirmedEventTypes.notChecked(checked, catalogue);

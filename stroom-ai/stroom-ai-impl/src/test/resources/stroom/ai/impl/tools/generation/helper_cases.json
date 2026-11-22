@@ -1553,7 +1553,7 @@
    ]
   ],
   "result": [
-   "[a, b] required ['EventTime', 'EventDetail/TypeId', 'EventDetail/Update/After'] are left out when empty.",
+   "[a, b] required ['EventTime', 'EventDetail/TypeId', 'EventDetail/Update/After'] (EventDetail/TypeId: a only; EventDetail/Update/After: b only) are left out when empty.",
    "[c] something else",
    "plain",
    "plain",

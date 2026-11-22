@@ -1021,6 +1021,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         b.lost.forEach(one -> warnings.add(lostWarning(one)));
         b.qualified = (List<LocalCheck.QualifiedIds>) check.remove(MappingSampleCheck.DOMAIN_QUALIFIED);
         b.placeholders = (List<Placeholders.Found>) check.remove(MappingSampleCheck.PLACEHOLDERS);
+        // What the sample's records all fill is no longer said to be maybe left out (seen in chat 185: the agent
+        // asked the user about each and put 'Unknown' in all of them).
+        XsltGenerator.withoutRequiredFilled(warnings,
+                (Map<String, Set<String>>) check.remove(MappingSampleCheck.REQUIRED_FILLED));
         b.result.put("sample_check", check);
         JsonValues.strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
         final List<String> found = new ArrayList<>(JsonValues.strings(check.get("problems")));

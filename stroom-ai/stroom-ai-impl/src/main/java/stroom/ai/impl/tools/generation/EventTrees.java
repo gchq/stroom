@@ -571,10 +571,10 @@ final class EventTrees {
         writtenTwice(rule);
         WrittenTwice.warnings(m.common(), rule).forEach(warning -> note(warnings, warning));
         if (!conditional.isEmpty()) {
-            note(warnings, "[" + rule.name() + "] required " + ToolText.list(conditional) + " are left out when "
-                           + "their input fields are empty, which makes the event invalid. Fine if those fields are "
-                           + "always filled; otherwise give the mapping a default. Given the sample, the sample "
-                           + "check counts the records that leave each empty: no need to count them.");
+            note(warnings, "[" + rule.name() + "] required " + ToolText.list(conditional)
+                           + XsltGenerator.REQUIRED_LEFT_OUT + " Fine if those fields are always filled; otherwise "
+                           + "give the mapping a default. Given the sample, the sample check counts the records that "
+                           + "leave each empty: no need to count them.");
         }
     }
 

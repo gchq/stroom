@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -244,6 +245,49 @@ class TestMappingSampleCheck {
         assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
                 TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
                 .noneSatisfy(warning -> assertThat(warning).contains("values in sample record"));
+    }
+
+    @Test
+    void aRequiredElementEverySampleRecordFillsIsNoLongerSaidToBeMaybeLeftOut() {
+        // Seen in chat 185: the generator's "required [...] are left out when their input fields are empty" kept
+        // beside a sample check that found none empty; the agent asked the user and put 'Unknown' in each.
+        final String sample = "<records><record><t>2022-01-15T14:52:23.000Z</t><cmd>run.exe</cmd><dir>c</dir>"
+                              + "</record><record><t>2022-01-15T14:52:24.000Z</t><cmd>b.exe</cmd></record></records>";
+        final Map<String, Object> json = new LinkedHashMap<>(Map.of("input", "xml", "root", "records",
+                "record", "record", "common", List.of(
+                        Map.of("path", "EventTime/TimeCreated", "field", "t"),
+                        Map.of("path", "EventSource/System/Name", "value", "S"),
+                        Map.of("path", "EventSource/System/Environment", "value", "Dev"),
+                        Map.of("path", "EventSource/Generator", "value", "g"),
+                        Map.of("path", "EventSource/Device/HostName", "value", "h"))));
+        json.put("events", List.of(Map.of("name", "launch", "fields", List.of(
+                Map.of("path", "EventDetail/TypeId", "value", "Launch"),
+                Map.of("path", "EventDetail/Process/Action", "value", "Execute"),
+                Map.of("path", "EventDetail/Process/Command", "field", "cmd")))));
+        final TranslationMapping mapping = TranslationMapping.fromJson(json);
+        final List<String> warnings = new ArrayList<>(XsltGenerator.generate(mapping, TranslationWorld.SCHEMA,
+                "4.1.0").warnings());
+        assertThat(warnings).anySatisfy(warning -> assertThat(warning)
+                .startsWith("[launch] required [")
+                .contains("'EventDetail/Process/Command'] are left out"));
+
+        final Map<String, Object> checked = MappingSampleCheck.check(mapping, List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC());
+        @SuppressWarnings("unchecked") final Map<String, Set<String>> filled =
+                (Map<String, Set<String>>) checked.get(MappingSampleCheck.REQUIRED_FILLED);
+        assertThat(filled.get("launch")).containsExactlyInAnyOrder("EventTime", "EventDetail/Process/Command");
+        XsltGenerator.withoutRequiredFilled(warnings, filled);
+        assertThat(warnings).noneSatisfy(warning -> assertThat(warning).contains("are left out when"));
+
+        // Only what the sample fills is dropped: the rest of the list stays.
+        final List<String> two = new ArrayList<>(List.of("[launch] required ['EventDetail/Process/Command', "
+                                                         + "'EventDetail/Process/Outcome'] are left out when their "
+                                                         + "input fields are empty, which makes the event invalid. "
+                                                         + "Fine if those fields are always filled.", "other"));
+        XsltGenerator.withoutRequiredFilled(two, filled);
+        assertThat(two).containsExactly("[launch] required ['EventDetail/Process/Outcome'] are left out when their "
+                                        + "input fields are empty, which makes the event invalid. Fine if those "
+                                        + "fields are always filled.", "other");
     }
 
     @Test

@@ -1067,6 +1067,40 @@ public final class LocalCheck {
     /// @return The warnings.
     public static List<String> requiredLeftEmpty(final CheckedRecords checked,
                                                  final Map<String, List<String>> requiredOnInput) {
+        return requiredCounts(checked, requiredOnInput).stream()
+                .filter(count -> count.empty() > 0)
+                .map(count -> "[" + count.rule() + "] " + count.path() + " is required by the schema, but its input ("
+                              + count.fields().stream().map(f -> "'" + f + "'").collect(Collectors.joining(", "))
+                              + ") is empty in " + count.empty() + " of the " + count.taken() + " sample records "
+                              + "this rule takes: those events fail the schema, which reports the element written "
+                              + "after it (often Data) as unexpected. Give the entry a default, or any_of with a "
+                              + "field that is filled.")
+                .toList();
+    }
+
+    /// The required elements written only when their inputs have a value that every sample record of their rule
+    /// fills, by rule: the warning that they may be left out says nothing more once the sample has been counted
+    /// (seen in chat 185: kept beside a check that found none empty, the agent asked the user about them all and put
+    /// 'Unknown' in each). Only entries read from fields are counted, as in [#requiredLeftEmpty(CheckedRecords, Map)],
+    /// and only rules that took a sample record.
+    ///
+    /// @param checked         The sample's records, as the mapping reads them.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value, by rule.
+    /// @return The elements filled in every sample record, by rule.
+    public static Map<String, Set<String>> requiredFilled(final CheckedRecords checked,
+                                                         final Map<String, List<String>> requiredOnInput) {
+        final Map<String, Set<String>> filled = new LinkedHashMap<>();
+        requiredCounts(checked, requiredOnInput).stream()
+                .filter(count -> count.taken() > 0 && count.empty() == 0)
+                .forEach(count -> filled.computeIfAbsent(count.rule(), ignored -> new LinkedHashSet<>())
+                        .add(count.path()));
+        return filled;
+    }
+
+    // Each rule's required elements read only from fields, with how many sample records the rule takes and how many
+    // of those leave the element's inputs empty.
+    private static List<RequiredCount> requiredCounts(final CheckedRecords checked,
+                                                      final Map<String, List<String>> requiredOnInput) {
         final TranslationMapping mapping = checked.mapping();
         final List<Object> records = checked.records();
         if (hasText(mapping.forEach()) || requiredOnInput.isEmpty()) {
@@ -1075,7 +1109,7 @@ public final class LocalCheck {
         final Set<String> derived = derived(mapping);
         final List<String> rules = rulesOf(checked);
         final List<Map<String, String>> extracted = extractedOf(checked);
-        final List<String> out = new ArrayList<>();
+        final List<RequiredCount> out = new ArrayList<>();
         for (final EventRule rule : mapping.events()) {
             for (final String path : requiredOnInput.getOrDefault(rule.name(), List.of())) {
                 final List<FieldMapping> entries = new ArrayList<>(mapping.common());
@@ -1118,14 +1152,7 @@ public final class LocalCheck {
                         empty++;
                     }
                 }
-                if (empty > 0) {
-                    out.add("[" + rule.name() + "] " + path + " is required by the schema, but its input ("
-                            + fields.stream().map(f -> "'" + f + "'").collect(Collectors.joining(", "))
-                            + ") is empty in " + empty + " of the " + taken + " sample records this rule takes: "
-                            + "those events fail the schema, which reports the element written after it (often "
-                            + "Data) as unexpected. Give the entry a default, or any_of with a field that is "
-                            + "filled.");
-                }
+                out.add(new RequiredCount(rule.name(), path, List.copyOf(fields), taken, empty));
             }
         }
         return out;
@@ -2114,5 +2141,9 @@ public final class LocalCheck {
                                + "and TypeId were not checked for them; step_sample shows what they become");
             }
         }
+    }
+
+    private record RequiredCount(String rule, String path, List<String> fields, int taken, int empty) {
+
     }
 }

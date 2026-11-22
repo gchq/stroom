@@ -7466,7 +7466,11 @@ pipeline would, in `stroom-ai-impl`:
     many);
   * required elements a rule writes only when their inputs have a value, whose inputs are empty in its records
     (`requiredLeftEmpty`; seen: the schema's error named the element after the one left out, read as Data in the
-    wrong place, two rounds of stepping before the Command entry got a default);
+    wrong place, two rounds of stepping before the Command entry got a default). The elements every record of their
+    rule fills (`requiredFilled`) are dropped from the generator's warning that they may be left out, which then names
+    only what the sample says nothing of (seen in chat 185: kept, the agent asked the user and put 'Unknown' in
+    each). Rules' warnings alike are merged, an element only some rules name followed by `(element: rule1, rule2
+    only)`;
   * Data entries reading fields none of the rule's records hold, as a warning (`dataNotHeld`; seen: a SecretServer
     launch rule's rpc_account, target and duration_ms, in none of its records);
   * value maps none of whose keys is a value the records give the field, so every record gets the default or nothing,

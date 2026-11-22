@@ -133,6 +133,12 @@ public final class XsltGenerator {
     public static final String UNSEEN_SOURCE_TYPE_END = ", not seen when this feed was surveyed: survey the feed "
                                                         + "again to cover it";
     // XML's white space around a value, as XPath's replace() strips it (and SourceTypeFields.valueOf).
+    /// How a rule's warning that required elements are left out when their inputs are empty goes on after its list.
+    static final String REQUIRED_LEFT_OUT = " are left out when their input fields are empty, which makes the "
+                                            + "event invalid.";
+    private static final Pattern REQUIRED_LEFT_OUT_WARNING = Pattern.compile(
+            "^\\[([^\\]]+)\\] required \\[('[^\\]]*')\\](" + Pattern.quote(REQUIRED_LEFT_OUT) + ".*)$",
+            Pattern.DOTALL);
     private static final String XML_SPACE_AROUND = "'^[ \\t\\n\\r]+|[ \\t\\n\\r]+$'";
     // The rule the common module's parts are written from: the wrapper's entries alone.
     private static final String COMMON_RULE = "common";
@@ -3518,6 +3524,38 @@ public final class XsltGenerator {
 
     // --------------------------------------------------------------------------------
 
+
+    /// Required elements of a rule that are left out when their input fields are empty: drop from the warnings what
+    /// the sample check found filled in every record of the rule (see
+    /// [stroom.ai.impl.tools.draft.LocalCheck#requiredFilled]).
+    ///
+    /// @param warnings The warnings, changed in place.
+    /// @param filled   The required elements every sample record of their rule fills, by rule.
+    public static void withoutRequiredFilled(final List<String> warnings, final Map<String, Set<String>> filled) {
+        if (filled.isEmpty()) {
+            return;
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String warning : warnings) {
+            final Matcher found = REQUIRED_LEFT_OUT_WARNING.matcher(warning);
+            if (!found.matches() || !filled.containsKey(found.group(1))) {
+                out.add(warning);
+                continue;
+            }
+            final List<String> left = new ArrayList<>();
+            final Matcher quoted = Pattern.compile("'([^']*)'").matcher(found.group(2));
+            while (quoted.find()) {
+                if (!filled.get(found.group(1)).contains(quoted.group(1))) {
+                    left.add(quoted.group(1));
+                }
+            }
+            if (!left.isEmpty()) {
+                out.add("[" + found.group(1) + "] required " + ToolText.list(left) + found.group(3));
+            }
+        }
+        warnings.clear();
+        warnings.addAll(out);
+    }
 
     /// What [XsltGenerator#generate(TranslationMapping, EventSchema, String, boolean)] gives.
     ///

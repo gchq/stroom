@@ -150,8 +150,11 @@ public final class MappingCompaction {
         return out;
     }
 
-    /// Messages the same but for their rule (and the list they name) as one, `[rule1, rule2] ...` with the lists
-    /// merged: six rules' "required [...] are left out" warnings were a quarter of a draft's reply.
+    /// Messages the same but for their rule (and the list they name) as fewer, `[rule1, rule2] ...`: six rules'
+    /// "required [...] are left out" warnings were a quarter of a draft's reply. The lists are merged, and an item
+    /// not every rule names is followed by the rules that do (`(item: rule1 only)`; seen in chat 185: eight rules'
+    /// lists merged said a View rule left Send/Source, Move/Source and Update/After out, and the agent asked the user
+    /// about each and put 'Unknown' in all of them).
     ///
     /// @param messages Problems or warnings.
     /// @return Them grouped, in order of each group's first.
@@ -181,19 +184,34 @@ public final class MappingCompaction {
                         : "[" + member[0] + "] " + member[1]));
                 continue;
             }
-            final Set<String> items = new LinkedHashSet<>();
+            // Each item with the rules naming it, in order of first mention; then the items by those rules.
+            final Map<String, List<String>> rulesByItem = new LinkedHashMap<>();
             for (final String[] member : members) {
                 final Matcher list = LIST.matcher(member[1]);
                 if (list.find()) {
                     final Matcher quoted = QUOTED.matcher(list.group(1));
                     while (quoted.find()) {
-                        items.add(quoted.group(1));
+                        rulesByItem.computeIfAbsent(quoted.group(1), ignored -> new ArrayList<>()).add(member[0]);
                     }
                 }
             }
-            final String body = LIST.matcher(members.getFirst()[1])
-                    .replaceFirst(Matcher.quoteReplacement(ToolText.list(List.copyOf(items))));
-            out.add("[" + String.join(", ", members.stream().map(member -> member[0]).toList()) + "] " + body);
+            if (rulesByItem.isEmpty()) {
+                out.add("[" + String.join(", ", members.stream().map(member -> member[0]).toList()) + "] "
+                        + members.getFirst()[1]);
+                continue;
+            }
+            final List<String> allRules = members.stream().map(member -> member[0]).distinct().toList();
+            final List<String> only = new ArrayList<>();
+            rulesByItem.forEach((item, rules) -> {
+                if (!new LinkedHashSet<>(rules).containsAll(allRules)) {
+                    only.add(item + ": " + String.join(", ", rules.stream().distinct().toList()) + " only");
+                }
+            });
+            final String list = ToolText.list(List.copyOf(rulesByItem.keySet())) + (only.isEmpty()
+                    ? ""
+                    : " (" + String.join("; ", only) + ")");
+            out.add("[" + String.join(", ", allRules) + "] "
+                    + LIST.matcher(members.getFirst()[1]).replaceFirst(Matcher.quoteReplacement(list)));
         }
         return out;
     }
