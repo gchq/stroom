@@ -25,7 +25,13 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.generation.ZoneSource;
 import stroom.ai.impl.tools.sample.TimePatterns;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,7 +45,9 @@ import java.util.regex.Pattern;
 /// offered when the sample streams' `RemoteFile` holds one.
 ///
 /// A date joined with each record's time of day is rolled over midnight (`rollover`), as a log's lines cross it. A
-/// time read with no zone or offset is read in the zone the user says (`timezone`), never assumed to be UTC.
+/// time read with no zone or offset is read in the zone the user says (`timezone`), never assumed to be UTC. A
+/// build's zone is kept in its record ([BuildRecords#rememberTimeZone]), so a redraft of the build reads its times in
+/// the zone chosen before rather than asking again; `timezone=` given changes it.
 final class TimeSources {
 
     /// The question put when records give no time.
@@ -56,6 +64,8 @@ final class TimeSources {
     /// The argument giving the answer to [#ZONE_QUESTION]: an IANA name or an offset, or `field:NAME` or
     /// `meta:NAME` (`|ZONE` the default, UTC when none) for each record's own zone.
     static final String TIMEZONE_ARG = "timezone";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TimeSources.class);
+
     private static final String FIELD_SOURCE = "field:";
     private static final String META_SOURCE = "meta:";
 
@@ -78,6 +88,8 @@ final class TimeSources {
     /// @param context   The call's context.
     /// @param consent   Asks the user in a form.
     /// @param action    The tool asking.
+    /// @param records   The build records, keeping the zone the user chose for the build.
+    /// @param build     The draft's build, or null (the zone then kept for no later draft).
     /// @param result    The draft's result (its `dateless_times` and `notes`).
     /// @param mapping   The draft's mapping, changed in place.
     /// @param fileNames The sample streams' `RemoteFile` headers.
@@ -87,6 +99,8 @@ final class TimeSources {
                       final ToolCallContext context,
                       final Consent consent,
                       final String action,
+                      final BuildRecords records,
+                      final String build,
                       final Map<String, Object> result,
                       final Map<String, Object> mapping,
                       final List<String> fileNames,
@@ -107,17 +121,19 @@ final class TimeSources {
         if (!timeless.isEmpty()) {
             times(call, context, consent, action, mapping, timeless, notes);
         }
-        zones(call, context, consent, action, result, mapping, received, notes);
+        zones(call, context, consent, action, new ZoneRecord(records, build), result, mapping, received, notes);
         result.put("notes", notes);
     }
 
     // The zone of times read with no zone or offset: the user's to say (asked for by the user), never assumed. A
-    // zone a field names, and an offset guessed from when Stroom received the sample, are offered.
+    // zone a field names, and an offset guessed from when Stroom received the sample, are offered. The zone the user
+    // chose for the build before is used without asking.
     @SuppressWarnings("unchecked")
     private static void zones(final ToolCall call,
                               final ToolCallContext context,
                               final Consent consent,
                               final String action,
+                              final ZoneRecord kept,
                               final Map<String, Object> result,
                               final Map<String, Object> mapping,
                               final List<String> received,
@@ -142,7 +158,8 @@ final class TimeSources {
         TimeZones.guess(zoneless, (Map<String, List<String>>) found.getOrDefault("examples", Map.of()), received)
                 .ifPresent(guess -> answers.putIfAbsent(guess.label(), guess.offset()));
         answers.put("Another zone: I'll name it", NONE);
-        final String chosen = chosenZone(call, context, consent, action, answers);
+        final ChosenZone choice = chosenZone(call, context, consent, action, kept, answers);
+        final String chosen = choice.zone();
         final String where = String.join(", ", zoneless.stream().map(entry -> "'" + TimeZones.readFrom(entry) + "'")
                 .distinct()
                 .toList());
@@ -155,6 +172,9 @@ final class TimeSources {
         // Chosen: the draft's notes no longer say the zone is the user's to say (seen in chat 182: the note did, and
         // the agent asked the user again in the chat).
         answeredZone(notes);
+        final String asChosen = choice.earlier()
+                ? ", the zone the user chose earlier for this build (timezone= changes it)"
+                : ", as the user chose";
         final Map<String, Object> source = zoneSource(chosen);
         if (source != null) {
             zoneless.forEach(entry -> entry.put("timezone", new LinkedHashMap<>(source)));
@@ -162,13 +182,13 @@ final class TimeSources {
                       + (source.containsKey("field")
                     ? "field '" + source.get("field") + "'"
                     : "stream meta '" + source.get("meta") + "'") + " (" + source.get("default") + " where it gives "
-                      + "none), as the user chose. build_translation_xslt names the sample's zones Stroom doesn't "
+                      + "none)" + asChosen + ". build_translation_xslt names the sample's zones Stroom doesn't "
                       + "read (abbreviations such as AEST): ask the user what each is and add it to the timezone's "
                       + "map; never guess one that names more than one zone (IST, CST).");
             return;
         }
         zoneless.forEach(entry -> entry.put("timezone", chosen));
-        notes.add("The times read from " + where + " are read in " + chosen + ", as the user chose.");
+        notes.add("The times read from " + where + " are read in " + chosen + asChosen + ".");
     }
 
     // The draft's notes once the zone is chosen: a time's note saying only that it has none dropped, and the rest
@@ -190,30 +210,47 @@ final class TimeSources {
         notes.addAll(kept);
     }
 
-    // The answer given as timezone=, else asked in a form; null when neither (no forms).
-    private static String chosenZone(final ToolCall call,
-                                     final ToolCallContext context,
-                                     final Consent consent,
-                                     final String action,
-                                     final Map<String, String> answers) {
+    // The answer given as timezone= (it wins, and is kept for the build), else the zone kept for the build, else
+    // asked in a form (the answer kept for the build); no zone when none of them (no forms).
+    private static ChosenZone chosenZone(final ToolCall call,
+                                         final ToolCallContext context,
+                                         final Consent consent,
+                                         final String action,
+                                         final ZoneRecord kept,
+                                         final Map<String, String> answers) {
         final Object given = ToolArgs.raw(call, TIMEZONE_ARG);
         if (given != null) {
-            final String zone = String.valueOf(given).strip();
-            if (zone.startsWith(FIELD_SOURCE) || zone.startsWith(META_SOURCE)) {
-                zoneSource(zone);
-                return zone;
-            }
-            if (ZoneSource.unreadable(zone)) {
-                throw new ToolRefusal("timezone '" + zone + "' is not a time zone Stroom reads: give an IANA name "
-                                      + "(e.g. Australia/Sydney, UTC), an offset (+10:00), or field:NAME or "
-                                      + "meta:NAME for each record's own zone (field:tz|UTC for a default other "
-                                      + "than UTC)");
-            }
-            return zone;
+            final String zone = givenZone(String.valueOf(given).strip());
+            kept.remember(zone, "given");
+            return new ChosenZone(zone, false);
         }
-        return consent.choose(call, context, action, ZONE_QUESTION, List.copyOf(answers.keySet()), null)
+        final Optional<String> earlier = kept.zone();
+        if (earlier.isPresent()) {
+            return new ChosenZone(earlier.get(), true);
+        }
+        final String answer = consent.choose(call, context, action, ZONE_QUESTION, List.copyOf(answers.keySet()),
+                        null)
                 .map(answers::get)
                 .orElse(null);
+        if (answer != null && !NONE.equals(answer)) {
+            kept.remember(answer, "form");
+        }
+        return new ChosenZone(answer, false);
+    }
+
+    // A zone given as timezone=, checked: a fixed zone Stroom reads, or a field's or meta's.
+    private static String givenZone(final String zone) {
+        if (zone.startsWith(FIELD_SOURCE) || zone.startsWith(META_SOURCE)) {
+            zoneSource(zone);
+            return zone;
+        }
+        if (ZoneSource.unreadable(zone)) {
+            throw new ToolRefusal("timezone '" + zone + "' is not a time zone Stroom reads: give an IANA name "
+                                  + "(e.g. Australia/Sydney, UTC), an offset (+10:00), or field:NAME or "
+                                  + "meta:NAME for each record's own zone (field:tz|UTC for a default other "
+                                  + "than UTC)");
+        }
+        return zone;
     }
 
     // A zone read record by record, as timezone= or the form gives it (field:NAME or meta:NAME, `|ZONE` the default,
@@ -408,5 +445,53 @@ final class TimeSources {
         return "rule" + (rules.size() == 1
                 ? " "
                 : "s ") + String.join(", ", rules.stream().map(rule -> "'" + rule.get("name") + "'").toList());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The zone for times with none: the user's (given, kept for the build, or answered in the form), null when not
+    // chosen; earlier when it is the one kept for the build from a draft before.
+    private record ChosenZone(String zone, boolean earlier) {
+
+    }
+
+    // The zone kept in a build's record: read and written there, nothing for a draft with no build (or one whose
+    // record can't be read or written).
+    private record ZoneRecord(BuildRecords records, String build) {
+
+        private static final String ZONE = "zone";
+
+        private Optional<String> zone() {
+            if (records == null || NullSafe.isBlankString(build)) {
+                return Optional.empty();
+            }
+            try {
+                return records.timeZone(build)
+                        .map(kept -> kept.get(ZONE))
+                        .filter(zone -> zone instanceof final String text && !text.isBlank())
+                        .map(String::valueOf);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Couldn't read build {}'s time zone: {}", build, e.getMessage()));
+                return Optional.empty();
+            }
+        }
+
+        private void remember(final String zone, final String how) {
+            if (records == null || NullSafe.isBlankString(build) || zone().filter(zone::equals).isPresent()) {
+                return;
+            }
+            final Map<String, Object> kept = new LinkedHashMap<>();
+            kept.put(ZONE, zone);
+            kept.put("how", how);
+            kept.put("recorded", LocalDate.now(ZoneOffset.UTC).toString());
+            try {
+                records.rememberTimeZone(build, kept);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Couldn't keep the time zone in build {}'s record: {}", build,
+                        e.getMessage()), e);
+            }
+        }
     }
 }

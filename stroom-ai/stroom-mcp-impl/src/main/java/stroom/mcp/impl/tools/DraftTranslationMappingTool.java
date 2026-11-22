@@ -212,7 +212,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                      + "source writes them in, as the user said (an "
                                                                      + "IANA name or +10:00), or field:NAME / "
                                                                      + "meta:NAME for each record's own (|ZONE the "
-                                                                     + "default); asked in a form when left out.")
+                                                                     + "default); asked in a form when left out, "
+                                                                     + "once a build (a redraft reuses it).")
                         .addEnumProperty(LongValues.ARG, List.of(LongValues.WHOLE, LongValues.CUT), "JSON "
                                                                   + "string values longer than Stroom's JSON "
                                                                   + "parser keeps (10,000 characters): whole (its "
@@ -343,8 +344,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         }
         // Records with no time, or times with no date: where they come from is the user's to say.
         final List<Map<String, String>> headers = streamIds.stream().map(sampleStreamTexts::receiptHeaders).toList();
-        TimeSources.apply(call, context, consent, NAME, result, mapping, headerValues(headers, "RemoteFile"),
-                headerValues(headers, "ReceivedTime"));
+        TimeSources.apply(call, context, consent, NAME, buildRecords.get(), build, result, mapping,
+                headerValues(headers, "RemoteFile"), headerValues(headers, "ReceivedTime"));
         // Several formats, each its own rules: a System/Name each, unless one was given (seen: one name for five
         // products).
         final List<Object> systemNotes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));

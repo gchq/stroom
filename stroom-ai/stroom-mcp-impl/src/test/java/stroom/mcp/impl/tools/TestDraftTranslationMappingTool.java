@@ -210,6 +210,41 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aRedraftInTheSameBuildUsesTheZoneTheUserChoseAndAnotherBuildAsksAgain() {
+        // Seen in chats 185 and 186: drafted, then drafted again in the same build (with the System/Name the user
+        // gave), and the user was asked the zone again, answering UTC both times.
+        final String local = "time,user,action\n2026-10-01 10:00:00,bob,login\n2026-10-01 10:04:00,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(13L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 13", local), List.of()));
+        world.forms = true;
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+
+        final Map<String, Object> first = world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1"));
+        assertThat(world.asked).filteredOn(TimeSources.ZONE_QUESTION::equals).hasSize(1);
+        assertThat(String.valueOf(first.get("mapping"))).contains("timezone=UTC");
+
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1",
+                "system_name", "Acme"));
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(String.valueOf(again.get("mapping"))).contains("timezone=UTC");
+        assertThat(String.valueOf(again.get("notes"))).contains("the zone the user chose earlier for this build",
+                "timezone=");
+
+        // Given as the argument, the zone given wins, and is the build's from then on.
+        final Map<String, Object> given = world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1",
+                TimeSources.TIMEZONE_ARG, "Australia/Sydney"));
+        assertThat(String.valueOf(given.get("mapping"))).contains("timezone=Australia/Sydney");
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1"))
+                .get("mapping"))).contains("timezone=Australia/Sydney");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+
+        // Another build is asked its own.
+        world.call(tool, Map.of("stream_ids", List.of(13), "build", "other-v1"));
+        assertThat(world.asked).contains(TimeSources.ZONE_QUESTION);
+    }
+
+    @Test
     void eachRecordsZoneMayBeReadFromAField() {
         // Asked for by the user: a field naming each record's zone, read record by record rather than one zone.
         final String zoned = "time,tz,user,action\n2026-10-01 10:00:00,Australia/Sydney,bob,login\n"

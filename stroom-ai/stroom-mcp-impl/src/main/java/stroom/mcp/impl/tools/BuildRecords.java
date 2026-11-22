@@ -117,6 +117,8 @@ public class BuildRecords {
     private static final String SYSTEM = "system";
     /// The record's key for the user's choice for JSON string values longer than Stroom's JSON parser keeps.
     public static final String LONG_VALUES = "long_values";
+    /// The record's key for the zone the user said the source writes times with no zone or offset in.
+    public static final String TIME_ZONE = "time_zone";
     /// The kinds of work a build may be started as.
     public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference", "assessment");
 
@@ -410,6 +412,31 @@ public class BuildRecords {
     public Map<String, Object> rememberLongValues(final String build, final Map<String, Object> choice) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(LONG_VALUES, new LinkedHashMap<>(choice)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The zone the user chose for the build's times with no zone or offset, as [#rememberTimeZone] kept it
+    /// ([TimeSources] reads it): `zone` (an IANA name, an offset, or `field:NAME` / `meta:NAME`), `how` and
+    /// `recorded` (its date); empty when none was recorded (or `build` is null).
+    public Optional<Map<String, Object>> timeZone(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(TIME_ZONE) instanceof final Map<?, ?> chosen
+                ? Optional.of(asMap(chosen))
+                : Optional.empty();
+    }
+
+    /// Records the zone the user chose for the build's times with no zone or offset, so a later draft of the build
+    /// reads them in it rather than asking again (seen in chats 185 and 186: a redraft asked the zone again, and the
+    /// user answered UTC both times).
+    ///
+    /// @param build  A build's name.
+    /// @param choice The choice, as [TimeSources] writes it.
+    /// @return The record as saved.
+    public Map<String, Object> rememberTimeZone(final String build, final Map<String, Object> choice) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(TIME_ZONE, new LinkedHashMap<>(choice)));
     }
 
     /// @param build A build's name.
