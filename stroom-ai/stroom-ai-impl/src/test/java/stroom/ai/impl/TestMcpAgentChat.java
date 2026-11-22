@@ -627,6 +627,46 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void theToolAResultSaysToCallNextIsOfferedFromTheNextStep() {
+        // Seen in chats 182 to 186: create_pipeline's next named step_sample, whose group was off, so the call was
+        // refused and made again.
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder()
+                        .content(List.of(new TextContent("{\"made\":true,\"next\":{\"step\":\"indexed\","
+                                                         + "\"call\":{\"tool\":\"index_create\",\"arguments\":{}}}}")))
+                        .isError(false)
+                        .build());
+        final McpToolset toolset = toolset(client, namedTool("pipeline_create"), namedTool("pipeline_step"),
+                namedTool("index_create"), namedTool("index_status"));
+        final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
+                null, null, null, null, null, null);
+        final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
+                usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
+                new ModelStreamer(aiService),
+                new ToolGroups.Activations(() -> aiDao), new TurnSummaries(), () -> config, aiDao, userActions,
+                workspaceArguments, toolGrants);
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("activate_pipeline")
+                        .arguments("{}").build())),
+                AiMessage.from(List.of(ToolExecutionRequest.builder().id("2").name("pipeline_create")
+                        .arguments("{}").build())),
+                AiMessage.from("Made."));
+
+        groupingChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(model.requests).hasSize(3);
+        assertThat(model.requests.get(2).toolSpecifications().stream().map(ToolSpecification::name))
+                .contains("index_create", "index_status")
+                .doesNotContain("activate_index");
+        assertThat(McpAgentChat.nextTool("{\"next\":{\"call\":{\"tool\":\"step_sample\"}}}"))
+                .contains("step_sample");
+        assertThat(McpAgentChat.nextTool("{\"next\":{\"step\":\"done\"}}")).isEmpty();
+        assertThat(McpAgentChat.nextTool("plain text with \"next\" in it")).isEmpty();
+    }
+
+    @Test
     void theModelIsRemindedAboutATaskListItHasNotUpdated() {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
                 ToolSpecification.builder().name("task_list").build(), (request, memoryId) -> "Task list updated"));
@@ -1841,12 +1881,18 @@ class TestMcpAgentChat {
         // Over the budget's threshold (1,100 of 1,375) at 11 steps in the conversation.
         estimateByStep(100);
 
+        final StringBuilder debugLog = new StringBuilder();
+
         final ChatResponse response = agentChat.chat(model, null, 7, messages, searchToolset(), 99,
-                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, new ContextBudget(1_375, 80));
+                new AtomicBoolean(false), taskContext, 1, debugLog, 0, new ContextBudget(1_375, 80));
 
         assertThat(response.aiMessage().text()).isEqualTo("done");
         final List<ChatRequest> summaries = requests.stream().filter(TestMcpAgentChat::isSummaryRequest).toList();
         assertThat(summaries).hasSize(1);
+        // Kept in the question's debug detail, to see what the agent carried on from (seen in chat 186: nowhere).
+        assertThat(debugLog.toString())
+                .contains("#### Summary of 7 earlier step(s), in their place")
+                .contains("Read files a and b; wrote /outputs/x.json.");
         final String input = ((UserMessage) summaries.getFirst().messages().get(1)).singleText();
         // The seven earlier steps, each call and result, and not the latest four.
         assertThat(input)

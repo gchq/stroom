@@ -311,7 +311,8 @@ class McpAgentChat {
         }
 
         // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
-        resumePending(chatId, run.conversation, run.tools, toolset, workingMessageId, taskContext, debugLog);
+        resumePending(chatId, run.conversation, run.tools, toolset, run.toolGroups, workingMessageId, taskContext,
+                debugLog);
 
         final int maxIterations = maxToolIterations();
         // From the question's list so far, as one kept before the run stopped for the user's approval is still to be
@@ -342,7 +343,8 @@ class McpAgentChat {
         // Loop cap hit. Make one final call with no tools so the model has to answer in words.
         noteStepLimit(chatId, maxIterations);
         if (response != null && response.aiMessage().hasToolExecutionRequests()) {
-            return call(chatModel, run.conversation, null, chatId, modelDoc, budget, workingMessageId);
+            return call(chatModel, run.conversation, null, chatId, modelDoc, budget, workingMessageId,
+                    run.debugLog);
         }
         return response;
     }
@@ -444,12 +446,12 @@ class McpAgentChat {
     // A call with no tools offered, for a run that has none.
     private ChatResponse plainCall(final Run run) {
         ChatResponse response = call(run.chatModel, run.conversation, null, run.chatId, run.modelDoc, run.budget,
-                run.workingMessageId);
+                run.workingMessageId, run.debugLog);
         // If the user added something while the model worked, answer again with it.
         for (int i = 0; i < MAX_STEER_FOLLOW_UPS && run.steerFeed.addTo(run.conversation, response.aiMessage());
              i++) {
             response = call(run.chatModel, run.conversation, null, run.chatId, run.modelDoc, run.budget,
-                    run.workingMessageId);
+                    run.workingMessageId, run.debugLog);
         }
         return response;
     }
@@ -498,7 +500,7 @@ class McpAgentChat {
 
         return LOGGER.logDurationIfDebugEnabled(
                 () -> call(run.chatModel, run.conversation, offered, chatId, run.modelDoc, run.budget,
-                        run.workingMessageId),
+                        run.workingMessageId, run.debugLog),
                 r -> "chat chatId=" + chatId + " iteration=" + iteration
                      + " toolCalls=" + r.aiMessage().toolExecutionRequests().size());
     }
@@ -632,7 +634,7 @@ class McpAgentChat {
                 run.conversation.add(ToolExecutionResultMessage.from(toolRequest,
                         runShowingProgress(run.toolset, toolRequest, run.workingMessageId, progress, () ->
                                 runAndRecord(chatId, callMessage, toolRequest, toolsNow, run.toolset,
-                                        run.debugLog, callNo, unattended))));
+                                        run.toolGroups, run.debugLog, callNo, unattended))));
             }
             case DENY -> run.conversation.add(ToolExecutionResultMessage.from(toolRequest,
                     recordNotRun(chatId, toolRequest, "Not run: " + verdict.reason(), unattended,
@@ -732,6 +734,7 @@ class McpAgentChat {
                                 final ToolExecutionRequest toolRequest,
                                 final Map<ToolSpecification, ToolExecutor> tools,
                                 final McpToolset toolset,
+                                final ToolGroups toolGroups,
                                 final StringBuilder debugLog,
                                 final int callNo,
                                 final boolean unattended) {
@@ -757,6 +760,11 @@ class McpAgentChat {
                         !isBuiltIn(toolRequest.name()));
         final String result = toolResult.text();
         final long durationMs = System.currentTimeMillis() - startMs;
+        // The tool its result says to call next is offered from the next step, its group turned on if it was off
+        // (seen in chats 182 to 186: step_sample named by create_pipeline's next, called, refused as its group was
+        // off, and called again, six calls in all).
+        nextTool(result).flatMap(toolGroups::groupOf)
+                .ifPresent(group -> toolGroupActivations.activate(chatId, group));
         runManager.addUsage(chatId, 0, 0, 1);
         LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
         appendDebugToolCall(debugLog, callNo, toolRequest, result);
@@ -839,6 +847,7 @@ class McpAgentChat {
                                final List<ChatMessage> conversation,
                                final Map<ToolSpecification, ToolExecutor> tools,
                                final McpToolset toolset,
+                               final ToolGroups toolGroups,
                                final int workingMessageId,
                                final TaskContext taskContext,
                                final StringBuilder debugLog) {
@@ -909,7 +918,8 @@ class McpAgentChat {
                 aiService.updateMessageText(workingMessageId, progress + "…");
                 final int thisCallNo = ++callNo;
                 result = runShowingProgress(toolset, request, workingMessageId, progress, () ->
-                        runAndRecord(chatId, message, request, tools, toolset, debugLog, thisCallNo, unattended));
+                        runAndRecord(chatId, message, request, tools, toolset, toolGroups, debugLog, thisCallNo,
+                                unattended));
             } else if (decided != null && decided.decision() == Decision.DENIED) {
                 result = recordNotRun(chatId, request, "Not run: the user did not allow this call"
                                                        + (NullSafe.isNonBlankString(decided.note())
@@ -1033,8 +1043,9 @@ class McpAgentChat {
                               final int chatId,
                               final OpenAIModelDoc modelDoc,
                               final ContextBudget budget,
-                              final int workingMessageId) {
-        fitToBudget(chatModel, modelDoc, conversation, tools, chatId, budget, workingMessageId);
+                              final int workingMessageId,
+                              final StringBuilder debugLog) {
+        fitToBudget(chatModel, modelDoc, conversation, tools, chatId, budget, workingMessageId, debugLog);
         // A stop asked for while the conversation was made smaller (e.g. while a summary was written) is seen
         // before the model is asked again.
         if (isCancelled()) {
@@ -1055,7 +1066,7 @@ class McpAgentChat {
                     throw e;
                 }
                 usageTracker.recordShortened(chatId, shortened);
-                fitToBudget(chatModel, modelDoc, conversation, tools, chatId, budget, workingMessageId);
+                fitToBudget(chatModel, modelDoc, conversation, tools, chatId, budget, workingMessageId, debugLog);
                 LOGGER.info(() -> "The request for chatId=" + chatId + " was too large for the context window ("
                                   + (size.isPresent()
                         ? size.getAsLong() + " tokens"
@@ -1074,10 +1085,12 @@ class McpAgentChat {
                              final List<ToolSpecification> tools,
                              final int chatId,
                              final ContextBudget budget,
-                             final int workingMessageId) {
+                             final int workingMessageId,
+                             final StringBuilder debugLog) {
         boolean summaryTried = false;
         if (budget.isOver(usageTracker.estimateCautiously(chatId, conversation, tools))) {
-            summaryTried = summariseEarlierSteps(chatModel, modelDoc, conversation, chatId, workingMessageId, false);
+            summaryTried = summariseEarlierSteps(chatModel, modelDoc, conversation, chatId, workingMessageId, false,
+                    debugLog);
         }
         int shortened = 0;
         while (budget.isOver(usageTracker.estimateCautiously(chatId, conversation, tools))) {
@@ -1086,7 +1099,8 @@ class McpAgentChat {
             // model that can't write one isn't asked again and again.
             if (step == 0 && !summaryTried) {
                 summaryTried = true;
-                if (summariseEarlierSteps(chatModel, modelDoc, conversation, chatId, workingMessageId, true)) {
+                if (summariseEarlierSteps(chatModel, modelDoc, conversation, chatId, workingMessageId, true,
+                        debugLog)) {
                     continue;
                 }
             }
@@ -1121,7 +1135,8 @@ class McpAgentChat {
                                           final List<ChatMessage> conversation,
                                           final int chatId,
                                           final int workingMessageId,
-                                          final boolean needed) {
+                                          final boolean needed,
+                                          final StringBuilder debugLog) {
         final List<Integer> steps = ConversationShortening.stepIndexes(conversation);
         final boolean summarisedBefore = conversation.stream()
                 .anyMatch(message -> ConversationShortening.isNote(message, ConversationShortening.TURN_SUMMARY_NOTE));
@@ -1150,6 +1165,10 @@ class McpAgentChat {
             final int summarised = ConversationShortening.withNote(conversation, keptFrom, note);
             LOGGER.info(() -> LogUtil.message("Summarised {} earlier step(s) of chatId={} to keep within the "
                                               + "context window", summarised, chatId));
+            // Kept in the question's debug detail, to see what the agent carried on from (seen in chat 186: after
+            // a summary the agent said it had stated results without reading them, and checked them again in some
+            // 15 calls, a 360 KB read_turn among them; the summary itself was nowhere to be read).
+            appendDebugSummary(debugLog, summarised, note);
             return true;
         } catch (final TaskTerminatedException e) {
             // A stop isn't a summary that couldn't be written.
@@ -1383,6 +1402,25 @@ class McpAgentChat {
             return JsonUtil.readValue(arguments, Map.class).containsKey(ConversationShortening.SHORTENED_ARGUMENTS_KEY);
         } catch (final RuntimeException e) {
             return false;
+        }
+    }
+
+    /// @param result A tool's result.
+    /// @return The tool its result says to call next (`next.call.tool`, as Stroom's build tools give it), if it says.
+    static Optional<String> nextTool(final String result) {
+        if (NullSafe.isBlankString(result) || !result.stripLeading().startsWith("{") || !result.contains("\"next\"")) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(JsonUtil.readValue(result, Map.class).get("next"))
+                    .filter(Map.class::isInstance)
+                    .map(next -> ((Map<?, ?>) next).get("call"))
+                    .filter(Map.class::isInstance)
+                    .map(call -> ((Map<?, ?>) call).get("tool"))
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast);
+        } catch (final RuntimeException e) {
+            return Optional.empty();
         }
     }
 
@@ -1686,6 +1724,15 @@ class McpAgentChat {
         if (NullSafe.isNonBlankString(rationale)) {
             debugLog.append("**Model rationale:** ").append(rationale.strip()).append("\n\n");
         }
+    }
+
+    private static void appendDebugSummary(final StringBuilder debugLog, final int steps, final String note) {
+        if (debugLog == null) {
+            return;
+        }
+        debugLog.append("#### Summary of ").append(steps).append(" earlier step(s), in their place\n\n```\n")
+                .append(note.strip())
+                .append("\n```\n\n");
     }
 
     private void appendDebugToolCall(final StringBuilder debugLog,
