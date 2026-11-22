@@ -63,6 +63,31 @@ class TestReferenceResults {
     }
 
     @Test
+    void theUsersAnswersAreKeptWholeThroughShorteningAndSummaries() {
+        // Seen in chat 185: ask_user's answers shortened three calls later, as other results are, and the agent
+        // read 300 KB of history back (read_turn, search_history) to find what the user had chosen.
+        final String answers = "The user answered:\n- How should empty values be handled?\n  Add defaults so every "
+                               + "event stays valid" + " ".repeat(400);
+        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
+        conversation.add(AiMessage.from("Step 1", List.of(call("1", "ask_user"))));
+        conversation.add(ToolExecutionResultMessage.from("1", "ask_user", answers));
+        for (int n = 2; n <= 8; n++) {
+            conversation.add(AiMessage.from("Step " + n, List.of(call(String.valueOf(n), "search"))));
+            conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "search", "r" + "x".repeat(1_000)));
+        }
+
+        while (ConversationShortening.shrinkKeepingSteps(conversation) > 0) {
+            // Shortened as far as results go.
+        }
+
+        assertThat(conversation).anyMatch(m -> m instanceof final ToolExecutionResultMessage r
+                                               && r.text().equals(answers));
+        ConversationShortening.withTurnSummary(conversation, indexOfStep(conversation, "Step 7"), "A summary.");
+        assertThat(((UserMessage) conversation.get(1)).singleText())
+                .contains("Add defaults so every event stays valid");
+    }
+
+    @Test
     void aSummaryOfEarlierStepsKeepsWhatWasReadForReferenceAsItWas() {
         final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
         conversation.add(AiMessage.from("Step 1", List.of(call("1", "read_document"))));

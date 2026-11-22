@@ -46,6 +46,10 @@ final class ReferenceResults {
             "describe_template",
             "describe_feed",
             "describe_data_source");
+    /// The tools whose results are the user's answers (seen in chat 185: ask_user's answers shortened three calls
+    /// later, as other results are, and the agent read 300 KB of history back to find what the user had chosen).
+    /// They are kept as the results read for reference are, and never shortened on their own.
+    static final Set<String> ANSWER_TOOLS = Set.of("ask_user");
     /// The most characters a result can have to be kept for reference: a larger one (e.g. a whole XSLT) is
     /// shortened as other results are.
     static final int MAX_CHARS = 6_000;
@@ -64,9 +68,15 @@ final class ReferenceResults {
     /// already shortened.
     static boolean isReference(final ToolExecutionResultMessage result) {
         final String text = NullSafe.string(result.text());
-        return TOOLS.contains(result.toolName())
+        return (TOOLS.contains(result.toolName()) || ANSWER_TOOLS.contains(result.toolName()))
                && text.length() <= MAX_CHARS
                && !text.equals(ConversationShortening.SHORTENED_RESULT);
+    }
+
+    /// @param result A tool's result.
+    /// @return True if it holds the user's answers ([#ANSWER_TOOLS]), not too large and not already shortened.
+    static boolean isAnswer(final ToolExecutionResultMessage result) {
+        return ANSWER_TOOLS.contains(result.toolName()) && isReference(result);
     }
 
     /// @param conversation The conversation.

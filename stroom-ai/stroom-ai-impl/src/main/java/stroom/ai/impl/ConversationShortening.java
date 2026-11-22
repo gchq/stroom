@@ -200,7 +200,8 @@ final class ConversationShortening {
     ///    [ReferenceResults#isReference]);
     /// 2. the arguments of earlier steps' tool calls (e.g. whole code proposed), keeping the latest step's;
     /// 3. earlier tool results, keeping only the latest and those read for reference;
-    /// 4. earlier tool results read for reference, keeping only the latest result;
+    /// 4. earlier tool results read for reference, keeping only the latest result (the user's answers, e.g.
+    ///    ask_user's, are never shortened this way: see [ReferenceResults#ANSWER_TOOLS]);
     /// 5. earlier steps, each put as a line or two in a note.
     ///
     /// The latest step, and its latest result, are always kept, so the model can carry on from it.
@@ -366,6 +367,7 @@ final class ConversationShortening {
             final int index = resultIndexes.get(i);
             final ToolExecutionResultMessage result = (ToolExecutionResultMessage) conversation.get(index);
             if (NullSafe.string(result.text()).length() > SHORTENED_MIN_CHARS
+                && !ReferenceResults.isAnswer(result)
                 && !(spareReference && ReferenceResults.isReference(result))) {
                 conversation.set(index, ToolExecutionResultMessage.from(result.id(), result.toolName(),
                         SHORTENED_RESULT));
