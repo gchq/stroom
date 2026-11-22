@@ -103,7 +103,8 @@ expected:
           |Update/After/Group/Name|Update/After/Group/Id|Update/After/User/Groups/Group/Name\
           |Update/After/User/Groups/Group/Id|Authorise/User/Groups/Group/Name|Authorise/User/Groups/Group/Id"
         - "Authorise/User/Id|Authorise/User/EmailAddress|Authorise/User/Name|Update/After/User/Id\
-          |Update/After/User/EmailAddress|Update/After/User/Name"
+          |Update/After/User/EmailAddress|Update/After/User/Name|Update/Changes/Add/User/Id\
+          |Update/Changes/Add/User/EmailAddress|Update/Changes/Add/User/Name"
       typed_at_least: 4
     - select: {text: FileAccessed}
       paths: ["View/File/Path|View/File/Name|View/File/Id|View/Document/Path|View/Document/Name|View/Document/Id\
