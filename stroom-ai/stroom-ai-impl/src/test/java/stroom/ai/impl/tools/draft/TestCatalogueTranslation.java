@@ -483,6 +483,28 @@ class TestCatalogueTranslation extends DraftFixtures {
     }
 
     @Test
+    void aPlacementInEventSourceIsWrittenInTheEventTypesRule() {
+        // 2026-11-22 (chat 183: the client application's name kept as Data, the user expecting EventSource/Client).
+        final Map<String, Object> view = type("View-Folder", "View folder", "View", null, null,
+                way(eq("Operation", "FolderBind")));
+        view.put("placements", List.of(
+                Map.of("path", "Folder/Path", "field", "FolderPath"),
+                Map.of("path", "EventSource/Client/Name", "field", "AppAccessContext.ClientAppId"),
+                // The common entries write the system's name for every event: left out, said.
+                Map.of("path", "EventSource/System/Name", "field", "Workload")));
+        final Map<String, Object> draft = draft(M365, notes(List.of(view), true));
+
+        final Map<String, Object> rule = rules(draft).get("view_folder");
+        assertThat(fields(rule).get("EventSource/Client/Name")).containsEntry("field", "AppAccessContext.ClientAppId");
+        assertThat(fields(rule)).doesNotContainKeys("EventDetail/View/EventSource/Client/Name",
+                "EventSource/System/Name");
+        assertThat(dataNames(rule)).doesNotContain("AppAccessContext.ClientAppId").contains("Workload");
+        assertThat(common(draft).get("EventSource/System/Name")).containsEntry("value", "Acme");
+        assertThat(notes(draft)).anyMatch(note -> note.contains("placement 'EventSource/System/Name' is written by "
+                                                                + "the common entries"));
+    }
+
+    @Test
     void aFieldEmptyInEverySampledRecordIsLeftOutOfTheRulesAndSaid() {
         // Chat 182: AppAccessContext.IssuedAtTime, empty in all 1,547 sampled records, drafted into several rules
         // as Data, each then warned of.

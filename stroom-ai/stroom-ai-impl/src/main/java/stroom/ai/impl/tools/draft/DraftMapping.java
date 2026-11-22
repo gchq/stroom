@@ -18,9 +18,12 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueOrder;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.ZoneSource;
+import stroom.ai.impl.tools.sample.HeldMarkup;
 import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SampleProfiler;
@@ -974,6 +977,10 @@ public final class DraftMapping {
         private final List<Map<String, Object>> timeCandidates = new ArrayList<>();
         // The other paths of each held-XML node, beside the one the draft maps it by (HeldXmlPaths.leftOut).
         private final Set<String> heldXmlOtherPaths = new HashSet<>();
+        // The fields holding XML that is a document (HeldMarkup), kept as one Data value each: never read further.
+        private final Set<String> documents = new LinkedHashSet<>();
+        // The source notes' catalogue of event types, or null: a held field's structure is measured within each.
+        private Catalogue catalogue;
 
         /// @param read       The sample as the draft reads it.
         /// @param sourceName The source's name.
@@ -997,6 +1004,7 @@ public final class DraftMapping {
                                   final Map<String, Object> sourceNotes,
                                   final Function<String, String> detailCheck) {
             input();
+            catalogue = SourceNotes.catalogue(sourceNotes);
             final Set<Set<String>> shapes = new HashSet<>();
             for (final Map<String, Object> record : records) {
                 final Set<String> shape = new HashSet<>();
@@ -1259,18 +1267,22 @@ public final class DraftMapping {
                     : List.of();
             final Set<String> skipped = new HashSet<>(heldFields);
             skipped.addAll(already);
+            skipped.addAll(documents);
             skipped.addAll(EventTimes.wrappedTexts(spec));
             final List<String> candidates = names.stream()
                     .filter(n -> !skipped.contains(n) && !values.get(n).isEmpty()
                                  && already.stream().noneMatch(x -> n.startsWith(x + "/")))
                     .toList();
+            final Function<Map<String, Object>, Object> typeOf = eventTypeOf();
             final List<String> wholes = candidates.stream()
-                    .filter(n -> mostly(values.get(n), DraftMapping::xmlElement))
+                    .filter(n -> mostly(values.get(n), DraftMapping::xmlElement) && structured(n, records, typeOf))
                     .toList();
             final List<String> afterWords = prefixed
                     ? candidates.stream()
-                            .filter(n -> !wholes.contains(n) && mostly(values.get(n), v ->
-                                    XML_AFTER_WORDS.equals(SampleProfiler.valueType(v))))
+                            .filter(n -> !wholes.contains(n) && !documents.contains(n)
+                                         && mostly(values.get(n), v ->
+                                    XML_AFTER_WORDS.equals(SampleProfiler.valueType(v)))
+                                         && structured(n, heldTails(n), typeOf))
                             .toList()
                     : List.of();
             if (wholes.isEmpty() && afterWords.isEmpty()) {
@@ -1319,6 +1331,53 @@ public final class DraftMapping {
             out.addAll(holding);
             out.addAll(xmlFields.stream().filter(n -> !out.contains(n)).toList());
             return out;
+        }
+
+        // Whether a field's XML is structured data, mapped through xml_fields; else (a document: HeldMarkup) it is
+        // kept as one Data value, said in a note, and never read further.
+        private boolean structured(final String field,
+                                   final List<Map<String, Object>> read,
+                                   final Function<Map<String, Object>, Object> typeOf) {
+            final HeldMarkup.Verdict verdict = HeldMarkup.judge(field, read, typeOf);
+            if (verdict.mapped()) {
+                return true;
+            }
+            documents.add(field);
+            notes.add(verdict.note(field));
+            return false;
+        }
+
+        // The records with the XML after a field's words of its own in its place, as the extract reads it out.
+        private List<Map<String, Object>> heldTails(final String field) {
+            final Pattern pattern = ToolText.re(XML_TAIL, Pattern.DOTALL);
+            final List<Map<String, Object>> out = new ArrayList<>();
+            for (final Map<String, Object> record : records) {
+                final Map<String, Object> copy = new LinkedHashMap<>(record);
+                final Matcher found = pattern.matcher(JsonValues.text(record.get(field)));
+                copy.put(field, found.find()
+                        ? found.group(1)
+                        : null);
+                out.add(copy);
+            }
+            return out;
+        }
+
+        // The event type each record is of, the catalogue's first way recognising it (null for none), or null when
+        // there's no catalogue: a held field's structure measured within each event type.
+        private Function<Map<String, Object>, Object> eventTypeOf() {
+            if (catalogue == null) {
+                return null;
+            }
+            final List<CatalogueOrder.WayOf> ways = CatalogueOrder.ways(catalogue);
+            if (ways.isEmpty()) {
+                return null;
+            }
+            final WayCheck check = WayCheck.of(mapping, matches);
+            return record -> ways.stream()
+                    .filter(way -> check.recognises(way.way().when(), record))
+                    .map(CatalogueOrder.WayOf::type)
+                    .findFirst()
+                    .orElse(null);
         }
 
         // Keys a line gives more than once (rcpt= once a recipient): each Data entry reading one writes every value
@@ -1410,6 +1469,8 @@ public final class DraftMapping {
             final List<String> out = new ArrayList<>(heldFields);
             final Set<String> skipped = new HashSet<>(heldFields);
             skipped.addAll(EventTimes.wrappedTexts(spec));
+            // Nor a document held as XML (HeldMarkup): kept whole.
+            skipped.addAll(documents);
             // Nor text the splitter reads further itself (seen in testing: a mail gateway's message, its words and
             // pairs already fields, read again as a header's app, procid and msgid: `message.pid` 2026-11-10).
             skipped.addAll(parsedFurther(spec));
@@ -1496,6 +1557,8 @@ public final class DraftMapping {
             final Set<String> skipped = new HashSet<>(heldFields);
             // A relay's message, or a collector's line: the source's whole line, its pairs read from its own message.
             skipped.addAll(EventTimes.wrappedTexts(spec));
+            // A document held as XML (HeldMarkup): its attributes aren't the record's pairs.
+            skipped.addAll(documents);
             // The text the splitter read its pairs from (a syslog line's key=value message): its pairs are fields
             // already, so it isn't read again (seen in testing: every key twice, the second read short) or mapped.
             final List<String> read = names.stream()

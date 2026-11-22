@@ -32,6 +32,7 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -301,7 +302,7 @@ final class CatalogueTranslation {
                     ? " isn't a field of the records"
                     : " holds addresses, not a user"));
         }
-        final Set<String> placed = placements(type, typeId, detail, fields);
+        final Set<String> placed = placements(type, typeId, detail, fields, pathsOf(common));
         final String user = actor != null
                 ? actor
                 : common.stream()
@@ -407,7 +408,8 @@ final class CatalogueTranslation {
     private Set<String> placements(final EventType type,
                                    final String typeId,
                                    final String detail,
-                                   final List<Map<String, Object>> fields) {
+                                   final List<Map<String, Object>> fields,
+                                   final Set<String> commonPaths) {
         final Set<String> placed = new LinkedHashSet<>();
         if (UNKNOWN.equals(detail)) {
             return placed;
@@ -415,7 +417,14 @@ final class CatalogueTranslation {
         final String prefix = EVENT_DETAIL + detail + "/";
         final Set<Map<String, Object>> written = Collections.newSetFromMap(new IdentityHashMap<>());
         for (final Placement placement : type.allPlacements()) {
-            if (placement.pathBelow(detail) == null) {
+            if (!placement.inEventSource() && placement.pathBelow(detail) == null) {
+                continue;
+            }
+            if (placement.inEventSource() && placement.writesFromRoot(detail).stream()
+                    .anyMatch(commonPaths::contains)) {
+                // The common entries write it for every event (the catalogue's check refuses such a placement).
+                unread.add(typeId + ": placement '" + placement.path() + "' is written by the common entries for "
+                           + "every event, so left out");
                 continue;
             }
             if (placement.field() != null && field(placement.field()) == null) {
@@ -441,6 +450,13 @@ final class CatalogueTranslation {
             }
         }
         return placed;
+    }
+
+    // The paths the entries write.
+    private static Set<String> pathsOf(final List<Map<String, Object>> entries) {
+        final Set<String> out = new HashSet<>();
+        entries.forEach(entry -> out.add(ToolText.strip(ToolText.str(entry.get(PATH)), "/")));
+        return out;
     }
 
     // Whether a placement of the event type names the field.

@@ -39,6 +39,12 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   `xml_fields`. A field an extract reads (`<field>.message`) can be named too. `draft_translation_mapping` does all
   this itself. Never a second parser or regexes per element in the splitter: a pipeline has one parser, reading the
   raw stream.
+- A document held as XML (a message's HTML body, a mail, text whose elements differ from record to record) is not
+  structured data: it is one Data value, its parts unread. A sibling field naming the format decides (XML and JSON
+  types are structured data; `html`, `text/plain`, `rtf` and any other format a document), else HTML's elements,
+  else whether its structure is alike from record to record of an event type. Its parts are mapped only if the user
+  asks (`xml_fields` in `changes=`). Where the draft can't tell, it shows samples: judge from what you know of the
+  source (a SOAP envelope or an XML event is structured data), or ask the user.
 - Only `stroom:` functions that exist may be used (`format-date`, `lookup`, `meta`, `dictionary`, `log`,
   `json-to-xml`, ...; there is no `stroom:json-parse`): `check_xslt` refuses unknown ones, elements the schema has no
   place for, and expressions that would select nothing for want of a namespace (stroom://guide/xslt).
@@ -65,11 +71,13 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   (high, medium, low), optionally `doubt` (why you are unsure of it).
 - **Placements**: where the event type's fields go in the schema, from what you know of the source: each a mapping
   fields entry (An entry, below) whose `path` is below `event_detail` (`Email/Subject`, `After/Object/Name`,
-  `Source/User/EmailAddress`), with `field`, a constant `value`, an `xpath` or a `lookup` (not `data_name`), and the
+  `Source/User/EmailAddress`), or in EventSource from `EventSource/` (`EventSource/Client/Name` for a field naming
+  the client application; not an element the common entries already write), with `field`, a constant `value`, an `xpath` or a `lookup` (not `data_name`), and the
   entry's conversions (`transform`,
   `time_format`, `timezone`, `map`, `default`, `repeat`); a list goes to an element that repeats with `for_each`
   (Groups, below), e.g. `{path: "Email/To", for_each: {array: "Recipients"}, fields: [{path: "EmailAddress", item:
-  true}]}`. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
+  true}]}`; a field whose items have fields of their own (an array of `{Name, Value}`) goes to a `for_each` group
+  with `fields`, or one item is picked by an `xpath`, never to a leaf. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
   GroupChat, Document...: `read_document type=XMLSchema element=EventDetail/<element>` lists them. The draft writes
   each as a typed entry of the event type's rule; every field no placement takes is kept as Data, each field once
   (`also_data: true` keeps a placed one as Data too; the vendor's code is always Data too). `affected` with
@@ -80,12 +88,12 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   fill rate in the type's records said in `typing`; a field holding several values in a record goes to an element that
   repeats (`repeat: true`) or a `for_each`; the values, converted as the translation converts them, are valid for the
   element's type, values or pattern (refused naming the values and the fix: transform, time_format, map, for_each, or
-  leaving the field as Data); an xpath's or a lookup's values aren't checked (said in `not_checked`), its path is.
+  leaving the field as Data); items with fields of their own aren't placed at a leaf; an xpath's or a lookup's values aren't checked (said in `not_checked`), its path is.
   A proposal bringing one of these is refused. An element the schema requires of the
   action element (Update's After, Send's Source and Destination, the object View, Create or Delete is of,
   Authenticate's Action and user) that nothing is placed at is `unplaced`: the set isn't put to the user until it is.
   Most of a type's fields kept as Data is only worth a look (`typing`); its `could_type` lists those fields and the
-  schema's elements below the action element: place those that have a home there, from what you know of the source.
+  schema's elements below the action element and in EventSource that nothing writes yet: place those that have a home there, from what you know of the source.
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
   `{field, <one test>}`, the test one of `equals`, `one_of`, `starts_with`, `contains`, `matches` (XPath's regex: no

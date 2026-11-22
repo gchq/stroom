@@ -1758,6 +1758,7 @@ public final class LocalCheck {
             final Set<String> suggested = lookedUp(wanted, seen);
             checkTimeFormats();
             checkZoneSources();
+            checkItemFields();
             unread(wanted, seen, suggested);
             // Once a record, not once a check: seen, 60 extract entries over 8,600 records took 9 s, three times
             // over. Worked out here, within the check's time limit for regexes.
@@ -1925,6 +1926,43 @@ public final class LocalCheck {
                     } else {
                         warnings.add(entry.path() + ": " + message + otherLayouts(entry, values));
                     }
+                }
+            }
+        }
+
+        // A typed entry (not Data, not a group) reading a field whose values are items with fields of their own
+        // (objects): each item would be written as its fields' text run together. Seen in chat 183: an array of
+        // {Name, Value} written to Configuration/Name as "NameFW to personal". A warning: the catalogue's check
+        // refuses such a placement.
+        private void checkItemFields() {
+            for (final FieldMapping entry : mapping.allEntries()) {
+                if (!hasText(entry.field()) || hasText(entry.dataName()) || entry.group() != null
+                    || derived.contains(entry.field())) {
+                    continue;
+                }
+                int held = 0;
+                int objects = 0;
+                final Set<String> keys = new LinkedHashSet<>();
+                for (final Object record : where(entry.scope())) {
+                    if (!(record instanceof final Map<?, ?> map) || map.get(entry.field()) == null) {
+                        continue;
+                    }
+                    held++;
+                    final Object value = map.get(entry.field());
+                    final List<?> items = value instanceof final List<?> list
+                            ? list
+                            : List.of(value);
+                    if (items.stream().anyMatch(Map.class::isInstance)) {
+                        objects++;
+                        items.stream().filter(Map.class::isInstance)
+                                .forEach(item -> ((Map<?, ?>) item).keySet().forEach(k -> keys.add(String.valueOf(k))));
+                    }
+                }
+                if (objects > 0 && objects * 2 > held) {
+                    warnings.add(entry.path() + ": field '" + entry.field() + "' holds items with fields of their "
+                                 + "own (" + String.join(", ", keys.stream().limit(6).toList()) + "): each item is "
+                                 + "written as its fields' text run together; read them with a for_each group with "
+                                 + "fields, or an xpath picking one item");
                 }
             }
         }

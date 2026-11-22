@@ -104,12 +104,15 @@ class TestHeldXmlPaths {
 
     @Test
     void theDraftMapsEachNodeOfAHeldBodyOnce() {
+        // Structured data: a Teams body's HTML is a document, kept whole since 2026-11-22 (TestHeldMarkup).
         final String lines = Stream.of("alice", "bob", "carol")
                 .map(user -> ToolJson.dumps(Map.of("time", "2026-11-20T10:00:00Z", "user", user, "event",
-                        Map.of("Body", Map.of("Content", TEAMS_BODY.replace("Omar Haddad", user))))))
+                        Map.of("Body", Map.of("Content", "<audit><actor id=\"" + user + "\"><name>" + user
+                                                         + "</name></actor><target><path>/a</path><name>doc</name>"
+                                                         + "</target></audit>")))))
                 .collect(Collectors.joining("\n"));
 
-        final Map<String, Object> draft = DraftMapping.draft(List.of(lines), "Teams", null, null, null, null, null);
+        final Map<String, Object> draft = DraftMapping.draft(List.of(lines), "Audit", null, null, null, null, null);
         final Map<String, Object> mapping = DraftFixtures.mappingOf(draft);
 
         assertThat(mapping.get("xml_fields")).isEqualTo(List.of(FIELD));
@@ -118,8 +121,8 @@ class TestHeldXmlPaths {
         final List<String> held = read.stream().filter(name -> name.startsWith(FIELD + "/")).toList();
         assertThat(held).doesNotHaveDuplicates()
                 .noneMatch(name -> name.contains("//"))
-                .contains(FIELD + "/div/p", FIELD + "/div/p/at", FIELD + "/div/p/emoji/@alt",
-                        FIELD + "/div/p/pre/code");
+                .contains(FIELD + "/audit/actor/name", FIELD + "/audit/actor/@id", FIELD + "/audit/target/path",
+                        FIELD + "/audit/target/name");
         // The note still offers the anywhere form.
         assertThat(DraftFixtures.notes(draft)).anySatisfy(note -> assertThat(note)
                 .contains("'<field>//<name>' for one anywhere below"));

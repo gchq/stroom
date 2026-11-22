@@ -255,8 +255,8 @@ class TestPlacementCheck {
                 placement("Email/Subject", "event.Subject")));
 
         final Map<String, Object> couldType = couldType(check(view), "View-MailItems");
-        // Small: it goes to the model with every check.
-        assertThat(ToolJson.dumps(couldType).length()).isLessThan(1_000);
+        // Small: it goes to the model with every check (EventSource's elements among them since 2026-11-22).
+        assertThat(ToolJson.dumps(couldType).length()).as(ToolJson.dumps(couldType)).isLessThan(1_200);
 
         assertThat(strings(couldType.get("data")))
                 .contains("event.MailboxOwnerUPN (1/1, e.g. 'al@acme.com')", "event.ClientIP (1/1, e.g. '10.0.0.9')")
@@ -443,6 +443,93 @@ class TestPlacementCheck {
     }
 
 
+    @Test
+    void aPlacementInEventSourceIsCheckedAsTheOthersAre() {
+        // Chat 183: event.ClientInfoString ("Client=OWA") names the client application, kept as Data while the
+        // user expected EventSource/Client.
+        final EventType logon = type("Authenticate-Logon", "Authenticate", "UserLoggedIn", List.of(
+                placement("User/Id", "event.UserId"),
+                placement("EventSource/Client/Name", "event.ClientInfoString")));
+        final EventType misspelt = type("View-Folder", "View", "FolderBind", List.of(
+                placement("EventSource/Client/Nmae", "event.ClientInfoString")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(logon, misspelt), clientSample(), SCHEMA);
+
+        assertThat(said(check.problems())).singleElement().asString()
+                .contains("View-Folder", "placement 'EventSource/Client/Nmae'", "has no child 'Nmae'");
+        assertThat(check.typing().get("Authenticate-Logon").fill()).containsEntry("event.ClientInfoString",
+                "1 of 1");
+    }
+
+    @Test
+    void anEventSourcePlacementOfWhatTheCommonEntriesWriteIsRefused() {
+        final EventType logon = type("Authenticate-Logon", "Authenticate", "UserLoggedIn", List.of(
+                placement("User/Id", "event.UserId"),
+                placement("EventSource/Client/IPAddress", "event.ClientIP")));
+        final CatalogueCheck.Drafted inCommon = CatalogueCheck.Drafted.of(Map.of("common", List.of(
+                Map.of("path", "EventSource/Client/IPAddress", "field", "event.ClientIP"))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(logon), clientSample(), SCHEMA, inCommon).problems()))
+                .singleElement().asString()
+                .contains("placement 'EventSource/Client/IPAddress'", "common entries", "every event");
+    }
+
+    @Test
+    void anEventSourcePlacementOutsideEventSourceOrAtItsRootIsRefused() {
+        final EventType logon = type("Authenticate-Logon", "Authenticate", "UserLoggedIn", List.of(
+                placement("User/Id", "event.UserId"),
+                placement("EventSource/Client", "event.ClientInfoString")));
+
+        assertThat(said(CatalogueCheck.check(catalogue(logon), clientSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("EventSource/Client holds elements, not a value",
+                        "EventSource/Client/Name");
+    }
+
+    @Test
+    void whatCouldBeTypedListsEventSourcesElementsNothingWritesYet() {
+        final EventType view = type("View-MailItems", "View", "MailItemsAccessed", List.of(
+                placement("Email/Subject", "event.Subject")));
+        final CatalogueCheck.Drafted inCommon = CatalogueCheck.Drafted.of(Map.of("common", List.of(
+                Map.of("path", "EventSource/Client/IPAddress", "field", "event.ClientIP"),
+                Map.of("path", "EventSource/System/Name", "value", "M365"))));
+
+        final Map<String, Object> couldType = couldType(CatalogueCheck.check(catalogue(view), sample(), SCHEMA,
+                inCommon), "View-MailItems");
+
+        final List<String> schema = List.of(String.valueOf(couldType.get("schema")).split("; "));
+        assertThat(schema).anySatisfy(line -> assertThat(line).startsWith("EventSource/Client: ")
+                .contains("Name").doesNotContain("IPAddress"));
+        assertThat(schema).anySatisfy(line -> assertThat(line).startsWith("EventSource/"));
+        assertThat(String.join("\n", schema)).as(String.valueOf(couldType.get("schema")))
+                .doesNotContain("System: Name", "System: Environment, Name");
+        assertThat(ToolJson.dumps(couldType).length()).isLessThan(1_500);
+    }
+
+    @Test
+    void anArrayOfObjectsPlacedInALeafIsRefusedWithAGroupOrAnXpathSuggested() {
+        // Chat 183: event.Parameters, an array of {Name, Value}, placed at Configuration/Name with repeat: each event
+        // got <Name>NameFW to personal</Name>, an item's key and value run together.
+        final EventType rule = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(
+                withKeys(placement("After/Configuration/Name", "event.Parameters"), "repeat", true)));
+
+        assertThat(said(CatalogueCheck.check(catalogue(rule), clientSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.Parameters", "fields of their own (Name, Value)", "for_each",
+                        "{array: 'event.Parameters'}", "xpath",
+                        "*[@key='event']/*[@key='Parameters']/*[*[@key='Name'] = 'Name']/*[@key='Value']");
+    }
+
+    @Test
+    void anArrayOfObjectsReadByAGroupIsAccepted() {
+        final EventType ok = type("Update-InboxRule", "Update", "UpdateInboxRules", List.of(
+                Map.of("path", "After/Configuration", "for_each", Map.of("array", "event.Parameters"),
+                        "fields", List.of(Map.of("path", "Name", "field", "Name"),
+                                Map.of("path", "Description", "field", "Value")))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(ok), clientSample(), SCHEMA).problems()))
+                .noneMatch(problem -> problem.contains("fields of their own"));
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -516,6 +603,25 @@ class TestPlacementCheck {
         // An action element written with a path below it (Network/Permit) is compared by its first step.
         assertThat(CatalogueCheck.verbsOtherThanWritten(List.of(type("Network-Allowed", "Network/Permit", "Allowed",
                 List.of())), SCHEMA)).isEmpty();
+    }
+
+    // A logon naming its client application, and an inbox rule updated with its parameters (name/value objects).
+    private static CatalogueSample clientSample() {
+        final List<String> lines = List.of(
+                line("UserLoggedIn", "UserId", "jo@acme.com", "ClientIP", "10.0.0.9", "ClientInfoString",
+                        "Client=OWA"),
+                line("FolderBind", "UserId", "jo@acme.com", "ClientInfoString", "Client=REST;Outlook"),
+                line("UpdateInboxRules", "UserId", "jo@acme.com", "Parameters", List.of(
+                        parameter("Name", "FW to personal"), parameter("Enabled", "True"))));
+        return CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    // A name/value item, its keys in that order.
+    private static Map<String, Object> parameter(final String name, final String value) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("Name", name);
+        out.put("Value", value);
+        return out;
     }
 
     private static CatalogueCheckResult check(final EventType... types) {

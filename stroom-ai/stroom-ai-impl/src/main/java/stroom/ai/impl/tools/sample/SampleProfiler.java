@@ -165,6 +165,11 @@ public final class SampleProfiler {
                                                + "mcp:parse-xml; draft_translation does), not by regexes in the "
                                                + "splitter or a second parser: a pipeline has one parser, reading "
                                                + "the raw stream";
+    /// What a field holding XML that reads as a document (HTML, a mail's body; [HeldMarkup]) is told.
+    public static final String HELD_DOCUMENT_NOTE = "XML held in text that reads as a document, not structured "
+                                                    + "data: keep it as one field and one Data value; its parts are "
+                                                    + "read (xml_fields) only if the user asks, and "
+                                                    + "draft_translation_mapping says why";
     // The < opening an element (or the XML declaration).
     private static final Pattern XML_START = ToolText.re("<[A-Za-z_?]");
     private static final Pattern NAME_CELL = ToolText.re("^[A-Za-z_][A-Za-z0-9_.-]{0,40}$");
@@ -669,7 +674,12 @@ public final class SampleProfiler {
             field.put("type", type);
             field.put("examples", examples.get(name));
             if (type.startsWith(EMBEDDED_XML)) {
-                field.put("note", HELD_XML_NOTE);
+                final HeldMarkup.Verdict verdict = EMBEDDED_XML.equals(type)
+                        ? HeldMarkup.judge(name, records, null)
+                        : null;
+                field.put("note", verdict == null || verdict.mapped()
+                        ? HELD_XML_NOTE
+                        : HELD_DOCUMENT_NOTE + " (" + verdict.reason() + ")");
             }
             fields.add(field);
         }

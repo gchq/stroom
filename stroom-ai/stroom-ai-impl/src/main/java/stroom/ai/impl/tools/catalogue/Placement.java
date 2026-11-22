@@ -36,7 +36,9 @@ import java.util.Set;
 /// value out of an array of name/value pairs; its values aren't checked here), with the mapping's conversions
 /// (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and its repeated groups (`for_each` with
 /// `fields`, each reading the item with `item: true` or a key of it); `also_data: true` keeps the field as Data too.
-/// The agent places a field from what it knows of the source; nothing matches field names to schema names.
+/// The agent places a field from what it knows of the source; nothing matches field names to schema names. A path
+/// starting `EventSource/` (2026-11-22: `EventSource/Client/Name` for a field naming the client application) is
+/// written by the event type's rule in its EventSource, checked the same way.
 ///
 /// @param entry The entry as given (its path below the action element, or from `EventDetail/<element>/`).
 public record Placement(Map<String, Object> entry) {
@@ -62,6 +64,9 @@ public record Placement(Map<String, Object> entry) {
     public static final List<String> KEYS = List.of(PATH, FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, "separator",
             "transform", "time_format", "timezone", "map", "default", "repeat", FOR_EACH, "as", FIELDS, "item",
             "scope", ALSO_DATA);
+
+    /// A placement's path starting here is in the event's EventSource, not below its action element (2026-11-22).
+    public static final String EVENT_SOURCE = "EventSource/";
 
     private static final String EVENT_DETAIL = "EventDetail/";
 
@@ -153,11 +158,20 @@ public record Placement(Map<String, Object> entry) {
         return ToolText.strip(ToolText.str(entry.get(PATH)).strip(), "/");
     }
 
+    /// @return True if its path is in the event's EventSource (`EventSource/Client/Name`): written by the event
+    /// type's rule there, not below its action element.
+    public boolean inEventSource() {
+        return path().startsWith(EVENT_SOURCE);
+    }
+
     /// @param detail The event type's action element, e.g. `Send` or `Network/Permit`.
     /// @return Its path below the action element: as given, or without `EventDetail/<element>/`; null when given
-    /// from EventDetail but under another element.
+    /// from EventDetail but under another element, or in EventSource ([#inEventSource()]).
     public String pathBelow(final String detail) {
         final String path = path();
+        if (inEventSource()) {
+            return null;
+        }
         if (!path.startsWith(EVENT_DETAIL)) {
             return path;
         }
@@ -230,21 +244,30 @@ public record Placement(Map<String, Object> entry) {
     }
 
     /// @param detail The event type's action element.
-    /// @return It as the translation mapping's fields entry: its path from `EventDetail/<element>/`, without
-    /// `also_data`.
+    /// @return Its path from the event's root: `EventSource/...` as given, else from `EventDetail/<element>/`.
+    public String fullPath(final String detail) {
+        if (inEventSource()) {
+            return path();
+        }
+        final String below = pathBelow(detail);
+        return EVENT_DETAIL + ToolText.strip(detail.strip(), "/") + "/" + (below == null
+                ? path()
+                : below);
+    }
+
+    /// @param detail The event type's action element.
+    /// @return It as the translation mapping's fields entry: its path from `EventDetail/<element>/` (or in
+    /// EventSource, as given), without `also_data`.
     public Map<String, Object> mappingEntry(final String detail) {
         final Map<String, Object> out = new LinkedHashMap<>(JsonValues.deepCopy(entry));
         out.remove(ALSO_DATA);
-        final String below = pathBelow(detail);
-        out.put(PATH, EVENT_DETAIL + ToolText.strip(detail.strip(), "/") + "/" + (below == null
-                ? path()
-                : below));
+        out.put(PATH, fullPath(detail));
         return out;
     }
 
     /// @param detail The event type's action element.
     /// @return The paths it writes below the action element: its own, or a group's path with each of its fields'
-    /// paths below it.
+    /// paths below it; none for one in EventSource ([#writesFromRoot(String)] has those).
     public List<String> writes(final String detail) {
         final String below = pathBelow(detail);
         if (below == null) {
@@ -252,6 +275,14 @@ public record Placement(Map<String, Object> entry) {
         }
         final List<String> out = new ArrayList<>();
         writes(entry, below, out);
+        return out;
+    }
+
+    /// @param detail The event type's action element.
+    /// @return The paths it writes from the event's root (`EventDetail/<element>/...` or `EventSource/...`).
+    public List<String> writesFromRoot(final String detail) {
+        final List<String> out = new ArrayList<>();
+        writes(entry, fullPath(detail), out);
         return out;
     }
 

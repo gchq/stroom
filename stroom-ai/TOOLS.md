@@ -3729,7 +3729,8 @@ catalogue already, its `check` and `listing` come too.
 the catalogue is never sent whole. `change` gives only the keys that change. An event type has `type_id`, `title`,
 `description`, `event_detail`, `action`, `success`, `actor`, `affected`, `affected_as` (written out to its leaf,
 `User` as `User/Id`; read as one placement), `placements` (2026-11-21: each a mapping fields entry whose `path` is
-below `event_detail`, with `field`, a constant `value`, `any_of`, `join`, an `xpath` or a `lookup` (2026-11-22: an
+below `event_detail`, or (2026-11-22) from `EventSource/`, e.g. `{path: "EventSource/Client/Name", field:
+"event.ClientInfoString"}`, written in the event type's rule, not in common, with `field`, a constant `value`, `any_of`, `join`, an `xpath` or a `lookup` (2026-11-22: an
 element the schema requires is often read by an xpath, e.g. a value out of an array of name/value pairs; `data_name`
 and `data_parent` stay refused), the mapping's `transform`, `time_format`, `timezone`, `map`, `default`, `repeat`, or
 a `for_each` group with `fields`; `also_data: true` keeps the field as Data too; a `change`
@@ -3784,6 +3785,15 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   once; values that, converted as the XSLT converts them (transform, map, default, time_format), the element's
   enumeration, pattern or XSD type refuses, naming up to three and the fix. An `xpath`'s or a `lookup`'s values
   aren't read here (said in `not_checked`, 2026-11-22); its path, repetition and a lookup's key field are checked.
+  A path from `EventSource/` (2026-11-22, chat 183: `event.ClientInfoString`, "Client=OWA", kept as Data while the
+  user expected EventSource/Client) is checked the same way from the event's root, and refused where the draft's
+  common entries already write that element for every event (leave it to them, or change the common entry: a rule's
+  entry would take the common one's place for this type's records only, so refused rather than replaced). A field
+  whose values are items with fields of their own (objects, as the records read them) placed at a leaf is refused,
+  naming their keys, with a `for_each` group with `fields` and (JSON input) an `xpath` picking one item suggested
+  (2026-11-22, chat 183: an array of `{Name, Value}` at `Configuration/Name`, each item written as
+  `NameFW to personal`); `build_translation_xslt`'s mapping check warns of a typed entry (not Data, not a group)
+  reading such a field.
 * `unplaced` (2026-11-21): elements the schema requires of an event type's action element (and of each element
   written below it: required children and required choices) that nothing the catalogue gives writes (placements, the
   Action, the outcome, Authenticate's user from the actor or the draft's common user, the draft's common entries
@@ -3797,7 +3807,10 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   the source's at large), those every record carries last, at most 12, each with its fill rate and a short
   example value; `schema`, the elements below the action element, those under each object the type writes first
   (e.g. `Email: Type, Id, Name, Subject, ...`), then the action element's other children (`Outcome: Success, ...`),
-  the objects of a collection by name. The hint says these fields should be typed (each one the schema has a home
+  the objects of a collection by name, then (2026-11-22) EventSource's elements nothing writes yet for the event type
+  (the common entries, its placements there, the draft's rule): each object's open leaves, those partly written first
+  (`EventSource/Client: Id, Name, HostName, ...` beside a Client/IPAddress written), objects with the same open leaves
+  together (`EventSource/{Device,Server}: ...`), at most 4, then EventSource's own leaves; not System (the draft's). The hint says these fields should be typed (each one the schema has a home
   for belongs in a placement, not in Data, from what the agent knows of the source; only what has no home stays as
   Data), with an example call for the first such event type; nothing is refused or paused, and no field is matched
   to an element by its name.
@@ -5159,7 +5172,8 @@ names, addresses kept), then takes what the catalogue says:
   (the vendor documentation's text, or the agent's) as fixed text.
 * The action element's Action and outcome, who acted (a field naming a person, not an address), the type's
   placements as typed entries (`affected`'s included; one reading a field the records haven't is left out and named
-  in `unread_fields`), the user authenticating for Authenticate; then the fields left over that the way's own records
+  in `unread_fields`; one in EventSource at its path from the root, left out and named there when the common entries
+  write it), the user authenticating for Authenticate; then the fields left over that the way's own records
   hold, as Data of the action element. Each field once: the draft rule's entries below the action element reading a
   placed field are taken out, and a placed field is Data too only with `also_data` (the vendor's code is always Data).
 * A field empty in every sampled record is left out of every rule (typed and Data alike, unless a placement names
@@ -5264,6 +5278,28 @@ generated without them.
     `//@alt`, `//emoji/@alt` and `/div/p/emoji/@alt`, each value written two or three times. A time held in XML is a
     time field once, by the same path (2026-11-22): `time_candidates`, the time chosen and the timestamp fields note
     list it as the draft maps it, not also by its other paths.
+  * **Held documents kept whole** (`HeldMarkup`, decided by the user 2026-11-22, chat 183): a field the draft would
+    read through `xml_fields` is first told structured data or a document. (1) A sibling field (the same parent in
+    the record) whose values name a format, in 4 of 5 of the records holding the XML: an XML or JSON type
+    (`xml`, `json`, `text/xml`, `application/xml`, any `+xml` or `+json`; `HeldMarkup.STRUCTURED_FORMATS`) is
+    structured data, mapped as before; any other format (`html`, `text/html`, `application/xhtml+xml`,
+    `text/plain`, `rtf`, `markdown`, `message/rfc822`, `multipart/*`, `application/pdf`, an unknown type) a
+    document. Values are compared, never field names. (2) Else HTML: the root in the XHTML namespace, or the root
+    and at least half of the element names HTML's (`HeldMarkup.HTML_ELEMENTS`, lower or upper case; SOAP's `Body`
+    is XML's) in most values: a document. (3) Else the element structure, each record's element and attribute paths
+    compared with the other records' of its event type (the source notes' catalogue's first way recognising it;
+    without one, the sample's): alike (sharing 80% of their paths with another record) in 80% of the records is
+    structured data; alike in at most 30% of at least 3 a document whose elements differ from record to record; else
+    unclear (two shapes half alike, one record). A document or an unclear value is not added to `xml_fields`: it is
+    one Data value (with the control-character and length handling of any value), its parts unread, so processing
+    logs no "did not parse as XML" for it, and the catalogue and stepping read it as the mapping does. The note says
+    why and that its parts are mapped only if the user asks (then `xml_fields` in `changes=` with entries reading
+    `<field>/<path>`); without a sibling naming the format it shows one sample (HTML) or up to three (each cut to 200
+    characters, white space collapsed), and for an unclear value asks the agent to judge from what it knows of the
+    source (a SOAP envelope, an XML event: structured), or to ask the user; for a varied one, to confirm with the
+    user. A uniform payload (case 49's SOAP envelope) and a Windows event whose EventData varies by event id stay
+    field-mapped (`TestDraftHeldMarkup`). `profile_sample` gives such a field `HELD_DOCUMENT_NOTE` (with why) in
+    place of the held-XML note.
   * The draft is kept for the session (`SentMappings`, as `draft:<build>` and, with a build, `draft:`), so the
     first save sends `changes=` only: a 50 KB draft written out whole in one call never reached the tool in
     testing. With a build it is also kept with the build in the user's own workspace, so a new MCP session of the
@@ -7098,7 +7134,7 @@ fragment wrapper (`FragmentWrappers`).
   `key=value` or `unknown text`), `records`, `fields` (each `field`, `fill_rate` (real values only: an empty
   value or a placeholder such as `-` isn't filled), `placeholder_rate` (when any), `type`, `examples`; types include
   `ip`, `integer`, `decimal`, `embedded json`, `embedded json after prefix`, `embedded xml` and `embedded xml after
-  prefix`, the XML types with a `note` to keep the field whole and read it in the translation through xml_fields), `suggested_parser`, and what the format
+  prefix`, the XML types with a `note` to keep the field whole and read it in the translation through xml_fields; one that reads as a document, `HeldMarkup`, told to keep it as one Data value, 2026-11-22), `suggested_parser`, and what the format
   needs (`text_converter`, `parser_properties`, `xslt_input`, `delimiter`, `has_header`, `columns`, `malformed_lines`,
   `note`). Up to 200 records a sample are profiled. Lines that are not records are named from up to 5,000 lines (a JSON
   line cut short, a CSV row short of columns or with an unclosed quote, a key=value line with no pairs); a file mostly

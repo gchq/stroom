@@ -28,7 +28,10 @@ import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.HeldText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
+import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.TimePatterns;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
@@ -80,6 +83,7 @@ final class PlacementCheck {
 
     private static final String EVENT_DETAIL = "EventDetail/";
     private static final String DATA = "Data";
+    private static final String SYSTEM = "System";
     private static final String UNKNOWN = "Unknown";
     // The most distinct values a placement's check reads, and names when they fail.
     private static final int VALUES_READ = 2_000;
@@ -91,6 +95,11 @@ final class PlacementCheck {
     private static final int EXAMPLE_LENGTH = 30;
     private static final int HOME_GROUPS = 6;
     private static final int HOMES_SHOWN = 14;
+    // EventSource's objects listed (those partly written first), and the most leaves of each.
+    private static final int SOURCE_GROUPS = 4;
+    private static final int SOURCE_LEAVES_SHOWN = 8;
+    // The most of an item's keys named.
+    private static final int ITEM_KEYS_SHOWN = 6;
     private static final List<String> PREFERRED_LEAVES = List.of("Id", "Name", "EmailAddress", "Path", "Title",
             "HostName", "IPAddress");
     private static final Pattern DATE_TIME = Pattern.compile(
@@ -175,6 +184,8 @@ final class PlacementCheck {
         final String label = "event type " + type.typeId();
         final Map<String, String> fill = new LinkedHashMap<>();
         final List<String> written = new ArrayList<>();
+        // What is written in EventSource, from the root: the common entries', the placements' there, the draft's.
+        final Set<String> sourceWritten = new LinkedHashSet<>();
         for (final Placement given : type.allPlacements()) {
             final boolean implied = !type.placements().contains(given);
             final Placement placement = implied
@@ -195,6 +206,9 @@ final class PlacementCheck {
             }
             if (problems.size() == before || implied) {
                 written.addAll(placement.writes(detail));
+                if (placement.inEventSource()) {
+                    sourceWritten.addAll(placement.writesFromRoot(detail));
+                }
             }
             if (placement.field() != null && recognised.cardinality() > 0) {
                 fill.put(placement.field(), filled(placement.field(), recognised) + " of "
@@ -203,8 +217,13 @@ final class PlacementCheck {
         }
         written.addAll(givenElsewhere(type, detail));
         written.addAll(drafted(detail, recognised));
+        commonPaths.stream().filter(path -> path.startsWith(Placement.EVENT_SOURCE)).forEach(sourceWritten::add);
+        draftedFromRoot(recognised).stream()
+                .filter(path -> path.startsWith(Placement.EVENT_SOURCE))
+                .forEach(sourceWritten::add);
         unplaced.addAll(required(label, detail, written));
-        return new Checked(problems, unplaced, notChecked, typing(type, detail, recognised, fill, written));
+        return new Checked(problems, unplaced, notChecked, typing(type, detail, recognised, fill, written,
+                sourceWritten));
     }
 
     // The action element, as the translation writes it; null for none, Unknown, or one the schema hasn't.
@@ -261,6 +280,15 @@ final class PlacementCheck {
     // What the draft's own rule taking most of the type's records (each record the first rule's that takes it)
     // writes below the action element: the translation's rule starts from its fields.
     private List<String> drafted(final String detail, final BitSet recognised) {
+        final String prefix = EVENT_DETAIL + detail + "/";
+        return draftedFromRoot(recognised).stream()
+                .filter(path -> path.startsWith(prefix))
+                .map(path -> path.substring(prefix.length()))
+                .toList();
+    }
+
+    // The paths, from the root, the draft's own rule taking most of the records writes.
+    private List<String> draftedFromRoot(final BitSet recognised) {
         if (rules.isEmpty() || recognised.isEmpty()) {
             return List.of();
         }
@@ -282,14 +310,9 @@ final class PlacementCheck {
                 best = r;
             }
         }
-        if (best < 0) {
-            return List.of();
-        }
-        final String prefix = EVENT_DETAIL + detail + "/";
-        return rules.get(best).paths().stream()
-                .filter(path -> path.startsWith(prefix))
-                .map(path -> path.substring(prefix.length()))
-                .toList();
+        return best < 0
+                ? List.of()
+                : rules.get(best).paths();
     }
 
     // --------------------------------------------------------------------------------
@@ -301,10 +324,18 @@ final class PlacementCheck {
                                    final Placement placement,
                                    final BitSet recognised,
                                    final List<String> problems) {
-        final String below = placement.pathBelow(detail);
+        // A path in EventSource (2026-11-22) is read from the event's root; the others below the action element.
+        final boolean source = placement.inEventSource();
+        final String base = source
+                ? ""
+                : EVENT_DETAIL + detail + "/";
+        final String below = source
+                ? placement.path()
+                : placement.pathBelow(detail);
         if (below == null || below.isEmpty()) {
             problems.add(said + ": its path is below its action element, " + detail + " (e.g. 'Email/Subject', "
-                         + "or 'EventDetail/" + detail + "/Email/Subject')");
+                         + "or 'EventDetail/" + detail + "/Email/Subject'), or in EventSource (e.g. "
+                         + "'EventSource/Client/Name')");
             return;
         }
         final String form = formProblem(placement, detail);
@@ -313,16 +344,26 @@ final class PlacementCheck {
             return;
         }
         final Map<String, Child> leaves = new LinkedHashMap<>();
-        for (final String path : placement.writes(detail)) {
-            final String problem = pathProblem(detail, path, leaves);
+        for (final String path : source
+                ? placement.writesFromRoot(detail)
+                : placement.writes(detail)) {
+            final String problem = pathProblem(base, path, leaves);
             if (problem != null) {
                 problems.add(said + ": " + problem);
+                return;
+            }
+            if (source && commonPaths.contains(path)) {
+                // The rule's entry would take the common entry's place for this event type's records only: refused,
+                // so what every event gives there is changed in one place, the common entry.
+                problems.add(said + ": the common entries already write " + path + " for every event: leave it to "
+                             + "them (or change the common entry), or place the field at another element of "
+                             + "EventSource");
                 return;
             }
         }
         // The group's own element must repeat in its parent: one higher up that repeats (Payload/Email for
         // Payload/Email/From) would make each item another of it, not another From.
-        if (placement.group() && !schema.repeatsInPlace(EVENT_DETAIL + detail + "/" + below)) {
+        if (placement.group() && !schema.repeatsInPlace(base + below)) {
             problems.add(said + ": for_each writes " + below + " once per item, but the schema has one " + below
                          + " in an event: put the group on an element that repeats (e.g. Email/To), or place one "
                          + "value, or leave the field as Data");
@@ -343,13 +384,18 @@ final class PlacementCheck {
             return;
         }
         if (!placement.group()) {
-            final String repeated = repetitionProblem(detail, below, placement, recognised);
+            final String items = itemsProblem(below, placement, recognised);
+            if (items != null) {
+                problems.add(said + ": " + items);
+                return;
+            }
+            final String repeated = repetitionProblem(base, below, placement, recognised);
             if (repeated != null) {
                 problems.add(said + ": " + repeated);
                 return;
             }
         }
-        valueProblems(said, detail, below, placement, recognised, leaves).ifPresent(problems::add);
+        valueProblems(said, base, below, placement, recognised, leaves).ifPresent(problems::add);
     }
 
     // The mapping's own reading of the entry (its for_each form, its conversions); null when it reads.
@@ -370,9 +416,10 @@ final class PlacementCheck {
         }
     }
 
-    // A path below the action element the schema has, to a leaf, not under Data; null when it is one.
-    private String pathProblem(final String detail, final String path, final Map<String, Child> leaves) {
-        final String full = EVENT_DETAIL + detail + "/" + path;
+    // A path below the base (the action element's, or the root for EventSource's) the schema has, to a leaf, not
+    // under Data; null when it is one.
+    private String pathProblem(final String base, final String path, final Map<String, Child> leaves) {
+        final String full = base + path;
         final List<Child> chain;
         try {
             chain = schema.resolve(full);
@@ -426,8 +473,106 @@ final class PlacementCheck {
                                                  + "field");
     }
 
+    // A field whose values are items with fields of their own (objects, as the records read them) placed at a
+    // leaf: why it is refused, or null. Chat 183: an array of {Name, Value} placed at Configuration/Name, each item
+    // written as its key and value run together ("NameFW to personal").
+    private String itemsProblem(final String below, final Placement placement, final BitSet recognised) {
+        final String field = placement.field();
+        if (field == null) {
+            return null;
+        }
+        // Read from the records as they are: the index's values are each item's text (its fields' run together).
+        final List<Object> records = index.sample().records();
+        final Set<String> keys = new LinkedHashSet<>();
+        Map<?, ?> first = null;
+        int objects = 0;
+        int held = 0;
+        for (int n = recognised.nextSetBit(0); n >= 0 && n < records.size() && held < VALUES_READ;
+             n = recognised.nextSetBit(n + 1)) {
+            if (!(records.get(n) instanceof final Map<?, ?> record) || record.get(field) == null) {
+                continue;
+            }
+            held++;
+            final List<Map<?, ?>> items = objects(record.get(field));
+            if (!items.isEmpty()) {
+                objects++;
+                for (final Map<?, ?> item : items) {
+                    item.keySet().forEach(key -> keys.add(String.valueOf(key)));
+                    if (first == null && !item.isEmpty()) {
+                        first = item;
+                    }
+                }
+            }
+        }
+        if (first == null || objects * 2 <= held) {
+            return null;
+        }
+        final List<String> named = new ArrayList<>(keys);
+        final int slash = below.lastIndexOf('/');
+        final String parent = slash < 0
+                ? below
+                : below.substring(0, slash);
+        final String leaf = below.substring(slash + 1);
+        final String key = String.valueOf(first.keySet().iterator().next());
+        final String other = named.stream().filter(name -> !name.equals(key)).findFirst().orElse(key);
+        final String group = "{path: '" + parent + "', for_each: {array: '" + field + "'}, fields: [{path: '" + leaf
+                             + "', field: '" + key + "'}, ...]}";
+        final String pick = jsonXpath(field, key, ToolText.str(first.get(key)), other);
+        return field + "'s items have fields of their own (" + cappedTo(named, ITEM_KEYS_SHOWN) + "): " + below
+               + " takes one value, so each item would be written as its fields' text run together: give a for_each "
+               + "group with fields, e.g. " + group + ", or an xpath picking one item" + (pick == null
+                ? " (e.g. the item whose " + key + " is '" + ToolText.str(first.get(key)) + "')"
+                : ", e.g. {path: '" + below + "', xpath: \"" + pick + "\"}") + ", or leave it as Data";
+    }
+
+    // The objects a value holds: itself, or an array's items that are objects (as read, or JSON text holding
+    // them); none for any other value.
+    private static List<Map<?, ?>> objects(final Object value) {
+        Object read = value;
+        if (value instanceof final String string) {
+            final String text = ToolText.strip(string);
+            if (!text.startsWith("{") && !text.startsWith("[")) {
+                return List.of();
+            }
+            try {
+                read = SampleProfiler.loadsDecoded(text);
+            } catch (final ToolJson.JsonDecodeException e) {
+                return List.of();
+            }
+        }
+        if (read instanceof final Map<?, ?> map) {
+            return List.of(map);
+        }
+        final List<Map<?, ?>> out = new ArrayList<>();
+        if (read instanceof final List<?> list) {
+            list.stream().filter(Map.class::isInstance).forEach(item -> out.add((Map<?, ?>) item));
+        }
+        return out;
+    }
+
+    // An xpath reading one item of a JSON input's array of objects (the item whose key is the value) and the other
+    // key of it, as the JSONParser writes the record; null for a field of another input, or held JSON.
+    private String jsonXpath(final String field, final String key, final String value, final String other) {
+        final TranslationMapping reading = index.sample().reading();
+        if (!"json".equals(reading.input()) || NullSafe.list(reading.jsonFields()).stream()
+                .anyMatch(held -> field.equals(held) || field.startsWith(held + "."))
+            || value.indexOf('\'') >= 0) {
+            return null;
+        }
+        final StringBuilder out = new StringBuilder();
+        for (final String step : JsonFieldNames.keys(field)) {
+            if (step.indexOf('\'') >= 0) {
+                return null;
+            }
+            out.append(out.isEmpty()
+                    ? ""
+                    : "/").append("*[@key='").append(step).append("']");
+        }
+        return out + "/*[*[@key='" + key + "'] = '" + value + "']/*[@key='" + other + "']";
+    }
+
     // Several values in a record placed where the schema has one, or without repeat: why, or null.
-    private String repetitionProblem(final String detail,
+    private String repetitionProblem(final String base,
                                      final String below,
                                      final Placement placement,
                                      final BitSet recognised) {
@@ -452,7 +597,7 @@ final class PlacementCheck {
         }
         final String head = field + " holds several values in " + several + " of its records (e.g. "
                             + ToolText.repr(example) + ")";
-        return schema.takesSeveralInPlace(EVENT_DETAIL + detail + "/" + below)
+        return schema.takesSeveralInPlace(base + below)
                 ? head + ", and only the first is written: give repeat: true (one " + below + " a value), or leave "
                   + "it as Data"
                 : head + ", but " + below + " takes one: place them with for_each on an element that repeats (e.g. "
@@ -465,7 +610,7 @@ final class PlacementCheck {
 
 
     private Optional<String> valueProblems(final String said,
-                                                     final String detail,
+                                                     final String base,
                                                      final String below,
                                                      final Placement placement,
                                                      final BitSet recognised,
@@ -492,8 +637,7 @@ final class PlacementCheck {
                     // A key of an item: not read here.
                     continue;
                 }
-                final String problem = invalid(EVENT_DETAIL + detail + "/" + path, path, leaves.get(path), field,
-                        values);
+                final String problem = invalid(base + path, path, leaves.get(path), field, values);
                 if (problem != null) {
                     return Optional.of(said + ": " + problem);
                 }
@@ -513,8 +657,7 @@ final class PlacementCheck {
             // here.
             return Optional.empty();
         }
-        final String problem = invalid(EVENT_DETAIL + detail + "/" + below, below, leaves.get(below), entry,
-                values);
+        final String problem = invalid(base + below, below, leaves.get(below), entry, values);
         return problem == null
                 ? Optional.empty()
                 : Optional.of(said + ": " + problem);
@@ -838,7 +981,8 @@ final class PlacementCheck {
                           final String detail,
                           final BitSet recognised,
                           final Map<String, String> fill,
-                          final List<String> written) {
+                          final List<String> written,
+                          final Set<String> sourceWritten) {
         if (recognised.cardinality() == 0) {
             return null;
         }
@@ -872,7 +1016,7 @@ final class PlacementCheck {
                 : null;
         final CouldType couldType = note == null
                 ? null
-                : new CouldType(dataFields(data, codes, recognised), homes(detail, written));
+                : new CouldType(dataFields(data, codes, recognised), homes(detail, written, sourceWritten));
         return new Typing(typedCount, data.size(), fill, note, couldType);
     }
 
@@ -932,7 +1076,7 @@ final class PlacementCheck {
     // Where the schema has homes below the action element: the elements under each object the event type writes
     // (the element holding a leaf written, e.g. Source/Folder for Source/Folder/Id), then the action element's other
     // children (an element holding others with its own, the objects of a collection by name only).
-    private List<String> homes(final String detail, final List<String> written) {
+    private List<String> homes(final String detail, final List<String> written, final Set<String> sourceWritten) {
         final String at = EVENT_DETAIL + detail;
         final Element action = schema.resolve(at).getLast().decl();
         final Set<String> objects = new LinkedHashSet<>();
@@ -982,6 +1126,64 @@ final class PlacementCheck {
         if (!alternatives.isEmpty()) {
             out.add("other objects: " + capped(alternatives));
         }
+        out.addAll(sourceHomes(sourceWritten));
+        return out;
+    }
+
+    // EventSource's elements nothing writes yet for the event type (2026-11-22; chat 183: the client application's
+    // name kept as Data beside the Client/IPAddress written): each object's leaves not written, those partly
+    // written first, objects whose open leaves are alike listed together (`EventSource/{Device,Server}: ...`), then
+    // EventSource's own leaves. Not System: the draft's own (system_name, environment).
+    private List<String> sourceHomes(final Set<String> sourceWritten) {
+        final String at = ToolText.strip(Placement.EVENT_SOURCE, "/");
+        final Element source;
+        try {
+            source = schema.resolve(at).getLast().decl();
+        } catch (final IllegalArgumentException e) {
+            return List.of();
+        }
+        // The open leaves -> the objects that have them, partly written ones first.
+        final Map<List<String>, List<String>> partly = new LinkedHashMap<>();
+        final Map<List<String>, List<String>> unwritten = new LinkedHashMap<>();
+        final List<String> leaves = new ArrayList<>();
+        for (final Child child : schema.children(source)) {
+            final String path = at + "/" + child.name();
+            if (DATA.equals(child.name()) || "Meta".equals(child.name()) || SYSTEM.equals(child.name())) {
+                continue;
+            }
+            if (schema.isLeaf(child.decl())) {
+                if (!sourceWritten.contains(path)) {
+                    leaves.add(child.name());
+                }
+                continue;
+            }
+            final List<String> open = new ArrayList<>();
+            for (final Child inner : schema.children(child.decl())) {
+                if (!DATA.equals(inner.name()) && !"Meta".equals(inner.name()) && schema.isLeaf(inner.decl())
+                    && !sourceWritten.contains(path + "/" + inner.name())) {
+                    open.add(inner.name());
+                }
+            }
+            final boolean touched = sourceWritten.stream().anyMatch(written -> written.startsWith(path + "/"));
+            if (!open.isEmpty()) {
+                (touched
+                        ? partly
+                        : unwritten).computeIfAbsent(open, ignored -> new ArrayList<>()).add(child.name());
+            }
+        }
+        final List<String> out = new ArrayList<>();
+        for (final Map<List<String>, List<String>> objects : List.of(partly, unwritten)) {
+            objects.forEach((open, names) -> {
+                if (out.size() < SOURCE_GROUPS) {
+                    out.add(at + "/" + (names.size() == 1
+                            ? names.getFirst()
+                            : "{" + String.join(",", names) + "}") + ": " + cappedTo(open, SOURCE_LEAVES_SHOWN));
+                }
+            });
+        }
+        if (!leaves.isEmpty()) {
+            out.add(at + ": " + cappedTo(leaves, SOURCE_LEAVES_SHOWN));
+        }
         return out;
     }
 
@@ -1005,9 +1207,13 @@ final class PlacementCheck {
     }
 
     private static String capped(final List<String> names) {
-        return String.join(", ", names.subList(0, Math.min(HOMES_SHOWN, names.size())))
-               + (names.size() > HOMES_SHOWN
-                ? ", … " + (names.size() - HOMES_SHOWN) + " more"
+        return cappedTo(names, HOMES_SHOWN);
+    }
+
+    private static String cappedTo(final List<String> names, final int most) {
+        return String.join(", ", names.subList(0, Math.min(most, names.size())))
+               + (names.size() > most
+                ? ", … " + (names.size() - most) + " more"
                 : "");
     }
 

@@ -121,7 +121,9 @@ in `json-to-xml(*[@key='message'])/*/*[@key='user']`, is read the same safe way;
 and read inside it as `<field>/<path>` from the document's root element down (`payload/Envelope/Body/Login/User`),
 `<field>//<name>` for an element anywhere in it, and `<field>//<name>/@<attr>` for an attribute. Steps match by local
 name, so the document's namespaces need no declaring. A value that isn't XML gives nothing rather than an error.
-`draft_translation_mapping` does this itself for a field whose values are XML documents.
+`draft_translation_mapping` does this itself for a field whose values are XML documents of structured data. A
+document (an HTML message body, its sibling `ContentType` `html`; text whose elements differ from record to record)
+stays one Data value, its parts read only if the user asks (stroom://guide/mapping).
 
 A wrapper whose message format depends on a source field (some sources' messages text, others' JSON or SOAP) is an
 aggregated feed: each source type group reads only its own messages, in its own format, with no threshold

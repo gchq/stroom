@@ -288,7 +288,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                 .description("Changes to the catalogue: {op: add|change|remove, type_id, ...the "
                                              + "event type's keys: title, description, event_detail, action, "
                                              + "success, actor, recognised_by [{when: [conditions], names}], "
-                                             + "placements [{path (below event_detail), field or value, "
+                                             + "placements [{path (below event_detail, or from "
+                                             + "EventSource/), field or value, "
                                              + "transform, time_format, map, for_each...}: the mapping's fields "
                                              + "entries], basis, confidence, one_type_because}. change gives only "
                                              + "the keys that change.")
@@ -496,9 +497,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                          + "event_detail, action, actor, recognised_by, placements, basis, confidence}]) from this "
                          + "evidence and what you know of the product: a type is what happened, recognised by "
                          + "conditions on the records' fields; its placements type its fields below the action "
-                         + "element, whatever is left being Data (stroom://guide/mapping). The seed is the draft's "
-                         + "own rules, for you to correct: add only what you keep. A Data Splitter part is a line "
-                         + "format, not an event type.");
+                         + "element (or in EventSource/), whatever is left being Data (stroom://guide/mapping). "
+                         + "The seed is the draft's own rules, for you to correct: add only what you keep. A Data "
+                         + "Splitter part is a line format, not an event type.");
         result.put("next", next(calling.build(), Map.of(PROPOSALS_ARG, "<the event types>"),
                 "checks them against every record; then confirm=true puts them to the user"));
         return result;
@@ -663,7 +664,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                      + (couldType.size() > 5
                     ? " (and " + (couldType.size() - 5) + " more)"
                     : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, and the schema's "
-                     + "elements below the action element). " + SHOULD_BE_TYPED + typingExample(couldType.getFirst()));
+                     + "elements below the action element and in EventSource). " + SHOULD_BE_TYPED
+                     + typingExample(couldType.getFirst()));
         }
         if (check.uncatalogued().records() > 0) {
             said.add(check.uncatalogued().records() + " record(s) no event type recognises (check.uncatalogued, by "
@@ -1786,7 +1788,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static String typingExample(final String typeId) {
         return "E.g. " + NAME + " proposals=[{\"op\": \"change\", \"type_id\": \"" + typeId + "\", "
                + "\"placements\": [{\"path\": \"Folder/Path\", \"field\": \"<the field holding the folder's "
-               + "path>\"}]}] (the path below the action element, one placement per field with a home).";
+               + "path>\"}]}] (the path below the action element, or from EventSource/ as EventSource/Client/Name, one "
+               + "placement per field with a home).";
     }
 
     // The confirmation's marks cleared (no set shown or amended), the streams kept.
