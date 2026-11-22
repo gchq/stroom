@@ -462,7 +462,12 @@ for a translation `kind`, `schema_version`, `input`, `rules` (a line a rule), `c
 gives the whole mapping instead. A summary is the default because a whole mapping (1,400 lines for one
 translation) was spilled by a client to a file, read in parts and sent back whole to regenerate the XSLT. A
 summary over half the characters per read (a CEF plan's 15 KB, mostly its not-sent list) is saved to
-`/documents/<uuid>/mapping.json`. An XSLT saved by the build tools with a mapping that no longer reads (deleted from
+`/documents/<uuid>/mapping.json`, the reply saying the saved file's layout (`SavedJsonLayout`, from the object
+saved: its top-level keys, each nested object's parts by path, each list's size and its items' keys) and a jq query
+that works on it (e.g. `.mapping.events[] | {name, fields: [.fields[] | .path]}`), as the whole mapping is under
+`.mapping` there, not at the top level as in a draft's file (seen in chats 184-186: some 15 jq queries of
+`.events[]` and `.common[]`, eight failing or empty). A translation, pipeline or survey section saved as too large
+says its layout the same way. An XSLT saved by the build tools with a mapping that no longer reads (deleted from
 its Documentation tab, or edited so it doesn't parse) gets `## Kept mapping` `{"lost": ...}` instead, saying the
 XSLT is now treated as hand-written and that `rebuild_mapping` recovers it (`DocumentAnalyses.lostMapping`, which
 checks the XSLT's kept-mapping tag through `XsltSaves`).
@@ -5640,11 +5645,14 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
     vendor-code Data is warned of in `sample_check` (`sample: …`), naming the event type, rule, field and Data; the
     XSLT is still built. Not for the catch-all, drop rules or event types not confirmed.
   * **A large result, outside Stroom** (`BuiltRulesTrim`): over 40,000 characters for a client outside Stroom,
-    `events` counts each rule's Data rather than listing it (`events_note`), and `sample_check` leaves out its
+    `events` counts each rule's Data rather than listing it, naming the first 12 (`data_names`, then `… N more`;
+    `events_note`), and `sample_check` leaves out its
     `warnings`, which the result's `warnings` repeat (each starting `sample: `; `warnings_note`). Seen in eval cases 35
     and 36 (2026-11-20): a third of results of 69,000 and 100,000 characters said twice. Still over (eval case 68,
-    300 rules: 110,000): each rule in a line, each warning without its example (long rule lists counted past five),
-    `changes_applied` counted; problems, `saved` and `xslt` kept whole (`LargeResults`).
+    300 rules: 110,000): each warning without its example (long rule lists counted past five), then each rule in a
+    line with its first Data names (`send_mail: … (16 fields, 23 Data: subject, sender, … 11 more)`; 12, else 6 or
+    3, else counted only, as many as fit the room the warnings left; seen in chats 184-186: 13 reads of the saved
+    result for which fields each rule kept as Data), `changes_applied` counted; problems, `saved` and `xslt` kept whole (`LargeResults`).
   * **Confirmed event types translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with
     the user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
     Logon, unsaid): `needs_review` with a table (`| Event type | Recognised by | You confirmed | Records | Now | Rule

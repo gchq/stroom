@@ -53,7 +53,8 @@ class TestBuiltRulesTrim {
                 "event", "rule0",
                 "when", List.of("code = '0'"),
                 "fields", List.of("EventDetail/TypeId", "EventSource/User/Id"),
-                "data", 3));
+                "data", 3,
+                "data_names", List.of("code", "host", "event.app")));
         assertThat((String) result.get("events_note")).contains("Data");
     }
 
@@ -114,7 +115,7 @@ class TestBuiltRulesTrim {
             assertThat(result.get(kept)).as(kept).isEqualTo(trimmed.get(kept));
         }
         assertThat(JsonValues.strings(result.get("events"))).hasSize(300)
-                .startsWith("rule0: code = '0' (2 fields, 3 Data)");
+                .startsWith("rule0: code = '0' (2 fields, 3 Data: code, host, event.app)");
         assertThat(JsonValues.strings(result.get("warnings"))).hasSize(81).startsWith(
                 "[rule0, rule1, rule2, rule3, rule4 and 295 more rules] required ['EventTime'] are left out when "
                 + "their input fields are empty.",
@@ -125,6 +126,80 @@ class TestBuiltRulesTrim {
         assertThat(saved.get("events")).isEqualTo(JsonUtil.readValue(JsonUtil.writeValueAsString(
                 trimmed.get("events"), false), List.class));
         assertThat(saved.get("warnings")).isEqualTo(trimmed.get("warnings"));
+    }
+
+    @Test
+    void eachRulesDataNamesAreSaidCappedSoTheAgentNeedNotDigForThem() {
+        // Seen in chats 184-186 (Haiku): the outline said "send_mail: ... (16 fields, 23 Data)", and the agent read
+        // the saved result 13 times to learn which fields each rule kept as Data, to type more of them.
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ok", true);
+        result.put("events", List.of(rule("send_mail", 23), rule("catch_all", 400)));
+
+        BuiltRulesTrim.trimIfLarge(CLIENT, result, 5_000);
+
+        final List<Map<String, Object>> rules = JsonValues.maps(result.get("events"));
+        assertThat(rules.getFirst()).containsEntry("data", 23);
+        assertThat(JsonValues.strings(rules.getFirst().get("data_names"))).hasSize(13)
+                .startsWith("d0", "d1", "d2")
+                .endsWith("d11", "… 11 more");
+        assertThat(JsonValues.strings(rules.get(1).get("data_names"))).hasSize(13).endsWith("… 388 more");
+
+        final Map<String, Object> raw = Map.of("event", "send_mail", "when", List.of("op = 'Send'"),
+                "fields", rule("send_mail", 2).get("fields"));
+        assertThat(firstOutlined(raw)).containsExactly("send_mail: op = 'Send' (1 fields, 2 Data: d0, d1)");
+        assertThat(firstOutlined(rules.getFirst())).containsExactly(
+                "send_mail: op = 'Send' (1 fields, 23 Data: d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, … 11 "
+                + "more)");
+        assertThat(firstOutlined(rules.get(1))).containsExactly(
+                "catch_all: op = 'Send' (1 fields, 400 Data: d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, … 388 "
+                + "more)");
+    }
+
+    @Test
+    void theDataNamesGiveWayToTheirCountsWhereTheOutlineHasNoRoomForThem() {
+        // 600 rules of 40 Data each: twelve names a rule would take the outline past the limit.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final List<Map<String, Object>> events = new ArrayList<>();
+        for (int i = 0; i < 600; i++) {
+            events.add(rule("rule" + i, 40));
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ok", true);
+        result.put("events", events);
+        BuiltRulesTrim.trimIfLarge(CLIENT, result, LargeResults.WHOLE_RESULT_CHARS);
+
+        assertThat(BuiltRulesTrim.outlineIfLarge(CLIENT, Optional.of(new SessionWorkspace(chats, 1)), "acme-v1",
+                result, LargeResults.WHOLE_RESULT_CHARS)).isTrue();
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LargeResults.WHOLE_RESULT_CHARS);
+        final List<String> lines = JsonValues.strings(result.get("events"));
+        assertThat(lines).hasSize(600);
+        assertThat(lines.getFirst()).startsWith("rule0: op = 'Send' (1 fields, 40 Data").doesNotContain("d11");
+    }
+
+    // The first rule's outline line, of a result of the rule repeated until it is past the limit.
+    private static List<String> firstOutlined(final Map<String, Object> rule) {
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final List<Map<String, Object>> events = new ArrayList<>();
+        while (LargeResults.length(events) <= LargeResults.WHOLE_RESULT_CHARS) {
+            events.add(rule);
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ok", true);
+        result.put("events", events);
+        BuiltRulesTrim.outlineIfLarge(CLIENT, Optional.of(new SessionWorkspace(chats, 1)), "acme-v1", result,
+                LargeResults.WHOLE_RESULT_CHARS);
+        return JsonValues.strings(result.get("events")).subList(0, 1);
+    }
+
+    private static Map<String, Object> rule(final String name, final int data) {
+        final List<String> fields = new ArrayList<>();
+        fields.add("EventDetail/TypeId");
+        for (int i = 0; i < data; i++) {
+            fields.add("EventDetail/Send/Data[d" + i + "]");
+        }
+        return Map.of("event", name, "when", List.of("op = 'Send'"), "fields", fields);
     }
 
     @Test

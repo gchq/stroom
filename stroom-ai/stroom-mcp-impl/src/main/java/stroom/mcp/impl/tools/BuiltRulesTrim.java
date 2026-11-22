@@ -32,8 +32,10 @@ import java.util.Optional;
 /// A build_translation_xslt result too large for a client outside Stroom to take whole: each rule's Data entries
 /// (`<action element>/Data[<field>]`) counted in its `events` summary rather than listed. Seen in eval cases 35 and 36
 /// over Claude Code: results of about 50 KB saved to files by the client, most of them the rules' Data (in the Pega
-/// sample, 19,000 of 32,000 characters for 13 rules). The mapping, kept by the server, still lists them. The
-/// sample check's warnings, which the result's warnings repeat, are said once.
+/// sample, 19,000 of 32,000 characters for 13 rules). The mapping, kept by the server, still lists them; each rule
+/// names its first few, so that the agent can see what it might type further without reading the saved result (seen
+/// in chats 184-186: 13 reads of it for which fields each rule kept as Data). The sample check's warnings, which the
+/// result's warnings repeat, are said once.
 final class BuiltRulesTrim {
 
     private static final String EVENTS = "events";
@@ -47,6 +49,12 @@ final class BuiltRulesTrim {
     // A warning's list of rules past this many characters names only its first few.
     private static final int RULES_CHARS = 200;
     private static final int RULES_NAMED = 5;
+    // The most Data names said of a rule; in an outline, fewer in turn until its rules fit the room they have (none
+    // last: the Data counted only).
+    private static final int DATA_NAMED = 12;
+    private static final List<Integer> OUTLINE_DATA_NAMED = List.of(DATA_NAMED, 6, 3, 0);
+    private static final String DATA_NAMES = "data_names";
+    private static final String MORE_MARK = "… ";
 
     private BuiltRulesTrim() {
         // Static only.
@@ -69,23 +77,24 @@ final class BuiltRulesTrim {
         for (final Map<String, Object> rule : JsonValues.maps(result.get(EVENTS))) {
             final Map<String, Object> said = new LinkedHashMap<>(rule);
             final List<String> fields = new ArrayList<>();
-            int data = 0;
+            final List<String> dataNames = new ArrayList<>();
             for (final Object field : JsonValues.listOrEmpty(rule.get("fields"))) {
                 final String path = ToolText.str(field);
                 if (path.contains(DATA)) {
-                    data++;
+                    dataNames.add(dataName(path));
                 } else {
                     fields.add(path);
                 }
             }
             said.put("fields", fields);
-            said.put("data", data);
+            said.put("data", dataNames.size());
+            said.put(DATA_NAMES, capped(dataNames, DATA_NAMED));
             rules.add(said);
         }
         result.put(EVENTS, rules);
-        result.put("events_note", "Each rule's Data are counted here, not listed (this result is too large to "
-                                  + "show whole): the mapping lists them, the fields each rule carries as Data of "
-                                  + "its action element.");
+        result.put("events_note", "Each rule's Data are counted here, and only the first " + DATA_NAMED + " "
+                                  + "named (data_names; this result is too large to show whole): the mapping lists "
+                                  + "them all, the fields each rule carries as Data of its action element.");
         sampleWarningsOnce(result);
         return true;
     }
@@ -94,8 +103,10 @@ final class BuiltRulesTrim {
     /// ([LargeResults#apply]): seen in eval case 68 (300 rules), 110,000 characters, the rules' summaries 98,000 even
     /// with their Data counted; and in cases 35 and 36, 48,000 and 66,000, the sample check's warnings for
     /// extractions that leave fields empty (some 430 characters each, most of it an example). Outlined: each rule in
-    /// a line (its conditions, how many fields and Data it writes); each warning without its example; the changes
-    /// applied counted. The problems, the saved XSLT, the XSLT itself when not saved, and what comes next kept whole.
+    /// a line (its conditions, how many fields and Data it writes, and the first Data names, as many as the room
+    /// allows); each warning without its example; the changes applied counted. The warnings are outlined first, so
+    /// that the room their examples took is left for the rules' Data names. The problems, the saved XSLT, the XSLT
+    /// itself when not saved, and what comes next kept whole.
     ///
     /// @param caller    Who called the tool.
     /// @param workspace The session's workspace, if it has one.
@@ -111,8 +122,8 @@ final class BuiltRulesTrim {
         return LargeResults.of(BuildTranslationXsltTool.NAME, key)
                 .keep("saved", "xslt", "field_mapping_needs", "schema_version", "source_notes_check",
                         "standing_instructions", "changes_applied_to", "events_note", "sample_check.problems")
-                .outline(EVENTS, (value, room) -> rulesInBrief(value))
                 .outline(WARNINGS, (value, room) -> withoutExamples(value))
+                .outline(EVENTS, BuiltRulesTrim::rulesInBrief)
                 .outline("changes_applied", (value, room) -> {
                     final List<String> changes = JsonValues.strings(value);
                     return changes.size() + " change(s) applied: " + LargeResults.head(String.join("; ",
@@ -121,8 +132,20 @@ final class BuiltRulesTrim {
                 .apply(caller, workspace, result, limit);
     }
 
-    // Each rule in a line: its name, its conditions, and how many fields and Data it writes.
-    private static Object rulesInBrief(final Object value) {
+    // Each rule in a line: its name, its conditions, how many fields and Data it writes, and its first Data names,
+    // as many as fit the room (none, the Data counted only, if even three a rule do not).
+    private static Object rulesInBrief(final Object value, final LargeResults.Room room) {
+        List<Object> rules = List.of();
+        for (final int named : OUTLINE_DATA_NAMED) {
+            rules = rulesInBrief(value, named);
+            if (LargeResults.length(rules) <= room.target()) {
+                return rules;
+            }
+        }
+        return rules;
+    }
+
+    private static List<Object> rulesInBrief(final Object value, final int named) {
         final List<Object> rules = new ArrayList<>();
         for (final Object entry : JsonValues.listOrEmpty(value)) {
             if (!(entry instanceof final Map<?, ?> rule)) {
@@ -130,16 +153,53 @@ final class BuiltRulesTrim {
                 continue;
             }
             final List<Object> fields = JsonValues.listOrEmpty(rule.get("fields"));
+            final List<String> dataNames = rule.containsKey(DATA_NAMES)
+                    ? JsonValues.strings(rule.get(DATA_NAMES))
+                    : fields.stream().map(ToolText::str).filter(path -> path.contains(DATA))
+                            .map(BuiltRulesTrim::dataName).toList();
             final long data = rule.get("data") instanceof final Number number
                     ? number.longValue()
-                    : fields.stream().filter(field -> ToolText.str(field).contains(DATA)).count();
+                    : dataNames.size();
             final long others = fields.stream().filter(field -> !ToolText.str(field).contains(DATA)).count();
             final List<String> when = JsonValues.strings(rule.get("when"));
             rules.add(rule.get("event") + ": " + (when.isEmpty()
                     ? "every record"
-                    : String.join(" and ", when)) + " (" + others + " fields, " + data + " Data)");
+                    : String.join(" and ", when)) + " (" + others + " fields, " + data + " Data"
+                      + dataNamesSaid(dataNames, data, named) + ")");
         }
         return rules;
+    }
+
+    // `: a, b, … N more` of a rule's Data names (already capped, its last entry `… N more`, when from a trimmed
+    // entry), at most the given number named; nothing if none are.
+    private static String dataNamesSaid(final List<String> dataNames, final long data, final int named) {
+        final List<String> names = dataNames.stream().filter(name -> !name.startsWith(MORE_MARK)).toList();
+        if (named == 0 || names.isEmpty()) {
+            return "";
+        }
+        final List<String> said = names.subList(0, Math.min(named, names.size()));
+        return ": " + String.join(", ", said) + (data > said.size()
+                ? ", " + MORE_MARK + (data - said.size()) + " more"
+                : "");
+    }
+
+    // A Data entry's name from its typed path, `EventDetail/Send/Data[subject]` giving `subject`.
+    private static String dataName(final String path) {
+        final int start = path.indexOf(DATA) + DATA.length();
+        final int end = path.lastIndexOf(']');
+        return end > start
+                ? path.substring(start, end)
+                : path.substring(start);
+    }
+
+    // The first so many names, then `… N more` if there are more.
+    private static List<String> capped(final List<String> names, final int most) {
+        if (names.size() <= most) {
+            return names;
+        }
+        final List<String> capped = new ArrayList<>(names.subList(0, most));
+        capped.add(MORE_MARK + (names.size() - most) + " more");
+        return capped;
     }
 
     /// Each warning without its example (from " E.g. "), and the rules it names, when many, counted past the first:
