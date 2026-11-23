@@ -18,16 +18,34 @@ package stroom.ai.client;
 
 import stroom.ai.shared.MermaidGantt;
 import stroom.ai.shared.MermaidGanttParser;
+import stroom.svg.shared.SvgImage;
 
 /// Draws the charts in an answer: after the shared Markdown converter has turned the answer to sanitised HTML,
 /// each ```` ```mermaid ```` code block it rendered (`<pre><code class="... language-mermaid">`) whose text is a
 /// gantt chart of the subset ([MermaidGanttParser]) is replaced by Stroom's own SVG of it ([AiGanttChart]). A
 /// block that isn't (another kind of chart, or one outside the subset) stays as code: nothing in it is ever run.
 /// Only the chat does this; the converter and every other use of it are unchanged.
+///
+/// A chart's element keeps the block's text (escaped, in [#SOURCE_ATTRIBUTE]) so it can be drawn again, zoomed or
+/// at another width ([AiGanttInteraction]), and has buttons to reset the zoom (shown only when zoomed) and to show
+/// it in a larger dialog.
 final class AiMermaidCharts {
 
     /// The class of the element a chart is drawn in.
     static final String CHART_CLASS = "ai-gantt";
+    /// The attribute of a chart's element holding the block's text.
+    static final String SOURCE_ATTRIBUTE = "data-gantt";
+    /// The attribute of a chart's element holding the span it is zoomed to ([AiGanttZoom#toAttribute]); absent when
+    /// it shows the whole period.
+    static final String VIEW_ATTRIBUTE = "data-gantt-view";
+    /// The attribute of a chart's element holding the width it is drawn at, when not [AiGanttChart#WIDTH].
+    static final String WIDTH_ATTRIBUTE = "data-gantt-width";
+    /// The class of the element holding a chart's SVG, drawn again in place.
+    static final String PLOT_CLASS = "ai-gantt-plot";
+    /// The class of the button that shows the whole period again.
+    static final String RESET_CLASS = "ai-gantt-reset";
+    /// The class of the button that shows a chart in a larger dialog.
+    static final String MAXIMISE_CLASS = "ai-gantt-maximise";
 
     private static final String LANGUAGE_CLASS = "language-mermaid";
     private static final String PRE = "<pre";
@@ -66,13 +84,56 @@ final class AiMermaidCharts {
     /// @return It drawn as a chart, in an element of [#CHART_CLASS], or null if it isn't a gantt chart of the
     /// subset.
     static String chart(final String text) {
-        final MermaidGantt gantt;
+        final MermaidGantt gantt = parse(text);
+        return gantt == null
+                ? null
+                : chart(text, gantt, null, AiGanttChart.WIDTH, true);
+    }
+
+    /// @param text A Mermaid code block's text.
+    /// @return The chart it holds, or null if it isn't a gantt chart of the subset.
+    static MermaidGantt parse(final String text) {
+        if (text == null) {
+            return null;
+        }
         try {
-            gantt = MermaidGanttParser.parse(text);
+            return MermaidGanttParser.parse(text);
         } catch (final IllegalArgumentException e) {
             return null;
         }
-        return "<div class=\"" + CHART_CLASS + "\">" + AiGanttChart.svg(gantt) + "</div>";
+    }
+
+    /// @param text        The block's text.
+    /// @param gantt       The chart it holds.
+    /// @param view        The span to draw, or null for the whole period.
+    /// @param width       The width to draw it at.
+    /// @param maximisable True for a button to show it in a larger dialog (not in the dialog itself).
+    /// @return The chart's element: its buttons, then its SVG in an element of [#PLOT_CLASS]; the text kept,
+    /// escaped, so it can be drawn again.
+    static String chart(final String text,
+                        final MermaidGantt gantt,
+                        final long[] view,
+                        final int width,
+                        final boolean maximisable) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("<div class=\"").append(CHART_CLASS).append("\" ").append(SOURCE_ATTRIBUTE).append("=\"")
+                .append(attribute(text)).append('"');
+        if (view != null) {
+            sb.append(' ').append(VIEW_ATTRIBUTE).append("=\"").append(AiGanttZoom.toAttribute(view)).append('"');
+        }
+        if (width != AiGanttChart.WIDTH) {
+            sb.append(' ').append(WIDTH_ATTRIBUTE).append("=\"").append(width).append('"');
+        }
+        sb.append("><div class=\"ai-gantt-tools\"><span class=\"ai-gantt-hint\">Drag across the times to zoom")
+                .append("</span>");
+        sb.append(button(RESET_CLASS, SvgImage.UNDO, "Reset zoom", "Show the whole period again", view == null));
+        if (maximisable) {
+            sb.append(button(MAXIMISE_CLASS, SvgImage.MAXIMISE, "Maximise", "Show the chart in a larger dialog",
+                    false));
+        }
+        sb.append("</div><div class=\"").append(PLOT_CLASS).append("\">").append(AiGanttChart.svg(gantt, view, width))
+                .append("</div></div>");
+        return sb.toString();
     }
 
     /// @param html Text of HTML, as an element's inner HTML gives it.
@@ -97,6 +158,24 @@ final class AiMermaidCharts {
             i++;
         }
         return sb.toString();
+    }
+
+    // A small button of the chart's, its label its text: of constants only.
+    private static String button(final String className,
+                                 final SvgImage icon,
+                                 final String label,
+                                 final String title,
+                                 final boolean hidden) {
+        return "<button type=\"button\" class=\"ai-gantt-button " + className + "\" title=\"" + title
+               + "\" aria-label=\"" + title + "\"" + (hidden
+                ? " hidden"
+                : "") + "><div class=\"svgIcon " + icon.getClassName() + "\">" + icon.getSvg() + "</div><span>"
+               + label + "</span></button>";
+    }
+
+    // Text escaped for an attribute's value, its line breaks kept as references.
+    private static String attribute(final String text) {
+        return AiChatOverview.escape(text).replace("\r", "").replace("\n", "&#10;");
     }
 
     // The Mermaid code block that starts at a <pre>, or null if it isn't one.

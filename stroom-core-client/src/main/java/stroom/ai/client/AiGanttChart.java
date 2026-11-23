@@ -29,10 +29,36 @@ import java.util.List;
 /// name (eight colours, the rest grey), a time axis below and a legend of the names. Every text is escaped; the
 /// colours and lines are CSS classes, themed for light and dark (`ask-stroom-ai.css`). The layout's maths are
 /// here, apart from the markup, so they can be tested.
+///
+/// A chart can be drawn zoomed to a span of its period ([AiGanttZoom]): only the tasks the span shows, cut to it,
+/// with ticks for the span; and at another width (a dialog's). The SVG carries its span and plot's bounds as data
+/// attributes, for [AiGanttInteraction] to map the pointer to times, and a hidden band it shows while dragging.
 final class AiGanttChart {
 
-    /// The width the chart is drawn at; it is scaled down to fit a narrower chat.
+    /// The width the chart is drawn at in the chat; it is scaled down to fit a narrower chat.
     static final int WIDTH = 720;
+    /// The least width a chart is drawn at, e.g. in a small dialog.
+    static final int MIN_WIDTH = 480;
+    /// The least room between two ticks, in pixels, on a chart drawn wider than [#WIDTH].
+    static final int TICK_SPACING = 70;
+    /// The attribute on the SVG giving the first time of the span drawn.
+    static final String FROM_ATTRIBUTE = "data-from";
+    /// The attribute on the SVG giving the last time of the span drawn.
+    static final String TO_ATTRIBUTE = "data-to";
+    /// The attribute on the SVG giving the x where the plot starts.
+    static final String PLOT_LEFT_ATTRIBUTE = "data-plot-left";
+    /// The attribute on the SVG giving the x where the plot ends.
+    static final String PLOT_RIGHT_ATTRIBUTE = "data-plot-right";
+    /// The attribute on the SVG giving the y where the plot starts.
+    static final String PLOT_TOP_ATTRIBUTE = "data-plot-top";
+    /// The attribute on the SVG giving the y where the plot's axis ends.
+    static final String PLOT_BOTTOM_ATTRIBUTE = "data-plot-bottom";
+    /// The attribute on the SVG giving the width it is drawn at.
+    static final String WIDTH_ATTRIBUTE = "data-width";
+    /// The attribute on the SVG giving the height it is drawn at.
+    static final String HEIGHT_ATTRIBUTE = "data-height";
+    /// The class of the band shown over the plot while a span is dragged across it.
+    static final String BAND_CLASS = "ai-gantt-band";
     /// The most names with a colour of their own; the rest are grey.
     static final int COLOURS = 8;
     /// The name drawn grey, as the tool writes the names past its top ones.
@@ -45,7 +71,7 @@ final class AiGanttChart {
     private static final int LANE_LABEL_WIDTH = 150;
     private static final int LANE_LABEL_CHARS = 22;
     private static final int PLOT_LEFT = PADDING + LANE_LABEL_WIDTH;
-    private static final int PLOT_RIGHT = WIDTH - PADDING - 8;
+    private static final int PLOT_RIGHT_MARGIN = PADDING + 8;
     private static final int ROW_HEIGHT = 18;
     private static final int BAR_HEIGHT = 12;
     private static final int LANE_PADDING = 4;
@@ -80,11 +106,24 @@ final class AiGanttChart {
     }
 
     /// @param gantt A chart of the subset.
-    /// @return It drawn as SVG.
+    /// @return It drawn as SVG, the whole period at [#WIDTH].
     static String svg(final MermaidGantt gantt) {
+        return svg(gantt, null, WIDTH);
+    }
+
+    /// @param gantt A chart of the subset.
+    /// @param view  The span to draw ([AiGanttZoom#dragRange]), or null for the whole period ([#range]).
+    /// @param width The width to draw it at, at least [#MIN_WIDTH].
+    /// @return It drawn as SVG: the tasks the span shows, cut to it; the legend still of all the chart's names, so
+    /// the colours stay as they were.
+    static String svg(final MermaidGantt gantt, final long[] view, final int width) {
+        final int drawnWidth = Math.max(MIN_WIDTH, width);
+        final int plotRight = drawnWidth - PLOT_RIGHT_MARGIN;
         final List<String> names = names(gantt);
-        final long[] range = range(gantt);
-        final Scale scale = new Scale(range[0], range[1], PLOT_LEFT, PLOT_RIGHT);
+        final long[] range = view == null
+                ? range(gantt)
+                : view;
+        final Scale scale = new Scale(range[0], range[1], PLOT_LEFT, plotRight);
         final StringBuilder body = new StringBuilder();
         int y = PADDING;
         if (gantt.getTitle() != null && !gantt.getTitle().isEmpty()) {
@@ -96,9 +135,10 @@ final class AiGanttChart {
         final StringBuilder lanes = new StringBuilder();
         int laneIndex = 0;
         for (final Section section : gantt.getSections()) {
-            final List<List<Task>> rows = rows(section.tasks(), scale);
+            final List<List<Task>> rows = rows(AiGanttZoom.visible(section.tasks(), scale.from(), scale.to()),
+                    scale);
             final int laneHeight = Math.max(1, rows.size()) * ROW_HEIGHT + 2 * LANE_PADDING;
-            appendLane(lanes, section, rows, names, scale, y, laneHeight, laneIndex++);
+            appendLane(lanes, section, rows, names, scale, drawnWidth, y, laneHeight, laneIndex++);
             y += laneHeight;
         }
         if (gantt.getSections().isEmpty()) {
@@ -109,15 +149,56 @@ final class AiGanttChart {
         final int plotBottom = y;
         appendAxis(body, gantt.getAxisFormat(), scale, plotTop, plotBottom);
         body.append(lanes);
+        // Over the lanes, hidden until a span is dragged; never in the way of the pointer.
+        body.append("<rect class=\"").append(BAND_CLASS).append("\" x=\"").append(PLOT_LEFT).append("\" y=\"")
+                .append(plotTop).append("\" width=\"0\" height=\"").append(plotBottom - plotTop)
+                .append("\" visibility=\"hidden\"/>");
         y = plotBottom + AXIS_HEIGHT;
-        y = appendLegend(body, names, y);
+        final int axisBottom = y;
+        y = appendLegend(body, names, y, plotRight);
         final int height = y + PADDING;
         final String label = gantt.getTitle() == null
                 ? "Timeline"
                 : gantt.getTitle();
-        return "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ai-gantt-svg\" viewBox=\"0 0 " + WIDTH + " "
-               + height + "\" width=\"" + WIDTH + "\" role=\"img\" aria-label=\"" + AiChatOverview.escape(label)
-               + "\">" + body + "</svg>";
+        return "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ai-gantt-svg\" viewBox=\"0 0 " + drawnWidth + " "
+               + height + "\" width=\"" + drawnWidth + "\" role=\"img\" aria-label=\"" + AiChatOverview.escape(label)
+               + "\" " + FROM_ATTRIBUTE + "=\"" + scale.from() + "\" " + TO_ATTRIBUTE + "=\"" + scale.to() + "\" "
+               + PLOT_LEFT_ATTRIBUTE + "=\"" + PLOT_LEFT + "\" " + PLOT_RIGHT_ATTRIBUTE + "=\"" + plotRight + "\" "
+               + PLOT_TOP_ATTRIBUTE + "=\"" + plotTop + "\" " + PLOT_BOTTOM_ATTRIBUTE + "=\"" + axisBottom + "\" "
+               + WIDTH_ATTRIBUTE + "=\"" + drawnWidth + "\" " + HEIGHT_ATTRIBUTE + "=\"" + height + "\">" + body
+               + "</svg>";
+    }
+
+    /// @param scale Where times are drawn.
+    /// @return The most ticks its axis has room for: [#MAX_TICKS] at [#WIDTH], more on a wider chart.
+    static int maxTicks(final Scale scale) {
+        return Math.max(MAX_TICKS, (int) ((scale.right() - scale.left()) / TICK_SPACING));
+    }
+
+    /// @param axisFormat The chart's axis format, or null for Mermaid's default.
+    /// @param ticks      The axis's ticks, as [#ticks] gives them.
+    /// @return The format to write them in: the chart's own, unless it would write two ticks the same (a zoomed
+    /// span finer than it shows), then one fine enough for the ticks' step: seconds under a minute, hours and
+    /// minutes under a day (with the day when the ticks cross midnight), else the day and month.
+    static String tickFormat(final String axisFormat, final List<Long> ticks) {
+        if (ticks.size() < 2 || isDistinct(ticks, axisFormat)) {
+            return axisFormat;
+        }
+        final long step = ticks.get(1) - ticks.get(0);
+        final boolean days = ticks.get(0) / DAY != ticks.get(ticks.size() - 1) / DAY;
+        final String finer;
+        if (step < MINUTE) {
+            finer = days
+                    ? "%d %b %H:%M:%S"
+                    : "%H:%M:%S";
+        } else if (step < DAY) {
+            finer = days
+                    ? "%d %b %H:%M"
+                    : "%H:%M";
+        } else {
+            finer = "%d %b";
+        }
+        return finer;
     }
 
     /// @param gantt A chart.
@@ -278,6 +359,7 @@ final class AiGanttChart {
                                    final List<List<Task>> rows,
                                    final List<String> names,
                                    final Scale scale,
+                                   final int width,
                                    final int top,
                                    final int height,
                                    final int index) {
@@ -285,7 +367,7 @@ final class AiGanttChart {
                 ? " ai-gantt-lane--odd"
                 : "").append("\">");
         sb.append("<rect class=\"ai-gantt-lane-back\" x=\"").append(PADDING).append("\" y=\"").append(top)
-                .append("\" width=\"").append(WIDTH - 2 * PADDING).append("\" height=\"").append(height)
+                .append("\" width=\"").append(width - 2 * PADDING).append("\" height=\"").append(height)
                 .append("\"/>");
         sb.append("<text class=\"ai-gantt-lane-label\" x=\"").append(PADDING + 6).append("\" y=\"")
                 .append(top + height / 2 + 4).append("\">")
@@ -342,22 +424,27 @@ final class AiGanttChart {
                                    final int top,
                                    final int bottom) {
         sb.append("<g class=\"ai-gantt-axis\">");
-        for (final long tick : ticks(scale.from(), scale.to(), MAX_TICKS)) {
+        final List<Long> ticks = ticks(scale.from(), scale.to(), maxTicks(scale));
+        final String format = tickFormat(axisFormat, ticks);
+        for (final long tick : ticks) {
             final String x = number(scale.position(tick));
             sb.append("<line class=\"ai-gantt-grid\" x1=\"").append(x).append("\" y1=\"").append(top)
                     .append("\" x2=\"").append(x).append("\" y2=\"").append(bottom).append("\"/>");
             sb.append("<text class=\"ai-gantt-tick\" x=\"").append(x).append("\" y=\"").append(bottom + 16)
-                    .append("\" text-anchor=\"middle\">").append(AiChatOverview.escape(format(tick, axisFormat)))
+                    .append("\" text-anchor=\"middle\">").append(AiChatOverview.escape(format(tick, format)))
                     .append("</text>");
         }
         sb.append("<line class=\"ai-gantt-baseline\" x1=\"").append(PLOT_LEFT).append("\" y1=\"").append(bottom)
-                .append("\" x2=\"").append(PLOT_RIGHT).append("\" y2=\"").append(bottom).append("\"/>");
+                .append("\" x2=\"").append(number(scale.right())).append("\" y2=\"").append(bottom).append("\"/>");
         sb.append("</g>");
     }
 
     // The legend: a swatch and name for each name with a colour, then the rest as one grey entry, wrapped to the
     // chart's width. Returns the y below it.
-    private static int appendLegend(final StringBuilder sb, final List<String> names, final int top) {
+    private static int appendLegend(final StringBuilder sb,
+                                    final List<String> names,
+                                    final int top,
+                                    final int plotRight) {
         final List<String> entries = new ArrayList<>();
         final List<String> classes = new ArrayList<>();
         int others = 0;
@@ -390,7 +477,7 @@ final class AiGanttChart {
         for (int i = 0; i < entries.size(); i++) {
             final String text = shortened(entries.get(i), LEGEND_NAME_CHARS);
             final int width = LEGEND_SWATCH + 6 + text.length() * LEGEND_CHAR_WIDTH;
-            if (x > PLOT_LEFT && x + width > PLOT_RIGHT) {
+            if (x > PLOT_LEFT && x + width > plotRight) {
                 x = PLOT_LEFT;
                 y += LEGEND_ROW_HEIGHT;
             }
@@ -406,16 +493,31 @@ final class AiGanttChart {
         return y + LEGEND_ROW_HEIGHT;
     }
 
+    // A bar's ends are held to the span drawn (AiGanttZoom.clip), so a zoomed chart cuts it at the plot's edges.
     private static double left(final Task task, final Scale scale) {
         return task.isMarker()
                 ? scale.position(task.start()) - MARKER_RADIUS
-                : scale.position(task.start());
+                : scale.position(AiGanttZoom.clip(task, scale.from(), scale.to())[0]);
     }
 
     private static double right(final Task task, final Scale scale) {
-        return task.isMarker()
-                ? scale.position(task.start()) + MARKER_RADIUS
-                : Math.max(scale.position(task.end()), scale.position(task.start()) + MIN_BAR_WIDTH);
+        if (task.isMarker()) {
+            return scale.position(task.start()) + MARKER_RADIUS;
+        }
+        final long[] clipped = AiGanttZoom.clip(task, scale.from(), scale.to());
+        return Math.max(scale.position(clipped[1]), scale.position(clipped[0]) + MIN_BAR_WIDTH);
+    }
+
+    private static boolean isDistinct(final List<Long> ticks, final String format) {
+        final List<String> labels = new ArrayList<>();
+        for (final long tick : ticks) {
+            final String label = format(tick, format);
+            if (labels.contains(label)) {
+                return false;
+            }
+            labels.add(label);
+        }
+        return true;
     }
 
     private static String shortened(final String text, final int maxChars) {

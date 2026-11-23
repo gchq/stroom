@@ -2559,6 +2559,96 @@ a.ai-stroom-link::after {
     user-select: text;
 }
 
+/* A drag across the plot zooms (AiGanttInteraction), so the pointer says so there; text stays selectable. */
+.ai-gantt-svg[data-plot-left] {
+    cursor: crosshair;
+}
+
+.ai-gantt-title,
+.ai-gantt-lane-label,
+.ai-gantt-legend-text {
+    cursor: text;
+}
+
+/* The band shown over the plot while a span is dragged; never in the pointer's way. */
+.ai-gantt-band {
+    fill: var(--control__text-color);
+    fill-opacity: 0.12;
+    stroke: var(--control__text-color);
+    stroke-opacity: 0.4;
+    stroke-width: 1;
+    pointer-events: none;
+}
+
+/* The chart's own controls, above it: a hint, Reset zoom (only when zoomed) and Maximise. */
+.ai-gantt-tools {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: var(--ai-font-size--meta);
+}
+
+.ai-gantt-hint {
+    color: var(--control__text-color--disabled);
+    margin-right: auto;
+}
+
+.ai-gantt-button {
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    padding: 2px 6px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.ai-gantt-button[hidden] {
+    display: none;
+}
+
+.ai-gantt-button:hover,
+.ai-gantt-button:focus-visible {
+    color: var(--control__text-color);
+    border-color: var(--control__text-color);
+}
+
+.ai-gantt-button:focus-visible {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+.ai-gantt-button .svgIcon,
+.ai-gantt-button .svgIcon svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+/* A chart shown in its own dialog: drawn at the dialog's width (so not scaled), scrolled when taller. */
+.ai-gantt-dialog {
+    box-sizing: border-box;
+    padding: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    background-color: var(--page__background-color);
+}
+
+.ai-gantt-dialog .ai-gantt {
+    margin: 0;
+}
+
+.ai-gantt-dialog .ai-gantt-svg {
+    max-width: none;
+}
+
 .ai-gantt-title {
     font-size: 14px;
     font-weight: 600;

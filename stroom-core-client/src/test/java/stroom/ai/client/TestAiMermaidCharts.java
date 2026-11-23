@@ -16,6 +16,8 @@
 
 package stroom.ai.client;
 
+import stroom.ai.shared.MermaidGantt;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,10 +41,50 @@ class TestAiMermaidCharts {
         final String drawn = AiMermaidCharts.drawCharts(html);
 
         assertThat(drawn)
-                .startsWith("<p>Alice's morning:</p>\n<div class=\"ai-gantt\"><svg ")
+                .startsWith("<p>Alice's morning:</p>\n<div class=\"ai-gantt\" data-gantt=\"gantt&#10;")
                 .contains(">R&amp;D (times in UTC)</text>")
-                .endsWith("</svg></div>\n<p>Folded: nothing.</p>")
+                .contains("<div class=\"ai-gantt-plot\"><svg ")
+                .endsWith("</svg></div></div>\n<p>Folded: nothing.</p>")
                 .doesNotContain("<pre>", "language-mermaid");
+    }
+
+    @Test
+    void aChartKeepsItsTextEscapedAndHasItsButtons() {
+        final String text = "gantt\n    title R&D (times in UTC)\n    t :2026-11-23, 1d\n";
+
+        final String chart = AiMermaidCharts.chart(text);
+
+        // The text, escaped, its line breaks as references, read back by the browser as written.
+        assertThat(chart).contains("data-gantt=\"gantt&#10;    title R&amp;D (times in UTC)&#10;    t :2026-11-23, "
+                                   + "1d&#10;\"")
+                .doesNotContain("data-gantt-view", "data-gantt-width");
+        // Reset zoom hidden until the chart is zoomed; Maximise in the chat.
+        assertThat(chart).contains("<button type=\"button\" class=\"ai-gantt-button ai-gantt-reset\" "
+                                   + "title=\"Show the whole period again\" aria-label=\"Show the whole period again\" "
+                                   + "hidden>")
+                .contains("<span>Reset zoom</span>")
+                .contains("class=\"ai-gantt-button ai-gantt-maximise\"")
+                .contains("<span>Maximise</span>");
+        assertThat(AiMermaidCharts.unescape("gantt&#10;    title R&amp;D")).isEqualTo("gantt\n    title R&D");
+    }
+
+    @Test
+    void aChartInTheDialogIsDrawnAtItsWidthZoomedAndWithoutMaximise() {
+        final String text = "gantt\n    dateFormat YYYY-MM-DD HH:mm:ss\n"
+                            + "    t :2026-11-23 09:00:00, 2026-11-23 12:00:00\n";
+        final long nine = MermaidGantt.wallClock(2026, 11, 23, 9, 0, 0, 0);
+        final long[] view = {nine + 3_600_000L, nine + 7_200_000L};
+
+        final String chart = AiMermaidCharts.chart(text, AiMermaidCharts.parse(text), view, 1000, false);
+
+        assertThat(chart).contains("data-gantt-view=\"" + view[0] + "," + view[1] + "\"")
+                .contains("data-gantt-width=\"1000\"")
+                .contains("viewBox=\"0 0 1000 ")
+                .contains("class=\"ai-gantt-button ai-gantt-reset\" title=\"Show the whole period again\" "
+                          + "aria-label=\"Show the whole period again\">")
+                .doesNotContain("ai-gantt-maximise");
+        assertThat(AiMermaidCharts.parse("gantt\n    click t call alert(1)")).isNull();
+        assertThat(AiMermaidCharts.parse(null)).isNull();
     }
 
     @Test
@@ -73,9 +115,9 @@ class TestAiMermaidCharts {
 
         final String drawn = AiMermaidCharts.drawCharts(html);
 
-        assertThat(drawn).containsSubsequence("<div class=\"ai-gantt\">", "<p>and</p>", bad,
-                "<pre class=\"x\">text</pre>", "<div class=\"ai-gantt\">");
-        assertThat(drawn.split("<svg ", -1)).hasSize(3);
+        assertThat(drawn).containsSubsequence("<div class=\"ai-gantt\" ", "<p>and</p>", bad,
+                "<pre class=\"x\">text</pre>", "<div class=\"ai-gantt\" ");
+        assertThat(drawn.split("class=\"ai-gantt-svg\"", -1)).hasSize(3);
     }
 
     @Test

@@ -318,6 +318,7 @@ public class AskStroomAiPresenter
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
     private final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider;
+    private final Provider<AiGanttPopupPresenter> ganttPopupPresenterProvider;
     private final Provider<DocSelectionPopup> docSelectionPopupProvider;
     private final Provider<CodeChangeReviewPresenter> codeChangeReviewPresenterProvider;
     private final ContentManager contentManager;
@@ -488,6 +489,7 @@ public class AskStroomAiPresenter
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider,
+                                final Provider<AiGanttPopupPresenter> ganttPopupPresenterProvider,
                                 final Provider<DocSelectionPopup> docSelectionPopupProvider,
                                 final Provider<CodeChangeReviewPresenter> codeChangeReviewPresenterProvider,
                                 final ContentManager contentManager,
@@ -507,6 +509,7 @@ public class AskStroomAiPresenter
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
         this.commandErrorPresenterProvider = commandErrorPresenterProvider;
+        this.ganttPopupPresenterProvider = ganttPopupPresenterProvider;
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         this.codeChangeReviewPresenterProvider = codeChangeReviewPresenterProvider;
         this.contentManager = contentManager;
@@ -576,6 +579,13 @@ public class AskStroomAiPresenter
                 }
             }
         }, ClickEvent.getType()));
+
+        // An answer's charts: zoomed by a drag, reset, and shown larger in a dialog (handlers on the conversation,
+        // not the charts, which are drawn again as answers are).
+        for (final HandlerRegistration registration : new AiGanttInteraction(chart ->
+                ganttPopupPresenterProvider.get().show(chart)).bind(getView().getMarkdownContainer())) {
+            registerHandler(registration);
+        }
 
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {

@@ -2584,7 +2584,11 @@ per section (tasks packed into as few rows as don't overlap, as Mermaid's compac
 markers, a dashed grid and ticks (steps from a second to a year, at most 8), a legend (eight colours in a fixed
 order by first appearance; "Other" and names past the eighth grey), and a `<title>` tooltip per bar; every text
 escaped, colours and lines by CSS classes (`ai-gantt-*` in `ask-stroom-ai.css`, the hues stepped for the dark
-theme). No third-party script.
+theme). No third-party script. Dragging across the plot or axis zooms to that span (bars cut to it, tasks outside
+it left out, ticks recomputed and written finer when the axis format would repeat; a drag under 5 px is a click),
+again within a zoom; "Reset zoom" (shown only when zoomed) or a double-click shows the whole period; "Maximise"
+opens it in a resizable Stroom dialog drawn at the dialog's width, with the same zoom (`AiGanttZoom`,
+`AiGanttInteraction`, `AiGanttPopupPresenter`).
 
 * **Examples**: `golden/gantt/*.mmd` (a day of window focus on two hosts, a week by day, hostile labels), each read
   by the parser and, line by line, by a port of Mermaid's gantt lexer rules (`TestGanttChartExamples`), as there is

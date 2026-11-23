@@ -25,6 +25,9 @@ import stroom.ai.client.AiConfigGeneralViewImpl;
 import stroom.ai.client.AiConfigTableAnalysisPresenter;
 import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView;
 import stroom.ai.client.AiConfigTableAnalysisViewImpl;
+import stroom.ai.client.AiGanttPopupPresenter;
+import stroom.ai.client.AiGanttPopupPresenter.AiGanttPopupView;
+import stroom.ai.client.AiGanttPopupViewImpl;
 import stroom.ai.client.AiMemoryPresenter;
 import stroom.ai.client.AiMemoryPresenter.AiMemoryView;
 import stroom.ai.client.AiMemoryViewImpl;
@@ -84,6 +87,10 @@ public class AskStroomAIModule extends PluginModule {
                 AiCommandErrorPresenter.class,
                 AiCommandErrorView.class,
                 AiCommandErrorViewImpl.class);
+        bindPresenterWidget(
+                AiGanttPopupPresenter.class,
+                AiGanttPopupView.class,
+                AiGanttPopupViewImpl.class);
         bindPresenterWidget(
                 DownloadChatPresenter.class,
                 DownloadChatView.class,
