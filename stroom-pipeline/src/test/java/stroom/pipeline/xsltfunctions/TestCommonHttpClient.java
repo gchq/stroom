@@ -151,6 +151,33 @@ class TestCommonHttpClient {
                 .hasMessageContaining("proxy");
     }
 
+    @Test
+    void testNullPropertiesDoNotChooseFormat() {
+        // A null OkHttp-only property must not make an Apache config look mixed.
+        final HttpClientConfiguration config = CommonHttpClient.parseClientConfiguration("""
+                {
+                  "sslConfig": null,
+                  "proxy": { "host": "proxy.example.com", "port": 3128 }
+                }""");
+
+        assertThat(config.getProxyConfiguration())
+                .isNotNull();
+        assertThat(config.getProxyConfiguration().getHost())
+                .isEqualTo("proxy.example.com");
+    }
+
+    @Test
+    void testErrorMessageExcludesPasswords() {
+        assertThatThrownBy(() -> CommonHttpClient.parseClientConfiguration("""
+                {
+                  "sslConfig": { "keyStorePassword": "s3cret" },
+                  "proxy": { "host": "proxy.example.com", "port": 3128 }
+                }"""))
+                .isInstanceOf(ProcessException.class)
+                .message()
+                .doesNotContain("s3cret");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "not json",

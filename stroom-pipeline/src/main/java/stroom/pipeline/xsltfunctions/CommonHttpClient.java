@@ -101,6 +101,7 @@ public class CommonHttpClient {
     /// @throws ProcessException If the config is not a valid JSON object, cannot be read in its
     ///                          format, or mixes OkHttp-only and Apache-only properties.
     static HttpClientConfiguration parseClientConfiguration(final String clientConfigStr) {
+        // Error messages never include the config itself, as it may hold key or trust store passwords.
         if (NullSafe.isBlankString(clientConfigStr)) {
             return HttpClientConfiguration.builder().build();
         }
@@ -111,9 +112,9 @@ public class CommonHttpClient {
 
         if (!okHttpProperties.isEmpty() && !apacheProperties.isEmpty()) {
             throw ProcessException.create(LogUtil.message(
-                    "HTTP client configuration \"{}\" mixes OkHttp-only properties {} with Apache-only " +
+                    "HTTP client configuration mixes OkHttp-only properties {} with Apache-only " +
                     "properties {}. Use only the Apache format.",
-                    clientConfigStr, okHttpProperties, apacheProperties));
+                    okHttpProperties, apacheProperties));
         } else if (!okHttpProperties.isEmpty()) {
             LOGGER.debug("Reading HTTP client configuration in the deprecated OkHttp format");
             return getOkHttpClientConfiguration(clientConfigStr);
@@ -129,18 +130,17 @@ public class CommonHttpClient {
             jsonNode = JsonUtil.getMapper().readTree(clientConfigStr);
         } catch (final RuntimeException e) {
             throw ProcessException.create(LogUtil.message(
-                    "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()), e);
+                    "Error parsing HTTP client configuration. {}", e.getMessage()), e);
         }
         if (jsonNode == null || !jsonNode.isObject()) {
-            throw ProcessException.create(LogUtil.message(
-                    "HTTP client configuration \"{}\" is not a JSON object.", clientConfigStr));
+            throw ProcessException.create("HTTP client configuration is not a JSON object.");
         }
         return jsonNode;
     }
 
     private static List<String> getPresentProperties(final JsonNode jsonNode, final List<String> propertyNames) {
         return propertyNames.stream()
-                .filter(jsonNode::has)
+                .filter(jsonNode::hasNonNull)
                 .toList();
     }
 
@@ -164,7 +164,7 @@ public class CommonHttpClient {
             return builder.build();
         } catch (final RuntimeException e) {
             throw ProcessException.create(LogUtil.message(
-                    "Error parsing OkHttp client configuration \"{}\". {}", clientConfigStr, e.getMessage()), e);
+                    "Error parsing OkHttp client configuration. {}", e.getMessage()), e);
         }
     }
 
@@ -173,8 +173,7 @@ public class CommonHttpClient {
             return JsonUtil.readValue(clientConfigStr, HttpClientConfiguration.class);
         } catch (final RuntimeException e) {
             throw ProcessException.create(LogUtil.message(
-                    "Error parsing Apache HTTP client configuration \"{}\". {}",
-                    clientConfigStr, e.getMessage()), e);
+                    "Error parsing Apache HTTP client configuration. {}", e.getMessage()), e);
         }
     }
 }
