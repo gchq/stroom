@@ -1235,6 +1235,70 @@ data and, when a question or a skill asks, the backing Event XML.
   not offered, no model), `TestChatModelSideCalls`, `TestMcpSampling`; e2e as part 2's, the characterisation by a
   stand-in for the client's model over MCP sampling and by the fake chat model in the chat.
 
+#### 2c. Timelines from any source (proposed 2026-11-24)
+
+Seen in chat 190: a user seen only in web proxy logs (Netskope) got 0 sessions, as sessions began only at a focus
+event, which only endpoint logs have; 4,606 actions in no session, empty tables, nothing to chart. Decided with the
+user (2026-11-24): the timeline works out what it can by itself, from any source normalised to the event-logging
+schema, and what it can't is captured iteratively in the site's skill.
+
+* **Sources** (asked in a form, unless a skill names them): with a dashboard attached, only its data source, all
+  supported data sources, or the user's own words (e.g. "web proxy logs and Windows events", matched to indexes and
+  shown to confirm); without one, all supported data sources by default, or the user's own words. Supported: every
+  Elastic Index the user can use. Over MCP, with no form, all supported, said in the result. On "all", one count
+  per index of the user's events; indexes without any, or without a user field, are listed and left out.
+* **The user field**, per index: the skill's, else the AGENTS doc's (a `## Fields` section the tool reads itself:
+  `user: Initiator.Id`, `host: ...`; checked by `propose_instructions` and `check_skill` like the other applied
+  sections), else convention (ECS `user.name`, a flat index's user id), else the index's documentation, else asked.
+  Checked against each index (a site standard most but not all indexes follow falls back per index); each index's
+  field and where it came from are in the result.
+* **Classified from the Events XML**: after the index filters by user and time, the events' XML is read by
+  StreamId/EventId (batched per stream; capped, e.g. 50,000 events, with progress, and past it a narrower period
+  asked for): the EventDetail element and its Action give the role (Authenticate Logon/ScreenUnlock/Connect/
+  Reconnect: active from here; Logoff/ScreenLock/Disconnect: idle from here; Process Execute/Startup and
+  Terminate/Shutdown: opened and closed; View, Create, Update, Delete, Copy, Move, Send, Receive, Print, Export,
+  Import, Search, Network, Install, Uninstall, Approval, Authorise, Alert: an action of that kind), the objects the
+  labels (window title, file path, URL, subject) and pairs' keys (process id or name, window, session). **The user
+  and the time always come from the index**, never the XML: the indexing pipeline may normalise them (lowercased,
+  domain stripped). Fallback where the XML is gone (retention) or doesn't exist (an index not built from Events):
+  index fields (an element-name field such as SchemaAction, with `event.action` for its Action), else a one-off
+  classification of the index's distinct event codes (the catalogue's event types where a build record has them,
+  else a side call), confirmed by the user and cached per index; how many events each way, in the result. Focus
+  isn't in the schema: a source recording it is named by a skill or the hand-written roles, kept as the override.
+* **Activity periods**: actions in no focus session or pair, close in time (gaps under the idle cap), become spans:
+  lane the host, else the source's name; label the application, else the object (e.g. the domain), else the action
+  kind; split where the label changes; marked `by: activity`, said to show when the user was active in that
+  source, not what had focus. Endpoint timelines unchanged: focus sessions and pairs win.
+* **Pairs** bound spans: `pairs: [{start, end, by, label}]`, several per source; an end closes the latest open start
+  of the same key; a start without an end runs to the idle cap or the period's end, and either unpaired is flagged.
+  1. **The schema's** (Process Execute/Startup to Terminate/Shutdown; Authenticate Logon to Logoff, ScreenLock to
+     ScreenUnlock): automatic.
+  2. **Inferred from the data**, automatic when clear: two event types that, for the same key value in the XML,
+     alternate (A, B, A, B) for nearly every key (e.g. 90%+), occur about equally often, and B follows A within a
+     plausible time. No lists of words (Open/Close...): tested on the user's own events, so a vendor's pair in any
+     naming passes and unrelated types sharing a field don't.
+  3. **Borderline** (half-alternating, lopsided counts): listed with their figures, not used.
+  Every pair's origin (skill, schema, inferred) and alternation share are in the result.
+* **Captured in the skill, iteratively**: after a run, the agent offers to record what it learned for each source
+  in the timeline skill's **Event chains** section (pairs inferred and used, so they're fixed rather than
+  re-inferred; borderline ones the user confirms; the user's corrections, e.g. "Lock-Workstation ends activity on
+  that host"), through `propose_skill`'s diff. Applied next run before the schema's pairs and inference.
+  `check_skill` checks each entry's event types and keys exist and still alternate in recent data. **Only offered
+  when the user may change the skills doc**: Edit on the SKILLS doc holding the skill in use (as "Review and apply"
+  needs), or Create in a folder for a new one; otherwise what was learned is kept for the chat (as corrections are)
+  and the result names who could record it, with the text to give them. Longer chains ("download, then copy to
+  USB") stay sequence_query's; a skill may name them for the agent to run beside the timeline.
+* **Two levels, three views**: detail spans (pairs, focus sessions, activity periods: start, end, label, lane, kind,
+  activity) and activities rolled up from them (the characterisation assigns spans; an activity's spans following
+  each other within the idle cap, across sources and hosts, merge into one interval keeping its spans and
+  evidence). `view`: `activities` (one lane per day by default, per activity on request; turns characterisation
+  on), `detail` (lanes by host or source), `both` (an activity row per day above the hosts' spans; on a dashboard,
+  spans coloured by activity). Both tables written every run (`activities.csv`, `spans.csv`), so the view changes
+  without reading the events again; the agent picks the view from the question, asks when unclear; a view too dense
+  for one chart (a week's detail) is said, with a day or one activity suggested.
+* **Skill template**: parameters for sources (default: ask), the user field, the level of detail (activities,
+  detail, both) and an Event chains section.
+
 #### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
 
 **Built 2026-11-23, gantt only** (the chat route): `gantt_chart` (dashboards group, chat only; `GanttChartTool`,
