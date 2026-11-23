@@ -140,6 +140,8 @@ public class LmdbDataStore implements DataStore {
     private final WindowRowGenerator windowKeyGenerator;
     // The first and last windows that the store has real rows for, noted as rows are stored.
     private final StoredWindowExtent storedWindowExtent = new StoredWindowExtent();
+    // Counts the times the store has been read through to find its windows.
+    private final AtomicLong windowExtentScans = new AtomicLong();
     private final int windowTimeFieldIndex;
     private final String windowTimeField;
     private final AtomicBoolean reportedRowWithNoWindowTime = new AtomicBoolean();
@@ -258,6 +260,9 @@ public class LmdbDataStore implements DataStore {
                 .build();
         this.db = env.openDb(queryKey + "_" + componentId);
         this.stateDb = env.openDb("state");
+        if (db.count() == 0) {
+            storedWindowExtent.openedEmpty();
+        }
 
         // Create a filter for incoming data.
         valueFilter = ValFilter.create(
@@ -367,6 +372,7 @@ public class LmdbDataStore implements DataStore {
     // Reads through the top level rows of the store to find the first and last windows with a real
     // row. Returns null if the read was interrupted.
     private long[] scanWindowExtent(final LmdbReadContext readContext) {
+        windowExtentScans.incrementAndGet();
         final long[] range = new long[]{Long.MAX_VALUE, Long.MIN_VALUE};
         lmdbRowKeyFactory.createChildKeyRange(Key.ROOT_KEY, keyRange ->
                 readContext.read(keyRange, iterator -> {
@@ -602,6 +608,14 @@ public class LmdbDataStore implements DataStore {
         putFilter.put(queueItem, this::doPut);
     }
 
+    /// Notes the windows of the rows of a payload from another node. It is put on the queue ahead of
+    /// the rows, and is not counted as a row by the put filter.
+    ///
+    /// @param span The windows that the other node holds real rows for.
+    void putWindowSpan(final StoredWindowExtent.Span span) {
+        doPut(span);
+    }
+
     private void doPut(final LmdbQueueItem queueItem) {
         try {
             queue.put(queueItem);
@@ -647,6 +661,7 @@ public class LmdbDataStore implements DataStore {
                                         sync.sync();
                                     }
                                     case final DeleteCommand deleteCommand -> delete(writeTxn, deleteCommand);
+                                    case final StoredWindowExtent.Span span -> storedWindowExtent.addSpan(span);
                                     default -> {
                                     }
                                 }
@@ -662,7 +677,11 @@ public class LmdbDataStore implements DataStore {
 
                                 // Create payload and clear the DB.
                                 storedWindowExtent.beginCommit();
-                                payloadCreator.addPayload(writeTxn, db, false);
+                                payloadCreator.addPayload(
+                                        writeTxn,
+                                        db,
+                                        false,
+                                        storedWindowExtent.getWrittenSpan());
                                 // The payload takes the rows out of the store.
                                 storedWindowExtent.committed(true);
 
@@ -708,7 +727,11 @@ public class LmdbDataStore implements DataStore {
                         // Create payload and clear the DB.
                         boolean finalPayload = false;
                         while (!finalPayload) {
-                            finalPayload = payloadCreator.addPayload(writeTxn, db, true);
+                            finalPayload = payloadCreator.addPayload(
+                                    writeTxn,
+                                    db,
+                                    true,
+                                    storedWindowExtent.getWrittenSpan());
                         }
                         // Make sure we end with an empty payload to indicate completion.
                         // Adding a final empty payload to the queue ensures that a consuming node will have to request
@@ -992,6 +1015,15 @@ public class LmdbDataStore implements DataStore {
     @Override
     public CompletionState getCompletionState() {
         return completionState;
+    }
+
+    /// Gets how many times the store has been read through to find the first and last time windows
+    /// that it holds real rows for. Tests use it to check that the windows are noted as rows are
+    /// stored.
+    ///
+    /// @return The number of times.
+    long getWindowExtentScanCount() {
+        return windowExtentScans.get();
     }
 
     /**

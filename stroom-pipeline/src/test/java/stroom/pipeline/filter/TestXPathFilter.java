@@ -28,7 +28,9 @@ import io.vavr.Tuple;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -44,6 +46,9 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestXPathFilter extends StroomUnitTest {
 
@@ -127,6 +132,47 @@ class TestXPathFilter extends StroomUnitTest {
                         Tuple.of("records/record[10]/data[@name = 'Message']/@value", MatchType.CONTAINS, "foo"),
                         false)
                 .build();
+    }
+
+    @Test
+    void testFilterCannotReadFiles(@TempDir final Path tempDir) throws Exception {
+        final Path dataFile = tempDir.resolve("data.txt");
+        Files.writeString(dataFile, "content");
+        final SAXEventRecorder steppingFilter = recordInput();
+
+        final XPathFilter xPathFilter = new XPathFilter();
+        xPathFilter.setPath("unparsed-text('" + dataFile.toUri() + "')");
+        xPathFilter.setMatchType(MatchType.EQUALS);
+        xPathFilter.setValue("content");
+        final SAXEventRecorder.CompiledXPathFilter compiledXPathFilter = new SAXEventRecorder.CompiledXPathFilter(
+                xPathFilter, steppingFilter.getConfiguration(), steppingFilter.getNamespaceContext());
+
+        assertThatThrownBy(() -> compiledXPathFilter.getXPathExpression()
+                .evaluate(steppingFilter.getEvents(), XPathConstants.STRING))
+                .hasStackTraceContaining("is not allowed");
+    }
+
+    @Test
+    void testFilterCannotReadEnvironmentVariables() throws Exception {
+        final SAXEventRecorder steppingFilter = recordInput();
+        final XPathFilter xPathFilter = new XPathFilter();
+        xPathFilter.setPath("environment-variable('PATH')");
+        final SAXEventRecorder.CompiledXPathFilter compiledXPathFilter = new SAXEventRecorder.CompiledXPathFilter(
+                xPathFilter, steppingFilter.getConfiguration(), steppingFilter.getNamespaceContext());
+
+        assertThat(compiledXPathFilter.getXPathExpression()
+                .evaluate(steppingFilter.getEvents(), XPathConstants.STRING))
+                .isEqualTo("");
+    }
+
+    private SAXEventRecorder recordInput() throws SAXException, IOException, ParserConfigurationException {
+        final Path input = StroomPipelineTestFileUtil.getTestResourcesFile(INPUT);
+        final XMLReader xmlReader = PARSER_FACTORY.newSAXParser().getXMLReader();
+        final SAXEventRecorder steppingFilter = new SAXEventRecorder(null, null);
+        steppingFilter.clear(null);
+        xmlReader.setContentHandler(steppingFilter);
+        xmlReader.parse(new InputSource(Files.newBufferedReader(input)));
+        return steppingFilter;
     }
 
     @SuppressWarnings("unchecked")

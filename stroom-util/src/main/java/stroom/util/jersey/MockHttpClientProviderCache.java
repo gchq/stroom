@@ -24,4 +24,9 @@ public class MockHttpClientProviderCache implements HttpClientProviderCache {
     public HttpClientProvider get(final HttpClientConfiguration httpClientConfiguration) {
         return null;
     }
+
+    @Override
+    public HttpClientProvider getAddressChecked(final HttpClientConfiguration httpClientConfiguration) {
+        return null;
+    }
 }

@@ -33,8 +33,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestXsltPoolImpl extends AbstractProcessIntegrationTest {
 
     private static final String COMPILE_FAILED = "COMPILE FAILED";
+    private static final String ERROR = "ERROR";
 
     @Inject
     private XsltStore xsltStore;
@@ -140,6 +144,66 @@ class TestXsltPoolImpl extends AbstractProcessIntegrationTest {
                 .contains("No XSLT found with name or UUID \"" + missingName + "\"");
     }
 
+    /// Pipeline XSLT must not read files, even with a literal URI that Saxon might resolve while compiling.
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {
+            "unparsed-text('file:///etc/hostname')",
+            "string(doc('file:///etc/fonts/fonts.conf'))",
+            "string(count(uri-collection('file:///etc/')))"})
+    void fileReadIsRefused(final String xpath) {
+        final DocRef xslt = createXslt(uniqueName("read"), selecting(xpath));
+
+        assertThat(transformOrError(xslt))
+                .startsWith(ERROR)
+                .containsAnyOf("is not allowed", "Exception thrown by URIResolver");
+    }
+
+    /// XSLT's document() treats a document it can't read as a recoverable error and returns nothing.
+    @Test
+    void documentFunctionReadsNothing() throws IOException {
+        // Not a @TempDir parameter, as the integration test base resolves parameters with Guice.
+        final Path file = Files.createTempFile("stroom-xslt-document-test", ".xml");
+        try {
+            Files.writeString(file, "<a><b/></a>");
+            final DocRef xslt = createXslt(uniqueName("document"),
+                    selecting("count(document('" + file.toUri() + "')//*)"));
+
+            assertThat(transformOrError(xslt)).isEqualTo("<out>0</out>");
+        } finally {
+            Files.deleteIfExists(file);
+        }
+    }
+
+    @Test
+    void resultDocumentIsRefused() {
+        final DocRef xslt = createXslt(uniqueName("write"), """
+                <?xml version="1.0" encoding="UTF-8" ?>
+                <xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                  <xsl:template match="/">
+                    <xsl:result-document href="file:///tmp/stroom-xslt-write-test.txt">x</xsl:result-document>
+                  </xsl:template>
+                </xsl:stylesheet>
+                """);
+
+        assertThat(transformOrError(xslt)).startsWith(COMPILE_FAILED);
+    }
+
+    @Test
+    void environmentVariablesAreHidden() {
+        final DocRef xslt = createXslt(uniqueName("env"), selecting(
+                "count(available-environment-variables()) || ':' || environment-variable('PATH')"));
+
+        assertThat(transformOrError(xslt)).isEqualTo("<out>0:</out>");
+    }
+
+    /// Stroom's own functions must still work in a secured XSLT.
+    @Test
+    void stroomFunctionsStillWork() {
+        final DocRef xslt = createXslt(uniqueName("stroom"), selecting("stroom:hex-to-dec('ff')"));
+
+        assertThat(transformOrError(xslt)).isEqualTo("<out>255</out>");
+    }
+
     private static String uniqueName(final String prefix) {
         return prefix + "-" + UUID.randomUUID();
     }
@@ -153,6 +217,18 @@ class TestXsltPoolImpl extends AbstractProcessIntegrationTest {
                   </xsl:template>
                 </xsl:stylesheet>
                 """.formatted(elementName);
+    }
+
+    private static String selecting(final String xpath) {
+        return """
+                <?xml version="1.0" encoding="UTF-8" ?>
+                <xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                    xmlns:stroom="stroom" exclude-result-prefixes="stroom">
+                  <xsl:template match="/">
+                    <out><xsl:value-of select="%s"/></out>
+                  </xsl:template>
+                </xsl:stylesheet>
+                """.formatted(xpath.replace("&", "&amp;").replace("<", "&lt;").replace("\"", "&quot;"));
     }
 
     private String importing(final DocRef imported, final String hrefForm) {
@@ -190,6 +266,24 @@ class TestXsltPoolImpl extends AbstractProcessIntegrationTest {
     private void saveXslt(final DocRef docRef, final String data) {
         final XsltDoc current = xsltStore.readDocument(docRef);
         xsltStore.writeDocument(current.copy().data(data).build());
+    }
+
+    // As transformPooled but returns ERROR and the messages of the exception and its causes if the
+    // transform fails.
+    private String transformOrError(final DocRef xsltRef) {
+        try {
+            return transformPooled(xsltRef);
+        } catch (final RuntimeException e) {
+            final StringBuilder sb = new StringBuilder(ERROR);
+            Throwable t = e;
+            while (t != null) {
+                sb.append(' ').append(t.getMessage());
+                t = t.getCause() == t
+                        ? null
+                        : t.getCause();
+            }
+            return sb.toString();
+        }
     }
 
     private String transformPooled(final DocRef xsltRef) {

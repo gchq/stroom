@@ -74,6 +74,11 @@ public class LmdbPayloadCreator {
                 // If there are some bytes to read then read them.
                 final byte[] bytes = input.readBytes(length);
                 try (final Input in = new Input(new ByteArrayInputStream(bytes))) {
+                    // The payload starts with the windows that the sending store holds real rows for.
+                    lmdbDataStore.putWindowSpan(new StoredWindowExtent.Span(
+                            in.readBoolean(),
+                            in.readLong(),
+                            in.readLong()));
                     while (!in.end()) {
                         final int rowKeyLength = in.readInt();
                         final byte[] key = in.readBytes(rowKeyLength);
@@ -87,8 +92,9 @@ public class LmdbPayloadCreator {
                         valueBuffer.put(value, 0, value.length);
                         valueBuffer.flip();
 
-                        // Create a new unique key if this isn't a group key.
-                        LmdbKV lmdbKV = new LmdbKV(null, keyBuffer, valueBuffer);
+                        // Create a new unique key if this isn't a group key. Its windows are noted
+                        // by the span at the start of the payload.
+                        LmdbKV lmdbKV = new LmdbKV(null, keyBuffer, valueBuffer, null);
                         lmdbKV = lmdbRowKeyFactory.makeUnique(lmdbKV);
 
                         lmdbDataStore.put(lmdbKV);
@@ -148,10 +154,19 @@ public class LmdbPayloadCreator {
         return currentPayload.isEmpty();
     }
 
+    /// Takes the rows out of the store and adds them to a payload to send to another node.
+    ///
+    /// @param writeTxn The transaction to take the rows out with.
+    /// @param db       The store's rows.
+    /// @param complete Whether the store has all of its rows.
+    /// @param span     The windows that the store holds real rows for, sent at the start of the
+    ///                 payload.
+    /// @return True if this is the last payload.
     boolean addPayload(final WriteTxn writeTxn,
                        final LmdbDb db,
-                       final boolean complete) {
-        final LmdbPayload payload = createPayload(writeTxn, db, complete);
+                       final boolean complete,
+                       final StoredWindowExtent.Span span) {
+        final LmdbPayload payload = createPayload(writeTxn, db, complete, span);
         doPut(payload);
         return payload.isFinalPayload();
     }
@@ -172,11 +187,13 @@ public class LmdbPayloadCreator {
 
     private LmdbPayload createPayload(final WriteTxn writeTxn,
                                       final LmdbDb db,
-                                      final boolean complete) {
+                                      final boolean complete,
+                                      final StoredWindowExtent.Span span) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
         return SimpleMetrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
+                writeSpan(payloadOutput, span);
                 final AtomicBoolean finalPayload = new AtomicBoolean(complete);
                 long size = 0;
                 long count = 0;
@@ -215,15 +232,18 @@ public class LmdbPayloadCreator {
 
                 writeTxn.commit();
                 payloadOutput.close();
-                return new LmdbPayload(finalPayload.get(), payloadOutput.toBytes());
+                return new LmdbPayload(finalPayload.get(), payloadBytes(payloadOutput, count));
 
             } else {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
+                writeSpan(payloadOutput, span);
+                long count = 0;
                 try (final Cursor<ByteBuffer> cursor = db.getDbi().openCursor(writeTxn.get())) {
                     boolean isFound = cursor.first();
                     while (isFound) {
                         final ByteBuffer keyBuffer = cursor.key();
                         final ByteBuffer valBuffer = cursor.val();
+                        count++;
 
                         payloadOutput.writeInt(keyBuffer.remaining());
                         payloadOutput.writeByteBuffer(keyBuffer);
@@ -237,8 +257,22 @@ public class LmdbPayloadCreator {
                 db.drop(writeTxn);
                 writeTxn.commit();
                 payloadOutput.close();
-                return new LmdbPayload(complete, payloadOutput.toBytes());
+                return new LmdbPayload(complete, payloadBytes(payloadOutput, count));
             }
         });
+    }
+
+    // A payload with no rows is sent with no bytes, without its span, so the node that receives it
+    // skips it. Each span is of every row written so far, so the next span with rows covers it.
+    private static byte[] payloadBytes(final PayloadOutput payloadOutput, final long rowCount) {
+        return rowCount == 0
+                ? new byte[0]
+                : payloadOutput.toBytes();
+    }
+
+    private static void writeSpan(final PayloadOutput payloadOutput, final StoredWindowExtent.Span span) {
+        payloadOutput.writeBoolean(span.known());
+        payloadOutput.writeLong(span.first());
+        payloadOutput.writeLong(span.last());
     }
 }

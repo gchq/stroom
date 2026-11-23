@@ -271,6 +271,32 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 Arrays.asList("user2", "2026-03-13T00:00:00.000Z", "0", "1", null));
     }
 
+    // A node sends the windows it holds real rows for with its rows, so the store they are merged into
+    // does not read through all of its rows to find its windows.
+    @Test
+    void rowsMergedFromTwoNodesDoNotMakeTheStoreReadThroughItsRows() throws InterruptedException {
+        final TableSettings tableSettings = lagTable("1d", null);
+        final DataStoreSettings nodeSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
+        final DataStore node1 = create(tableSettings, nodeSettings);
+        final DataStore node2 = create(tableSettings, nodeSettings);
+        final DataStore dataStore = create(tableSettings);
+
+        // Only node2 has a real row on the 13th, so the merged store must learn of it from node2.
+        addEvent(node1, "2026-03-10T09:00:00Z", "user1");
+        addEvent(node2, "2026-03-10T10:00:00Z", "user1");
+        addEvent(node2, "2026-03-13T09:00:00Z", "user1");
+
+        transferPayloads(node1, dataStore);
+        transferPayloads(node2, dataStore);
+
+        assertThat(windowRows(dataStore, tableSettings, 5)).containsExactlyInAnyOrder(
+                Arrays.asList("user1", "2026-03-10T00:00:00.000Z", "2", null, "0"),
+                Arrays.asList("user1", "2026-03-11T00:00:00.000Z", "0", "2", "0"),
+                Arrays.asList("user1", "2026-03-12T00:00:00.000Z", "0", "0", "1"),
+                Arrays.asList("user1", "2026-03-13T00:00:00.000Z", "1", "0", null));
+        assertThat(((LmdbDataStore) dataStore).getWindowExtentScanCount()).isZero();
+    }
+
     @Test
     void hoppingWindowRowsMergedFromTwoNodes() throws InterruptedException {
         final TableSettings tableSettings = windowTable("1h", "30m");

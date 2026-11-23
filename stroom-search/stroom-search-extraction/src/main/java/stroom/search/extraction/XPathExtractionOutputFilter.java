@@ -29,6 +29,8 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
+import stroom.util.xml.SaxonPolicy;
+import stroom.util.xml.SaxonSecurity;
 
 import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
@@ -72,9 +74,10 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     private final QueryInfoHolder queryInfoHolder;
     private final FieldListConsumerHolder fieldListConsumerHolder;
     private final LocationFactoryProxy locationFactory;
-    private final Configuration config = new Configuration();
+    // Locked so the XPaths can't read files, URLs or environment variables.
+    private final Processor processor = SaxonSecurity.newProcessor(SaxonPolicy.LOCKED);
+    private final Configuration config = processor.getUnderlyingConfiguration();
     private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
-    private final Processor processor = new Processor(config);
     private final XPathCompiler compiler = processor.newXPathCompiler();
     private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
     private Locator locator;

@@ -266,6 +266,16 @@ public class GlobalConfigService implements GlobalConfig {
             // into an object (e.g. if it is a docref, list, map etc)
             ConfigProperty persistedConfigProperty;
             if (configProperty.hasDatabaseOverride()) {
+                // Read-only properties can only be set in the configuration file.
+                final boolean editable = configMapper.getGlobalProperty(configProperty.getName())
+                        .map(ConfigProperty::isEditable)
+                        .orElse(true);
+                if (!editable) {
+                    throw new ConfigPropertyValidationException(LogUtil.message(
+                            "Property {} is read-only and can only be set in the configuration file",
+                            configProperty.getName()));
+                }
+
 
                 // Ensure the value is a valid serialised form and that the de-serialised form
                 // passes javax validation
