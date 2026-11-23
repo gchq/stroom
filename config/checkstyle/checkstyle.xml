@@ -196,6 +196,13 @@
             <property name="ignoreComments" value="true"/>
             <property name="message" value="Do not use GWT.log: use stroom.widget.util.client.Console (see stroom-gwt/UI-GUIDE.md)."/>
         </module>
+        <!-- Nor does its JSNI write to the browser's console, which is in a comment, so comments are
+             checked. Allowed (suppressions.xml) in Console itself, the workbench and a served page's script. -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="BrowserConsole"/>
+            <property name="format" value="\bconsole\s*\.\s*(log|debug|info|warn|error|trace)\s*\("/>
+            <property name="message" value="Do not use the browser''s console: use stroom.widget.util.client.Console (see stroom-gwt/UI-GUIDE.md)."/>
+        </module>
 
         <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
         <module name="SuppressWarningsHolder"/>

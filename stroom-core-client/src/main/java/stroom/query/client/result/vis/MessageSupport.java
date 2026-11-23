@@ -136,7 +136,8 @@ public class MessageSupport implements FrameListener {
 
         } else if ("select".equals(functionName)) {
             final JSONValue selection = message.get("selection");
-            Console.debug(() -> "Received selection from vis: " + selection.toString());
+            // Not what is selected, which is users' data
+            Console.debug("Received selection from vis");
 
             if (onSelection != null) {
                 onSelection.accept(VisComponentSelection.create(selection));

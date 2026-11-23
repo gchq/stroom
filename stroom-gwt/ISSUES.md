@@ -1730,7 +1730,9 @@ to delete them by hand.~~
     standard format clears the error. A play for that found that a saved custom format never ticked
     Custom, so one that can't be used was neither said nor refused: `SelectionBox` keeps a value that
     isn't in its list, and the tick looked for it having none. Now the tick is whether the format is
-    a standard one (`SavedCustomFormat`). Plays: `App/Main/TimePreferences`
+    a standard one (`SavedCustomFormat`). `InvalidInputs` and `LayerContainer` said that hidden tabs are
+    looked in, which is so only of layers that stay on the page; no other tabbed dialog has a checked
+    field in a tab. Plays: `App/Main/TimePreferences`
     `InvalidCustomFormatNotReported`, `StandardFormatClearsError` and `SavedInvalidCustomFormat`, and
     `App/Main/AppShell` `InvalidCustomFormatRefusesOk` and `InvalidCustomFormatInHiddenTab`.
   * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
@@ -1782,7 +1784,8 @@ to delete them by hand.~~
     so development is now Super Dev Mode (the `superdevmode` property), and draft compiles and the
     workbench log as production does; warnings and errors use the console's own levels; a dashboard
     link's parameters and every link clicked are no longer logged; and a reply's handler that fails
-    is logged with its stack, not the reply.
+    is logged with its stack, not the reply. Checkstyle's `BrowserConsole` refuses the browser's
+    console in JSNI, and a selection made in a visualisation is logged without its contents.
     Also found: `DocumentationTabController.updateEditState` runs on every `setText` and
     `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
     and shows the preview, and a blank document opens the editor when it becomes editable. It
