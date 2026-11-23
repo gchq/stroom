@@ -154,16 +154,20 @@ class SourceTypeRegistries {
 
     /// @param feed A feed's name.
     /// @param name A Documentation doc's name.
-    /// @return The Documentation doc of that name in the folder of the feed (one outside any build), if the user
-    /// can read it: a registry promoted beside the feed.
+    /// @return The Documentation doc of that name in the folder of the feed, or in the feed's own folder beside it
+    /// (one outside any build), if the user can read it: a registry promoted beside the feed.
     Optional<SurveyRecord> besideFeed(final String feed, final String name) {
         try {
             for (final DocRef ref : feedNames.feedsNamed(feed)) {
                 if (guard.buildOf(ref).isPresent()) {
                     continue;
                 }
+                // Beside the feed, else in its own folder (where promotion files it when the feed's folder holds
+                // other sources).
                 final Optional<SurveyRecord> found = places.documentationBeside(ref, name)
                         .filter(doc -> guard.buildOf(doc).isEmpty())
+                        .or(() -> places.documentationInOwnFolder(ref, name)
+                                .filter(doc -> guard.buildOf(doc).isEmpty()))
                         .flatMap(this::read);
                 if (found.isPresent()) {
                     return found;

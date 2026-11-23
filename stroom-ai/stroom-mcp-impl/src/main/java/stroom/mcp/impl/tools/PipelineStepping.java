@@ -565,6 +565,19 @@ class PipelineStepping {
                 acceptedErrors.explainedFor(pipeline.doc().getUuid()));
     }
 
+    /// Adds to a step's triage the warnings of the records a group's pipeline passed over, as benign groups by
+    /// source type ([PassedOverRecords#addSetAsideTo]), grouped as the step's own are.
+    ///
+    /// @param summary    The step's triage.
+    /// @param passedOver The records passed over.
+    /// @param pipeline   The pipeline stepped.
+    void addPassedOver(final Map<String, Object> summary,
+                       final PassedOverRecords passedOver,
+                       final SteppedPipeline pipeline) {
+        passedOver.addSetAsideTo(summary, markers -> streamSummaries.errorTriage().triage(markers, pipeline.own(),
+                null, EXAMPLES, List.of(), List.of()));
+    }
+
     /// @param pipeline The pipeline about to be walked.
     /// @return The check of its output against the schema of its namespace, for each record, when no schema filter
     /// in it checks that output.

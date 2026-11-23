@@ -102,6 +102,7 @@ class SourceTypeGroups {
     private static final String COMMON_RULE = "common";
     private static final String SYSTEM_NAME = "EventSource/System/Name";
     private static final String ENVIRONMENT = "EventSource/System/Environment";
+    private static final String GENERATOR = "EventSource/Generator";
     /// A build changing a group whose pipeline is promoted makes a new version of it (copy_pipeline): the only way a
     /// promoted pipeline changes (decided by the user, 2026-11-17).
     static final String NEW_VERSION = "new_version";
@@ -320,9 +321,13 @@ class SourceTypeGroups {
     /// @param given       The mapping given for the group.
     /// @param schema      The event-logging schema the Events are written in.
     /// @param version     Its version.
+    /// @param generator   The feed's own Generator the user gave now (in its form, or as `feed_generator`), else
+    ///                    null: then the registry's ([FeedGenerators#kept]).
     /// @return The plan.
     /// @throws ToolRefusal if a source type isn't the registry's, the group is a second one in the build (a build
-    /// makes one source type group), or the source types given leave out one the build's scope puts in the group.
+    /// makes one source type group), the source types given leave out one the build's scope puts in the group, or
+    /// the feed's other groups are translated already and its common module can't be found (a group never makes
+    /// the feed's shared module from its own mapping, decided by the user 2026-11-23).
     Plan plan(final String build,
               final Registry registry,
               final String group,
@@ -330,7 +335,8 @@ class SourceTypeGroups {
               final List<String> keptTypes,
               final TranslationMapping given,
               final EventSchema schema,
-              final String version) {
+              final String version,
+              final String generator) {
         final Map<String, Object> state = registry.found().state();
         final String feed = registry.feed();
         final String field = JsonValues.text(state.get("field"));
@@ -355,9 +361,16 @@ class SourceTypeGroups {
                 : href(commonDoc.uuid(), commonDoc.name());
         final List<String> notes = new ArrayList<>();
         final String systemName = systemName(state, types, given);
+        if (commonDoc == null) {
+            refuseCommonAnew(state, group, feed);
+        }
+        final String feedGenerator = NullSafe.isNonBlankString(generator)
+                ? generator
+                : FeedGenerators.kept(state);
         final Split split = commonDoc == null
-                ? firstSplit(given, state, feed, naming, helpersHref)
-                : leftToCommon(given, keptCommon(commonDoc), helpersHref, commonSaid(commonDoc));
+                ? firstSplit(given, state, feed, naming, helpersHref, feedGenerator)
+                : leftToCommon(given, keptCommon(commonDoc), helpersHref, commonSaid(commonDoc), state, feed,
+                        feedGenerator);
         final TranslationMapping common = split.common();
         final TranslationMapping groupMapping = split.group();
         notes.addAll(split.notes());
@@ -378,7 +391,26 @@ class SourceTypeGroups {
         }
         return new Plan(feed, group, mode, types, field, systemName, registry, helpersDoc, commonDoc, common,
                 commonChanged, groupMapping.withModule(module), effective(groupMapping, common, systemName, field),
-                notes, unsaved, problems);
+                notes, unsaved, problems, new FeedGenerator(split.generatorAsk(), generator));
+    }
+
+    // A later group's build whose feed's common module isn't found (other groups translated already): refused, never
+    // a common module made anew from this group's mapping, which would hold its own parts (decided by the user
+    // 2026-11-23: a group build never changes the shared module).
+    private static void refuseCommonAnew(final Map<String, Object> state, final String group, final String feed) {
+        final List<String> others = JsonValues.maps(state.get("rows")).stream()
+                .filter(row -> SourceTypeRegistry.TRANSLATED.equals(row.get("status")))
+                .map(row -> JsonValues.text(row.get("group")))
+                .filter(other -> !other.isEmpty() && !other.equals(group))
+                .distinct()
+                .toList();
+        if (!others.isEmpty()) {
+            throw new ToolRefusal("Feed " + feed + "'s common module ('" + commonName(feed) + "') can't be found, "
+                                  + "though group(s) " + ToolText.list(others) + " translate its records: a group "
+                                  + "never makes the feed's shared module anew from its own mapping. The registry "
+                                  + "beside the feed names it (its modules); check the build works from that "
+                                  + "registry (record_source_types copies it). Nothing was saved.");
+        }
     }
 
     // The common module as a note names it: a promoted one's change goes to a new version of it.
@@ -453,7 +485,9 @@ class SourceTypeGroups {
             made = translationDocs.saveModule(context, build, commonName(plan.feed()), into, generated.xslt(),
                     TranslationDocs.Source.of(common), commonDoc == null
                             ? "The parts every source type group of " + plan.feed() + " writes one way"
-                            : "The shared calls of group '" + plan.group() + "' added");
+                            : plan.generator().given() != null
+                                    ? "The feed's own Generator, given in group '" + plan.group() + "''s build"
+                                    : "The shared calls of group '" + plan.group() + "' added");
         } else {
             final Optional<String> imported = importedHref(commonDoc.uuid(), ModuleChecks.HELPERS);
             if (imported.isPresent() && !imported.get().contains("uuid='" + helpersUuid + "'")) {
@@ -744,6 +778,14 @@ class SourceTypeGroups {
         }
         state.put("rows", rows);
         state.put("updated", now);
+        if (plan.generator() != null && plan.generator().given() != null) {
+            // The feed's own Generator, as the user gave it: its later builds' common module parts reuse it.
+            final Map<String, Object> generator = new LinkedHashMap<>();
+            generator.put("value", plan.generator().given());
+            generator.put("by", "user");
+            generator.put("at", now);
+            state.put(FeedGenerators.REGISTRY_KEY, generator);
+        }
         final SurveyRecord written = registries.writeRegistry(context.session(), build, plan.feed(),
                 plan.registry().found(), SourceTypeRegistry.render(state));
         final Map<String, Object> out = new LinkedHashMap<>();
@@ -1163,6 +1205,9 @@ class SourceTypeGroups {
         if (common == null) {
             common = registryModule(build, state, COMMON_KEY, commonName(feed));
         }
+        if (common == null) {
+            common = promotedModule(build, feed, COMMON_KEY);
+        }
         Module helpers = common == null
                 ? null
                 : importedHref(common.uuid(), ModuleChecks.HELPERS).flatMap(SourceTypeGroups::uuidOf)
@@ -1171,7 +1216,27 @@ class SourceTypeGroups {
         if (helpers == null) {
             helpers = registryModule(build, state, HELPERS_KEY, HelpersXslt.docName(feed));
         }
+        if (helpers == null) {
+            helpers = promotedModule(build, feed, HELPERS_KEY);
+        }
         return new Modules(helpers, common);
+    }
+
+    // A module of the feed as the registry promoted beside the feed names it, where the build's own registry names
+    // none: a build whose registry was made anew, not copied from the promoted one, still builds on the feed's
+    // modules (seen in chat 189: the registry promoted into the feed's own folder wasn't found, the build made one of
+    // its own, and its group's mapping made a new common module, its own Generator in it). Null for none.
+    private Module promotedModule(final String build, final String feed, final String key) {
+        try {
+            return registries.registry(null, feed)
+                    .map(found -> JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(found.state().get(MODULES)).get(key)))
+                    .map(named -> moduleOf(build, JsonValues.text(named.get("uuid"))))
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No promoted registry of feed {} read for its modules: {}", feed,
+                    e.getMessage()));
+            return null;
+        }
     }
 
     // A module of the feed as the registry names it (the feed's newest), else the build's own of its name or a
@@ -1516,7 +1581,8 @@ class SourceTypeGroups {
                                     final Map<String, Object> state,
                                     final String feed,
                                     final String naming,
-                                    final String helpersHref) {
+                                    final String helpersHref,
+                                    final String feedGenerator) {
         final Set<String> moving = new LinkedHashSet<>();
         for (final String root : SourceTypeModule.PART_ROOTS) {
             final List<FieldMapping> entries = given.common().stream()
@@ -1529,13 +1595,37 @@ class SourceTypeGroups {
                 moving.add(root);
             }
         }
+        // A Generator naming the group's source types is the group's own: the feed's common module writes the feed's
+        // (decided by the user 2026-11-23, seen in chat 188).
+        final List<String> named = moving.contains(GENERATOR)
+                ? generatorNames(given, state, feed)
+                : List.of();
         final List<Map<String, Object>> commonEntries = new ArrayList<>();
         final List<FieldMapping> kept = new ArrayList<>();
         for (final FieldMapping entry : given.common()) {
-            if (moving.contains(SourceTypeModule.partOf(entry.strippedPath()))) {
+            final String part = SourceTypeModule.partOf(entry.strippedPath());
+            if (moving.contains(part) && !(GENERATOR.equals(part) && !named.isEmpty())) {
                 commonEntries.add(new LinkedHashMap<>(entry.toJson(DumpMode.COMPACT)));
             } else {
                 kept.add(entry);
+            }
+        }
+        final List<String> notes = new ArrayList<>();
+        String generatorAsk = null;
+        if (!named.isEmpty()) {
+            final String own = generatorValue(given);
+            final Map<String, Object> shared = new LinkedHashMap<>();
+            shared.put("path", GENERATOR);
+            shared.put("value", NullSafe.nonBlankStringElse(feedGenerator, FeedGenerators.PLACEHOLDER));
+            commonEntries.add(shared);
+            if (feedGenerator == null) {
+                generatorAsk = FeedGenerators.withoutSourceTypes(own, FeedGenerators.sourceTypeNames(state), feed,
+                        feed);
+                notes.add(generatorNote(own, named, generatorAsk));
+            } else {
+                notes.add(GENERATOR + ": this group writes its own ('" + own + "', naming " + ToolText.list(named)
+                          + "); the feed's common module writes the feed's, '" + feedGenerator + "', for every "
+                          + "group that writes none of its own");
             }
         }
         if (moving.contains("EventSource/System")) {
@@ -1564,7 +1654,6 @@ class SourceTypeGroups {
         module.put("helpers", helpersHref);
         json.put("module", module);
         final TranslationMapping common = TranslationMapping.parse(json);
-        final List<String> notes = new ArrayList<>();
         if (!moving.isEmpty() || !given.shared().isEmpty()) {
             notes.add("The feed's common module '" + commonName(feed) + "' is made from this mapping's "
                       + ToolText.list(new ArrayList<>(moving)) + (given.shared().isEmpty()
@@ -1572,18 +1661,71 @@ class SourceTypeGroups {
                     : " and its shared calls") + ": every group of the feed calls them, and a rule mapping one of "
                       + "those elements itself writes its own");
         }
-        return new Split(common, given.withCommonAndShared(kept, List.of()), notes, true);
+        return new Split(common, given.withCommonAndShared(kept, List.of()), notes, true, generatorAsk);
+    }
+
+    // The source types (by the registry's names for them) the mapping's Generator value names; none for one naming
+    // none, or a Generator read from the records.
+    private static List<String> generatorNames(final TranslationMapping given,
+                                               final Map<String, Object> state,
+                                               final String feed) {
+        return FeedGenerators.named(generatorValue(given), FeedGenerators.sourceTypeNames(state), feed);
+    }
+
+    // The mapping's Generator value, or null for none (or one read from the records).
+    private static String generatorValue(final TranslationMapping mapping) {
+        return mapping.common().stream()
+                .filter(entry -> GENERATOR.equals(entry.strippedPath()) && entry.value() != null)
+                .map(FieldMapping::value)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // What is said where the feed's own Generator isn't known: the group writes its own, the common module the
+    // placeholder until the user gives the feed's.
+    private static String generatorNote(final String own, final List<String> named, final String proposed) {
+        return GENERATOR + ": this group writes its own ('" + own + "', naming " + ToolText.list(named) + "); the "
+               + "feed's common module, called by every group that writes none of its own, needs the feed's own "
+               + "Generator, naming no source type, and says '" + FeedGenerators.PLACEHOLDER + "' until it is "
+               + "given. Ask the user for it (propose '" + proposed + "') and call again with "
+               + BuildTranslationXsltTool.FEED_GENERATOR_ARG + "=<their answer>: it is kept with the feed's registry "
+               + "for its later builds.";
     }
 
     // The group's entries the build's common module writes the same way left to it; different ones are the group's.
     // The group's shared calls the module lacks are added to it: a group imports only the common module, which
     // imports the site's libraries, so none is imported twice in the group's stylesheet.
     private static Split leftToCommon(final TranslationMapping given,
-                                      final TranslationMapping common,
+                                      final TranslationMapping kept,
                                       final String helpersHref,
-                                      final String commonSaid) {
+                                      final String commonSaid,
+                                      final Map<String, Object> state,
+                                      final String feed,
+                                      final String feedGenerator) {
         final List<String> notes = new ArrayList<>();
-        final List<FieldMapping> kept = new ArrayList<>(given.common());
+        // The common module's Generator a placeholder (the feed's own not given when it was made): the feed's own
+        // replaces it once given, the one change to it a group makes (no group relies on a placeholder). Else asked,
+        // the group's own proposing it.
+        final boolean placeholder = generatorValue(kept) != null
+                                    && generatorValue(kept).strip().startsWith(FeedGenerators.PLACEHOLDER);
+        final TranslationMapping common = placeholder && feedGenerator != null
+                ? withGenerator(kept, feedGenerator)
+                : kept;
+        final boolean generatorGiven = common != kept;
+        String generatorAsk = null;
+        if (generatorGiven) {
+            notes.add(GENERATOR + ": the feed's own, '" + feedGenerator + "', replaces the placeholder in the "
+                      + "feed's common module " + commonSaid);
+        } else if (placeholder) {
+            final String own = generatorValue(given);
+            generatorAsk = FeedGenerators.withoutSourceTypes(own, FeedGenerators.sourceTypeNames(state), feed,
+                    feed);
+            notes.add("The feed's common module " + commonSaid + " says '" + FeedGenerators.PLACEHOLDER + "' as its "
+                      + "Generator: ask the user for the feed's own, naming no source type (propose '"
+                      + generatorAsk + "'), and call again with " + BuildTranslationXsltTool.FEED_GENERATOR_ARG
+                      + "=<their answer>");
+        }
+        final List<FieldMapping> own = new ArrayList<>(given.common());
         for (final SourceTypeModule.CommonPart part : SourceTypeModule.commonParts(common)) {
             final List<FieldMapping> theirs = given.common().stream()
                     .filter(entry -> part.at().equals(SourceTypeModule.partOf(entry.strippedPath())))
@@ -1603,7 +1745,7 @@ class SourceTypeGroups {
                 continue;
             }
             if (compared(theirs).equals(compared(commons))) {
-                kept.removeAll(theirs);
+                own.removeAll(theirs);
             } else {
                 notes.add(part.at() + ": this group writes its own (its mapping's differs from the feed's common "
                           + "module's), so the common module's part isn't called for it");
@@ -1614,7 +1756,8 @@ class SourceTypeGroups {
                                                                            && theirs.at().equals(use.at())))
                 .toList();
         if (added.isEmpty()) {
-            return new Split(common, given.withCommonAndShared(kept, List.of()), notes, false);
+            return new Split(common, given.withCommonAndShared(own, List.of()), notes, generatorGiven,
+                    generatorAsk);
         }
         final List<SharedTemplate> shared = new ArrayList<>(common.shared());
         shared.addAll(added);
@@ -1623,7 +1766,23 @@ class SourceTypeGroups {
         notes.add("Shared call(s) " + ToolText.list(added.stream().map(SharedTemplate::template).toList())
                   + " added to the feed's common module " + commonSaid + ", which imports their libraries: a group "
                   + "imports only the common module, and calls them through it");
-        return new Split(withCalls, given.withCommonAndShared(kept, List.of()), notes, true);
+        return new Split(withCalls, given.withCommonAndShared(own, List.of()), notes, true, generatorAsk);
+    }
+
+    // The common module's mapping with its Generator the value given.
+    private static TranslationMapping withGenerator(final TranslationMapping common, final String value) {
+        final List<FieldMapping> entries = new ArrayList<>();
+        for (final FieldMapping entry : common.common()) {
+            if (GENERATOR.equals(entry.strippedPath()) && entry.value() != null) {
+                final Map<String, Object> json = new LinkedHashMap<>();
+                json.put("path", GENERATOR);
+                json.put("value", value);
+                entries.add(FieldMapping.fromJson(json));
+            } else {
+                entries.add(entry);
+            }
+        }
+        return common.withCommonAndShared(entries, common.shared());
     }
 
     // Entries compared as JSON, in any order, the System Name and Environment aside: each group passes its own name,
@@ -1803,6 +1962,8 @@ class SourceTypeGroups {
     /// @param notes        What was left to the common module, or kept the group's own.
     /// @param unsaved      The code of the modules not saved yet, by the href importing them.
     /// @param problems     What stops the common module made now being generated.
+    /// @param generator    The feed's own Generator: proposed to the user where the common module needs it, and
+    ///                     given by the user now.
     record Plan(String feed,
                 String group,
                 String mode,
@@ -1818,7 +1979,8 @@ class SourceTypeGroups {
                 TranslationMapping effective,
                 List<String> notes,
                 Map<String, String> unsaved,
-                List<String> problems) {
+                List<String> problems,
+                FeedGenerator generator) {
 
         /// @param mapping The group's mapping as changed since (a domain split, a placeholder left out).
         /// @return This plan with it, its module kept.
@@ -1828,8 +1990,18 @@ class SourceTypeGroups {
                     : mapping;
             return new Plan(feed, group, mode, sourceTypes, field, systemName, registry, helpersDoc, commonDoc,
                     common, commonChanged, withModule, SourceTypeGroups.effective(withModule.withModule(null), common,
-                    systemName, field), notes, unsaved, problems);
+                    systemName, field), notes, unsaved, problems, generator);
         }
+    }
+
+    /// The feed's own Generator, which its common module writes for every group writing none of its own (decided by
+    /// the user 2026-11-23: naming no source type).
+    ///
+    /// @param proposed The value proposed to the user where the common module needs it (the group's own with its
+    ///                 source types' names taken out), or null where it doesn't.
+    /// @param given    The value the user gave now, kept with the feed's registry once the group is saved; or null.
+    record FeedGenerator(String proposed, String given) {
+
     }
 
     /// One of the feed's modules.
@@ -1918,10 +2090,12 @@ class SourceTypeGroups {
 
     }
 
+    // generatorAsk: the feed's own Generator proposed to the user, where the common module needs it; else null.
     private record Split(TranslationMapping common,
                          TranslationMapping group,
                          List<String> notes,
-                         boolean commonChanged) {
+                         boolean commonChanged,
+                         String generatorAsk) {
 
     }
 }

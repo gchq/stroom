@@ -209,6 +209,45 @@ class TestStepRecordsTool {
     }
 
     @Test
+    void aGroupsPipelineStepsOnlyItsOwnSourceTypesLocationsOfASurvey(@TempDir final Path dir) throws IOException {
+        // Decided by the user 2026-11-23: seen in chat 189, step_records over the survey's locations stepped records
+        // of every source type, four of them (holding NUL and ESC) said to produce no Event, and the agent spent ten
+        // calls finding they were passed over.
+        world.keepsAGroupMapping();
+        world.stepper = (stream, at) -> at.getRecordIndex() == 0
+                ? SteppingWorld.step(stream, 0, 0, AN_EVENT)
+                : SteppingWorld.passedOver(stream, 0, at.getRecordIndex(), SteppingWorld.azureRecord("SharePoint"));
+        final Path file = dir.resolve("survey.json");
+        Files.writeString(file, "{\"feed\": \"AZ\", \"locations\": [{\"stream\": 7, \"record\": 0, \"shape\": "
+                                + "\"mail\", \"source_types\": [\"ExchangeOnline\"]}, {\"stream\": 7, \"record\": 1, "
+                                + "\"shape\": \"file\", \"source_types\": [\"SharePoint\"]}, {\"stream\": 7, "
+                                + "\"record\": 2, \"shape\": \"file2\", \"source_types\": [\"SharePoint\"]}]}");
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.localFile(1, WorkspacePath.parse("/outputs/survey_feed/az.json"))).thenReturn(file);
+        final ToolCallContext context = world.contextBuilder().workspace(new SessionWorkspace(chats, 1)).build();
+
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations_from\": "
+                                      + "\"/outputs/survey_feed/az.json\"}"), context);
+
+        assertThat(result.isError()).as(result.text()).isFalse();
+        final Map<String, Object> said = BuildToolCalls.json(result.text());
+        assertThat(world.steps).containsExactly("REFRESH 0:0");
+        assertThat(said.get("records_stepped")).isEqualTo(1);
+        assertThat(said.get("locations_left_out")).isEqualTo(Map.of("SharePoint", 2));
+        assertThat(String.valueOf(said.get("locations_left_out_note"))).contains("SharePoint 2", "not stepped");
+        assertThat(said.get("shapes_not_clean")).isEqualTo(List.of());
+
+        // Given explicitly, another source type's record is stepped, said passed over as its source type's.
+        final Map<String, Object> given = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": [{\"stream\": 7, "
+                                                      + "\"record\": 1, \"shape\": \"file\", \"source_types\": "
+                                                      + "[\"SharePoint\"]}]}");
+        assertThat(records(given).getFirst()).containsEntry(StepRecordsTool.PASSED_OVER, true)
+                .containsEntry("passed_over_source_type", "SharePoint");
+        assertThat(given.get("shapes_not_clean")).isEqualTo(List.of());
+    }
+
+    @Test
     void aRecordAGroupsPipelinePassesOverHasNoErrorAndLeavesItsShapeClean() {
         // A group's pipeline passes over the feed's other source types: no "produced no Event" warning, no error,
         // and the shape (another source type's) said apart rather than left not clean.

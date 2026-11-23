@@ -30,6 +30,7 @@ import org.mockito.Mockito;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -189,6 +190,54 @@ class TestPassedOverRecords {
         assertThat(sifted.passedOver()).isFalse();
         assertThat(sifted.markers()).containsExactly(truncated);
         assertThat(passed.count()).isZero();
+    }
+
+    @Test
+    void aRecordHoldingControlCharactersIsStillToldByItsSourceType() {
+        // Seen in chat 189: Teams and Exchange mail bodies holding NUL, BEL and ESC weren't read, so records the
+        // group passes over were said to produce no Event and their parser warnings were the build's.
+        final PassedOverRecords passed = group();
+        final String bodies = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><map xmlns=\"http://www.w3.org/2013/XSL/"
+                              + "json\"><string key=\"Workload\">SharePoint</string><string key=\"Body\">a&#x7;b"
+                              + "&#x1b;[31mc&#0;d\u0000e\u0007f</string></map>";
+        final String undeclared = "<map xmlns=\"http://www.w3.org/2013/XSL/json\"><string key=\"Workload\">"
+                                  + "SharePoint</string><string key=\"Body\">&#x1b;\u001b</string></map>";
+
+        assertThat(passed.sift(List.of(), SteppingWorld.passedOver(7, 0, 1, bodies), at(7, 0, 1)).passedOver())
+                .isTrue();
+        assertThat(passed.sift(List.of(), SteppingWorld.passedOver(7, 0, 2, undeclared), at(7, 0, 2))
+                .passedOver()).isTrue();
+
+        assertThat(passed.bySourceType()).isEqualTo(Map.of("SharePoint", 2));
+        assertThat(PassedOverRecords.fieldsOf(bodies)).containsEntry("Workload", "SharePoint");
+    }
+
+    @Test
+    void aPassedOverRecordsWarningsAreListedApartAsBenignNamingTheirSourceType() {
+        // Decided by the user 2026-11-23: a parser setting that matters only for another group's records is not
+        // this build's to decide: labelled as that source type's, benign, never asked.
+        final PassedOverRecords passed = group();
+        final ErrorTriage.Marker truncated = ErrorTriage.marker("WARNING", "jsonParser",
+                "String value truncated to length 10000, original length: 25486", null).withRecord("7:1");
+        passed.sift(List.of(truncated), SteppingWorld.passedOver(7, 0, 1, SteppingWorld.azureRecord("SharePoint")),
+                at(7, 0, 1));
+        final Map<String, Object> summary = ErrorTriage.bundled().triage(List.of(), Set.of("jsonParser"), 1, 3,
+                List.of());
+
+        passed.addSetAsideTo(summary, markers -> ErrorTriage.bundled().triage(markers, Set.of("jsonParser"), null,
+                3, List.of()));
+
+        assertThat(summary).containsEntry("verdict", "clean");
+        assertThat(SteppingVerdicts.byClass(summary)).containsEntry(ErrorTriage.BENIGN, 1);
+        assertThat(SteppingVerdicts.groups(summary)).singleElement().satisfies(group -> {
+            assertThat(group).containsEntry("class", ErrorTriage.BENIGN)
+                    .containsEntry("passed_over_source_type", "SharePoint")
+                    .containsEntry("element", "jsonParser")
+                    .containsEntry("records", List.of("7:1"));
+            assertThat(String.valueOf(group.get("reason"))).startsWith("In records of SharePoint, which this group "
+                                                                       + "passes over: not this build's to decide")
+                    .contains("parser settings are its own").doesNotContain("long_values");
+        });
     }
 
     @Test

@@ -126,7 +126,8 @@ final class ListFields {
     /// @param values  Each field's non-empty values in the sample.
     /// @param json    True if the input is JSON, whose fields may hold arrays of objects.
     /// @param sides   The user's answers, by the list ([NameValueLists#nestedName] for a list inside an array's
-    ///                items): the key holding the value before; a list with none taken in its items' key order.
+    ///                items): the key holding the value before; a list with none taken as proposed (by its keys'
+    ///                names, else their order).
     /// @param found   Filled with each old/new list found ([#changeListFound]).
     /// @return The notes to add to the draft.
     static List<String> propose(final Map<String, Object> mapping,
@@ -675,7 +676,8 @@ final class ListFields {
     /// @param list     The list's name (a field, or [NameValueLists#nestedName]).
     /// @param changes  Its keys, as drafted.
     /// @param values   Its values.
-    /// @param answered True if the user's answer set its old key, false if the items' key order did.
+    /// @param answered True if the user's answer set its old key, false if the proposal did (the keys' names, else
+    ///                 their order).
     /// @return `list`, `name_key`, `old_key`, `new_key`, `by` (`user` or `order`) and `example` (an item holding
     /// both values, where one does).
     static Map<String, Object> changeListFound(final String list,
@@ -855,8 +857,9 @@ final class ListFields {
                 : " are old/new lists") + " of property changes: under an Update drafted as its Before and After "
                + "snapshots, the object changed (the one the rule writes in a snapshot, else Object) holding a Data "
                + "per property of its old value in Before and its new value in After (one in each object per item of a "
-               + "list of targets); elsewhere as any array of objects. The old values are taken from the first of "
-               + "the two value keys in the items' order: if the keys say otherwise, swap old_key and new_key. Write "
+               + "list of targets); elsewhere as any array of objects. The old values are taken from the value key "
+               + "whose name says before (old, previous...), else the first in the items' order: if the values say "
+               + "otherwise, swap old_key and new_key. Write "
                + "the snapshots' object as the element the changed thing is (User, Group...), and place a property "
                + "whose name means an element by name, typed in both snapshots, e.g. {\"path\": "
                + "\"EventDetail/Update/After/User/Name\", \"change\": {\"list\": \"" + example.getKey()

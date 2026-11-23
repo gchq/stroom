@@ -103,7 +103,8 @@ public final class DraftMapping {
     /// what tells them apart, for the agent to choose from.
     public static final String TIME_CANDIDATES = "time_candidates";
     /// The draft's key for the old/new lists it found (2026-11-23): each list's name, keys (`old_key` as drafted),
-    /// `by` (`user` where the user's answer set it, `order` where the items' key order did) and an example item,
+    /// `by` (`user` where the user's answer set it, `order` where the proposal did: the keys' names, else their
+    /// order) and an example item,
     /// for the draft's tool to ask the user which key holds the value before the change.
     public static final String CHANGE_LISTS = "change_lists";
     /// The key a drafted time entry carries while its time is one of several the agent must choose from: the
@@ -1090,7 +1091,7 @@ public final class DraftMapping {
             repeatedKeys();
             // Fields holding lists (a comma list, a JSON array of objects): a Data per item, not the whole list.
             // An old/new list's old key as the user said for the build (put in the notes by the draft's tool), else
-            // its items' key order; each list found said, for the tool to ask of (2026-11-23).
+            // as proposed (the keys' names, else their order); each list found said, for the tool to ask of.
             final List<Map<String, Object>> changeLists = new ArrayList<>();
             notes.addAll(ListFields.propose(mapping, values, "json".equals(mapping.get("input")),
                     SourceNotes.changeSides(sourceNotes), changeLists));

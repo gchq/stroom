@@ -25,6 +25,8 @@ import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.sample.XmlTree;
+import stroom.ai.impl.tools.validation.XPathChecks;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
 
@@ -32,7 +34,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /// The records a source type group's pipeline passed over while stepped: records of the feed's other source types
@@ -63,6 +70,8 @@ final class PassedOverRecords {
     private static final Pattern LINE = Pattern.compile(Pattern.quote(XsltGenerator.PASSED_OVER) + "\\d+"
                                                         + Pattern.quote(XsltGenerator.PASSED_OVER_END));
     private static final Pattern DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>");
+    // NUL, which no XML holds, raw or as a reference: a JSON value's \u0000 as Stroom's parser passes it on.
+    private static final Pattern NUL = Pattern.compile("\u0000|&#0+;|&#[xX]0+;");
 
     // The group's rows and source types, to tell a record's source type by; null when they aren't known.
     private final SourceTypeScope scope;
@@ -73,6 +82,8 @@ final class PassedOverRecords {
     // The parts' meta, for a source type field read from it; null when not needed.
     private final PartAttributes attributes;
     private final Map<String, Integer> bySourceType = new TreeMap<>(ToolText::compare);
+    // The warnings and notes of the records passed over, by the source type they are of: listed apart, benign.
+    private final Map<String, List<ErrorTriage.Marker>> setAside = new TreeMap<>(ToolText::compare);
     private int count;
 
     private PassedOverRecords(final SourceTypeScope scope,
@@ -119,13 +130,13 @@ final class PassedOverRecords {
     /// Tells whether one record stepped was passed over by the group's pipeline, counting it by its source type if
     /// so: a record whose source type (by the registry's rows) is not one of the group's, and that the pipeline wrote
     /// no Event for. A record passed over keeps only its ERROR and FATAL markers (see
-    /// [#breaksTheStream(ErrorTriage.Marker)]); an older XSLT's line of the records passed over is taken out of
-    /// every record's markers.
+    /// [#breaksTheStream(ErrorTriage.Marker)]), its others set aside by its source type
+    /// ([#addSetAsideTo]); an older XSLT's line of the records passed over is taken out of every record's markers.
     ///
     /// @param markers  What the record's step met.
     /// @param result   The step, whose XSLT's input is the record.
     /// @param location Where the record is: its stream and part, for a source type field read from the part's meta.
-    /// @return The markers left, and whether the record was passed over.
+    /// @return The markers left, whether the record was passed over, and its source type if so.
     Sifted sift(final List<ErrorTriage.Marker> markers, final SteppingResult result, final StepLocation location) {
         final List<ErrorTriage.Marker> left = new ArrayList<>();
         boolean lineSaid = false;
@@ -144,17 +155,70 @@ final class PassedOverRecords {
             return new Sifted(left, false);
         }
         count++;
-        bySourceType.merge(told == null
+        final String counted = told == null
                 ? NOT_TOLD
-                : told, 1, Integer::sum);
+                : told;
+        bySourceType.merge(counted, 1, Integer::sum);
+        left.stream()
+                .filter(marker -> !breaksTheStream(marker))
+                .forEach(marker -> setAside.computeIfAbsent(counted, type -> new ArrayList<>()).add(marker));
         return new Sifted(left.stream()
                 .filter(PassedOverRecords::breaksTheStream)
-                .toList(), true);
+                .toList(), true, counted);
+    }
+
+    /// @return The source types the group translates; empty for a pipeline that isn't a group's (or whose rows
+    /// aren't known).
+    Optional<Set<String>> groupSourceTypes() {
+        return scope == null
+                ? Optional.empty()
+                : Optional.of(Set.copyOf(scope.names()));
+    }
+
+    /// Adds to a step's triage the warnings and notes met in the records passed over, as benign groups apart, one
+    /// each by source type, element and message, each saying the source type they are of (decided by the user
+    /// 2026-11-23: seen in chat 189, an Entra ID group's step said the JSON parser cut long values in Exchange mail
+    /// records it passes over, and the agent asked the user to keep or cut values of a field the group doesn't
+    /// map). They are not this build's to decide: the pipeline's parser settings are its own, and change nothing
+    /// in the Events of the source type's own group.
+    ///
+    /// @param summary A step's triage ([ErrorTriage#triage]), its groups and counts by class added to.
+    /// @param triage  Groups markers as the step's triage does.
+    void addSetAsideTo(final Map<String, Object> summary,
+                       final Function<List<ErrorTriage.Marker>, Map<String, Object>> triage) {
+        for (final Map.Entry<String, List<ErrorTriage.Marker>> entry : setAside.entrySet()) {
+            final List<ErrorTriage.Marker> markers = entry.getValue();
+            for (final Map<String, Object> group : SteppingVerdicts.groups(triage.apply(markers))) {
+                group.put("class", ErrorTriage.BENIGN);
+                group.put("reason", setAsideReason(entry.getKey()));
+                group.put("passed_over_source_type", entry.getKey());
+                group.put("records", new TreeSet<>(markers.stream()
+                        .filter(marker -> Objects.equals(marker.severity(), group.get("severity"))
+                                          && Objects.equals(marker.element(), group.get("element")))
+                        .map(ErrorTriage.Marker::record)
+                        .filter(Objects::nonNull)
+                        .toList()).stream().limit(SteppingVerdicts.MAX_RECORDS_LISTED).toList());
+                group.remove("cause");
+                group.remove("may_follow_from");
+                SteppingVerdicts.groups(summary).add(group);
+                SteppingVerdicts.byClass(summary).merge(ErrorTriage.BENIGN, 1, Integer::sum);
+            }
+        }
+    }
+
+    /// @param sourceType The source type of the records passed over.
+    /// @return Why their warnings are benign for the group's build.
+    static String setAsideReason(final String sourceType) {
+        return "In records of " + (NOT_TOLD.equals(sourceType)
+                ? "other source types"
+                : sourceType) + ", which this group passes over: not this build's to decide (don't ask the user "
+               + "of it for this group). The pipeline's parser settings are its own: changing one here changes "
+               + "nothing in the Events of that source type's own group.";
     }
 
     /// Whether a marker of a record the group passes over still counts against the group: an ERROR or FATAL can
     /// break the stream whoever's record it is, but a WARNING or INFO (a parser's note on a long value of another
-    /// group's source type, say) is about data that isn't this group's and is left out.
+    /// group's source type, say) is about data that isn't this group's: set aside, benign ([#addSetAsideTo]).
     ///
     /// Seen in testing: an Identity group's step_sample verdict was `review` from two jsonParser "String value
     /// truncated" warnings on Exchange and Teams records it passes over, and its processor filter was refused.
@@ -194,8 +258,9 @@ final class PassedOverRecords {
                 .map(entry -> entry.getKey() + " " + entry.getValue())
                 .toList())
                + "). They are left to the other groups' pipelines: not errors, and not counted in "
-               + "records_with_errors or the verdict. Their warnings are left out too (about data of other "
-               + "groups' source types); only an ERROR or FATAL on one of them is kept.";
+               + "records_with_errors or the verdict. Their warnings are listed apart, as benign groups naming "
+               + "the source type (passed_over_source_type): not this build's to decide. Only an ERROR or FATAL "
+               + "on one of them counts against the group.";
     }
 
     // The source type of the record stepped, by the group's rows ([SourceTypeScope#UNMATCHED] for a value no row
@@ -237,13 +302,25 @@ final class PassedOverRecords {
     static Map<String, Object> fieldsOf(final String xml) {
         final XmlElement root;
         try {
-            root = XmlParser.parse(DECLARATION.matcher(xml).replaceFirst(""));
+            root = XmlParser.parse(readable(xml));
         } catch (final RuntimeException e) {
             return null;
         }
         final Map<String, Object> fields = new LinkedHashMap<>();
         flatten(root, "", fields);
         return fields;
+    }
+
+    // The record as XML 1.1, as Stroom writes it: control characters (raw, or by reference) are XML 1.1's, and NUL,
+    // which no XML holds, left out. Seen in chat 189: Teams and Exchange records holding NUL, BEL and ESC in their
+    // message bodies weren't read, so their source type wasn't told, and records the group passes over were said
+    // to produce no Event, their parser's warnings this build's.
+    private static String readable(final String xml) {
+        final String body = NUL.matcher(DECLARATION.matcher(xml).replaceFirst("")).replaceAll("");
+        final String referenced = XPathChecks.xml11(body);
+        return referenced.startsWith(XmlTree.XML_11_DECLARATION)
+                ? referenced
+                : XmlTree.XML_11_DECLARATION + referenced;
     }
 
     private static void flatten(final XmlElement element, final String path, final Map<String, Object> fields) {
@@ -275,7 +352,14 @@ final class PassedOverRecords {
     ///
     /// @param markers    The markers left.
     /// @param passedOver True if the group's pipeline passed the record over.
-    record Sifted(List<ErrorTriage.Marker> markers, boolean passedOver) {
+    /// @param sourceType The source type of a record passed over ([#NOT_TOLD] where it can't be told); null for
+    ///                   one not passed over.
+    record Sifted(List<ErrorTriage.Marker> markers, boolean passedOver, String sourceType) {
 
+        /// @param markers    The markers left.
+        /// @param passedOver True if the group's pipeline passed the record over.
+        Sifted(final List<ErrorTriage.Marker> markers, final boolean passedOver) {
+            this(markers, passedOver, null);
+        }
     }
 }

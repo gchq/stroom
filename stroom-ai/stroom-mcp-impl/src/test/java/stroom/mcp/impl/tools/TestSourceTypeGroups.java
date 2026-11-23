@@ -57,6 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 
 /// `build_translation_xslt group=`: a source type group of an aggregated feed saved with its mapping as the XSLT of
 /// a pipeline of its own, the feed's common module and helpers made from the first group's mapping (a chain: the
@@ -364,6 +365,122 @@ class TestSourceTypeGroups {
         assertThat(keptMapping(rest).common()).anySatisfy(entry -> assertThat(entry.strippedPath())
                 .isEqualTo("EventSource/System/Name"));
         assertThat(rest.getData()).contains("'PEGA Calls'", "'PEGA DB'");
+    }
+
+    @Test
+    void aLaterGroupsOwnGeneratorIsWrittenInItsOwnXsltAndNeverChangesTheFeedsSharedModule() {
+        // Decided by the user 2026-11-23 (chat 189): a group's own value for a shared part is written in its own
+        // XSLT in place of the module's part, for that group only; a group build never changes the shared module.
+        // Seen there: the feed's registry, promoted into the feed's own folder, wasn't found, the build's registry
+        // was made anew naming no module, and the Entra ID group's mapping made the feed's common module again,
+        // its own Generator in it.
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final Map<String, String> first = xsltsInBuild();
+        final String folder = world.world.folder("System/Feeds/PEGA").uuid;
+        first.values().forEach(uuid -> world.world.move(uuid, folder));
+        final String commonCode = world.xslt(first.get("PEGA common")).getData();
+        final String securityCode = world.xslt(first.get("PEGA PEGA security V1.0")).getData();
+        final String promoted = written.getLast();
+        Mockito.when(world.registries.registry(isNull(), eq("PEGA"))).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(new SurveyRecord("p", "PEGA source types", promoted), true,
+                        SourceTypeRegistry.read(promoted))));
+        written.add(registry().doc().text());
+        final Map<String, Object> mapping = withGenerator(integration(), "Pega integration bus");
+
+        final Map<String, Object> saved = world.call(tool, args(mapping, "PEGA integration",
+                List.of("PegaIntegration")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        // No module made or changed in the build: the group imports the feed's, as promoted.
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA PEGA integration V1.0");
+        final XsltDoc group = world.xslt(xsltsInBuild().get("PEGA PEGA integration V1.0"));
+        assertThat(group.getData()).contains("Pega integration bus", "pega_common_event_time",
+                "uuid='" + first.get("PEGA common") + "'").doesNotContain("pega_common_generator");
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).startsWith("EventSource/Generator: this group writes its own"));
+        // The shared module and the first group's events as they were.
+        assertThat(world.xslt(first.get("PEGA common")).getData()).isEqualTo(commonCode).contains("Pega")
+                .doesNotContain("Pega integration bus");
+        assertThat(world.xslt(first.get("PEGA PEGA security V1.0")).getData()).isEqualTo(securityCode);
+    }
+
+    @Test
+    void aLaterGroupOfAFeedWhoseCommonModuleCantBeFoundIsRefused() {
+        // A group never makes the feed's shared module anew from its own mapping.
+        written.add(withRows(registry().doc().text(), row -> {
+            if ("PegaSecurityEvent".equals(row.get("name"))) {
+                row.put("status", SourceTypeRegistry.TRANSLATED);
+                row.put("group", "PEGA security");
+            }
+        }));
+
+        final Map<String, Object> refused = world.call(tool, args(integration(), "PEGA integration",
+                List.of("PegaIntegration")));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("common module ('PEGA common') can't be found",
+                "'PEGA security'", "Nothing was saved");
+        assertThat(xsltsInBuild()).isEmpty();
+    }
+
+    @Test
+    void aGeneratorNamingTheGroupsSourceTypesIsItsOwnAndTheFeedsIsAskedOnce() {
+        // Decided by the user 2026-11-23 (chat 188): the first group's source name, naming its source types, became
+        // the shared module's Generator. The group's stays its own; the feed's is asked, proposed without them.
+        world.forms = true;
+        world.answers.put("Source type group 'PEGA security'", "Into the same feed (PEGA)");
+        world.answers.put("The Generator this group gives", "PEGA audit trail");
+        final Map<String, Object> mapping = withGenerator(security(), "Pega platform (PEGA Security)");
+
+        final Map<String, Object> saved = world.call(tool, args(mapping, "PEGA security",
+                List.of("PegaSecurityEvent")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final int asked = world.asked.indexOf(world.asked.stream()
+                .filter(intro -> intro.startsWith("The Generator this group gives")).findFirst().orElseThrow());
+        assertThat(ToolJson.dumps(world.formsShown.get(asked))).contains("\"examples\": [\"Pega platform\"]");
+        final Map<String, String> docs = xsltsInBuild();
+        final XsltDoc common = world.xslt(docs.get("PEGA common"));
+        assertThat(common.getData()).contains("PEGA audit trail").doesNotContain("PEGA Security");
+        final XsltDoc group = world.xslt(docs.get("PEGA PEGA security V1.0"));
+        assertThat(group.getData()).contains("Pega platform (PEGA Security)").doesNotContain("pega_common_generator");
+        // Kept with the feed's registry for its later builds.
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("generator")))
+                .containsEntry("value", "PEGA audit trail").containsEntry("by", "user");
+
+        // Not asked again.
+        world.asked.clear();
+        assertThat(world.call(tool, args(mapping, "PEGA security", List.of("PegaSecurityEvent"))).get("problems"))
+                .isEqualTo(List.of());
+        assertThat(world.asked).noneSatisfy(intro -> assertThat(intro).startsWith("The Generator this group"));
+    }
+
+    @Test
+    void withoutFormsTheSharedGeneratorIsThePlaceholderUntilTheFeedsIsGiven() {
+        final Map<String, Object> mapping = withGenerator(security(), "Pega platform (PEGA Security)");
+
+        final Map<String, Object> saved = world.call(tool, args(mapping, "PEGA security",
+                List.of("PegaSecurityEvent")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final String common = xsltsInBuild().get("PEGA common");
+        assertThat(world.xslt(common).getData()).contains(FeedGenerators.PLACEHOLDER)
+                .doesNotContain("PEGA Security");
+        assertThat(world.xslt(xsltsInBuild().get("PEGA PEGA security V1.0")).getData())
+                .contains("Pega platform (PEGA Security)");
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).contains("propose 'Pega platform'", "feed_generator="));
+
+        // The user's answer, said in the chat, replaces the placeholder in the build's module, and is kept.
+        final Map<String, Object> given = args(mapping, "PEGA security", List.of("PegaSecurityEvent"));
+        given.put("feed_generator", "PEGA audit trail");
+        final Map<String, Object> again = world.call(tool, given);
+
+        assertThat(again.get("problems")).as("%s", again).isEqualTo(List.of());
+        assertThat(xsltsInBuild().get("PEGA common")).isEqualTo(common);
+        assertThat(world.xslt(common).getData()).contains("PEGA audit trail")
+                .doesNotContain(FeedGenerators.PLACEHOLDER);
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("generator")))
+                .containsEntry("value", "PEGA audit trail");
     }
 
     @Test
@@ -1206,6 +1323,17 @@ class TestSourceTypeGroups {
                                         {"path": "EventDetail/Authenticate/Data", "data_name": "correlation",
                                          "field": "soap/Envelope/Header/CorrelationId"}]}]}"""
                 .formatted(WRAPPER.replace("\"PEGA\"", "\"PEGA Integration\"")));
+    }
+
+    // The mapping with its Generator the value given.
+    private static Map<String, Object> withGenerator(final Map<String, Object> mapping, final String generator) {
+        final Map<String, Object> out = new LinkedHashMap<>(mapping);
+        out.put("common", JsonValues.maps(mapping.get("common")).stream()
+                .map(entry -> "EventSource/Generator".equals(entry.get("path"))
+                        ? Map.<String, Object>of("path", "EventSource/Generator", "value", generator)
+                        : entry)
+                .toList());
+        return out;
     }
 
     // The mapping with its System/Name each source type's own, read from the source type field.

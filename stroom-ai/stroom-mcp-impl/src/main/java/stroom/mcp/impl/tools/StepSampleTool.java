@@ -506,6 +506,7 @@ class StepSampleTool extends AbstractBuiltInTool {
                 .toList();
         final Map<String, Object> summary = stepping.triage(walked.markers, pipeline, walked.records.size());
         SteppingVerdicts.listRecords(summary, walked.markers);
+        stepping.addPassedOver(summary, walked.passedOver, pipeline);
         SteppingVerdicts.block(summary, stepping.unagreedUnknown(pipeline, outputElement, walked.unknown,
                 walked.records.size(), draftCode, SteppingVerdicts.whatUnknownHolds(walked.unknownOutputs)));
         if (!judged.isEmpty() && walked.wroteEvents == judged.size() && walked.wroteAnEvent == 0) {

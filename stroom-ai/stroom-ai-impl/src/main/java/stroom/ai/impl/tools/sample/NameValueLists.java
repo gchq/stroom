@@ -25,7 +25,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -78,6 +80,14 @@ public final class NameValueLists {
     private static final int VALUES_READ = 5_000;
     // The share of the distinct names that must be words or identifiers.
     private static final double WORDY_SHARE = 0.9;
+    // The words of a key's name meaning the value before a change, and after it (decided by the user 2026-11-23:
+    // only which side is proposed first, the user still answering).
+    private static final Set<String> BEFORE_WORDS = Set.of("old", "previous", "prev", "before", "original", "from");
+    private static final Set<String> AFTER_WORDS = Set.of("new", "current", "after", "updated", "to");
+    // Where a key's name splits into words: between a lower case letter or digit and an upper case one, before the
+    // last upper case letter of a run followed by a lower case one, and at anything but a letter or digit.
+    private static final Pattern WORD_BREAK = Pattern.compile(
+            "(?<=[\\p{Ll}\\d])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}\\p{Ll})|[^\\p{L}\\d]+");
     private static final Pattern LETTER = Pattern.compile("\\p{L}");
     // The keys of an old/new list's items: a name, its old value and its new value.
     private static final int CHANGE_KEYS = 3;
@@ -325,8 +335,10 @@ public final class NameValueLists {
     ///   name aren't). A list of things of three keys ({UPN, DisplayName, Role}, {Type, ID, Name}) shows neither;
     /// * at least [#MIN_LISTS] lists hold items.
     ///
-    /// Which of the two is old: the first in the items' key order (decided by the user: by order, the keys never
-    /// matched by name; a placement or entry names them, `old_key` and `new_key`, where the order says otherwise).
+    /// Which of the two is old, as proposed (the user is asked in a build with forms; a placement or entry names
+    /// them, `old_key` and `new_key`): the one the two keys' names say ([#oldKeyByName]), else the first in the
+    /// items' key order (decided by the user 2026-11-23: Microsoft 365 writes `NewValue` before `OldValue`, so the
+    /// order alone proposed the wrong one).
     ///
     /// @param values A field's values: each a list (as read) or JSON text holding one; any other value skipped.
     /// @return The field as an old/new list, or empty where its values aren't one.
@@ -379,7 +391,49 @@ public final class NameValueLists {
         if (!beforeAndAfter(lists, sides.get(0), sides.get(1))) {
             return Optional.empty();
         }
-        return Optional.of(new ChangeList(nameKey, sides.get(0), sides.get(1), namesIn(values, nameKey)));
+        final String old = Objects.requireNonNullElse(oldKeyByName(sides.get(0), sides.get(1)), sides.get(0));
+        final String added = old.equals(sides.get(0))
+                ? sides.get(1)
+                : sides.get(0);
+        return Optional.of(new ChangeList(nameKey, old, added, namesIn(values, nameKey)));
+    }
+
+    /// The key of an old/new list's two value keys whose name says it holds the value before the change: a word of
+    /// its name (a whole word, or a camelCase or snake_case part, in any case) meaning before (old, previous, prev,
+    /// before, original, from) where the other's doesn't, or the other's meaning after (new, current, after,
+    /// updated, to) where its own doesn't. Proposed first to the user (decided by the user 2026-11-23); the items'
+    /// key order where the names say nothing, or say both of one key.
+    ///
+    /// @param first  The first value key, in the items' order.
+    /// @param second The second.
+    /// @return The one holding the value before, by their names; null where the names don't tell.
+    public static String oldKeyByName(final String first, final String second) {
+        final boolean firstBefore = says(first, BEFORE_WORDS) && !says(first, AFTER_WORDS);
+        final boolean firstAfter = says(first, AFTER_WORDS) && !says(first, BEFORE_WORDS);
+        final boolean secondBefore = says(second, BEFORE_WORDS) && !says(second, AFTER_WORDS);
+        final boolean secondAfter = says(second, AFTER_WORDS) && !says(second, BEFORE_WORDS);
+        final boolean firstIsOld = firstBefore || secondAfter;
+        final boolean secondIsOld = secondBefore || firstAfter;
+        if (firstIsOld == secondIsOld) {
+            // Neither says, or they say both ways.
+            return null;
+        }
+        return firstIsOld
+                ? first
+                : second;
+    }
+
+    // Whether a key's name holds one of the words, as a whole word or a camelCase or snake_case part.
+    private static boolean says(final String key, final Set<String> words) {
+        if (key == null) {
+            return false;
+        }
+        for (final String part : WORD_BREAK.split(key)) {
+            if (words.contains(part.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // The key of the items' three that names each property: text in every item, passing a name's tests; of two that
@@ -698,7 +752,8 @@ public final class NameValueLists {
     /// A field told an old/new property-change list ([#changes(Collection)]).
     ///
     /// @param nameKey The items' key holding each property's name.
-    /// @param oldKey  The key holding its value before (the first of the other two in the items' order).
+    /// @param oldKey  The key holding its value before, as proposed: by the keys' names where they say, else the
+    ///                first of the other two in the items' order.
     /// @param newKey  The key holding its value after.
     /// @param names   How many items hold each property's name over the values it was told from, most first.
     public record ChangeList(String nameKey, String oldKey, String newKey, Map<String, Integer> names) {

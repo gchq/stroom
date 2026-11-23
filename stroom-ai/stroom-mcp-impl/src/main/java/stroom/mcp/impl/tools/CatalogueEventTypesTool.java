@@ -616,11 +616,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     .map(typeId -> typeId + ": not in the sample (kept, and said so in the review)")
                     .toList());
         }
+        // No table of the set the user confirms next: only confirm=true's needs_showing result carries it (decided
+        // by the user 2026-11-23: seen in chats 187 to 189, qwen showed and restyled the check's table before
+        // confirming, and the chat then showed the confirmation's too). The counts, problems and typing are the
+        // agent's to judge the catalogue by.
         final List<EventType> next = nextSet(kept);
-        if (recorded && !check.refused() && !next.isEmpty() && check.unplacedOf(typeIds(next)).isEmpty()) {
-            // The set the user confirms next, as the chat will show it.
-            result.put(TABLE, shownSet(calling, next, check, confirmingNow));
-        }
         result.put("catalogue", compact(kept));
         saved(calling, applied.catalogue(), check).ifPresent(path -> result.put("listing", path));
         result.put(HINT, amendmentSent

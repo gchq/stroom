@@ -727,8 +727,9 @@ class TestPlacementCheck {
                 "Update-User");
 
         assertThat(strings(couldType.get("arrays"))).as(ToolJson.dumps(couldType)).contains(
-                "event.ModifiedProperties: an old/new list (old values in OldValue, new in NewValue, by the items' "
-                + "order: give old_key and new_key where the keys say otherwise); properties: DisplayName (4), "
+                "event.ModifiedProperties: an old/new list (old values in OldValue, new in NewValue, by the keys' "
+                + "names, else the items' order: give old_key and new_key where the values say otherwise); "
+                + "properties: DisplayName (4), "
                 + "JobTitle (2), Department (2) — written as Before and After snapshots, each property Data of the "
                 + "object; a property whose name means an element goes there in both by name, e.g. {path: "
                 + "'User/Name', change: {list: 'event.ModifiedProperties', name: 'DisplayName'}}");

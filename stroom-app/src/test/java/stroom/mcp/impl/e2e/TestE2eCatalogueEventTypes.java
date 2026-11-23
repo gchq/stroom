@@ -77,7 +77,7 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         assertThat(nextStep(json("build_status", args("build", build)))).isNotEqualTo("translation");
 
         // ### Proposed: checked against every record, each counted; nothing overlaps, nothing left uncatalogued;
-        // the high-confidence ones summarised for the chat by what happened, every row in the source notes.
+        // every row in the source notes.
         final Map<String, Object> checked = proposed(build, raw, List.of(
                 withKeys(eventType("Authenticate-Logon", "Authenticate", "high", when("action", "equals", "login")),
                         "action", "Logon", "actor", "user"),
@@ -93,8 +93,8 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
                 .containsEntry("Export-Report", 8L).containsEntry("Delete-Records", 1L);
         assertThat(list(checkOf(checked), "overlaps")).isEmpty();
         assertThat(map(checkOf(checked), "uncatalogued")).containsEntry("records", 0);
-        assertThat(String.valueOf(checked.get("table"))).startsWith("**2 high-confidence event types**")
-                .contains("Authenticate: 2 event types, 16 records").doesNotContain(TABLE_HEADER);
+        // No table for the user in the check's result: confirm=true's carries it (decided by the user 2026-11-23).
+        assertThat(checked).doesNotContainKey("table");
         assertThat(notesDocText(build)).contains("### Authenticate", "| `Authenticate-Logon` Authenticate Logon | "
                                                  + "E2E: Authenticate-Logon | action is login | 8 |");
 
@@ -105,6 +105,8 @@ class TestE2eCatalogueEventTypes extends AbstractE2eTest {
         client.answeringWith(amendingCatalogueForm(3, AMENDMENT));
         final Map<String, Object> first = json(CATALOGUE, args("build", build, "confirm", true));
         dump("confirm high", first);
+        assertThat(String.valueOf(first.get("table"))).startsWith("**2 high-confidence event types**")
+                .contains("Authenticate: 2 event types, 16 records").doesNotContain(TABLE_HEADER);
         Map<String, Object> step = first;
         for (int round = 0; round < 4 && !jsonOf(step).contains(AMENDMENT); round++) {
             step = json(CATALOGUE, args("build", build, "confirm", true));

@@ -681,7 +681,8 @@ class TestDraftTranslationMappingTool {
     @Test
     void anOldNewListsOldKeyIsAskedOnceForTheBuildAndTheDraftFollowsTheAnswer() {
         // Decided by the user 2026-11-23: not by key order alone (Microsoft 365 writes NewValue before OldValue). In a
-        // build with forms, asked with the order's guess first; kept for the build, so a redraft isn't asked again.
+        // build with forms, asked with the proposal first (the keys' names, else their order); kept for the build, so
+        // a redraft isn't asked again.
         final String users = """
                 {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Update user.", "UserId": "jo", \
                 "ClientIP": "10.0.0.1", "Workload": "Directory", "event": {"Target": "sam", "ResultStatus": \
@@ -715,7 +716,14 @@ class TestDraftTranslationMappingTool {
         final Map<String, Object> first = world.call(tool, Map.of("samples", samples, "build", "acme-v1"));
 
         assertThat(world.asked).anySatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION)
-                .contains("event.ModifiedProperties", "NewValue or OldValue", "\"OldValue\": \"Sam T\""));
+                .contains("event.ModifiedProperties", "OldValue or NewValue", "\"OldValue\": \"Sam T\""));
+        // The keys' names propose OldValue, though NewValue comes first in the items: listed first.
+        final int asked = world.asked.indexOf(world.asked.stream()
+                .filter(question -> question.startsWith(ChangeSides.QUESTION)).findFirst().orElseThrow());
+        assertThat(ToolJson.dumps(world.formsShown.get(asked))).contains("[\"OldValue holds the value before, "
+                                                                        + "NewValue the value after\", \"NewValue "
+                                                                        + "holds the value before, OldValue the "
+                                                                        + "value after\"]");
         assertThat(ToolJson.dumps(first.get("change_lists"))).contains("\"old_key\": \"OldValue\", \"new_key\": "
                                                                       + "\"NewValue\", \"by\": \"user\"");
         // The snapshots follow the answer: Before reads OldValue, After NewValue.
@@ -737,13 +745,13 @@ class TestDraftTranslationMappingTool {
         world.call(tool, Map.of("samples", samples, "build", "other-v1"));
         assertThat(world.asked).anySatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION));
 
-        // Without forms the items' key order stands, with the note to check it.
+        // Without forms the same proposal stands (the keys' names), with the note to check it.
         world.asked.clear();
         world.forms = false;
         final Map<String, Object> unasked = world.call(tool, Map.of("samples", samples, "build", "third-v1"));
         assertThat(world.asked).isEmpty();
-        assertThat(ToolJson.dumps(unasked.get("change_lists"))).contains("\"old_key\": \"NewValue\", "
-                                                                        + "\"new_key\": \"OldValue\", \"by\": "
+        assertThat(ToolJson.dumps(unasked.get("change_lists"))).contains("\"old_key\": \"OldValue\", "
+                                                                        + "\"new_key\": \"NewValue\", \"by\": "
                                                                         + "\"order\"");
         assertThat(ToolJson.dumps(unasked.get("notes"))).contains("swap old_key and new_key");
     }

@@ -2613,6 +2613,21 @@ Built in phase 3 (where the design was silent):
   from the source type field (`field` and `map`), the names put on the group's registry rows when it is saved, and the
   group keeps its System part, never put in the common module (seen in chat 182: a map there left later groups with
   no System/Name). Only for source types told by exact values of a record's own field; others take one name.
+* A group never changes the shared module (decided by the user 2026-11-23, chat 189): its own value for a shared part
+  is written in its own XSLT in place of the module's part, for that group only (one element, never two). The
+  registry promoted into the feed's own folder (`<feed folder>/<feed>`, where promotion files a source's documents
+  beside other sources) is found there; a build's registry naming no module takes the modules the promoted registry
+  names; and a later group whose feed's common module can't be found (another group translated already) is refused,
+  never made anew from its mapping (seen in chat 189: the promoted registry wasn't found, the build's registry was
+  made anew, and the Entra ID group's Generator went into a new `<feed> common`). A placeholder Generator in the
+  module (below) is the one value a later build replaces, once the feed's own is given.
+* The shared Generator is the feed's, naming no source type (decided by the user 2026-11-23, chat 188: "Microsoft 365
+  audit (Exchange Online and Teams)" became the module's). A first group's Generator naming the registry's source
+  types (`FeedGenerators`: a row's name, matched value or System Name, in any case or spacing, or a name's last word
+  that isn't a word of the feed's name) stays the group's own; the module takes the feed's own Generator, asked once
+  in a form (proposed with the source types' wording taken out: "Microsoft 365 audit") or given as
+  `feed_generator`, and kept in the registry (`generator`) for the feed's later builds. With neither, the module says
+  `TODO generator` (the draft's default) and the group's notes say to ask and pass `feed_generator`.
 * `<feed> helpers` holds `mcp:json-to-xml`, `mcp:parse-xml` and `mcp:zone`; group-specific functions stay in the group.
   A group logs (WARN) each record whose held XML or JSON field doesn't parse, and still writes the event.
 * The dispatcher reads the source type field once a record through `mcp:<mode>_source_type` (the registry's rows in
@@ -2743,7 +2758,15 @@ Parser (JSON) -> <feed> <group> XSLT -> Schema filter -> Writer -> Stream append
   It holds the stylesheet-level declarations the dispatcher held.
 * **Records passed over** are counted, once a document, in one INFO line (`Passed over N record(s) not of this group's
   source types`), never warned of: the user chose the group's source types, so a source type outside them, new or not,
-  is not its concern.
+  is not its concern. When stepped (`PassedOverRecords`), a record is told by its source type field even where its
+  values hold control characters or NUL (read as XML 1.1, as Stroom writes it, NUL left out: seen in chat 189, Teams
+  and Exchange bodies holding NUL, BEL and ESC weren't read, so passed-over records were said to produce no Event and
+  their parser warnings were the build's). Its warnings and notes are listed apart, benign groups by source type
+  (`passed_over_source_type`, "In records of X, which this group passes over: not this build's to decide"): a
+  parser setting that matters only for another group's records (the JSON parser's long values) is never asked, the
+  pipeline's parser settings being its own (decided by the user 2026-11-23). `step_records locations_from=` steps
+  only the group's source types' locations (`locations_left_out` counts the rest); a location given of another is
+  stepped and said passed over as its source type's.
 * **Imports form a chain**: group → `<feed> common` → `<feed> helpers` → site library (e.g. Event/Meta), each module
   imported once, so no stylesheet imports a module twice and Stroom's import resolver is unchanged. A shared call only
   one group needs is called from the common module like the rest, never imported by the group beside it.
@@ -3491,7 +3514,10 @@ reads them; output JSON):
 
 * High-confidence event types are one set for the whole build (a build is one source type group), not one per group.
 * A seeded type is evidence only, never in the catalogue until the agent adds it.
-* The table is shown before its form (`needs_showing`), and shown again when more than 90 seconds old.
+* The table is shown before its form (`needs_showing`), and shown again when more than 90 seconds old. Only
+  `confirm=true`'s result carries it: a proposals (check) result carries none, only what the agent judges the
+  catalogue by (counts, problems, typing, the listing's path) (decided by the user 2026-11-23: in chats 187 to 189,
+  qwen read the check's table from its result file and showed it restyled, then the confirmation's was shown too).
 * A condition the check can't evaluate is `not_checked`, not refused.
 * The catch-all carries `allow_unknown`; a line format's catch-all is flagged with its variant condition alone; a
   catch-all after a sole event type is left out.
@@ -3693,14 +3719,17 @@ Taylor"}]` and Graph's `targetResources: [{id, type, modifiedProperties: [{displ
   draft reports each list it found (`DraftMapping.CHANGE_LISTS`: name, keys, `by: user|order`, an item holding both
   values). In a build with forms, `draft_translation_mapping` (`ChangeSides`, mcp-impl) asks of each list taken by
   order which key holds the value before the change (`ChangeSides.QUESTION`, the list, its two keys and the example
-  item; the order's guess first), keeps the answer in the build record's `draft_choices` (`change_sides`, list ->
+  item; the proposal first: the value key whose name says before, by its words (old, previous, prev, before,
+  original, from against new, current, after, updated, to; whole words or camelCase/snake_case parts, any case:
+  `NameValueLists.oldKeyByName`), else the first in key order (decided by the user 2026-11-23, chat 189: Microsoft
+  365's `{Name, NewValue, OldValue}` was proposed the wrong way round)), keeps the answer in the build record's `draft_choices` (`change_sides`, list ->
   key, as the time source is kept) and drafts again with it, so the draft's snapshots and a catalogue placement's
   keys follow it; a redraft in the build isn't asked (its note says "as the user said earlier for this build"). The
   answers reach the draft through the source notes (`SourceNotes.CHANGE_SIDES`, put there by the tool, never in the
   user's documentation; `ListFields`, `CatalogueTranslation`) and `catalogue_event_types`' check through
   `CatalogueCheck.Drafted.withChangeSides` (`PlacementCheck`: `could_type` says "as the user said"). A list inside an
   array's items goes by `targetResources[].modifiedProperties` (`NameValueLists.nestedName`). Without forms or a
-  build, key order stands, with the note to check it and swap. `old_key` and `new_key` given in a placement or an
+  build, the same proposal stands, with the note to check it and swap. `old_key` and `new_key` given in a placement or an
   entry win over both. The eval reference answers the question from the case's `reference.change_sides`; cases 60
   and 76 say in `user_knows` which key holds the old value.
 * **Change form** (`ListChange`, a mapping entry's `change: {list, name, name_key, old_key, new_key}`): its side is
@@ -4709,6 +4738,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | Chat 189 (an Entra ID group of the Azure audit feed after its Messaging group): (1) a group's own value for a shared part (EventTime, System, Generator, Device) is written in its own XSLT in place of the common module's part, for that group only; a group build never changes the shared module: the registry promoted into the feed's own folder (`<feed folder>/<feed>`, where promotion files it beside other sources) is found there (`DocumentPlaces.documentationInOwnFolder`), a build's registry naming no module takes the promoted registry's (`SourceTypeGroups.promotedModule`), and a later group whose feed's common module can't be found is refused, never made anew from its mapping; (2) the shared Generator is the feed's, naming no source type: a group's Generator naming the registry's source types (their names, matched values or System Names, any case or spacing, or a name's last word not the feed's; `FeedGenerators`) stays the group's, and the common module takes the feed's own, asked once in a form (proposed with the source types' wording taken out) or given as `feed_generator`, kept in the registry (`generator`); without either, the module says `TODO generator` with a note, replaced once given; (3) the old/new question proposes by the value keys' names first (old, previous, prev, before, original, from against new, current, after, updated, to; whole words or camel/snake parts), else key order, the no-forms fallback the same (`NameValueLists.oldKeyByName`); (4a) a record the group passes over is told even when its values hold control characters or NUL (read as XML 1.1, NUL left out), and its warnings are listed apart as benign groups naming its source type (`passed_over_source_type`), not this build's to decide; (4b) `step_records locations_from=` steps only the group's source types' locations (`locations_left_out`), a record of another passed over labelled with its source type; (5) the catalogue's proposals (check) results carry no user table: only `confirm=true`'s `needs_showing` does. | Aggregated feeds: source types and source type groups; Old/new property-change lists; Stepping; Event type catalogue; TOOLS.md (build_translation_xslt, step_sample, step_records, catalogue_event_types, draft_translation_mapping) |
 | 2026-11-23 | A message body's plain text from its HTML (an `html_text` transform) is written up as a future addition, not built: the product owner chose not now | HTML bodies to plain text (future) |
 | 2026-11-23 | Four fixes from eval case 76 and chat 188. (1) An Update's old/new lists are a Data per property of each snapshot by default, whatever wrote the mapping (`SnapshotChanges`, run by the draft after the catalogue's translation and by build_translation_xslt on the sample's records, the mapping then generated and checked again): a group below a snapshot over items holding one gains its side's Data per property (a field reading the list whole, or a group over it, replaced: converted as a name/value list read whole as Data is), a plain Data of a record's list becomes its side's (or both snapshots' below an Update), an object reading the list by name gains the rest; a group over targets in one snapshot gets a copy in the other (as a group reading a change is written in both), and where both are placed each keeps its own fields; a group's field writing the list whole at a typed element is refused by the catalogue's check. (2) The sample check takes a Data per pair or per property for the loop it is and a pair or property by name for one value (no several-values warning), counts the lists pairs and changes read as read, and checks a change's values without the generator's `mcp:` unwrapping. (3) A failed verify_index gives `failed`, the checks that didn't pass without their samples or traces, among the parts a large result's stub gives in full (`LargeResults.ACT_ON`, 8,000 characters). (4) promote_build's final result is `needs_showing`, so Stroom AI's chat gives its layout and tidy-up whole (up to 64,000 characters), as other content to show as it is. (5) A parsed XPath node reads its text from the expression it was parsed from, shared by all its nodes (`XPathNode.inSource`), and `XPathTrees.normal` keeps a node whose children it leaves unchanged as parsed (`withChildren`), instead of each node copying its own text: TestConditionParity's 200,000-character condition (some 1,500 nested nodes) held over 300 MB of copies, and once this change moved test classes between forks, the fork running it ran out of its 640 MB heap and nine classes never ran. | Old/new property-change lists; Ask Stroom AI (large results); TOOLS.md (build_translation_xslt, catalogue_event_types, draft_translation_mapping, verify_index, promote_build, large results) |
 | 2026-11-23 | Which key of an old/new list is old is the user's to say, not key order alone: in a build with forms, `draft_translation_mapping` asks of each list it took by order (`ChangeSides.QUESTION`: the list, its two keys and an item holding both values, the order's guess first), keeps the answer in the build record's `draft_choices` (`change_sides`) and drafts again with it; a redraft isn't asked; the catalogue's check follows the build's answer (`Drafted.withChangeSides`); without forms or a build, key order and the note; keys given in a placement or entry win. | Old/new property-change lists; TOOLS.md (draft_translation_mapping) |

@@ -1389,7 +1389,8 @@ final class PlacementCheck {
         final String head = field + ": an old/new list (old values in " + changes.oldKey() + ", new in "
                             + changes.newKey() + (answered
                 ? ", as the user said"
-                : ", by the items' order: give old_key and new_key where the keys say otherwise") + "); properties: "
+                : ", by the keys' names, else the items' order: give old_key and new_key where the values say "
+                  + "otherwise") + "); properties: "
                             + namesSaid(names);
         final String name = names.keySet().iterator().next();
         return head + (snapshots
@@ -1648,8 +1649,8 @@ final class PlacementCheck {
             for (final String key : List.of("name_key", "old_key", "new_key")) {
                 if (change.get(key) != null && !three.contains(ToolText.str(change.get(key)))) {
                     return list + "'s items name each property by " + keys.nameKey() + " and hold its values in "
-                           + keys.oldKey() + " and " + keys.newKey() + " (old first, by the items' order): give "
-                           + "those as name_key, old_key and new_key, or leave them out";
+                           + keys.oldKey() + " and " + keys.newKey() + " (old first, by the keys' names, else the "
+                           + "items' order): give those as name_key, old_key and new_key, or leave them out";
                 }
             }
             final String name = change.get("name") instanceof final String named

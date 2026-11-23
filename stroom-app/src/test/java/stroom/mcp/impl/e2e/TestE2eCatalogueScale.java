@@ -144,7 +144,8 @@ class TestE2eCatalogueScale extends AbstractE2eTest {
     // The check of all 300, given in outline: what the agent acts on whole, the rest read from the saved file.
     private void outlinedAsAnAgentReadsIt(final Map<String, Object> given) {
         assertThat(WholeResults.outlined(given)).as("past 40,000 characters, given in outline: %s", given).isTrue();
-        assertThat(given).containsKeys("status", "recorded", "hint", "next", "table");
+        // No table for the user: only confirm=true's result carries it (decided by the user 2026-11-23).
+        assertThat(given).containsKeys("status", "recorded", "hint", "next").doesNotContainKey("table");
         assertThat(map(checkOf(given), "counts")).as("counted").containsEntry("event_types", TYPES);
         assertThat(checkOf(given)).containsKeys("problems", "overlaps", "uncatalogued", "several");
         final String saved = String.valueOf(map(given, "whole_result").get("saved"));

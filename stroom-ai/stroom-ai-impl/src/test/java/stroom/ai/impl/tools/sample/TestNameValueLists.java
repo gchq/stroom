@@ -185,12 +185,12 @@ class TestNameValueLists {
     void anAuditSamplesModifiedPropertiesAreAnOldNewListAndItsOtherListsAreNot(final String file) {
         final Map<String, List<Object>> lists = arrays(AZURE + file);
 
-        // The sample's items are {Name, NewValue, OldValue}: by the items' key order, NewValue is taken as old (the
-        // keys are never read by name; a placement names them where the order says otherwise).
+        // The sample's items are {Name, NewValue, OldValue}: the keys' names propose OldValue as old, though NewValue
+        // comes first in the items (decided by the user 2026-11-23).
         assertThat(NameValueLists.changes(lists.get("event.ModifiedProperties"))).hasValueSatisfying(found -> {
             assertThat(found.nameKey()).isEqualTo("Name");
-            assertThat(found.oldKey()).isEqualTo("NewValue");
-            assertThat(found.newKey()).isEqualTo("OldValue");
+            assertThat(found.oldKey()).isEqualTo("OldValue");
+            assertThat(found.newKey()).isEqualTo("NewValue");
             assertThat(found.names()).containsKeys("Role.DisplayName", "Role.TemplateId",
                     "ForceChangePasswordNextLogin");
         });
@@ -248,6 +248,44 @@ class TestNameValueLists {
         assertThat(NameValueLists.changes(List.of(
                 "[{\"Name\": \"OS\", \"Value\": \"Ios\"}, {\"Name\": \"Browser\", \"Value\": \"Edge\"}]",
                 "[{\"Name\": \"OS\", \"Value\": \"Mac\"}]"))).isEmpty();
+    }
+
+    @Test
+    void theOldKeyIsProposedByTheKeysNamesElseTheirOrder() {
+        // Decided by the user 2026-11-23: words meaning before or after, whole or as camelCase or snake_case parts.
+        assertThat(NameValueLists.changes(List.of("""
+                [{"Name": "Title", "NewValue": "Lead", "OldValue": "Analyst"}]""", """
+                [{"Name": "Title", "NewValue": "Head", "OldValue": "Lead"}]""")))
+                .hasValueSatisfying(found -> assertThat(List.of(found.oldKey(), found.newKey()))
+                        .containsExactly("OldValue", "NewValue"));
+        assertThat(NameValueLists.changes(List.of("""
+                [{"displayName": "Title", "oldValue": "Analyst", "newValue": "Lead"}]""", """
+                [{"displayName": "Title", "oldValue": "Lead", "newValue": "Head"}]""")))
+                .hasValueSatisfying(found -> assertThat(List.of(found.oldKey(), found.newKey()))
+                        .containsExactly("oldValue", "newValue"));
+        assertThat(NameValueLists.changes(List.of("""
+                [{"name": "Title", "after": "Lead", "before": "Analyst"}]""", """
+                [{"name": "Title", "after": "Head", "before": "Lead"}]""")))
+                .hasValueSatisfying(found -> assertThat(List.of(found.oldKey(), found.newKey()))
+                        .containsExactly("before", "after"));
+        // Keys that say nothing: the items' order.
+        assertThat(NameValueLists.changes(List.of("""
+                [{"Name": "Title", "Second": "Lead", "First": "Analyst"}]""", """
+                [{"Name": "Title", "Second": "Head", "First": "Lead"}]""")))
+                .hasValueSatisfying(found -> assertThat(List.of(found.oldKey(), found.newKey()))
+                        .containsExactly("Second", "First"));
+
+        assertThat(NameValueLists.oldKeyByName("NewValue", "OldValue")).isEqualTo("OldValue");
+        assertThat(NameValueLists.oldKeyByName("value_after", "value_before")).isEqualTo("value_before");
+        assertThat(NameValueLists.oldKeyByName("ORIGINAL", "Value")).isEqualTo("ORIGINAL");
+        assertThat(NameValueLists.oldKeyByName("Value", "currentValue")).isEqualTo("Value");
+        assertThat(NameValueLists.oldKeyByName("fromValue", "toValue")).isEqualTo("fromValue");
+        // Words inside other words don't count; nor names that say both ways, or neither.
+        assertThat(NameValueLists.oldKeyByName("Total", "Oldest")).isNull();
+        assertThat(NameValueLists.oldKeyByName("OldNew", "Value")).isNull();
+        assertThat(NameValueLists.oldKeyByName("OldValue", "PreviousValue")).isNull();
+        assertThat(NameValueLists.oldKeyByName("A", "B")).isNull();
+        assertThat(NameValueLists.oldKeyByName(null, "B")).isNull();
     }
 
     @Test

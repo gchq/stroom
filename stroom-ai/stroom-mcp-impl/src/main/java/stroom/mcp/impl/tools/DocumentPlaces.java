@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 
 import jakarta.inject.Inject;
@@ -77,6 +78,34 @@ class DocumentPlaces {
                 .map(documentAccess::children)
                 .orElse(List.of())
                 .stream()
+                .map(ExplorerNode::getDocRef)
+                .filter(Objects::nonNull)
+                .filter(child -> DocumentationDoc.TYPE.equals(child.getType()) && name.equals(child.getName()))
+                .findFirst();
+    }
+
+    /// The Documentation doc of a name in a feed's own folder: the folder named for the feed beside it, where
+    /// promotion files a source's registry and notes when the feed's folder holds other sources
+    /// ([SourceFolders#ownFolder]). Seen in chat 189: the Azure feed in /Feeds, its registry promoted into
+    /// /Feeds/<feed>, the next build didn't find it beside the feed, made a registry of its own, and with it a new
+    /// common module from its own group's mapping.
+    ///
+    /// @param feed A feed.
+    /// @param name The Documentation doc's name, e.g. the feed's registry's.
+    /// @return It, if the user can view it.
+    Optional<DocRef> documentationInOwnFolder(final DocRef feed, final String name) {
+        if (folderOf(feed).isEmpty()) {
+            return Optional.empty();
+        }
+        return documentAccess.parent(feed)
+                .map(documentAccess::children)
+                .orElse(List.of())
+                .stream()
+                .map(ExplorerNode::getDocRef)
+                .filter(Objects::nonNull)
+                .filter(child -> ExplorerConstants.FOLDER_TYPE.equals(child.getType())
+                                 && feed.getName().equalsIgnoreCase(child.getName()))
+                .flatMap(folder -> documentAccess.children(folder).stream())
                 .map(ExplorerNode::getDocRef)
                 .filter(Objects::nonNull)
                 .filter(child -> DocumentationDoc.TYPE.equals(child.getType()) && name.equals(child.getName()))

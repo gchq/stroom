@@ -134,9 +134,10 @@ class TestCatalogueEventTypesTool {
                 List.of(8))).containsEntry("Delete-Records", Map.of("records", 1, "by_way", List.of(1)));
         assertThat(list(check.get("overlaps"))).isEmpty();
         assertThat(map(check.get("uncatalogued"))).containsEntry("records", 0);
-        // The set the user confirms first, as the chat will show it: the high-confidence ones summarised.
-        assertThat(String.valueOf(checked.get("table"))).startsWith("**2 high-confidence event types**")
-                .contains("- Authenticate: 2 event types, 16 records; Authenticate-Logon (8), Authenticate-Logoff (8)");
+        // No table for the user: only confirm=true's result carries it (decided by the user 2026-11-23, chats 187 to
+        // 189: the agent showed the check's table, then the confirmation's was shown too).
+        assertThat(checked).doesNotContainKey("table");
+        assertThat(String.valueOf(checked)).doesNotContain("high-confidence event types");
         assertThat(map(checked.get("catalogue")).get("event_types")).isEqualTo(List.of(
                 Map.of("type_id", "Authenticate-Logon", "title", "Authenticate Logon", "status", "proposed"),
                 Map.of("type_id", "Authenticate-Logoff", "title", "Authenticate Logoff", "status", "proposed"),
@@ -217,9 +218,13 @@ class TestCatalogueEventTypesTool {
                 + "\"change\": {",
                 "E.g. catalogue_event_types proposals=[{\"op\": \"change\", \"type_id\": \"Delete-Records\", "
                 + "\"placements\": [{\"path\": ");
-        // The set summary the user is shown is unchanged.
-        assertThat(checked).containsKey("table");
-        assertThat(String.valueOf(checked.get("table"))).doesNotContain("could_type", "orders");
+        // No table in the check's result; confirm=true's shows the set without the check's typing.
+        assertThat(checked).doesNotContainKey("table");
+        final Map<String, Object> shown = call(Map.of("build", BUILD, "confirm", true),
+                user(McpAnswers.ACCEPT).context());
+        assertThat(shown).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(shown.get("table"))).startsWith("**1 low-confidence event type**")
+                .contains("Delete-Records").doesNotContain("could_type", "orders");
     }
 
     @Test

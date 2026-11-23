@@ -141,6 +141,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private static final String PLACEMENT_CHOSEN = "placement chosen";
     static final String REFERENCES_ARG = "references";
     static final String DOMAIN_SPLIT_ARG = "domain_split";
+    /// The argument giving an aggregated feed's own Generator, as the user said it in the chat.
+    static final String FEED_GENERATOR_ARG = "feed_generator";
+    // The block of UnsavedChoices that keeps the feed's own Generator the user gave in its form, by feed.
+    private static final String GENERATOR_CHOSEN = "feed generator chosen";
 
     // The answers suggested when the mapping translates event types the user confirmed otherwise.
     private static final String KEEP_CHANGE = "Keep the mapping's change";
@@ -433,6 +437,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                  + "a new group: true when the user wants its "
                                                                  + "Events in an output feed of its own, false for "
                                                                  + "the same feed. Otherwise asked in a form.")
+                        .addStringProperty(FEED_GENERATOR_ARG, "With group, only where no form can be shown: the "
+                                                               + "feed's own EventSource/Generator as the user "
+                                                               + "gave it in the chat, when the result asks for "
+                                                               + "it.")
                         .addEnumProperty(DOMAIN_SPLIT_ARG, List.of(DomainSplits.SPLIT, DomainSplits.KEEP),
                                 "Only on the user's word in the chat: split the domain off users' Ids, or keep them "
                                 + "whole. The latest word, over an answer kept with the XSLT or the feed's groups'.")
@@ -536,7 +544,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return question.get();
         }
         keepUnmappedLoggingOff(b);
-        planGroup(context, b);
+        planGroup(call, context, b);
         unsplitDomains(b);
         generate(context, b);
         if (!TranslationBuilds.problems(b.result).isEmpty()) {
@@ -798,7 +806,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
 
     // A source type group's (group=, the build's scoped group by default, or a saved group regenerated or changed):
     // the mapping split from the feed's common module, which with the helpers is made where the build has none.
-    private void planGroup(final ToolCallContext context, final Build b) {
+    private void planGroup(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
         final SourceTypeModule kept = b.mapping.module();
         // A build makes one source type group, the one its scope names: a new translation in it is that group's.
@@ -832,8 +840,33 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? List.of()
                 : NullSafe.list(kept.sourceTypes());
         final SourceTypeGroups.Registry registry = groups.registry(build, request.feeds());
-        b.group = groups.plan(build, registry, group, request.sourceTypes(), keptTypes,
-                b.mapping.withModule(null).withSeenSourceTypes(null), b.schema, b.version);
+        final TranslationMapping given = b.mapping.withModule(null).withSeenSourceTypes(null);
+        final String target = "feed:" + build + "/" + registry.feed();
+        final String generator = NullSafe.isNonBlankString(request.feedGenerator())
+                ? request.feedGenerator().strip()
+                : UnsavedChoices.recalled(context, target, GENERATOR_CHOSEN).get(registry.feed());
+        b.group = groups.plan(build, registry, group, request.sourceTypes(), keptTypes, given, b.schema, b.version,
+                generator);
+        final String proposed = b.group.generator().proposed();
+        if (proposed != null) {
+            // The feed's own Generator, asked once for the feed (decided by the user 2026-11-23): the group's own
+            // names its source types, and the common module every group calls needs one naming none.
+            final Optional<String> answered = consent.answer(call, context, NAME, "The Generator this group gives "
+                                                                                + "names its source types, so it is "
+                                                                                + "the group's own. The feed's "
+                                                                                + "common module, which every "
+                                                                                + "group of " + registry.feed()
+                                                                                + " calls, writes the feed's own, "
+                                                                                + "naming no source type. It is "
+                                                                                + "kept for the feed's later "
+                                                                                + "builds.",
+                    "EventSource/Generator for every source type group of " + registry.feed(), proposed);
+            if (answered.isPresent()) {
+                UnsavedChoices.remember(context, target, GENERATOR_CHOSEN, Map.of(registry.feed(), answered.get()));
+                b.group = groups.plan(build, registry, group, request.sourceTypes(), keptTypes, given, b.schema,
+                        b.version, answered.get());
+            }
+        }
         b.mapping = b.group.groupMapping();
     }
 
@@ -2146,6 +2179,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     /// @param ownOutputFeed   For a new group, true when the user wants its Events in a feed of its own, false for
     ///                        the feed's Events; null when not given.
     /// @param references      The reference data a group's lookups read, or null for those the registry has.
+    /// @param domainSplit     The user's word in the chat on splitting the domain off users' Ids, or null.
+    /// @param feedGenerator   An aggregated feed's own Generator, as the user gave it in the chat, or null.
     record Request(Object mapping,
                    Object changes,
                    String schemaVersion,
@@ -2168,7 +2203,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                    List<String> sourceTypes,
                    Boolean ownOutputFeed,
                    List<Map<String, Object>> references,
-                   String domainSplit) {
+                   String domainSplit,
+                   String feedGenerator) {
 
         /// Reads a call's arguments.
         ///
@@ -2207,7 +2243,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                             ? null
                             : ToolArgs.flag(call, OWN_OUTPUT_FEED_ARG),
                     references(ToolArgs.raw(call, REFERENCES_ARG)),
-                    DomainSplits.answerOf(tool.stringArg(call, DOMAIN_SPLIT_ARG)).orElse(null));
+                    DomainSplits.answerOf(tool.stringArg(call, DOMAIN_SPLIT_ARG)).orElse(null),
+                    tool.stringArg(call, FEED_GENERATOR_ARG));
         }
 
         // The reference data a group's lookups read, as the registry keeps them; null when none were given.

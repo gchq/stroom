@@ -4003,8 +4003,9 @@ and removed since (`CatalogueDiff`).
   `needs_placements` (2026-11-21: a set confirmed, the next one leaving an element the schema requires empty, with
   `unplaced`), `confirmed`);
   `catalogue`; listing: `evidence` (`fields`, `shapes`, `examples`, `seed`), and with a catalogue `check` and
-  `listing`; proposals: `recorded`, `source_notes`, `refused`, `check`, `not_in_sample`, `table` (the next set's),
-  `listing`; confirmation: `table` (and `review_id`), `confirmed_now`, `amendments` and `amended`, `check`; `read_with`,
+  `listing`; proposals: `recorded`, `source_notes`, `refused`, `check`, `not_in_sample`, `listing` (no `table`:
+  only confirm=true's result carries the set the user is shown, decided by the user 2026-11-23 after chats 187 to
+  189, where qwen showed the check's table restyled and the confirmation's was shown after it); confirmation: `table` (and `review_id`), `confirmed_now`, `amendments` and `amended`, `check`; `read_with`,
   `scope`, `survey`, `since_promoted`, `carried`; `hint`; `next` (`step: catalogue`, the call, then).
 * **Large, outside Stroom** (`CatalogueOutline`, 2026-11-20; case 68: 61k–93k): `not_in_sample` and `catalogue`
   counted (by status, TypeIds listed as they fit), the check's counts summed and `order` left out (problems, overlaps,
@@ -4519,8 +4520,15 @@ promotion and returns the plan's `next`.
     mapping is kept (`(not told from the step)`). The no-Event check reads only the records not
     passed over; every record passed over is blocking (`SteppingVerdicts.allPassedOver`: nothing the group
     translates was checked). Seen in chat 177: 304 of 500 records "with errors", 238 only passed over, explained
-    away by the agent. `step_records` marks such a record `passed_over: true` (no "no Event" warning), leaves its
-    shape out of `shapes_not_clean` and names it in `shapes_passed_over`; `evaluate_pipeline` carries the counts.
+    away by the agent. `step_records` marks such a record `passed_over: true` (no "no Event" warning) with its
+    `passed_over_source_type`, leaves its shape out of `shapes_not_clean` and names it in `shapes_passed_over`;
+    `evaluate_pipeline` carries the counts. A record is told even where its values hold control characters or NUL
+    (read as XML 1.1, as Stroom writes it, NUL left out; seen in chat 189: Teams and Exchange bodies holding NUL,
+    BEL and ESC weren't read, so passed-over records were said to produce no Event). Its WARNING and INFO markers
+    are listed apart (2026-11-23), never in the verdict: a benign group each by source type, element and message
+    (`passed_over_source_type`, reason "In records of X, which this group passes over: not this build's to
+    decide", the pipeline's parser settings its own), so a parser setting that matters only for another group's
+    records (the JSON parser cutting Exchange mail bodies, chat 189) is never asked of the user.
   * A JSON parser with its root map (`addRootObject` not false), every stream stepped as one record, and the first
     stream's head a JSON array: a review group says each array is one record (a large one outlasts stepping) and to
     set `addRootObject` false with `update_pipeline` and match `/array/map`. The head is read only for a user with
@@ -4561,8 +4569,12 @@ in one stream share a session.
   and `record` required, `part` default 0; `shape` names the survey shape the record is an example of; `expect` is
   `event` (default) or `none` for a kind the user chose to leave untranslated. A single location, or the list as
   JSON text, is read too. Or `locations_from`: the path of a survey_feed result saved to the workspace
-  (`whole_result.saved`), every location it lists stepped (2026-11-20). `draft_code`. Only the first 500 locations are
-  stepped.
+  (`whole_result.saved`), every location it lists stepped (2026-11-20); for a source type group's pipeline, only
+  those of the group's source types (by each location's `source_types`; 2026-11-23, chat 189: 292 locations of other
+  source types stepped, four said to produce no Event, ten calls spent finding they were passed over), the rest
+  counted in `locations_left_out` (by source type) with `locations_left_out_note`; refused where none is the group's.
+  A location given of another source type is stepped and said passed over as its source type's. `draft_code`. Only
+  the first 500 locations are stepped.
 * **Returns**: `pipeline`, `records_stepped`, `records_with_errors`, `records_not_found`, `shapes_not_clean`,
   `left_untranslated_as_intended`, `draft_code_used`, the triage, `records` (the first 100, each `record`, `shape`,
   `events`, `errors`, and `found: false` with `why` for one not found), and as they apply `hint`, `stopped_early`
@@ -5276,11 +5288,13 @@ snapshot (the catalogue's affected object), else `Object`; an array of targets e
 targets in each snapshot, an object per target with a Data per key and a Data per property. Elsewhere it is an array
 of objects as before. Which key holds the old value (2026-11-23) is the user's to say: the result's `change_lists`
 names each list found (its keys, `by: user` or `order`, an item holding both values); in a build with forms the
-tool asks of each list taken by order ("Which key of an old/new list holds a property's value before the
-change?", the order's guess first), keeps the answer with the build (`draft_choices.change_sides`, so a redraft
-isn't asked) and drafts again with it, `catalogue_event_types` checking the build's placements by it too; without
-forms or a build, the first value key in the items' order is taken, and the note says to check it and swap
-`old_key` and `new_key` (Microsoft 365 writes NewValue first); keys given in a placement or entry win. The note
+tool asks of each list it proposed ("Which key of an old/new list holds a property's value before the
+change?", the proposal first: the value key whose name says before, by its words (old, previous, prev, before,
+original, from against new, current, after, updated, to; whole words or camel/snake parts, any case), else the
+first in the items' order; 2026-11-23, chat 189: `{Name, NewValue, OldValue}` was proposed by order, wrongly),
+keeps the answer with the build (`draft_choices.change_sides`, so a redraft isn't asked) and drafts again with it,
+`catalogue_event_types` checking the build's placements by it too; without forms or a build, the same proposal is
+taken, and the note says to check it and swap `old_key` and `new_key`; keys given in a placement or entry win. The note
 also gives the change form for a property whose name means an element, typed in both snapshots; an item key
 of few words in a list of targets (`type: User, Group`) is noted as what may name the object. A mapping entry's
 `change` is JSON input only, its side its path's (below Before the old value, below After the new), allowed in a
@@ -5589,7 +5603,16 @@ System Name (its source types' rows', else its mapping's) as a parameter. A Syst
 type's own, a `field` and `map`) is never the common module's: the group writing it keeps its whole System part (with
 the registry's Environment), so a later group gets its own name or the common module's. A later group's entries the
 same as the common module's (its System Name and Environment aside) are left to it; others are its own, said in
-`group.notes`;
+`group.notes`, written in the group's own XSLT in place of the module's part, for that group only: a group never
+changes the shared module (decided by the user 2026-11-23, chat 189). The registry promoted into the feed's own
+folder (`<feed folder>/<feed>`) is found there, a build's registry naming no module takes the promoted registry's,
+and a later group whose feed's common module can't be found (another group translated already) is refused, never
+made anew from its mapping. The shared Generator is the feed's, naming no source type (chat 188): a first group's
+Generator naming the registry's source types (a row's name, matched value or System Name, any case or spacing, or a
+name's last word not the feed's; `FeedGenerators`) stays its own, and the module takes the feed's own, asked once in
+a form (proposed with the source types' wording taken out) or given as `feed_generator`, kept in the registry
+(`generator`) for later builds; with neither, the module says `TODO generator` (the draft's default), the notes say
+to ask, and a later call's `feed_generator` replaces it (the one change a group makes to the module);
 a shared call of a later group's that the common module lacks is added to the common module, saved again (in place,
 or as a new version of a promoted one), never imported by the group. **One source type group a build**
 (decided 2026-11-13): `group` defaults to the one the build's scope names (`record_source_types`; a new translation in
@@ -5702,7 +5725,8 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   `uuid`; `change` (the
   version history line); `include_xslt` (also return the code when saving); `reviewed` (a `review_id`);
   `field_mapping`, `pipeline_uuid`, `max_records` (1 to 1000, default 50); `discard_hand_edit`,
-  `hand_edit_choices`; `group` and `source_types` (a source type group, above); with `group`, `own_output_feed` and
+  `hand_edit_choices`; `group` and `source_types` (a source type group, above); with `group`, `own_output_feed`,
+  `feed_generator` (the feed's own Generator as the user said it in the chat, where no form can be shown) and
   `references`.
 * **Returns**: the generator's result (`ok`, `xslt` unless saved, `problems`, `warnings` grouped, `events`),
   `schema_version` (and `schema_version_settled`), `required_imports`, `sample_check` (`records`, `problems`,
@@ -5722,8 +5746,8 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   made stays so when a hand edit is read back into it); and
   every save refusal of save_xslt. `changes={}` is the mapping as it stands (the session's draft, or the saved
   mapping); a source type group's first save with no `name` changes the build's draft. With `group`: no source type registry in the build; `source_types` not the registry's, or
-  none and no scope; a name whose mode is the common module's; a new group saved with no form and no
-  `own_output_feed`; a promoted group's change with no form and no `pipeline`; a module that doesn't generate.
+  none and no scope; a name whose mode is the common module's; a later group whose feed's common module can't be
+  found; a new group saved with no form and no `own_output_feed`; a promoted group's change with no form and no `pipeline`; a module that doesn't generate.
 * **Notes**:
   * **The same input written twice** (`WrittenTwice`, 2026-11-21): a warning, never a problem, when one rule writes
     the same input (the same entry but for its path, data_name and data_parent, read in the same groups' for_each)

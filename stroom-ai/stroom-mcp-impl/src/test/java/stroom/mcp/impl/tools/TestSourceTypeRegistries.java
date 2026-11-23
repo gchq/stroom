@@ -20,8 +20,11 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.XsltDoc;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -150,8 +153,44 @@ class TestSourceTypeRegistries {
                 .hasMessageContaining("build 'done' is open on it");
     }
 
+    @Test
+    void aRegistryPromotedIntoTheFeedsOwnFolderIsFoundBesideTheFeed() {
+        // Seen in chat 189: the feed in /Feeds, beside other feeds, so promotion filed its registry in
+        // /Feeds/<feed>; the next build looked only in /Feeds, made a registry of its own, and with it a new
+        // common module from its own group's mapping.
+        final DocRef feed = new DocRef("Feed", "f-1", FEED);
+        final DocRef feeds = new DocRef(ExplorerConstants.FOLDER_TYPE, "d-feeds", "Feeds");
+        final DocRef own = new DocRef(ExplorerConstants.FOLDER_TYPE, "d-own", FEED);
+        final DocRef registry = new DocRef(DocumentationDoc.TYPE, "orig", REGISTRY);
+        final DocumentPlaces realPlaces = new DocumentPlaces(documentAccess, Mockito.mock(PipelineIndex.class));
+        final SourceTypeRegistries found = new SourceTypeRegistries(guard, documentAccess, documentWrites, feedNames,
+                realPlaces, () -> records);
+        Mockito.when(feedNames.feedsNamed(FEED)).thenReturn(List.of(feed));
+        Mockito.when(guard.buildOf(any())).thenReturn(Optional.empty());
+        Mockito.when(documentAccess.canView(any())).thenReturn(true);
+        Mockito.when(documentAccess.node(any())).thenReturn(Optional.of(ExplorerNode.builder().build()));
+        Mockito.when(documentAccess.path(feed)).thenReturn("/Feeds");
+        Mockito.when(documentAccess.parent(feed)).thenReturn(Optional.of(feeds));
+        Mockito.when(documentAccess.children(feeds)).thenReturn(List.of(node(feed), node(new DocRef("Feed", "f-2",
+                "OTHER")), node(own)));
+        Mockito.when(documentAccess.children(own)).thenReturn(List.of(node(registry)));
+        final String text = SourceTypeRegistry.render(new LinkedHashMap<>(Map.of("feed", FEED, "field", "Workload",
+                "rows", List.of())));
+        Mockito.when(documentAccess.read(eq(registry), eq(DocumentationDoc.class))).thenReturn(Optional.of(
+                DocumentationDoc.builder().uuid("orig").name(REGISTRY).version("v7").data(text).build()));
+
+        assertThat(found.registry(BUILD, FEED)).hasValueSatisfying(registryFound -> {
+            assertThat(registryFound.promoted()).isTrue();
+            assertThat(registryFound.doc().uuid()).isEqualTo("orig");
+        });
+    }
+
     private static SourceTypeRegistries.Found promoted() {
         return new SourceTypeRegistries.Found(new SurveyRecord("orig", REGISTRY, ""), true, Map.of("feed", FEED));
+    }
+
+    private static ExplorerNode node(final DocRef ref) {
+        return ExplorerNode.builder().docRef(ref).build();
     }
 
     private static WriteGuard.BuildDoc doc(final String type, final String uuid, final String name) {

@@ -56,7 +56,7 @@ final class SteppingVerdicts {
     private static final Pattern REFERENCE = Pattern.compile("<(?:[\\w.-]+:)?reference[\\s>]",
             Pattern.UNICODE_CHARACTER_CLASS);
     /// The most records a group lists.
-    private static final int MAX_RECORDS_LISTED = 20;
+    static final int MAX_RECORDS_LISTED = 20;
 
     private SteppingVerdicts() {
         // Static methods only.

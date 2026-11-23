@@ -36,12 +36,13 @@ import java.util.Optional;
 
 /// Which value key of each old/new property-change list holds a property's value before the change (decided by the
 /// user 2026-11-23): not settled by the items' key order alone (Microsoft 365 writes `NewValue` before `OldValue`,
-/// Graph `oldValue` before `newValue`). In a build, with forms, the draft asks the user of each list it found by
-/// order, showing its two keys and an item holding both values, the order's guess first; the answer is kept in the
-/// build's record ([BuildRecords#rememberDraftChoice], as the time source is), so a redraft doesn't ask again, and
-/// `catalogue_event_types` checks the build's placements by it. Without forms, or a build, the items' key order
-/// stands, with the draft's note telling the agent to check it and swap `old_key` and `new_key`. Keys given in a
-/// placement or a mapping entry win over both.
+/// Graph `oldValue` before `newValue`). In a build, with forms, the draft asks the user of each list it found,
+/// showing its two keys and an item holding both values, the proposal first: the key whose name says before (old,
+/// previous...; [stroom.ai.impl.tools.sample.NameValueLists#oldKeyByName]), else the first in the items' key order;
+/// the answer is kept in the build's record ([BuildRecords#rememberDraftChoice], as the time source is), so a
+/// redraft doesn't ask again, and `catalogue_event_types` checks the build's placements by it. Without forms, or a
+/// build, the proposal stands, with the draft's note telling the agent to check it and swap `old_key` and `new_key`.
+/// Keys given in a placement or a mapping entry win over both.
 final class ChangeSides {
 
     /// The question asked of a list, its start (its list, keys and example follow).
@@ -97,7 +98,7 @@ final class ChangeSides {
     }
 
     /// Asks the user, in a build with forms, which key holds the value before the change of each old/new list the
-    /// draft took by its items' key order, the order's guess first; each answer kept for the build.
+    /// draft proposed (by the keys' names, else their order), the proposal first; each answer kept for the build.
     ///
     /// @param call    The call.
     /// @param context Its context.

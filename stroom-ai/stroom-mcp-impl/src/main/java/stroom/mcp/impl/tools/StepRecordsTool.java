@@ -54,6 +54,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /// `step_records` - steps chosen records of existing streams, in place, and returns one verdict for them all, like
@@ -124,7 +128,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
                         .addStringProperty(LOCATIONS_FROM_ARG, "Instead of locations: a survey_feed result saved "
                                                                + "to the workspace (its whole_result.saved, given "
                                                                + "when it was too large to show whole), every "
-                                                               + "location it lists stepped.")
+                                                               + "location it lists stepped (for a source type "
+                                                               + "group's pipeline, those of its source types).")
                         .addProperty(DRAFT_CODE_ARG, ObjectSchema.builder()
                                 .description(PipelineStepping.DRAFT_CODE_DESCRIPTION)
                                 .build())
@@ -173,7 +178,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
         }
         try {
             final List<Location> given = locations(call);
-            final List<Location> locations = given.isEmpty() && stringArg(call, LOCATIONS_FROM_ARG) != null
+            final boolean fromSurvey = given.isEmpty() && stringArg(call, LOCATIONS_FROM_ARG) != null;
+            final List<Location> locations = fromSurvey
                     ? savedLocations(context, stringArg(call, LOCATIONS_FROM_ARG))
                     : given;
             if (locations.isEmpty()) {
@@ -182,7 +188,9 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                            + "saved to the workspace.");
             }
             final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
-            return JsonResults.of(stepRecords(call, context, pipelineUuid, locations, draftCode));
+            return JsonResults.of(fromSurvey
+                    ? stepSurveyed(call, context, pipelineUuid, locations, draftCode)
+                    : stepRecords(call, context, pipelineUuid, locations, draftCode));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {
@@ -193,6 +201,52 @@ class StepRecordsTool extends AbstractBuiltInTool {
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
+    }
+
+    /// A survey's locations stepped: for a source type group's pipeline, only those of the group's source types
+    /// (decided by the user 2026-11-23: seen in chat 189, an Entra ID group stepped 292 records of other source
+    /// types, four said to produce no Event, and the agent spent ten calls finding they were passed over). Those left
+    /// out are counted by source type (`locations_left_out`).
+    ///
+    /// @throws ToolTimeoutException if the call is cancelled.
+    /// @throws ToolRefusal if the group's source types leave no location to step.
+    private Map<String, Object> stepSurveyed(final ToolCall call,
+                                             final ToolCallContext context,
+                                             final String pipelineUuid,
+                                             final List<Location> locations,
+                                             final Map<String, String> draftCode) {
+        final Optional<Set<String>> groupTypes = stepping.passedOver(stepping.load(pipelineUuid))
+                .groupSourceTypes();
+        if (groupTypes.isEmpty()) {
+            return stepRecords(call, context, pipelineUuid, locations, draftCode);
+        }
+        final Map<String, Integer> leftOut = new TreeMap<>(ToolText::compare);
+        final List<Location> own = new ArrayList<>();
+        for (final Location location : locations) {
+            if (location.onlyOthers(groupTypes.get())) {
+                location.sourceTypes().forEach(type -> leftOut.merge(type, 1, Integer::sum));
+            } else {
+                own.add(location);
+            }
+        }
+        if (own.isEmpty()) {
+            throw new ToolRefusal("None of the survey's " + locations.size() + " locations is of the group's source "
+                                  + "types (" + ToolText.list(List.copyOf(new TreeSet<>(groupTypes.get())))
+                                  + "): they are " + leftOut.keySet() + "'s, which its pipeline passes over. "
+                                  + "Survey the group's records, or give locations of them.");
+        }
+        final Map<String, Object> result = stepRecords(call, context, pipelineUuid, own, draftCode);
+        if (!leftOut.isEmpty()) {
+            final Map<String, Object> out = new LinkedHashMap<>(result);
+            out.put("locations_left_out", leftOut);
+            out.put("locations_left_out_note", (locations.size() - own.size()) + " of the survey's locations are "
+                                               + "of other source types alone (" + String.join(", ", leftOut
+                    .entrySet().stream().map(entry -> entry.getKey() + " " + entry.getValue()).toList())
+                                               + "), which the group's pipeline passes over: not stepped. Only "
+                                               + "the group's own are stepped and judged.");
+            return out;
+        }
+        return result;
     }
 
     /// The records stepped: `pipeline`, `records_stepped`, `records_with_errors`, `records_not_found`,
@@ -327,6 +381,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
         entry.put("errors", found.size());
         if (sifted.passedOver()) {
             entry.put(PASSED_OVER, true);
+            entry.put("passed_over_source_type", sifted.sourceType());
         }
         if (EXPECT_NONE.equals(location.expect())) {
             entry.put("expect", EXPECT_NONE);
@@ -347,6 +402,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
         }
         final Map<String, Object> summary = stepping.triage(walked.markers, pipeline, records.size());
         SteppingVerdicts.listRecords(summary, walked.markers);
+        stepping.addPassedOver(summary, walked.passedOver, pipeline);
         SteppingVerdicts.block(summary, stepping.unagreedUnknown(pipeline, pipeline.outputElement(),
                 walked.unknown, records.size(), draftCode, SteppingVerdicts.whatUnknownHolds(walked.unknownOutputs)));
         final List<String> missing = records.stream()
@@ -481,9 +537,33 @@ class StepRecordsTool extends AbstractBuiltInTool {
     /// @param part   The zero-based part.
     /// @param record The zero-based record within the part.
     /// @param shape  The survey shape this record is an example of, or null.
-    /// @param expect `event`, or `none`: a kind the user chose to leave untranslated (survey_feed sets it), so no
-    ///               Event is right.
-    record Location(long stream, long part, long record, String shape, String expect) {
+    /// @param expect      `event`, or `none`: a kind the user chose to leave untranslated (survey_feed sets it), so
+    ///                    no Event is right.
+    /// @param sourceTypes The source types of an aggregated feed the survey found the record's shape in (its
+    ///                    `source_types`); none where not said.
+    record Location(long stream, long part, long record, String shape, String expect, List<String> sourceTypes) {
+
+        /// Fills in an empty list for null.
+        Location {
+            sourceTypes = List.copyOf(Objects.requireNonNullElse(sourceTypes, List.of()));
+        }
+
+        /// A location no source type is said of.
+        ///
+        /// @param stream The stream.
+        /// @param part   The zero-based part.
+        /// @param record The zero-based record within the part.
+        /// @param shape  The survey shape this record is an example of, or null.
+        /// @param expect `event`, or `none`.
+        Location(final long stream, final long part, final long record, final String shape, final String expect) {
+            this(stream, part, record, shape, expect, List.of());
+        }
+
+        /// @param groupTypes A group's source types.
+        /// @return True if the survey said the record's shape is of other source types alone.
+        boolean onlyOthers(final Set<String> groupTypes) {
+            return !sourceTypes.isEmpty() && sourceTypes.stream().noneMatch(groupTypes::contains);
+        }
 
         /// @param value A location as given.
         /// @param index Its place in the list, for what is said when it isn't one.
@@ -508,9 +588,12 @@ class StepRecordsTool extends AbstractBuiltInTool {
             if (!EXPECT_EVENT.equals(expect) && !EXPECT_NONE.equals(expect)) {
                 throw new ToolRefusal("locations[" + index + "].expect is 'event' or 'none', not '" + expect + "'");
             }
+            final List<String> sourceTypes = map.get("source_types") instanceof final List<?> types
+                    ? types.stream().filter(Objects::nonNull).map(String::valueOf).toList()
+                    : List.of();
             return new Location(stream, part, record, map.get("shape") == null
                     ? null
-                    : String.valueOf(map.get("shape")), expect);
+                    : String.valueOf(map.get("shape")), expect, sourceTypes);
         }
 
         private static Long whole(final Object value) {
