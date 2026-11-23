@@ -103,7 +103,8 @@ public class AnalyticProcessingController extends Controller {
 
     /// Shows how a rule or report runs.
     ///
-    /// @param docRef   The rule or report.
+    /// @param docRef   The rule or report's ref, as every tab is given it; not used, as what is
+    ///                 fetched is for the document's own ref.
     /// @param document The rule or report.
     public void read(final DocRef docRef, final AbstractAnalyticRuleDoc document) {
         this.document = document;

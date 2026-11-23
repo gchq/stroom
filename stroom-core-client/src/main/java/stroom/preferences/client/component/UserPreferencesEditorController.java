@@ -63,6 +63,9 @@ public class UserPreferencesEditorController extends Controller {
     private final KeyBindingPreferencesController keyBindingPreferences;
     private final ControllerLayer keyBindingPreferencesLayer;
     private UserPreferences fetchedUserPreferences;
+    // Set once Cancel has gone back to the saved preferences, so a field that commits its edit as
+    // it loses the focus (e.g. the custom format, as the dialog goes) can't apply it again
+    private boolean cancelled;
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -157,6 +160,7 @@ public class UserPreferencesEditorController extends Controller {
                 e.hide();
             }
         } else {
+            cancelled = true;
             userPreferencesManager.setCurrentPreferences(fetchedUserPreferences);
             // Ensure screens revert to the old prefs
             triggerThemeChange(userPreferencesManager.getCurrentPreferences());
@@ -177,6 +181,9 @@ public class UserPreferencesEditorController extends Controller {
     }
 
     private void onChange() {
+        if (cancelled) {
+            return;
+        }
         final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
         UserPreferences after = write(before);
 

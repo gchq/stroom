@@ -686,6 +686,20 @@ public final class QueryEditorStories {
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // OK with nothing entered for a column that has no filter changes nothing, so the query
+                // isn't changed (it used to be given an empty filter)
+                .story("ColumnFilterOkUnchanged", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Count");
+                    play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Filter 'Count'");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toHaveFocus());
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeNull());
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query's column filter has no Include/Exclude tab (unlike a dashboard's)
                 .story("QuerySideFilterHasNoIncludeExcludeTab", context -> render(context, FIXTURES))
                 .withPlay(play -> {

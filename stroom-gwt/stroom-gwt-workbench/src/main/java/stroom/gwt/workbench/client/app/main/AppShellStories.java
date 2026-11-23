@@ -386,6 +386,32 @@ public final class AppShellStories {
                     play.expect(dialog.queryByRole("spinbutton", "Minutes")).toBeNull();
                     expectNoProblems(play);
                 })
+                // Escape undoes a custom format typed but not yet committed: the field still has the
+                // focus as the dialog goes, and its blur used to apply the cancelled format again
+                // after Cancel had gone back to the saved one. Info's dates show the format in use
+                // ("x", moment's epoch milliseconds, would add 1700000000000 to the time)
+                .story("EscapeUndoesCustomFormat", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("checkbox", "Custom"));
+                    final Query customFormat = dialog.within(dialog.getByText("Custom Format", "label")
+                            .closest(".form-group")).querySelector("input");
+                    play.type(customFormat, "x");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Show Info", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(screen.getByText("2023-11-14T22:13:20.000Z"))
+                            .toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    expectNoProblems(play);
+                })
                 // The Keyboard Shortcuts tab lists each action the user can bind, one row per
                 // shortcut, with the built-in arrow keys that can't be changed
                 .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))

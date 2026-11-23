@@ -102,13 +102,16 @@ public class ColumnFilterEditorController extends Controller implements Focus {
     /// Returns the filter entered for a column.
     ///
     /// @param column The column.
-    /// @return The filter, with no expression if none is entered.
+    /// @return The filter, with no expression if none is entered (so clearing the text removes the
+    /// column's filter), or null if none is entered and the column had no filter.
     public ColumnFilter getColumnFilter(final Column column) {
-        final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
         final String expression = editor.getText().trim();
-        if (!expression.isEmpty()) {
-            builder.filter(expression);
+        if (expression.isEmpty() && column.getColumnFilter() == null) {
+            return null;
         }
-        return builder.build();
+        // A blank expression is made null
+        return ColumnFilter.fromColumn(column)
+                .filter(expression)
+                .build();
     }
 }

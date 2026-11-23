@@ -1263,7 +1263,7 @@ shows one), and the app itself.
 | The dashboard table filter dialog's focus on open | **Fixed** (19 November 2026): `ColumnFilterEditorController` is a `Focus`; `TableFilterFocusesItsEditor` |
 | `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | **Fixed** (19 November 2026), each as its entry below |
 | Debug logging in `DocumentationTabController` | Fixed (20 November 2026): the `GWT.log` calls and the commented code are gone |
-| `XPathFilterEditor`'s default condition | Still so, harmless |
+| `XPathFilterEditor`'s default condition | **Fixed** (23 November 2026), as the entry below |
 | `CombinedParser.getMode()`'s guess for a None converter | Still so, and the entry is wrong that it has no effect: `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives a Data Splitter the XML range mode |
 | `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Fixed (20 November 2026) |
 
@@ -1660,6 +1660,16 @@ to delete them by hand.~~
     covers it.~~ **Fixed** (19 November 2026): `!Objects.equals(filter, column.getColumnFilter())`,
     as `ColumnFilterTabsController` has; the same result as the branch that worked, so no story
     can show a difference (`App/Editors/QueryEditor` `ColumnFilterMenu` still sets a filter).
+    The code review of 23 November 2026 found two older faults in `getColumnFilter` behind it,
+    both on master too: clearing a filter's text and pressing OK kept the old filter (an empty
+    editor gave back a copy of the column's own filter, so nothing had changed), and OK with nothing
+    entered for a column with no filter gave it an empty filter, so the query or dashboard was
+    marked changed. **Fixed** (23 November 2026): no text and no filter before gives null, and
+    otherwise the text is always set, a blank one becoming no filter. Plays, both failing before:
+    `App/Editors/QueryEditor` `ColumnFilterOkUnchanged` (Save stays disabled) and
+    `App/Editors/DashboardEditor` `TableFilterCleared` (the cleared filter doesn't come back). The
+    query editor can't show the clearing: its columns' filters come from the search's reply, which
+    in the workbench is fixed, so a filter set in a play is gone after the next result.
   * ~~The time preferences don't make the dialog changed when the time zone Id, the offset or the
     Custom Format text is edited (`TimePreferences`, lines 101-112).~~ **Re-scoped and fixed**
     (19 November 2026). The dialog has no changed state of its own: OK always saved these fields (it
@@ -1670,6 +1680,11 @@ to delete them by hand.~~
     or blank one is never applied. Play: `App/Main/TimePreferences` `EveryFieldReportsItsChange`
     (failed before). Cancel's revert of what was applied is unchanged, and is covered with the
     dialog's stories (`App/Main/AppShell`).
+    Also guarded (23 November 2026, from the code review): Cancel sets a flag that stops any later
+    change being applied, as a custom format or offset typed but not committed still has the focus
+    as Escape closes the dialog, and its blur would apply it again after Cancel's revert. Not seen:
+    `App/Main/AppShell` `EscapeUndoesCustomFormat` passes with or without the guard, as the
+    workbench's Chromium fires no blur when the dialog goes; the guard is for browsers that do.
   * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
     (`AnalyticProcessingController.setProcessType`).~~ **Fixed** (19 November 2026): showing the
@@ -1706,10 +1721,16 @@ to delete them by hand.~~
     `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
     and shows the preview, and a blank document opens the editor when it becomes editable. It
     predates the controller; whether a Save should keep the editor open needs a decision.
-* `XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
-  the controller overwrites it.
-* `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
-  has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
+* ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
+  the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
+  `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides
+  whether to show them from `MatchType.isNeedsValue()` rather than its own list of the four
+  conditions that take a value. Opening the dialog always reads the filter's condition, so what
+  shows is the same and no story can show a difference; `App/Main/StepFilterDialog` still passes.
+* `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter. The parser
+  built is always a Data Splitter (`ParserFactoryPoolImpl`), but the guess isn't without effect:
+  `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives
+  a Data Splitter the XML range mode (corrected 23 November 2026, as the table above says).
 * ~~The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
   been selected" (`FindAnnotationList`).~~ **Fixed** (30 October 2026): the chooser
