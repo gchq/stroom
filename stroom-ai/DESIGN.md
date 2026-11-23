@@ -1246,7 +1246,10 @@ have no time, so would otherwise always be "Other"); at most 20 lanes and 200 ba
 left out first, then the latest markers); the chat packs a section's tasks into as few rows as don't overlap (as
 Mermaid's compact display), where other apps give each task a row of its own; each bar has an SVG `title` tooltip
 (text only, so cheap now). The examples are checked by a port of Mermaid's gantt lexer rules, as there is no
-Mermaid offline. The dashboard route (a CSV Data Connection) is not built.
+Mermaid offline. The dashboard route for derived rows (a CSV Data Connection) is not built: deferred by the user
+(2026-11-24), as the chat's timeline and the dashboard `timeline` kind over indexed data already work; when built,
+`activity_timeline` offers to write its sessions table as a CSV Data Connection and propose a dashboard with the
+`timeline` chart over it (its columns already fit the kind).
 
 Decided with the product owner (2026-11-23): a small set of charts drawn in the chat, from a workspace table, with
 nothing created beforehand; or a dashboard, for what the chat's charts can't show or when the user wants one. Which,
