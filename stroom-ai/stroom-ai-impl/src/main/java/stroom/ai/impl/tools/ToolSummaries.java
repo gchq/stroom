@@ -71,6 +71,7 @@ public final class ToolSummaries {
             Map.entry("find_pipeline_templates", "Onboarding: lists the pipeline templates."),
             Map.entry("find_reference_data", "Lists the reference data maps that can be looked up."),
             Map.entry("folder_contents", "Lists what is in an Explorer folder."),
+            Map.entry("gantt_chart", "Draws a table of times as a timeline chart in the chat."),
             Map.entry("get_current_date", "Gives today's date (UTC)."),
             Map.entry("get_current_datetime", "Gives the current date and time (UTC)."),
             Map.entry("get_current_time", "Gives the current time of day (UTC)."),

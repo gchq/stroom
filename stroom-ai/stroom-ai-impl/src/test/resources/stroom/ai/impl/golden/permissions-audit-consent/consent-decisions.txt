@@ -18,6 +18,7 @@
 - fetch_events (read-only, reads untrusted content): RUN in every situation
 - find_in_content (read-only, reads untrusted content): RUN in every situation
 - folder_contents (read-only, reads untrusted content): RUN in every situation
+- gantt_chart (read-only, reads untrusted content): RUN in every situation
 - get_current_date (read-only, reads only trusted content): RUN in every situation
 - get_current_datetime (read-only, reads only trusted content): RUN in every situation
 - get_current_time (read-only, reads only trusted content): RUN in every situation

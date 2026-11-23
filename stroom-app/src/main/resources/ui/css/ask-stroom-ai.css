@@ -2543,6 +2543,147 @@ a.ai-stroom-link::after {
     fill: var(--control__text-color--disabled);
 }
 
+/* A timeline (a Mermaid gantt block) in an answer, drawn as SVG by the chat (AiGanttChart): scaled down to fit a
+   narrow chat, its text selectable. Bars are coloured by their name in a fixed order of eight hues (the rest
+   grey), each hue stepped for the light and the dark theme; text keeps the page's own colours. */
+.ai-gantt {
+    margin: 8px 0;
+    overflow-x: auto;
+}
+
+.ai-gantt-svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    font-family: inherit;
+    user-select: text;
+}
+
+.ai-gantt-title {
+    font-size: 14px;
+    font-weight: 600;
+    fill: var(--control__text-color);
+}
+
+.ai-gantt-lane-back {
+    fill: transparent;
+}
+
+.ai-gantt-lane--odd .ai-gantt-lane-back {
+    fill: var(--control__border-color);
+    fill-opacity: 0.25;
+}
+
+.ai-gantt-lane-label,
+.ai-gantt-legend-text {
+    font-size: 12px;
+    fill: var(--control__text-color);
+}
+
+.ai-gantt-tick,
+.ai-gantt-empty {
+    font-size: 11px;
+    fill: var(--control__text-color--disabled);
+}
+
+.ai-gantt-grid {
+    stroke: var(--control__border-color);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+}
+
+.ai-gantt-baseline {
+    stroke: var(--control__border-color);
+    stroke-width: 1;
+}
+
+/* A marker's ring of the page's colour keeps it clear of the bars it sits on. */
+.ai-gantt-marker {
+    stroke: var(--page__background-color);
+    stroke-width: 2;
+}
+
+.ai-gantt--done {
+    fill-opacity: 0.55;
+}
+
+.ai-gantt--crit {
+    stroke: var(--control__text-color);
+    stroke-width: 1.5;
+}
+
+.ai-gantt-c1 {
+    fill: #2a78d6;
+}
+
+.ai-gantt-c2 {
+    fill: #eb6834;
+}
+
+.ai-gantt-c3 {
+    fill: #1baf7a;
+}
+
+.ai-gantt-c4 {
+    fill: #eda100;
+}
+
+.ai-gantt-c5 {
+    fill: #e87ba4;
+}
+
+.ai-gantt-c6 {
+    fill: #008300;
+}
+
+.ai-gantt-c7 {
+    fill: #6250d6;
+}
+
+.ai-gantt-c8 {
+    fill: #e34948;
+}
+
+.ai-gantt-other {
+    fill: #8a8a85;
+}
+
+.stroom-theme-dark .ai-gantt-c1 {
+    fill: #3987e5;
+}
+
+.stroom-theme-dark .ai-gantt-c2 {
+    fill: #d95926;
+}
+
+.stroom-theme-dark .ai-gantt-c3 {
+    fill: #199e70;
+}
+
+.stroom-theme-dark .ai-gantt-c4 {
+    fill: #c98500;
+}
+
+.stroom-theme-dark .ai-gantt-c5 {
+    fill: #d55181;
+}
+
+.stroom-theme-dark .ai-gantt-c6 {
+    fill: #0ca30c;
+}
+
+.stroom-theme-dark .ai-gantt-c7 {
+    fill: #9085e9;
+}
+
+.stroom-theme-dark .ai-gantt-c8 {
+    fill: #e66767;
+}
+
+.stroom-theme-dark .ai-gantt-other {
+    fill: #7a7a75;
+}
+
 /* A message gone to from the overview, picked out for a moment. */
 .ai-message--located {
     animation: ai-message-located 2s ease-out;

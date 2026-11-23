@@ -5427,11 +5427,16 @@ public class AskStroomAiPresenter
                                    final int retryTurnId,
                                    final boolean editable) {
         // What the user typed is shown as typed (markup in it too); what is copied stays as they typed it.
-        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(
+        final SafeHtml convertedHtml = markdownConverter.convertUntrustedMarkdownToHtml(
                 cssClass.contains("ai-message--user")
                         ? AiUserMarkdown.escapeHtml(markdownText)
                         : markdownText);
         final boolean assistant = cssClass.contains("ai-message--assistant");
+        // An answer's Mermaid timelines drawn by the chat's own renderer, of escaped text only; any other block
+        // stays as the converter made it.
+        final SafeHtml markdownHtml = assistant
+                ? SafeHtmlUtils.fromTrustedString(AiMermaidCharts.drawCharts(convertedHtml.asString()))
+                : convertedHtml;
         final boolean error = cssClass.contains("ai-message--error");
 
         hb.div(wrapper -> {

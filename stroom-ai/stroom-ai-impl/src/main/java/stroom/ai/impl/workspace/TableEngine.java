@@ -351,7 +351,11 @@ public final class TableEngine {
         return names.stream().map(name -> index(name, header)).toList();
     }
 
-    static int index(final String name, final List<String> columns) {
+    /// @param name    A column's name, in any case.
+    /// @param columns A table's columns.
+    /// @return The column's index.
+    /// @throws WorkspaceException if there is no such column, naming those there are.
+    public static int index(final String name, final List<String> columns) {
         if (name != null) {
             final int exact = columns.indexOf(name);
             if (exact >= 0) {

@@ -152,6 +152,7 @@ class TestAgentModeTools {
             Map.entry("read_document", false),
             Map.entry("document_documentation", false),
             Map.entry("folder_contents", false),
+            Map.entry("gantt_chart", false),
             Map.entry("get_instructions", false),
             // Saves its snapshot of the tab's results to the workspace, which querying needs.
             Map.entry("current_results", false),

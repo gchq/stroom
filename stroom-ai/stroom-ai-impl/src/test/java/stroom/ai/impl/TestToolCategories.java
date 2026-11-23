@@ -36,7 +36,8 @@ class TestToolCategories {
 
     private static final Map<AiToolCategory, List<String>> EXPECTED = Map.of(
             AiToolCategory.CORE, List.of("ask_user", "delete_file", "document_documentation", "document_info",
-                    "document_links", "find_in_content", "folder_contents", "get_current_date",
+                    "document_links", "find_in_content", "folder_contents", "gantt_chart",
+                    "get_current_date",
                     "get_current_datetime", "get_current_time", "get_instructions", "get_utc_time_offset", "grep",
                     "instruction_evidence", "jq", "ls", "memory", "pipeline", "read_document", "read_file",
                     "read_turn", "str_replace",

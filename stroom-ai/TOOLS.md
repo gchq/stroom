@@ -159,6 +159,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file, or reads a stream's records | search | yes | | View Data | | | slot |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries, ...) | core | yes | | | | View | |
 | `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts; finds documents by name | core | yes | | | Manage Processors | View | |
+| `gantt_chart` | Draws a workspace table of times as a timeline: a Mermaid gantt block the chat draws with its own renderer | core | yes | dashboards | | | | chat |
 | `get_current_date` | Today's date in the user's time zone | core | yes | | | | | trusted |
 | `get_current_datetime` | The current date and time in the user's time zone, and in UTC | core | yes | | | | | trusted |
 | `get_current_time` | The current time of day in UTC | core | yes | | | | | trusted |
@@ -2279,9 +2280,71 @@ unsaved edits included. Otherwise it is against the documentation as saved. The 
 
 ## Dashboards, extractions and visualisations
 
-These six tools are in the chat's dashboards tool group. They are offered once the group is active, or from the
-start when the attached tab is a dashboard (`BuiltInToolGroups`). All are in category Content and read-only, and
-all but `list_visualisations` are chat only.
+These seven tools are in the chat's dashboards tool group. They are offered once the group is active, or from the
+start when the attached tab is a dashboard (`BuiltInToolGroups`). All are read-only and in category Content, but
+`gantt_chart` (Core); all but `list_visualisations` are chat only.
+
+### `gantt_chart`
+
+Core · read-only · chat only · Classes: `GanttChartTool`, `GanttCharts`; `stroom.ai.shared.MermaidGantt`,
+`MermaidGanttParser` (`stroom-core-shared`); in the chat, `AiMermaidCharts` and `AiGanttChart` (`stroom.ai.client`)
+
+Draws a workspace table of times as a timeline in the chat: it writes a ```` ```mermaid ```` `gantt` block for the
+agent to put in its reply as it is, and the chat draws it. The agent never writes chart code. It is the only chart
+the chat draws: for any other kind (a heat map, a network, a pie, bars or lines, a map) the result and the
+description say to offer only a dashboard (`propose_dashboard`, `propose_visualisation`), never a chat chart that
+approximates it; where a timeline is asked for and the user hasn't said where, the agent asks (chat or dashboard).
+
+* **The block** (`GanttCharts`), the same layout every time: `title` (the call's, or "Timeline", with the time zone
+  named after it: "(times in Europe/London)"), `dateFormat YYYY-MM-DD HH:mm:ss`, an `axisFormat` by the span
+  (`%H:%M` up to a day, `%d %b %H:%M` up to a week, else `%d %b`), then a `section` per lane (the `lane` column's
+  values, in the order they start), or per day in the zone (`2026-11-23 Mon`) without one. A row is a bar from
+  `start` to `end`, or a marker (`milestone`, `0d`) where it has no end or ends as it starts. Times are written in
+  the call's zone (`timeZone`, else the user's device's, else UTC, saying so), across a change of clocks too.
+* **Escaping**: every value from the data (labels, lanes, the title) has Mermaid's syntax characters taken out
+  (`:`, `,`, `;`, `#`, `%`, quotes, backticks, braces, angle brackets, backslashes), its line breaks (and Unicode
+  line separators and control characters) made spaces, and is cut to 40 characters; a label Mermaid would read as
+  a statement or a date (starting `click`, `section`, `excludes`, ... or `2026-11-23`) gets `· ` before it. Never
+  `click`, `call`, callbacks, comments or `%%{init}%%`.
+* **Folding**, each said in the result's "Folded" list: rows with no start time that can be read, or ending before
+  they start, left out; the labels kept (`top`, at most 8, the chat's colours): those with the most time, and up to
+  half of them labels of markers by their rows, the rest "Other"; at most 20 lanes (the rest in a section "Other");
+  a bar following one of its label in its lane (no other bar between) within `mergeSeconds` (default 300) merged
+  into it; bars shorter than `minSeconds` (default 60) left out; at most 200 bars and markers, the shortest bars
+  left out first, then the latest markers.
+* **Round trip**: every block written is read back by `MermaidGanttParser`, with as many sections and tasks as
+  written, or the call fails (a bug, never the data's doing).
+* **Arguments**: `path` (a .csv, .tsv or .md table), `start` and `label` (columns), optional `end`, `lane`, `title`,
+  `top`, `minSeconds`, `mergeSeconds`, `timeZone`. Times are read as the table tool's join reads them (ISO 8601, UTC
+  without a zone, or epoch milliseconds).
+* **Returns**: the block, its counts (bars, markers, sections, rows of the table, named as the whole table), what
+  was folded, the zone, and what the chat draws.
+* **Refuses**: a file that isn't a table (JSON, XML, text), a column the table doesn't have (naming those it has),
+  a table with no rows or no start time that can be read, and a zone that isn't one.
+
+**The subset** (`MermaidGanttParser`, in `stroom-core-shared` so the server and the browser share it, plain Java
+with no regular expressions or `java.time`): `gantt` first; `title`, `dateFormat` (dayjs `YYYY`, `MM`, `DD`, `HH`,
+`mm`, `ss`, `SSS`), `axisFormat` (d3 `%Y %y %m %d %e %b %a %H %M %S`), `section`; tasks `<name> : [tags,] [id,]
+<start>, <end or duration>` with tags `done`, `active`, `crit`, `milestone` and durations `ms`, `s`, `m`, `h`, `d`,
+`w`. Anything else is outside it and refused: comments and directives, `click`/`call`/`href`, `after`/`until`,
+`excludes` and the other statements, front matter, Mermaid's syntax characters, a task whose name starts like a
+statement or a date; and over 200,000 characters, 1,000 tasks or 200 sections. Times are wall-clock, held as
+milliseconds since 1970-01-01 on that clock (`MermaidGantt.wallClock`), so the browser needs no time zones.
+
+**In the chat** (`AiMermaidCharts`, called from `AskStroomAiPresenter` for answers only): after the shared
+`MarkdownConverter.convertUntrustedMarkdownToHtml` has made the answer sanitised HTML, each `<pre><code
+class="... language-mermaid">` block of text only whose content (character references read) parses is replaced by
+`AiGanttChart`'s SVG; any other block stays as code, never run. `MarkdownConverter`, `MarkdownPreviewPresenter`
+and Documentation docs are unchanged (a ```` ```mermaid ```` block there stays code). `AiGanttChart` draws a lane
+per section (tasks packed into as few rows as don't overlap, as Mermaid's compact display does), bars, diamonds for
+markers, a dashed grid and ticks (steps from a second to a year, at most 8), a legend (eight colours in a fixed
+order by first appearance; "Other" and names past the eighth grey), and a `<title>` tooltip per bar; every text
+escaped, colours and lines by CSS classes (`ai-gantt-*` in `ask-stroom-ai.css`, the hues stepped for the dark
+theme). No third-party script.
+
+* **Examples**: `golden/gantt/*.mmd` (a day of window focus on two hosts, a week by day, hostile labels), each read
+  by the parser and, line by line, by a port of Mermaid's gantt lexer rules (`TestGanttChartExamples`), as there is
+  no Mermaid offline; paste one into the Mermaid Live Editor to check it against Mermaid itself.
 
 ### `propose_dashboard`
 

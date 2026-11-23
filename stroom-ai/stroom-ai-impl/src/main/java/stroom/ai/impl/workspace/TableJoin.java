@@ -180,7 +180,7 @@ public final class TableJoin {
     ///
     /// @param cell The cell.
     /// @return The time in epoch milliseconds, or null if the cell is empty or isn't a time.
-    static Long millis(final String cell) {
+    public static Long millis(final String cell) {
         if (NullSafe.isBlankString(cell)) {
             return null;
         }

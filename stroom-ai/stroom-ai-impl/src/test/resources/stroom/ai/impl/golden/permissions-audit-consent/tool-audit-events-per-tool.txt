@@ -359,6 +359,9 @@
     "totalResults" : 10
   }
 
+## gantt_chart {"path":"/outputs/a.csv","start":"EventId","label":"UserId"}
+(nothing recorded)
+
 ## get_current_date {}
 (nothing recorded)
 

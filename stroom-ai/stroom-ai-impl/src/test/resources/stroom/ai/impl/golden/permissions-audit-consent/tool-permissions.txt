@@ -371,6 +371,7 @@ Needs: View (document)
 ## Tools with no permission check of their own (the same with everything and with nothing)
 - ask_user: same (it fails here, as McpElicitations is mocked)
 - delete_file: same
+- gantt_chart: same
 - get_current_date (its output is the time, so not compared)
 - get_current_datetime (its output is the time, so not compared)
 - get_current_time (its output is the time, so not compared)

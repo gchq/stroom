@@ -83,6 +83,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(PreviewExtractionTool.class)
                 .addBinding(ProposeExtractionPipelineTool.class)
                 .addBinding(ListVisualisationsTool.class)
+                .addBinding(GanttChartTool.class)
                 .addBinding(ProposeVisualisationTool.class)
                 .addBinding(ProposeDocumentationChangeTool.class)
                 .addBinding(ConfigPropertiesTool.class)

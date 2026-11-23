@@ -4,6 +4,10 @@ A chart of a table's results, on a dashboard or in a StroomQL query, generated f
 write a chart's code or its settings JSON: you choose a chart kind, the table columns it draws and its style, and
 Stroom builds the Visualisation from a fixed template, drawn by its own reviewed adapter.
 
+In Stroom AI's chat, a timeline (bars from a table's start and end times, markers, a lane per host or day) can
+instead be drawn in the reply itself, by `gantt_chart`: the only chart the chat draws. Where both fit, which is the
+user's choice; any other chart is a dashboard's.
+
 ## Steps
 
 1. Call `list_visualisations`: which charting libraries are installed (ECharts and D3, which Stroom generates

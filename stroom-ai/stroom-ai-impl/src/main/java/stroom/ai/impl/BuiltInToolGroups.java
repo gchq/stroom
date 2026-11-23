@@ -105,6 +105,7 @@ public final class BuiltInToolGroups {
                     "find_elastic_clusters",
                     "elastic_index_templates"),
             DASHBOARDS, List.of(
+                    "gantt_chart",
                     "propose_dashboard",
                     "propose_dashboard_change",
                     "propose_visualisation",
@@ -155,8 +156,8 @@ public final class BuiltInToolGroups {
                                  + "why data is, or will be, deleted");
         purposes.put(INDEXING, "plan, make and check search indexes (Lucene or Elasticsearch), their index "
                                + "templates and their indexing pipelines");
-        purposes.put(DASHBOARDS, "make or change dashboards, their charts and visualisations, and the search "
-                                 + "extractions their tables use");
+        purposes.put(DASHBOARDS, "draw a timeline in the chat, or make or change dashboards, their charts and "
+                                 + "visualisations, and the search extractions their tables use");
         purposes.put(ADMINISTRATION, "read Stroom's configuration properties, the tasks running on its nodes, "
                                      + "and its data and index volumes");
         purposes.put(SEQUENCES, "hunt for ordered sequences of events in any data source (X, then Y, by the "

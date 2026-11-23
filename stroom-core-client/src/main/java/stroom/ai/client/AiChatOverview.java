@@ -529,8 +529,9 @@ final class AiChatOverview {
         return lines;
     }
 
-    // Text made safe to put in SVG.
-    private static String escape(final String text) {
+    /// @param text Text to put in SVG or HTML.
+    /// @return It with the characters markup reads escaped.
+    static String escape(final String text) {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {
             final char c = text.charAt(i);

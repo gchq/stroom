@@ -938,7 +938,8 @@ because each later part stands on the earlier:
 2. **An activity timeline** derived from a user's events: sessions of active use of each application, and the
    actions taken in each; and above it (2b) the activities they make up, what the user was working on.
 3. **Charts of derived results**: a small subset drawn in the chat (tool-written Mermaid, Stroom's own SVG renderer),
-   or a dashboard over a CSV Data Connection (stroom#6010), at the user's choice.
+   or a dashboard over a CSV Data Connection (stroom#6010), at the user's choice. The chat's gantt is built
+   (2026-11-23); the dashboard route's CSV Data Connection is not.
 4. **Skills**: saved, parameterised procedures (a hunt, a timeline) an analyst or the agent runs again.
 
 **Today** (what the agent does without these): `sequence_query` runs "X then Y by the same entity" as one EQL
@@ -1095,6 +1096,17 @@ data and, when a question or a skill asks, the backing Event XML.
   artifacts and evidence, and the sessions in no activity.
 
 #### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
+
+**Built 2026-11-23, gantt only** (the chat route): `gantt_chart` (dashboards group, chat only; `GanttChartTool`,
+`GanttCharts`) writes the block from a workspace table; the parser is `stroom.ai.shared.MermaidGanttParser`; the
+chat draws it with `AiMermaidCharts` and `AiGanttChart` (`stroom.ai.client`), styled in `ask-stroom-ai.css`.
+TOOLS.md (`gantt_chart`) has the block's layout, escaping, folding and the subset. As built, beyond the text below:
+the labels kept are those with the most time and, up to half of them, labels of markers by their rows (markers
+have no time, so would otherwise always be "Other"); at most 20 lanes and 200 bars and markers (the shortest bars
+left out first, then the latest markers); the chat packs a section's tasks into as few rows as don't overlap (as
+Mermaid's compact display), where other apps give each task a row of its own; each bar has an SVG `title` tooltip
+(text only, so cheap now). The examples are checked by a port of Mermaid's gantt lexer rules, as there is no
+Mermaid offline. The dashboard route (a CSV Data Connection) is not built.
 
 Decided with the product owner (2026-11-23): a small set of charts drawn in the chat, from a workspace table, with
 nothing created beforehand; or a dashboard, for what the chat's charts can't show or when the user wants one. Which,
@@ -5072,6 +5084,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | Charts in the chat built, gantt only (part 3's chat route): `gantt_chart` (dashboards group, chat only) turns a workspace table into a ```` ```mermaid ```` gantt block of a fixed subset (every value stripped of Mermaid syntax, never `click`, callbacks or `%%{init}%%`; folded: bars of a label merged within a lane, short bars left out, the top 8 labels with markers' labels kept beside them and the rest "Other", 20 lanes, 200 bars and markers; times in the user's zone, named in the title), read back by the shared `MermaidGanttParser` (`stroom-core-shared`) before it is returned; the chat's presenter replaces each parsed block, after the shared Markdown converter, with SVG from its own renderer (`AiGanttChart`: lanes, axis, bars, markers, legend, themed by CSS), any other block staying code; `MarkdownConverter` and Documentation docs unchanged; the tool and the visualisation guide say the user chooses the chat or a dashboard, and that other kinds are a dashboard's only | Activity timelines, streaming joins and skills (3. Charts); TOOLS.md (gantt_chart) |
 | 2026-11-23 | Activity timelines, streaming key-ordered joins, derived results as CSV Data Connections and skills designed (proposed, not built), in that order of building; open questions listed for the product owner | Activity timelines, streaming joins and skills (proposed) |
 | 2026-11-23 | Chat 189 (an Entra ID group of the Azure audit feed after its Messaging group): (1) a group's own value for a shared part (EventTime, System, Generator, Device) is written in its own XSLT in place of the common module's part, for that group only; a group build never changes the shared module: the registry promoted into the feed's own folder (`<feed folder>/<feed>`, where promotion files it beside other sources) is found there (`DocumentPlaces.documentationInOwnFolder`), a build's registry naming no module takes the promoted registry's (`SourceTypeGroups.promotedModule`), and a later group whose feed's common module can't be found is refused, never made anew from its mapping; (2) the shared Generator is the feed's, naming no source type: a group's Generator naming the registry's source types (their names, matched values or System Names, any case or spacing, or a name's last word not the feed's; `FeedGenerators`) stays the group's, and the common module takes the feed's own, asked once in a form (proposed with the source types' wording taken out) or given as `feed_generator`, kept in the registry (`generator`); without either, the module says `TODO generator` with a note, replaced once given; (3) the old/new question proposes by the value keys' names first (old, previous, prev, before, original, from against new, current, after, updated, to; whole words or camel/snake parts), else key order, the no-forms fallback the same (`NameValueLists.oldKeyByName`); (4a) a record the group passes over is told even when its values hold control characters or NUL (read as XML 1.1, NUL left out), and its warnings are listed apart as benign groups naming its source type (`passed_over_source_type`), not this build's to decide; (4b) `step_records locations_from=` steps only the group's source types' locations (`locations_left_out`), a record of another passed over labelled with its source type; (5) the catalogue's proposals (check) results carry no user table: only `confirm=true`'s `needs_showing` does. | Aggregated feeds: source types and source type groups; Old/new property-change lists; Stepping; Event type catalogue; TOOLS.md (build_translation_xslt, step_sample, step_records, catalogue_event_types, draft_translation_mapping) |
 | 2026-11-23 | A message body's plain text from its HTML (an `html_text` transform) is written up as a future addition, not built: the product owner chose not now | HTML bodies to plain text (future) |
