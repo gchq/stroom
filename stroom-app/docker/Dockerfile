@@ -24,7 +24,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS stroom-base-stage
+FROM eclipse-temurin:27.0.1.0-jdk-alpine-3.24@sha256:a63e42ef2a577cdb0802b73bb6f8fa2c3b0ebf1b4f00f29eb22e7f4d83b234f7 AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
