@@ -1160,9 +1160,18 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
   as the steps' examples, the concrete values it used offered as parameters) or from a description (its steps drafted
   from the tools and the user's own indexes, by `describe_data_source`); what only the author knows (the name, the
   "When to use" phrasings, which values are parameters, where results go) asked in a form; it checks its own draft
-  (below). **Saved by an approval button** in the chat (decided 2026-11-23), as `propose_dashboard`'s and the other
-  proposals' are: the doc shown (an edit as its change), the button writing it with its history entry; never written
-  without it.
+  (below). **Proposed as a diff, as AGENTS docs are** (decided 2026-11-23): the `propose_instructions` mechanism
+  reused (`apply_documentation_change`, `UserActionLookupImpl.savedDocumentation`, `AiDocumentationChanges`): nothing
+  changes until the user presses the chat's "Review and apply"; for an existing `SKILLS` doc the review opens it on
+  its Documentation tab and puts the diff in its editor *unsaved*, the user saving it with Stroom's Save, or
+  discarding it by closing without saving (back to the last saved version); applying needs Edit and is refused if
+  the doc has been saved with other text since; a folder with no `SKILLS` doc gets a create-on-apply button (the whole
+  doc shown as added; applying creates and saves it as the user, then opens it). The front matter's history entry is
+  part of the diff, so it is seen before saving. **Undo after saving**: the chat keeps the text from before the change,
+  so "undo that change" proposes the reverse diff the same way. **Reverting to an older saved version**: later, if
+  the Stroom developers add a way to read a saved version back (with database persistence every save's content is
+  already snapshotted, `doc_data_snapshot`, but `DocAuditEntryService` only gives time, user and action, and nothing
+  reads a snapshot or reverts): a docstore and Info panel feature, for every document type.
 * **Trial run before saving** (decided 2026-11-23): "try it on jsmith for one day" runs the draft once and shows the
   result before the save button, problems found in real output.
 * **Templates shipped with the tools, not live skills** (decided 2026-11-23): `propose_skill` offers built-in starting
@@ -1174,8 +1183,8 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
   commits, DESIGN.md and TOOLS.md, which describe the templates and the format.
 * **A skills guide** for the agent (the conventions: headings, parameters, front matter, the chart subset), facts
   only, read when authoring, as the mapping guide is.
-* **Later**: rollback to an earlier version (the history records changes, nothing restores them yet); skills tested as
-  eval cases are (a skill and its expected outcome on known data).
+* **Later**: reverting to an older saved version (above, needing the core feature); skills tested as eval cases are
+  (a skill and its expected outcome on known data).
 * **Checking tool**: reads a skill and reports problems and suggestions, each with a proposed fix. Problems: no
   description; no steps; a parameter used but not listed, or listed and unused; a tool that doesn't exist or the
   reader's policies don't allow; an example call whose arguments don't match the tool's schema; an index or field
@@ -1197,7 +1206,7 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
 * **In the chat**: a skill picker, and slash commands to list skills and invoke one by name with its parameters
   (decided 2026-11-23); a client change beside the tools.
 * **Tools**: `propose_skill` (authoring), `check_skill` (checking), `find_skills` (searching by words or name);
-  anyone who may write the doc saves a skill, by the approval button.
+  anyone who may write the doc saves a skill, through "Review and apply" (a diff, as for AGENTS docs).
 * **First skill**: the user activity timeline, its role conditions for the site's endpoint products held in it.
 
 #### Open questions
@@ -1220,8 +1229,8 @@ To settle with the product owner before building; listed in [Open questions](#op
 7. ~~Skills' form~~: Markdown only in Documentation docs (default name `SKILLS`, several skills a doc, a `#` heading
    each), front matter for the marker and the change history, guided steps; discovery global with the model deciding
    from every readable skill's name and description, context ordering them (decided 2026-11-23).
-8. ~~Skills' tools~~: `propose_skill`, `check_skill`, `find_skills`; anyone who may write the doc saves one, by an
-   approval button in the chat; a trial run before saving; templates shipped with the tools, product-specific
+8. ~~Skills' tools~~: `propose_skill`, `check_skill`, `find_skills`; anyone who may write the doc saves one, its
+   change proposed as a diff through "Review and apply", as AGENTS docs' are; a trial run before saving; templates shipped with the tools, product-specific
    examples later as a content pack; in the chat, a skill picker and slash commands (decided 2026-11-23).
 9. ~~Characterisation content~~: sent to the configured model, as other tool results are (decided 2026-11-23).
 10. ~~Text size~~: a capped excerpt, the first 500 characters by default (a setting) (decided 2026-11-23).
