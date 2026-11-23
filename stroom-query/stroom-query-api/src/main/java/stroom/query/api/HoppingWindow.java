@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"timeField", "windowSize", "advanceSize"})
+@JsonPropertyOrder({"timeField", "windowSize", "advanceSize", "offset", "timeZone"})
 @JsonInclude(Include.NON_NULL)
 public final class HoppingWindow implements Window {
 
@@ -35,33 +35,66 @@ public final class HoppingWindow implements Window {
     @JsonProperty
     private final String advanceSize;
     @JsonProperty
-    private final String function;
+    private final String offset;
+    @JsonProperty
+    private final String timeZone;
 
+    /// Creates the time windows of a `window` clause, as in
+    /// `window EventTime by 1d advance 1h offset 6h`.
+    ///
+    /// @param timeField   The field whose time puts a row in its windows.
+    /// @param windowSize  The size of each window, as a duration such as `1d`.
+    /// @param advanceSize How long after one window starts the next one does, as a duration such as
+    ///                    `1h`, or `null` if the windows don't overlap.
+    /// @param offset      How far to move every window start, as a duration such as `6h`, or `-6h` to
+    ///                    move them earlier, or `null` for none.
+    /// @param timeZone    The id of the time zone that the windows follow.
     @JsonCreator
     public HoppingWindow(@JsonProperty("timeField") final String timeField,
                          @JsonProperty("windowSize") final String windowSize,
                          @JsonProperty("advanceSize") final String advanceSize,
-                         @JsonProperty("function") final String function) {
+                         @JsonProperty("offset") final String offset,
+                         @JsonProperty("timeZone") final String timeZone) {
         this.timeField = timeField;
         this.windowSize = windowSize;
         this.advanceSize = advanceSize;
-        this.function = function;
+        this.offset = offset;
+        this.timeZone = timeZone;
     }
 
+    /// Gets the field whose time puts a row in its windows.
+    ///
+    /// @return The name of the time field.
     public String getTimeField() {
         return timeField;
     }
 
+    /// Gets the size of each window.
+    ///
+    /// @return The size, as a duration such as `1d`.
     public String getWindowSize() {
         return windowSize;
     }
 
+    /// Gets how long after one window starts the next one does.
+    ///
+    /// @return The advance, as a duration such as `1h`, or `null` if the windows don't overlap.
     public String getAdvanceSize() {
         return advanceSize;
     }
 
-    public String getFunction() {
-        return function;
+    /// Gets how far every window start is moved.
+    ///
+    /// @return The offset, as a duration such as `6h` or `-6h`, or `null` for none.
+    public String getOffset() {
+        return offset;
+    }
+
+    /// Gets the time zone that the windows follow.
+    ///
+    /// @return The id of the time zone.
+    public String getTimeZone() {
+        return timeZone;
     }
 
     @Override
@@ -73,74 +106,26 @@ public final class HoppingWindow implements Window {
             return false;
         }
         final HoppingWindow that = (HoppingWindow) o;
-        return Objects.equals(timeField, that.timeField) && Objects.equals(windowSize,
-                that.windowSize) && Objects.equals(advanceSize, that.advanceSize) && Objects.equals(
-                function,
-                that.function);
+        return Objects.equals(timeField, that.timeField) &&
+               Objects.equals(windowSize, that.windowSize) &&
+               Objects.equals(advanceSize, that.advanceSize) &&
+               Objects.equals(offset, that.offset) &&
+               Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeField, windowSize, advanceSize, function);
+        return Objects.hash(timeField, windowSize, advanceSize, offset, timeZone);
     }
 
     @Override
     public String toString() {
         return "HoppingWindow{" +
-                "timeField='" + timeField + '\'' +
-                ", windowSize='" + windowSize + '\'' +
-                ", advanceSize='" + advanceSize + '\'' +
-                ", function='" + function + '\'' +
-                '}';
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-
-        private String timeField = "EventTime";
-        private String windowSize = "10m";
-        private String advanceSize = "1m";
-        private String function = "count()";
-
-        private Builder() {
-        }
-
-        private Builder(final HoppingWindow hoppingWindow) {
-            this.timeField = hoppingWindow.timeField;
-            this.windowSize = hoppingWindow.windowSize;
-            this.advanceSize = hoppingWindow.advanceSize;
-            this.function = hoppingWindow.function;
-        }
-
-        public Builder timeField(final String timeField) {
-            this.timeField = timeField;
-            return this;
-        }
-
-        public Builder windowSize(final String windowSize) {
-            this.windowSize = windowSize;
-            return this;
-        }
-
-        public Builder advanceSize(final String advanceSize) {
-            this.advanceSize = advanceSize;
-            return this;
-        }
-
-        public Builder function(final String function) {
-            this.function = function;
-            return this;
-        }
-
-        public HoppingWindow build() {
-            return new HoppingWindow(timeField, windowSize, advanceSize, function);
-        }
+               "timeField='" + timeField + '\'' +
+               ", windowSize='" + windowSize + '\'' +
+               ", advanceSize='" + advanceSize + '\'' +
+               ", offset='" + offset + '\'' +
+               ", timeZone='" + timeZone + '\'' +
+               '}';
     }
 }

@@ -22,6 +22,8 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ResultPage;
 
+import java.util.Optional;
+
 public class MockProcessorTaskService implements ProcessorTaskService {
 
     @Override
@@ -32,5 +34,20 @@ public class MockProcessorTaskService implements ProcessorTaskService {
     @Override
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return ResultPage.empty();
+    }
+
+    @Override
+    public Optional<ProcessorTask> fetch(final long taskId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean returnToCreated(final long taskId) {
+        return false;
+    }
+
+    @Override
+    public boolean markFailed(final long taskId) {
+        return false;
     }
 }

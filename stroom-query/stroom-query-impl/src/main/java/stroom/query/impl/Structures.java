@@ -292,18 +292,63 @@ class Structures {
                 "eval ${1:variable_name} = ${2:value}\n$0");
         add(list, name(TokenType.WINDOW),
                 """
-                        Create windowed data, e.g.
+                        Put rows into windows of time, and group them by the window they are in, e.g.
                         ```stroomql
-                        window EventTime by 1y
+                        from Events
+                        window EventTime by 1d
+                        group by UserId
+                        select windowStart() as Day, UserId, count() as Events
                         ```
-                        This will create counts for grouped rows per year plus the previous year.
-                                          
+                        This gives a row for each user for each day. `windowStart()` and `windowEnd()` give
+                        the times of a row's window. A window includes its start and not its end.
+
+                        Add `advance` to make windows that overlap, e.g.
                         ```stroomql
-                        window EventTime by 1y advance 1m
+                        window EventTime by 1h advance 10m
                         ```
-                        This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
+                        A window of an hour then starts every 10 minutes, and each row is counted in every
+                        window that covers it. The size must be a whole number of advances, and a row can
+                        be in at most 100 windows.
+
+                        Add `offset` to move where windows start, e.g.
+                        ```stroomql
+                        window EventTime by 1d offset 6h
+                        ```
+                        Each day then runs from 06:00 to 06:00. Use a minus sign, as in `offset -2h`, to move
+                        the start earlier.
+
+                        Sizes are a number and a unit: `ms`, `s`, `m` (minutes), `h`, `d`, `w`, `M` (months)
+                        or `y`. Days, weeks, months and years follow the calendar in your time zone, so `1d`
+                        is 23 or 25 hours long when the clocks change, weeks start on Monday and months on
+                        the 1st. `24h` is always 24 hours. `7d` is every seven days counted from 1 January
+                        1970, which is not the same as `1w`. A year can advance by months and a week by days,
+                        but months and years can't advance by weeks, days or less.
+
+                        Use `lag` and `lead` to compare a window with another one, e.g.
+                        ```stroomql
+                        from Events
+                        window EventTime by 1d
+                        eval Change = count() - lag(count(), 1)
+                        group by UserId
+                        select windowStart() as Day, UserId, count() as Events, Change
+                        ```
+                        `lag(count(), 1)` is the count of the window one size before for the same user, and
+                        `lead(count(), 1)` the one after. A third value, as in `lag(max(Bytes), 1, 0)`, is
+                        given when the other window has no value. A user with no events in a window still
+                        gets a row for it if a window either side reads it.
+
+                        Rows with no time in the window's field are left out.
+
+                        A rule judges a window only when it has all of its events. A rule that is run on
+                        a schedule judges each window once, in the run whose time range holds the end of
+                        the window, or the end of the last window it reads with `lead`. It searches back
+                        before the start of its time range as far as it needs to for the start of the
+                        window and for the windows it reads with `lag`. Give each run a time range that
+                        follows on from the last one, such as `day() - 1d` to `day()` for a rule run
+                        once a day. This needs a time range with a start, on the field of the window.
+                        Without one, each run judges every window that has ended.
                         """,
-                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
+                "window ${1:time_field} by ${2:size}\n$0");
         add(list, name(TokenType.FILTER),
                 """
                         Use filter to filter values that have not been indexed during search retrieval.
@@ -363,6 +408,18 @@ class Structures {
                         ```stroomql
                         having count > 3
                         ```
+                        A condition can test a column by name, or an expression, e.g.
+                        ```stroomql
+                        having count() > 3 and max(Bytes) < 1000
+                        ```
+                        Two expressions can be compared with `=`, `!=`, `>`, `>=`, `<` or `<=`, e.g.
+                        ```stroomql
+                        having count() > lag(count(), 1) * 2
+                        ```
+                        A name on the right is a column if there is one of that name, and text if not.
+                        A row is kept only if the comparison is true, so a row with nothing to compare
+                        with is left out. To keep the first window, give `lag` a value to use, as in
+                        `lag(count(), 1, 0)`.
                         """,
                 "having ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.LIMIT),

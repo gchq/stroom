@@ -96,6 +96,17 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                         .create(analyticRuleDoc);
                 final DocRef dataSource = searchRequest.getQuery().getDataSource();
 
+                // A streaming rule judges each event alone and keeps no rows to group.
+                final boolean hasWindow = NullSafe.list(searchRequest.getResultRequests())
+                        .stream()
+                        .flatMap(resultRequest -> NullSafe.list(resultRequest.getMappings()).stream())
+                        .anyMatch(tableSettings -> tableSettings.getWindow() != null);
+                if (hasWindow) {
+                    throw new RuntimeException("Unable to process analytic: " + ruleIdentity
+                                               + " because a streaming rule can't have a window clause. "
+                                               + "Use a table builder or scheduled query rule");
+                }
+
                 if (dataSource == null || !ViewDoc.TYPE.equals(dataSource.getType())) {
                     throw new RuntimeException("Error: Rule needs to reference a view");
 

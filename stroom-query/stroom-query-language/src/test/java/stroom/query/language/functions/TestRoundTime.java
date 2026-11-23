@@ -129,7 +129,35 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
                         ValDate.create(crossDayExpectedMillis),
                         ValDate.create(crossDayInputMillis),
                         ValString.create("PT15M")
+                ),
+                TestCase.of(
+                        "Before 1970 rounds down",
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 50, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 52, 0))),
+                        ValString.create("PT5M")
+                ),
+                TestCase.of(
+                        "Before 1970 rounds up",
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 55, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 53, 0))),
+                        ValString.create("PT5M")
+                ),
+                TestCase.of(
+                        "Before 1970 half way rounds up",
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 50, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 47, 30))),
+                        ValString.create("PT5M")
+                ),
+                TestCase.of(
+                        "Before 1970 exactly on boundary",
+                        ValDate.create(utcMillis(LocalDateTime.of(1955, 1, 1, 5, 0, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1955, 1, 1, 5, 0, 0))),
+                        ValString.create("PT1H")
                 )
         );
+    }
+
+    private static long utcMillis(final LocalDateTime localDateTime) {
+        return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 }

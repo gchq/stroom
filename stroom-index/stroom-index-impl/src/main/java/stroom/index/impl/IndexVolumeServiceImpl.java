@@ -18,6 +18,9 @@ package stroom.index.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.IndexVolumeGroupService;
@@ -26,12 +29,9 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
-import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -55,6 +55,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -106,6 +107,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     private static final String CACHE_NAME = "Index Volume Selector Cache";
     protected static final String TEMP_FILE_PREFIX = "stroomIdxVolVal";
+    private static final String SHARED_TO_LOCAL_MESSAGE =
+            "A shared index volume cannot be made local, because its shards may have been written by any node. " +
+            "Add a new local volume instead.";
 
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
@@ -118,6 +122,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private final LoadingStroomCache<VolGroupNode, HasCapacitySelector> volGroupNodeToVolSelectorCache;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
     private final PathCreator pathCreator;
+    private final Provider<TargetNodeSetFactory> targetNodeSetFactoryProvider;
+    private final SharedVolumeChecker sharedVolumeChecker = new SharedVolumeChecker();
 
     // Holds map of groupName|nodeName => index vols but only entries for this node
     private final AtomicReference<VolumeMap> currentVolumeMap = new AtomicReference<>();
@@ -133,7 +139,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                            final IndexVolumeGroupService indexVolumeGroupService,
                            final CacheManager cacheManager,
                            final HasCapacitySelectorFactory hasCapacitySelectorFactory,
-                           final PathCreator pathCreator) {
+                           final PathCreator pathCreator,
+                           final Provider<TargetNodeSetFactory> targetNodeSetFactoryProvider) {
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
@@ -144,6 +151,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         this.indexVolumeGroupService = indexVolumeGroupService;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
         this.pathCreator = pathCreator;
+        this.targetNodeSetFactoryProvider = targetNodeSetFactoryProvider;
 
         // Most selectors are stateful, and we need one per vol grp so the round-robin works.
         this.volGroupNodeToVolSelectorCache = cacheManager.createLoadingCache(
@@ -178,8 +186,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     public ValidationResult validate(final IndexVolume indexVolume) {
 
         ValidationResult validationResult = ValidationResult.ok();
-        if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
-            validationResult = ValidationResult.error("You must select a node for the volume.");
+        // A shared volume has no node, every node uses it.
+        if (!indexVolume.isShared() && NullSafe.isBlankString(indexVolume, IndexVolume::getNodeName)) {
+            validationResult = ValidationResult.error("You must select a node for a local volume.");
         }
         if (validationResult.isOk()
             && NullSafe.isBlankString(indexVolume, IndexVolume::getPath)) {
@@ -190,42 +199,131 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         final Optional<IndexVolume> existingIndexVolume = indexVolume.getId() != null
                 ? securityContext.secureResult(() -> indexVolumeDao.fetch(indexVolume.getId()))
                 : Optional.empty();
-        final boolean hasPathChanged = existingIndexVolume.filter(existingVol ->
-                        Objects.equals(existingVol.getPath(), indexVolume.getPath()))
+        if (validationResult.isOk()
+            && !indexVolume.isShared()
+            && existingIndexVolume.filter(IndexVolume::isShared).isPresent()) {
+            validationResult = ValidationResult.error(SHARED_TO_LOCAL_MESSAGE);
+        }
+
+        final boolean hasPathOrTypeChanged = existingIndexVolume.filter(existingVol ->
+                        Objects.equals(existingVol.getPath(), indexVolume.getPath())
+                        && existingVol.getVolumeType() == indexVolume.getVolumeType())
                 .isEmpty();
 
-        if (hasPathChanged) {
+        if (hasPathOrTypeChanged) {
             if (validationResult.isOk()) {
                 validationResult = validateForDupPathInThisGroup(indexVolume);
             }
             if (validationResult.isOk()) {
-                validationResult = validateForDupPathInOtherGroups(indexVolume);
-            }
-            if (validationResult.isOk()) {
                 validationResult = validateVolumePath(indexVolume);
+            }
+            // Warnings come last so that they do not hide an error.
+            if (validationResult.isOk()) {
+                validationResult = combineWarnings(
+                        validateForMerge(indexVolume),
+                        validateForDupPathInOtherGroups(indexVolume));
             }
         }
         return validationResult;
     }
 
+    // Only one result goes back to the user, so two warnings are shown together and confirmed once.
+    private static ValidationResult combineWarnings(final ValidationResult first, final ValidationResult second) {
+        if (first.isOk()) {
+            return second;
+        } else if (second.isOk()) {
+            return first;
+        } else {
+            return ValidationResult.warning(first.getMessage() + "\n\n" + second.getMessage());
+        }
+    }
+
+    // Validation is a separate call that a client may skip, and the database's unique key does not cover
+    // volumes that have no node, so the rules that keep one volume per path are checked again on saving.
+    private void requireNoDupPathInThisGroup(final IndexVolume indexVolume) {
+        if (!NullSafe.isBlankString(indexVolume, IndexVolume::getPath)) {
+            final ValidationResult validationResult = validateForDupPathInThisGroup(indexVolume);
+            if (!validationResult.isOk()) {
+                throw new IndexException(validationResult.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public ValidationResult validatePath(final IndexVolume indexVolume) {
+        // The check creates the directory and a test file, so it needs the permission to manage volumes.
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () ->
+                NullSafe.isBlankString(indexVolume, IndexVolume::getPath)
+                        ? ValidationResult.error("You must provide a path for the volume.")
+                        : validateVolumePath(indexVolume));
+    }
+
     private ValidationResult validateForDupPathInThisGroup(final IndexVolume indexVolume) {
-        final List<IndexVolume> volumeGroups = securityContext.secureResult(() ->
-                indexVolumeDao.getVolumesInGroup(indexVolume.getIndexVolumeGroupId()));
+        final String path = getAbsVolumePath(indexVolume);
+        final List<IndexVolume> volumesWithSamePath = securityContext.secureResult(() ->
+                        indexVolumeDao.getVolumesInGroup(indexVolume.getIndexVolumeGroupId()))
+                .stream()
+                .filter(dbVol -> !Objects.equals(dbVol.getId(), indexVolume.getId()))
+                .filter(dbVol -> Objects.equals(getAbsVolumePath(dbVol), path))
+                .toList();
 
-        final boolean foundDupPathAndNode = volumeGroups.stream()
-                .anyMatch(dbVol ->
-                        !Objects.equals(dbVol.getId(), indexVolume.getId())
-                        && Objects.equals(getAbsVolumePath(dbVol), getAbsVolumePath(indexVolume))
-                        && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName()));
-
-        if (foundDupPathAndNode) {
+        if (volumesWithSamePath.stream().anyMatch(IndexVolume::isShared)) {
+            // A shared volume is the only volume in its group with its path, as it stands for every node.
+            return ValidationResult.error(LogUtil.message(
+                    "A shared index volume already exists in this group with path '{}'.",
+                    indexVolume.getPath()));
+        } else if (indexVolume.isShared()) {
+            if (indexVolume.getId() == null && !volumesWithSamePath.isEmpty()) {
+                return ValidationResult.error(LogUtil.message(
+                        "A local index volume already exists in this group with path '{}'. " +
+                        "Edit that volume and mark it as shared instead of adding a new one.",
+                        indexVolume.getPath()));
+            }
+        } else if (volumesWithSamePath.stream().anyMatch(dbVol ->
+                Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName()))) {
             return ValidationResult.error(
                     LogUtil.message("An index volume already exists in this group with node '{}' and path '{}'.",
                             indexVolume.getNodeName(),
                             indexVolume.getPath()));
-        } else {
-            return ValidationResult.ok();
         }
+        return ValidationResult.ok();
+    }
+
+    // Marking a volume as shared merges the other nodes' volumes for the same path into it, so say so first.
+    private ValidationResult validateForMerge(final IndexVolume indexVolume) {
+        if (indexVolume.isShared() && indexVolume.getId() != null) {
+            final List<IndexVolume> volumesToMerge = securityContext.secureResult(() ->
+                    getLocalVolumesWithSamePath(indexVolume));
+            if (!volumesToMerge.isEmpty()) {
+                return ValidationResult.warning(LogUtil.message("""
+                                Marking this volume as shared will merge the local volume{} for path '{}' on node{} \
+                                [{}] into it. Their shards will belong to this volume and the local volume{} will be \
+                                removed.
+                                Only do this if the path is the same shared mount on every node.
+                                Click OK to mark the volume as shared.""",
+                        StringUtil.pluralSuffix(volumesToMerge.size()),
+                        indexVolume.getPath(),
+                        StringUtil.pluralSuffix(volumesToMerge.size()),
+                        volumesToMerge.stream()
+                                .map(dbVol -> "'" + dbVol.getNodeName() + "'")
+                                .sorted()
+                                .collect(Collectors.joining(", ")),
+                        StringUtil.pluralSuffix(volumesToMerge.size())));
+            }
+        }
+        return ValidationResult.ok();
+    }
+
+    // The local volumes in the same group that have the same path as a shared volume and so are the same
+    // storage. The shared volume replaces them.
+    private List<IndexVolume> getLocalVolumesWithSamePath(final IndexVolume sharedVolume) {
+        final String path = getAbsVolumePath(sharedVolume);
+        return indexVolumeDao.getVolumesInGroup(sharedVolume.getIndexVolumeGroupId())
+                .stream()
+                .filter(dbVol -> !Objects.equals(dbVol.getId(), sharedVolume.getId()))
+                .filter(dbVol -> !dbVol.isShared())
+                .filter(dbVol -> Objects.equals(getAbsVolumePath(dbVol), path))
+                .toList();
     }
 
     private String getAbsVolumePath(final IndexVolume volume) {
@@ -241,7 +339,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         final Set<String> dupGroupNames = volumes.stream()
                 .filter(dbVol ->
                         !Objects.equals(dbVol.getIndexVolumeGroupId(), indexVolume.getIndexVolumeGroupId())
-                        && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName())
+                        // A shared volume is on every node, so it clashes with the path on any node.
+                        && (dbVol.isShared()
+                            || indexVolume.isShared()
+                            || Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName()))
                         && Objects.equals(getAbsVolumePath(dbVol), path))
                 .map(dbVol -> NullSafe.get(
                         indexVolumeGroupService.get(dbVol.getIndexVolumeGroupId()),
@@ -250,12 +351,14 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         if (!dupGroupNames.isEmpty()) {
             return ValidationResult.warning(LogUtil.message("""
-                            Path '{}' on node '{}' is already a member of index volume group{} [{}].
+                            Path '{}' {} is already a member of index volume group{} [{}].
                             It is NOT recommended to have the same index volume node and path belonging to \
                             multiple volume groups.
                             Click OK to ignore this and set it anyway.""",
                     indexVolume.getPath(),
-                    indexVolume.getNodeName(),
+                    (indexVolume.isShared()
+                            ? "on a shared volume"
+                            : "on node '" + indexVolume.getNodeName() + "'"),
                     (dupGroupNames.size() > 1
                             ? "s"
                             : ""),
@@ -336,11 +439,19 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                         : i.getNodeName())
                 .toList();
 
+        final String nodeName;
+        if (indexVolume.isShared()) {
+            // A shared volume has no node.
+            nodeName = null;
+        } else if (Strings.isNullOrEmpty(indexVolume.getNodeName())) {
+            nodeName = NextNameGenerator.getNextName(names, "New index volume");
+        } else {
+            nodeName = indexVolume.getNodeName();
+        }
+
         final IndexVolume updated = indexVolume
                 .copy()
-                .nodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
-                        ? NextNameGenerator.getNextName(names, "New index volume")
-                        : indexVolume.getNodeName())
+                .nodeName(nodeName)
                 .path(Strings.isNullOrEmpty(indexVolume.getPath())
                         ? null
                         : indexVolume.getPath())
@@ -348,8 +459,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 .stampAudit(securityContext)
                 .build();
 
-        final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.create(updated));
+        final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
+            requireNoDupPathInThisGroup(updated);
+            return indexVolumeDao.create(updated);
+        });
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -367,18 +480,47 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 indexVolumeDao.fetch(indexVolume.getId()).orElse(
                         null));
 
+        final boolean shared = indexVolume.isShared();
+        if (loadedIndexVolume.isShared() && !shared) {
+            throw new IndexException(SHARED_TO_LOCAL_MESSAGE);
+        }
+
         final IndexVolume updated = loadedIndexVolume
                 .copy()
                 .indexVolumeGroupId(indexVolume.getIndexVolumeGroupId())
                 .path((indexVolume.getPath()))
-                .nodeName(indexVolume.getNodeName())
+                // A shared volume has no node.
+                .nodeName(shared
+                        ? null
+                        : indexVolume.getNodeName())
+                .volumeType(indexVolume.getVolumeType())
                 .bytesLimit(indexVolume.getBytesLimit())
                 .state(indexVolume.getState())
                 .stampAudit(securityContext)
                 .build();
 
-        final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.update(updated));
+        final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
+            if (shared) {
+                requireNoDupPathInThisGroup(updated);
+            }
+            // Only the change from local to shared merges volumes, which the user has been warned about.
+            // Later edits of a shared volume must not remove other volumes.
+            if (shared && !loadedIndexVolume.isShared()) {
+                // The other nodes' volumes for the same path are the same storage, so the shared volume
+                // replaces them and takes their shards.
+                final List<Integer> mergedVolumeIds = getLocalVolumesWithSamePath(updated)
+                        .stream()
+                        .map(IndexVolume::getId)
+                        .toList();
+                if (!mergedVolumeIds.isEmpty()) {
+                    LOGGER.info("Merging index volumes {} into shared index volume {} with path '{}'",
+                            mergedVolumeIds, updated.getId(), updated.getPath());
+                }
+                return indexVolumeDao.mergeIntoSharedVolume(updated, mergedVolumeIds);
+            } else {
+                return indexVolumeDao.update(updated);
+            }
+        });
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -402,8 +544,15 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         // nodes can pile in and do this at the same time
         final String nodeName = nodeInfo.getThisNodeName();
         taskContext.info(() -> "Updating index volume status for node " + nodeName);
-        final ExpressionOperator expression = ExpressionUtil.equalsText(IndexVolumeFields.NODE_NAME, nodeName);
-        final List<IndexVolume> volumes = find(new ExpressionCriteria(expression)).getValues();
+        // The volumes this node uses are its own local volumes and every shared volume.
+        // Rescanning writes volume state, so it needs the same permission as other volume management.
+        final List<IndexVolume> volumes = securityContext.secureResult(
+                        AppPermission.MANAGE_VOLUMES_PERMISSION,
+                        () -> indexVolumeDao.getVolumesOnNodeGrouped(nodeName))
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .toList();
         for (final IndexVolume volume : volumes) {
             taskContext.info(() -> "Updating index volume status for '" + volume.getPath() + "' and node " + nodeName);
             updateVolumeState(volume);
@@ -411,6 +560,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             // Record some statistics for the use of this volume.
             recordStats(volume);
         }
+        checkSharedVolumes(volumes, nodeName);
 
         taskContext.info(() -> "Caching index volumes for node " + nodeName);
         // Now cache the index vols for THIS node only, grouped by vol group name
@@ -426,8 +576,46 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         return newMap;
     }
 
+    // Look for signs that a volume marked as shared is in fact a disk that only this node can see.
+    private void checkSharedVolumes(final List<IndexVolume> volumes, final String nodeName) {
+        try {
+            final Set<Integer> sharedVolumeIds = volumes.stream()
+                    .filter(IndexVolume::isShared)
+                    .map(IndexVolume::getId)
+                    .collect(Collectors.toSet());
+            sharedVolumeChecker.retain(sharedVolumeIds);
+
+            if (!sharedVolumeIds.isEmpty()) {
+                // Only nodes that are running are expected to keep a marker fresh, so a node that is down
+                // does not look like a volume that is not shared.
+                final List<String> otherNodes = targetNodeSetFactoryProvider.get().getEnabledActiveTargetNodeSet()
+                        .stream()
+                        .filter(otherNode -> !Objects.equals(otherNode, nodeName))
+                        .toList();
+                final long nowMs = System.currentTimeMillis();
+                for (final IndexVolume volume : volumes) {
+                    if (volume.isShared()) {
+                        final Path path = Paths.get(getAbsVolumePath(volume));
+                        if (Files.isDirectory(path)) {
+                            sharedVolumeChecker.check(volume.getId(), path, nodeName, otherNodes, nowMs);
+                        } else {
+                            // Nothing can be said about a volume this node cannot reach at all.
+                            sharedVolumeChecker.forget(volume.getId());
+                        }
+                    }
+                }
+            }
+        } catch (final NullClusterStateException | NodeNotFoundException e) {
+            // The cluster state is not known yet, e.g. just after startup, so check on the next run.
+            LOGGER.debug(() -> "Unable to check shared index volumes: " + LogUtil.exceptionMessage(e), e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> "Error checking shared index volumes: " + LogUtil.exceptionMessage(e), e);
+        }
+    }
+
     private IndexVolume updateVolumeState(final IndexVolume volume) {
-        final Path path = Paths.get(volume.getPath());
+        // A relative path is relative to stroom home, which is where the volume's shards are written.
+        final Path path = Paths.get(getAbsVolumePath(volume));
         final IndexVolume.Builder builder = volume.copy();
 
         // Ensure the path exists
@@ -526,7 +714,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                     // The parent will also pick up the index shard (as well as the
                     // store)
                     LOGGER.info("Clearing index volume {}", volume.getPath());
-                    FileUtil.deleteContents(Paths.get(volume.getPath()));
+                    FileUtil.deleteContents(Paths.get(getAbsVolumePath(volume)));
                 });
         clearCurrentVolumeMap();
     }
@@ -547,7 +735,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName);
         }
 
-        indexVolumes = removeIneligibleVolumes(indexVolumes);
+        indexVolumes = preferSharedVolumes(removeIneligibleVolumes(indexVolumes));
 
         if (!indexVolumes.isEmpty()) {
             indexVolumes.sort(Comparator.nullsFirst(Comparator.comparing(IndexVolume::getPath)));
@@ -588,6 +776,17 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                     .filter(indexVolume -> VolumeUseState.ACTIVE.equals(indexVolume.getState()))
                     .collect(Collectors.toList());
         }
+    }
+
+    // A group may hold shared and local volumes. New shards go to its shared volumes when it has any that can
+    // take them, so a group that is being moved to shared storage stops adding shards to its local volumes.
+    private static List<IndexVolume> preferSharedVolumes(final List<IndexVolume> list) {
+        final List<IndexVolume> sharedVolumes = list.stream()
+                .filter(IndexVolume::isShared)
+                .collect(Collectors.toList());
+        return sharedVolumes.isEmpty()
+                ? list
+                : sharedVolumes;
     }
 
     private VolumeMap getCurrentVolumeMap() {
@@ -695,6 +894,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                                     // Use HashMap so we can cope with null values
                                     final Map<String, Object> map = new HashMap<>();
                                     map.put("path", vol.getPath());
+                                    map.put("type", vol.getVolumeType());
                                     map.put("limit", vol.getBytesLimit());
                                     map.put("state", vol.getState());
                                     map.put("free", vol.getBytesFree());
@@ -712,6 +912,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 .addDetail("volumeSelector", volumeConfigProvider.get().getVolumeSelector())
                 .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumeMap.getCreateTime()))
                 .addDetail("volumeGroups", volInfoMap)
+                .addDetail("sharedVolumesNotSeenByNodes", sharedVolumeChecker.getProblems())
                 .build();
     }
 

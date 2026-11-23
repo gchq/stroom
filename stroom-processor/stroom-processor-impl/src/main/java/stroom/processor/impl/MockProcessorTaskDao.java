@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Singleton
@@ -288,6 +289,27 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     @Override
     public void clear() {
         dao.clear();
+    }
+
+    @Override
+    public boolean changeTaskStatus(final long taskId,
+                                    final Set<TaskStatus> currentStatuses,
+                                    final TaskStatus newStatus) {
+        final Optional<ProcessorTask> optional = dao.getMap().values()
+                .stream()
+                .filter(task -> task.getId() == taskId)
+                .filter(task -> currentStatuses.contains(task.getStatus()))
+                .findFirst();
+        optional.ifPresent(task -> {
+            final ProcessorTask.Builder builder = task.copy()
+                    .status(newStatus)
+                    .statusTimeMs(System.currentTimeMillis());
+            if (TaskStatus.CREATED.equals(newStatus)) {
+                builder.nodeName(null);
+            }
+            dao.update(builder.build());
+        });
+        return optional.isPresent();
     }
 
     @Override

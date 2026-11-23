@@ -178,7 +178,39 @@ class TestXPath extends AbstractFunctionTest<XPath> {
                         ValString.create("Error in XPath expression"),
                         ValString.create(namespacedXml),
                         ValString.create("/ns:root/ns:element"),
-                        ValString.create("other:nsb"))
+                        ValString.create("other:nsb")),
+
+                // Files, URLs and environment variables can't be read.
+                TestCase.of(
+                        "Refused - unparsed-text file",
+                        ValString.create("is not allowed"),
+                        ValString.create(xml),
+                        ValString.create("unparsed-text('file:///etc/hostname')")),
+                TestCase.of(
+                        "Refused - doc",
+                        ValString.create("Exception thrown by URIResolver"),
+                        ValString.create(xml),
+                        ValString.create("string(doc('file:///etc/fonts/fonts.conf'))")),
+                TestCase.of(
+                        "Refused - uri-collection",
+                        ValString.create("is not allowed"),
+                        ValString.create(xml),
+                        ValString.create("string(count(uri-collection('file:///etc/')))")),
+                TestCase.of(
+                        "Refused - unparsed-text http",
+                        ValString.create("is not allowed"),
+                        ValString.create(xml),
+                        ValString.create("unparsed-text('http://127.0.0.1:1/')")),
+                TestCase.of(
+                        "Refused - environment variable is empty",
+                        ValString.create(""),
+                        ValString.create(xml),
+                        ValString.create("string(environment-variable('PATH'))")),
+                TestCase.of(
+                        "Refused - external entity in the XML",
+                        ValString.create("DOCTYPE is disallowed"),
+                        ValString.create("<!DOCTYPE a [<!ENTITY e SYSTEM \"file:///etc/hostname\">]><a>&e;</a>"),
+                        ValString.create("/a"))
         );
     }
 }

@@ -21,4 +21,10 @@ import stroom.util.http.HttpClientConfiguration;
 public interface HttpClientProviderCache {
 
     HttpClientProvider get(HttpClientConfiguration httpClientConfiguration);
+
+    /// Gets a client that only connects to hosts that [stroom.util.http.AddressCheckingDnsResolver] allows.
+    ///
+    /// @param httpClientConfiguration The client configuration.
+    /// @return The client provider, to be closed after use.
+    HttpClientProvider getAddressChecked(HttpClientConfiguration httpClientConfiguration);
 }

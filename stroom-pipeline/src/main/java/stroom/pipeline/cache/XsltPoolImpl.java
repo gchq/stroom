@@ -61,8 +61,10 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltPoolImpl.class);
     private static final ElementId ELEMENT_ID = new ElementId(XsltPool.class.getSimpleName());
 
+    private final Provider<XsltConfig> xsltConfigProvider;
     private final URIResolver uriResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
+    private volatile CurrentSettings currentSettings;
 
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
@@ -77,6 +79,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                 () -> xsltConfigProvider.get().getCacheConfig(),
                 documentPermissionCache,
                 securityContext);
+        this.xsltConfigProvider = xsltConfigProvider;
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }
@@ -88,7 +91,16 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                                                                    final List<PipelineReference> pipelineReferences,
                                                                    final boolean usePool) {
         // Get the item from the pool.
-        final PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
+        PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
+
+        // A pooled XSLT compiled with other security settings, e.g. while secure mode was off, is dropped and
+        // another borrowed. Each idle copy is dropped as it is found, so a new copy compiled with the current
+        // settings (by this or another thread) is kept. A copy made without the pool is always new.
+        while (usePool && isStale(poolItem)) {
+            LOGGER.debug("Recompiling {} as the XSLT security settings have changed", k);
+            discardObject(poolItem);
+            poolItem = super.borrowObject(k, usePool);
+        }
 
         // Configure the item.
         if (poolItem != null && poolItem.getValue() != null && poolItem.getValue().getFunctionLibrary() != null) {
@@ -115,6 +127,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             LOGGER.debug("Creating xslt executable: " + xslt.toString());
         }
 
+        final XsltSecuritySettings securitySettings = getSecuritySettings();
         XsltExecutable xsltExecutable = null;
         StroomXsltFunctionLibrary functionLibrary = null;
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
@@ -125,8 +138,8 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                 errorReceiver);
 
         try {
-            // Create a new Saxon processor.
-            final Processor processor = new Processor(false);
+            // Create a new Saxon processor, secured unless an administrator has turned secure mode off.
+            final Processor processor = securitySettings.newProcessor();
 
             // Register the Stroom XSLT extension functions.
             functionLibrary = stroomXsltFunctionLibraryProvider.get();
@@ -143,7 +156,26 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             errorReceiver.log(Severity.FATAL_ERROR, null, ELEMENT_ID, e.getMessage(), e);
         }
 
-        return new StoredXsltExecutable(xsltExecutable, functionLibrary, errorReceiver);
+        return new StoredXsltExecutable(xsltExecutable, functionLibrary, errorReceiver, securitySettings);
+    }
+
+    private boolean isStale(final PoolItem<StoredXsltExecutable> poolItem) {
+        return poolItem != null
+               && poolItem.getValue() != null
+               && !getSecuritySettings().equals(poolItem.getValue().getSecuritySettings());
+    }
+
+    // The settings are made once for each XsltConfig, so this is a reference check on the borrow path and a
+    // bad allowed URI prefix is only warned about once each time the configuration changes.
+    private XsltSecuritySettings getSecuritySettings() {
+        final XsltConfig xsltConfig = xsltConfigProvider.get();
+        final CurrentSettings current = currentSettings;
+        if (current != null && current.xsltConfig() == xsltConfig) {
+            return current.securitySettings();
+        }
+        final XsltSecuritySettings securitySettings = XsltSecuritySettings.from(xsltConfig);
+        currentSettings = new CurrentSettings(xsltConfig, securitySettings);
+        return securitySettings;
     }
 
     @Override
@@ -171,5 +203,13 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                 .forEach(this::invalidate);
 
         LOGGER.debug("Completed event handler for {}", event);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record CurrentSettings(XsltConfig xsltConfig, XsltSecuritySettings securitySettings) {
+
     }
 }

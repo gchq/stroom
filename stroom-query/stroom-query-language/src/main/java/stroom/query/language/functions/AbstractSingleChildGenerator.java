@@ -32,6 +32,11 @@ abstract class AbstractSingleChildGenerator extends AbstractGenerator {
     public abstract void set(Val[] values, final StoredValues storedValues);
 
     @Override
+    public void setShifted(final Val[] values, final StoredValues storedValues) {
+        childGenerator.setShifted(values, storedValues);
+    }
+
+    @Override
     public abstract Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier);
 
     @Override

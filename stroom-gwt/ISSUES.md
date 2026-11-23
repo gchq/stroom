@@ -541,7 +541,7 @@ its inputs are) and offer those.
 
 ### GeoMap's map tiles are blocked in an asset-based visualisation
 
-**Tracked** in GitHub issue #6060 (19 November 2026).
+**Fixed** (#6060, 19 November 2026): the new property `stroom.documentAsset.allowedImageOrigins` lists origins added to the asset policy's `img-src` (`DocumentAssetServlet.assetContentSecurityPolicy`, `TestDocumentAssetServlet`). It is empty by default, so an admin adds the tile server, e.g. `https://*.tile.osm.org`. Each entry must be an `http`/`https` source with a host; a bare `*` or a scheme alone (`https:`) is refused, as it would allow any host. Only `img-src` changes; `connect-src` stays `'self'`. Not yet seen on a running Stroom.
 
 **Re-checked** (6 November 2026, against the code): still open in the code: `DocumentAssetServlet.java:212-219` still has `img-src 'self' data:`, with no setting for other origins; a blank map needs a running Stroom to see.
 

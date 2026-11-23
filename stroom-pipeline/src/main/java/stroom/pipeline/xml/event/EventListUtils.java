@@ -19,6 +19,8 @@ package stroom.pipeline.xml.event;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.util.CharBuffer;
+import stroom.util.xml.SaxonPolicy;
+import stroom.util.xml.SaxonSecurity;
 import stroom.util.xml.XMLUtil;
 
 import net.sf.saxon.Configuration;
@@ -126,7 +128,7 @@ public final class EventListUtils {
      */
     public static NodeInfo buildNodeInfo(final EventList events) {
         try {
-            final Configuration configuration = Configuration.newConfiguration();
+            final Configuration configuration = SaxonSecurity.newConfiguration(SaxonPolicy.LOCKED);
             final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
             final ReceivingContentHandler receivingContentHandler = new ReceivingContentHandler();
             final TinyBuilder builder = new TinyBuilder(pipe);

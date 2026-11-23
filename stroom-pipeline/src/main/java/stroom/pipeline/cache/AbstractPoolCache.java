@@ -172,6 +172,16 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
         }
     }
 
+    /// Drops a borrowed pooled item so it is never borrowed again, leaving any other pooled items for its key.
+    ///
+    /// @param item The borrowed item, from a borrow that used the pool.
+    protected void discardObject(final PoolItem<V> item) {
+        final PoolKey<K> poolKey = item.getKey();
+        LOGGER.debug("Discarding {}", poolKey);
+        release(poolKey, false);
+        cache.invalidate(poolKey);
+    }
+
     /// Gives the lease on a borrowed pool key back to the pool for its key.
     ///
     /// @return True if the pool key was made available to borrow again.
