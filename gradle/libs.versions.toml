@@ -157,7 +157,7 @@ junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" } # v
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" } # version controlled by junit-bom
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" } # version controlled by junit-bom
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" } # version controlled by junit-bom
-kryo = { module = "com.esotericsoftware:kryo", version = "5.5.0" }
+kryo = { module = "com.esotericsoftware:kryo", version = "5.7.1" }
 # lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
 # See https:#github.com/gchq/stroom/issues/3485 & https:#github.com/gchq/stroom/issues/4133
 # Potentially caused by https:#github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
