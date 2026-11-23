@@ -24,16 +24,13 @@ import stroom.query.api.TimeRange;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexStore;
-import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PermissionException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
@@ -111,6 +108,11 @@ public class ElasticEqlService implements ElasticEql {
     // The runtime field named in a query, as a whole word.
     private static final Pattern DOC_FIELD_NAMED = Pattern.compile("\\b" + DOC_FIELD + "\\b");
     private static final String NORMALIZER = "normalizer";
+    // What an EQL sequence needs of its documents: one time field, on one cluster.
+    private static final ElasticDocs.Rules RULES = new ElasticDocs.Rules(
+            "which an EQL sequence orders its events by",
+            "an EQL sequence searches one cluster",
+            "an EQL sequence orders every event by one field");
     /// How long Elasticsearch waits for a search to complete before answering, at submission and at each poll:
     /// how soon a stop reaches a running search.
     static final Duration STOP_CHECK = Duration.ofMillis(250);
@@ -142,7 +144,7 @@ public class ElasticEqlService implements ElasticEql {
 
     @Override
     public Target target(final List<DocRef> indexes) {
-        final Docs docs = docs(indexes);
+        final ElasticDocs.Checked docs = docs(indexes);
         return securityContext.useAsReadResult(() -> elasticClientCache.contextResult(
                 docs.cluster().getConnection(), client -> new Target(checkVersion(client), docs.timeField(),
                         docs.indexNames(), docs.all().stream().map(ElasticEqlService::fields).toList())));
@@ -175,7 +177,7 @@ public class ElasticEqlService implements ElasticEql {
     @Override
     public Result search(final Request request) {
         Objects.requireNonNull(request, "request");
-        final Docs docs = docs(request.indexes());
+        final ElasticDocs.Checked docs = docs(request.indexes());
         final Query filter = filter(docs, request.timeRange());
         final int size = Math.clamp(request.size(), 1, MAX_SEQUENCES);
         final Duration timeLimit = request.timeLimit();
@@ -203,71 +205,24 @@ public class ElasticEqlService implements ElasticEql {
     }
 
     // The documents, checked: Use on each, all found, each with an index name, one cluster and one time field.
-    private Docs docs(final List<DocRef> indexes) {
-        if (NullSafe.isEmptyCollection(indexes)) {
-            throw new Refusal(Reason.NOT_FOUND, "No Elastic Index was given");
-        }
-        for (final DocRef docRef : indexes) {
-            if (docRef == null || !securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
-                throw new PermissionException(securityContext.getUserRef(),
-                        LogUtil.message("You are not authorised to search {}", docRef));
-            }
-        }
-        return securityContext.useAsReadResult(() -> {
-            final List<ElasticIndexDoc> found = new ArrayList<>();
-            for (final DocRef docRef : indexes) {
-                final ElasticIndexDoc indexDoc = elasticIndexStore.readDocument(docRef);
-                if (indexDoc == null) {
-                    throw new Refusal(Reason.NOT_FOUND, "Elastic Index " + docRef + " was not found");
-                }
-                if (NullSafe.isBlankString(indexDoc.getIndexName())) {
-                    throw new Refusal(Reason.NOT_QUERYABLE, "Elastic Index '" + indexDoc.getName()
-                                                            + "' has no index name");
-                }
-                if (indexDoc.getClusterRef() == null) {
-                    throw new Refusal(Reason.NOT_QUERYABLE, "Elastic Index '" + indexDoc.getName() + "' has no "
-                                                            + "cluster");
-                }
-                if (NullSafe.isBlankString(indexDoc.getTimeField())) {
-                    throw new Refusal(Reason.NO_TIME_FIELD, "Elastic Index '" + indexDoc.getName() + "' has no time "
-                                                            + "field, which an EQL sequence orders its events by");
-                }
-                found.add(indexDoc);
-            }
-            final Set<String> clusters = new LinkedHashSet<>();
-            found.forEach(doc -> clusters.add(doc.getClusterRef().getUuid()));
-            if (clusters.size() > 1) {
-                final List<String> names = found.stream()
-                        .map(doc -> "'" + doc.getName() + "' on cluster '"
-                                    + NullSafe.nonBlankStringElse(doc.getClusterRef().getName(),
-                                doc.getClusterRef().getUuid()) + "'")
-                        .toList();
-                throw new Refusal(Reason.DIFFERENT_CLUSTERS, "The Elastic Indexes are on different clusters ("
-                                                             + String.join(", ", names) + "): an EQL sequence "
-                                                             + "searches one cluster", names);
-            }
-            final Set<String> timeFields = new LinkedHashSet<>();
-            found.forEach(doc -> timeFields.add(doc.getTimeField().strip()));
-            if (timeFields.size() > 1) {
-                final List<String> names = found.stream()
-                        .map(doc -> "'" + doc.getName() + "' orders by '" + doc.getTimeField().strip() + "'")
-                        .toList();
-                throw new Refusal(Reason.DIFFERENT_TIME_FIELDS, "The Elastic Indexes have different time fields ("
-                                                                + String.join(", ", names) + "): an EQL sequence "
-                                                                + "orders every event by one field", names);
-            }
-            final ElasticClusterDoc cluster = elasticClusterStore.readDocument(found.getFirst().getClusterRef());
-            if (cluster == null) {
-                throw new Refusal(Reason.NOT_QUERYABLE, "The Elastic Cluster of Elastic Index '"
-                                                        + found.getFirst().getName() + "' was not found");
-            }
-            return new Docs(found.stream().map(doc -> doc.getIndexName().strip()).toList(),
-                    timeFields.iterator().next(), cluster, found);
-        });
+    private ElasticDocs.Checked docs(final List<DocRef> indexes) {
+        return ElasticDocs.check(securityContext, elasticIndexStore, elasticClusterStore, indexes, RULES,
+                (problem, message, names) -> new Refusal(reason(problem), message, names));
+    }
+
+    // The reason an EQL search is refused for a problem with its documents.
+    private static Reason reason(final ElasticDocs.Problem problem) {
+        return switch (problem) {
+            case NOT_FOUND -> Reason.NOT_FOUND;
+            case NOT_QUERYABLE -> Reason.NOT_QUERYABLE;
+            case NO_TIME_FIELD -> Reason.NO_TIME_FIELD;
+            case DIFFERENT_CLUSTERS -> Reason.DIFFERENT_CLUSTERS;
+            case DIFFERENT_TIME_FIELDS -> Reason.DIFFERENT_TIME_FIELDS;
+        };
     }
 
     // The time range as a filter on the documents' time field, or null for none.
-    private static Query filter(final Docs docs, final TimeRange timeRange) {
+    private static Query filter(final ElasticDocs.Checked docs, final TimeRange timeRange) {
         if (timeRange == null || (NullSafe.isBlankString(timeRange.getFrom())
                                   && NullSafe.isBlankString(timeRange.getTo()))) {
             return null;
@@ -336,7 +291,7 @@ public class ElasticEqlService implements ElasticEql {
         return concrete;
     }
 
-    private static EqlSearchRequest searchRequest(final Docs docs,
+    private static EqlSearchRequest searchRequest(final ElasticDocs.Checked docs,
                                                   final Request request,
                                                   final Query filter,
                                                   final int size,
@@ -704,24 +659,5 @@ public class ElasticEqlService implements ElasticEql {
                     : (Object) number.longValue();
         }
         return String.valueOf(value);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// The documents of a search, checked.
-    ///
-    /// @param indexNames Each document's index name, in order.
-    /// @param timeField  Their time field.
-    /// @param cluster    Their cluster.
-    /// @param all        The documents, in order.
-    private record Docs(List<String> indexNames, String timeField, ElasticClusterDoc cluster,
-                        List<ElasticIndexDoc> all) {
-
-        /// @return The first document.
-        ElasticIndexDoc first() {
-            return all.getFirst();
-        }
     }
 }

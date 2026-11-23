@@ -193,7 +193,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `run_stroomql` | Runs a StroomQL query into a workspace table, refusing a search on an index whose answer would mislead | search | yes | | | | | slot |
 | `search_events` | XPath, text or jq search over fetched events into a table; or, given an index, finds events as a dashboard would | search | yes | | | | Use | slot |
 | `search_history` | Searches the chat's history for text | search | yes | | | | | chat |
-| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until); a StroomQL windowed join of two steps on other data sources | search | yes | sequences | | | Use | slot |
+| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until), or a streaming key-ordered join in Stroom where EQL can't (keysOnly entity steps, join-field transforms, sides too big for EQL); a StroomQL windowed join of two steps on other data sources | search | yes | sequences | | | Use | slot |
 | `server_tasks` | The tasks running on every node now (Monitoring > Server Tasks) | administration | yes | administration | Manage Tasks | | | |
 | `str_replace` | Replaces text in a workspace file | core | no | | | | | trusted |
 | `stream_meta` | Finds streams and their meta, grouped and aggregated if asked; describes one stream's family | processing | yes | | | View Data | View | |
@@ -338,8 +338,9 @@ Several tools cover neighbouring ground. Which does what:
 * **Events in an index**: `search_events` with `index` searches an index as a dashboard does and gives
   StreamId/EventId hits and the streams holding them; `run_stroomql` runs any StroomQL into a table;
   `esql_query` answers totals, top N and grouped questions on an Elastic Index with ES|QL, in Elasticsearch;
-  `sequence_query` finds ordered "X then Y" sequences: with EQL across Elastic Indexes on one cluster, and as a
-  StroomQL windowed join of two steps on any other data source;
+  `sequence_query` finds ordered "X then Y" sequences: with EQL across Elastic Indexes on one cluster, as a
+  streaming key-ordered join in Stroom on Elastic Indexes where EQL can't, and as a StroomQL windowed join of two
+  steps on any other data source;
   `describe_data_source` says which searches on an index would mislead. There is no `find_events` tool.
 * **Reference data**: `find_reference_data` lists every map in the environment; `xslt_lookups` starts from given
   XSLTs or pipelines and analyses their lookups.
@@ -1488,14 +1489,21 @@ written from the doc, so a query never names another index.
 
 ### `sequence_query`
 
-search · read-only · Use on every data source (`DataSourceAccess`, and again by `ElasticEqlService` for EQL or the
-query service for StroomQL) · takes a run slot · Classes: `SequenceQueryTool`, `EqlQueryWriter`,
-`EqlSequenceResults`, `StroomQlSequence`, `SequenceStroomQl`, `stroom.ai.api.ElasticEql`, `ElasticEqlService`
+search · read-only · Use on every data source (`DataSourceAccess`, and again by `ElasticEqlService` for EQL,
+`ElasticKeyStreamsService` on every page of the streaming join, or the query service for StroomQL) · takes a run
+slot · Classes: `SequenceQueryTool`, `EqlQueryWriter`, `EqlSequenceResults`, `StroomQlSequence`, `SequenceStroomQl`,
+`KeyStreamSequence`, `KeyStreamJoin`, `StreamSequences`, `KeyGroupSource`, `KeyRanges`, `JoinKeys`, `JoinBudget`,
+`StreamFilters`, `stroom.ai.api.ElasticEql`, `ElasticEqlService`, `stroom.ai.api.ElasticKeyStreams`,
+`ElasticKeyStreamsService`, `ElasticDocs`
 
 One tool for ordered sequences (it was `eql_sequence` until 2026-11-20). The model gives structured steps once; the
 engine follows the data sources, and the result says which ran and why (`engine`, `engine_reason`):
 
-* **Every step on an Elastic Index** (on one cluster): one EQL sequence in Elasticsearch, with everything below.
+* **Every step on an Elastic Index** (on one cluster): one EQL sequence in Elasticsearch, with everything below;
+  or a streaming key-ordered join run in Stroom (see "Streaming join" below), where EQL can't run it: asked for
+  (`engine=stream`), a step EQL can't take (`keysOnly`, `transform`), docs with different time fields, or a first
+  step the pre-flight count says is too big for EQL (past 1,000,000 events, without `runAnyway`). `engine=eql`
+  keeps EQL's refusals.
 * **Any step on another data source** (a Lucene index, a view, any Stroom data source): a StroomQL windowed join
   run in Stroom (see "StroomQL windowed join" below), which takes two steps joined by their `by` fields only.
 
@@ -1505,20 +1513,24 @@ by the same user on the same host", "20 failed logons then a success". Structure
 
 * **Offered** in the chat in the `sequences` group, and only to a user who can Use a data source (see
   "Usable" above): the chat sends `activate_sequences` (about 290 characters) until the model turns it on,
-  and the full definition (about 8,400 characters as sent) only from then, while the chat's latest two questions
+  and the full definition (about 9,800 characters as sent, 8,400 before the streaming join's `engine`,
+  `keysOnly` and `transform` of 2026-11-23) only from then, while the chat's latest two questions
   use it. The guidance bullet names it "in the sequences group". The definition carries the rules and
   examples, and `until` and the `any_of` items list their properties (a condition's, a step's index, where, any_of
   and by), as strict providers may refuse an object schema with none. What a call can get wrong is also said by
   the refusal or result that meets it (a `?` in a pattern, nested and text fields, the versions for missing and
   runs, a Lucene index, docs on different clusters, the counts and `runAnyway`, the limits on `runs`, `fields` and
   `limit`, the caveat and which doc to review).
-* **Arguments**: `steps` (2 or more, in order), each `{index, where, any_of, by, missing, runs, fields}`: the doc
+* **Arguments**: `steps` (2 or more, in order), each `{index, where, any_of, by, missing, runs, fields, keysOnly,
+  transform}` (the last two for the streaming join only): the doc
   (uuid or name), conditions as `search_events` takes them plus `caseInsensitive`, `NOT_IN` and `length`, an
   optional `any_of` group (2 or more plain conditions, at least one must hold), its own join fields (same number and
   order in every step), `missing=true` for "and then NOT", `runs=N` (1 to 100), and up to 5 fields to show;
   `until` (`{index, where, any_of, by}`); `maxspan` (at most 24h); `timeFrom`/`timeTo`; `limit` (default 1,000, at most
   10,000, and for EQL at most as many sequences as fit 10,000 fetched events: 5,000 two-step ones, said in the
-  result, as Elasticsearch refuses more ids than its max result window, seen in the 2026-11-20 benchmark); `runAnyway`; `out` (chat);
+  result, as Elasticsearch refuses more ids than its max result window, seen in the 2026-11-20 benchmark; the
+  streaming join: default 10,000, at most 100,000, all counted); `runAnyway`; `engine` (`auto`, the default, `eql`
+  or `stream`); `out` (chat);
   `timeZone` (see Time zones: the zone of `timeFrom`/`timeTo`, of the windowed join's conditions' date points, and
   of the result's times, which both engines' results state, `time_zone` in JSON).
 * **EQL** (`EqlQueryWriter`): `sequence with maxspan=2m [any where stroom_eql_doc == "1" and ...] by a, b ...`,
@@ -1593,6 +1605,75 @@ by the same user on the same host", "20 failed logons then a success". Structure
   one node): about 11 µs per joined row read plus 0.37 µs per joined row read per first-step event of the same
   entity. The result is as EQL's (per entity, the pairs table in `/outputs/sequences/`), with `step_counts` and
   `first_step_keys`, and the join itself is the review query, validated, to offer with `propose_query`.
+
+* **Streaming join** (`KeyStreamSequence`, built 2026-11-23): neither side joined in Elasticsearch; each step read
+  in join-key order through `stroom.ai.api.ElasticKeyStreams` (`ElasticKeyStreamsService`, beside
+  `ElasticEqlService`; Use on the doc checked on every page, the call's query time limit and the chat's stop on
+  every request, each request waited for in 250 ms slices and cancelled on a stop), and the sides merged in Stroom
+  holding only the current key's events (`KeyStreamJoin`), so no side is bounded by the 10,000-hit window, the
+  buckets limit, ES|QL's 10,000 rows or EQL's fetches. A step `keysOnly=true` (an entity condition at any time, e.g.
+  a directory's users of team A; not limited by the time range; with `missing=true` the entities not in it) is
+  read as keys: a composite aggregation on the join key paged by `after_key`. Every other step is read as events: a
+  point-in-time search sorted by the key, then the doc's own time field (`numeric_type: date`), paged by
+  `search_after`, with `StreamId`, `EventId` and the step's fields only, the point in time closed at the end. A
+  step's conditions are a Stroom expression (`StreamFilters`: CONTAINS/STARTS_WITH/ENDS_WITH as `*` patterns,
+  IS_NULL as `NOT = *`, NOT_IN as `NOT (IN)`, `caseInsensitive` the term's option; `length` refused, EQL takes it)
+  made into Query DSL as a search's is.
+  * **Steps in time** (`StreamSequences`): a sequence starts at a step 1 event (its `runs` events) and takes for
+    each later step its earliest events at or after the step before's, never one event twice, all within `maxspan`
+    of the first; a missing step has no event between its neighbours (to the window's end when last); an `until`
+    event between the first and last ends it. As in EQL a later step 1 event before the next step's takes the
+    sequence over, and one entity's sequences don't overlap; the count is exact for these rules (`COUNTED`), not
+    "at least" as EQL's. `maxspan` is asked only when two or more steps are in time (or there is an `until`).
+  * **Keys compare as Elasticsearch sorts them** (`JoinKeys`): text by code point (its UTF-8 bytes), numbers and
+    dates by value, IPs by their 16 bytes; join fields of different kinds (text against a number) refused.
+  * **Transforms** (`transform`: `lowercase`, `strip_domain` (`CORP\jsmith`, `jsmith@corp` are `jsmith`),
+    `file_name` (a path's last part), applied in order, on a keyword join field): computed by Elasticsearch as a
+    runtime keyword field (a Painless script of the same transform as `ElasticKeyStreams.Transform.apply`), which
+    the query, the sort and the aggregation use, so the events stream in the order of the key that is compared
+    (transforming in Stroom after a sort by the raw value would break the merge's order).
+  * **Estimate first**: each step's events (`EqlQueryWriter.countPipeline`, up to the rows cap) and keys (`| STATS
+    n = COUNT(*) BY <join fields> | SORT n DESC | LIMIT 3` with `countTotal`, the 3 commonest kept as examples) by
+    `ElasticEsql.query`; a join whose estimate is 80% or more of a cap (10,000,000 rows read, 1,000,000 keys merged:
+    `stroom.ai.workspace.joinMaxRows`, `joinMaxKeys`) is asked about in the chat (a form, "about N rows to read ...,
+    W workers, about T (W workers put W times the search load on the cluster)", Run it / Don't run it), refused
+    with the estimate over MCP unless `runAnyway`. Not asked when a step is pushed down (the estimate is then an
+    upper bound). Past a cap, or at the time limit, every worker stops at its next page, keeping what was found,
+    and the result says why (`ended_early`).
+  * **Time limit**: the query time limit, unless the estimate (at `ROWS_PER_SECOND`, 20,000 rows a second a
+    worker) says the join won't fit it: then in the chat the form offers "Run it, for up to <joinTimeLimit>", "Run
+    it within <query time limit>" or "Don't run it"; over MCP it runs within the query time limit saying so
+    (`time_note`), and `runAnyway=true` runs it up to `stroom.ai.workspace.joinTimeLimit` (15 minutes). One
+    estimated past even the join time limit says it will likely end early. The result gives `time_limit_s`. The
+    call's own deadline is the longer of the two limits; EQL, the counts and the StroomQL join keep the query time
+    limit.
+  * **Push-down**: the step that must happen with the fewest keys, if at most `joinPushDownKeys` (50,000), is read
+    first (all its keys) and its keys become terms on every other step's sides, per worker range in batches under
+    Elasticsearch's 65,536 terms limit (each batch a key range of its own, so keys stay in order); a `keysOnly`
+    pushed step is then merged from those keys.
+  * **Workers** (`joinWorkers`, 4; at most 16): the key space of the first join field cut into ranges
+    (`KeyRanges`): from the pushed-down keys, else, past 50,000 estimated rows, from `sampleKeys` on the step with
+    the most events (the key at which the running count passes each multiple of rows / workers, so ranges hold
+    about the same rows, not an even cut of the alphabet); each worker reads every step restricted to its range and
+    merges alone, as the user (`SecurityContext.asUserResult`), on its own threads; the results put together in key
+    order. One call, one run slot; the workers share its query time limit; progress (`ToolProgress`) every 2 s
+    across them all: rows read, keys merged, ranges done.
+  * **Result**: `engine: stream`, `engine_reason`, each step (`read_as` keys or events, its estimate, keys read,
+    `transform`), the estimate, `workers`, `key_ranges`, `pushed_down`, `rows_read`, `keys_merged`, `took_ms`,
+    `sequence_count` (or `entity_match_count` when every step is `keysOnly`), `entity_count`, the table (as EQL's,
+    in key order, the first `limit`; `/outputs/sequences/join-<time>.md`), the per-entity summary of those, the
+    caveat, the review queries per doc (each doc's own time field). Audited per doc as a Search event.
+  * **Diagnosis when nothing is found** (`diagnosis`): each step alone (its events and keys); for each later step
+    sharing no key with step 1, a few of each side's commonest values (`No shared values between step 1 (Proxy:
+    user) and step 2 (Endpoint: UserName), e.g. CORP\jsmith vs jsmith`) and the transform that would make them meet
+    where one does (`KeyStreamSequence.bridge`), else a check with esql_query; when the entities meet but no
+    sequence is in order, widen `maxspan`. Reporting only: the indexes are never changed (decided 2026-11-23).
+  * **Data quality** (`data_quality`): the keys whose first timed step happened and whose last never did in the
+    period, with both steps' indexes and a few examples: "it didn't happen" told from "the source may be missing
+    events"; estimated (from the first step's keys) when the last step was pushed down.
+  * **Limits held**: one key's events past 100,000 a step are counted, not held (`keys_cut`); a multi-valued join
+    field is read by its smallest value in a scan (a sort's `min`), by every value as keys.
+  * **Benchmark** (`TestBenchStreamingJoin`, opt-in): see "Streaming join benchmark" in DESIGN.md.
 
 ### `current_results`
 

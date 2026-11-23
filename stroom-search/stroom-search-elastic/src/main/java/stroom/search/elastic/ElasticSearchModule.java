@@ -21,12 +21,14 @@ import stroom.ai.api.ElasticEql;
 import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticIndexPresence;
 import stroom.ai.api.ElasticIndexTemplates;
+import stroom.ai.api.ElasticKeyStreams;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.elastic.esql.ElasticEqlService;
 import stroom.search.elastic.esql.ElasticEsqlService;
+import stroom.search.elastic.esql.ElasticKeyStreamsService;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
 import stroom.search.elastic.search.ElasticSearchProvider;
@@ -61,6 +63,7 @@ public class ElasticSearchModule extends AbstractModule {
         bind(ElasticIndexPresence.class).to(AiElasticIndexPresence.class);
         bind(ElasticEsql.class).to(ElasticEsqlService.class);
         bind(ElasticEql.class).to(ElasticEqlService.class);
+        bind(ElasticKeyStreams.class).to(ElasticKeyStreamsService.class);
 
         SuggestionsServiceBinder.create(binder())
                 .bind(ElasticIndexDoc.TYPE, ElasticSuggestionsQueryHandler.class);

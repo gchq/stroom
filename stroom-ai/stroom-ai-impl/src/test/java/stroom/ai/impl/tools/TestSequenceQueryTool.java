@@ -25,6 +25,7 @@ import stroom.ai.api.ElasticEql.Result;
 import stroom.ai.api.ElasticEql.Sequence;
 import stroom.ai.api.ElasticEql.Target;
 import stroom.ai.api.ElasticEsql;
+import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.EqlQueryWriter.Filter;
@@ -50,6 +51,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ErrorMessage;
@@ -99,6 +101,7 @@ class TestSequenceQueryTool {
     private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
     private final ElasticEql elasticEql = Mockito.mock(ElasticEql.class);
     private final ElasticEsql elasticEsql = Mockito.mock(ElasticEsql.class);
+    private final ElasticKeyStreams keyStreams = Mockito.mock(ElasticKeyStreams.class);
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
@@ -189,7 +192,8 @@ class TestSequenceQueryTool {
         joinRows.add(List.of("bob", "2026-01-01T01:00:00.000Z", "7", "5", "2026-01-01T01:00:30.000Z", "8", "1"));
         sequences.add(pair("alice", "H1", T0, 40_000, 1));
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
-                () -> queryService, auditLog, agentSearches);
+                () -> queryService, auditLog, agentSearches, new KeyStreamSequence(() -> keyStreams,
+                        () -> elasticEsql, Mockito.mock(SecurityContext.class), auditLog));
     }
 
     @Test
@@ -378,7 +382,11 @@ class TestSequenceQueryTool {
         assertThat(run(chat(UserQuestions.NONE), args("2m"))).contains("'Devices' on cluster 'A', 'Sysmon' on "
                                                                          + "cluster 'B'")
                 .contains("Run a sequence per cluster");
-        assertThat(run(chat(UserQuestions.NONE), args("2m"))).contains("'Devices' orders by 'EventTime'")
+        // With engine=eql, as auto runs a stream (TestKeyStreamSequence.autoRunsAsAStreamWhenTheDocsHaveDifferent
+        // TimeFields).
+        final Map<String, Object> eql = new LinkedHashMap<>(args("2m"));
+        eql.put("engine", "eql");
+        assertThat(run(chat(UserQuestions.NONE), eql)).contains("'Devices' orders by 'EventTime'")
                 .contains("Use docs whose time field is the same");
         assertThat(run(chat(UserQuestions.NONE), args("2m"))).contains("Use run_stroomql instead");
     }
@@ -409,8 +417,12 @@ class TestSequenceQueryTool {
     void aSequenceTheCountsSayIsTooBigIsRefusedBeforeItRuns() {
         // The count reads at most COUNT_CAP + 1 events: more than the cap.
         counts.put(DEVICES, SequenceQueryTool.COUNT_CAP + 1);
+        // With engine=eql, as auto runs a stream (TestKeyStreamSequence.autoRunsAsAStreamWhenTheFirstStepIsTooBig
+        // ForEql).
+        final Map<String, Object> eql = new LinkedHashMap<>(args("2m"));
+        eql.put("engine", "eql");
 
-        final String output = run(chat(UserQuestions.NONE), args("2m"));
+        final String output = run(chat(UserQuestions.NONE), eql);
 
         assertThat(output).contains("Not run: step 1 matches more than 1000000 events in the window (step 1: more "
                                     + "than 1000000, step 2: 10), and a sequence reads every event of its first "

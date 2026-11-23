@@ -25,6 +25,7 @@ import stroom.ai.api.ElasticIndexTemplates.ComponentTemplate;
 import stroom.ai.api.ElasticIndexTemplates.IndexTemplate;
 import stroom.ai.api.ElasticIndexTemplates.IndexTemplates;
 import stroom.ai.api.ElasticIndexTemplates.Status;
+import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.TabSnapshots.StoredPart;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
@@ -669,6 +670,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(ElasticIndexTemplates.class).toInstance(elasticIndexTemplates);
                 bind(ElasticEsql.class).toInstance(elasticEsql);
                 bind(ElasticEql.class).toInstance(elasticEql);
+                bind(ElasticKeyStreams.class).toInstance(Mockito.mock(ElasticKeyStreams.class));
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
                 bind(DataService.class).toInstance(Mockito.mock(DataService.class));
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));

@@ -280,6 +280,15 @@ final class EqlQueryWriter {
     /// @param cap  The most events counted.
     /// @return The pipeline, e.g. `| WHERE action == "Copy" | LIMIT 1000001 | STATS n = COUNT(*)`.
     static String countPipeline(final Step step, final long cap) {
+        return wherePipeline(step) + "| LIMIT " + (cap + 1) + " | STATS n = COUNT(*)";
+    }
+
+    /// One step's conditions as an ES|QL `WHERE` (as [#countPipeline] counts them), for the streaming join's
+    /// estimate: empty for none, else ending with a space, so a command can follow.
+    ///
+    /// @param step The step.
+    /// @return The pipeline, e.g. `| WHERE action == "Copy" `.
+    static String wherePipeline(final Step step) {
         final List<String> parts = new ArrayList<>();
         for (final Filter filter : step.filters()) {
             final String condition = esqlCondition(filter, step.types().get(filter.field()));
@@ -295,9 +304,9 @@ final class EqlQueryWriter {
         if (!anyOf.isEmpty() && !anyOf.contains(null)) {
             parts.add("(" + String.join(" OR ", anyOf) + ")");
         }
-        return (parts.isEmpty()
+        return parts.isEmpty()
                 ? ""
-                : "| WHERE " + String.join(" AND ", parts) + " ") + "| LIMIT " + (cap + 1) + " | STATS n = COUNT(*)";
+                : "| WHERE " + String.join(" AND ", parts) + " ";
     }
 
     /// One condition in ES|QL, for a count.

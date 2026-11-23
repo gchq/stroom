@@ -21,6 +21,7 @@ import stroom.ai.api.CodeChangeStepper;
 import stroom.ai.api.ElasticEql;
 import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticIndexTemplates;
+import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
@@ -139,6 +140,7 @@ final class BuiltInToolsTestWiring {
                 bind(ElasticIndexTemplates.class).toInstance(Mockito.mock(ElasticIndexTemplates.class));
                 bind(ElasticEsql.class).toInstance(Mockito.mock(ElasticEsql.class));
                 bind(ElasticEql.class).toInstance(Mockito.mock(ElasticEql.class));
+                bind(ElasticKeyStreams.class).toInstance(Mockito.mock(ElasticKeyStreams.class));
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
                 bind(DataService.class).toInstance(Mockito.mock(DataService.class));
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));

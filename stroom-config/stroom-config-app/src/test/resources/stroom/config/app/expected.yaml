@@ -128,6 +128,11 @@ appConfig:
     unattendedAfter: "PT10M"
     workspace:
       eqlDefaultMaxspan: "PT5M"
+      joinMaxKeys: 1000000
+      joinMaxRows: 10000000
+      joinPushDownKeys: 50000
+      joinTimeLimit: "PT15M"
+      joinWorkers: 4
       maxCharsPerRead: 20000
       maxChatBytes: 104857600
       maxEventBytes: 1048576

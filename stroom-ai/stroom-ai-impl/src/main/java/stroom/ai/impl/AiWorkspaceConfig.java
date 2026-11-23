@@ -45,6 +45,11 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final int DEFAULT_MAX_STREAM_STORE_READS = 500;
     static final long DEFAULT_MAX_TOOL_ARGUMENT_BYTES = 1024 * 1024;
     static final StroomDuration DEFAULT_EQL_MAXSPAN = StroomDuration.ofMinutes(5);
+    static final int DEFAULT_JOIN_WORKERS = 4;
+    static final int DEFAULT_JOIN_PUSH_DOWN_KEYS = 50_000;
+    static final long DEFAULT_JOIN_MAX_KEYS = 1_000_000;
+    static final long DEFAULT_JOIN_MAX_ROWS = 10_000_000;
+    static final StroomDuration DEFAULT_JOIN_TIME_LIMIT = StroomDuration.ofMinutes(15);
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -60,6 +65,11 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final int maxStreamStoreReads;
     private final long maxToolArgumentBytes;
     private final StroomDuration eqlDefaultMaxspan;
+    private final int joinWorkers;
+    private final int joinPushDownKeys;
+    private final long joinMaxKeys;
+    private final long joinMaxRows;
+    private final StroomDuration joinTimeLimit;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -76,6 +86,11 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         maxStreamStoreReads = DEFAULT_MAX_STREAM_STORE_READS;
         maxToolArgumentBytes = DEFAULT_MAX_TOOL_ARGUMENT_BYTES;
         eqlDefaultMaxspan = DEFAULT_EQL_MAXSPAN;
+        joinWorkers = DEFAULT_JOIN_WORKERS;
+        joinPushDownKeys = DEFAULT_JOIN_PUSH_DOWN_KEYS;
+        joinMaxKeys = DEFAULT_JOIN_MAX_KEYS;
+        joinMaxRows = DEFAULT_JOIN_MAX_ROWS;
+        joinTimeLimit = DEFAULT_JOIN_TIME_LIMIT;
     }
 
     /// The limits, with the default EQL sequence window.
@@ -111,6 +126,103 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                 maxToolArgumentBytes, null);
     }
 
+    /// The limits, with the default streaming join settings.
+    ///
+    /// @param maxFileBytes         The largest a workspace file may be, or null for the default.
+    /// @param maxChatBytes         The most a chat's workspace files may hold, or null for the default.
+    /// @param maxUserBytes         The most a user's chat workspaces may hold, or null for the default.
+    /// @param maxLinesPerRead      The most lines a tool returns in one call, or null for the default.
+    /// @param maxCharsPerRead      The most characters a tool returns in one call, or null for the default.
+    /// @param toolTimeLimit        The longest a workspace tool call may run, or null for the default.
+    /// @param queryTimeLimit       The longest a query run by the agent may take, or null for the default.
+    /// @param maxQueryLength       The longest a query run by the agent may be, or null for the default.
+    /// @param maxEventsPerFetch    The most source events fetched in one call, or null for the default.
+    /// @param maxEventBytes        The largest source event fetched, or null for the default.
+    /// @param maxStreamStoreReads  The most streams read from the stream store in one call, or null for the default.
+    /// @param maxQueryRows         The most rows a query run by the agent may return, or null for the default.
+    /// @param maxToolArgumentBytes The largest a tool call's arguments may be, or null for the default.
+    /// @param eqlDefaultMaxspan    The window a sequence suggests, or null for the default.
+    public AiWorkspaceConfig(final Long maxFileBytes,
+                             final Long maxChatBytes,
+                             final Long maxUserBytes,
+                             final Integer maxLinesPerRead,
+                             final Integer maxCharsPerRead,
+                             final StroomDuration toolTimeLimit,
+                             final StroomDuration queryTimeLimit,
+                             final Integer maxQueryLength,
+                             final Integer maxEventsPerFetch,
+                             final Integer maxEventBytes,
+                             final Integer maxStreamStoreReads,
+                             final Integer maxQueryRows,
+                             final Long maxToolArgumentBytes,
+                             final StroomDuration eqlDefaultMaxspan) {
+        this(maxFileBytes, maxChatBytes, maxUserBytes, maxLinesPerRead, maxCharsPerRead, toolTimeLimit,
+                queryTimeLimit, maxQueryLength, maxEventsPerFetch, maxEventBytes, maxStreamStoreReads, maxQueryRows,
+                maxToolArgumentBytes, eqlDefaultMaxspan, null, null, null, null);
+    }
+
+    /// @param maxFileBytes         The largest a workspace file may be, or null for the default.
+    /// @param maxChatBytes         The most a chat's workspace files may hold, or null for the default.
+    /// @param maxUserBytes         The most a user's chat workspaces may hold, or null for the default.
+    /// @param maxLinesPerRead      The most lines a tool returns in one call, or null for the default.
+    /// @param maxCharsPerRead      The most characters a tool returns in one call, or null for the default.
+    /// @param toolTimeLimit        The longest a workspace tool call may run, or null for the default.
+    /// @param queryTimeLimit       The longest a query run by the agent may take, or null for the default.
+    /// @param maxQueryLength       The longest a query run by the agent may be, or null for the default.
+    /// @param maxEventsPerFetch    The most source events fetched in one call, or null for the default.
+    /// @param maxEventBytes        The largest source event fetched, or null for the default.
+    /// @param maxStreamStoreReads  The most streams read from the stream store in one call, or null for the default.
+    /// @param maxQueryRows         The most rows a query run by the agent may return, or null for the default.
+    /// @param maxToolArgumentBytes The largest a tool call's arguments may be, or null for the default.
+    /// @param eqlDefaultMaxspan    The window a sequence suggests, or null for the default.
+    /// @param joinWorkers          The workers a streaming join uses, or null for the default.
+    /// @param joinPushDownKeys     The most keys a side pushed down as a filter may have, or null for the default.
+    /// @param joinMaxKeys          The most keys a streaming join merges, or null for the default.
+    /// @param joinMaxRows          The most rows a streaming join reads, or null for the default.
+    public AiWorkspaceConfig(final Long maxFileBytes,
+                             final Long maxChatBytes,
+                             final Long maxUserBytes,
+                             final Integer maxLinesPerRead,
+                             final Integer maxCharsPerRead,
+                             final StroomDuration toolTimeLimit,
+                             final StroomDuration queryTimeLimit,
+                             final Integer maxQueryLength,
+                             final Integer maxEventsPerFetch,
+                             final Integer maxEventBytes,
+                             final Integer maxStreamStoreReads,
+                             final Integer maxQueryRows,
+                             final Long maxToolArgumentBytes,
+                             final StroomDuration eqlDefaultMaxspan,
+                             final Integer joinWorkers,
+                             final Integer joinPushDownKeys,
+                             final Long joinMaxKeys,
+                             final Long joinMaxRows) {
+        this(maxFileBytes, maxChatBytes, maxUserBytes, maxLinesPerRead, maxCharsPerRead, toolTimeLimit,
+                queryTimeLimit, maxQueryLength, maxEventsPerFetch, maxEventBytes, maxStreamStoreReads, maxQueryRows,
+                maxToolArgumentBytes, eqlDefaultMaxspan, joinWorkers, joinPushDownKeys, joinMaxKeys, joinMaxRows,
+                null);
+    }
+
+    /// @param maxFileBytes         The largest a workspace file may be, or null for the default.
+    /// @param maxChatBytes         The most a chat's workspace files may hold, or null for the default.
+    /// @param maxUserBytes         The most a user's chat workspaces may hold, or null for the default.
+    /// @param maxLinesPerRead      The most lines a tool returns in one call, or null for the default.
+    /// @param maxCharsPerRead      The most characters a tool returns in one call, or null for the default.
+    /// @param toolTimeLimit        The longest a workspace tool call may run, or null for the default.
+    /// @param queryTimeLimit       The longest a query run by the agent may take, or null for the default.
+    /// @param maxQueryLength       The longest a query run by the agent may be, or null for the default.
+    /// @param maxEventsPerFetch    The most source events fetched in one call, or null for the default.
+    /// @param maxEventBytes        The largest source event fetched, or null for the default.
+    /// @param maxStreamStoreReads  The most streams read from the stream store in one call, or null for the default.
+    /// @param maxQueryRows         The most rows a query run by the agent may return, or null for the default.
+    /// @param maxToolArgumentBytes The largest a tool call's arguments may be, or null for the default.
+    /// @param eqlDefaultMaxspan    The window a sequence suggests, or null for the default.
+    /// @param joinWorkers          The workers a streaming join uses, or null for the default.
+    /// @param joinPushDownKeys     The most keys a side pushed down as a filter may have, or null for the default.
+    /// @param joinMaxKeys          The most keys a streaming join merges, or null for the default.
+    /// @param joinMaxRows          The most rows a streaming join reads, or null for the default.
+    /// @param joinTimeLimit        The longest a streaming join may run when the user agrees, or null for the
+    ///                             default.
     @JsonCreator
     public AiWorkspaceConfig(@JsonProperty("maxFileBytes") final Long maxFileBytes,
                              @JsonProperty("maxChatBytes") final Long maxChatBytes,
@@ -125,7 +237,12 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxStreamStoreReads") final Integer maxStreamStoreReads,
                              @JsonProperty("maxQueryRows") final Integer maxQueryRows,
                              @JsonProperty("maxToolArgumentBytes") final Long maxToolArgumentBytes,
-                             @JsonProperty("eqlDefaultMaxspan") final StroomDuration eqlDefaultMaxspan) {
+                             @JsonProperty("eqlDefaultMaxspan") final StroomDuration eqlDefaultMaxspan,
+                             @JsonProperty("joinWorkers") final Integer joinWorkers,
+                             @JsonProperty("joinPushDownKeys") final Integer joinPushDownKeys,
+                             @JsonProperty("joinMaxKeys") final Long joinMaxKeys,
+                             @JsonProperty("joinMaxRows") final Long joinMaxRows,
+                             @JsonProperty("joinTimeLimit") final StroomDuration joinTimeLimit) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -141,6 +258,11 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.maxToolArgumentBytes = Objects.requireNonNullElse(maxToolArgumentBytes,
                 DEFAULT_MAX_TOOL_ARGUMENT_BYTES);
         this.eqlDefaultMaxspan = Objects.requireNonNullElse(eqlDefaultMaxspan, DEFAULT_EQL_MAXSPAN);
+        this.joinWorkers = Objects.requireNonNullElse(joinWorkers, DEFAULT_JOIN_WORKERS);
+        this.joinPushDownKeys = Objects.requireNonNullElse(joinPushDownKeys, DEFAULT_JOIN_PUSH_DOWN_KEYS);
+        this.joinMaxKeys = Objects.requireNonNullElse(joinMaxKeys, DEFAULT_JOIN_MAX_KEYS);
+        this.joinMaxRows = Objects.requireNonNullElse(joinMaxRows, DEFAULT_JOIN_MAX_ROWS);
+        this.joinTimeLimit = Objects.requireNonNullElse(joinTimeLimit, DEFAULT_JOIN_TIME_LIMIT);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -238,6 +360,48 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return eqlDefaultMaxspan;
     }
 
+    @JsonPropertyDescription("The workers a streaming join run by the agent (sequence_query's stream engine) uses, "
+                             + "each reading its own range of the join key's values from Elasticsearch: more "
+                             + "finish sooner, and put as many times the search load on the cluster. 1 reads "
+                             + "the join in one stream.")
+    @JsonProperty("joinWorkers")
+    public int getJoinWorkers() {
+        return joinWorkers;
+    }
+
+    @JsonPropertyDescription("The most join keys a step of a streaming join may have for it to be read first and "
+                             + "its keys pushed down as a terms filter on the other steps (e.g. a team's users), "
+                             + "so the larger sides are cut before they stream. Batched under Elasticsearch's "
+                             + "terms limit (65,536 by default).")
+    @JsonProperty("joinPushDownKeys")
+    public int getJoinPushDownKeys() {
+        return joinPushDownKeys;
+    }
+
+    @JsonPropertyDescription("The most join keys a streaming join run by the agent may merge before it stops, "
+                             + "keeping what it has found. A join estimated near it is asked about before it runs.")
+    @JsonProperty("joinMaxKeys")
+    public long getJoinMaxKeys() {
+        return joinMaxKeys;
+    }
+
+    @JsonPropertyDescription("The most rows (events, and keys read as keys) a streaming join run by the agent may "
+                             + "read from Elasticsearch before it stops, keeping what it has found. A join "
+                             + "estimated near it is asked about before it runs.")
+    @JsonProperty("joinMaxRows")
+    public long getJoinMaxRows() {
+        return joinMaxRows;
+    }
+
+    @JsonPropertyDescription("The longest a streaming join run by the agent (sequence_query's stream engine) may "
+                             + "run when its estimate says it won't fit the query time limit and the user agrees "
+                             + "(a form in the chat, runAnyway over MCP). Otherwise a join runs within the query "
+                             + "time limit. Its workers share it; one past it stops, keeping what it has found.")
+    @JsonProperty("joinTimeLimit")
+    public StroomDuration getJoinTimeLimit() {
+        return joinTimeLimit;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -255,6 +419,11 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", maxStreamStoreReads=" + maxStreamStoreReads +
                ", maxToolArgumentBytes=" + maxToolArgumentBytes +
                ", eqlDefaultMaxspan=" + eqlDefaultMaxspan +
+               ", joinWorkers=" + joinWorkers +
+               ", joinPushDownKeys=" + joinPushDownKeys +
+               ", joinMaxKeys=" + joinMaxKeys +
+               ", joinMaxRows=" + joinMaxRows +
+               ", joinTimeLimit=" + joinTimeLimit +
                '}';
     }
 }

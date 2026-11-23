@@ -87,9 +87,18 @@ sequence_query finds ordered events by the same entity within a time span, in on
 - On any other data source (a Lucene index, a view), it runs a StroomQL windowed join in Stroom: 2 steps joined by
   their `by` fields, step 2 with a condition, and no `until`, `missing` or `runs`. A first step with too many
   events for the join table is refused before it runs.
-- `maxspan` is at most 24h. Each step is counted first, and a sequence too big for the time limit is refused
-  unless `runAnyway` is true.
-- Its result says which engine ran, and gives a StroomQL review query.
+- On Elastic Index docs it can also run as a streaming join in Stroom (`engine=stream`; chosen by itself where
+  EQL can't: a first step too big for EQL, docs with different time fields, `keysOnly` or `transform`): each step
+  read in join-key order and merged, so no side is capped at 10,000. A `keysOnly` step only says which entities
+  count, at any time (a team's users in a directory index; with `missing`, those not in it). `transform`
+  (`lowercase`, `strip_domain`, `file_name`) bridges join values sources write differently (`CORP\jsmith` and
+  `jsmith`). Its count is exact; sizes are estimated first, and a join near its caps is asked about.
+- A transform is computed by Elasticsearch for every event (about twice the time of the same join without one in
+  the benchmark); a field indexed already normalised joins at full speed.
+- `maxspan` is at most 24h. Each step is counted first, and a sequence too big for EQL's time limit runs as the
+  streaming join, or with `engine=eql` is refused unless `runAnyway` is true.
+- Its result says which engine ran, and gives a StroomQL review query. A streaming join that finds nothing says
+  why: each step's own count, and values of each side when they share none.
 
 ## The table tool's join
 

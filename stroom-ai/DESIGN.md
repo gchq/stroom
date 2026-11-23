@@ -927,7 +927,7 @@ other data source, as a StroomQL windowed join. Decided with the user:
 
 ### Activity timelines, streaming joins and skills (proposed 2026-11-23)
 
-Proposed, not built: designed with the product owner from analysts' questions that join entities across indexes
+Part 1, the streaming join, built 2026-11-23 (see "As built" under it); parts 2 to 4 proposed, not built. Designed with the product owner from analysts' questions that join entities across indexes
 and order their events in time, "which users in team A accessed abc.com and downloaded a file, then copied that file
 to removable media?" (proxy, identity and endpoint indexes, 100,000 users), and "build a timeline of a user's
 activity over the past 7 days" (window open, close and focus, clipboard copies, web accesses, file copies, from
@@ -949,7 +949,7 @@ into workspace tables and join them there, within their row caps. A team filter 
 or a join after the fact; join values must be equal as stored (EQL can't transform them); "the same file" needs a
 value both indexes hold alike.
 
-#### 1. Streaming, key-ordered join
+#### 1. Streaming, key-ordered join (built 2026-11-23)
 
 Neither side is joined in Elasticsearch: each is read in join-key order and the two streams merged in Stroom, holding
 only the current key's rows (a sort-merge join), so neither side's size is bounded by Elasticsearch's 10,000-hit
@@ -1001,6 +1001,71 @@ window, its buckets limit or ES|QL's 10,000 rows.
   near the caps runs, as four workers put four times the search load on the cluster.
 * **Benchmark after the build** (asked for by the product owner): one worker against four on the same joins, the
   time, the cluster's search load and the memory each takes, before the default is kept.
+
+**As built** (2026-11-23; TOOLS.md "`sequence_query`", "Streaming join", has the detail):
+
+* **Interface**: `stroom.ai.api.ElasticKeyStreams` (the name kept), implemented by `ElasticKeyStreamsService` beside
+  `ElasticEsqlService` and `ElasticEqlService`, bound in `ElasticSearchModule`. `target`, `keyPage`, `openScan` /
+  `scanPage` (`NextPage` in, `ScanPage` out) / `close`, `sampleKeys` (the key at which the running count of events
+  passes each multiple of `everyRows`, so ranges hold about the same rows). A side (`Side`) is a doc, its join
+  fields (`KeyField`, each with its `Transform`s), a Stroom expression, a time range, a key range of the first join
+  field and terms per join field. Every call checks Use on its doc (`PermissionException` naming it), takes its own
+  time limit and the stop flag, and is waited for in 250 ms slices; the caller audits. The shared "one cluster, Use
+  on each, time fields" check is `ElasticDocs.check` (package-private), which `ElasticEqlService.target` and `search`
+  now call with EQL's rules (one time field required) and the key streams with theirs (each doc its own time field,
+  or none for a doc read only by key); `ElasticEql` and `ElasticEsql` are unchanged, and so are their messages.
+* **Transforms in Elasticsearch, not after**: a transformed join field is a runtime keyword field (a Painless script
+  of `Transform.apply`) that the query, the sort and the aggregation use, so the events come in the order of the key
+  compared. Applying the transform in Stroom to rows sorted by the raw value would break the merge's order
+  (`JSmith` sorts before `alice`; `jsmith` after), so "applied as the rows stream" is done by Elasticsearch as it
+  streams them.
+* **Engine choice inside `sequence_query`** (no new tool, as the design wants and to avoid tool bloat): `engine`
+  (`auto`, the default, `eql`, `stream`); auto runs the stream where EQL can't (a step `keysOnly` or with
+  `transform`; docs with different time fields; a first step the pre-flight count puts past 1,000,000 events without
+  `runAnyway`) and EQL otherwise, the result's `engine`/`engine_reason` saying which and why. Two step properties
+  were added (`keysOnly`: an entity condition at any time, e.g. a team in a directory, read by key, not limited by
+  the time range, `missing` for the entities not in it; `transform`), and `limit` reaches 100,000 on the stream.
+* **Sequence rules on the stream** (`StreamSequences`): EQL's, counted exactly: the latest step 1 event before the
+  next step's keeps the sequence, one entity's sequences don't overlap, one event never two steps; `missing`,
+  `runs`, `until`. Keys compare in Elasticsearch's order (`JoinKeys`: code points, numbers, 16-byte IPs).
+* **Push-down** only when the small side has at most `joinPushDownKeys` keys and a tenth of another step's events
+  (`PUSH_DOWN_FACTOR`): two sides of about the same size are both streamed, as reading one first and sending all its
+  keys as terms costs more than it cuts. A pushed-down last step hides the first step's keys that never ended, so
+  the data-quality count is then estimated from the first step's keys and marked so.
+* **Estimate and asking**: the estimate is an upper bound when a side is pushed down, so the user isn't asked then;
+  the caps stop every worker at its next page, keeping what was found (`ended_early`), as does the time limit.
+* **Settings** (`stroom.ai.workspace`): `joinWorkers` 4, `joinPushDownKeys` 50,000, `joinMaxKeys` 1,000,000,
+  `joinMaxRows` 10,000,000, `joinTimeLimit` 15 minutes.
+* **Join time limit** (decided by the product owner after the benchmark, 2026-11-23): a join runs within the query
+  time limit unless its estimate says it won't fit; then the chat's form offers to run it up to `joinTimeLimit` (or
+  within the query time limit, or not at all), and over MCP it runs within the query time limit saying so unless
+  `runAnyway` (up to `joinTimeLimit`). A join estimated past even `joinTimeLimit` says it will likely end early.
+  EQL and the StroomQL join keep the query time limit.
+* **Tests**: JUnit for each part (`TestJoinKeys`, `TestStreamSequences`, `TestKeyRanges`, `TestStreamFilters`,
+  `TestKeyStreamJoin`, `TestKeyStreamSequence` over an in-memory `ElasticKeyStreams`, `TestElasticKeyStreamsService`
+  on WireMock); e2e `TestE2eStreamingJoin` on the test cluster (past 10,000 sequences across two indexes, the same
+  sequences from 4 workers as from 1, a team pushed down, the estimate and the caps, mismatched values diagnosed and
+  bridged by `strip_domain`, a doc the user can't use refused by the tool and by the service); benchmark
+  `TestBenchStreamingJoin` (opt-in, `-DbenchStreamingJoin=true`).
+* **Streaming join benchmark** (2026-11-23, `TestBenchStreamingJoin`; from the single-node test container,
+  Elasticsearch 9.5 with a 512 MB heap on a 16-core host, so a guide to the ratios, not a production cluster's
+  figures): 1,500,000 events in each of two indices, 200,000 users; heap is the whole test JVM's peak (88 MB before),
+  an upper bound on the join's own.
+
+  | Join | Workers | Elapsed | Rows read | Keys merged | Matches | Peak heap |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | Download then copy within 2m (events) | 1 | 72.0 s | 3,000,000 | 200,000 | 1,500,000 | 329 MB |
+  | Download then copy within 2m (events) | 4 | 23.2 s | 3,000,000 | 200,000 | 1,500,000 | 518 MB |
+  | The same, `lowercase` on one side | 1 | 132.4 s | 3,000,000 | 200,000 | 1,500,000 | 328 MB |
+  | The same, `lowercase` on one side | 4 | 39.0 s | 3,000,000 | 200,000 | 1,500,000 | 498 MB |
+  | Users who did both (keys only) | 1 | 5.1 s | 400,000 | 200,000 | 200,000 | 280 MB |
+  | Users who did both (keys only) | 4 | 2.1 s | 400,000 | 200,000 | 200,000 | 304 MB |
+
+  Four workers were 3.1 to 3.4 times as fast on events and 2.4 times on keys, for about 1.5 times the heap, so the
+  default of 4 is kept. A transform (a Painless runtime field per event) costs about 1.8 times the plain join. The
+  estimate's rate (`KeyStreamSequence.ROWS_PER_SECOND`) is set to 20,000 rows a second a worker, under the transform
+  case. At the default 2-minute query time limit, joins of a few million events need the workers (or a raised
+  `queryTimeLimit`).
 
 **Entity values as indexed** (decided 2026-11-23: making indexes consistent is the data engineers' and admins'
 work, not the analysis tools'): joins, hunts and timelines work on the data as it is indexed; where sources write a
@@ -5121,6 +5186,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | Part 1 built, the streaming key-ordered join: `stroom.ai.api.ElasticKeyStreams` (target, keyPage, openScan/scanPage/close, sampleKeys; paged, stateless, Use on every call, its own time limit and stop) implemented by `ElasticKeyStreamsService` beside the ES|QL and EQL services, the "Use on each, one cluster, time fields" check shared as `ElasticDocs` (ElasticEql/ElasticEsql unchanged); a new engine inside `sequence_query`, not a new tool (`engine` auto/eql/stream; auto streams only where EQL can't: `keysOnly` or `transform` steps, different time fields, a first step past the pre-flight cap), `limit` to 100,000, counts exact; transforms computed by Elasticsearch as runtime fields so events stream in the compared key's order; a side pushed down as terms only with at most 50,000 keys and a tenth of another side's events; workers by key range (pushed-down keys or `sampleKeys`), as the user; estimate by ES|QL with `countTotal`, the user asked at 80% of a cap (refused over MCP unless `runAnyway`), caps and the time limit ending early with what was found; a diagnosis when nothing is found (each step alone, unshared values with examples, a bridging transform) and keys that began and never ended, with their sources; settings `joinWorkers` 4, `joinPushDownKeys` 50,000, `joinMaxKeys` 1,000,000, `joinMaxRows` 10,000,000, `joinTimeLimit` 15 minutes (a join past the query time limit by its estimate runs up to it when the user agrees: the chat form or `runAnyway`); benchmarked 1 against 4 workers on the single-node test container (4 kept) | Activity timelines, streaming joins and skills (1. Streaming, key-ordered join, as built); TOOLS.md (sequence_query, Streaming join) |
 | 2026-11-23 | Skills (part 4) built: `find_skills`, `check_skill`, `propose_skill` in a `skills` group; skills docs read by convention (`SkillDoc`), discovered globally by name (only Documentation docs named `SKILLS` are skills docs, one a folder, found by name so no other doc is read; front matter holds the history and marks no other doc) with the list in the system prompt (`SkillCatalogue`), checked (`SkillChecks`), proposed through `create_instructions` (with `name` SKILLS) and `apply_documentation_change`; a trial run is the draft's steps bound to the given values and handed back for the model to follow (no replay engine, so the trial is the same run a saved skill gets); undo is the body's reverse with a history entry saying so (the history is kept, not reversed); offered skills recorded in a `SKILLS_OFFERED` message; the chat's `/skills` and `/skill:<name>` commands, the per-skill commands in the command list being the picker | Activity timelines, streaming joins and skills (proposed) |
 | 2026-11-23 | Charts in the chat built, gantt only (part 3's chat route): `gantt_chart` (dashboards group, chat only) turns a workspace table into a ```` ```mermaid ```` gantt block of a fixed subset (every value stripped of Mermaid syntax, never `click`, callbacks or `%%{init}%%`; folded: bars of a label merged within a lane, short bars left out, the top 8 labels with markers' labels kept beside them and the rest "Other", 20 lanes, 200 bars and markers; times in the user's zone, named in the title), read back by the shared `MermaidGanttParser` (`stroom-core-shared`) before it is returned; the chat's presenter replaces each parsed block, after the shared Markdown converter, with SVG from its own renderer (`AiGanttChart`: lanes, axis, bars, markers, legend, themed by CSS), any other block staying code; `MarkdownConverter` and Documentation docs unchanged; the tool and the visualisation guide say the user chooses the chat or a dashboard, and that other kinds are a dashboard's only | Activity timelines, streaming joins and skills (3. Charts); TOOLS.md (gantt_chart) |
 | 2026-11-23 | Activity timelines, streaming key-ordered joins, derived results as CSV Data Connections and skills designed (proposed, not built), in that order of building; open questions listed for the product owner | Activity timelines, streaming joins and skills (proposed) |

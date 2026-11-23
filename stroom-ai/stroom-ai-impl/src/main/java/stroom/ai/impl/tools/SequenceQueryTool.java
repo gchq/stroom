@@ -21,6 +21,9 @@ import stroom.ai.api.ElasticEql.Refusal;
 import stroom.ai.api.ElasticEql.Result;
 import stroom.ai.api.ElasticEql.Target;
 import stroom.ai.api.ElasticEsql;
+import stroom.ai.api.ElasticKeyStreams;
+import stroom.ai.api.ElasticKeyStreams.KeyField;
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.EqlQueryWriter.Filter;
 import stroom.ai.impl.tools.EqlQueryWriter.Step;
@@ -28,6 +31,7 @@ import stroom.ai.impl.tools.EqlSequenceResults.Entity;
 import stroom.ai.impl.tools.EqlSequenceResults.EventCount;
 import stroom.ai.impl.tools.EqlSequenceResults.Review;
 import stroom.ai.impl.tools.EqlSequenceResults.Row;
+import stroom.ai.impl.tools.KeyStreamSequence.JoinStep;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -59,6 +63,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -106,6 +111,23 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     static final String CASE_INSENSITIVE_KEY = "caseInsensitive";
     static final String ANY_OF_KEY = "any_of";
     static final String LENGTH_KEY = "length";
+    static final String KEYS_ONLY_KEY = "keysOnly";
+    static final String TRANSFORM_KEY = "transform";
+    static final String ENGINE_ARG = "engine";
+    static final String ENGINE_AUTO = "auto";
+    static final String ENGINE_EQL = "eql";
+    static final String ENGINE_STREAM = "stream";
+    /// Why the streaming engine ran when it was asked for.
+    static final String STREAM_ASKED = "engine=stream was asked for, so the sequence ran in Stroom as a streaming "
+                                       + "join: each step read from Elasticsearch in join-key order and merged.";
+    /// Why the streaming engine ran for a step EQL can't take.
+    static final String STREAM_NEEDED = "A step is read as keys (keysOnly) or transforms its join fields, which EQL "
+                                        + "can't do, so the sequence ran in Stroom as a streaming join: each step "
+                                        + "read from Elasticsearch in join-key order and merged.";
+    /// Why the streaming engine ran for docs with different time fields.
+    static final String STREAM_TIME_FIELDS = "The docs have different time fields, which one EQL sequence can't "
+                                             + "order by, so the sequence ran in Stroom as a streaming join, each "
+                                             + "doc's events in order of its own time field.";
     /// The negated list condition, which only this tool takes: `not field in (...)`.
     static final String NOT_IN = "NOT_IN";
     /// The sequences returned when the call doesn't say.
@@ -159,6 +181,10 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     /// is [10000]", seen in the benchmark of 2026-11-20 with 10,000 two-step sequences), so the limit is lowered to
     /// what fits ([#mostSequences]).
     static final int MAX_FETCHED_EVENTS = 10_000;
+    /// The join-field transforms a step takes, as the model names them.
+    static final List<String> TRANSFORMS = Arrays.stream(Transform.values())
+            .map(transform -> transform.name().toLowerCase(Locale.ROOT))
+            .toList();
     private static final List<Duration> OTHER_WINDOWS = List.of(Duration.ofMinutes(1), Duration.ofMinutes(15),
             Duration.ofHours(1));
     private static final int[] ESQL_VERSION = {8, 14};
@@ -175,6 +201,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     private final Provider<QueryService> queryServiceProvider;
     private final AiAuditLog auditLog;
     private final StroomQlSequence stroomQlSequence;
+    private final KeyStreamSequence keyStreamSequence;
 
     @Inject
     SequenceQueryTool(final ChatWorkspace workspace,
@@ -183,7 +210,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                       final DataSourceAccess dataSourceAccess,
                       final Provider<QueryService> queryServiceProvider,
                       final AiAuditLog auditLog,
-                      final AgentSearches agentSearches) {
+                      final AgentSearches agentSearches,
+                      final KeyStreamSequence keyStreamSequence) {
         super(workspace);
         this.elasticEqlProvider = elasticEqlProvider;
         this.elasticEsqlProvider = elasticEsqlProvider;
@@ -191,6 +219,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         this.queryServiceProvider = queryServiceProvider;
         this.auditLog = auditLog;
         this.stroomQlSequence = new StroomQlSequence(queryServiceProvider, agentSearches, dataSourceAccess);
+        this.keyStreamSequence = keyStreamSequence;
     }
 
     @Override
@@ -266,6 +295,17 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                                               + "(default 1, at most " + EqlQueryWriter.MAX_RUNS + ").")
                 .addProperty(FIELDS_KEY, stringArraySchema("Up to " + MAX_STEP_FIELDS + " fields of its events to "
                                                            + "show, beside the join fields and ids."))
+                .addBooleanProperty(KEYS_ONLY_KEY, "True if the step only says which entities count, at any time "
+                                                   + "(e.g. the users of team A in a directory index): read as keys, "
+                                                   + "not in time order; with missing=true, entities NOT in it. "
+                                                   + "Elastic Indexes only (the stream engine).")
+                .addProperty(TRANSFORM_KEY, ArraySchema.builder()
+                        .items(new ToolSchema.EnumSchema(null, TRANSFORMS))
+                        .description("Optional: what is done to its join fields' values before they are compared, "
+                                     + "in order, where sources write them differently: lowercase, strip_domain "
+                                     + "(CORP\\jsmith and jsmith@corp are jsmith), file_name (a path's last part). "
+                                     + "Elastic Indexes only (the stream engine).")
+                        .build())
                 .required(INDEX_KEY, BY_KEY)
                 .build();
         final ObjectSchema until = ObjectSchema.builder()
@@ -290,8 +330,14 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                                  + "(a Lucene index, a view), a StroomQL windowed join run in Stroom, which takes 2 "
                                  + "steps joined by by (no until, missing or runs; no caseInsensitive, length, "
                                  + "IS_NULL or regex; step 2 needs a condition) and refuses a first step with too "
-                                 + "many events; the result says which ran and why. Finds ordered sequences of "
-                                 + "events: e.g. a USB "
+                                 + "many events; the result says which ran and why. On Elastic Indexes it runs "
+                                 + "instead as a streaming join in Stroom (engine=stream; chosen itself where EQL "
+                                 + "can't: a first step too big for EQL, different time fields, keysOnly or "
+                                 + "transform): each step read in join-key order and merged, no side capped, sizes "
+                                 + "estimated first; keysOnly=true for a step that only says which entities count "
+                                 + "(e.g. a team's users in a directory), transform for join values sources write "
+                                 + "differently (CORP\\jsmith vs jsmith); a join that finds nothing says why. "
+                                 + "Finds ordered sequences of events: e.g. a USB "
                                  + "device plugged in then a file copied to it; a clipboard copy then PowerShell "
                                  + "within 2 minutes by the same user on the same host; 20 failed logons then a "
                                  + "success. Give steps (2 or more, in order), each with its doc, its where "
@@ -305,8 +351,9 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                         .general(". Fields are checked against each doc's")
                         .chatOnly(" (describe_data_source gives them)")
                         .general(". Each step is counted first: the result says when a later step is far more "
-                                 + "selective, and a sequence too big for the time limit is refused before it runs "
-                                 + "(narrow the window or the first step, or runAnyway=true). The result gives the "
+                                 + "selective, and a first step too big for EQL runs as the streaming join "
+                                 + "(with engine=eql it is refused before it runs: narrow the window or the first "
+                                 + "step, or runAnyway=true). The result gives the "
                                  + "EQL, a summary per entity, the sequences with each step's StreamId/EventId, and "
                                  + "a validated StroomQL review query per doc, for a saved query")
                         .chatOnly(" (propose_query)")
@@ -317,8 +364,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                         .chatOnly(" (ask_user, the docs as options)")
                         .general(", then offer that doc's; on other data sources the windowed join itself is the "
                                  + "review query. EQL sequences come straight from Elasticsearch, as ES|QL counts "
-                                 + "do, and may include streams the user can't see or deleted ones. EQL is refused "
-                                 + "for docs on different clusters or with different time fields, and nested fields. "
+                                 + "do, and may include streams the user can't see or deleted ones. Docs on "
+                                 + "different clusters and nested fields are refused. "
                                  + "A text field is searched as its keyword subfield (the result says so). A literal "
                                  + "? can't be in a pattern (EQL reads it as any one character).")
                         .build())
@@ -337,7 +384,13 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                         .addStringProperty(TIME_TO_ARG, "Optional: up to this time (ISO 8601, or Stroom's now()).")
                         .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .addIntegerProperty(LIMIT_ARG, "The most sequences (default " + DEFAULT_LIMIT + ", at most "
-                                                       + ElasticEql.MAX_SEQUENCES + ").")
+                                                       + ElasticEql.MAX_SEQUENCES + "; the stream engine: default "
+                                                       + KeyStreamSequence.DEFAULT_LIMIT + ", at most "
+                                                       + KeyStreamSequence.MAX_LIMIT + ", counting all).")
+                        .addEnumProperty(ENGINE_ARG, List.of(ENGINE_AUTO, ENGINE_EQL, ENGINE_STREAM), "Optional: "
+                                + "auto (default: chosen by the steps and their sizes), eql, or stream (a "
+                                + "streaming join in Stroom, for sides too big for EQL or more than "
+                                + ElasticEql.MAX_SEQUENCES + " sequences).")
                         .addBooleanProperty(RUN_ANYWAY_ARG, "True to run even though the counts say it won't finish "
                                                             + "in the time limit.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
@@ -352,6 +405,22 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     @Override
     protected Duration timeLimit(final ToolCallContext context) {
         return limits(context).getQueryTimeLimit().getDuration();
+    }
+
+    /// The call as a whole may run as long as the streaming join's time limit, which the user may agree to past the
+    /// query time limit; EQL, the counts and the StroomQL join keep the query time limit ([#timeLimit]).
+    ///
+    /// @param request The model's call.
+    /// @param context The call's context.
+    /// @return The longer of the two.
+    @Override
+    protected Duration timeLimit(final ToolCall request, final ToolCallContext context) {
+        final Duration query = timeLimit(context);
+        final Duration join = NullSafe.getOrElse(limits(context).getJoinTimeLimit(), duration -> duration.getDuration(),
+                query);
+        return join.compareTo(query) > 0
+                ? join
+                : query;
     }
 
     @Override
@@ -382,9 +451,20 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         // The zone the time range's date expressions and times without an offset, and the results' times, are in.
         final ToolTimeZone zone = timeZone(request, context);
         final long referenceTime = System.currentTimeMillis();
+        final String engine = engine(request);
+        final boolean needsStream = all.stream().anyMatch(GivenStep::needsStream);
         final Optional<DocRef> notElastic = docs.stream().filter(doc -> !isElastic(doc)).findFirst();
         if (notElastic.isPresent()) {
+            if (needsStream || ENGINE_STREAM.equals(engine)) {
+                throw new WorkspaceException(DataSourceAccess.describe(notElastic.get()) + " isn't an Elastic Index: "
+                                             + KEYS_ONLY_KEY + ", " + TRANSFORM_KEY + " and engine=stream need every "
+                                             + "step on an Elastic Index.");
+            }
             return runInStroom(request, context, given, givenUntil, byGiven, notElastic.get(), zone, referenceTime);
+        }
+        if (needsStream && ENGINE_EQL.equals(engine)) {
+            throw new WorkspaceException(KEYS_ONLY_KEY + " and " + TRANSFORM_KEY + " need the stream engine, which EQL "
+                                         + "can't do: leave engine out, or give engine=stream.");
         }
         final Map<DocRef, List<QueryField>> fieldsByDoc = new LinkedHashMap<>();
         for (final DocRef doc : docs) {
@@ -395,7 +475,24 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             }
             fieldsByDoc.put(doc, fields);
         }
-        final Target target = target(docs);
+        if (needsStream || ENGINE_STREAM.equals(engine)) {
+            return runStreamed(request, context, given, givenUntil, byGiven, docs, fieldsByDoc, fieldNotes, zone,
+                    referenceTime, needsStream
+                            ? STREAM_NEEDED
+                            : STREAM_ASKED);
+        }
+        final Target target;
+        try {
+            target = elasticEqlProvider.get().target(docs);
+        } catch (final Refusal refusal) {
+            if (ENGINE_AUTO.equals(engine) && refusal.reason() == ElasticEql.Reason.DIFFERENT_TIME_FIELDS) {
+                return runStreamed(request, context, given, givenUntil, byGiven, docs, fieldsByDoc, fieldNotes, zone,
+                        referenceTime, STREAM_TIME_FIELDS);
+            }
+            throw new WorkspaceException(refusal(refusal, Map.of()));
+        } catch (final PermissionException e) {
+            throw new WorkspaceException(notUsable(docs, e));
+        }
         final List<Step> steps = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
             steps.add(step(given.get(i), "Step " + (i + 1), byGiven, docs, fieldsByDoc, target, fieldNotes, zone,
@@ -440,6 +537,12 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         final Preflight preflight = preflight(steps, docs, timeRange, target.version(), deadline, timeLimit,
                 context.stopped());
         if (preflight.tooBig() && !booleanArg(request, RUN_ANYWAY_ARG, false)) {
+            if (ENGINE_AUTO.equals(engine)) {
+                return runStreamed(request, context, given, givenUntil, byGiven, docs, fieldsByDoc, fieldNotes, zone,
+                        referenceTime, "As one EQL sequence, " + preflight.tooBigNote() + " So the sequence ran in "
+                                       + "Stroom as a streaming join instead: each step read from Elasticsearch in "
+                                       + "join-key order and merged.");
+            }
             throw new WorkspaceException("Not run: " + preflight.tooBigNote() + " " + capitalised(NARROW)
                                          + " (fewer events in the first step's conditions), or call again with "
                                          + RUN_ANYWAY_ARG + "=true to run it anyway.\n\nThe EQL would be:\n" + eql);
@@ -523,6 +626,140 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                 sessionWorkspace(context), out, context.session().isChat(), context.stopped(), zone, referenceTime));
     }
 
+    // Runs the sequence as a streaming join in Stroom (KeyStreamSequence), on Elastic Indexes.
+    private ToolResult runStreamed(final ToolCall request,
+                                   final ToolCallContext context,
+                                   final List<GivenStep> given,
+                                   final GivenStep givenUntil,
+                                   final Map<String, DocRef> byGiven,
+                                   final List<DocRef> docs,
+                                   final Map<DocRef, List<QueryField>> fieldsByDoc,
+                                   final List<String> fieldNotes,
+                                   final ToolTimeZone zone,
+                                   final long referenceTime,
+                                   final String reason) {
+        final ElasticKeyStreams.Target streams = keyStreamSequence.target(docs);
+        final List<String> timeFields = streams.docs().stream().map(ElasticKeyStreams.Doc::timeField).toList();
+        final Target target = new Target(streams.version(), timeFields.stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null), streams.docs().stream().map(ElasticKeyStreams.Doc::indexName).toList(),
+                streams.docs().stream().map(ElasticKeyStreams.Doc::fields).toList());
+        final List<JoinStep> steps = new ArrayList<>();
+        for (int i = 0; i < given.size(); i++) {
+            final String what = "Step " + (i + 1);
+            steps.add(joinStep(given.get(i), step(given.get(i), what, byGiven, docs, fieldsByDoc, target, fieldNotes,
+                    zone, referenceTime), what, byGiven, target, timeFields));
+        }
+        final JoinStep until = givenUntil == null
+                ? null
+                : joinStep(givenUntil, step(givenUntil, "The until step", byGiven, docs, fieldsByDoc, target,
+                        fieldNotes, zone, referenceTime), "The until step", byGiven, target, timeFields);
+        checkJoins(steps.stream().map(JoinStep::step).toList(), until == null
+                ? null
+                : until.step());
+        final List<JoinStep> timed = steps.stream().filter(step -> !step.keysOnly()).toList();
+        if (!timed.isEmpty() && timed.getFirst().step().missing()) {
+            throw new WorkspaceException("The first step read in time is missing=true: a sequence starts with an "
+                                         + "event that happens.");
+        }
+        if (steps.stream().allMatch(step -> step.step().missing())) {
+            throw new WorkspaceException("Every step is missing=true: at least one step must happen.");
+        }
+        final List<JoinKeys.Kind> kinds = steps.getFirst().kinds();
+        final List<JoinStep> all = new ArrayList<>(steps);
+        if (until != null) {
+            all.add(until);
+        }
+        for (int i = 1; i < all.size(); i++) {
+            if (!all.get(i).kinds().equals(kinds)) {
+                throw new WorkspaceException((i < steps.size()
+                        ? "Step " + (i + 1)
+                        : "The until step") + "'s join fields " + all.get(i).step().joinFields() + " are "
+                                             + kindsText(all.get(i).kinds()) + ", but step 1's "
+                                             + steps.getFirst().step().joinFields() + " are " + kindsText(kinds)
+                                             + ": join fields compare only with fields of the same kind (text, "
+                                             + "number or IP address).");
+            }
+        }
+        final boolean inTime = timed.size() > 1 || (until != null && !timed.isEmpty());
+        final String givenMaxspan = stringArg(request, MAXSPAN_ARG);
+        final Duration maxspan = !inTime
+                ? null
+                : givenMaxspan != null
+                        ? EqlQueryWriter.maxspan(givenMaxspan)
+                        : askMaxspan(request, context);
+        final Integer givenLimit = intArg(request, LIMIT_ARG);
+        final int limit = Math.clamp(Objects.requireNonNullElse(givenLimit, KeyStreamSequence.DEFAULT_LIMIT), 1,
+                KeyStreamSequence.MAX_LIMIT);
+        final WorkspacePath givenOut = outArg(request);
+        final WorkspacePath out = givenOut != null
+                ? givenOut
+                : sessionWorkspace(context).newFile("/outputs/sequences/join", ".md");
+        return keyStreamSequence.run(new KeyStreamSequence.Call(steps, until, docs, timeFields, fieldsByDoc, maxspan,
+                maxspanSource(givenMaxspan), timeRange(request, zone, referenceTime), limit, reason,
+                fieldNotes.stream().distinct().toList(), booleanArg(request, RUN_ANYWAY_ARG, false), request.id(),
+                context, limits(context), sessionWorkspace(context), out, zone, timeLimit(context), this::invalid,
+                limits(context).getMaxQueryLength()));
+    }
+
+    // A step of the streaming join: its join fields as read, how they compare, and its doc's time field.
+    private static JoinStep joinStep(final GivenStep given,
+                                     final Step step,
+                                     final String what,
+                                     final Map<String, DocRef> byGiven,
+                                     final Target target,
+                                     final List<String> timeFields) {
+        final DocRef doc = byGiven.get(given.index());
+        final int position = step.doc() - 1;
+        final Map<String, ElasticEql.Field> mapping = position < target.fields().size()
+                ? target.fields().get(position)
+                : Map.of();
+        final List<KeyField> keys = new ArrayList<>();
+        final List<JoinKeys.Kind> kinds = new ArrayList<>();
+        for (final String field : step.joinFields()) {
+            final ElasticEql.Field mapped = mapping.get(field);
+            final JoinKeys.Kind kind = JoinKeys.kind(mapped == null
+                    ? null
+                    : mapped.nativeType());
+            if (kind == null) {
+                throw new WorkspaceException(what + ": '" + field + "' in Elastic Index '" + doc.getName() + "' is a "
+                                             + mapped.nativeType() + " field, which can't be a join key: join on a "
+                                             + "keyword, number, date or IP field.");
+            }
+            if (!given.transforms().isEmpty() && kind != JoinKeys.Kind.TEXT) {
+                throw new WorkspaceException(what + ": '" + field + "' in Elastic Index '" + doc.getName() + "' isn't "
+                                             + "text, so it can't be transformed: leave transform out of this step.");
+            }
+            keys.add(new KeyField(field, given.transforms()));
+            kinds.add(kind);
+        }
+        final String timeField = timeFields.get(position);
+        if (!given.keysOnly() && timeField == null) {
+            throw new WorkspaceException(what + ": Elastic Index '" + doc.getName() + "' has no time field, so its "
+                                         + "events can't be put in time order: give it " + KEYS_ONLY_KEY + "=true "
+                                         + "(an entity condition at any time).");
+        }
+        return new JoinStep(step, doc, keys, kinds, given.keysOnly(), timeField);
+    }
+
+    private static String kindsText(final List<JoinKeys.Kind> kinds) {
+        return String.join(", ", kinds.stream().map(kind -> kind.name().toLowerCase(Locale.ROOT)).toList());
+    }
+
+    // The engine asked for: auto (the default), eql or stream.
+    private String engine(final ToolCall request) {
+        final String given = NullSafe.trim(stringArg(request, ENGINE_ARG)).toLowerCase(Locale.ROOT);
+        if (given.isEmpty()) {
+            return ENGINE_AUTO;
+        }
+        if (!List.of(ENGINE_AUTO, ENGINE_EQL, ENGINE_STREAM).contains(given)) {
+            throw new WorkspaceException("engine '" + given + "' isn't one of " + ENGINE_AUTO + ", " + ENGINE_EQL
+                                         + ", " + ENGINE_STREAM + ".");
+        }
+        return given;
+    }
+
     private static String maxspanSource(final String givenMaxspan) {
         return givenMaxspan != null
                 ? "as asked"
@@ -598,7 +835,7 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("until is one step: an object with index, where and by.");
         }
         final GivenStep until = givenStep(map, "The until step", notes);
-        if (until.missing() || until.runs() > 1 || !until.fields().isEmpty()) {
+        if (until.missing() || until.runs() > 1 || !until.fields().isEmpty() || until.keysOnly()) {
             throw new WorkspaceException("The until step takes index, where and by only.");
         }
         return until;
@@ -631,7 +868,37 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         if (missing && !fields.isEmpty()) {
             throw new WorkspaceException(what + " is missing=true, so it has no events to show fields of.");
         }
-        return new GivenStep(index, filters, anyOf, names(map.get(BY_KEY), what, BY_KEY, notes), missing, runs, fields);
+        final boolean keysOnly = truthy(map.get(KEYS_ONLY_KEY));
+        if (keysOnly && (runs > 1 || !fields.isEmpty())) {
+            throw new WorkspaceException(what + " is keysOnly=true: it says which entities count, so it has no runs "
+                                         + "or fields to show.");
+        }
+        return new GivenStep(index, filters, anyOf, names(map.get(BY_KEY), what, BY_KEY, notes), missing, runs, fields,
+                keysOnly, transforms(map.get(TRANSFORM_KEY), what));
+    }
+
+    // The join-field transforms a step names, in order.
+    private static List<Transform> transforms(final Object given, final String what) {
+        final List<?> names = given == null
+                ? List.of()
+                : given instanceof final List<?> list
+                        ? list
+                        : List.of(String.valueOf(given).split(","));
+        final List<Transform> transforms = new ArrayList<>();
+        for (final Object name : names) {
+            final String text = NullSafe.trim(name == null
+                    ? null
+                    : String.valueOf(name)).toLowerCase(Locale.ROOT);
+            if (text.isEmpty()) {
+                continue;
+            }
+            if (!TRANSFORMS.contains(text)) {
+                throw new WorkspaceException(what + ": transform '" + name + "' isn't one of "
+                                             + String.join(", ", TRANSFORMS) + ".");
+            }
+            transforms.add(Transform.valueOf(text.toUpperCase(Locale.ROOT)));
+        }
+        return transforms;
     }
 
     // A list of conditions in the where form: where's, or an any_of group's (one level: no group inside).
@@ -973,17 +1240,6 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
                                              + "of join fields, in the same order (its own names for the same "
                                              + "things).");
             }
-        }
-    }
-
-    // The docs' cluster and time field, refused naming what differs.
-    private Target target(final List<DocRef> docs) {
-        try {
-            return elasticEqlProvider.get().target(docs);
-        } catch (final Refusal refusal) {
-            throw new WorkspaceException(refusal(refusal, Map.of()));
-        } catch (final PermissionException e) {
-            throw new WorkspaceException(notUsable(docs, e));
         }
     }
 
@@ -1762,15 +2018,30 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
     /// @param by      Its join fields.
     /// @param missing True for an event that must not happen.
     /// @param runs    How many times in a row.
-    /// @param fields  Fields to show.
+    /// @param fields     Fields to show.
+    /// @param keysOnly   True if it is read as keys (an entity condition at any time), not events in time.
+    /// @param transforms What is done to its join fields' values before they are compared.
     record GivenStep(String index,
                              List<Filter> filters,
                              List<Filter> anyOf,
                              List<String> by,
                              boolean missing,
                              int runs,
-                             List<String> fields) {
+                             List<String> fields,
+                             boolean keysOnly,
+                             List<Transform> transforms) {
 
+        /// Copies the list.
+        GivenStep {
+            transforms = transforms == null
+                    ? List.of()
+                    : List.copyOf(transforms);
+        }
+
+        /// @return True if only the stream engine can run the step.
+        boolean needsStream() {
+            return keysOnly || !transforms.isEmpty();
+        }
     }
 
 
