@@ -55,7 +55,7 @@ class TestHttpCall {
 
         final HttpClientFactory httpClientFactory =
                 new BasicHttpClientFactory(new HttpClientConfigConverter(pathCreator));
-        final HttpCall httpCall = new HttpCall(null);
+        final HttpCall httpCall = new HttpCall(null, null);
         try (final CloseableHttpClient httpClient = httpClientFactory.get("test", httpClientConfiguration)) {
             httpCall.execute("https://localhost:5443/", "", "", "", httpClient,
                     response -> {

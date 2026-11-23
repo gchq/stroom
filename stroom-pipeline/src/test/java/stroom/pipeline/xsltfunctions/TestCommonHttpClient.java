@@ -17,6 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.filter.XsltConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpProxyConfiguration;
 import stroom.util.jersey.HttpClientProviderCache;
@@ -28,10 +29,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 
 class TestCommonHttpClient {
+
+    private final HttpClientProviderCache cache = Mockito.mock(HttpClientProviderCache.class);
 
     @Test
     void testBlankUsesDefaults() {
@@ -193,19 +199,73 @@ class TestCommonHttpClient {
 
     @Test
     void testCreateClientProviderPassesParsedConfig() {
-        final HttpClientProviderCache httpClientProviderCache = Mockito.mock(HttpClientProviderCache.class);
-        final CommonHttpClient commonHttpClient = new CommonHttpClient(httpClientProviderCache);
         final String clientConfigStr = """
                 { "proxy": { "host": "proxy.example.com", "port": 3128 } }""";
 
-        commonHttpClient.createClientProvider(clientConfigStr);
+        newClient(false).createClientProvider(clientConfigStr);
 
         final ArgumentCaptor<HttpClientConfiguration> captor =
                 ArgumentCaptor.forClass(HttpClientConfiguration.class);
-        Mockito.verify(httpClientProviderCache).get(captor.capture());
+        Mockito.verify(cache).get(captor.capture());
         assertThat(captor.getValue().getProxyConfiguration())
                 .isNotNull();
         assertThat(captor.getValue().getProxyConfiguration().getHost())
                 .isEqualTo("proxy.example.com");
+    }
+
+    @Test
+    void testJsonProxyRefusedInSecureMode() {
+        // Before #6082 a proxy in the JSON config was dropped, so secure mode never saw it.
+        final CommonHttpClient client = newClient(true);
+
+        assertThatThrownBy(() -> client.createClientProvider("""
+                { "proxy": { "host": "proxy.example.com", "port": 3128 } }"""))
+                .isInstanceOf(ProcessException.class)
+                .hasMessageContaining("proxy");
+        Mockito.verifyNoInteractions(cache);
+    }
+
+    @Test
+    void testSecureModeUsesAddressCheckedClient() {
+        newClient(true).createClientProvider("");
+
+        Mockito.verify(cache).getAddressChecked(any(HttpClientConfiguration.class));
+        Mockito.verify(cache, Mockito.never()).get(any());
+    }
+
+    @Test
+    void testSecureModeOffUsesOrdinaryClient() {
+        newClient(false).createClientProvider("");
+
+        Mockito.verify(cache).get(any(HttpClientConfiguration.class));
+        Mockito.verify(cache, Mockito.never()).getAddressChecked(any());
+    }
+
+    @Test
+    void testProxyRefusedInSecureMode() {
+        final CommonHttpClient client = newClient(true);
+        final HttpClientConfiguration configuration = HttpClientConfiguration.builder()
+                .proxyConfiguration(new HttpProxyConfiguration("localhost", 3128, null, null, null))
+                .build();
+
+        assertThatThrownBy(() -> client.createClientProvider(configuration))
+                .hasMessageContaining("proxy");
+        Mockito.verifyNoInteractions(cache);
+    }
+
+    @Test
+    void testProxyAllowedWithSecureModeOff() {
+        final HttpClientConfiguration configuration = HttpClientConfiguration.builder()
+                .proxyConfiguration(new HttpProxyConfiguration("localhost", 3128, null, null, null))
+                .build();
+
+        newClient(false).createClientProvider(configuration);
+
+        Mockito.verify(cache).get(configuration);
+    }
+
+    private CommonHttpClient newClient(final boolean secureMode) {
+        final XsltConfig xsltConfig = new XsltConfig(null, null, secureMode, List.of(), null, null);
+        return new CommonHttpClient(cache, () -> xsltConfig);
     }
 }

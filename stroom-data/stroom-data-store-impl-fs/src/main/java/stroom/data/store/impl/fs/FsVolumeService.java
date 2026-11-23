@@ -22,6 +22,7 @@ import stroom.data.store.api.S3VolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.ValidationResult;
+import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
@@ -30,6 +31,9 @@ import stroom.util.sysinfo.HasSystemInfo;
 
 public interface FsVolumeService
         extends S3VolumeService, S3ClientConfigService, EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
+
+    String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
+    DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
 
     FsVolume create(FsVolume fsVolume);
 

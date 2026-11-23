@@ -55,8 +55,9 @@ public class LmdbKV extends KV<ByteBuffer, ByteBuffer> implements LmdbQueueItem 
         this.realWindowKey = realWindowKey;
     }
 
-    /// Tells whether [#getRealWindowKey()] can be relied on. It can't for a row that was not made
-    /// from an event by the store it is put in, such as one that came from another node.
+    /// Tells whether [#getRealWindowKey()] can be relied on. It can't for a row whose windows are
+    /// not noted in some other way, as those of a row from another node are by the span that comes
+    /// with it.
     ///
     /// @return True if it is known whether this is a real row of a time window.
     public boolean isWindowKnown() {
