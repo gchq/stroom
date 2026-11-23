@@ -24,6 +24,7 @@ import stroom.util.http.HttpClientFactory;
 import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;
+import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class DropwizardHttpClientFactory implements HttpClientFactory {
@@ -41,6 +42,13 @@ public class DropwizardHttpClientFactory implements HttpClientFactory {
     @Override
     public CloseableHttpClient get(final String name,
                                    final HttpClientConfiguration httpClientConfiguration) {
+        return get(name, httpClientConfiguration, null);
+    }
+
+    @Override
+    public CloseableHttpClient get(final String name,
+                                   final HttpClientConfiguration httpClientConfiguration,
+                                   final DnsResolver dnsResolver) {
         // Now create a new client.
         io.dropwizard.client.HttpClientConfiguration configuration = httpClientConfigConverter.convert(
                 httpClientConfiguration,
@@ -53,9 +61,12 @@ public class DropwizardHttpClientFactory implements HttpClientFactory {
         final boolean followRedirects = httpClientConfiguration == null
                 ? HttpClientConfiguration.DEFAULT_FOLLOW_REDIRECTS
                 : httpClientConfiguration.isFollowRedirects();
-        return new HttpClientBuilder(environment)
+        final HttpClientBuilder builder = new HttpClientBuilder(environment)
                 .using(configuration)
-                .using(new ConfiguredRedirectStrategy(followRedirects))
-                .build(name);
+                .using(new ConfiguredRedirectStrategy(followRedirects));
+        if (dnsResolver != null) {
+            builder.using(dnsResolver);
+        }
+        return builder.build(name);
     }
 }

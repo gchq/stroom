@@ -29,19 +29,29 @@ class TestXsltConfig {
         final XsltConfig xsltConfig = new XsltConfig();
         assertThat(xsltConfig.isSecureMode()).isTrue();
         assertThat(xsltConfig.getAllowedUriPrefixes()).isEmpty();
+        assertThat(xsltConfig.getAllowedEmailRecipients()).isEmpty();
+        assertThat(xsltConfig.getMaxEmailsPerRun()).isEqualTo(XsltConfig.DEFAULT_MAX_EMAILS_PER_RUN);
     }
 
     @Test
     void testMissingValuesAreSecure() {
-        final XsltConfig xsltConfig = new XsltConfig(null, null, null, null);
+        final XsltConfig xsltConfig = new XsltConfig(null, null, null, null, null, null);
         assertThat(xsltConfig.isSecureMode()).isTrue();
         assertThat(xsltConfig.getAllowedUriPrefixes()).isEmpty();
+        assertThat(xsltConfig.getAllowedEmailRecipients()).isEmpty();
+        assertThat(xsltConfig.getMaxEmailsPerRun()).isEqualTo(XsltConfig.DEFAULT_MAX_EMAILS_PER_RUN);
     }
 
     @Test
     void testNullPrefixesLeftOut() {
         // E.g. an empty "- " item in the YAML list.
-        final XsltConfig xsltConfig = new XsltConfig(null, null, true, Arrays.asList(null, "/data/lookups", null));
+        final XsltConfig xsltConfig = new XsltConfig(null,
+                null,
+                true,
+                Arrays.asList(null, "/data/lookups", null),
+                Arrays.asList(null, "@example.com"),
+                null);
         assertThat(xsltConfig.getAllowedUriPrefixes()).containsExactly("/data/lookups");
+        assertThat(xsltConfig.getAllowedEmailRecipients()).containsExactly("@example.com");
     }
 }

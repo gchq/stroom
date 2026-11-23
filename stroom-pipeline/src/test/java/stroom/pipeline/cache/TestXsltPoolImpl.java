@@ -177,7 +177,9 @@ class TestXsltPoolImpl {
                 current.getCacheConfig(),
                 current.getMaxElements(),
                 secureMode,
-                allowedUriPrefixes));
+                allowedUriPrefixes,
+                current.getAllowedEmailRecipients(),
+                current.getMaxEmailsPerRun()));
     }
 
     private StoredXsltExecutable borrowAndReturn() {

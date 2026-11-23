@@ -18,6 +18,7 @@ package stroom.util.xml;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.TransformerFactoryImpl;
@@ -548,7 +549,8 @@ public final class SaxonSecurity {
                 parser.setProperty("http://xml.org/sax/properties/lexical-handler", null);
                 pool.offer(parser);
             } catch (final SAXException e) {
-                LOGGER.debug("Not pooling a parser that could not be reset: {}", e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Not pooling a parser that could not be reset: {}",
+                        e.getMessage()));
             }
         }
 

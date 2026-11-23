@@ -160,6 +160,8 @@ public class ConfigMapper {
     // Each Prop provides access set/get access to a default appConfig object tree.
     // The content never changes as the defaults are compile time values.
     private final Map<PropertyPath, Prop> defaultPropertiesMap = new HashMap<>();
+    // Read-only properties whose database value has been warned about.
+    private final Set<PropertyPath> warnedReadOnlyPaths = ConcurrentHashMap.newKeySet();
 
     // All property paths that exist in this.appConfig
     private final Set<PropertyPath> allPropertyPaths;
@@ -593,7 +595,8 @@ public class ConfigMapper {
                 // one is ignored.
                 final OverrideValue<String> databaseOverrideValue;
                 if (prop.hasAnnotation(ReadOnly.class)) {
-                    if (dbConfigProperty.hasDatabaseOverride()) {
+                    // Warned about once, as this runs on every refresh of the configuration.
+                    if (dbConfigProperty.hasDatabaseOverride() && warnedReadOnlyPaths.add(fullPath)) {
                         LOGGER.warn("Ignoring the database value for read-only property {}", fullPath);
                     }
                     databaseOverrideValue = globalConfigProperty.getDatabaseOverrideValue();

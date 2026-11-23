@@ -16,9 +16,21 @@
 
 package stroom.util.http;
 
+import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public interface HttpClientFactory {
 
     CloseableHttpClient get(String name, HttpClientConfiguration httpClientConfiguration);
+
+    /// Creates a client that resolves the host names it connects to with the given resolver.
+    ///
+    /// @param name                    The name of the client.
+    /// @param httpClientConfiguration The client configuration, may be null.
+    /// @param dnsResolver             The resolver for every host the client connects to, or null for the
+    ///                                default.
+    /// @return The new client.
+    CloseableHttpClient get(String name,
+                            HttpClientConfiguration httpClientConfiguration,
+                            DnsResolver dnsResolver);
 }
