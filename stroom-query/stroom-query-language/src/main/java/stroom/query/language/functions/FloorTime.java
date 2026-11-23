@@ -56,7 +56,8 @@ class FloorTime extends AbstractRoundDateTime {
         return zonedDateTime -> {
             final long duration = parseDuration(params[1], "duration").toMillis();
             final long millis = zonedDateTime.toInstant().toEpochMilli();
-            final long remainder = millis % duration;
+            // floorMod keeps the remainder positive for times before 1970, where % would be negative
+            final long remainder = Math.floorMod(millis, duration);
             final long flooredMillis = millis - remainder;
             return ZonedDateTime.ofInstant(Instant.ofEpochMilli(flooredMillis), zoneId);
         };

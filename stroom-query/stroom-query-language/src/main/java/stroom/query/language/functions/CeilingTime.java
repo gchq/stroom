@@ -56,20 +56,12 @@ class CeilingTime extends AbstractRoundDateTime {
         return zonedDateTime -> {
             final long duration = parseDuration(params[1], "duration").toMillis();
             final long millis = zonedDateTime.toInstant().toEpochMilli();
-
-            final Instant t1 = Instant.ofEpochMilli(millis);
-
-            final long remainder = millis % duration;
+            // floorMod keeps the remainder positive for times before 1970, where % would be negative
+            final long remainder = Math.floorMod(millis, duration);
             long ceilingMillis = millis - remainder;
-
-            final Instant t2 = Instant.ofEpochMilli(ceilingMillis);
-
             if (remainder > 0) {
                 ceilingMillis += duration;
             }
-
-            final Instant t3 = Instant.ofEpochMilli(ceilingMillis);
-
             return ZonedDateTime.ofInstant(Instant.ofEpochMilli(ceilingMillis), zoneId);
         };
     }
