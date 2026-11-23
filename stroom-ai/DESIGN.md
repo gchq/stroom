@@ -1001,11 +1001,11 @@ window, its buckets limit or ES|QL's 10,000 rows.
 * **Benchmark after the build** (asked for by the product owner): one worker against four on the same joins, the
   time, the cluster's search load and the memory each takes, before the default is kept.
 
-**Normalised entity fields at onboarding** (the cheapest way to make joins work): every index plan writes the same
-fields the same way whatever the source writes: user (`user.name` without its domain, `user.domain`,
-`user.email`), host (`host.name` short and lowercase, `host.ip`), process (`process.name`, `process.executable`),
-file (`file.name`, `file.path`, `file.hash.*`), URL (`url.domain`, `url.path`); and `verify_index` samples these
-fields' values in the sibling indexes of the same cluster and says where their formats differ.
+**Entity values as indexed** (decided 2026-11-23: making indexes consistent is the data engineers' and admins'
+work, not the analysis tools'): joins, hunts and timelines work on the data as it is indexed; where sources write a
+value differently, the join-field transforms bridge them (lowercase, the domain stripped, a path's file name), and
+when a join finds nothing the diagnostics say why ("no shared user values, e.g. `CORP\jsmith` vs `jsmith`"),
+reporting, never fixing. Onboarding and `verify_index` are unchanged by this; no index is changed or reindexed.
 
 #### 2. Activity timeline
 
@@ -1030,7 +1030,12 @@ documentation).
   marks); per day, active time by application; the actions not in any session; the raw events by their stream and
   event Ids. Written to the workspace and, at the user's choice, as a CSV Data Connection (part 3).
 * **Idle: roles plus a cap** (decided 2026-11-23): `idle_start`/`idle_end` end and resume intervals where the sources
-  hold them; a cap (no event for N minutes) ends the rest, marked uncertain.
+  hold them; a cap (no event for 30 minutes by default, a setting a call or skill may override) ends the rest, marked
+  uncertain.
+* **Test data** (decided 2026-11-23): the aggregated-feeds generator extended with endpoint records (window focus,
+  open and close, clipboard, file copy, removable media), Windows records (logon, lock and unlock) and proxy records
+  for a few users across hosts, with planted data-quality gaps and one "finance proposal" thread across a word
+  processor, the web, AI chat and messages; and an eval case asking for a user's timeline.
 * **Missing events are flagged, never smoothed over** (asked for by the product owner, 2026-11-23: data quality can
   drop events, rarely): an interval is still made, with why its start or end is uncertain, and the output has a
   data-quality section, counts with examples: unpaired bounds (`open` without `close` and the reverse; `idle_start`
@@ -1186,10 +1191,11 @@ To settle with the product owner before building; listed in [Open questions](#op
    (decided 2026-11-23).
 2. ~~Join sizes~~: 4 workers by key range, pushed down under 50,000 keys, caps of 1,000,000 keys and 10,000,000 rows,
    all settings; one against four workers benchmarked after the build (decided 2026-11-23).
-3. ~~Join values~~: both: normalised entity fields at onboarding (with `verify_index` flagging mismatched formats
-   across sibling indexes) and a small set of join-field transforms for data already indexed (decided 2026-11-23).
-4. ~~Timeline~~: a tool of its own, in a group offered when asked for; idle by roles plus a cap, missing events
-   flagged (decided 2026-11-23). Open: the cap's default (30 minutes proposed).
+3. ~~Join values~~: the analysis side only: join-field transforms and diagnostics that report mismatched values;
+   index consistency is the data engineers' and admins' work, onboarding and `verify_index` unchanged (decided
+   2026-11-23).
+4. ~~Timeline~~: a tool of its own, in a group offered when asked for; idle by roles plus a cap of 30 minutes by
+   default (a setting; a call or skill may override it), missing events flagged (decided 2026-11-23).
 5. ~~Timeline privacy~~: the existing tool policies only, no permission of its own (decided 2026-11-23).
 6. ~~Charts~~: in the chat (a Mermaid subset, Stroom's own SVG renderer) or a dashboard, at the user's choice;
    only the dashboard where the chart asked for is outside the subset; a dashboard route's CSV Data Connection in a
