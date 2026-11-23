@@ -2302,6 +2302,127 @@ class TestNullSafe {
                 .isEqualTo(4L);
     }
 
+    @Test
+    void testGetBoolean() {
+        final AtomicBoolean nullRoot = null;
+        final AtomicBoolean trueValue = new AtomicBoolean(true);
+        final AtomicBoolean falseValue = new AtomicBoolean(false);
+        final AtomicReference<AtomicBoolean> nullChild2 = new AtomicReference<>();
+        final AtomicReference<AtomicBoolean> trueChild2 = new AtomicReference<>(trueValue);
+        final AtomicReference<AtomicReference<AtomicBoolean>> nullChild3 = new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicBoolean>> trueChild3 =
+                new AtomicReference<>(trueChild2);
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> nullChild4 =
+                new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> trueChild4 =
+                new AtomicReference<>(trueChild3);
+
+        assertThat(NullSafe.getBoolean((Boolean) null)).isFalse();
+        assertThat(NullSafe.getBoolean(true)).isTrue();
+        assertThat(NullSafe.getBoolean(false)).isFalse();
+
+        assertThat(NullSafe.getBoolean(nullRoot, AtomicBoolean::get)).isFalse();
+        assertThat(NullSafe.getBoolean(trueValue, AtomicBoolean::get)).isTrue();
+
+        assertThat(NullSafe.getBoolean(nullChild2, AtomicReference::get, AtomicBoolean::get))
+                .isFalse();
+        assertThat(NullSafe.getBoolean(trueChild2, AtomicReference::get, AtomicBoolean::get))
+                .isTrue();
+
+        assertThat(NullSafe.getBoolean(nullChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isFalse();
+        assertThat(NullSafe.getBoolean(trueChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isTrue();
+
+        assertThat(NullSafe.getBoolean(nullChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isFalse();
+        assertThat(NullSafe.getBoolean(trueChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isTrue();
+
+        assertThat(NullSafe.getBoolean(falseValue, AtomicBoolean::get)).isFalse();
+    }
+
+    @Test
+    void testGetBooleanOrElse() {
+        final AtomicBoolean nullRoot = null;
+        final AtomicBoolean trueValue = new AtomicBoolean(true);
+        final AtomicReference<AtomicBoolean> nullChild2 = new AtomicReference<>();
+        final AtomicReference<AtomicBoolean> trueChild2 = new AtomicReference<>(trueValue);
+        final AtomicReference<AtomicReference<AtomicBoolean>> nullChild3 = new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicBoolean>> trueChild3 =
+                new AtomicReference<>(trueChild2);
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> nullChild4 =
+                new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> trueChild4 =
+                new AtomicReference<>(trueChild3);
+
+        assertThat(NullSafe.getBooleanOrElse((Boolean) null, true)).isTrue();
+        assertThat(NullSafe.getBooleanOrElse(true, false)).isTrue();
+        assertThat(NullSafe.getBooleanOrElse(false, true)).isFalse();
+
+        assertThat(NullSafe.getBooleanOrElse(nullRoot, AtomicBoolean::get, true)).isTrue();
+        assertThat(NullSafe.getBooleanOrElse(trueValue, AtomicBoolean::get, false)).isTrue();
+
+        assertThat(NullSafe.getBooleanOrElse(
+                nullChild2,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                true))
+                .isTrue();
+        assertThat(NullSafe.getBooleanOrElse(
+                trueChild2,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                false))
+                .isTrue();
+
+        assertThat(NullSafe.getBooleanOrElse(
+                nullChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                true))
+                .isTrue();
+        assertThat(NullSafe.getBooleanOrElse(
+                trueChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                false))
+                .isTrue();
+
+        assertThat(NullSafe.getBooleanOrElse(
+                nullChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                true))
+                .isTrue();
+        assertThat(NullSafe.getBooleanOrElse(
+                trueChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                false))
+                .isTrue();
+    }
+
 //    @TestFactory
 //    Stream<DynamicTest> testDuration() {
 //        return TestUtil.buildDynamicTestStream()

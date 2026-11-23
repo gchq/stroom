@@ -948,6 +948,225 @@ public class NullSafe {
         }
     }
 
+    /// @return val if it is non-null, else false.
+    public static boolean getBoolean(final Boolean val) {
+        return val != null && val;
+    }
+
+    ///
+    /// @param val   The value to check.
+    /// @param other The value to return if val is null.
+    /// @return val if it is non-null, else other.
+    public static boolean getBooleanOrElse(final Boolean val, final boolean other) {
+        return val != null
+                ? val
+                : other;
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive boolean getter to apply to value.
+    /// @return The result of applying getter to value, or false if value is null.
+    public static <T1> boolean getBoolean(final T1 value,
+                                          final ToBooleanFunction<T1> getter) {
+        if (value == null) {
+            return false;
+        } else {
+            return Objects.requireNonNull(getter).applyAsBoolean(value);
+        }
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive boolean getter to apply to value.
+    /// @param other  The value to return if value is null.
+    /// @return The result of applying getter to value, or other if value is null.
+    public static <T1> boolean getBooleanOrElse(final T1 value,
+                                                final ToBooleanFunction<T1> getter,
+                                                final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            return Objects.requireNonNull(getter).applyAsBoolean(value);
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive boolean getter to apply to the child value.
+    /// @return The result of applying getter2, or false if any preceding value is null.
+    public static <T1, T2> boolean getBoolean(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final ToBooleanFunction<T2> getter2) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsBoolean(value2);
+            }
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive boolean getter to apply to the child value.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter2, or other if any preceding value is null.
+    public static <T1, T2> boolean getBooleanOrElse(final T1 value,
+                                                    final Function<T1, T2> getter1,
+                                                    final ToBooleanFunction<T2> getter2,
+                                                    final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsBoolean(value2);
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive boolean getter to apply to the child value.
+    /// @return The result of applying getter3, or false if any preceding value is null.
+    public static <T1, T2, T3> boolean getBoolean(final T1 value,
+                                                  final Function<T1, T2> getter1,
+                                                  final Function<T2, T3> getter2,
+                                                  final ToBooleanFunction<T3> getter3) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsBoolean(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive boolean getter to apply to the child value.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter3, or other if any preceding value is null.
+    public static <T1, T2, T3> boolean getBooleanOrElse(final T1 value,
+                                                        final Function<T1, T2> getter1,
+                                                        final Function<T2, T3> getter2,
+                                                        final ToBooleanFunction<T3> getter3,
+                                                        final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsBoolean(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive boolean getter to apply to the child value.
+    /// @return The result of applying getter4, or false if any preceding value is null.
+    public static <T1, T2, T3, T4> boolean getBoolean(final T1 value,
+                                                      final Function<T1, T2> getter1,
+                                                      final Function<T2, T3> getter2,
+                                                      final Function<T3, T4> getter3,
+                                                      final ToBooleanFunction<T4> getter4) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return false;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsBoolean(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive boolean getter to apply to the child value.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter4, or other if any preceding value is null.
+    public static <T1, T2, T3, T4> boolean getBooleanOrElse(final T1 value,
+                                                            final Function<T1, T2> getter1,
+                                                            final Function<T2, T3> getter2,
+                                                            final Function<T3, T4> getter3,
+                                                            final ToBooleanFunction<T4> getter4,
+                                                            final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return other;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsBoolean(value4);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @return True if val is not null and true
      */
