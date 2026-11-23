@@ -64,6 +64,19 @@ class TestPlacementCheck {
     }
 
     @Test
+    void aSearchsQueryWhoseAdvancedTermsHoldThemselvesIsCheckedWithoutEndlessExamples() {
+        // A search's advanced query holds And, Or and Not, which hold themselves and need nothing more: the example
+        // of where a value goes below Query recursed without end (a StackOverflowError in the Pega e2e,
+        // 2026-11-24).
+        // A search event type keeping most of its fields as Data is told where they could go, Query's children
+        // among them.
+        final EventType search = type("Search-Mail", "Search", "MailItemsAccessed", List.of(
+                placement("Query/Raw", "event.Subject")));
+
+        assertThat(String.valueOf(couldType(check(search), "Search-Mail").get("schema"))).contains("Query: ");
+    }
+
+    @Test
     void aPathTheSchemaHasntBelowTheActionElementIsRefusedSayingWhatItAllows() {
         final EventType view = type("View-MailItems", "View", "MailItemsAccessed", List.of(
                 placement("Email/Topic", "event.Subject")));

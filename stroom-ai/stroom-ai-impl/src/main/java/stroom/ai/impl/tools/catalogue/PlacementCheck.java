@@ -1179,7 +1179,14 @@ final class PlacementCheck {
 
     // The rest of a path to a leaf under an element, for an example: `/Id`, `/User/Id`.
     private String example(final Element decl) {
-        if (decl == null || schema.isLeaf(decl)) {
+        return example(decl, new HashSet<>());
+    }
+
+    // The example below an element, never through one it is already below: a search's advanced query holds And, Or
+    // and Not, which hold themselves and need nothing more, so the walk went round them without end (a
+    // StackOverflowError in the Pega e2e, 2026-11-24).
+    private String example(final Element decl, final Set<Element> walked) {
+        if (decl == null || schema.isLeaf(decl) || !walked.add(decl)) {
             return "";
         }
         final List<Child> children = schema.children(decl);
@@ -1201,7 +1208,7 @@ final class PlacementCheck {
                         : candidates.getFirst());
         return first == null
                 ? ""
-                : "/" + first.name() + example(first.decl());
+                : "/" + first.name() + example(first.decl(), walked);
     }
 
     // --------------------------------------------------------------------------------
