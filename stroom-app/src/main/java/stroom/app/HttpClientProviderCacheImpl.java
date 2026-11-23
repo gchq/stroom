@@ -19,6 +19,7 @@ package stroom.app;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
+import stroom.util.http.AddressCheckingDnsResolver;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.jersey.HttpClientProvider;
@@ -44,7 +45,7 @@ public class HttpClientProviderCacheImpl implements HttpClientProviderCache {
 
     private static final String CACHE_NAME = "Http Client Cache";
 
-    private final LoadingStroomCache<HttpClientConfiguration, HttpClientProviderImpl> cache;
+    private final LoadingStroomCache<CacheKey, HttpClientProviderImpl> cache;
     private final HttpClientFactory httpClientFactory;
 
     @Inject
@@ -59,29 +60,42 @@ public class HttpClientProviderCacheImpl implements HttpClientProviderCache {
                 this::destroy);
     }
 
+    @Override
     public HttpClientProvider get(final HttpClientConfiguration httpClientConfiguration) {
+        return get(new CacheKey(httpClientConfiguration, false));
+    }
+
+    @Override
+    public HttpClientProvider getAddressChecked(final HttpClientConfiguration httpClientConfiguration) {
+        return get(new CacheKey(httpClientConfiguration, true));
+    }
+
+    private HttpClientProvider get(final CacheKey key) {
         // Get an item from the cache.
-        HttpClientProviderImpl httpClientProvider = cache.get(httpClientConfiguration);
+        HttpClientProviderImpl httpClientProvider = cache.get(key);
         // Try to acquire, if we fail then keep trying to get an item from the cache.
         while (!httpClientProvider.acquire()) {
             // Make sure the cache releases the currently cached item if it hasn't already.
-            cache.invalidate(httpClientConfiguration);
+            cache.invalidate(key);
             // Get a new item from the cache.
-            httpClientProvider = cache.get(httpClientConfiguration);
+            httpClientProvider = cache.get(key);
         }
         return httpClientProvider;
     }
 
-    private HttpClientProviderImpl create(final HttpClientConfiguration httpClientConfiguration) {
+    private HttpClientProviderImpl create(final CacheKey key) {
         LOGGER.debug("Creating client");
         final CloseableHttpClient httpClient = httpClientFactory.get(
                 "HttpClientCache-" + UUID.randomUUID(),
-                httpClientConfiguration);
+                key.configuration(),
+                key.addressChecked()
+                        ? AddressCheckingDnsResolver.INSTANCE
+                        : null);
         LOGGER.debug("Creating client provider");
         return new HttpClientProviderImpl(httpClient);
     }
 
-    private void destroy(final HttpClientConfiguration key, final HttpClientProviderImpl value) {
+    private void destroy(final CacheKey key, final HttpClientProviderImpl value) {
         LOGGER.debug("Destroying client provider");
         try {
             value.release();
@@ -131,5 +145,14 @@ public class HttpClientProviderCacheImpl implements HttpClientProviderCache {
                 }
             }
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Clients that check addresses are kept apart from those that don't, even for the same configuration.
+    private record CacheKey(HttpClientConfiguration configuration, boolean addressChecked) {
+
     }
 }

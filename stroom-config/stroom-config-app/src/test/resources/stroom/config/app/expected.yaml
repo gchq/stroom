@@ -911,6 +911,8 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
     xslt:
+      allowedEmailRecipients: []
+      allowedUriPrefixes: []
       cache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -918,6 +920,8 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       maxElements: 1000000
+      maxEmailsPerRun: 100
+      secureMode: true
   planb:
     defaultShardCounts:
       STATE: 16

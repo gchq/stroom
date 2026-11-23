@@ -21,8 +21,8 @@ package stroom.query.common.v2;
 ///
 /// The windows are noted as rows are stored, so that the store does not have to be read through to
 /// find them. They are only read through, once, when rows have been stored or removed in a way that
-/// was not noted: when a store that already holds rows is opened, when rows are deleted, and when
-/// rows arrive from another node.
+/// was not noted: when a store that already holds rows is opened, and when rows are deleted. Rows that
+/// arrive from another node come with the windows that the node has noted, as a [Span].
 ///
 /// The thread that writes to the store calls [#add(LmdbKV)], then [#beginCommit()] before it commits
 /// and [#committed(boolean)] after. A read takes a [Snapshot] before it begins and another once it
@@ -36,6 +36,13 @@ final class StoredWindowExtent {
     private long uncommittedFirst = Long.MAX_VALUE;
     private long uncommittedLast = Long.MIN_VALUE;
     private boolean uncommittedUnknown;
+
+    // The windows of every row that has been written, which a store that sends its rows to another
+    // node sends with them. They are unknown unless the store held no rows when it was opened. Used by
+    // the writing thread only, once the store is open.
+    private long writtenFirst = Long.MAX_VALUE;
+    private long writtenLast = Long.MIN_VALUE;
+    private boolean writtenUnknown = true;
 
     // The windows of rows committed since the store last changed in a way that was not noted.
     private long committedFirst = Long.MAX_VALUE;
@@ -58,11 +65,43 @@ final class StoredWindowExtent {
     /// @param lmdbKV The row.
     void add(final LmdbKV lmdbKV) {
         if (!lmdbKV.isWindowKnown()) {
-            uncommittedUnknown = true;
+            addSpan(Span.UNKNOWN);
         } else if (lmdbKV.getRealWindowKey() != null) {
-            uncommittedFirst = Math.min(uncommittedFirst, lmdbKV.getRealWindowKey());
-            uncommittedLast = Math.max(uncommittedLast, lmdbKV.getRealWindowKey());
+            addSpan(new Span(true, lmdbKV.getRealWindowKey(), lmdbKV.getRealWindowKey()));
         }
+    }
+
+    /// Notes that rows have been written to the store, and not yet committed, that hold real rows of
+    /// a span of windows. Rows from another node come with such a span.
+    ///
+    /// @param span The windows.
+    void addSpan(final Span span) {
+        if (!span.known()) {
+            uncommittedUnknown = true;
+            writtenUnknown = true;
+        } else if (span.first() <= span.last()) {
+            uncommittedFirst = Math.min(uncommittedFirst, span.first());
+            uncommittedLast = Math.max(uncommittedLast, span.last());
+            writtenFirst = Math.min(writtenFirst, span.first());
+            writtenLast = Math.max(writtenLast, span.last());
+        }
+    }
+
+    /// Gets the windows of every row that has been written to the store, which the store sends with
+    /// its rows to another node. Called by the writing thread.
+    ///
+    /// @return The windows.
+    Span getWrittenSpan() {
+        return writtenUnknown
+                ? Span.UNKNOWN
+                : new Span(true, writtenFirst, writtenLast);
+    }
+
+    /// Notes that the store held no rows when it was opened, so it does not have to be read through to
+    /// find its windows. Called before any row is written or read.
+    synchronized void openedEmpty() {
+        unknownChanges = 0;
+        writtenUnknown = false;
     }
 
     /// Notes that the rows written so far are about to be committed. Until [#committed(boolean)] is
@@ -161,5 +200,26 @@ final class StoredWindowExtent {
                     long commitCount,
                     boolean committing) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The first and last windows that a set of rows holds real rows for, which a store sends with
+    /// its rows to another node. It is also put on the queue of the store that receives them, ahead
+    /// of the rows, so that it is noted with them.
+    ///
+    /// The span sent with each set of rows is of every row the sending store has written so far. A
+    /// store may send its rows in more than one set, so the store that receives them may note a
+    /// window a little before its rows arrive. Once every set has arrived, the windows are exact.
+    ///
+    /// @param known Whether the windows are known. They are not if rows were written whose windows
+    ///              were not noted, so the store that receives them has to read through its rows.
+    /// @param first The key of the first window, or `Long.MAX_VALUE` if none.
+    /// @param last  The key of the last window, or `Long.MIN_VALUE` if none.
+    record Span(boolean known, long first, long last) implements LmdbQueueItem {
+
+        static final Span UNKNOWN = new Span(false, Long.MAX_VALUE, Long.MIN_VALUE);
     }
 }

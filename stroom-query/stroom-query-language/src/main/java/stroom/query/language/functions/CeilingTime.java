@@ -16,11 +16,6 @@
 
 package stroom.query.language.functions;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
-
 @FunctionDef(
         name = CeilingTime.NAME,
         commonCategory = FunctionCategory.DATE,
@@ -39,56 +34,24 @@ import java.time.format.DateTimeParseException;
                         @FunctionArg(
                                 name = "duration",
                                 description = "The duration to ceiling by in ISO-8601 format " +
-                                              "(e.g., 'PT5M' for 5 minutes).",
+                                              "(e.g., 'PT5M' for 5 minutes). Multiples of it are " +
+                                              "counted from midnight in the query's time zone.",
                                 argType = ValString.class)
                 })
 )
-class CeilingTime extends AbstractRoundDateTime {
+class CeilingTime extends AbstractRoundTimeToDuration {
 
     static final String NAME = "ceilingTime";
 
     public CeilingTime(final ExpressionContext expressionContext, final String name) {
-        super(expressionContext, name, 2, 2);
+        super(expressionContext, name);
     }
 
     @Override
-    protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            final long duration = parseDuration(params[1], "duration").toMillis();
-            final long millis = zonedDateTime.toInstant().toEpochMilli();
-
-            final Instant t1 = Instant.ofEpochMilli(millis);
-
-            final long remainder = millis % duration;
-            long ceilingMillis = millis - remainder;
-
-            final Instant t2 = Instant.ofEpochMilli(ceilingMillis);
-
-            if (remainder > 0) {
-                ceilingMillis += duration;
-            }
-
-            final Instant t3 = Instant.ofEpochMilli(ceilingMillis);
-
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(ceilingMillis), zoneId);
-        };
-    }
-
-    // Reads the argument via AbstractRoundDateTime.constantString; reading it with
-    // param.toString() would silently break param('key') here.
-    private Duration parseDuration(final Param param, final String paramName) {
-        if (param == null) {
-            return Duration.ZERO;
-        }
-        final String value = constantString(param);
-        if (value == null) {
-            throw new IllegalArgumentException(
-                    "Invalid " + paramName + ": " + param + " - " + whyNotConstant(param));
-        }
-        try {
-            return Duration.parse(value);
-        } catch (final DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid " + paramName + " format: " + value);
-        }
+    long adjust(final long millis, final long durationMillis) {
+        final long remainder = remainder(millis, durationMillis);
+        return remainder == 0
+                ? millis
+                : millis - remainder + durationMillis;
     }
 }
