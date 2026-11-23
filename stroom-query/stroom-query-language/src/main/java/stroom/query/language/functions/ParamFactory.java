@@ -18,6 +18,7 @@ package stroom.query.language.functions;
 
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
+import stroom.query.language.token.TimeLiteral;
 
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public class ParamFactory {
                     return ValDate.create(DateUtil.parseNormalDateTimeString(token.getText()));
 
                 case DURATION:
-                    return ValDuration.create(ValDurationUtil.parseToMilliseconds(token.getText()));
+                    return ValDuration.create(TimeLiteral.toExactMillis(TimeLiteral.parse(token.getText())));
 
                 case NUMBER:
                     return ValDouble.create(Double.parseDouble(token.getText()));

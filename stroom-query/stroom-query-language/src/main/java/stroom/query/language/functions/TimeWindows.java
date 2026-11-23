@@ -17,11 +17,11 @@
 package stroom.query.language.functions;
 
 import stroom.query.api.HoppingWindow;
+import stroom.query.language.token.TimeLiteral;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 
-import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -155,8 +155,8 @@ public final class TimeWindows {
 
     private static SimpleDuration parseDuration(final String string, final String name) {
         try {
-            return SimpleDurationUtil.parse(string);
-        } catch (final ParseException | RuntimeException e) {
+            return TimeLiteral.parse(string);
+        } catch (final RuntimeException e) {
             throw new IllegalArgumentException(
                     "The " + name + " '" + string + "' is not a duration, such as 1d", e);
         }

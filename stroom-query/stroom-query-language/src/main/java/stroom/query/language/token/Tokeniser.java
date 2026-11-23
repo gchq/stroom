@@ -126,7 +126,8 @@ public class Tokeniser {
         tokens = split("=", 0, TokenType.EQUALS, tokens);
 
         // Tag durations.
-        tokens = split("(^|\\s|\\))(\\d+(ns|ms|s|m|h|d|w|M|y))", 2, TokenType.DURATION, tokens);
+        // Patterns here ignore case, so a unit in the wrong case is tagged too, and is refused when it is read.
+        tokens = split("(^|\\s|\\))(" + TimeLiteral.REGEX + ")", 2, TokenType.DURATION, tokens);
         // Tag numbers.
         tokens = split("(^|\\s|\\))(\\d+(\\.\\d+)?([Ee]-\\d+)?)", 2, TokenType.NUMBER, tokens);
 

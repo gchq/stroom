@@ -71,6 +71,19 @@ public enum TimeUnit implements HasDisplayValue, HasPrimitiveValue {
         return null;
     }
 
+    /// Gets the unit with exactly this short form. Case matters, as `m` is a minute and `M` is a month.
+    ///
+    /// @param shortForm The short form, such as `ms`.
+    /// @return The unit, or `null` if no unit has that short form.
+    public static TimeUnit fromShortForm(final String shortForm) {
+        for (final TimeUnit timeUnit : values()) {
+            if (timeUnit.shortForm.equals(shortForm)) {
+                return timeUnit;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String getDisplayValue() {
         return displayValue;

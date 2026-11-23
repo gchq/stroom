@@ -23,8 +23,10 @@ import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
 import stroom.query.language.functions.UserTimeZoneUtil;
+import stroom.query.language.token.TimeLiteral;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.time.DateTimeException;
 import java.time.Duration;
@@ -50,10 +52,10 @@ public class DateExpressionParser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateExpressionParser.class);
 
-    // The inner digit run is possessive (\d++): a duration digit run is always terminated by a unit letter
-    // ([smhdwMy], disjoint from \d), so no backtracking into the digits is ever needed. This avoids O(n^2)
-    // scanning (ReDoS) on a long run of digits with no trailing unit.
-    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d++[smhdwMy])+");
+    // The digit run of a literal is possessive: it is always terminated by a unit letter, so no backtracking
+    // into the digits is ever needed. This avoids O(n^2) scanning (ReDoS) on a long run of digits with no
+    // trailing unit.
+    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:" + TimeLiteral.REGEX + ")+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
@@ -378,23 +380,9 @@ public class DateExpressionParser {
         // Strip out spaces.
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 
-        int start = 0;
-        final char[] chars = expression.toCharArray();
-
         TimeFunction lastFunction = null;
-        while (start < chars.length) {
-            // Get digits.
-            final int numStart = start;
-            while (Character.isDigit(chars[start])) {
-                start++;
-            }
-            final long num = Long.parseLong(new String(chars, numStart, start - numStart));
-
-            // Get duration type.
-            final char type = chars[start++];
-
-            // Create my duration.
-            final TimeFunction function = createFunction(sign, type, num);
+        for (final SimpleDuration duration : TimeLiteral.parseCompound(expression)) {
+            final TimeFunction function = createFunction(sign, duration);
             if (lastFunction != null) {
                 final TimeFunction innerFunction = lastFunction;
                 lastFunction = time -> function.apply(innerFunction.apply(time));
@@ -405,29 +393,26 @@ public class DateExpressionParser {
         return lastFunction;
     }
 
-    private static TimeFunction createFunction(final char sign, final char type, final long value) {
-        return switch (sign) {
-            case '+' -> switch (type) {
-                case 's' -> time -> time.plusSeconds(value);
-                case 'm' -> time -> time.plusMinutes(value);
-                case 'h' -> time -> time.plusHours(value);
-                case 'd' -> time -> time.plusDays(value);
-                case 'w' -> time -> time.plusWeeks(value);
-                case 'M' -> time -> time.plusMonths(value);
-                case 'y' -> time -> time.plusYears(value);
-                default -> throw new DateTimeException("Unknown duration type '" + type + "'.");
-            };
-            case '-' -> switch (type) {
-                case 's' -> time -> time.minusSeconds(value);
-                case 'm' -> time -> time.minusMinutes(value);
-                case 'h' -> time -> time.minusHours(value);
-                case 'd' -> time -> time.minusDays(value);
-                case 'w' -> time -> time.minusWeeks(value);
-                case 'M' -> time -> time.minusMonths(value);
-                case 'y' -> time -> time.minusYears(value);
-                default -> throw new DateTimeException("Unknown duration type '" + type + "'.");
-            };
+    private static TimeFunction createFunction(final char sign, final SimpleDuration duration) {
+        final int direction = switch (sign) {
+            case '+' -> 1;
+            case '-' -> -1;
             default -> throw new DateTimeException("Unknown sign '" + sign + "'.");
+        };
+        final long value = direction * duration.getTime();
+        return switch (duration.getTimeUnit()) {
+            case NANOSECONDS, MILLISECONDS -> {
+                // Times are held to the millisecond, so anything finer is refused and not lost.
+                final long millis = direction * TimeLiteral.toExactMillis(duration);
+                yield time -> time.plus(millis, ChronoUnit.MILLIS);
+            }
+            case SECONDS -> time -> time.plusSeconds(value);
+            case MINUTES -> time -> time.plusMinutes(value);
+            case HOURS -> time -> time.plusHours(value);
+            case DAYS -> time -> time.plusDays(value);
+            case WEEKS -> time -> time.plusWeeks(value);
+            case MONTHS -> time -> time.plusMonths(value);
+            case YEARS -> time -> time.plusYears(value);
         };
     }
 

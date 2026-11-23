@@ -16,14 +16,21 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.language.token.StructureBuilder;
+import stroom.query.language.token.Tokeniser;
+
 import org.junit.jupiter.api.Test;
 
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestDateExpressionParser {
 
@@ -140,6 +147,60 @@ class TestDateExpressionParser {
     void testWeekPlus() {
         assertThat(DateExpressionParser.parse("week()+1w", nowEpochMilli).get())
                 .isEqualTo(ZonedDateTime.parse("2015-02-09T00:00:00.000Z"));
+    }
+
+    @Test
+    void testMilliseconds() {
+        assertThat(DateExpressionParser.parse("second()+5ms", nowEpochMilli).get())
+                .isEqualTo(ZonedDateTime.parse("2015-02-03T01:22:33.005Z"));
+        assertThat(DateExpressionParser.parse("second()-5ms", nowEpochMilli).get())
+                .isEqualTo(ZonedDateTime.parse("2015-02-03T01:22:32.995Z"));
+        assertThat(DateExpressionParser.parse("second()+1m5ms", nowEpochMilli).get())
+                .isEqualTo(ZonedDateTime.parse("2015-02-03T01:23:33.005Z"));
+        assertThat(DateExpressionParser.parse("second()+1000000ns", nowEpochMilli).get())
+                .isEqualTo(ZonedDateTime.parse("2015-02-03T01:22:33.001Z"));
+    }
+
+    @Test
+    void testUnitsAreCaseSensitive() {
+        assertThat(DateExpressionParser.parse("second()+1m", nowEpochMilli).get())
+                .isEqualTo(ZonedDateTime.parse("2015-02-03T01:23:33.000Z"));
+        assertThat(DateExpressionParser.parse("second()+1M", nowEpochMilli).get())
+                .isEqualTo(ZonedDateTime.parse("2015-03-03T01:22:33.000Z"));
+    }
+
+    @Test
+    void testFinerThanMillisecond() {
+        testError("now()+1ns", "'1ns' can't be used as a duration, as durations are held to the millisecond");
+    }
+
+    @Test
+    void testTokens() {
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().referenceTime(nowEpochMilli).build();
+        assertThat(DateExpressionParser.parse(tokens("second()+5ms"), dateTimeSettings).orElseThrow())
+                .isEqualTo(ZonedDateTime.parse("2015-02-03T01:22:33.005Z"));
+        assertThat(DateExpressionParser.parse(tokens("second()+1M"), dateTimeSettings).orElseThrow())
+                .isEqualTo(ZonedDateTime.parse("2015-03-03T01:22:33.000Z"));
+        assertThatThrownBy(() -> DateExpressionParser.parse(tokens("second()+1H"), dateTimeSettings))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessageContaining("Unknown unit 'H'");
+    }
+
+    @Test
+    void testDayAndWeekAcrossClockChange() {
+        // The clocks go forward on 31 March 2024, so the day is 23 hours long.
+        final String time = "2024-03-30T12:00:00.000+00:00[Europe/London]";
+        assertThat(DateExpressionParser.parse(time + " + 1d", nowEpochMilli).orElseThrow().toInstant())
+                .isEqualTo(Instant.parse("2024-03-31T11:00:00Z"));
+        assertThat(DateExpressionParser.parse(time + " + 24h", nowEpochMilli).orElseThrow().toInstant())
+                .isEqualTo(Instant.parse("2024-03-31T12:00:00Z"));
+        assertThat(DateExpressionParser.parse(time + " + 1w", nowEpochMilli).orElseThrow().toInstant())
+                .isEqualTo(Instant.parse("2024-04-06T11:00:00Z"));
+    }
+
+    // The tokens of a StroomQL term's value, as the query language passes them on.
+    private static List<AbstractToken> tokens(final String value) {
+        return StructureBuilder.createBasic(Tokeniser.parse(value)).getChildren();
     }
 
     @Test
