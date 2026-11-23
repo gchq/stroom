@@ -30,6 +30,7 @@ import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -86,6 +87,12 @@ public final class FormGroupStories {
                     play.expect(email).toHaveAttribute("aria-keyshortcuts", "F1");
                     final Query help = play.getByTitle("Email address - Click for help (F1)");
                     play.expect(help).toHaveAttribute("tabindex", "-2");
+                    // The help icon is its label's colour, in both themes (it was the icon buttons'
+                    // blue in the light theme)
+                    final Query icon = play.within(help).querySelector(".form-group__help-icon");
+                    final Query label = play.getByText("Email address", "label");
+                    play.expect("the help icon's colour the label's", () -> colour(icon.element().get())
+                            .equals(colour(label.element().get()))).toBe(true);
                     // Clicking the help button shows the help, leaving the focus in the text box
                     play.click(email);
                     play.click(help);
@@ -267,4 +274,9 @@ public final class FormGroupStories {
                         : null;
         formGroup.setFeedback(message);
     }
+
+    // An element's text colour, as drawn
+    private static native String colour(Element element) /*-{
+        return $wnd.getComputedStyle(element).color;
+    }-*/;
 }
