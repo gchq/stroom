@@ -81,6 +81,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -142,9 +143,35 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         try {
             final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
-            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(doc, effectiveExecutionTime);
+            // A rule with a window clause judges the windows that are ready in its time range, which may
+            // need events from before the start of the range, so the search starts early enough for them.
+            final MappedRequestBundle requestedBundle = buildMappedSearchRequest(
+                    doc,
+                    effectiveExecutionTime,
+                    doc.getTimeRange());
+            final WholeWindowFilter wholeWindowFilter = createWholeWindowFilter(
+                    requestedBundle,
+                    effectiveExecutionTime);
+            final MappedRequestBundle mappedRequestBundle = wholeWindowFilter != null
+                                                            && wholeWindowFilter.searchesBeforeRange()
+                    ? buildMappedSearchRequest(
+                            doc,
+                            effectiveExecutionTime,
+                            new TimeRange(
+                                    null,
+                                    doc.getTimeRange().getCondition(),
+                                    DateUtil.createNormalDateTimeString(wholeWindowFilter.getSearchFrom()),
+                                    doc.getTimeRange().getTo()))
+                    : requestedBundle;
             final ExpressionContext expressionContext = mappedRequestBundle.expressionContext;
-            final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
+            // The store of a rule with a window clause holds rows of windows that the rule does not
+            // judge, so the limit of the query is applied to the rows it judges and not to the store.
+            final long judgedRowLimit = wholeWindowFilter != null
+                    ? getRowLimit(mappedRequestBundle.mappedRequest)
+                    : Long.MAX_VALUE;
+            final SearchRequest mappedRequest = wholeWindowFilter != null
+                    ? removeRowLimits(mappedRequestBundle.mappedRequest)
+                    : mappedRequestBundle.mappedRequest;
 
             // Fix table result requests.
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -197,20 +224,19 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                     final ColumnFormatter fieldFormatter =
                             new ColumnFormatter(new FormatterFactory(expressionContext.getDateTimeSettings()));
 
-                    // The rows of time windows that the time range of the query cuts short are not
-                    // judged, as they are worked out from part of their events.
-                    final Predicate<Item> wholeWindowFilter = createWholeWindowFilter(
-                            mappedRequest,
-                            tableSettings,
-                            compiledColumns,
-                            dataStore.getColumns(),
-                            effectiveExecutionTime);
+                    // Only the rows of the time windows that are ready in the time range are judged.
+                    final Predicate<Item> judgedWindowFilter = createJudgedWindowFilter(
+                            wholeWindowFilter,
+                            dataStore.getColumns());
+                    final AtomicLong judgedRows = new AtomicLong();
 
                     try (final DuplicateCheck duplicateCheck =
                             duplicateCheckFactory.create(doc, compiledColumns)) {
                         detectionConsumerProxy.start();
                         final Consumer<Item> itemConsumer = item -> {
-                            if (wholeWindowFilter.test(item) && duplicateCheck.check(item)) {
+                            if (judgedWindowFilter.test(item)
+                                && judgedRows.incrementAndGet() <= judgedRowLimit
+                                && duplicateCheck.check(item)) {
                                 Long streamId = null;
                                 Long eventId = null;
                                 final List<DetectionValue> values = new ArrayList<>();
@@ -449,7 +475,8 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     }
 
     private MappedRequestBundle buildMappedSearchRequest(final AnalyticRuleDoc analytic,
-                                                         final Instant effectiveExecutionTime) {
+                                                         final Instant effectiveExecutionTime,
+                                                         final TimeRange timeRange) {
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
@@ -460,7 +487,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         final Query sampleQuery = Query
                 .builder()
                 .params(analytic.getParameters())
-                .timeRange(analytic.getTimeRange())
+                .timeRange(timeRange)
                 .build();
         final SearchRequest sampleRequest = new SearchRequest(
                 searchRequestSource,
@@ -483,7 +510,10 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     public List<String> extractColumnNames(final AnalyticRuleDoc analytic) {
         if (analytic.getDuplicateNotificationConfig() != null) {
             // Time doesn't matter, so just use now()
-            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(analytic, Instant.now());
+            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(
+                    analytic,
+                    Instant.now(),
+                    analytic.getTimeRange());
             final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
             final TableSettings tableSettings = NullSafe.get(
@@ -522,26 +552,23 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     // --------------------------------------------------------------------------------
 
 
-    // Creates a test of whether a row is of a time window that lies wholly inside the time that was
-    // searched, which ends at the time the rule is run for if the query's time range has no earlier
-    // end. Every row passes if the query has no window clause.
-    private Predicate<Item> createWholeWindowFilter(final SearchRequest searchRequest,
-                                                    final TableSettings tableSettings,
-                                                    final CompiledColumns compiledColumns,
-                                                    final List<Column> columns,
-                                                    final Instant effectiveExecutionTime) {
-        if (!(tableSettings.getWindow() instanceof final HoppingWindow window)) {
-            return item -> true;
+    // Chooses the time windows that the rule judges, from the windows of the query's window clause and
+    // the time range of the rule, which ends at the time the rule is run for if the range has no
+    // earlier end. Gives null if the query has no window clause.
+    private WholeWindowFilter createWholeWindowFilter(final MappedRequestBundle bundle,
+                                                      final Instant effectiveExecutionTime) {
+        final SearchRequest searchRequest = bundle.mappedRequest();
+        final TableSettings tableSettings = NullSafe.get(
+                searchRequest.getResultRequests(),
+                List::getFirst,
+                resultRequest -> NullSafe.first(resultRequest.getMappings()));
+        if (tableSettings == null || !(tableSettings.getWindow() instanceof final HoppingWindow window)) {
+            return null;
         }
-        int windowKeyIndex = -1;
-        for (int i = 0; i < columns.size(); i++) {
-            if (SearchRequestFactory.WINDOW_COLUMN_NAME.equals(columns.get(i).getName())) {
-                windowKeyIndex = i;
-            }
-        }
-        if (windowKeyIndex == -1) {
-            return item -> true;
-        }
+        final CompiledColumns compiledColumns = CompiledColumns.create(
+                bundle.expressionContext(),
+                tableSettings.getColumns(),
+                ParamUtil.createParamMap(searchRequest.getQuery().getParams()));
 
         // The time range of the query only bounds the windows if it is applied to the field that
         // the windows are of.
@@ -553,16 +580,67 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                                      .isPresent();
         final TimeFilter searched = rangeIsOfWindowField
                 ? DateExpressionParser.getTimeFilter(timeRange, searchRequest.getDateTimeSettings())
-                : new TimeFilter(0L, Long.MAX_VALUE);
-        final WholeWindowFilter wholeWindowFilter = new WholeWindowFilter(
+                : new TimeFilter(Long.MIN_VALUE, Long.MAX_VALUE);
+        final long from = rangeIsOfWindowField && !NullSafe.isBlankString(timeRange.getFrom())
+                ? searched.getFrom()
+                : WholeWindowFilter.NO_START;
+        return new WholeWindowFilter(
                 window,
                 compiledColumns.getValueReferenceIndex().getWindowShifts(),
-                new TimeFilter(searched.getFrom(), Math.min(searched.getTo(), effectiveExecutionTime.toEpochMilli())));
+                new TimeFilter(from, Math.min(searched.getTo(), effectiveExecutionTime.toEpochMilli())));
+    }
+
+    // Creates a test of whether a row is of a time window that the rule judges. Every row passes if
+    // the query has no window clause.
+    private Predicate<Item> createJudgedWindowFilter(final WholeWindowFilter wholeWindowFilter,
+                                                     final List<Column> columns) {
+        if (wholeWindowFilter == null) {
+            return item -> true;
+        }
+        int windowKeyIndex = -1;
+        for (int i = 0; i < columns.size(); i++) {
+            if (SearchRequestFactory.WINDOW_COLUMN_NAME.equals(columns.get(i).getName())) {
+                windowKeyIndex = i;
+            }
+        }
+        if (windowKeyIndex == -1) {
+            // The search may reach back before the time range, so judging every row would judge
+            // windows that are not in it.
+            throw new IllegalStateException("The query has a window clause but no column of the window of a row");
+        }
         final int index = windowKeyIndex;
         return item -> {
             final Long windowKey = NullSafe.get(item.getValue(index), Val::toLong);
-            return windowKey != null && wholeWindowFilter.isWhole(windowKey);
+            return windowKey != null && wholeWindowFilter.isJudged(windowKey);
         };
+    }
+
+    // Gets the most rows that the query's limit allows at the top level of its table, or no limit if
+    // the query has none.
+    private static long getRowLimit(final SearchRequest searchRequest) {
+        final List<Long> maxResults = NullSafe.get(
+                searchRequest.getResultRequests(),
+                List::getFirst,
+                resultRequest -> NullSafe.first(resultRequest.getMappings()),
+                TableSettings::getMaxResults);
+        final Long limit = NullSafe.first(maxResults);
+        return limit != null
+                ? limit
+                : Long.MAX_VALUE;
+    }
+
+    // Takes the query's limits off its tables, so that the store keeps the rows of every window.
+    private static SearchRequest removeRowLimits(final SearchRequest searchRequest) {
+        final List<ResultRequest> resultRequests = NullSafe.list(searchRequest.getResultRequests())
+                .stream()
+                .map(resultRequest -> resultRequest.copy()
+                        .mappings(NullSafe.list(resultRequest.getMappings())
+                                .stream()
+                                .map(tableSettings -> tableSettings.copy().maxResults(null).build())
+                                .toList())
+                        .build())
+                .toList();
+        return searchRequest.copy().resultRequests(resultRequests).build();
     }
 
     private record MappedRequestBundle(SearchRequest mappedRequest,

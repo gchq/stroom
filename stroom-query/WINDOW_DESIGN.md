@@ -348,7 +348,7 @@ select windowStart() as Day, UserId, today, yesterday
 
 - `lag(agg, n)` is the aggregate for the window `n` sizes earlier; `lead(agg, n)` for the window `n` sizes later. Both are by time, per group.
 - An earlier or later window with no events for the group gives the aggregate's empty value, 0 for a count, if it lies between the first and last windows that hold an event of any group.
-- A window before the first window that holds an event, or after the last, gives null, or the default if one is given. The first and last are of all groups, and are used whether or not the query has a time range. A comparison with null is false, so a rule does not fire on the first window that has events. A scheduled rule also leaves out a row whose `lag` or `lead` window is outside the time range of its query.
+- A window before the first window that holds an event, or after the last, gives null, or the default if one is given. The first and last are of all groups, and are used whether or not the query has a time range. A comparison with null is false, so a rule does not fire on the first window that has events. A scheduled rule searches back before its time range for the windows it reads with `lag`, and judges a row that reads a later window with `lead` once that window has ended.
 - `having` takes expressions, so `having count() > lag(count(), 1) * 5` works without an `eval`.
 - `lag` or `lead` without a `window` clause is refused.
 
@@ -404,6 +404,12 @@ A second review, of those three commits, led to these changes, written on 19 Nov
 - **Counting rows.** Only top-level rows are read in full when counting, not every row at every depth.
 
 A bare name on the right of a `having` comparison is read as a column if an eval or a select column has that name, and as text if not (commit 9117902aef).
+
+### Follow-up (#6077)
+
+A review of the merged work found that a scheduled rule using `lag` could never fire: with a range of `day() - 1d` to `day()`, the day before the range was not searched, so yesterday was left out on every run, and nothing said why. A rule run on a schedule now judges each window once, in the run whose time range holds the time the window is ready: the end of the window, or the end of the last window it reads with `lead`. The rule searches from the start of the earliest window it judges, less its furthest `lag`, so a range that does not line up with the windows, or that `lag` reads before, no longer drops windows. Runs whose ranges follow on from each other judge each window once. This needs a time range with a start, on the field of the window; without one, each run judges every window that has ended, as before.
+
+The search back applies to the whole query, so a join or bracketed query is searched over the same longer range, and the rows of a window that `lag` reads join as they would in a query over that range. A `limit` in the query applies to the rows the rule judges, not to the store, so the rows searched only for `lag` do not take the place of judged rows.
 
 ### Known limits
 
