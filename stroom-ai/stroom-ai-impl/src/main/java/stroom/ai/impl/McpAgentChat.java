@@ -21,6 +21,7 @@ import stroom.ai.impl.ToolApprovalRequest.Decision;
 import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.LangChain4jTools.StroomToolExecutor;
+import stroom.ai.impl.tools.SkillCatalogue;
 import stroom.ai.impl.tools.TaskListReminder;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
@@ -218,6 +219,8 @@ class McpAgentChat {
     private TabSnapshots tabSnapshots;
     // Null where it isn't injected (in tests): a document attached mid-run is then noted as unavailable.
     private DocumentReferences documentReferences;
+    // Lists the skills the user can read in the prompt, once their tools are offered; null if not bound.
+    private SkillCatalogue skillCatalogue;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -262,6 +265,12 @@ class McpAgentChat {
     @Inject
     void setDocumentReferences(final DocumentReferences documentReferences) {
         this.documentReferences = documentReferences;
+    }
+
+    /// @param skillCatalogue Lists the skills the user can read, for the prompt.
+    @Inject
+    void setSkillCatalogue(final SkillCatalogue skillCatalogue) {
+        this.skillCatalogue = skillCatalogue;
     }
 
     @Inject
@@ -391,7 +400,7 @@ class McpAgentChat {
         // On are the groups the chat used in its latest questions, and those the question's guidance needs.
         final ToolGroups groupsAtStart = run.toolGroups;
         toolGroupActivations.startRun(chatId, groupsAtStart::groupOf,
-                BuiltInToolGroups.neededBy(systemPrompt(run.conversation)));
+                BuiltInToolGroups.neededBy(systemPrompt(run.conversation), latestQuestion(run.conversation)));
         run.tools = offeredTools(chatId, run.toolGroups, run.modelDoc);
         // Trusted servers' instructions on how to use their tools, for the servers whose tools are offered.
         final String serverInstructions = joined(toolset.serverInstructions(run.mcpTools.keySet().stream()
@@ -399,6 +408,8 @@ class McpAgentChat {
                 .flatMap(Optional::stream)
                 .collect(Collectors.toSet())));
         withServerInstructions(run.conversation, serverInstructions);
+        // The skills the user can read, a line each, in the stable part of the prompt, for the model to choose.
+        withSkills(run);
         // With the build tools' instructions, once they are offered.
         run.buildInstructions = new BuildInstructions(chatId, serverInstructions);
         run.buildInstructions.addIfOffered(run.conversation, run.tools);
@@ -1500,6 +1511,33 @@ class McpAgentChat {
         return text.isEmpty()
                 ? null
                 : text;
+    }
+
+    // Adds the list of the skills the user can read to the system prompt, if their tools are offered, and records
+    // which matched the question.
+    private void withSkills(final Run run) {
+        if (skillCatalogue == null || run.builtIns.keySet().stream()
+                .noneMatch(specification -> SkillCatalogue.FIND_SKILLS.equals(specification.name()))) {
+            return;
+        }
+        try {
+            skillCatalogue.prompt(run.chatId).ifPresent(prompt -> {
+                withServerInstructions(run.conversation, prompt.text());
+                skillCatalogue.recordOffered(run.chatId, prompt);
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to list the skills for chat " + run.chatId, e);
+        }
+    }
+
+    // The text of the latest question in the conversation, or null if there is none.
+    private static String latestQuestion(final List<ChatMessage> conversation) {
+        for (final ChatMessage message : conversation.reversed()) {
+            if (message instanceof final UserMessage user && user.hasSingleText()) {
+                return user.singleText();
+            }
+        }
+        return null;
     }
 
     // The text of the conversation's system prompt, or null if it has none.

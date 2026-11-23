@@ -23,6 +23,7 @@ import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.impl.extraction.ExtractionActions;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
+import stroom.ai.impl.tools.SkillDoc;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChangeExtraction;
@@ -77,6 +78,7 @@ public class UserActionService {
     static final String UNDO_DASHBOARD_COMMAND = "Undo applied dashboard change";
     static final String APPLY_DOCUMENTATION_COMMAND = "Apply proposed documentation change";
     static final String CREATE_INSTRUCTIONS_COMMAND = "Create proposed standing instructions";
+    static final String CREATE_SKILLS_COMMAND = "Create proposed skills doc";
     static final String CREATED = "Created and saved";
     static final String UNDO_DOCUMENTATION_COMMAND = "Undo applied documentation change";
     static final String WRITE_EXTRACTION_COMMAND = "Write proposed search extraction";
@@ -727,17 +729,28 @@ public class UserActionService {
                                                   final ToolResultRecord result,
                                                   final UserActionRecord action,
                                                   final Set<Integer> rejected) {
-        final String target = "standing instructions in " + describeDoc(action);
+        final boolean skills = SkillDoc.DOC_NAME.equals(action.name());
+        final String target = (skills
+                ? "skills (" + SkillDoc.DOC_NAME + ") in "
+                : "standing instructions in ") + describeDoc(action);
+        final String command = skills
+                ? CREATE_SKILLS_COMMAND
+                : CREATE_INSTRUCTIONS_COMMAND;
         if (action.doc() == null || lookup.find(action.doc()).isEmpty()) {
             final String problem = "The folder no longer exists, or you cannot see it.";
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), CREATE_INSTRUCTIONS_COMMAND, target, problem,
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target, problem,
                     false);
             return new AiUserActionResult(false, problem, null);
         }
-        if (lookup.instructionsIn(action.doc()).isPresent()) {
-            final String problem = "The folder has standing instructions (an AGENTS doc) now, so this can't create "
-                                   + "them: ask for the change to be proposed to that doc.";
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), CREATE_INSTRUCTIONS_COMMAND, target, problem,
+        if ((skills
+                ? lookup.skillsIn(action.doc())
+                : lookup.instructionsIn(action.doc())).isPresent()) {
+            final String problem = skills
+                    ? "The folder has a skills doc (SKILLS) now, so this can't create one: ask for the change to be "
+                      + "proposed to that doc."
+                    : "The folder has standing instructions (an AGENTS doc) now, so this can't create them: ask "
+                      + "for the change to be proposed to that doc.";
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target, problem,
                     false);
             return new AiUserActionResult(false, problem, null);
         }
@@ -754,19 +767,25 @@ public class UserActionService {
                 : proposed.withChangesExcept(rejected, "\n");
         final DocRef created;
         try {
-            created = lookup.createInstructions(action.doc(), text);
+            created = skills
+                    ? lookup.createSkills(action.doc(), text)
+                    : lookup.createInstructions(action.doc(), text);
         } catch (final RuntimeException e) {
-            final String problem = "The standing instructions couldn't be created: "
+            final String problem = (skills
+                    ? "The skills doc couldn't be created: "
+                    : "The standing instructions couldn't be created: ")
                                    + NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName());
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), CREATE_INSTRUCTIONS_COMMAND, target, problem,
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target, problem,
                     false);
             return new AiUserActionResult(false, problem, null);
         }
         if (update(message, result, action.withStatus(Status.DONE, CREATED)) == null) {
             LOGGER.warn(() -> "Created " + created + " but couldn't mark the button in chat " + chatId + " done");
         }
-        auditLog.processed(ToolSession.chat(chatId), created, CREATE_INSTRUCTIONS_COMMAND, target,
-                "Created and saved the proposed standing instructions", true);
+        auditLog.processed(ToolSession.chat(chatId), created, command, target,
+                skills
+                        ? "Created and saved the proposed skills doc"
+                        : "Created and saved the proposed standing instructions", true);
         // So the model knows on its next turn (or now, if it is working).
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I created the "
                                                                      + target + " and saved it.");

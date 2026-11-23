@@ -1,15 +1,16 @@
 # The built-in tools the model is shown
 
-Built-in tools: 59
+Built-in tools: 62
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (48 tool(s))
+### AGENT (49 tool(s))
 activate_administration
 activate_build
 activate_dashboards
 activate_indexing
 activate_processing
+activate_skills
 ask_user
 current_results
 delete_file
@@ -54,12 +55,13 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (44 tool(s))
+### ASK (45 tool(s))
 activate_administration
 activate_build
 activate_dashboards
 activate_indexing
 activate_processing
+activate_skills
 ask_user
 current_results
 describe_data_source
@@ -100,12 +102,13 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (44 tool(s))
+### PLAN (45 tool(s))
 activate_administration
 activate_build
 activate_dashboards
 activate_indexing
 activate_processing
+activate_skills
 ask_user
 current_results
 describe_data_source
@@ -202,6 +205,45 @@ Asks the user the questions you need answered before you carry on, and waits for
     }
   },
   "required" : [ "questions" ],
+  "type" : "object"
+}
+
+================================================================================
+## check_skill
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Checks a skill, saved (by name) or a draft (its markdown), and gives its problems and suggestions, each with a proposed fix: structure (description, steps, parameters used and listed), example calls against the tools' parameters and your tool policies, the data sources and fields they name, a hand edit since the doc's latest history entry; vague steps, values that should be parameters, a chart the chat doesn't draw, a thin 'When to use', near-duplicates, and how your chats used it.
+
+### Parameters
+
+{
+  "properties" : {
+    "doc" : {
+      "description" : "A Documentation doc (UUID or path) to check every skill of.",
+      "type" : "string"
+    },
+    "folder" : {
+      "description" : "The folder of its skills doc, where two share a name.",
+      "type" : "string"
+    },
+    "markdown" : {
+      "description" : "A draft skill to check instead, from its '# Name' heading.",
+      "type" : "string"
+    },
+    "name" : {
+      "description" : "A saved skill's name.",
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
   "type" : "object"
 }
 
@@ -775,6 +817,47 @@ Finds text in the content of Stroom documents (e.g. XSLTs, text converters, dict
     }
   },
   "required" : [ "pattern" ],
+  "type" : "object"
+}
+
+================================================================================
+## find_skills
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Finds the skills the user can read (saved procedures, in Documentation docs marked as skills docs): by words in their names, descriptions and 'When to use', or one by name to read it whole, checked, and follow its steps. Give arguments (the values the question gives, {} for none) to run it: its defaults are applied, any required parameter not given is asked of the user in a form, and the steps come back with the values in. The skills you can read are listed in your instructions; two of one name are told apart by folder.
+
+### Parameters
+
+{
+  "properties" : {
+    "arguments" : {
+      "description" : "With name: the skill's parameters' values, by name, to run it.",
+      "properties" : { },
+      "required" : [ ],
+      "type" : "object"
+    },
+    "folder" : {
+      "description" : "The folder of its skills doc (path or UUID), where two skills share a name.",
+      "type" : "string"
+    },
+    "name" : {
+      "description" : "A skill's name (or its /skill: command's name), to read it whole.",
+      "type" : "string"
+    },
+    "words" : {
+      "description" : "Words to search for, e.g. 'timeline user activity'.",
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
   "type" : "object"
 }
 
@@ -2042,6 +2125,73 @@ While the tab the user attached is a StroomQL Query, offers them an 'Apply to qu
     }
   },
   "required" : [ "query", "summary" ],
+  "type" : "object"
+}
+
+================================================================================
+## propose_skill
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Writes a skill (a saved, parameterised procedure: a hunt, a timeline) with the user and proposes it for a skills doc as a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no SKILLS doc, by creating and saving one). The doc's history is written for you. Actions: draft (from this chat's calls, or a description: what only the user knows is asked in a form), template (built-in starting points), trial (run a draft once on given parameters before saving: follow the steps it gives back), propose (default), remove, undo (the reverse of a change applied in this chat), record (a hand edit in the history). A skill: '# Name', a first paragraph saying what it does, '## When to use' (how people ask), '## Parameters' ('- name (required): ...' or '- name (default 7): ...'), '## Steps' (numbered, {name} where a parameter goes, an example call in fenced JSON {"tool": ..., "arguments": {...}}), '## Output'; get_instructions guide='skills'.
+
+### Parameters
+
+{
+  "properties" : {
+    "action" : {
+      "description" : "What to do (default propose).",
+      "enum" : [ "propose", "draft", "template", "trial", "remove", "undo", "record" ],
+      "type" : "string"
+    },
+    "change" : {
+      "description" : "What the change does, a line, for the doc's history and shown with the diff (propose, remove).",
+      "type" : "string"
+    },
+    "description" : {
+      "description" : "draft: what the skill does.",
+      "type" : "string"
+    },
+    "doc" : {
+      "description" : "The SKILLS doc by UUID or path, in place of folder.",
+      "type" : "string"
+    },
+    "draft" : {
+      "description" : "The draft a trial kept (the path its result gives), in place of markdown.",
+      "type" : "string"
+    },
+    "folder" : {
+      "description" : "The folder whose SKILLS doc holds the skill (UUID or Explorer path).",
+      "type" : "string"
+    },
+    "from" : {
+      "description" : "draft: from this chat's calls (default), or from description.",
+      "enum" : [ "chat", "description" ],
+      "type" : "string"
+    },
+    "markdown" : {
+      "description" : "The skill, from its '# Name' heading (propose, trial).",
+      "type" : "string"
+    },
+    "name" : {
+      "description" : "A skill's name (remove, record), or a template's.",
+      "type" : "string"
+    },
+    "parameters" : {
+      "description" : "trial: the parameters' values, by name.",
+      "properties" : { },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "required" : [ ],
   "type" : "object"
 }
 

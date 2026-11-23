@@ -40,10 +40,13 @@ import java.util.function.Consumer;
 /// is reviewed side by side; applying it is checked and recorded by the server first (which needs Edit), then put
 /// in the tab's editor as an unsaved edit for the user to save. Undo apply puts back the text the tab held, while
 /// it still holds the applied text. A Documentation document's own content is its Documentation tab, so a change to
-/// an AGENTS doc is applied the same way; standing instructions for a folder with none are reviewed and created
-/// (`create_instructions`).
+/// an AGENTS doc (or a skills doc) is applied the same way; standing instructions or skills for a folder with none
+/// are reviewed and created (`create_instructions`).
 @Singleton
 public class AiDocumentationChanges {
+
+    /// The name of a skills doc, which a `create_instructions` proposal names when it proposes one.
+    static final String SKILLS_DOC_NAME = "SKILLS";
 
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<CodeChangeReviewPresenter> reviewPresenterProvider;
@@ -118,15 +121,37 @@ public class AiDocumentationChanges {
                                       final TaskMonitorFactory monitor,
                                       final Change change,
                                       final Runnable onCreated) {
+        reviewNewDoc(handlers, monitor, change, null, onCreated);
+    }
+
+    /// Shows the review of a doc proposed for a folder that has none (`create_instructions`): standing
+    /// instructions (an AGENTS doc), or skills (a SKILLS doc); applying it asks the server to create the doc with
+    /// the parts kept and save it (which needs Create in the folder), then opens it.
+    ///
+    /// @param handlers  Where to fire events.
+    /// @param monitor   Shows the server's calls in progress.
+    /// @param change    The proposal: its doc is the folder, and its base is empty.
+    /// @param docName   The doc's name, `SKILLS` for skills; null or `AGENTS` for standing instructions.
+    /// @param onCreated Called once the doc has been created.
+    public void reviewNewDoc(final HasHandlers handlers,
+                             final TaskMonitorFactory monitor,
+                             final Change change,
+                             final String docName,
+                             final Runnable onCreated) {
+        final boolean skills = SKILLS_DOC_NAME.equals(docName);
         final CodeChangeReviewPresenter review = reviewPresenterProvider.get();
-        review.show("Review Proposed Standing Instructions - " + name(change.doc()), "", change.proposed(),
+        review.show((skills
+                        ? "Review Proposed Skills - "
+                        : "Review Proposed Standing Instructions - ") + name(change.doc()), "", change.proposed(),
                 AceEditorMode.MARKDOWN, false, (andStep, text, rejected, onResult) ->
                         askStroomAiClient.applyCodeChange(change.chatId(), change.messageId(), change.actionId(),
                                 rejected,
                                 result -> {
                                     if (!result.isDone()) {
                                         onResult.accept(NullSafe.nonBlankStringElse(result.getMessage(),
-                                                "The standing instructions can't be created."));
+                                                skills
+                                                        ? "The skills doc can't be created."
+                                                        : "The standing instructions can't be created."));
                                         return;
                                     }
                                     onResult.accept(null);
@@ -138,7 +163,9 @@ public class AiDocumentationChanges {
                                     onCreated.run();
                                 },
                                 error -> onResult.accept(NullSafe.nonBlankStringElse(error.getMessage(),
-                                        "Unable to create the standing instructions.")),
+                                        skills
+                                                ? "Unable to create the skills doc."
+                                                : "Unable to create the standing instructions.")),
                                 monitor));
     }
 

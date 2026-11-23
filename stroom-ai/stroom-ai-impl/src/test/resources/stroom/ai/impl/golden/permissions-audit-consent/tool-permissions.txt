@@ -317,6 +317,29 @@ Needs: View (document)
 - nothing: REFUSED or limited: Error: no folder '/Test' that you can see. Give a folder's UUID or Explorer path.
 - admin: runs (the same as with everything)
 
+## find_skills {"name":"Test skill"}
+Needs: View (document), Use (document)
+- everything: runs: Skill 'Test skill' (folder /Test, doc skills-uuid).
+- without View (document): REFUSED or limited: No skill named 'Test skill' that you can read. Search with words=.
+- without Use (document): REFUSED or limited: No skill named 'Test skill' that you can read. Search with words=.
+- nothing: REFUSED or limited: No skill named 'Test skill' that you can read. Search with words=.
+- admin: runs (the same as with everything)
+
+## check_skill {"name":"Test skill"}
+Needs: View (document), Use (document)
+- everything: runs: Skill 'Test skill' (folder /Test):
+- without View (document): REFUSED or limited: No skill named 'Test skill' that you can read. Find it with find_skills.
+- without Use (document): REFUSED or limited: No skill named 'Test skill' that you can read. Find it with find_skills.
+- nothing: REFUSED or limited: No skill named 'Test skill' that you can read. Find it with find_skills.
+- admin: runs (the same as with everything)
+
+## propose_skill {"change":"Added","folder":"/Test","markdown":"# Another skill\n\nCounts things.\n\n## Steps\n\n1. Count them with `table`.\n"}
+Needs: View (document)
+- everything: runs: The user has been shown the skill 'Another skill' as a new SKILLS doc for folder '/Test' (+19 −0 lines) as a diff, with the history entry, and a 'Review and apply' button. Nothing changes until they a…
+- without View (document): REFUSED or limited: Error: No folder '/Test' that you can see. Give a folder's UUID or Explorer path.
+- nothing: REFUSED or limited: Error: No folder '/Test' that you can see. Give a folder's UUID or Explorer path.
+- admin: runs (the same as with everything)
+
 ## propose_visualisation {"columns":{"x":"UserId","y":"UserId"},"kind":"bar","library":"echarts","name":"Users","summary":"Events by user.","table":"table-1"}
 Needs: View (document)
 - everything: runs: The tab shows no table of results to chart. Run its query first.

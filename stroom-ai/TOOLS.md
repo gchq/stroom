@@ -101,11 +101,11 @@ Where a tool is offered:
   is given one `activate_<group>` tool per group naming the group's tools, and once it calls it, the group's tools
   are offered from its next step. The 103 tools' definitions took about 51k tokens of a 131k context window
   before the question, so a long question had its steps shortened at every step. The groups are `build`,
-  `processing`, `indexing`, `dashboards`, `administration` and `sequences` (the tables below give each
+  `processing`, `indexing`, `dashboards`, `administration`, `sequences` and `skills` (the tables below give each
   tool's). A group's name may hold `_`: it is only MCP tool names that are split at the first `_`, and an MCP
   group of the same name as a built-in one is `mcp_<name>`. A tool in no
   group is always offered. A dashboard tab's guidance turns on `dashboards` from the start
-  (`BuiltInToolGroups.neededBy`). A group none of whose tools the user may use, or that are usable (see
+  (`BuiltInToolGroups.neededBy`), and a skill run by name (the chat's `/skill:` command) turns on `skills`. A group none of whose tools the user may use, or that are usable (see
   "Usable"), isn't offered: `activate_sequences` only to a user who can Use a data source. `activate_*` are
   not tools of their own: they are made by `ToolGroups` and are not in the tables.
 * **Usable**: a tool can say it has nothing to work on for the user (`StroomTool.isUsable`), and the chat then
@@ -145,6 +145,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | Tool | What it does | Category | Read-only | Group | Requires | Unlocked by | Documents | Flags |
 |------|--------------|----------|-----------|-------|----------|-------------|-----------|-------|
 | `ask_user` | Asks the user questions in a form, with options to pick, and waits for the answers | core | yes | | | | | trusted |
+| `check_skill` | A skill's problems and suggestions, each with a fix: structure, parameters, example calls against the tools' schemas and policies, data sources and fields, hand edits, vague steps, values that should be parameters, charts, near-duplicates, use | core | yes | skills | | | View, Use | |
 | `config_properties` | Searches, gets and lists system properties, with overrides and their sources; secrets masked | administration | yes | administration | Manage Properties | | | |
 | `current_results` | Snapshots the results table of the attached query or dashboard tab as a workspace table | search | yes | | | | Use | chat |
 | `delete_file` | Deletes a file in the workspace's `/outputs/` | core | no | | | | | trusted |
@@ -158,6 +159,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `explain_retention` | How long data is kept and why: retention rules in order, the rule keeping a feed or stream, what would go now | processing | yes | processing | | Manage Policies, Manage Jobs | | |
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file, or reads a stream's records | search | yes | | View Data | | | slot |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries, ...) | core | yes | | | | View | |
+| `find_skills` | Searches the skills the user can read, or reads one by name, checked; with arguments, its parameters bound and the missing ones asked in a form | core | yes | skills | | | View | |
 | `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts; finds documents by name | core | yes | | | Manage Processors | View | |
 | `gantt_chart` | Draws a workspace table of times as a timeline: a Mermaid gantt block the chat draws with its own renderer | core | yes | dashboards | | | | chat |
 | `get_current_date` | Today's date in the user's time zone | core | yes | | | | | trusted |
@@ -166,6 +168,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `get_instructions` | The AGENTS docs that apply to folders or documents, or a bundled working guide | core | yes | | | | View | |
 | `instruction_evidence` | What the user's own recent chats say about how they want things done: repeated and mixed form answers, and their messages | core | yes | build | | | | chat |
 | `propose_instructions` | Offers standing instructions (an AGENTS doc) for a folder as a diff: applied to the doc's editor, or created and saved | content | yes | build | | | View | chat |
+| `propose_skill` | Drafts (from the chat or a description, a form for what only the author knows), offers templates, trial-runs and proposes skills for a SKILLS doc as a diff: applied to its editor, or created and saved; remove, undo, record a hand edit | content | yes | skills | | | View | chat |
 | `get_utc_time_offset` | A time zone's offset from UTC | core | yes | | | | | trusted |
 | `grep` | Finds lines of a workspace file containing some text | core | yes | | | | | |
 | `jq` | Runs a jq query on a workspace JSON file | core | yes | | | | | |
@@ -666,6 +669,83 @@ propose the corrected text again.
   against the existing doc; a new doc needs `markdown`), `summary` (shown with the diff).
 * **Returns**: text: what the user was shown, the diff, and any lines the tools will leave out; with the button.
 * **Refuses**: a folder the user can't see; `edits` for a folder with no doc; text identical to the doc's.
+
+### Skills: `find_skills`, `check_skill`, `propose_skill`
+
+Skills group · Classes: `SkillDoc`, `SkillCatalogue`, `SkillChecks`, `SkillFacts`, `SkillParameters`,
+`SkillInvocations`, `SkillTemplates`, `SkillUsage`, `FindSkillsTool`, `CheckSkillTool`, `ProposeSkillTool`;
+`UserActions` (`apply_documentation_change`, `create_instructions` with `name` SKILLS),
+`UserActionService.createInstructions`, `UserActionLookupImpl.createSkills`; in the UI `AiSlashCommands`,
+`AiDocumentationChanges`; the guide `skills`
+
+A skill is a saved, parameterised procedure (a hunt, a timeline), Markdown in a Documentation doc named `SKILLS` (one a
+folder), several skills to a doc, a `#` heading each (`SkillDoc`). Only the name makes a skills doc: front matter
+(`stroom: skills`) holds the history, and a doc of another name with it is not a skills doc. By convention: the first paragraph under the heading is its description; `## When
+to use` how people ask for it; `## Parameters` a list (`- name (required): ...`, `- name (default 7): ...`); `##
+Steps` numbered, `{name}` where a parameter goes, example calls in fenced JSON (`{"tool": ..., "arguments":
+{...}}`); `## Output`. The front matter's `history` (each entry `version`, `date`, `author`, `how`: `agent` or
+`user`, `skill`, `change`, and `body`, a 12-character hash of the text below the front matter as the change left it)
+is written by `propose_skill`; a body that no longer matches its latest entry's hash is an edit by hand. It shows as
+YAML text: no change to the shared Markdown rendering. The model follows the steps; nothing is replayed.
+
+* **Discovery** (`SkillCatalogue`): the Documentation docs named `SKILLS`, found by name (`DocFinder`), View
+  checked for each; no other doc is read. Each is read again after 15 s, and parsed again only for a new version.
+  When `find_skills` is offered, `McpAgentChat.withSkills` appends the list to the system prompt (its stable
+  part): a line a skill, `- name (folder) [near this context]: description` (descriptions cut at 200 characters),
+  those in the folder of the attached tab's document and the folders above it first, the most specific first;
+  two of one name are told apart by folder, the nearer first. Over 50 skills or 6,000 characters it lists the near
+  ones and those sharing words with the question (name, description, "When to use"), up to the size, then "… N
+  more: search them with find_skills words=". A skill the user can't view is never listed.
+* **Learning from use** (`SkillUsage`): the listed skills whose description or "When to use" share words with the
+  question (or are near it) are recorded as offered, once a question, in a `SKILLS_OFFERED` message (never shown
+  or sent to the model); chosen is a `find_skills` call naming it in the same question; asked by name is a
+  `/skill:` command or the whole name in the question. `check_skill` reads the user's chats in the
+  `instruction_evidence` window.
+* **`find_skills`** (core, read-only): `words` (search: name, description, "When to use"; at most 20 listed),
+  `name` (or the command's name; the nearest of two first, with `folder` to choose), `arguments` (an object: run
+  it). Read by name, the skill is checked first and its problems said, to tell the user before it runs. Given
+  `arguments`, its parameters are bound (`SkillParameters`: given values, then defaults), any required one missing
+  is asked in a form (the form mechanism every tool uses, `UserQuestions`), and the steps and output come back with
+  the values in. Where no form can be shown (over `/mcp`, or the user away) it says which are needed.
+* **`check_skill`** (core, read-only): `name` (and `folder`) for a saved skill, `doc` for every skill of a doc (one
+  not named `SKILLS` is told to be renamed), or `markdown` for a draft.
+  Problems: no description; no steps; a parameter used and not listed, or listed and unused; a template
+  placeholder (`[[...]]`) unfilled; an example call that can't be read; a tool that doesn't exist (the nearest
+  name offered) or the user's tool policies don't allow; an example call off the tool's schema (unknown or
+  missing arguments, wrong types, enum values; `"{name}"` and `[[...]]` fit any type); a data source (`index`,
+  `data_source`, a StroomQL `from`) that doesn't exist or the user can't Use; a field (`fields`, `by`, `field`,
+  `where[].field`) the data source doesn't have; a hand edit since the latest history entry (fix:
+  `record`); front matter that can't be read. Suggestions: a vague step (no tool named and no call; the tool whose
+  description shares most of its words proposed, with its required arguments); a date or time written in, or a
+  value the "When to use" phrasings ask about, that should be a parameter; a chart in the chat other than a
+  timeline (`gantt`) (a dashboard's); a thin "When to use" (fewer than 2 phrasings or 6 words); a near-duplicate
+  (half or more of the name and description words shared); offered 5 or more times and never chosen; asked for by
+  name when it wasn't offered.
+* **`propose_skill`** (content, read-only: it only offers a button; chat only): `action` is
+  * `propose` (default): `markdown` (one skill) or `draft` (a trial's file); `folder` (its `SKILLS` doc) or `doc`
+    (any skills doc); `change` (the history entry and the diff's summary). The skill is put in place of the one of
+    its name, or added; the front matter is written with the new entry (its hash of the new body); checked, its
+    problems said. An existing doc gets an `apply_documentation_change` against its saved text (applied to its
+    editor unsaved, refused if saved with other text since); a folder with none a `create_instructions` with
+    `name` SKILLS (created and saved on apply, refused if the folder has one by then).
+  * `draft`: from this chat's tool calls (`from=chat`, the default; calls that only look around are left out) or
+    a `description` (`from=description`); a form asks the name, how people ask, which of the calls' concrete values
+    vary (each offered as a parameter named after its argument or the field it is compared with) and where the
+    results go; the draft has those values as `{name}` and `[[...]]` for what the model must write.
+  * `template`: the built-in starting points (`SkillTemplates`, resources `skill-templates/*.md`): a user activity
+    timeline, X then Y by the same entity, who of a group did X; each the procedure with `[[...]]` placeholders for
+    a site's sources, fields and role conditions; no product-specific content.
+  * `trial`: the draft run once before saving: kept at `/outputs/skills/<name>.md`, checked, bound to
+    `parameters` (refused if a required one is missing), and its steps come back for the model to follow now, as
+    a saved skill is followed; the result is shown before the save button.
+  * `remove` (`name`), `record` (an entry with `how: user`, its author the doc's last updater), `undo`:
+    the latest change proposed with this tool in the chat that the user applied (and saved since), reversed from
+    the text before it kept in the chat (the action's base), with a history entry "Undid version N"; refused if
+    it wasn't saved, or the doc was saved with other text since.
+* **Slash commands** (`AiSlashCommands`): `/skills [words]` lists the skills (from `listSkills`, the same
+  readable skills) in the command reference; each skill is a command `/skill:<name>` with its parameters, offered
+  in the command list (the picker). Sent as typed; the model is given it (`SkillInvocations.expand`) as the request
+  to read the skill with `find_skills` and those `arguments`, which asks for the missing ones in a form.
 
 ### `get_instructions`
 

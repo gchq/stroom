@@ -33,6 +33,7 @@ import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.tools.SkillDoc;
 import stroom.ai.impl.tools.StroomQlSources;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -158,6 +159,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -193,9 +195,33 @@ public final class BuiltInToolWorld implements AutoCloseable {
     /// A Visualisation already in Stroom.
     public static final DocRef VISUALISATION = new DocRef("Visualisation", "visualisation-uuid", "Bar chart");
     public static final DocRef AGENTS = new DocRef(DocumentationDoc.TYPE, "agents-uuid", AgentInstructions.DOC_NAME);
+    /// A skills doc (marked by its front matter), kept out of the folder's listing so the other tools' outputs
+    /// don't change with it.
+    public static final DocRef SKILLS = new DocRef(DocumentationDoc.TYPE, "skills-uuid", SkillDoc.DOC_NAME);
     /// An Elastic Index, kept out of the folder's listing so the other tools' outputs don't change with it.
     public static final DocRef ELASTIC_INDEX = new DocRef(ElasticIndexDoc.TYPE, "elastic-index-uuid",
             "Test elastic index");
+
+    /// The skills doc's text: one skill, whose example call searches the index.
+    public static final String SKILL_TEXT = """
+            ---
+            stroom: skills
+            ---
+
+            # Test skill
+
+            Finds a user's events.
+
+            ## Parameters
+            - user (required): the account.
+
+            ## Steps
+            1. Search:
+               ```json
+               {"tool": "search_events", "arguments": {"index": "index-uuid", "where": [{"field": "UserId", \
+            "value": "{user}"}]}}
+               ```
+            """;
 
     /// The XSLT's text: it makes a lookup, so the lookup tools have something to find.
     public static final String XSLT_TEXT = """
@@ -283,6 +309,11 @@ public final class BuiltInToolWorld implements AutoCloseable {
                     "markdown", "# Test words\n\nThe words to look for.", "summary", "Says what the words are."))),
             Map.entry("propose_instructions", json(Map.of("folder", "/Test", "markdown",
                     "# Standing instructions\n\n- Times are UTC.", "summary", "Times as chosen in two chats."))),
+            Map.entry("find_skills", "{\"name\":\"Test skill\"}"),
+            Map.entry("check_skill", "{\"name\":\"Test skill\"}"),
+            Map.entry("propose_skill", json(Map.of("folder", "/Test", "markdown",
+                    "# Another skill\n\nCounts things.\n\n## Steps\n\n1. Count them with `table`.\n",
+                    "change", "Added"))),
             Map.entry("config_properties", "{\"mode\":\"get\",\"paths\":[\"stroom.ui.defaultMaxResults\"]}"),
             Map.entry("elastic_index_templates", "{\"uuid\":\"elastic-index-uuid\"}"));
 
@@ -672,11 +703,22 @@ public final class BuiltInToolWorld implements AutoCloseable {
         add(DASHBOARD, null);
         add(AGENTS, new DocumentationDoc(AGENTS.getUuid(), AGENTS.getName(), null, null, null, null, null, null,
                 "Feeds in /Test are test feeds."));
+        add(SKILLS, new DocumentationDoc(SKILLS.getUuid(), SKILLS.getName(), null, null, null, null, null, null,
+                SKILL_TEXT));
         // Found by its UUID, but with no handler, as its templates are read by ElasticIndexTemplates.
         docRefs.put(ELASTIC_INDEX.getUuid(), ELASTIC_INDEX);
         // Read through their stores (ScriptStore, VisualisationStore), not handlers.
         docRefs.put(ECHARTS.getUuid(), ECHARTS);
         docRefs.put(VISUALISATION.getUuid(), VISUALISATION);
+    }
+
+    // A name filter as DocFinder applies it, ignoring case: with wild cards, a trailing '*' matches any rest.
+    private static boolean nameMatches(final String name, final String filter, final boolean wildCards) {
+        if (wildCards && filter.endsWith("*")) {
+            return name.toLowerCase(Locale.ROOT).startsWith(filter.substring(0, filter.length() - 1)
+                    .toLowerCase(Locale.ROOT));
+        }
+        return name.equalsIgnoreCase(filter);
     }
 
     private void add(final DocRef docRef, final Object document) {
@@ -966,6 +1008,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 return docRefs.values().stream()
                         .filter(docRef -> !FOLDER.equals(docRef))
                         .filter(docRef -> !ELASTIC_INDEX.equals(docRef))
+                        .filter(docRef -> !SKILLS.equals(docRef))
                         .map(BuiltInToolWorld::node)
                         .toList();
             }
@@ -978,7 +1021,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
         Mockito.when(docFinder.findByName(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()))
                 .thenAnswer(invocation -> docRefs.values().stream()
                         .filter(docRef -> docRef.getType().equals(invocation.getArgument(0)))
-                        .filter(docRef -> docRef.getName().equalsIgnoreCase(invocation.getArgument(1)))
+                        .filter(docRef -> nameMatches(docRef.getName(), invocation.getArgument(1),
+                                Boolean.TRUE.equals(invocation.getArgument(2))))
                         .filter(docRef -> hasDocumentPermission(docRef, DocumentPermission.VIEW))
                         .toList());
         Mockito.doCallRealMethod().when(docFinder).findByName(Mockito.anyString(), Mockito.anyString());

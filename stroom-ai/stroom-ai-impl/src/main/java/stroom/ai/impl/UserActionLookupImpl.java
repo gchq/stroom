@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.SkillDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
@@ -175,26 +176,43 @@ public class UserActionLookupImpl implements UserActionLookup {
 
     @Override
     public Optional<DocRef> instructionsIn(final DocRef folder) {
+        return documentationIn(folder, AgentInstructions.DOC_NAME);
+    }
+
+    @Override
+    public Optional<DocRef> skillsIn(final DocRef folder) {
+        return documentationIn(folder, SkillDoc.DOC_NAME);
+    }
+
+    private Optional<DocRef> documentationIn(final DocRef folder, final String name) {
         if (folder == null) {
             return Optional.empty();
         }
         return explorerNodeService.getChildren(folder).stream()
                 .map(ExplorerNode::getDocRef)
-                .filter(child -> DocumentationDoc.TYPE.equals(child.getType())
-                                 && AgentInstructions.DOC_NAME.equals(child.getName()))
+                .filter(child -> DocumentationDoc.TYPE.equals(child.getType()) && name.equals(child.getName()))
                 .filter(child -> securityContext.hasDocumentPermission(child, DocumentPermission.VIEW))
                 .findFirst();
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public DocRef createInstructions(final DocRef folder, final String text) {
+        return createDocumentation(folder, AgentInstructions.DOC_NAME, text);
+    }
+
+    @Override
+    public DocRef createSkills(final DocRef folder, final String text) {
+        return createDocumentation(folder, SkillDoc.DOC_NAME, text);
+    }
+
+    @SuppressWarnings("unchecked")
+    private DocRef createDocumentation(final DocRef folder, final String name, final String text) {
         final ExplorerService explorerService = Objects.requireNonNull(explorerServiceProvider.get(),
                 "No explorer service");
         final ExplorerNode folderNode = explorerNodeService.getNode(folder)
                 .orElseThrow(() -> new IllegalStateException("The folder no longer exists."));
         // Checks the user's permission to create it there, and logs it as any new document is.
-        final DocRef made = explorerService.create(DocumentationDoc.TYPE, AgentInstructions.DOC_NAME, folderNode,
+        final DocRef made = explorerService.create(DocumentationDoc.TYPE, name, folderNode,
                 PermissionInheritance.DESTINATION).getDocRef();
         try {
             final DocumentActionHandler<DocumentationDoc> handler = documentActionHandlers.get(

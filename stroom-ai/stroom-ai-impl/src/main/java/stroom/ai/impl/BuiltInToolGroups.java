@@ -16,8 +16,11 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.SkillInvocations;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +41,7 @@ public final class BuiltInToolGroups {
     static final String DASHBOARDS = "dashboards";
     static final String ADMINISTRATION = "administration";
     static final String SEQUENCES = "sequences";
+    static final String SKILLS = "skills";
 
     /// What each group is for, as the tool that turns it on says, in the order the groups are offered.
     static final Map<String, String> PURPOSES = purposes();
@@ -119,7 +123,12 @@ public final class BuiltInToolGroups {
             // Its definition is large and most chats never hunt sequences. Offered only to a user who can use a
             // data source (StroomTool#isUsable), so a group with none of its tools offered isn't either.
             SEQUENCES, List.of(
-                    "sequence_query")));
+                    "sequence_query"),
+            // Asked for by name, or turned on when a skill fits: the list of skills is in the prompt already.
+            SKILLS, List.of(
+                    "find_skills",
+                    "check_skill",
+                    "propose_skill")));
 
     private BuiltInToolGroups() {
         // Static only.
@@ -136,13 +145,31 @@ public final class BuiltInToolGroups {
         return GROUP_BY_TOOL.keySet();
     }
 
+    /// @return The names of the groups, in the order they are offered.
+    public static Set<String> groupNames() {
+        return PURPOSES.keySet();
+    }
+
     /// @param systemPrompt The system prompt a question is asked with, or null.
     /// @return The groups its guidance needs from the start: a dashboard tab's guidance is about the dashboard
     /// tools, so the model isn't made to turn them on before it can follow it.
     static Set<String> neededBy(final String systemPrompt) {
-        return systemPrompt != null && systemPrompt.contains(ContextAssembler.DASHBOARD_GUIDANCE)
-                ? Set.of(DASHBOARDS)
-                : Set.of();
+        return neededBy(systemPrompt, null);
+    }
+
+    /// @param systemPrompt The system prompt a question is asked with, or null.
+    /// @param question     The question, as the model is given it, or null.
+    /// @return The groups its guidance needs from the start, and those a skill run by name needs (its tools read
+    /// the skill).
+    static Set<String> neededBy(final String systemPrompt, final String question) {
+        final Set<String> needed = new LinkedHashSet<>();
+        if (systemPrompt != null && systemPrompt.contains(ContextAssembler.DASHBOARD_GUIDANCE)) {
+            needed.add(DASHBOARDS);
+        }
+        if (question != null && question.startsWith(SkillInvocations.EXPANDED_PREFIX)) {
+            needed.add(SKILLS);
+        }
+        return Set.copyOf(needed);
     }
 
     private static Map<String, String> purposes() {
@@ -163,6 +190,8 @@ public final class BuiltInToolGroups {
         purposes.put(SEQUENCES, "hunt for ordered sequences of events in any data source (X, then Y, by the "
                                        + "same user or host, within N; on Elastic Indexes also N in a row, and X "
                                        + "and then not Y)");
+        purposes.put(SKILLS, "find, check and save skills: saved, parameterised procedures (a hunt, a timeline) "
+                             + "to read whole and follow, or to write from a chat or a template");
         return Collections.unmodifiableMap(purposes);
     }
 

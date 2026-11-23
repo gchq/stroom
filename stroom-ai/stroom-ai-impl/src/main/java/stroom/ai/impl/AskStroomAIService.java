@@ -26,6 +26,9 @@ import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryPath;
 import stroom.ai.impl.tools.ChatBrowserZones;
+import stroom.ai.impl.tools.SkillCatalogue;
+import stroom.ai.impl.tools.SkillDoc;
+import stroom.ai.impl.tools.SkillInvocations;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
@@ -46,10 +49,12 @@ import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMcpPrompt;
+import stroom.ai.shared.AiMcpPromptArgument;
 import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSkill;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
@@ -247,6 +252,8 @@ public class AskStroomAIService {
     private Duration idleCompactionWait = IDLE_COMPACTION_WAIT;
     // Null where it isn't injected (in tests), and answers are stored as written.
     private AnswerLinks answerLinks;
+    // The skills the user can read, for the chat's slash commands; null if not bound.
+    private SkillCatalogue skillCatalogue;
     private final McpAgentChat mcpAgentChat;
     private final DocumentReferences documentReferences;
     private final TableDownloader tableDownloader;
@@ -687,6 +694,32 @@ public class AskStroomAIService {
         }
         aiService.deleteMessage(latest.getId());
         return contextAssembler.estimateUsage(chatId);
+    }
+
+    /// @param skillCatalogue The skills the user can read.
+    @Inject
+    void setSkillCatalogue(final SkillCatalogue skillCatalogue) {
+        this.skillCatalogue = skillCatalogue;
+    }
+
+    /// @return The skills the user can read, as the chat's slash commands (`/skill:<name>`) that run them by name,
+    /// each with its parameters: a default is said in its description.
+    public List<AiSkill> listSkills() {
+        if (skillCatalogue == null) {
+            return List.of();
+        }
+        return skillCatalogue.readable(List.of()).stream()
+                .map(listed -> new AiSkill(listed.skill().name(), listed.folderPath(),
+                        SkillInvocations.PREFIX + SkillDoc.slug(listed.skill().name()),
+                        listed.skill().description(),
+                        listed.skill().parameters().stream()
+                                .map(parameter -> new AiMcpPromptArgument(parameter.name(),
+                                        parameter.description() + (parameter.defaultValue() == null
+                                                ? ""
+                                                : " (default " + parameter.defaultValue() + ")"),
+                                        parameter.required()))
+                                .toList()))
+                .toList();
     }
 
     /// @param answerLinks Links the documents and streams answers mention.

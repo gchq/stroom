@@ -35,8 +35,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestToolCategories {
 
     private static final Map<AiToolCategory, List<String>> EXPECTED = Map.of(
-            AiToolCategory.CORE, List.of("ask_user", "delete_file", "document_documentation", "document_info",
-                    "document_links", "find_in_content", "folder_contents", "gantt_chart",
+            AiToolCategory.CORE, List.of("ask_user", "check_skill", "delete_file", "document_documentation",
+                    "document_info",
+                    "document_links", "find_in_content", "find_skills", "folder_contents", "gantt_chart",
                     "get_current_date",
                     "get_current_datetime", "get_current_time", "get_instructions", "get_utc_time_offset", "grep",
                     "instruction_evidence", "jq", "ls", "memory", "pipeline", "read_document", "read_file",
@@ -49,7 +50,7 @@ class TestToolCategories {
                     "propose_dashboard",
                     "propose_dashboard_change", "propose_documentation_change", "propose_extraction_pipeline",
                     "propose_instructions", "propose_query",
-                    "propose_query_change", "propose_visualisation", "xslt_lookups"),
+                    "propose_query_change", "propose_skill", "propose_visualisation", "xslt_lookups"),
             AiToolCategory.INDEXING, List.of("elastic_index_templates"),
             AiToolCategory.PROCESSING, List.of("explain_processing", "explain_retention", "processor_tasks",
                     "stream_meta"),

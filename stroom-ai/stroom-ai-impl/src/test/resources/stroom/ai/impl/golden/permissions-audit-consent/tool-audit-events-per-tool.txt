@@ -4,6 +4,28 @@
 ## ask_user {"intro":"Which feed?","questions":[{"id":"feed","question":"Feed?","type":"text"}]}
 (nothing recorded)
 
+## check_skill {"name":"Test skill"}
+- audit: documentViewed(1, DocRef{type='Documentation', uuid='skills-uuid', name='SKILLS'}, "Skill 'Test skill' checked by the check_skill tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Documentation 'SKILLS' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Skill 'Test skill' checked by the check_skill tool"
+      } ],
+      "id" : "skills-uuid",
+      "name" : "SKILLS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Skill 'Test skill' checked by the check_skill tool",
+      "success" : true
+    }
+  }
+
 ## config_properties {"mode":"get","paths":["stroom.ui.defaultMaxResults"]}
 - audit: propertiesViewed(1, ["stroom.ui.defaultMaxResults"], "Read by the config_properties tool")
 - event: AskStroomAi.viewProperties "Ask Stroom AI viewed 1 system property in chat 1"
@@ -268,6 +290,28 @@
       "raw" : "'HOST_TO_LOCATION' in 1 document(s) given"
     },
     "totalResults" : 0
+  }
+
+## find_skills {"name":"Test skill"}
+- audit: documentViewed(1, DocRef{type='Documentation', uuid='skills-uuid', name='SKILLS'}, "Skill 'Test skill' read by the find_skills tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Documentation 'SKILLS' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Skill 'Test skill' read by the find_skills tool"
+      } ],
+      "id" : "skills-uuid",
+      "name" : "SKILLS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Skill 'Test skill' read by the find_skills tool",
+      "success" : true
+    }
   }
 
 ## folder_contents {"folder":"folder-uuid"}
@@ -652,6 +696,28 @@
       "success" : true
     },
     "type" : "APPLICATION"
+  }
+
+## propose_skill {"change":"Added","folder":"/Test","markdown":"# Another skill\n\nCounts things.\n\n## Steps\n\n1. Count them with `table`.\n"}
+- audit: documentViewed(1, DocRef{type='Folder', uuid='folder-uuid', name='Test'}, "Proposed a skill change with the propose_skill tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Folder 'Test' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Proposed a skill change with the propose_skill tool"
+      } ],
+      "id" : "folder-uuid",
+      "name" : "Test",
+      "type" : "Folder"
+    } ],
+    "outcome" : {
+      "description" : "Proposed a skill change with the propose_skill tool",
+      "success" : true
+    }
   }
 
 ## propose_visualisation {"columns":{"x":"UserId","y":"UserId"},"kind":"bar","library":"echarts","name":"Users","summary":"Events by user.","table":"table-1"}

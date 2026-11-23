@@ -55,6 +55,7 @@ public class BundledKnowledge implements AgentKnowledge {
             "json-input",
             "mapping",
             "reference-data",
+            "skills",
             "visualisation",
             "xslt");
     /// The field convention profiles, by name: each is `conventions/<name>.yaml`.

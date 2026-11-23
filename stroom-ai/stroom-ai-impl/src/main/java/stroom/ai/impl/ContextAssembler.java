@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.ai.impl.AiDao.ChatUsage;
 import stroom.ai.impl.memory.AiMemoryService;
+import stroom.ai.impl.tools.SkillInvocations;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
@@ -606,7 +607,8 @@ public class ContextAssembler {
                         if (msg.getTurnId() == unfinishedTurnId) {
                             // Its steps in full, with anything the user added as it worked, so the model carries
                             // on from them.
-                            messages.add(new UserMessage(earlierTabNote(msg) + msg.getMessage()));
+                            messages.add(new UserMessage(earlierTabNote(msg)
+                                                         + SkillInvocations.expand(msg.getMessage())));
                             messages.addAll(turnSteps(history.stream()
                                     .filter(message -> message.getTurnId() == unfinishedTurnId)
                                     .toList()));
@@ -615,9 +617,10 @@ public class ContextAssembler {
                         // Say which tools were used for the answer, so the model knows what it has already
                         // looked at.
                         final String toolLog = toolLog(toolMessagesByTurn.get(msg.getTurnId()));
+                        final String asked = SkillInvocations.expand(msg.getMessage());
                         messages.add(new UserMessage(earlierTabNote(msg) + (toolLog != null
-                                ? msg.getMessage() + "\n\n[" + toolLog + "]"
-                                : msg.getMessage())));
+                                ? asked + "\n\n[" + toolLog + "]"
+                                : asked)));
                     }
                     case STEER_MESSAGE -> {
                         // An unfinished turn's are given with its steps.
@@ -632,9 +635,11 @@ public class ContextAssembler {
         }
 
         // Only the latest question is given its tab in full; earlier ones say where theirs is.
+        // A skill run by name with the chat's slash command is given as the request to read and run it.
+        final String asked = SkillInvocations.expand(request.getMessage());
         final String question = unfinishedTurnId > 0
-                ? request.getMessage() + "\n\n" + UNFINISHED_TURN_NOTE
-                : request.getMessage();
+                ? asked + "\n\n" + UNFINISHED_TURN_NOTE
+                : asked;
         messages.add(new UserMessage(tab != null
                 ? question + "\n\n" + tabSnapshots.note(chatId, tab)
                 : question + detachedTabNote(chatId)));

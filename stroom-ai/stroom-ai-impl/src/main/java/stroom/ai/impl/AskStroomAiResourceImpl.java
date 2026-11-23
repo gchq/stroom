@@ -29,6 +29,7 @@ import stroom.ai.shared.AiMcpPrompt;
 import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
+import stroom.ai.shared.AiSkill;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AiUserActionResult;
 import stroom.ai.shared.AiWriteExtractionRequest;
@@ -880,6 +881,21 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().listMcpPrompts(config))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public List<AiSkill> listSkills() {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "listSkills"))
+                .withDescription("List the skills the user can read, as the chat's slash commands")
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiSkills")
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().listSkills())
                 .getResultAndLog();
     }
 

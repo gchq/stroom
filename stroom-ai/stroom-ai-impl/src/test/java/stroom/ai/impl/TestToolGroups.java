@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.SkillInvocations;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.McpToolServerConfig;
@@ -226,6 +227,13 @@ class TestToolGroups {
                 .containsExactly(BuiltInToolGroups.DASHBOARDS);
         assertThat(BuiltInToolGroups.neededBy("system")).isEmpty();
         assertThat(BuiltInToolGroups.neededBy(null)).isEmpty();
+    }
+
+    @Test
+    void aSkillRunByNameNeedsTheSkillsTools() {
+        assertThat(BuiltInToolGroups.neededBy("system", SkillInvocations.expand("/skill:timeline user=jsmith")))
+                .containsExactly(BuiltInToolGroups.SKILLS);
+        assertThat(BuiltInToolGroups.neededBy("system", "a timeline for jsmith")).isEmpty();
     }
 
     private static Map<ToolSpecification, ToolExecutor> builtIns(final String... names) {

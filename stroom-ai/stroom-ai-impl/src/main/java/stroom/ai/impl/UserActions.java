@@ -20,6 +20,7 @@ import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.SkillDoc;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
@@ -95,8 +96,9 @@ public class UserActions {
     /// propose_documentation_change tool), which the user can apply to the tab's editor (unsaved) and undo.
     public static final String APPLY_DOCUMENTATION_CHANGE = "apply_documentation_change";
     /// Opens a review of a standing instructions doc (an AGENTS doc) the agent proposed for a folder that has none
-    /// (only from Stroom's own propose_instructions tool); applying it creates the doc in the folder and saves it,
-    /// as the user, who needs Create there.
+    /// (only from Stroom's own propose_instructions tool), or of a skills doc (a SKILLS doc, from propose_skill,
+    /// with `name` SKILLS); applying it creates the doc in the folder and saves it, as the user, who needs Create
+    /// there. The record's `name` is the doc's name.
     public static final String CREATE_INSTRUCTIONS = "create_instructions";
     /// Opens Stroom's New Dashboard dialog with a suggested name; once created, the dashboard is given a query, a
     /// table and optionally a data preview, built from the StroomQL (only from Stroom's own propose_dashboard tool).
@@ -707,20 +709,31 @@ public class UserActions {
         if (named == null || proposed == null || proposed.isBlank() || proposed.length() > MAX_CODE_CHARS) {
             return Optional.empty();
         }
+        final String docName = NullSafe.nonBlankStringElse(string(map.get("name")), AgentInstructions.DOC_NAME);
+        final boolean skills = SkillDoc.DOC_NAME.equals(docName);
+        if (!skills && !AgentInstructions.DOC_NAME.equals(docName)) {
+            return Optional.empty();
+        }
         final DocRef folder = lookup.find(named).orElse(null);
         if (folder == null || !ExplorerConstants.FOLDER_TYPE.equals(folder.getType())
-            || lookup.instructionsIn(folder).isPresent()) {
+            || (skills
+                ? lookup.skillsIn(folder)
+                : lookup.instructionsIn(folder)).isPresent()) {
             return Optional.empty();
         }
         final Integer added = count(map.get("added"));
         final String summary = NullSafe.get(string(map.get("summary")), String::strip);
-        final String label = "Create standing instructions (" + AgentInstructions.DOC_NAME + ") in folder '"
+        final String label = (skills
+                ? "Create skills (" + SkillDoc.DOC_NAME + ")"
+                : "Create standing instructions (" + AgentInstructions.DOC_NAME + ")") + " in folder '"
                              + folder.getName() + "': +" + Objects.requireNonNullElse(added, 0) + " lines";
         return Optional.of(new UserActionRecord(id, CREATE_INSTRUCTIONS, label,
                 NullSafe.isBlankString(summary)
                         ? null
                         : truncate(summary, MAX_DETAILS_CHARS),
-                null, null, folder, proposed, List.of(), expiresMs, Status.PENDING, null, null,
+                null, null, folder, proposed, List.of(), expiresMs, Status.PENDING, null, skills
+                        ? SkillDoc.DOC_NAME
+                        : null,
                 new UserActionRecord.CodeChange(null, null, "", EMPTY_HASH, null,
                         Objects.requireNonNullElse(added, 0), 0)));
     }

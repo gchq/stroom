@@ -1,0 +1,19 @@
+# Not run: needs chat-style skill cases in the eval harness (kind: skill). Run on Haiku and Sonnet.
+name: Running a skill from a chat with no context, chosen among distractors
+kind: skill
+capabilities: [skills, find_skills, discovery]
+# Three skills are readable: the one wanted and two that share words with the question. No tab is attached. Scored
+# on: the right skill read whole with find_skills (by name), its required parameter taken from the question (the
+# user) and the default used for the other, and the answer given as its Output says (a table by host).
+setup:
+  lucene_index: {name: Logons, fields: [EventTime, UserId, Outcome, Host]}
+  skills_docs:
+    - folder: /Hunts
+      skills: [Failed logons by host, Logon times of day, Accounts locked out]
+request: How many failed logons did bob have this week?
+user_knows: The Logons index; bob is the account name.
+expected:
+  tools_used: [find_skills, run_stroomql]
+  chosen: Failed logons by host
+  arguments: {user: bob}
+  answer: {shape: table, columns: [Host, count]}

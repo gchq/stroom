@@ -858,6 +858,40 @@ class TestUserActionService {
     }
 
     @Test
+    void aNewSkillsDocIsCreatedAndSavedAsTheUserUnlessTheFolderHasOneByThen() {
+        final DocRef skills = new DocRef("Documentation", "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b", "SKILLS");
+        Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(lookup.skillsIn(FOLDER)).thenReturn(Optional.empty());
+        Mockito.when(lookup.instructionsIn(FOLDER)).thenReturn(Optional.of(AGENTS));
+        Mockito.when(lookup.createSkills(FOLDER, INSTRUCTIONS)).thenReturn(skills);
+        storeResult(newSkills());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "skills-1");
+
+        assertThat(result.isDone()).as(result.getMessage()).isTrue();
+        assertThat(result.getOpenDocument()).isEqualTo(skills);
+        Mockito.verify(lookup, Mockito.never()).createInstructions(Mockito.any(), Mockito.anyString());
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(skills),
+                Mockito.eq(UserActionService.CREATE_SKILLS_COMMAND), Mockito.anyString(),
+                Mockito.eq("Created and saved the proposed skills doc"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("I created the skills (SKILLS) in Folder 'Acme' and saved it"));
+    }
+
+    @Test
+    void aNewSkillsDocIsNotCreatedOnceTheFolderHasOne() {
+        Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(lookup.skillsIn(FOLDER)).thenReturn(Optional.of(AGENTS));
+        storeResult(newSkills());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "skills-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("has a skills doc (SKILLS) now");
+        Mockito.verify(lookup, Mockito.never()).createSkills(Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
     void newStandingInstructionsAreKeptToThePartsTheUserKept() {
         Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
         Mockito.when(lookup.instructionsIn(FOLDER)).thenReturn(Optional.empty());
@@ -1112,6 +1146,13 @@ class TestUserActionService {
         return new UserActionRecord("instructions-1", UserActions.CREATE_INSTRUCTIONS,
                 "Create standing instructions (AGENTS) in folder 'Acme': +3 lines", null, null, null, FOLDER,
                 INSTRUCTIONS, List.of(), Long.MAX_VALUE, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, "", UserActionService.sha256(""), null, 3, 0));
+    }
+
+    private static UserActionRecord newSkills() {
+        return new UserActionRecord("skills-1", UserActions.CREATE_INSTRUCTIONS,
+                "Create skills (SKILLS) in folder 'Acme': +3 lines", null, null, null, FOLDER,
+                INSTRUCTIONS, List.of(), Long.MAX_VALUE, Status.PENDING, null, "SKILLS",
                 new UserActionRecord.CodeChange(null, null, "", UserActionService.sha256(""), null, 3, 0));
     }
 

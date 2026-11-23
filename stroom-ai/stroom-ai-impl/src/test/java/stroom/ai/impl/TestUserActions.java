@@ -559,6 +559,36 @@ class TestUserActions {
     }
 
     @Test
+    void aNewSkillsDocButtonIsOfferedForAFolderWithNoSkillsDoc() {
+        final DocRef folder = new DocRef("Folder", OTHER_UUID, "Hunts");
+        Mockito.when(lookup.find(new DocRef("Folder", OTHER_UUID))).thenReturn(Optional.of(folder));
+        Mockito.when(lookup.skillsIn(folder)).thenReturn(Optional.empty());
+        // A folder with an AGENTS doc may still have no SKILLS doc.
+        Mockito.when(lookup.instructionsIn(folder)).thenReturn(Optional.of(new DocRef("Documentation", "a")));
+        final Map<String, Object> create = new HashMap<>();
+        create.put("id", "skills-1");
+        create.put("action", "create_instructions");
+        create.put("name", "SKILLS");
+        create.put("doc", doc("Folder", OTHER_UUID, "Something else"));
+        create.put("request", "---\nstroom: skills\n---\n\n# Timeline\n");
+        create.put("added", 5);
+
+        assertThat(userActions.check(null, List.of(create), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo("create_instructions");
+            assertThat(action.name()).isEqualTo("SKILLS");
+            assertThat(action.label()).isEqualTo("Create skills (SKILLS) in folder 'Hunts': +5 lines");
+        });
+
+        // Not once the folder has one, nor for a doc name that is neither.
+        Mockito.when(lookup.skillsIn(folder)).thenReturn(Optional.of(new DocRef("Documentation", "s")));
+        assertThat(userActions.check(null, List.of(create), NOW)).isEmpty();
+        Mockito.when(lookup.skillsIn(folder)).thenReturn(Optional.empty());
+        final Map<String, Object> other = new HashMap<>(create);
+        other.put("name", "README");
+        assertThat(userActions.check(null, List.of(other), NOW)).isEmpty();
+    }
+
+    @Test
     void aDashboardChangeButtonNeedsADashboardTheUserCanSeeAndGoodChanges() {
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.empty());
         assertThat(userActions.check(null, List.of(dashboardChange("d1")), NOW)).isEmpty();

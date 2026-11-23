@@ -30,6 +30,7 @@ import stroom.ai.shared.AiMcpPrompt;
 import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
+import stroom.ai.shared.AiSkill;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AiUserActionResult;
 import stroom.ai.shared.AiWriteExtractionRequest;
@@ -801,6 +802,23 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.listMcpPrompts(config))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Lists the skills the user can read, as slash commands.
+    ///
+    /// @param consumer           Given the skills.
+    /// @param errorHandler       Told if they can't be listed.
+    /// @param taskMonitorFactory Shows the call in progress.
+    void listSkills(final Consumer<List<AiSkill>> consumer,
+                    final RestErrorHandler errorHandler,
+                    final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(AskStroomAiResource::listSkills)
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

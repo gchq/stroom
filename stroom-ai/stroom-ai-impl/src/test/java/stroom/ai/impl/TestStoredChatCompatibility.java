@@ -68,7 +68,9 @@ class TestStoredChatCompatibility {
             AiMessageType.STREAMING_THINKING,
             AiMessageType.DASHBOARD_DATA,
             AiMessageType.QUERY_DATA,
-            AiMessageType.TABLE_DATA);
+            AiMessageType.TABLE_DATA,
+            // Added after the fixture was made (2026-11-23): never shown or sent to the model.
+            AiMessageType.SKILLS_OFFERED);
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);

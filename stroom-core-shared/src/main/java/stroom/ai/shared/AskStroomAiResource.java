@@ -115,6 +115,13 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "listAiMcpPrompts")
     List<AiMcpPrompt> listMcpPrompts(@Parameter(description = "config", required = true) AskStroomAiConfig config);
 
+    @GET
+    @Path("/listSkills")
+    @Operation(
+            summary = "List the skills the user can read, as slash commands that run them by name",
+            operationId = "listAiSkills")
+    List<AiSkill> listSkills();
+
     @POST
     @Path("/getMcpPrompt")
     @Operation(

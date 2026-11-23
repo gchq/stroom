@@ -114,7 +114,13 @@ public enum AiMessageType implements HasPrimitiveValue {
      * finishes: the run gives up waiting for a tool from an MCP server, and skips the rest of the step's tool calls,
      * to pick it up.
      */
-    SEND_NOW_STEER_MESSAGE(25);
+    SEND_NOW_STEER_MESSAGE(25),
+    /**
+     * The skills a question was offered (those of the list given to the model that matched it), as JSON
+     * ({@code {"offered":["name", ...]}}), so how skills are used can be read from the chats later. Never shown in
+     * the conversation or sent to the model.
+     */
+    SKILLS_OFFERED(26);
 
     /**
      * @return True if this is a message the user sent to steer a run that the run has yet to pick up.

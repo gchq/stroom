@@ -37,6 +37,7 @@ import stroom.ai.shared.AiMcpPromptArgument;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSkill;
 import stroom.ai.shared.AiSuggestions;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiWriteExtractionRequest;
@@ -442,6 +443,10 @@ public class AskStroomAiPresenter
     // The prompts the model's MCP servers offer, as slash commands, once fetched.
     private List<AiMcpPrompt> mcpPrompts;
     private boolean fetchingPrompts;
+    // The skills the user can read, as slash commands; null until fetched, and again once a message is sent, as
+    // skills may have been saved since.
+    private List<AiSkill> skills;
+    private boolean fetchingSkills;
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
     // The model the open chat has been answered with, or null for a new chat (or not yet known).
@@ -1784,6 +1789,10 @@ public class AskStroomAiPresenter
                 // Suggest the MCP prompts too, once they have been fetched.
                 fetchPrompts(() -> onInputChanged(text));
             }
+            if (skills == null) {
+                // And the skills, as commands that run them (the picker: type /skill: to see them all).
+                fetchSkills(() -> onInputChanged(text));
+            }
             final List<AiSlashCommand> matches = new ArrayList<>();
             for (final AiSlashCommand command : slashCommands()) {
                 if (command.getName().startsWith(trimmed)) {
@@ -1797,10 +1806,13 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * @return The chat's own commands, then the MCP servers' prompts.
+     * @return The chat's own commands, then the skills the user can read, then the MCP servers' prompts.
      */
     private List<AiSlashCommand> slashCommands() {
         final List<AiSlashCommand> commands = new ArrayList<>(AiSlashCommands.COMMANDS);
+        for (final AiSkill skill : NullSafe.list(skills)) {
+            commands.add(AiSlashCommands.skillCommand(skill));
+        }
         for (final AiMcpPrompt prompt : NullSafe.list(mcpPrompts)) {
             final StringBuilder arguments = new StringBuilder();
             for (final AiMcpPromptArgument argument : NullSafe.list(prompt.getArguments())) {
@@ -1832,6 +1844,26 @@ public class AskStroomAiPresenter
                     reference.toString()));
         }
         return commands;
+    }
+
+    /// Fetches the skills the user can read, once until a message is sent.
+    ///
+    /// @param then Called once they have been fetched (or couldn't be).
+    private void fetchSkills(final Runnable then) {
+        if (fetchingSkills) {
+            return;
+        }
+        fetchingSkills = true;
+        askStroomAiClient.listSkills(list -> {
+            skills = NullSafe.list(list);
+            fetchingSkills = false;
+            then.run();
+        }, error -> {
+            // No skills if they can't be listed, but the other commands work.
+            skills = List.of();
+            fetchingSkills = false;
+            then.run();
+        }, SILENT);
     }
 
     /**
@@ -1906,6 +1938,9 @@ public class AskStroomAiPresenter
         final String rest = parts.length > 1
                 ? parts[1].strip()
                 : "";
+        if (parts[0].startsWith(AiSlashCommands.SKILL_PREFIX)) {
+            return runSkillCommand(message, parts[0]);
+        }
         if (AiSlashCommands.isOwn(parts[0])) {
             runOwnCommand(parts[0], rest);
             return true;
@@ -1919,6 +1954,28 @@ public class AskStroomAiPresenter
                          + "/compact) or a prompt of one of the MCP servers: type / to see them, with how to use "
                          + "each. To send a message that starts with /, start it with //.", null);
         return true;
+    }
+
+    /// A skill run by name: sent as typed, for the agent to read the skill and follow it (asking in a form for any
+    /// required parameter left out), if it is a skill the user can read.
+    ///
+    /// @param message The message, as typed.
+    /// @param command Its command, e.g. `/skill:user-activity-timeline`.
+    /// @return True if it was dealt with here (an error shown, or the skills being fetched first); false to send it.
+    private boolean runSkillCommand(final String message, final String command) {
+        if (skills == null) {
+            fetchSkills(() -> onSendMessage(message));
+            return true;
+        }
+        final boolean known = skills.stream().anyMatch(skill -> command.equalsIgnoreCase(skill.getCommand()));
+        if (!known) {
+            showCommandError("There is no skill " + command.substring(AiSlashCommands.SKILL_PREFIX.length())
+                             + " that you can read. Type /skills to list them.", AiSlashCommands.SKILLS);
+            return true;
+        }
+        // Skills may be saved by the time the next command is typed.
+        skills = null;
+        return false;
     }
 
     /// Says why a command can't be run: for one there is, with a link to its documentation above the input.
@@ -2003,6 +2060,14 @@ public class AskStroomAiPresenter
                     onClearChat(currentChat);
                 }
             }
+            case AiSlashCommands.SKILLS -> fetchSkills(() -> {
+                referenceCommand = AiSlashCommands.SKILLS;
+                // Skills' names and descriptions are written by users, so are treated as untrusted.
+                getView().showCommandReference(markdownConverter.convertUntrustedMarkdownToHtml(
+                        AiSlashCommands.skillsReference(skills, rest)));
+                // Listed afresh next time.
+                skills = null;
+            });
             case AiSlashCommands.REMEMBER -> {
                 if (rest.isEmpty()) {
                     showCommandError("Say what to remember, e.g. /remember our firewall feeds start with FW-.",
@@ -2778,7 +2843,9 @@ public class AskStroomAiPresenter
         if (change == null) {
             return;
         }
-        aiDocumentationChanges.reviewNewInstructions(this, this, change, () -> {
+        // A skills doc's proposal names it; standing instructions' don't.
+        final String docName = AiToolMessages.getString(findUserAction(messageId, actionId), "name");
+        aiDocumentationChanges.reviewNewDoc(this, this, change, docName, () -> {
             showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.CREATED);
             // Fetch the note of what was done.
             pollAfterAnswer();
@@ -4872,6 +4939,10 @@ public class AskStroomAiPresenter
      * it is replaced where it stands, otherwise the new element is added to the end of the conversation.
      */
     private void appendMessage(final AiChatMessage msg, final long nowMs) {
+        if (msg.getMessageType() == AiMessageType.SKILLS_OFFERED) {
+            // A record of which skills a question was offered, for the agent's tools: never shown.
+            return;
+        }
         if (msg.getMessageType() == AiMessageType.SUGGESTIONS) {
             // Not part of the conversation: offered above the input instead.
             answerFollowUps = parseFollowUps(msg.getMessage());

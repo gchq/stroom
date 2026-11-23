@@ -106,6 +106,8 @@ short are never a full ranking); row-level work, and other data sources: run_str
 cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds.
 Combining data from two places, or "X, then Y, within N": stroom://guide/joins (StroomQL joins, sequence_query); let
 Stroom match over all the rows, never by reading them.
+Skills (saved procedures in SKILLS docs): find_skills reads one to follow, check_skill checks it;
+stroom://guide/skills.
 
 Parsing: profile_sample names the parser and the namespace the XSLT reads its output in (xslt_input): JSON is read by
 the JSON template's JSONParser with no text converter, text (CSV, syslog, key=value) by a Data Splitter written with
