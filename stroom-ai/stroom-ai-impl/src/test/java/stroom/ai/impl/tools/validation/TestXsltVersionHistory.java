@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.validation.XsltVersionHistory.Previous;
 import stroom.ai.impl.tools.validation.XsltVersionHistory.Row;
 

@@ -16,12 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.IndexSearches;
-import stroom.ai.impl.tools.IndexSearches.Found;
-import stroom.ai.impl.tools.IndexSearches.Probe;
-import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.query.IndexSearches;
+import stroom.ai.impl.tools.query.IndexSearches.Found;
+import stroom.ai.impl.tools.query.IndexSearches.Probe;
+import stroom.ai.impl.tools.streams.StreamReader.Fetched;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;

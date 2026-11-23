@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;

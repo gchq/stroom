@@ -16,12 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueDiff;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;

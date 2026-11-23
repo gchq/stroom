@@ -16,7 +16,7 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.impl.tools.SkillInvocations;
+import stroom.ai.impl.tools.skills.SkillInvocations;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.McpToolServerConfig;

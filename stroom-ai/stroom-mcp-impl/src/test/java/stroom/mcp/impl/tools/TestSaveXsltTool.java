@@ -16,12 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.validation.XsltSafety;
 import stroom.pipeline.shared.XsltDoc;
 

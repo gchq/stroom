@@ -27,6 +27,21 @@ import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.dao.AiDaoModule;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
+import stroom.ai.impl.tools.query.AgentSearches;
+import stroom.ai.impl.tools.query.CurrentResultsTool;
+import stroom.ai.impl.tools.query.FetchEventsTool;
+import stroom.ai.impl.tools.query.IndexEvents;
+import stroom.ai.impl.tools.query.RunStroomQlTool;
+import stroom.ai.impl.tools.query.SearchEventsTool;
+import stroom.ai.impl.tools.query.StroomQlLimit;
+import stroom.ai.impl.tools.query.StroomQlSources;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.workspace.ColumnSummariser;
+import stroom.ai.impl.tools.workspace.GrepTool;
+import stroom.ai.impl.tools.workspace.JqTool;
+import stroom.ai.impl.tools.workspace.SummariseColumnTool;
+import stroom.ai.impl.tools.workspace.TableTool;
+import stroom.ai.impl.tools.workspace.XPathTool;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.MockSourceDocModule;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -173,7 +188,7 @@ class TestDataPipelineTools {
         final PipelineTool pipeline = pipeline();
         final Duration toolLimit = workspace.limits().getToolTimeLimit().getDuration();
         final Duration queryLimit = workspace.limits().getQueryTimeLimit().getDuration();
-        Mockito.when(currentResultsTool.timeLimit(Mockito.any())).thenReturn(queryLimit);
+        Mockito.when(((AbstractWorkspaceTool) currentResultsTool).timeLimit(Mockito.any())).thenReturn(queryLimit);
         final ToolCallContext context = ToolCalls.inChat(chatId, workspace);
 
         assertThat(pipeline.timeLimit(request("{\"steps\":["
@@ -194,7 +209,8 @@ class TestDataPipelineTools {
 
     @Test
     void testPipelineStartsFromASnapshotOfTheTabsResults() {
-        Mockito.when(currentResultsTool.timeLimit(Mockito.any())).thenReturn(Duration.ofMinutes(1));
+        Mockito.when(((AbstractWorkspaceTool) currentResultsTool).timeLimit(Mockito.any()))
+                .thenReturn(Duration.ofMinutes(1));
         Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.argThat(inChat(chatId)))).thenReturn(
                 new CurrentResultsTool.Outcome("Took a snapshot of Logons: 1 row(s).\nState: ok", "/attachments/7.md"));
 
@@ -212,7 +228,8 @@ class TestDataPipelineTools {
 
     @Test
     void testPipelineStopsWhenNoSnapshotCanBeTaken() {
-        Mockito.when(currentResultsTool.timeLimit(Mockito.any())).thenReturn(Duration.ofMinutes(1));
+        Mockito.when(((AbstractWorkspaceTool) currentResultsTool).timeLimit(Mockito.any()))
+                .thenReturn(Duration.ofMinutes(1));
         Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.argThat(inChat(chatId)))).thenReturn(
                 CurrentResultsTool.Outcome.problem("Getting the events means running its search again."));
 

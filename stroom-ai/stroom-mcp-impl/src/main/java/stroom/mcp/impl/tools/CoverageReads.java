@@ -17,9 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.CallProgress;
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefEvents;
@@ -28,9 +25,12 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.XmlTree;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;

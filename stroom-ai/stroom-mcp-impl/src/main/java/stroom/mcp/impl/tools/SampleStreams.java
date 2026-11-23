@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;

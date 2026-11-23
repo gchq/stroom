@@ -16,10 +16,10 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.AgentKnowledge;
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.indexing.IndexingHelpers.Destination;
 import stroom.ai.impl.tools.indexing.IndexingHelpers.TemplateTarget;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 

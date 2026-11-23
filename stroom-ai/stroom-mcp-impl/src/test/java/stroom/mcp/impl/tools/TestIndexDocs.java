@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 

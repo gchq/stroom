@@ -16,10 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.FeedAccess;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
+import stroom.ai.impl.tools.streams.FeedAccess;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.shared.PipelineDoc;

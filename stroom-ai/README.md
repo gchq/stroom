@@ -84,12 +84,14 @@ In `stroom-ai-impl` (`stroom.ai.impl`):
   `ChartCheck`); the adapters are resources in `src/main/resources/stroom/ai/impl/vis/`
   (`echarts-generic.js`, `d3-generic.js`).
 * **The workspace**: `workspace/` (files, tables, safe jq, XPath and regex, limits).
-* **Tools**: `tools/` holds every tool. The chat's own tools (`*Tool.java`, e.g. `RunStroomQlTool`,
-  `ProposeDashboardChangeTool`, `ProposeVisualisationTool`, `ProcessorTasksTool`, `ExplainProcessingTool`) are
-  registered in `BuiltInTools`; the build workflow's shared code is in `tools/draft` (drafting mappings),
-  `tools/generation` (mapping to XSLT and back: `XsltGenerator`, `XsltReader`, `HandEdits`), `tools/sample`
-  (profiling, surveying, the Data Splitter dry run), `tools/indexing` (field plans, index templates, ECS),
-  `tools/fielddoc` (documentation of fields) and `tools/cef`. `error_rules.yaml` holds Stroom's error triage rules.
+* **Tools**: `tools/` holds the tool framework, and every tool in a subpackage by area (`query`, `sequence`,
+  `timeline`, `workspace`, `documents`, `propose`, `processing`, `streams`, `instructions`, `skills`, `time`, `chat`,
+  `config`). The chat's own tools (`*Tool.java`, e.g. `RunStroomQlTool`, `ProposeDashboardChangeTool`,
+  `ProposeVisualisationTool`, `ProcessorTasksTool`, `ExplainProcessingTool`) are registered in `BuiltInTools`; the
+  build workflow's shared code is in `tools/draft` (drafting mappings), `tools/generation` (mapping to XSLT and back:
+  `XsltGenerator`, `XsltReader`, `HandEdits`), `tools/sample` (profiling, surveying, the Data Splitter dry run),
+  `tools/indexing` (field plans, index templates, ECS), `tools/fielddoc` (documentation of fields) and `tools/cef`.
+  `tools/processing/error_rules.yaml` holds Stroom's error triage rules.
 * **Memory**: `memory/`. **Search extraction**: `extraction/`.
 
 In `stroom-mcp-impl` (`stroom.mcp.impl`):

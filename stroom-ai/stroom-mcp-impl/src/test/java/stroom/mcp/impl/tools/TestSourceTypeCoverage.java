@@ -17,7 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
@@ -26,6 +25,7 @@ import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;

@@ -18,11 +18,11 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticClusterTests;
 import stroom.ai.api.ElasticIndexTemplates;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexResource;

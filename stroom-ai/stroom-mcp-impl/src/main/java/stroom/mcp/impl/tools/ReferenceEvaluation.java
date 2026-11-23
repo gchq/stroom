@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.shared.NullSafe;

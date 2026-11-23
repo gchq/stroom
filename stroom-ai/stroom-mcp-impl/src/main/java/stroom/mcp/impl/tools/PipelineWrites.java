@@ -16,16 +16,16 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;

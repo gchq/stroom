@@ -17,7 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
-import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.shared.AiToolCategory;
 
 import org.junit.jupiter.api.BeforeEach;

@@ -16,9 +16,9 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.Fetched;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

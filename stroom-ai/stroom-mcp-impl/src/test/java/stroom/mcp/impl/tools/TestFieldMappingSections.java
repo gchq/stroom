@@ -16,15 +16,15 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.SteppingWalks;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;

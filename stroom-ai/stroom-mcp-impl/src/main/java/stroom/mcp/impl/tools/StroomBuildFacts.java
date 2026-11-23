@@ -16,20 +16,20 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;

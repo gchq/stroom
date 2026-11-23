@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.docref.DocRef;
 import stroom.pipeline.cache.PoolItem;
 import stroom.pipeline.cache.SchemaKey;

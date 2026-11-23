@@ -16,12 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AcceptedErrors;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.AcceptedErrors;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docstore.api.DocFinder;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;

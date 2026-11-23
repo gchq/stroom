@@ -1,0 +1,399 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.query;
+
+import stroom.ai.api.ElasticEsql;
+import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.AbstractWorkspaceTool;
+import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolDefinition;
+import stroom.ai.impl.tools.ToolDescription;
+import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceException;
+import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.impl.QueryService;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+/// `describe_data_source` - a data source's fields, as the query editor's help gives them: each field's type, the
+/// conditions it supports and whether it can be queried, and the data source's time field. QueryService.findFields
+/// makes no check of its own, so the tool checks Use on the data source first, and treats one the user can't use
+/// as one that doesn't exist. Logged as a View of the data source.
+public class DescribeDataSourceTool extends AbstractWorkspaceTool {
+
+    static final String NAME = "describe_data_source";
+    static final String DATA_SOURCE_ARG = "data_source";
+    static final String FIELD_ARG = "field";
+    /// The most fields given.
+    static final int MAX_FIELDS = 1_000;
+
+    private final DataSourceAccess dataSourceAccess;
+    private final Provider<QueryService> queryServiceProvider;
+    private final AgentInstructions agentInstructions;
+    private final DataSourceDocumentation dataSourceDocumentation;
+    private final AiAuditLog auditLog;
+    private Provider<ElasticEsql> elasticEsqlProvider;
+
+    @Inject
+    DescribeDataSourceTool(final ChatWorkspace workspace,
+                           final DataSourceAccess dataSourceAccess,
+                           final Provider<QueryService> queryServiceProvider,
+                           final AgentInstructions agentInstructions,
+                           final DataSourceDocumentation dataSourceDocumentation,
+                           final AiAuditLog auditLog) {
+        super(workspace);
+        this.dataSourceAccess = dataSourceAccess;
+        this.queryServiceProvider = queryServiceProvider;
+        this.agentInstructions = agentInstructions;
+        this.dataSourceDocumentation = dataSourceDocumentation;
+        this.auditLog = auditLog;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.SEARCH;
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
+                .name(NAME)
+                .description(ToolDescription.builder()
+                        .general("Gives a data source's fields: each field's type, the conditions it supports and "
+                                 + "whether it can be queried, and the data source's time field. Use it to check "
+                                 + "the field names in a StroomQL query (from \"<data source name>\" ...) or a "
+                                 + "search of an index. Also gives its documentation, which says what its fields "
+                                 + "hold when their names don't (e.g. the field mapping of the pipeline that feeds "
+                                 + "it): use it to choose a data source and its fields. The AGENTS docs that apply "
+                                 + "where the data source is are given too: follow what they say about its fields, "
+                                 + "e.g. which field holds the acting user. For a Lucene or Elastic index, it says "
+                                 + "which searches through Stroom would mislead (e.g. CONTAINS on Elasticsearch "
+                                 + "finds nothing), and what to search instead. With field=, one field as the user "
+                                 + "names it (loosely: 'Recipient ID' finds Email/Recipient/Id): its type, "
+                                 + "conditions, source path, description, sample values and the AGENTS lines "
+                                 + "naming it; where several fields could be meant, they are listed for the user to "
+                                 + "choose.")
+                        .chatOnly(" To find an event the user describes in an index, use search_events with "
+                                  + "index.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(DATA_SOURCE_ARG, ToolDescription.builder()
+                                .general("The data source's name or uuid")
+                                .chatOnly(", as list_data_sources gives it")
+                                .general(".")
+                                .build())
+                        .addStringProperty(FIELD_ARG, "Optional: one field, in the user's words (e.g. 'Recipient "
+                                                      + "ID' or 'who received it'), to describe it alone. Several "
+                                                      + "close matches are listed: ask the user which they mean, "
+                                                      + "never pick one yourself.")
+                        .required(DATA_SOURCE_ARG)
+                        .build())
+                .build();
+    }
+
+    @Override
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final String given = stringArg(request, DATA_SOURCE_ARG);
+        if (given == null) {
+            throw new WorkspaceException("Give the data source's name or uuid.");
+        }
+        final List<DocRef> found = dataSourceAccess.find(given);
+        if (found.isEmpty()) {
+            return ToolResult.text(DataSourceAccess.NOT_FOUND);
+        }
+        if (found.size() > 1) {
+            final StringBuilder sb = new StringBuilder("Several data sources you can use are called '")
+                    .append(given).append("'. Give the uuid of the one you mean:\n");
+            found.forEach(docRef -> sb.append("- ").append(DataSourceAccess.describe(docRef)).append('\n'));
+            return ToolResult.text(sb.toString().stripTrailing());
+        }
+        final DocRef dataSource = found.getFirst();
+        auditLog.documentViewed(context.session(), dataSource, "Fields described by the " + NAME + " tool");
+        final ResultPage<QueryField> fields = queryServiceProvider.get().findFields(new FindFieldCriteria(
+                new PageRequest(0, MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource, null, null));
+        final List<QueryField> values = NullSafe.list(NullSafe.get(fields, ResultPage::getValues));
+        final StringBuilder sb = new StringBuilder(DataSourceAccess.describe(dataSource)).append('\n');
+        dataSourceAccess.timeField(dataSource)
+                .ifPresent(field -> sb.append("Time field: ").append(field.getFldName()).append('\n'));
+        if (values.isEmpty()) {
+            sb.append("It has no fields you can see.");
+            return ToolResult.text(sb.append(contextNote(context, dataSource)).toString());
+        }
+        final String wanted = stringArg(request, FIELD_ARG);
+        if (NullSafe.isNonBlankString(wanted)) {
+            return ToolResult.text(sb.append(oneField(context, dataSource, values, wanted)).toString()
+                    .stripTrailing());
+        }
+        sb.append("Fields (").append(values.size()).append("):\n");
+        for (final QueryField field : values) {
+            sb.append("- ").append(field.getFldName()).append(" (")
+                    .append(NullSafe.get(field.getFldType(), Object::toString)).append(')');
+            if (!field.queryable()) {
+                sb.append(", not queryable");
+            }
+            if (field.getConditionSet() != null) {
+                sb.append(", conditions: ").append(field.getConditionSet());
+            }
+            if (NullSafe.isNonBlankString(field.getDocRefType())) {
+                sb.append(", refers to ").append(field.getDocRefType()).append(" documents");
+            }
+            sb.append('\n');
+        }
+        if (values.size() >= MAX_FIELDS) {
+            sb.append("(Only the first ").append(MAX_FIELDS).append(" fields are given.)\n");
+        }
+        MisleadingSearches.backendOf(dataSource).ifPresent(backend -> sb.append(searchingNote(backend, values)));
+        if (ElasticIndexDoc.TYPE.equals(dataSource.getType()) && elasticEsqlProvider != null) {
+            elasticEsqlProvider.get().esqlVersion(dataSource)
+                    .ifPresent(version -> sb.append(esqlNote(version, values)));
+        }
+        sb.append(contextNote(context, dataSource));
+        return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    // field=: the field the user's words name, with all that is known of it; or the fields they could name, for the
+    // user to choose; or the closest, when none matches.
+    private String oneField(final ToolCallContext context,
+                            final DocRef dataSource,
+                            final List<QueryField> fields,
+                            final String wanted) {
+        final List<DataSourceDocumentation.Documented> docs = dataSourceDocumentation.find(context.session(),
+                dataSource, "Documentation read by the " + NAME + " tool");
+        final Map<String, Map<String, String>> rows = DataSourceDocumentation.fieldRows(docs);
+        final Map<String, String> descriptions = new LinkedHashMap<>();
+        rows.forEach((name, row) -> NullSafe.consume(column(row, "description"), text ->
+                descriptions.put(name, text)));
+        final Map<String, QueryField> byName = new LinkedHashMap<>();
+        fields.forEach(field -> byName.putIfAbsent(field.getFldName(), field));
+        final FieldMatches.Matched matched = FieldMatches.match(wanted, List.copyOf(byName.keySet()),
+                descriptions);
+        final StringBuilder sb = new StringBuilder();
+        switch (matched.kind()) {
+            case ONE -> {
+                final FieldMatches.Candidate one = matched.candidates().getFirst();
+                sb.append(described(context, dataSource, byName.get(one.name()), rows.get(one.name()), one));
+            }
+            case SEVERAL -> {
+                sb.append("Several fields could be '").append(wanted).append("'. Ask the user which they mean "
+                                                                            + "(don't pick one yourself), then "
+                                                                            + "call again with its name:\n");
+                int n = 1;
+                for (final FieldMatches.Candidate candidate : matched.candidates()) {
+                    final QueryField field = byName.get(candidate.name());
+                    sb.append(n++).append(". ").append(candidate.name()).append(" (")
+                            .append(NullSafe.get(field, QueryField::getFldType, Object::toString)).append("): ")
+                            .append(candidate.why());
+                    final String description = descriptions.get(candidate.name());
+                    if (NullSafe.isNonBlankString(description) && !candidate.why().contains(description)) {
+                        sb.append(". ").append(ToolText.head(description, 160));
+                    }
+                    sb.append('\n');
+                }
+            }
+            case NONE -> sb.append("No field matches '").append(wanted).append("'. The closest by name: ")
+                    .append(String.join(", ", matched.candidates().stream()
+                            .map(FieldMatches.Candidate::name).toList()))
+                    .append(". Ask the user which they mean, or call without field= for every field.\n");
+        }
+        return sb.toString();
+    }
+
+    // One field: its type, conditions, source path, description, sample values and the AGENTS lines naming it.
+    private String described(final ToolCallContext context,
+                             final DocRef dataSource,
+                             final QueryField field,
+                             final Map<String, String> row,
+                             final FieldMatches.Candidate matched) {
+        final StringBuilder sb = new StringBuilder("Field: ").append(field.getFldName()).append(" (")
+                .append(NullSafe.get(field.getFldType(), Object::toString)).append(')');
+        if (!"its name".equals(matched.why())) {
+            sb.append(", matched as ").append(matched.why());
+        }
+        sb.append('\n');
+        sb.append("- queryable: ").append(field.queryable()
+                ? "yes"
+                : "no (found by no search)").append('\n');
+        if (field.getConditionSet() != null) {
+            sb.append("- conditions: ").append(field.getConditionSet()).append('\n');
+        }
+        if (NullSafe.isNonBlankString(field.getDocRefType())) {
+            sb.append("- refers to ").append(field.getDocRefType()).append(" documents\n");
+        }
+        final Optional<DataSourceDocumentation.Planned> planned = dataSourceDocumentation.planned(
+                dataSourceDocumentation.feedingPipelines(dataSource), field.getFldName());
+        final String from = column(row, "from");
+        if (planned.isPresent()) {
+            final PlannedField plannedField = planned.get().field();
+            sb.append("- source: ").append(plannedField.isConstant()
+                    ? "the constant '" + plannedField.constant() + "', in every document"
+                    : plannedField.source())
+                    .append(" (the index plan kept with pipeline ")
+                    .append(context.links().document(planned.get().pipeline())).append(")\n");
+        } else if (NullSafe.isNonBlankString(from)) {
+            sb.append("- source: ").append(from).append(" (its documentation)\n");
+        }
+        final String description = NullSafe.nonBlankStringElse(column(row, "description"),
+                planned.map(p -> p.field().description()).orElse(""));
+        if (NullSafe.isNonBlankString(description)) {
+            sb.append("- description: ").append(description).append('\n');
+        }
+        final String samples = column(row, "sample");
+        if (NullSafe.isNonBlankString(samples)) {
+            sb.append("- sample values: ").append(samples).append('\n');
+        }
+        final List<String> agents = agentLines(context, dataSource, field.getFldName());
+        if (!agents.isEmpty()) {
+            sb.append("- AGENTS lines naming it (follow them):\n");
+            agents.forEach(line -> sb.append("  - ").append(line).append('\n'));
+        }
+        return sb.toString();
+    }
+
+    // The cell of the column whose name starts with the word given (Description, From (event-logging path),
+    // Sample values), or null.
+    private static String column(final Map<String, String> row, final String word) {
+        if (row == null) {
+            return null;
+        }
+        return row.entrySet().stream()
+                .filter(entry -> entry.getKey().toLowerCase(Locale.ROOT).startsWith(word))
+                .map(Map.Entry::getValue)
+                .filter(NullSafe::isNonBlankString)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // The lines of the AGENTS docs that apply where the data source is which name the field: its words in a run
+    // (Email.Recipient.Id for Email/Recipient/Id), or for a name of one word, the word itself.
+    private List<String> agentLines(final ToolCallContext context, final DocRef dataSource, final String name) {
+        final List<String> named = FieldMatches.words(name);
+        final List<String> out = new ArrayList<>();
+        final AgentInstructions.Standing standing = agentInstructions.load(context.session(),
+                "Standing instructions read by the " + NAME + " tool");
+        for (final AgentInstructions.InstructionDoc doc : standing.applyingTo(List.of(
+                agentInstructions.folderOf(dataSource)))) {
+            for (final String line : doc.text().split("\n", -1)) {
+                if (!line.isBlank() && (line.contains(name) || (named.size() > 1
+                                                                && Collections.indexOfSubList(
+                        FieldMatches.words(line), named) >= 0))) {
+                    out.add(line.strip() + " (" + context.links().document(doc.docRef()) + ")");
+                }
+            }
+        }
+        return out;
+    }
+
+    /// @param elasticEsqlProvider Says whether ES|QL can be used on an Elastic Index, so aggregations are steered to
+    ///                            esql_query.
+    @Inject
+    void setElasticEsql(final Provider<ElasticEsql> elasticEsqlProvider) {
+        this.elasticEsqlProvider = elasticEsqlProvider;
+    }
+
+    /// The line for an Elastic Index whose cluster takes ES|QL: aggregations go to esql_query, with an example from
+    /// the index's own fields.
+    ///
+    /// @param version The cluster's version.
+    /// @param fields  The index's fields.
+    /// @return The note, on a line of its own.
+    static String esqlNote(final String version, final List<QueryField> fields) {
+        return "Aggregations on this index (Elasticsearch " + version + "): use esql_query, which Elasticsearch "
+               + "answers itself" + EsqlHints.examplePipeline(fields)
+                       .map(pipeline -> ", e.g. pipeline '" + pipeline + "'")
+                       .orElse("") + ".\n";
+    }
+
+    /// What a search of a Lucene or Elastic index through Stroom gets wrong without an error (found against Stroom
+    /// 7.13), so a query or search on it avoids it.
+    ///
+    /// @param backend [MisleadingSearches#ELASTICSEARCH] or [MisleadingSearches#LUCENE].
+    /// @param fields  The index's fields.
+    /// @return The note, on lines of its own.
+    static String searchingNote(final String backend, final List<QueryField> fields) {
+        final StringBuilder sb = new StringBuilder("\nSearching it through Stroom (");
+        if (MisleadingSearches.ELASTICSEARCH.equals(backend)) {
+            sb.append("Elasticsearch): STARTS_WITH and CONTAINS find nothing, or are refused (use EQUALS with a * "
+                      + "wildcard, e.g. 'adm*' or '*err*', or MATCHES_REGEX); IS_NULL and IS_NOT_NULL match every "
+                      + "document (EQUALS '*' finds " + MisleadingSearches.EQUALS_ANY + ", NOT_EQUALS '*' none; "
+                      + "MATCHES_REGEX '" + MisleadingSearches.NON_EMPTY + "' a non-empty value on a string "
+                      + "field)");
+            final Set<String> ipFields = MisleadingSearches.ipFields(fields);
+            if (!ipFields.isEmpty()) {
+                sb.append("; on an ip field (")
+                        .append(String.join(", ", ipFields))
+                        .append(") a wildcard finds nothing: use a CIDR range, e.g. EQUALS '192.0.2.0/24'");
+            }
+        } else {
+            sb.append("Lucene): STARTS_WITH and ENDS_WITH find nothing (use EQUALS with a * wildcard, e.g. 'ca*' "
+                      + "or '*ol'); CONTAINS finds nothing on a keyword field (use EQUALS '*aro*'), nor a range on "
+                      + "a text field (use EQUALS with a wildcard, an address range as '10.1.*', or IN with the "
+                      + "values); IN finds nothing when a value holds a space (search each such value with "
+                      + "EQUALS)");
+        }
+        return sb.append("; IN takes values separated by commas. A field that is not queryable is found by no "
+                         + "search.\n").toString();
+    }
+
+    // What the people and builds that look after the data source say about it: its documentation (e.g. that
+    // document.description is a tweet's text, from the pipeline that feeds it) and its AGENTS docs (e.g. which field
+    // holds the acting user). Given even when its fields can't be listed.
+    private String contextNote(final ToolCallContext context, final DocRef dataSource) {
+        return DataSourceDocumentation.note(context.links(), dataSourceDocumentation.find(context.session(),
+                       dataSource, "Documentation read by the " + NAME + " tool"))
+               + agentInstructions.load(context.session(), "Standing instructions read by the " + NAME + " tool")
+                       .note(context.links(), List.of(agentInstructions.folderOf(dataSource)));
+    }
+
+    @Override
+    public boolean readsUntrustedContent() {
+        // Field names come from users' documents.
+        return true;
+    }
+}

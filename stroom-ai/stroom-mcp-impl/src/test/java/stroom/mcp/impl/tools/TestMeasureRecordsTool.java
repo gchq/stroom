@@ -16,10 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.PartLengths;
 import stroom.ai.impl.tools.sample.RecordLengths.Measured;
 import stroom.ai.impl.tools.sample.RecordLengths.Span;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.PartLengths;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -17,9 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticIndexPresence.Presence;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;

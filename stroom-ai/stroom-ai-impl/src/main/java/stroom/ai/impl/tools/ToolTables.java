@@ -35,7 +35,7 @@ import java.util.List;
 
 /// Writes the tables the stream tools make to the workspace (CSV, TSV or Markdown, by the file's name), for the
 /// table tool to work on, and shows the model their first rows.
-final class ToolTables {
+public final class ToolTables {
 
     /// The longest a cell is shown in a preview.
     static final int MAX_PREVIEW_CELL_CHARS = 200;
@@ -55,11 +55,11 @@ final class ToolTables {
     /// @param rows          The rows, each with a cell per column.
     /// @param sourceDocUuid The document the table came from, so access to it is checked again when the file is
     ///                      used, or null.
-    static void write(final SessionWorkspace workspace,
-                      final WorkspacePath out,
-                      final List<String> columns,
-                      final List<List<String>> rows,
-                      final String sourceDocUuid) {
+    public static void write(final SessionWorkspace workspace,
+                             final WorkspacePath out,
+                             final List<String> columns,
+                             final List<List<String>> rows,
+                             final String sourceDocUuid) {
         final Path temp = workspace.tempFile();
         try {
             try (final BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
@@ -86,7 +86,7 @@ final class ToolTables {
     /// @param rows    The rows.
     /// @param maxRows The most rows to show.
     /// @return The table's first rows, with a note of how many more there are.
-    static String preview(final List<String> columns, final List<List<String>> rows, final int maxRows) {
+    public static String preview(final List<String> columns, final List<List<String>> rows, final int maxRows) {
         final StringBuilder sb = new StringBuilder(row(columns));
         sb.append('|').append(" --- |".repeat(columns.size())).append('\n');
         rows.stream().limit(maxRows).forEach(row -> sb.append(row(row)));
@@ -116,7 +116,7 @@ final class ToolTables {
     /// @param file    The file to write.
     /// @param columns The column headings.
     /// @param rows    The rows, each with a cell per column.
-    static void writeCsv(final Path file, final List<String> columns, final List<List<String>> rows) {
+    public static void writeCsv(final Path file, final List<String> columns, final List<List<String>> rows) {
         try (final BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
             writeDelimited(writer, CSVFormat.DEFAULT, columns, rows);
         } catch (final IOException e) {

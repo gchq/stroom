@@ -19,6 +19,8 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.McpElicitations;
+import stroom.ai.impl.tools.workspace.LsTool;
+import stroom.ai.impl.tools.workspace.ReadFileTool;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;

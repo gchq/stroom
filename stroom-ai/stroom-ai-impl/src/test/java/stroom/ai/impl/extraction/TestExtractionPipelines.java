@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.extraction;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;

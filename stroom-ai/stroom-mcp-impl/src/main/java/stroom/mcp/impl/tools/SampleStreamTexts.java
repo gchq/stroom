@@ -18,13 +18,13 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiSamplingConfig;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamCharsets;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.StreamReadException;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.sample.PartSampler;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.streams.StreamCharsets;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.StreamReadException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

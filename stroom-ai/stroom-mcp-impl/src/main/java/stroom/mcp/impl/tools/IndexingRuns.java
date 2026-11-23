@@ -17,11 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticIndexPresence.Presence;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexResource;

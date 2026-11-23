@@ -17,8 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -29,6 +27,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 import stroom.ai.impl.tools.sample.DataSplitterSchema;
 import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.SampleProfiler;
@@ -37,6 +36,7 @@ import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.StroomInput;
 import stroom.ai.impl.tools.sample.StroomSplitterRun;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.xml.converter.ds3.RootFactory;

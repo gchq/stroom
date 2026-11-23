@@ -16,16 +16,16 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.XmlTree;
+import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.validation.XPathChecks;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;

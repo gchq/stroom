@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

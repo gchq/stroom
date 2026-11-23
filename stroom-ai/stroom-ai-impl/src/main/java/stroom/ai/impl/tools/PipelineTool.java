@@ -18,6 +18,13 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.query.CurrentResultsTool;
+import stroom.ai.impl.tools.query.FetchEventsTool;
+import stroom.ai.impl.tools.query.SearchEventsTool;
+import stroom.ai.impl.tools.workspace.GrepTool;
+import stroom.ai.impl.tools.workspace.JqTool;
+import stroom.ai.impl.tools.workspace.TableTool;
+import stroom.ai.impl.tools.workspace.XPathTool;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -41,7 +48,7 @@ import java.util.UUID;
  * file the step before wrote, so intermediate results never enter the conversation. The steps are given as a JSON
  * array of tool calls, never as a command string, and each is checked as if called on its own.
  */
-class PipelineTool extends AbstractWorkspaceTool {
+public class PipelineTool extends AbstractWorkspaceTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineTool.class);
 
@@ -53,15 +60,23 @@ class PipelineTool extends AbstractWorkspaceTool {
     private final Map<String, AbstractWorkspaceTool> tools;
     private final CurrentResultsTool currentResultsTool;
 
+    /// @param workspace The chats' workspaces, which the tool reads and writes.
+    /// @param grepTool           The grep step.
+    /// @param jqTool             The jq step.
+    /// @param xPathTool          The xpath step.
+    /// @param tableTool          The table step.
+    /// @param fetchEventsTool    The fetch_events step.
+    /// @param searchEventsTool   The search_events step.
+    /// @param currentResultsTool The current_results step.
     @Inject
-    PipelineTool(final ChatWorkspace workspace,
-                 final GrepTool grepTool,
-                 final JqTool jqTool,
-                 final XPathTool xPathTool,
-                 final TableTool tableTool,
-                 final FetchEventsTool fetchEventsTool,
-                 final SearchEventsTool searchEventsTool,
-                 final CurrentResultsTool currentResultsTool) {
+    public PipelineTool(final ChatWorkspace workspace,
+                        final GrepTool grepTool,
+                        final JqTool jqTool,
+                        final XPathTool xPathTool,
+                        final TableTool tableTool,
+                        final FetchEventsTool fetchEventsTool,
+                        final SearchEventsTool searchEventsTool,
+                        final CurrentResultsTool currentResultsTool) {
         super(workspace);
         this.currentResultsTool = currentResultsTool;
         this.tools = Map.of(

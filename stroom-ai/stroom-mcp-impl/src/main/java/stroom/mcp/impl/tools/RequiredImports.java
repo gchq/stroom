@@ -16,14 +16,14 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AgentInstructions;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.XsltDoc;

@@ -17,10 +17,10 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.RecordStream;
 import stroom.ai.impl.tools.sample.Shapes;
+import stroom.ai.impl.tools.streams.StreamReader;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

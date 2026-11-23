@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
+import stroom.ai.impl.tools.processing.ProcessorTasksTool;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;

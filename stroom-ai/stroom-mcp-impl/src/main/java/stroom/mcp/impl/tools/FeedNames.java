@@ -16,10 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;

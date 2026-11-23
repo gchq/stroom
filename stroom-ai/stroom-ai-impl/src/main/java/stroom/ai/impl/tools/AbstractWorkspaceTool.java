@@ -45,7 +45,8 @@ public abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
     // reaches its own session's files, and its limits, through its context.
     private final ChatWorkspace workspaces;
 
-    AbstractWorkspaceTool(final ChatWorkspace workspaces) {
+    /// @param workspaces The chats' workspaces, which the tool reads and writes.
+    protected AbstractWorkspaceTool(final ChatWorkspace workspaces) {
         this.workspaces = workspaces;
     }
 

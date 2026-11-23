@@ -16,7 +16,7 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;

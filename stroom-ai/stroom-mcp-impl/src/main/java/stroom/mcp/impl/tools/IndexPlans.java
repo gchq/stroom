@@ -16,10 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
@@ -27,6 +26,7 @@ import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.logging.LambdaLogger;

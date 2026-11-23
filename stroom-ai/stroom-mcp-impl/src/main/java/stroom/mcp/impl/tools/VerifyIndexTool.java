@@ -17,13 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.IndexSearches;
-import stroom.ai.impl.tools.IndexSearches.Found;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.MisleadingSearches;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -34,8 +28,14 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.query.IndexSearches;
+import stroom.ai.impl.tools.query.IndexSearches.Found;
+import stroom.ai.impl.tools.query.MisleadingSearches;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.ComponentConfig;

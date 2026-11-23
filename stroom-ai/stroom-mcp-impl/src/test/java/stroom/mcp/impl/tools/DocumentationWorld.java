@@ -16,10 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.meta.shared.MetaRow;

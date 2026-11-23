@@ -26,7 +26,7 @@ import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
-import stroom.ai.impl.tools.StroomQlSources;
+import stroom.ai.impl.tools.query.StroomQlSources;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;

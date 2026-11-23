@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.data.shared.UploadDataRequest;
 import stroom.data.store.api.DataService;
 import stroom.meta.api.AttributeMap;

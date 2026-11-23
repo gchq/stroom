@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.Globs;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.indexing.IndexNamePatterns;
 import stroom.ai.impl.tools.indexing.IndexTemplates;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;

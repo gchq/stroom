@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.FieldGroup;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 
 import org.junit.jupiter.api.Test;
 

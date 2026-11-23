@@ -16,12 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.pipeline.shared.stepping.StepLocation;
 
 import org.junit.jupiter.api.Test;

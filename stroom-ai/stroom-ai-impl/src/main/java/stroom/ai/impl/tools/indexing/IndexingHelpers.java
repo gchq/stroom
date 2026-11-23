@@ -16,13 +16,13 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.Globs;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.KeptMapping.Kept;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping.Kept;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.TranslationDescriptions;
 import stroom.ai.impl.tools.validation.XmlTrees;

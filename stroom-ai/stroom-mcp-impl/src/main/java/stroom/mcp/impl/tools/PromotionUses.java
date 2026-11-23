@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;

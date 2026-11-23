@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;

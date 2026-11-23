@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.GoldenFiles;
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;

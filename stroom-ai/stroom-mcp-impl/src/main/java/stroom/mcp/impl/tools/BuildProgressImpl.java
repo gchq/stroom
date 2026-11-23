@@ -17,9 +17,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.BuildProgress;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.processing.AcceptedErrors;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 

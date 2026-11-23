@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.StreamReadException;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.StreamReadException;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 

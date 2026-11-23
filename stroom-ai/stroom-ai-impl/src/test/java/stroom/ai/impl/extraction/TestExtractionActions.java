@@ -17,8 +17,8 @@
 package stroom.ai.impl.extraction;
 
 import stroom.ai.impl.extraction.ExtractionActions.Written;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiCreateExtraction;
 import stroom.ai.shared.AiWriteExtractionRequest;

@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 
 import org.junit.jupiter.api.Test;
 

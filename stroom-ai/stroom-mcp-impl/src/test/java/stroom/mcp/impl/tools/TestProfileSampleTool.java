@@ -17,12 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.shared.AiToolCategory;
 import stroom.meta.shared.Meta;
 import stroom.util.json.JsonUtil;

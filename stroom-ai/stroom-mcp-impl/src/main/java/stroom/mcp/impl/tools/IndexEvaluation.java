@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

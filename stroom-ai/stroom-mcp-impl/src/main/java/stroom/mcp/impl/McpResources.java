@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl;
 
-import stroom.ai.impl.tools.AgentKnowledge;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;

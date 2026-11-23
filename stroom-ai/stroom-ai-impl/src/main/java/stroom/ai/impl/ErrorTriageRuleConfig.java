@@ -31,7 +31,7 @@ import java.util.Objects;
 
 /// One of the environment's error triage rules, as set in the config (a YAML mapping in `config.yml`, an item of
 /// a JSON array in the Properties screen), with the fields of Stroom's bundled rules (`error_rules.yaml`). Held as
-/// a list in [ErrorTriageConfig#getRules()]; [stroom.ai.impl.tools.ErrorTriage] checks the class and reason.
+/// a list in [ErrorTriageConfig#getRules()]; [stroom.ai.impl.tools.processing.ErrorTriage] checks the class and reason.
 @NotInjectableConfig
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"severity", "element", "own", "message", "class", "reason", "cause"})

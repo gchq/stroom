@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl;
 
-import stroom.ai.impl.tools.AgentKnowledge;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.mcp.impl.tools.BuildToolsModule;
 import stroom.util.RunnableWrapper;

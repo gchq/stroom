@@ -17,10 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -29,10 +26,13 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
+import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;

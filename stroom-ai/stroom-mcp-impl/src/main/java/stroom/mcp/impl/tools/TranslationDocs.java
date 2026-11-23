@@ -16,20 +16,20 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AgentKnowledge;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.cef.CefPlan;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.sample.DataSplitterSchema;
 import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.ai.impl.tools.validation.XmlTrees;

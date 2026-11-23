@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.Lookup;
 import stroom.ai.impl.tools.generation.LookupKeys;

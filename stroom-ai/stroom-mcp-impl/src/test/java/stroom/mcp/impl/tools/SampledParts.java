@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.sample.PartSampler;
+import stroom.ai.impl.tools.streams.StreamReader;
 
 import org.mockito.Mockito;
 

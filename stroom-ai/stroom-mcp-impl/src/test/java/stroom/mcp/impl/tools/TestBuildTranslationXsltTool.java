@@ -18,9 +18,9 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.draft.SplitterXml;

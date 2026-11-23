@@ -16,14 +16,14 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.PlannedValues;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;

@@ -17,11 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;

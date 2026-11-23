@@ -16,17 +16,17 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.IndexSearches;
-import stroom.ai.impl.tools.IndexSearches.Found;
-import stroom.ai.impl.tools.IndexSearches.Probe;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.PlannedValues;
+import stroom.ai.impl.tools.query.IndexSearches;
+import stroom.ai.impl.tools.query.IndexSearches.Found;
+import stroom.ai.impl.tools.query.IndexSearches.Probe;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.Fetched;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;

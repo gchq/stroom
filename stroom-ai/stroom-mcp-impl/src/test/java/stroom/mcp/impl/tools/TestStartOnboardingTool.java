@@ -17,8 +17,8 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
-import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;

@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.util.shared.NullSafe;
 
 import java.nio.charset.StandardCharsets;

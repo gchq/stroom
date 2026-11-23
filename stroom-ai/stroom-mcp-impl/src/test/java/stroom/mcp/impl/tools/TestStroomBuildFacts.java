@@ -16,13 +16,13 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.RawText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.RawText;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;

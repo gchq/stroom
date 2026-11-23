@@ -16,7 +16,6 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
@@ -24,6 +23,7 @@ import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.cef.CefLines;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.generation.XmlElement;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

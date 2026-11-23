@@ -17,10 +17,10 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.CallProgress;
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.processing.ErrorTriage;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;

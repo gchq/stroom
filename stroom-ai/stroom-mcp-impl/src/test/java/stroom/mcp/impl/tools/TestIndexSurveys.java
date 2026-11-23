@@ -16,12 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.IndexSearches;
-import stroom.ai.impl.tools.IndexSearches.Found;
-import stroom.ai.impl.tools.IndexSearches.Probe;
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.query.IndexSearches;
+import stroom.ai.impl.tools.query.IndexSearches.Found;
+import stroom.ai.impl.tools.query.IndexSearches.Probe;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.Column;

@@ -16,9 +16,9 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.CloseMatches;
 

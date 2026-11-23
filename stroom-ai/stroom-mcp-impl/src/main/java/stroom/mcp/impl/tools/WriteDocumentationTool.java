@@ -17,10 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.AcceptedErrors;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -32,10 +29,13 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.DocumentationText;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.MarkdownHtml;
+import stroom.ai.impl.tools.processing.AcceptedErrors;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;

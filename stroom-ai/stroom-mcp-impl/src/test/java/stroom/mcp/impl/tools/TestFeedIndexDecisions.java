@@ -18,15 +18,15 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.ElicitationSchema;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 

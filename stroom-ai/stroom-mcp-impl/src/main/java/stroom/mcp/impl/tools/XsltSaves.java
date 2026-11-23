@@ -16,10 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.docref.DocRef;
 
 import jakarta.inject.Inject;
@@ -34,7 +34,8 @@ import java.util.Optional;
 /// history and the hand-edit check.
 public class XsltSaves {
 
-    /// The kinds of what an XSLT is generated from, as kept with it ([stroom.ai.impl.tools.KeptMapping#KINDS]).
+    /// The kinds of what an XSLT is generated from, as kept with it
+    /// ([stroom.ai.impl.tools.documents.KeptMapping#KINDS]).
     public static final String TRANSLATION = "translation";
     /// An index's field plan.
     public static final String INDEX = "index";

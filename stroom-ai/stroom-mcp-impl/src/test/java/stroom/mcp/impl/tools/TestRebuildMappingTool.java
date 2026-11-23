@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.docref.DocRef;

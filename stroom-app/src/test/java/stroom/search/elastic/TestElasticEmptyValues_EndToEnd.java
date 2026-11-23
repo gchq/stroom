@@ -16,8 +16,8 @@
 
 package stroom.search.elastic;
 
-import stroom.ai.impl.tools.MisleadingSearches;
-import stroom.ai.impl.tools.MisleadingSearches.NullSearch;
+import stroom.ai.impl.tools.query.MisleadingSearches;
+import stroom.ai.impl.tools.query.MisleadingSearches.NullSearch;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;

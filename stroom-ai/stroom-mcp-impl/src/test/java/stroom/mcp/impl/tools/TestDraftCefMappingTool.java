@@ -16,10 +16,6 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AgentInstructions;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
@@ -27,6 +23,10 @@ import stroom.ai.impl.tools.cef.CefField;
 import stroom.ai.impl.tools.cef.CefOverride;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.cef.CefValue;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.validation.EventStreams;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.pipeline.shared.SharedElementData;

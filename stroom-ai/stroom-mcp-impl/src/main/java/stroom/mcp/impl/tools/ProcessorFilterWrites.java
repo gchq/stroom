@@ -18,11 +18,11 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiBuildsConfig;
 import stroom.ai.impl.AiConfig;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;

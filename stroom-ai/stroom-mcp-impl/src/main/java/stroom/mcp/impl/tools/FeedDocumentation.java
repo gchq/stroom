@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.KeptMapping;
 
 import java.util.ArrayList;
 import java.util.Arrays;

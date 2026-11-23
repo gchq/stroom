@@ -17,9 +17,9 @@
 package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefKeys;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.FieldGroup;

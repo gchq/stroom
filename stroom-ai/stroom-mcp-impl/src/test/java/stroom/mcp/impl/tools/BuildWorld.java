@@ -18,7 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiConfig;
-import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;

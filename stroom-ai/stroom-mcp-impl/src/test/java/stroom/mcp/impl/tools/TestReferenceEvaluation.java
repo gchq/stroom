@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 

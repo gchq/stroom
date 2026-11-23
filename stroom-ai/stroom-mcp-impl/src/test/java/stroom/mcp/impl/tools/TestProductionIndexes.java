@@ -18,8 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.api.ElasticIndexPresence.State;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;

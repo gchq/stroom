@@ -17,7 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
-import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.docref.DocRef;

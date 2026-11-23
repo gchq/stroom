@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.api.DocFinder;

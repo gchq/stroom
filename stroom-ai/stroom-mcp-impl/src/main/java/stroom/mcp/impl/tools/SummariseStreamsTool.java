@@ -18,8 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -28,6 +26,8 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;

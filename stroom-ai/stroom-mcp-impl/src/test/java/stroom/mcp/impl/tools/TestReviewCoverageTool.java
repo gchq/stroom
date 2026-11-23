@@ -16,15 +16,15 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.cef.CefEvents;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.impl.tools.validation.EventStreams;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;

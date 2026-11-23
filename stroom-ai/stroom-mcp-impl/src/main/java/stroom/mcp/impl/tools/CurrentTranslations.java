@@ -16,15 +16,15 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;

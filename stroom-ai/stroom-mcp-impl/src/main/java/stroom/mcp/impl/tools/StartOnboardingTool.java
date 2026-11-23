@@ -17,7 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -30,6 +29,7 @@ import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;

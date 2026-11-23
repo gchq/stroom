@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiDao;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.logging.LambdaLogger;

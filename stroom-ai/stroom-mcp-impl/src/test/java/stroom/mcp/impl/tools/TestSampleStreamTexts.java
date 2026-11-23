@@ -18,14 +18,14 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiSamplingConfig;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.sample.PartSampler;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.meta.shared.Meta;
 
 import org.junit.jupiter.api.Test;

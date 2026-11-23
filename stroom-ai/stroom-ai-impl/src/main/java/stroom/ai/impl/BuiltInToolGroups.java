@@ -16,7 +16,7 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.impl.tools.SkillInvocations;
+import stroom.ai.impl.tools.skills.SkillInvocations;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

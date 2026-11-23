@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.sample.SurveyDoc;
+import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.documentation.shared.DocumentationDoc;

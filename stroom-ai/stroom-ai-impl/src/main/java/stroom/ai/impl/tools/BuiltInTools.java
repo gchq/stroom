@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AiToolSummary;
 import stroom.util.logging.LambdaLogger;
@@ -71,7 +72,7 @@ public class BuiltInTools {
 
     /// @param tools    The tools, as bound in [BuiltInToolsModule].
     /// @param contexts Makes the context of a call in a chat.
-    BuiltInTools(final Set<StroomTool> tools, final ChatToolCallContexts contexts) {
+    public BuiltInTools(final Set<StroomTool> tools, final ChatToolCallContexts contexts) {
         this(tools, contexts, new ToolCallGuard());
     }
 

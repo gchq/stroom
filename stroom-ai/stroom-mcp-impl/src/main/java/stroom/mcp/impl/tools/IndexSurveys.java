@@ -17,15 +17,15 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.CallProgress;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.IndexSearches;
-import stroom.ai.impl.tools.IndexSearches.Found;
-import stroom.ai.impl.tools.IndexSearches.Probe;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.query.IndexSearches;
+import stroom.ai.impl.tools.query.IndexSearches.Found;
+import stroom.ai.impl.tools.query.IndexSearches.Probe;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.LuceneIndexDoc;

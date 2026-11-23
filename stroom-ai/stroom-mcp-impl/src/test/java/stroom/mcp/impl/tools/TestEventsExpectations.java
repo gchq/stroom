@@ -16,13 +16,13 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.Fetched;
-import stroom.ai.impl.tools.StreamReader.Records;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.Fetched;
+import stroom.ai.impl.tools.streams.StreamReader.Records;
 import stroom.mcp.impl.BundledKnowledge;
 
 import org.junit.jupiter.api.Test;

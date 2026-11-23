@@ -18,8 +18,8 @@ package stroom.ai.impl.extraction;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.extraction.ExtractionPlan.Sample;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;

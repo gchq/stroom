@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.McpTestClient;
 import stroom.pipeline.PipelineStore;

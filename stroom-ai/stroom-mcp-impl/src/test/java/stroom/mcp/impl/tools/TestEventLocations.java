@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.SteppingWalks;
-import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;

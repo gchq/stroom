@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AcceptedErrors;
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.processing.AcceptedErrors;
+import stroom.ai.impl.tools.processing.ErrorTriage;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;

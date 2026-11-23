@@ -18,8 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.AiWorkspaceDao.FileInfo;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspacePath;

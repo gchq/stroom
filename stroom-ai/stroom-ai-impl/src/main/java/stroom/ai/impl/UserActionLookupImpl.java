@@ -16,8 +16,8 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.impl.tools.AgentInstructions;
-import stroom.ai.impl.tools.SkillDoc;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.skills.SkillDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;

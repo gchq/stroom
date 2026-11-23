@@ -17,8 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -26,6 +24,8 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.impl.tools.validation.EventChecks;
 import stroom.ai.impl.tools.validation.EventStreams;
 import stroom.ai.impl.tools.validation.XsltChecks;

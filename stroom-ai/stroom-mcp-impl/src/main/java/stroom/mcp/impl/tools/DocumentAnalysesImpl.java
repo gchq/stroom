@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAnalyses;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.documents.DocumentAnalyses;
 import stroom.docref.DocRef;
 
 import jakarta.inject.Inject;

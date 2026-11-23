@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 
 /// How the tools triage the errors a pipeline wrote or stepping met, as blocking, review or benign (see
-/// [stroom.ai.impl.tools.ErrorTriage]): Stroom's own rules are bundled, and these come before them.
+/// [stroom.ai.impl.tools.processing.ErrorTriage]): Stroom's own rules are bundled, and these come before them.
 @JsonPropertyOrder(alphabetic = true)
 public class ErrorTriageConfig extends AbstractConfig implements IsStroomConfig {
 

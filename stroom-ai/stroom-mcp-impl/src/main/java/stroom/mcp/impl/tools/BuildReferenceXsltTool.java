@@ -17,8 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -30,6 +28,8 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.ReferenceGenerator;
 import stroom.ai.impl.tools.generation.ReferenceMapping;
+import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.shared.AiToolCategory;

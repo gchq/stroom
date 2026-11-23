@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -16,13 +16,13 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.processing.AcceptedErrors;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

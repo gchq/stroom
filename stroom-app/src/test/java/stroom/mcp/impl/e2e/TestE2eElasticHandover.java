@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.ai.impl.tools.AgentKnowledge;
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.indexing.EcsSchema;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.docref.DocRef;
 import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;

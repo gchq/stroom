@@ -16,10 +16,10 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.RecordPicks;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.streams.RecordPicks;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.Fetched;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;

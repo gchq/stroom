@@ -470,7 +470,7 @@ public final class Shapes {
     }
 
     /// As [#add(RecordSplitter.Chunk, int, long, int)], for records read from further into the part than its
-    /// start: a window of it ([stroom.ai.impl.tools.StreamReader#readWindows]).
+    /// start: a window of it ([stroom.ai.impl.tools.streams.StreamReader#readWindows]).
     ///
     /// @param chunk       Records read from a part.
     /// @param index       The record's index among them.

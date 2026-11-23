@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.McpElicitations;
+import stroom.ai.impl.tools.time.ChatBrowserZones;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 
@@ -52,7 +53,7 @@ public class ChatToolCallContexts {
 
     /// @param browserZones The time zone of the browser each chat was last asked from.
     @Inject
-    void setBrowserZones(final ChatBrowserZones browserZones) {
+    public void setBrowserZones(final ChatBrowserZones browserZones) {
         this.browserZones = browserZones;
     }
 

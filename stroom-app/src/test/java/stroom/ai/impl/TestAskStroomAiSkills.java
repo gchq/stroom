@@ -18,9 +18,9 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.ai.impl.tools.SkillCatalogue;
-import stroom.ai.impl.tools.SkillDoc;
-import stroom.ai.impl.tools.SkillInvocations;
+import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.skills.SkillInvocations;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;

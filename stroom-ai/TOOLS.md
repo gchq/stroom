@@ -7,9 +7,10 @@ it does where that isn't obvious. How to use Stroom AI is in the user and admini
 
 There are 107 tools, in two modules:
 
-* **Built-in tools** (56): `stroom-ai/stroom-ai-impl`, package `stroom.ai.impl.tools`, bound in
-  `BuiltInToolsModule`. Documents, search, streams and processing diagnosis, administration, the chat's workspace,
-  and proposals the user applies with a button.
+* **Built-in tools** (56): `stroom-ai/stroom-ai-impl`, package `stroom.ai.impl.tools` (the tool framework) and its
+  subpackages by area (`chat`, `config`, `documents`, `instructions`, `processing`, `propose`, `query`, `sequence`,
+  `skills`, `streams`, `time`, `timeline`, `workspace`), bound in `BuiltInToolsModule`. Documents, search, streams
+  and processing diagnosis, administration, the chat's workspace, and proposals the user applies with a button.
 * **Build tools** (51): `stroom-ai/stroom-mcp-impl`, package `stroom.mcp.impl.tools`, bound in `BuildToolsModule`.
   They explore the environment and build Stroom content: feeds, translations, pipelines, indexes, processor filters
   and their documentation, in a build folder, promoted once the user approves. Their shared helpers that don't
@@ -8142,7 +8143,7 @@ What the generated XSLT does at run time that other tools rely on:
 rules, rooted paths, variable reads, the input namespace), `MappingCompaction` (`compactRules`, `compactPairs`,
 `grouped`), `XsltNames`, `XsltComments`, `Pairs`, `FieldHomes`, `StyledXslt` (the indexing and CEF XSLTs written in the
 translation's style, with the same helpers, so the three can't drift apart), `HandEdits` (`undone`, `collisions`,
-outline, plan fields) and `CodeDiff` (with `LineDiff`). The kept blocks are in `stroom.ai.impl.tools.KeptMapping`
+outline, plan fields) and `CodeDiff` (with `LineDiff`). The kept blocks are in `stroom.ai.impl.tools.documents.KeptMapping`
 (`withMapping`, `readMapping`, `replaceSection`, `docDigest`, `withBlock`): compact JSON in an HTML comment after a note
 asking people to leave it be, because shown as it was (1,400 lines of JSON for one translation) it buried the
 Documentation tab's own text. A block is written as `ToolJson.dumpsCompact` writes it (no spaces after `,` or `:`,
@@ -8382,7 +8383,7 @@ Small classes every tool uses, so behaviour is the same everywhere. Most are in 
 
 The tools' working knowledge is bundled with Stroom in `stroom-mcp-impl`
 (`src/main/resources/stroom/mcp/impl/knowledge/`, read by `BundledKnowledge`, which binds
-`stroom.ai.impl.tools.AgentKnowledge`). Without that module there is none, and the tools that use it say so.
+`stroom.ai.impl.tools.instructions.AgentKnowledge`). Without that module there is none, and the tools that use it say so.
 
 * **Working guides** (`guides/<name>.md`): `agent-instructions`, `cef`, `data-splitter`, `documentation`,
   `aggregated-feeds` (source types, the registry, scopes, source type groups and their pipelines, indexes and

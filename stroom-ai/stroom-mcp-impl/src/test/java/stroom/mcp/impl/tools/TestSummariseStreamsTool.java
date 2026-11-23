@@ -17,9 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.ai.shared.AiToolCategory;
 
 import org.junit.jupiter.api.BeforeEach;

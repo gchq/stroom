@@ -17,9 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.KeptMapping.Kept;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping.Kept;
 import stroom.docref.DocRef;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.XsltDoc;

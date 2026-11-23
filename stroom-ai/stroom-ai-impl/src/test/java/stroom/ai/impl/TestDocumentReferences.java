@@ -17,8 +17,8 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;

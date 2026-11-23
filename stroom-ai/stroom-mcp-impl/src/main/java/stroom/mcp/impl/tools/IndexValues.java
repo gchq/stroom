@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.IndexSearches;
-import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.query.IndexSearches;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;

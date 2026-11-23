@@ -17,8 +17,8 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.BuildProgress;
-import stroom.ai.impl.tools.DocumentAnalyses;
 import stroom.ai.impl.tools.StroomTool;
+import stroom.ai.impl.tools.documents.DocumentAnalyses;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;

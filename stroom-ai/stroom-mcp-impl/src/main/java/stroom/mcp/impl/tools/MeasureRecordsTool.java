@@ -17,8 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamReader.PartLengths;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -28,6 +26,8 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.sample.RecordLengths;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamReader.PartLengths;
 import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.xml.converter.ds3.RootFactory;
 import stroom.security.shared.AppPermission;

@@ -16,10 +16,10 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 import stroom.util.yaml.YamlUtil;

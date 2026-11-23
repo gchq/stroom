@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.generation.ReferenceGenerator;
 import stroom.ai.impl.tools.generation.ReferenceMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;

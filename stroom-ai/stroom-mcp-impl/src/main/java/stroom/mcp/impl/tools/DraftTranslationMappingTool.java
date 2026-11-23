@@ -17,7 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.LargeResults;
 import stroom.ai.impl.tools.ToolArgs;
@@ -35,6 +34,7 @@ import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;

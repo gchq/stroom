@@ -16,13 +16,6 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.SteppingWalks;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
@@ -31,6 +24,8 @@ import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.cef.CefLines;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.cef.CefValue;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
@@ -45,7 +40,12 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.processing.ErrorTriage;
+import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.docref.DocRef;

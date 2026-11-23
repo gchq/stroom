@@ -18,11 +18,11 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticClusterTests;
 import stroom.ai.api.ElasticClusterTests.TestResult;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.search.elastic.shared.ElasticClusterDoc;

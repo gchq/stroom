@@ -17,19 +17,19 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.ToolOutputs;
-import stroom.ai.impl.tools.AcceptedErrors;
-import stroom.ai.impl.tools.AgentInstructions;
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.InstructionRules.FieldMappingLayout;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.InstructionRules.FieldMappingLayout;
+import stroom.ai.impl.tools.processing.AcceptedErrors;
+import stroom.ai.impl.tools.processing.ErrorTriage;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamSummaries;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;

@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.shared.AiToolAccess;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;

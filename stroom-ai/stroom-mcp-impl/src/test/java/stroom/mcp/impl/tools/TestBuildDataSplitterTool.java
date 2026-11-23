@@ -16,13 +16,13 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.StroomSplitterRun;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.util.json.JsonUtil;

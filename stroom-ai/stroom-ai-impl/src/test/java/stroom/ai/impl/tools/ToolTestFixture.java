@@ -18,6 +18,10 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
+import stroom.ai.impl.tools.streams.FeedAccess;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.docref.DocRef;
@@ -58,35 +62,36 @@ import java.util.Set;
 /// A small world of documents for the document, content and stream tool tests: documents by UUID, which of them
 /// the user can view, what each holds, a workspace that keeps what is written to it in memory, and a mocked audit
 /// log. No database is needed.
-final class ToolTestFixture {
+public final class ToolTestFixture {
 
-    final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
-    final ExplorerNodeService explorerNodeService = Mockito.mock(ExplorerNodeService.class);
+    public final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+    public final ExplorerNodeService explorerNodeService = Mockito.mock(ExplorerNodeService.class);
     final StroomEventLoggingService eventLoggingService = Mockito.mock(StroomEventLoggingService.class);
-    final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
+    public final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     /// What has been written to the workspace, by path.
-    final Map<String, String> written = new HashMap<>();
+    public final Map<String, String> written = new HashMap<>();
     /// The documents, by UUID.
-    final Map<String, DocRef> docRefs = new HashMap<>();
+    public final Map<String, DocRef> docRefs = new HashMap<>();
     /// What each document holds, by UUID.
     final Map<String, Object> documents = new HashMap<>();
     /// The UUIDs of the documents the user can view.
-    final Set<String> visible = new HashSet<>();
+    public final Set<String> visible = new HashSet<>();
     /// The UUIDs of the documents whose permission check fails.
-    final Set<String> failing = new HashSet<>();
+    public final Set<String> failing = new HashSet<>();
     /// The dependency graph's edges.
     final List<Dependency> edges = new ArrayList<>();
     /// The dependency graph, answering the quick filter queries the tools make.
-    final DocDependencyService dependencyService = Mockito.mock(DocDependencyService.class);
+    public final DocDependencyService dependencyService = Mockito.mock(DocDependencyService.class);
     /// Finds documents by name, as Stroom's does: only those the user can view.
-    final DocFinder docFinder = Mockito.mock(DocFinder.class);
+    public final DocFinder docFinder = Mockito.mock(DocFinder.class);
     /// The folders each document is in, by UUID, e.g. `List.of("Feeds", "Archive")`; `/Lookups` if not given.
-    final Map<String, List<String>> folders = new HashMap<>();
+    public final Map<String, List<String>> folders = new HashMap<>();
     @SuppressWarnings("rawtypes")
     private final Map<DocumentTypeName, DocumentActionHandler> handlers = new HashMap<>();
     private AiWorkspaceConfig limits = new AiWorkspaceConfig();
 
-    ToolTestFixture(final Path tempDir) {
+    /// @param tempDir The test's temporary directory, which holds the workspace.
+    public ToolTestFixture(final Path tempDir) {
         Mockito.when(securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(true);
         Mockito.when(securityContext.hasDocumentPermission(Mockito.any(DocRef.class),
                 Mockito.eq(DocumentPermission.VIEW))).thenAnswer(invocation -> {
@@ -145,25 +150,25 @@ final class ToolTestFixture {
     }
 
     /// @return The tools' access checks, over this world, logging to its audit log.
-    DocumentAccess documentAccess() {
+    public DocumentAccess documentAccess() {
         return new DocumentAccess(() -> explorerNodeService, securityContext, () -> handlers, auditLog());
     }
 
     /// @param processorFilterService The processor filters of this world.
     /// @return The tools' processor filter checks, over this world.
-    ProcessorFilterAccess processorFilterAccess(final ProcessorFilterService processorFilterService) {
+    public ProcessorFilterAccess processorFilterAccess(final ProcessorFilterService processorFilterService) {
         return new ProcessorFilterAccess(securityContext, () -> processorFilterService, documentAccess());
     }
 
     /// @return The tools' feed checks by name, over this world: a feed is found by name only if the user can view
     /// it.
-    FeedAccess feedAccess() {
+    public FeedAccess feedAccess() {
         Mockito.doCallRealMethod().when(docFinder).findByName(Mockito.anyString(), Mockito.anyString());
         return new FeedAccess(() -> docFinder, documentAccess());
     }
 
     /// @return The AGENTS docs of this world, read through its access checks.
-    AgentInstructions agentInstructions() {
+    public AgentInstructions agentInstructions() {
         return new AgentInstructions(() -> docFinder, documentAccess());
     }
 
@@ -173,7 +178,10 @@ final class ToolTestFixture {
     /// @param text    What it says.
     /// @param canView True if the user can view it.
     /// @param folders The folders it is in, from the top of the tree, e.g. "Feeds"; none for the top.
-    DocRef addInstructions(final String uuid, final String text, final boolean canView, final String... folders) {
+    public DocRef addInstructions(final String uuid,
+                                  final String text,
+                                  final boolean canView,
+                                  final String... folders) {
         this.folders.put(uuid, List.of(folders));
         return add(new DocRef(DocumentationDoc.TYPE, uuid, AgentInstructions.DOC_NAME),
                 new DocumentationDoc(uuid, AgentInstructions.DOC_NAME, null, null, null, null, null, null, text),
@@ -181,7 +189,7 @@ final class ToolTestFixture {
     }
 
     /// @return The audit log, logging to this world's mocked event logging.
-    AiAuditLog auditLog() {
+    public AiAuditLog auditLog() {
         return new AiAuditLog(() -> eventLoggingService);
     }
 
@@ -192,7 +200,7 @@ final class ToolTestFixture {
     /// @param canView  True if the user can view it.
     /// @return The document.
     @SuppressWarnings("unchecked")
-    DocRef add(final DocRef docRef, final Object document, final boolean canView) {
+    public DocRef add(final DocRef docRef, final Object document, final boolean canView) {
         docRefs.put(docRef.getUuid(), docRef);
         if (document != null) {
             documents.put(docRef.getUuid(), document);
@@ -210,16 +218,17 @@ final class ToolTestFixture {
     }
 
     /// Adds an edge to the dependency graph.
-    void link(final DocRef from, final DocRef to) {
+    public void link(final DocRef from, final DocRef to) {
         edges.add(new Dependency(from, to, true));
     }
 
-    void setLimits(final AiWorkspaceConfig limits) {
+    /// @param limits The workspace limits the tools see from now on.
+    public void setLimits(final AiWorkspaceConfig limits) {
         this.limits = limits;
     }
 
     /// @return The events logged, of their type.
-    <T extends EventAction> List<T> logged(final Class<T> type) {
+    public <T extends EventAction> List<T> logged(final Class<T> type) {
         final ArgumentCaptor<EventAction> captor = ArgumentCaptor.forClass(EventAction.class);
         Mockito.verify(eventLoggingService, Mockito.atLeast(0)).log(Mockito.anyString(), Mockito.anyString(),
                 captor.capture());
@@ -229,7 +238,10 @@ final class ToolTestFixture {
                 .toList();
     }
 
-    static ToolCall request(final String name, final String arguments) {
+    /// @param name      The tool's name.
+    /// @param arguments The call's arguments, as JSON.
+    /// @return A call of the tool.
+    public static ToolCall request(final String name, final String arguments) {
         return ToolCalls.call(name, arguments);
     }
 

@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolArgs;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;

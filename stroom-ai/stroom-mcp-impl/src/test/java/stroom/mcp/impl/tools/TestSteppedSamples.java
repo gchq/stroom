@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;

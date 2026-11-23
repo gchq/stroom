@@ -17,12 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.tools.PipelineIndex.Entry;
@@ -50,8 +50,8 @@ import java.util.TreeSet;
 /// pipeline reference, and which pipelines already use that feed. Also the loader pipelines themselves and the
 /// template for new reference-data pipelines. Only the XSLTs and pipelines the user can view are read.
 ///
-/// [stroom.ai.impl.tools.XsltLookupsTool] (xslt_lookups) works from the other end: the lookups an XSLT makes, and
-/// which of its pipelines' loaders write each map.
+/// [stroom.ai.impl.tools.streams.XsltLookupsTool] (xslt_lookups) works from the other end: the lookups an XSLT makes,
+/// and which of its pipelines' loaders write each map.
 class FindReferenceDataTool extends AbstractBuiltInTool {
 
     static final String NAME = "find_reference_data";

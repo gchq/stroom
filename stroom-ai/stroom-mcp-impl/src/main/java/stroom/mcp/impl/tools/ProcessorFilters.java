@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.ProcessorFilterAccess;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.api.ProcessorFilterService;

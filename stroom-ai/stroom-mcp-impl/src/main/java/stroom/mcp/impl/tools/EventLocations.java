@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.SteppingWalks;
-import stroom.ai.impl.tools.SteppingWalks.Walk;
-import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.streams.SteppingWalks.Walk;
+import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;

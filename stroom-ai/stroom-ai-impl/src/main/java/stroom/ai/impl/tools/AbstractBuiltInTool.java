@@ -18,6 +18,8 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.tools.time.ToolTimeZone;
+import stroom.ai.impl.tools.time.UserTimeZones;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.util.json.JsonUtil;
 

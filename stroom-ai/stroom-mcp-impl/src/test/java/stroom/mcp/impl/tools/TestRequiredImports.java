@@ -16,9 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 

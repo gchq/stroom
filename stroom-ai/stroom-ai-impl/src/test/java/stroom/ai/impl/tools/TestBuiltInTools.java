@@ -16,6 +16,13 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.instructions.AgentKnowledge;
+import stroom.ai.impl.tools.time.GetCurrentDateTimeTool;
+import stroom.ai.impl.tools.time.GetCurrentDateTool;
+import stroom.ai.impl.tools.time.GetCurrentTimeTool;
+import stroom.ai.impl.tools.time.GetUtcTimeOffsetTool;
+import stroom.ai.impl.tools.time.ToolTimeZone;
+import stroom.ai.impl.tools.time.UserTimeZones;
 import stroom.ai.shared.AiToolCategory;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;

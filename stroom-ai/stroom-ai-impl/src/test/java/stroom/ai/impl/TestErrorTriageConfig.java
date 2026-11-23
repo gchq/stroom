@@ -16,7 +16,7 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.processing.ErrorTriage;
 import stroom.util.json.JsonUtil;
 import stroom.util.yaml.YamlUtil;
 

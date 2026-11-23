@@ -17,6 +17,8 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.processing.AcceptedErrors;
+
 import java.util.List;
 import java.util.Optional;
 

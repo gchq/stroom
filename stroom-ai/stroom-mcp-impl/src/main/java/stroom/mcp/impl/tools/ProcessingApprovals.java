@@ -17,11 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StroomLinks;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;

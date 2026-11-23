@@ -18,10 +18,10 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.api.ElasticIndexPresence.State;
-import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.Globs;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.indexing.IndexNamePatterns;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;

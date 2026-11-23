@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.SteppingWalks;
+import stroom.ai.impl.tools.processing.ErrorTriage;
+import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.pipeline.shared.stepping.SteppingResult;
 
 import java.util.ArrayList;

@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.tools.PipelineWrites.Filled;
 import stroom.mcp.impl.tools.PipelineWrites.Layout;

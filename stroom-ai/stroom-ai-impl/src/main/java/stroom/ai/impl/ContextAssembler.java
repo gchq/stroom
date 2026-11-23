@@ -20,7 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.ai.impl.AiDao.ChatUsage;
 import stroom.ai.impl.memory.AiMemoryService;
-import stroom.ai.impl.tools.SkillInvocations;
+import stroom.ai.impl.tools.skills.SkillInvocations;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
