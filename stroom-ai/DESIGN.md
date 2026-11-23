@@ -1157,8 +1157,25 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
   a table). The model follows the steps as it follows a guide: no deterministic replay at first (a step marked to
   run exactly can be a later convention, without changing existing skills).
 * **Authoring tool**: from a chat ("save this as a skill": the parameters picked out of what the agent did, its calls
-  as the steps' examples, the output chosen) or from a description; it checks its own draft (below) and offers the doc
-  in a form for the user to edit and approve, adding the history entry; never writes without approval.
+  as the steps' examples, the concrete values it used offered as parameters) or from a description (its steps drafted
+  from the tools and the user's own indexes, by `describe_data_source`); what only the author knows (the name, the
+  "When to use" phrasings, which values are parameters, where results go) asked in a form; it checks its own draft
+  (below). **Saved by an approval button** in the chat (decided 2026-11-23), as `propose_dashboard`'s and the other
+  proposals' are: the doc shown (an edit as its change), the button writing it with its history entry; never written
+  without it.
+* **Trial run before saving** (decided 2026-11-23): "try it on jsmith for one day" runs the draft once and shows the
+  result before the save button, problems found in real output.
+* **Templates shipped with the tools, not live skills** (decided 2026-11-23): `propose_skill` offers built-in starting
+  points ("user activity timeline", "X then Y by the same entity", "who of a group did X"), the procedure with
+  placeholders for what a site supplies (its sources and their role conditions), filled with the user from their
+  indexes and checked; nothing appears in an explorer until a user saves a skill, so no product-specific content in
+  core. **Product-specific example skills** (Windows Security, Sysmon, the Microsoft 365 audit...) later as a content
+  pack in the content store, on its own release cycle. **User documentation** by the stroom-docs agent from the
+  commits, DESIGN.md and TOOLS.md, which describe the templates and the format.
+* **A skills guide** for the agent (the conventions: headings, parameters, front matter, the chart subset), facts
+  only, read when authoring, as the mapping guide is.
+* **Later**: rollback to an earlier version (the history records changes, nothing restores them yet); skills tested as
+  eval cases are (a skill and its expected outcome on known data).
 * **Checking tool**: reads a skill and reports problems and suggestions, each with a proposed fix. Problems: no
   description; no steps; a parameter used but not listed, or listed and unused; a tool that doesn't exist or the
   reader's policies don't allow; an example call whose arguments don't match the tool's schema; an index or field
@@ -1180,7 +1197,7 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
 * **In the chat**: a skill picker, and slash commands to list skills and invoke one by name with its parameters
   (decided 2026-11-23); a client change beside the tools.
 * **Tools**: `propose_skill` (authoring), `check_skill` (checking), `find_skills` (searching by words or name);
-  anyone who may write the doc saves a skill, every save approved in a form.
+  anyone who may write the doc saves a skill, by the approval button.
 * **First skill**: the user activity timeline, its role conditions for the site's endpoint products held in it.
 
 #### Open questions
@@ -1203,8 +1220,9 @@ To settle with the product owner before building; listed in [Open questions](#op
 7. ~~Skills' form~~: Markdown only in Documentation docs (default name `SKILLS`, several skills a doc, a `#` heading
    each), front matter for the marker and the change history, guided steps; discovery global with the model deciding
    from every readable skill's name and description, context ordering them (decided 2026-11-23).
-8. ~~Skills' tools~~: `propose_skill`, `check_skill`, `find_skills`; anyone who may write the doc saves one (approved
-   in a form); in the chat, a skill picker and slash commands to list and invoke skills (decided 2026-11-23).
+8. ~~Skills' tools~~: `propose_skill`, `check_skill`, `find_skills`; anyone who may write the doc saves one, by an
+   approval button in the chat; a trial run before saving; templates shipped with the tools, product-specific
+   examples later as a content pack; in the chat, a skill picker and slash commands (decided 2026-11-23).
 9. ~~Characterisation content~~: sent to the configured model, as other tool results are (decided 2026-11-23).
 10. ~~Text size~~: a capped excerpt, the first 500 characters by default (a setting) (decided 2026-11-23).
 11. ~~Confidence~~: the model answers high, medium or low; low stays "unclear", listed apart with its reason
