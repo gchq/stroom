@@ -312,7 +312,7 @@ public class AppUserPermissionsListPresenter
     }
 
     private boolean isUserEnabled(final AppUserPermissions appUserPermissions) {
-        return NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
+        return NullSafe.test(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
     private Function<AppUserPermissions, CommandLink> buildOpenAppPermissionsCommandLink() {
@@ -325,7 +325,9 @@ public class AppUserPermissionsListPresenter
                         "Open " + userRef.getType(CaseType.LOWER)
                         + " '" + displayName + "' on the "
                         + UsersAndGroupsPlugin.SCREEN_NAME + " screen.",
-                        () -> OpenUsersAndGroupsScreenEvent.fire(AppUserPermissionsListPresenter.this, userRef));
+                        () -> OpenUsersAndGroupsScreenEvent.fire(
+                                AppUserPermissionsListPresenter.this,
+                                userRef));
             } else {
                 return null;
             }
