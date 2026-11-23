@@ -1032,6 +1032,11 @@ documentation).
 * **Idle: roles plus a cap** (decided 2026-11-23): `idle_start`/`idle_end` end and resume intervals where the sources
   hold them; a cap (no event for 30 minutes by default, a setting a call or skill may override) ends the rest, marked
   uncertain.
+* **Tests**: e2e for the timeline's sessions, attachments and data-quality flags on the generated data, the
+  characterisation's two passes (the side calls stubbed in e2e), and the Gantt it writes; evals on Haiku and Sonnet
+  asking for a user's timeline and what they were working on. The streaming join: e2e on the test cluster (a join
+  past 10,000 rows, a pushed-down side, worker ranges, the caps and the estimate), then the 1-against-4-workers
+  benchmark.
 * **Test data** (decided 2026-11-23): the aggregated-feeds generator extended with endpoint records (window focus,
   open and close, clipboard, file copy, removable media), Windows records (logon, lock and unlock) and proxy records
   for a few users across hosts, with planted data-quality gaps and one "finance proposal" thread across a word
@@ -1183,8 +1188,21 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
   commits, DESIGN.md and TOOLS.md, which describe the templates and the format.
 * **A skills guide** for the agent (the conventions: headings, parameters, front matter, the chart subset), facts
   only, read when authoring, as the mapping guide is.
-* **Later**: reverting to an older saved version (above, needing the core feature); skills tested as eval cases are
-  (a skill and its expected outcome on known data).
+* **Tested end to end and by evals** (decided 2026-11-23), as the onboarding tools are:
+  * **e2e** (no model): `propose_skill` from a chat's calls and from a description, its diff applied to an existing
+    `SKILLS` doc and creating a new one (the history entry in the front matter, refused when the doc was saved with
+    other text since); `check_skill`'s problems and suggestions on planted faults (an undeclared parameter, a tool
+    that doesn't exist or the policies deny, an example call off its schema, a missing index or field, a hand edit);
+    discovery (the list the model is given: every readable skill, near-context ones first, the size guard; a skill
+    the user can't read left out); a trial run; a template filled; the reverse diff for undo; a slash command's
+    invocation with missing parameters asked.
+  * **Evals** (a model, on the eval harness): saving a skill from a finished investigation (scored: its parameters
+    are the values that vary, its steps name real tools with calls that fit, `check_skill` finds nothing); running
+    a skill from a chat with no context (the right skill chosen among distractors, its parameters asked or taken
+    from the question, the result as the skill says); a skill broken since it was written (a renamed index) reported
+    before it runs, with the fix; and the timeline skill end to end on the generated data. Run on Haiku and Sonnet.
+* **Later**: reverting to an older saved version (above, needing the core feature); a skill's own tests (a skill and
+  its expected outcome on known data, run like eval cases, to check it still works after indexes or tools change).
 * **Checking tool**: reads a skill and reports problems and suggestions, each with a proposed fix. Problems: no
   description; no steps; a parameter used but not listed, or listed and unused; a tool that doesn't exist or the
   reader's policies don't allow; an example call whose arguments don't match the tool's schema; an index or field
