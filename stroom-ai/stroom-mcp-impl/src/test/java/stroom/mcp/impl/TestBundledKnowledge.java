@@ -133,9 +133,9 @@ class TestBundledKnowledge {
         // guide holds the facts (the user, 2026-11-21: facts, not steps, and no bloat).
         final String text = String.join(" ", BundledKnowledge.serverInstructions().split("\\s+"));
 
-        assertThat(text).contains("Combining data from two places, or \"X, then Y, within N\": "
-                                  + "stroom://guide/joins (StroomQL joins, sequence_query); let Stroom match over "
-                                  + "all the rows, never by reading them.")
+        assertThat(text).contains("Combining data from two places, \"X, then Y, within N\", or a user's activity "
+                                  + "over time: stroom://guide/joins (StroomQL joins, sequence_query, "
+                                  + "activity_timeline); let Stroom match over all the rows, never by reading them.")
                 .doesNotContain("a StroomQL join in run_stroomql");
         assertThat(new BundledKnowledge().guide("joins").orElseThrow())
                 .startsWith("# Joins")

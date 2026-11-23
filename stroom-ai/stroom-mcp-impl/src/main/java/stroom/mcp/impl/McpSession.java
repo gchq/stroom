@@ -83,6 +83,12 @@ final class McpSession {
         return capabilities != null && capabilities.elicitation() != null;
     }
 
+    /// @return True if the client said it can have its model answer the server's requests (MCP sampling), which a
+    /// tool's side calls use ([McpSampling]).
+    boolean canSample() {
+        return capabilities != null && capabilities.sampling() != null;
+    }
+
     /// @return The session, as the tools and the audit log see it.
     ToolSession toolSession() {
         return new ToolSession(ToolSession.Kind.MCP, id,

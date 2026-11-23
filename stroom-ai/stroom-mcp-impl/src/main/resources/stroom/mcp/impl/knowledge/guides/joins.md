@@ -100,6 +100,24 @@ sequence_query finds ordered events by the same entity within a time span, in on
 - Its result says which engine ran, and gives a StroomQL review query. A streaming join that finds nothing says
   why: each step's own count, and values of each side when they share none.
 
+## A user's activity over time (activity_timeline)
+
+activity_timeline builds one user's (or entity's) timeline for a period from several Elastic Index sources, each
+read for that user alone as the streaming join reads a side, and worked out in code.
+
+- Each source gives the fields that hold the user, host, application, window title, window, object and text, and
+  its roles as conditions (as sequence_query's steps take them): `focus`, `open`, `close`, `idle_start` (lock,
+  sleep, logoff), `idle_end` (unlock, wake, logon) and `actions`, each with its `kind`. Which conditions mean which
+  role is the site's: a skill, an AGENTS doc or the source's documentation holds them.
+- A session runs from a focus to the next focus, an idle start, or the idle cap (no event for 30 minutes by default,
+  `idleCap`), marked uncertain then. Hosts are separate lanes. An action with no host is attached by time.
+- Missing events are flagged with counts and examples (unpaired opens and closes, idle starts with no end, a source
+  silent while another shows the user active, clocks that disagree), never smoothed over.
+- Its sessions table is drawn by gantt_chart as it is. With `characterise`: activities, sessions tied by the
+  documents, pages and terms they share (Leiden clusters), and loose items (messages, prompts) classified by a
+  model outside the conversation, low confidence left unclear. Labels are inferences. Corrections (`move`,
+  `merge`, `rename`) are kept with the chat, so a re-run keeps them.
+
 ## The table tool's join
 
 For data StroomQL can't join: attached tables, a tab's results saved by current_results, esql_query or search

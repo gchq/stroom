@@ -144,6 +144,8 @@ class TestAgentModeTools {
             Map.entry("run_stroomql", false),
             Map.entry("esql_query", false),
             Map.entry("sequence_query", false),
+            // Saves its tables, and the analyst's corrections to the activities, to the workspace.
+            Map.entry("activity_timeline", false),
             Map.entry("summarise_column", false),
             Map.entry("task_list", false),
             Map.entry("ask_user", false),

@@ -61,6 +61,8 @@ public final class ToolSummaries {
             Map.entry("draft_translation_mapping", "Onboarding: drafts a translation mapping from the sample."),
             Map.entry("elastic_index_templates", "Reads the Elasticsearch templates of an Elastic Index's index."),
             Map.entry("sequence_query", "Finds ordered sequences of events, with EQL or a StroomQL windowed join."),
+            Map.entry("activity_timeline", "Builds a user's activity timeline from several sources, and what they "
+                                           + "were working on."),
             Map.entry("esql_query", "Runs an ES|QL query on an Elasticsearch index: totals, top N and groups."),
             Map.entry("evaluate_pipeline", "Gathers the facts for an evaluation of an existing event pipeline."),
             Map.entry("explain_processing",

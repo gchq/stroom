@@ -1,5 +1,7 @@
-# Not run: needs chat-style skill cases in the eval harness (kind: skill), and parts 1 to 3 of the design (the
-# streaming join, the activity timeline and the chat's charts), built in other branches. Run on Haiku and Sonnet.
+# Not run: needs chat-style skill cases in the eval harness (kind: skill). Parts 1 to 3 of the design (the streaming
+# join, the activity timeline and the chat's charts) are built; the generated data is the activity timeline's week
+# (aggregated/activity-timeline, eval case 77's), and the template's steps call activity_timeline and gantt_chart.
+# Run on Haiku and Sonnet.
 name: The user activity timeline skill, end to end on the generated data
 kind: skill
 capabilities: [skills, templates, trial_run, timeline]
@@ -8,13 +10,13 @@ capabilities: [skills, templates, trial_run, timeline]
 # user's indexes (describe_data_source), the trial run's output a timeline of that user's sessions in time order,
 # the proposal through 'Review and apply', and check_skill finding no problems.
 setup:
-  generated_data: activity-timeline
+  generated_data: aggregated/activity-timeline/activity-timeline.csv
   folder: /Investigations
 request: Make me a skill that builds a user's activity timeline from our endpoint and Windows logs, and try it on
   jsmith for one day first.
 user_knows: Call it "User activity timeline"; the user and the number of days vary; a timeline in the chat.
 expected:
-  tools_used: [propose_skill, describe_data_source]
+  tools_used: [propose_skill, describe_data_source, activity_timeline]
   template: user-activity-timeline
   trial: {parameters: {user: jsmith, days: 1}}
   check_skill_problems: 0

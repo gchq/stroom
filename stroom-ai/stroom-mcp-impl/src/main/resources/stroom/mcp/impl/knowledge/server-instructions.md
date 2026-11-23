@@ -104,8 +104,8 @@ from the generated documentation and the indexes' fields. Answer in plain words 
 Totals, top N or grouped questions on an Elasticsearch index: esql_query, which Elasticsearch answers itself (rows cut
 short are never a full ranking); row-level work, and other data sources: run_stroomql. Compute derived values and
 cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds.
-Combining data from two places, or "X, then Y, within N": stroom://guide/joins (StroomQL joins, sequence_query); let
-Stroom match over all the rows, never by reading them.
+Combining data from two places, "X, then Y, within N", or a user's activity over time: stroom://guide/joins
+(StroomQL joins, sequence_query, activity_timeline); let Stroom match over all the rows, never by reading them.
 Skills (saved procedures in SKILLS docs): find_skills reads one to follow, check_skill checks it;
 stroom://guide/skills.
 

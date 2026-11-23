@@ -251,6 +251,7 @@ class McpTools {
                 .progress(progress(session, exchange, request.progressToken()))
                 .limits(SessionLimits.lookedUp(chatWorkspace::limits))
                 .links(StroomLinks.absolute(uriFactoryProvider.get().uiUri("").toString()))
+                .sideCalls(new McpSampling(session, exchange, forms.formTimeout()))
                 .build();
     }
 

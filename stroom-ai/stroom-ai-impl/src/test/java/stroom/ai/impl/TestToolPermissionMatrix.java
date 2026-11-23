@@ -76,6 +76,7 @@ class TestToolPermissionMatrix {
             new Case("validate_stroomql", null, List.of(Need.USE)),
             new Case("esql_query", null, List.of(Need.USE)),
             new Case("sequence_query", null, List.of(Need.USE)),
+            new Case("activity_timeline", null, List.of(Need.USE)),
             new Case("search_events", "{\"index\":\"index-uuid\",\"where\":[{\"field\":\"UserId\","
                                       + "\"value\":\"alice\"}]}", List.of(Need.USE)),
             new Case("propose_query", null, List.of(Need.USE)),
@@ -178,11 +179,12 @@ class TestToolPermissionMatrix {
 
         // A tool in a group is offered as the tool that turns its group on.
         assertThat(new TreeSet<>(withEverything)).containsExactlyElementsOf(OfferedToolNames.withNoGroupsOn(all));
-        // All but the sequences group's activator: its one tool, sequence_query, is only offered to a user who
-        // can use an Elastic Index (its definition is large, and it has nothing to search without one).
-        assertThat(withEverything).contains("activate_sequences");
+        // All but the sequences and timelines groups' activators: their tools, sequence_query and
+        // activity_timeline, are only offered to a user who can use a data source (an Elastic Index for the
+        // timeline): their definitions are large, and they have nothing to search without one.
+        assertThat(withEverything).contains("activate_sequences", "activate_timelines");
         assertThat(withNothing).containsExactlyElementsOf(withEverything.stream()
-                .filter(name -> !"activate_sequences".equals(name))
+                .filter(name -> !"activate_sequences".equals(name) && !"activate_timelines".equals(name))
                 .toList());
     }
 

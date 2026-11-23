@@ -253,6 +253,13 @@ Needs: Use (document)
 - nothing: REFUSED or limited: Error: No data source with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
 - admin: runs (the same as with everything)
 
+## activity_timeline {"entity":"alice","sources":[{"index":"elastic-index-uuid","user":"UserId","roles":{"focus":{"where":[{"field":"UserId","value":"alice"}]}}}]}
+Needs: Use (document)
+- everything: runs: Error: Source 1: Elastic Index 'Test elastic index' can't be read: its cluster gave nothing for it.
+- without Use (document): REFUSED or limited: Error: No data source with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
+- nothing: REFUSED or limited: Error: No data source with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
+- admin: runs (the same as with everything)
+
 ## search_events {"index":"index-uuid","where":[{"field":"UserId","value":"alice"}]}
 Needs: Use (document)
 - everything: runs: {"index":{"type":"Index","uuid":"index-uuid","name":"Test index","backend":"lucene"},"searched":["UserId EQUALS alice"],"total":0,"hits":[],"by_stream":[],"errors":["Stroom's dashboard search gave no …

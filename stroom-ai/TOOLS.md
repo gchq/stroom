@@ -144,6 +144,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 
 | Tool | What it does | Category | Read-only | Group | Requires | Unlocked by | Documents | Flags |
 |------|--------------|----------|-----------|-------|----------|-------------|-----------|-------|
+| `activity_timeline` | One user's (or entity's) activity timeline from several Elastic Index sources, worked out in code: sessions of active use of each application on each host (focus, idle roles, the idle cap), the actions in each, daily totals, missing events flagged; with `characterise`, the activities they make up (Leiden anchors, loose items classified by the model in side calls) | search | yes | timelines | | | Use | slot |
 | `ask_user` | Asks the user questions in a form, with options to pick, and waits for the answers | core | yes | | | | | trusted |
 | `check_skill` | A skill's problems and suggestions, each with a fix: structure, parameters, example calls against the tools' schemas and policies, data sources and fields, hand edits, vague steps, values that should be parameters, charts, near-duplicates, use | core | yes | skills | | | View, Use | |
 | `config_properties` | Searches, gets and lists system properties, with overrides and their sources; secrets masked | administration | yes | administration | Manage Properties | | | |
@@ -1674,6 +1675,82 @@ by the same user on the same host", "20 failed logons then a success". Structure
   * **Limits held**: one key's events past 100,000 a step are counted, not held (`keys_cut`); a multi-valued join
     field is read by its smallest value in a scan (a sort's `min`), by every value as keys.
   * **Benchmark** (`TestBenchStreamingJoin`, opt-in): see "Streaming join benchmark" in DESIGN.md.
+
+### `activity_timeline`
+
+One user's (or entity's) activity timeline for a period from several sources (`ActivityTimelineTool`): sessions of
+active use of each application on each host, the actions in each, each day's active time by application, the window
+lifetimes, the actions in no session, the events by their stream and event ids, and data-quality flags; with
+`characterise`, the activities the sessions make up, what the user was working on (part 2 and 2b of DESIGN.md's
+"Activity timelines, streaming joins and skills"). Group `timelines`; offered to a user who can use an Elastic Index.
+
+* **Reading** (`TimelineReader`, the streaming join's machinery): each role of each source is an
+  `ElasticKeyStreams.Side` of its Elastic Index (the role's conditions a Stroom expression, `StreamFilters`, as
+  `sequence_query`'s steps' are), restricted to the one entity by a terms condition on the source's user field
+  (`transform` applied to it and the entity, so `CORP\jsmith` and `jsmith` are one), read in time order by a
+  point-in-time scan through `KeyGroupSource` (one key), within a `JoinBudget`: `timelineMaxEvents` (200,000), the
+  query time limit and the user's stop. Each source audited as a search. Elastic Indexes only, each with a time
+  field.
+* **Sessions** (`TimelineSessions`, in code): per host, an interval on a process starts at a `focus` on it and ends
+  at the next focus (any process), an `idle_start`, or the idle cap (no event of any source on the host for
+  `idleCap`, default `timelineIdleCap`, 30 minutes), marked `end_mark` ("ended by the idle cap") and `ended_by cap`;
+  an `idle_end` resumes the process focused before (`start_mark` "resumed after idle"); an action on a process with
+  no interval running starts one (`start_mark` "no focus event seen"); one still running at the period's end ends
+  there, marked. Window lifetimes from `open` to `close`, paired by the `window` field, else the process.
+* **Actions attached**: an action on a host to the interval it falls in, `by process` where it names that
+  interval's process, else `by time`; an action naming no host to the interval of any host active then (the latest
+  started), `by time`; any other is in no session.
+* **Data-quality flags** (counted, three examples each; the intervals are still made): `open_without_close`,
+  `close_without_open`, `idle_start_without_end` (activity after an idle start with no idle end), `idle_end_without_start`
+  (after activity; one before any activity is the period's start), `focus_without_open` (a source with `open` only),
+  `ended_by_cap`, `source_silence` (a source of window focus with no events on a host for longer than the cap, less
+  the host's idle periods, while 3 or more events of other sources show the user active there), `out_of_order`
+  (more than a minute before an earlier event id of its stream), `future_dated` (over 5 minutes after now),
+  `clock_disagreement` (two sources' events naming the same object on a host within 10 minutes, the middle of 3 or
+  more differences past 2 minutes), `two_focused` (two focuses on a host within a second).
+* **Characterisation** (`ActivityCharacterisation`, with `characterise=true`): pass 1 in code, a graph of the
+  sessions linked by an artifact they share (a title's parts, its application's suffix such as " - Word" dropped
+  where every title of the application has it; a file's name; a URL's domain and first path segment; normalised so
+  "Report v2.docx" and "Report.docx" are one), by significant terms they share (in 2 or more sessions and at most
+  half), and by being close in time (2 minutes, each next session to start); its clusters by `Leiden` (the chart
+  analytics' algorithm, ported from the generic visualisations, deterministic) of 2 or more sessions with an
+  artifact or term link are the anchor activities, with a profile (top artifacts, key terms, applications) and a
+  label from it. Pass 2, the model: free-text items (an action's `text`) and sessions the graph left out with words,
+  unless they name an anchor's artifact or two of its terms (placed in code), go in batches of
+  `characteriseBatchItems` (50), each item's text cut to `characteriseExcerptChars` (500), with its time, host,
+  source, session and the one before, and the activities' profiles; the answer, a JSON list of `{item, activity,
+  name, confidence, reason}`, is checked in code (an activity not offered, a missing item or a confidence that isn't
+  high, medium or low is `unclear`; low is `unclear` with its reason; `new` makes an activity where two or more items
+  share its name); a batch that can't be read is asked once more. Batches run in parallel up to `joinWorkers`; at
+  most `characteriseMaxItems` (1,000) a run unless the user agrees (a form in the chat, `runAnyway` over MCP). One
+  more call names the activities from their evidence. Answers and names are cached in the workspace by item text and
+  profiles (`characterisation-cache.json`), so a re-run asks only for new items.
+* **Side calls** (`ModelSideCalls`, from the call's context): in a chat, the run's model through
+  `ChatModelSideCalls` (`ModelStreamer.callUnseen`, as step and compaction summaries; tokens added to the run's
+  usage; stopped with the run); over `/mcp`, the client's model by MCP sampling (`McpSampling`, where the client says
+  it can; the wait not counted against the call's time limit, at most the form timeout); otherwise none, and the
+  loose items are left unclassified, the result saying so. The chat's model sees only the outcome.
+* **Corrections**: `{move, to}`, `{merge: [...]}`, `{rename, label}`, applied last and kept in the workspace
+  (`corrections.json` beside the tables), so a re-run keeps them; one naming what isn't there is said and left out.
+* **Arguments**: `entity`, `sources` (each `index`, `name`, `user`, `transform`, `host`, `process`, `title`,
+  `window`, `object`, `text`, `roles` with `focus`, `open`, `close`, `idle_start`, `idle_end` as `{where, any_of}`
+  and `actions` as `[{kind, where, any_of}]`), `timeFrom` (default `now()-7d`), `timeTo` (default `now()`),
+  `idleCap`, `characterise`, `corrections`, `runAnyway`, `timeZone`.
+* **Returns**: in a chat, Markdown (active time by host and application, the flags with examples, the activities
+  with their evidence, the tables, the gantt_chart call that draws the sessions); over MCP, JSON (also structured
+  content): `entity`, `time`, `idle_cap_minutes`, `sources` (events each), `events_read`, `ended_early`,
+  `session_count`, `hosts`, `uncertain_sessions`, `actions`, `unattached_actions`, `columns`/`rows` (host, process,
+  sessions, active minutes, the most first), `data_quality`, `files`, `gantt`, `characterisation` (`activities`
+  each with `label_is: inferred` and `found_by`, `sessions_in_no_activity`, `items`, `items_placed`, `model_calls`,
+  `items_asked`, `items_not_classified`, `unclear` with reasons, `modularity`, `notes`, `gantt`), `time_zone`,
+  `derived`, `caveat`. Tables under `/outputs/timelines/<entity>/`: `sessions.csv` (`gantt_chart` with start, end,
+  label `process`, lane `host` draws it as it is), `actions.csv`, `events.csv`, `daily.csv`, `windows.csv`,
+  `quality.csv`, and with `characterise` `activities.csv` (lane `activity_label`: a section an activity) and
+  `items.csv`. Times in the tables are UTC.
+* **Refuses**: no `entity` or `sources`; a source that isn't an Elastic Index, or whose index has no time field; a
+  field the index doesn't have; a user field that can't be one key (a text field with no keyword subfield, a
+  transform on a number); a role that isn't one, or with no conditions; a bad period or `idleCap` (1 minute to 24
+  hours).
 
 ### `current_results`
 

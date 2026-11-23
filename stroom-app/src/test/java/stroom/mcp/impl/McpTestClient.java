@@ -28,9 +28,12 @@ import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
+import io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest;
+import io.modelcontextprotocol.spec.McpSchema.CreateMessageResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
+import io.modelcontextprotocol.spec.McpSchema.Role;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.mockito.Mockito;
@@ -57,8 +60,11 @@ public final class McpTestClient {
     private final McpSession session;
     private final McpAsyncServerExchange exchange = Mockito.mock(McpAsyncServerExchange.class);
     private final List<ElicitFormRequest> forms = Collections.synchronizedList(new ArrayList<>());
+    private final List<CreateMessageRequest> samplingRequests = Collections.synchronizedList(new ArrayList<>());
     private Function<ElicitFormRequest, ElicitResult> user = McpTestClient::agree;
 
+    /// A client that doesn't offer sampling.
+    ///
     /// @param mcpTools        The endpoint's tools.
     /// @param securityContext Runs each call as the user.
     /// @param owner           The session's user.
@@ -67,11 +73,34 @@ public final class McpTestClient {
                   final SecurityContext securityContext,
                   final UserRef owner,
                   final boolean canShowForms) {
+        this(mcpTools, securityContext, owner, canShowForms, null);
+    }
+
+    /// @param mcpTools        The endpoint's tools.
+    /// @param securityContext Runs each call as the user.
+    /// @param owner           The session's user.
+    /// @param canShowForms    True if the client says it can show forms (MCP elicitation).
+    /// @param model           Answers the server's sampling requests as the client's model would, or null if the
+    ///                        client doesn't offer sampling.
+    McpTestClient(final McpTools mcpTools,
+                  final SecurityContext securityContext,
+                  final UserRef owner,
+                  final boolean canShowForms,
+                  final Function<CreateMessageRequest, String> model) {
         this.mcpTools = mcpTools;
         this.securityContext = securityContext;
         final ClientCapabilities.Builder capabilities = ClientCapabilities.builder();
         if (canShowForms) {
             capabilities.elicitation();
+        }
+        if (model != null) {
+            capabilities.sampling();
+            Mockito.when(exchange.createMessage(Mockito.any())).thenAnswer(invocation -> {
+                final CreateMessageRequest request = invocation.getArgument(0);
+                samplingRequests.add(request);
+                return Mono.just(new CreateMessageResult(Role.ASSISTANT, new TextContent(model.apply(request)),
+                        "stand-in", CreateMessageResult.StopReason.END_TURN));
+            });
         }
         this.session = new McpSession(UUID.randomUUID().toString(), owner, new Implementation("Test client", "1"),
                 capabilities.build(), McpSession.TransportKeeper.NONE);
@@ -92,6 +121,13 @@ public final class McpTestClient {
     public List<ElicitFormRequest> forms() {
         synchronized (forms) {
             return List.copyOf(forms);
+        }
+    }
+
+    /// @return Every sampling request the server made of the client's model, in order.
+    public List<CreateMessageRequest> samplingRequests() {
+        synchronized (samplingRequests) {
+            return List.copyOf(samplingRequests);
         }
     }
 

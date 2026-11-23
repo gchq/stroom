@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.vis.AdapterScripts;
 import stroom.dashboard.impl.script.ScriptContentProvider;
 import stroom.docstore.api.DocumentStoreBinder;
@@ -43,6 +44,7 @@ public class AiModule extends AbstractModule {
         bind(AiService.class).to(AiServiceImpl.class);
         bind(AiAttachmentFileStore.class).asEagerSingleton();
         bind(TableSummariser.class).to(TableSummariserImpl.class);
+        bind(ModelSideCalls.ForChat.class).to(ChatModelSideCalls.class);
 
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);

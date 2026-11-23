@@ -55,6 +55,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(RunStroomQlTool.class)
                 .addBinding(EsqlQueryTool.class)
                 .addBinding(SequenceQueryTool.class)
+                .addBinding(ActivityTimelineTool.class)
                 .addBinding(SummariseColumnTool.class)
                 .addBinding(DocumentInfoTool.class)
                 .addBinding(ReadDocumentTool.class)

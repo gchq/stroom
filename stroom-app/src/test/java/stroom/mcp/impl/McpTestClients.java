@@ -19,7 +19,10 @@ package stroom.mcp.impl;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.UserRef;
 
+import io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest;
 import jakarta.inject.Inject;
+
+import java.util.function.Function;
 
 /// Makes [McpTestClient]s of the endpoint's REAL tools, for tests outside this package (the end-to-end suites in
 /// `stroom.mcp.impl.e2e`), which can't see [McpTools] itself.
@@ -41,6 +44,19 @@ public final class McpTestClients {
     /// @param canShowForms True if the client says it can show forms (MCP elicitation).
     /// @return The client.
     public McpTestClient client(final UserRef owner, final boolean canShowForms) {
-        return new McpTestClient(mcpTools, securityContext, owner, canShowForms);
+        return new McpTestClient(mcpTools, securityContext, owner, canShowForms, null);
+    }
+
+    /// A client that also says it can have its model answer the server's requests (MCP sampling), each answered by
+    /// a stand-in for the client's model.
+    ///
+    /// @param owner        The session's user.
+    /// @param canShowForms True if the client says it can show forms (MCP elicitation).
+    /// @param model        Answers each sampling request, as the client's model would.
+    /// @return The client.
+    public McpTestClient sampling(final UserRef owner,
+                                  final boolean canShowForms,
+                                  final Function<CreateMessageRequest, String> model) {
+        return new McpTestClient(mcpTools, securityContext, owner, canShowForms, model);
     }
 }

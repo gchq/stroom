@@ -3,6 +3,7 @@
 # logged and the reason the card shows (when it differs).
 
 ## Built-in tools
+- activity_timeline (read-only, reads untrusted content): RUN in every situation
 - ask_user (read-only, reads only trusted content): RUN in every situation
 - check_skill (read-only, reads untrusted content): RUN in every situation
 - config_properties (read-only, reads untrusted content): RUN in every situation

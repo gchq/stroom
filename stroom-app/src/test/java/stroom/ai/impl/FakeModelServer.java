@@ -32,7 +32,9 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Function;
 
 /// The chat model, as an OpenAI-compatible chat completions server running in-process on a random port, so that a
 /// chat goes through Stroom's real model client, HTTP client and streaming. It is scripted: each request that
@@ -48,6 +50,7 @@ final class FakeModelServer implements AutoCloseable {
     private final Deque<Map<String, Object>> replies = new ConcurrentLinkedDeque<>();
     private final List<Map<String, Object>> agentRequests = Collections.synchronizedList(new ArrayList<>());
     private final List<Map<String, Object>> sideRequests = Collections.synchronizedList(new ArrayList<>());
+    private volatile Function<Map<String, Object>, String> sideAnswers = request -> null;
 
     private FakeModelServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -85,6 +88,16 @@ final class FakeModelServer implements AutoCloseable {
         return this;
     }
 
+    /// Answers the requests that offer no tools (a tool's side calls, e.g. a timeline's characterisation) as the
+    /// function says, the rest with a short answer of their own.
+    ///
+    /// @param answers Each request's answer, given its body; null for the short answer.
+    /// @return This server.
+    FakeModelServer answeringSideRequests(final Function<Map<String, Object>, String> answers) {
+        this.sideAnswers = answers;
+        return this;
+    }
+
     /// @return The body of every request that offered tools (the agent's turns), in order.
     List<Map<String, Object>> agentRequests() {
         synchronized (agentRequests) {
@@ -114,7 +127,7 @@ final class FakeModelServer implements AutoCloseable {
                         : replies.poll();
             } else {
                 sideRequests.add(request);
-                reply = Map.of("answer", SIDE_ANSWER);
+                reply = Map.of("answer", Objects.requireNonNullElse(sideAnswers.apply(request), SIDE_ANSWER));
             }
             final boolean streamed = !Boolean.FALSE.equals(request.get("stream"));
             if (streamed) {

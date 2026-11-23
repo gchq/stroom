@@ -74,6 +74,19 @@ class TestToolCallContext {
     }
 
     @Test
+    void aChatsSideCallsAreItsRunsAndThereAreNoneOutsideARun() {
+        final ModelSideCalls runCalls = Mockito.mock(ModelSideCalls.class);
+        contexts.setSideCalls((chatId, run) -> chatId == 5
+                ? runCalls
+                : ModelSideCalls.NONE);
+        final ToolRunContext run = new ToolRunContext(null, null, () -> false);
+
+        assertThat(run.run(() -> contexts.forChat(5)).sideCalls()).isSameAs(runCalls);
+        assertThat(contexts.forChat(5).sideCalls()).isSameAs(ModelSideCalls.NONE);
+        assertThat(ToolCalls.outsideChat().sideCalls()).isSameAs(ModelSideCalls.NONE);
+    }
+
+    @Test
     void aChatsQuestionsAreAskedAsAFormInTheChatWhileTheUserIsWatching() {
         final ElicitResult answer = new ElicitResult(Action.ACCEPT, Map.of("q", "yes"));
         Mockito.when(elicitations.askUser(5, "ask_user", "c1", "Intro", Map.of())).thenReturn(answer);

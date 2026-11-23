@@ -901,8 +901,15 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         return transforms;
     }
 
-    // A list of conditions in the where form: where's, or an any_of group's (one level: no group inside).
-    private static List<Filter> filters(final Object given, final String what, final String key) {
+    /// A list of conditions in the where form: where's, or an any_of group's (one level: no group inside). The
+    /// activity timeline's roles take them too ([ActivityTimelineTool]).
+    ///
+    /// @param given The conditions as the call gives them: a list of `{field, condition, value}`.
+    /// @param what  What they are of, for a refusal (e.g. `Step 2`).
+    /// @param key   The argument they were given in, for a refusal (e.g. `where`).
+    /// @return The conditions.
+    /// @throws WorkspaceException if they aren't such a list, or name a condition that isn't one.
+    static List<Filter> filters(final Object given, final String what, final String key) {
         final List<?> conditions = given == null
                 ? List.of()
                 : given instanceof final List<?> list
@@ -935,8 +942,8 @@ class SequenceQueryTool extends AbstractWorkspaceTool {
         return filters;
     }
 
-    // The conditions a step takes: search_events's, and NOT_IN.
-    private static List<String> conditionNames() {
+    /// @return The conditions a step takes: search_events's, and NOT_IN.
+    static List<String> conditionNames() {
         final List<String> names = new ArrayList<>(IndexEvents.CONDITIONS.stream()
                 .filter(EqlQueryWriter::takes)
                 .map(Condition::name)

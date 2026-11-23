@@ -127,6 +127,9 @@ appConfig:
     toolGroupThreshold: 24
     unattendedAfter: "PT10M"
     workspace:
+      characteriseBatchItems: 50
+      characteriseExcerptChars: 500
+      characteriseMaxItems: 1000
       eqlDefaultMaxspan: "PT5M"
       joinMaxKeys: 1000000
       joinMaxRows: 10000000
@@ -145,6 +148,8 @@ appConfig:
       maxToolArgumentBytes: 1048576
       maxUserBytes: 524288000
       queryTimeLimit: "PT2M"
+      timelineIdleCap: "PT30M"
+      timelineMaxEvents: 200000
       toolTimeLimit: "PT30S"
     workspaceFileRetention: "P7D"
   analytics:

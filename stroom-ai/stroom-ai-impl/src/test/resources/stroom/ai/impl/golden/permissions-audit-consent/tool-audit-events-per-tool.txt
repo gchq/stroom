@@ -1,6 +1,9 @@
 # The audit records each built-in tool makes, run on its fixed input as a user with every
 # permission. 'audit' lines are calls to AiAuditLog; 'event' lines are what it logs.
 
+## activity_timeline {"entity":"alice","sources":[{"index":"elastic-index-uuid","user":"UserId","roles":{"focus":{"where":[{"field":"UserId","value":"alice"}]}}}]}
+(nothing recorded)
+
 ## ask_user {"intro":"Which feed?","questions":[{"id":"feed","question":"Feed?","type":"text"}]}
 (nothing recorded)
 

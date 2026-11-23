@@ -35,6 +35,7 @@ public class ChatToolCallContexts {
     private final Provider<McpElicitations> elicitationsProvider;
     private final Provider<AiChatRunManager> runManagerProvider;
     private ChatBrowserZones browserZones;
+    private ModelSideCalls.ForChat sideCalls;
 
     /// @param workspace            The workspaces of the chats.
     /// @param elicitationsProvider Shows forms in the chat and waits for the answers.
@@ -55,17 +56,29 @@ public class ChatToolCallContexts {
         this.browserZones = browserZones;
     }
 
+    /// @param sideCalls Makes a run's side calls to the chat's model (see [ModelSideCalls]). Optional: bound beside
+    ///                  the chat's model client, which a module of the tools alone (e.g. in a test) doesn't have, so
+    ///                  its chats' tools have no side calls.
+    @com.google.inject.Inject(optional = true)
+    void setSideCalls(final ModelSideCalls.ForChat sideCalls) {
+        this.sideCalls = sideCalls;
+    }
+
     /// @param chatId The chat the call is made in.
     /// @return The context of a call in the chat, part of the agent run this thread is working on, if any (see
     /// [ToolRunContext#current()]).
     public ToolCallContext forChat(final int chatId) {
         final ToolSession session = ToolSession.chat(chatId);
+        final ToolRunContext run = ToolRunContext.current().orElse(null);
         return ToolCallContext.builder(session)
                 .workspace(new SessionWorkspace(workspace, chatId))
                 .userQuestions(new ChatUserQuestions(chatId, elicitationsProvider, runManagerProvider))
                 // The session's limits, including its time limit.
                 .limits(sessionLimits.forSession(session))
-                .runContext(ToolRunContext.current().orElse(null))
+                .runContext(run)
+                .sideCalls(run == null || sideCalls == null
+                        ? ModelSideCalls.NONE
+                        : sideCalls.forRun(chatId, run))
                 .localZoneId(browserZones == null
                         ? null
                         : browserZones.get(chatId))

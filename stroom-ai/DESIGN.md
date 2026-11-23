@@ -927,7 +927,9 @@ other data source, as a StroomQL windowed join. Decided with the user:
 
 ### Activity timelines, streaming joins and skills (proposed 2026-11-23)
 
-Part 1, the streaming join, built 2026-11-23 (see "As built" under it); parts 2 to 4 proposed, not built. Designed with the product owner from analysts' questions that join entities across indexes
+Built 2026-11-23, each part with its "As built" notes: part 1 (the streaming join), parts 2 and 2b (the activity
+timeline and what the user was working on), part 3's chat route (the gantt; the dashboard route's CSV Data
+Connection is not built) and part 4 (skills). Designed with the product owner from analysts' questions that join entities across indexes
 and order their events in time, "which users in team A accessed abc.com and downloaded a file, then copied that file
 to removable media?" (proxy, identity and endpoint indexes, 100,000 users), and "build a timeline of a user's
 activity over the past 7 days" (window open, close and focus, clipboard copies, web accesses, file copies, from
@@ -1073,7 +1075,7 @@ value differently, the join-field transforms bridge them (lowercase, the domain 
 when a join finds nothing the diagnostics say why ("no shared user values, e.g. `CORP\jsmith` vs `jsmith`"),
 reporting, never fixing. Onboarding and `verify_index` are unchanged by this; no index is changed or reindexed.
 
-#### 2. Activity timeline
+#### 2. Activity timeline (built 2026-11-23)
 
 A tool (its name to decide) derives a user's timeline for a period from several sources; deterministic, in the tool,
 never by the model. Generic: it knows roles, an entity (user), a place (host), an application (process) and a time;
@@ -1118,7 +1120,49 @@ documentation).
 * **The same for bounded sequences** (part 1 and `sequence_query`): the keys with an opening step but no closing one
   are counted, with their source, so "it didn't happen" is told apart from "the source may be missing events".
 
-#### 2b. Activity characterisation (what the user was working on)
+**As built** (2026-11-23; TOOLS.md "`activity_timeline`" has the detail):
+
+* **One tool, `activity_timeline`, in a group of its own, `timelines`** (decided: a tool of its own, offered when
+  asked for; its definition is large and most chats never build a timeline), offered to a user who can use an
+  Elastic Index; characterisation is its `characterise` argument and corrections its `corrections`, not more tools
+  (to avoid tool bloat). No permission of its own: the tool policies and Use on each source's index.
+* **Reading reuses part 1**: each role of each source is an `ElasticKeyStreams.Side` (its conditions a Stroom
+  expression by `StreamFilters`, the conditions parsed as `sequence_query`'s steps' are), restricted to the one
+  entity by a terms condition on the source's user field (its `transform`s applied to it and the entity), read in
+  time order through `KeyGroupSource.scan` (one key) within a `JoinBudget` (`timelineMaxEvents`, the query time
+  limit, the stop). No new Elasticsearch code. Elastic Indexes only, as the streaming join (decided open question 1);
+  Lucene and other data sources later.
+* **Sessions in code** (`TimelineSessions`): as above, plus: an `idle_end` resumes the process focused before the
+  idle start (`resumed after idle`); an action on a process with no interval running starts one (`no focus event
+  seen`); the cap's end is the last sign of activity plus the cap; an interval still running at the period's end
+  ends there, marked. Activity from any source on the host keeps an interval alive (a proxy's web access from the
+  host while the browser is in focus).
+* **Data-quality flags as built**: the unpaired bounds (an idle end is flagged only after activity on the host, so a
+  logon first thing isn't a missing lock), intervals ended by the cap, source silence (only for a source that reports
+  window focus on that host, others being sparse by nature; the silence less the host's idle periods past the cap,
+  with 3 or more events of other sources outside them), out of order by event id within a stream beyond a minute,
+  future-dated, two sources' clocks disagreeing (the same object on a host within 10 minutes, the middle of 3 or
+  more differences past 2 minutes), two applications focused within a second.
+* **Output**: the tables in the chat's workspace under `/outputs/timelines/<entity>/` (sessions, actions with how
+  each was attached, the events with StreamId and EventId, per day, window lifetimes, data quality), the sessions
+  table drawn by `gantt_chart` as it is (start, end, label `process`, lane `host`), the result saying so; in the
+  chat a summary, over MCP JSON with the active time by host and application as its `rows`. The CSV Data
+  Connection route waits for part 3's.
+* **Settings** (`stroom.ai.workspace`): `timelineIdleCap` 30 minutes (a call's `idleCap` overrides it),
+  `timelineMaxEvents` 200,000.
+* **Tests**: JUnit `TestTimelineSessions` (intervals, idle roles, the cap, the period's end, hosts as lanes,
+  attachment, days in the user's zone, every flag), `TestActivityTimelineTool` (over `InMemoryKeyStreams`: one
+  user's sides, the tables, the gantt round trip, the refusals); e2e `TestE2eActivityTimeline` on the test cluster
+  with the generated week (the planted sessions, attachments and flags), `TestAskStroomAiActivityTimeline` (the
+  chat, the side calls answered by the fake model server, the activities drawn as a gantt block). Test data:
+  `aggregated-feeds-generator.py` writes `aggregated/activity-timeline/activity-timeline.csv` (one user's week:
+  endpoint focus, open, close, clipboard, saves and a removable copy; logon, lock and unlock with the user's
+  domain; proxy, AI chat and messages; a desktop and a laptop; another user beside) and
+  `activity-timeline-expected.json` (the sessions planted and the gaps: a dropped unlock, the endpoint silent while
+  the proxy shows browsing, a window never closed); eval case 77 asks for the user's timeline and what they were
+  working on, run with its reference by `TestE2eEvalReference`.
+
+#### 2b. Activity characterisation (what the user was working on; built 2026-11-23)
 
 A level above the timeline (asked for by the product owner, 2026-11-23): from events to sessions (part 2) to
 *activities*, threads of sessions across applications and sources tied together by what they touched ("working on
@@ -1159,6 +1203,37 @@ data and, when a question or a skill asks, the backing Event XML.
   from a skill or an AGENTS doc, or from the model's general knowledge, marked as its inference.
 * **Output**: a Gantt with a section per activity, its sessions as bars; under it each activity's time, applications,
   artifacts and evidence, and the sessions in no activity.
+
+**As built** (2026-11-23; TOOLS.md "`activity_timeline`", Characterisation and Side calls):
+
+* **Anchors** (`ActivityCharacterisation`, pass 1): the graph's links are a shared artifact (weight 3 each, at most
+  two), shared significant terms (in 2 or more sessions and at most half; half their IDF, at most 3) and the next
+  session to start within 2 minutes (1, so switching back and forth adds up); an application's title suffix (" -
+  Word", the last part every one of its titles has) is dropped first, as it says nothing of the work. Clusters by
+  `Leiden`, a Java port of the chart analytics' own algorithm (`leiden` in the generic visualisations' scripts, the
+  same steps, the deterministic merge), as no JavaScript engine runs on the server; a cluster of 2 or more sessions
+  with an artifact or term link inside is an anchor.
+* **Loose items, side calls**: `ModelSideCalls` on each call's context: in a chat the run's model by
+  `ChatModelSideCalls` (`ModelStreamer.callUnseen`, as step and compaction summaries; tokens added to the run's
+  usage; the run's stop), over `/mcp` the client's by MCP sampling (`McpSampling`, `sampling/createMessage`, where
+  the client says it can; the wait as long as a form's and not counted against the call's time limit), else none
+  (strong links only, the result saying the loose items weren't classified). Batches of `characteriseBatchItems`
+  (50) in parallel up to `joinWorkers`, each item's text cut to `characteriseExcerptChars` (500), at most
+  `characteriseMaxItems` (1,000) a run unless the user agrees (the chat's form, `runAnyway` over MCP); answers
+  checked in code, low confidence `unclear` with its reason, a batch asked once more if its answer can't be read; one
+  more call names the activities; answers and names cached in the workspace by item text and profiles.
+* **Corrections** kept per investigation: in the chat's workspace beside the timeline's tables
+  (`corrections.json`), applied last on every re-run; `move`, `merge`, `rename`. A skill isn't updated from them
+  (that stays `propose_skill`'s, when the analyst asks).
+* **Output**: `activities.csv` (each session's activity and label, how it was placed), drawn by `gantt_chart` with
+  lane `activity_label`, a section an activity; `items.csv` (each item, where it went, how, its confidence and
+  reason); in the result each activity's label (marked an inference), how it was found, its sessions, items,
+  minutes, applications, artifacts and terms, the unclear items' reasons, the notes. The message text stays in the
+  side calls and the workspace, never the result.
+* **Tests**: JUnit `TestLeiden`, `TestActivityCharacterisation` (side calls stubbed: batching, the excerpt cap, the
+  confidence threshold, new themes, names, corrections, the cache, a batch asked again, an answer naming an activity
+  not offered, no model), `TestChatModelSideCalls`, `TestMcpSampling`; e2e as part 2's, the characterisation by a
+  stand-in for the client's model over MCP sampling and by the fake chat model in the chat.
 
 #### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
 
@@ -1229,8 +1304,8 @@ engine); undo after saving proposes the body from before the change with a histo
 history is kept, so the undo is recorded, rather than reversed with it); the offered skills of a question are
 those of the list sharing words with it (or near its context), recorded in a `SKILLS_OFFERED` message; the picker
 is the command list, each skill a command with its parameters (type `/skill:`). The templates use today's tools
-(`run_stroomql`, `table`, `sequence_query`): the timeline and chart tools of parts 2 and 3 replace their steps once
-built.
+(`run_stroomql`, `table`, `sequence_query`), but the user activity timeline's, which calls `activity_timeline` and
+`gantt_chart` (parts 2 and 3) since they were built.
 
 A skill is how to do one kind of work (a hunt, a timeline, an investigation), saved so the agent, or an analyst, does
 it again with new parameters. AGENTS docs hold rules, guides facts, skills procedures. Decided with the product owner
@@ -5186,6 +5261,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | Activity timeline and characterisation built (parts 2 and 2b): `activity_timeline` in a `timelines` group (one tool: `characterise` and `corrections` are arguments), reading each source's roles for one entity with the streaming join's machinery (`ElasticKeyStreams` sides with a terms condition, `KeyGroupSource`, `JoinBudget`); sessions, attachment and data-quality flags in code (`TimelineSessions`; an idle end flagged only after activity; source silence only for a window-focus source, less idle time); the sessions table drawn by `gantt_chart` as it is; anchors by a Java port of the chart analytics' Leiden over sessions linked by shared artifacts (application title suffixes dropped), terms and time; loose items in batched side calls (`ModelSideCalls`: the chat's model as summaries are, MCP sampling over `/mcp`, else skipped saying so), low confidence unclear, answers checked and cached; corrections kept in the chat's workspace; settings `timelineIdleCap` 30 minutes, `timelineMaxEvents` 200,000, `characteriseExcerptChars` 500, `characteriseBatchItems` 50, `characteriseMaxItems` 1,000; the timeline skill template calls the new tools; generated week and eval case 77 | Activity timelines, streaming joins and skills (2. and 2b., as built); TOOLS.md (activity_timeline) |
 | 2026-11-23 | Part 1 built, the streaming key-ordered join: `stroom.ai.api.ElasticKeyStreams` (target, keyPage, openScan/scanPage/close, sampleKeys; paged, stateless, Use on every call, its own time limit and stop) implemented by `ElasticKeyStreamsService` beside the ES|QL and EQL services, the "Use on each, one cluster, time fields" check shared as `ElasticDocs` (ElasticEql/ElasticEsql unchanged); a new engine inside `sequence_query`, not a new tool (`engine` auto/eql/stream; auto streams only where EQL can't: `keysOnly` or `transform` steps, different time fields, a first step past the pre-flight cap), `limit` to 100,000, counts exact; transforms computed by Elasticsearch as runtime fields so events stream in the compared key's order; a side pushed down as terms only with at most 50,000 keys and a tenth of another side's events; workers by key range (pushed-down keys or `sampleKeys`), as the user; estimate by ES|QL with `countTotal`, the user asked at 80% of a cap (refused over MCP unless `runAnyway`), caps and the time limit ending early with what was found; a diagnosis when nothing is found (each step alone, unshared values with examples, a bridging transform) and keys that began and never ended, with their sources; settings `joinWorkers` 4, `joinPushDownKeys` 50,000, `joinMaxKeys` 1,000,000, `joinMaxRows` 10,000,000, `joinTimeLimit` 15 minutes (a join past the query time limit by its estimate runs up to it when the user agrees: the chat form or `runAnyway`); benchmarked 1 against 4 workers on the single-node test container (4 kept) | Activity timelines, streaming joins and skills (1. Streaming, key-ordered join, as built); TOOLS.md (sequence_query, Streaming join) |
 | 2026-11-23 | Skills (part 4) built: `find_skills`, `check_skill`, `propose_skill` in a `skills` group; skills docs read by convention (`SkillDoc`), discovered globally by name (only Documentation docs named `SKILLS` are skills docs, one a folder, found by name so no other doc is read; front matter holds the history and marks no other doc) with the list in the system prompt (`SkillCatalogue`), checked (`SkillChecks`), proposed through `create_instructions` (with `name` SKILLS) and `apply_documentation_change`; a trial run is the draft's steps bound to the given values and handed back for the model to follow (no replay engine, so the trial is the same run a saved skill gets); undo is the body's reverse with a history entry saying so (the history is kept, not reversed); offered skills recorded in a `SKILLS_OFFERED` message; the chat's `/skills` and `/skill:<name>` commands, the per-skill commands in the command list being the picker | Activity timelines, streaming joins and skills (proposed) |
 | 2026-11-23 | Charts in the chat built, gantt only (part 3's chat route): `gantt_chart` (dashboards group, chat only) turns a workspace table into a ```` ```mermaid ```` gantt block of a fixed subset (every value stripped of Mermaid syntax, never `click`, callbacks or `%%{init}%%`; folded: bars of a label merged within a lane, short bars left out, the top 8 labels with markers' labels kept beside them and the rest "Other", 20 lanes, 200 bars and markers; times in the user's zone, named in the title), read back by the shared `MermaidGanttParser` (`stroom-core-shared`) before it is returned; the chat's presenter replaces each parsed block, after the shared Markdown converter, with SVG from its own renderer (`AiGanttChart`: lanes, axis, bars, markers, legend, themed by CSS), any other block staying code; `MarkdownConverter` and Documentation docs unchanged; the tool and the visualisation guide say the user chooses the chat or a dashboard, and that other kinds are a dashboard's only | Activity timelines, streaming joins and skills (3. Charts); TOOLS.md (gantt_chart) |

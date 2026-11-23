@@ -1,11 +1,15 @@
 # Synthetic aggregated feeds for Stroom AI's source type e2e tests (TestE2eSourceType*, TestE2eAggregatedFeedWalks).
 # Not real data: PEGA logs in a JSON wrapper (messages of text, JSON or SOAP XML), Azure audit records chosen by
 # Workload, collector records chosen by LogFilePath, and Entra ID directory audit records as Microsoft Graph writes
-# them (targets each with the properties changed, old and new values as JSON text; eval case 76).
+# them (targets each with the properties changed, old and new values as JSON text; eval case 76); and a user's week
+# of activity across sources for the activity timeline (endpoint window focus, open and close, clipboard and file
+# copies, removable media; logon, lock and unlock; proxy, AI chat and messages; eval case 77, TestE2eActivityTimeline).
 #
 # Usage: python3 aggregated-feeds-generator.py <dir>
 # Writes <dir>/{pega,azure-audit,collector-paths,entra-audit}/<name>-{1,2}.json. Each file is the first lines of a
-# fixed, seeded run (the full run is made so the slices don't change with the number of lines kept).
+# fixed, seeded run (the full run is made so the slices don't change with the number of lines kept). Also writes
+# <dir>/activity-timeline/activity-timeline.csv (a question's records: no quoted values, so no commas in them) and
+# activity-timeline-expected.json (the sessions planted, and the data-quality gaps planted).
 import json, random, sys, datetime as dt, uuid
 out = sys.argv[1]
 r = random.Random(6061)
@@ -420,6 +424,165 @@ def collector(n, day):
                                  "LogFilePath": p, "message": m}))
     return lines
 
+# ----------------------------------------------------------------------------------------------------------------
+# A user's week of activity (the activity timeline). Its own seeded generator, so the other files stay the same.
+ra = random.Random(6064)
+WEEK = [dt.datetime(2026, 11, d) for d in (9, 10, 11, 12, 13)]
+DESK = "ws-jsmith-01"
+LAPTOP = "lt-jsmith-02"
+PROPOSAL = "Q3 Finance Proposal v2.docx - Word"
+CONTRACT = "Supplier Contract 2026.pdf - Acrobat"
+APPS = {"OUTLOOK.EXE": "Inbox - Outlook", "Teams.exe": "Chat - Teams", "chrome.exe": None, "WINWORD.EXE": PROPOSAL,
+        "ACROBAT.EXE": CONTRACT, "EXCEL.EXE": "Q3 Pricing Model.xlsx - Excel",
+        "POWERPNT.EXE": "Q3 Finance Proposal deck.pptx - PowerPoint"}
+PAGES = {"research": ("Pricing benchmarks 2026 - Google Chrome", "https://research.example.org/pricing/benchmarks"),
+         "legal": ("Contract termination clauses - Google Chrome", "https://legal.example.org/contracts/termination"),
+         "news": ("Local news - Google Chrome", "https://news.example.com/local"),
+         "flights": ("Cheap flights to Hobart - Google Chrome", "https://travel.example.com/flights/hobart")}
+PROMPTS = ["How do I phrase a discount clause politely for a large customer?",
+           "Suggest a short summary paragraph for a quarterly pricing proposal",
+           "What notice period is usual for ending a supplier agreement?"]
+MESSAGES = ["can you send last quarter's numbers?", "the deck is nearly done - review at 3?",
+            "lunch on Friday?", "the supplier wants an answer on the termination terms by Thursday"]
+
+def at(day, hhmm):
+    h, m = hhmm.split(":")
+    return day.replace(hour=int(h), minute=int(m))
+
+def day_plan(i, day):
+    # Each session: (host, start, process, title or page, kind); kind focus (a focus starts it) or resume (an unlock
+    # resumes the process focused before). Each ends at the next session of its host, or the host's next lock.
+    # Monday's first focus starts the week; on the other days the logon resumes Outlook, the last day's last
+    # application, until the first focus.
+    first = (DESK, "08:31", "OUTLOOK.EXE", None, "focus") if i == 0 else (DESK, "08:30", "OUTLOOK.EXE", None, "resume")
+    plan = [first, (DESK, "08:50", "WINWORD.EXE", None, "focus"),
+            (DESK, "09:45", "chrome.exe", "research", "focus"), (DESK, "10:05", "WINWORD.EXE", None, "focus"),
+            (DESK, "10:50", "Teams.exe", None, "focus"), (DESK, "11:00", "WINWORD.EXE", None, "focus"),
+            (DESK, "12:00", "chrome.exe", "news", "focus")]
+    plan += [(DESK, "13:15", "chrome.exe", "news", "resume"), (DESK, "13:20", "ACROBAT.EXE", None, "focus"),
+             (DESK, "14:10", "chrome.exe", "legal", "focus"), (DESK, "14:30", "ACROBAT.EXE", None, "focus"),
+             (DESK, "15:10", "OUTLOOK.EXE", None, "focus"), (DESK, "15:45", "WINWORD.EXE", None, "focus"),
+             (DESK, "17:10", "OUTLOOK.EXE", None, "focus")]
+    if i == 1:
+        # Tuesday: the pricing model, in Excel, whose window is never closed (an open without a close).
+        plan.insert(2, (DESK, "09:20", "EXCEL.EXE", None, "focus"))
+    if i == 2:
+        # Wednesday: the unlock after lunch is dropped, so the first focus comes while the desktop is locked; the
+        # afternoon meeting is on the laptop.
+        plan = [p for p in plan if p[1] < "13:15"] + [(DESK, "13:15", "ACROBAT.EXE", None, "focus"),
+                                                      (DESK, "13:40", "WINWORD.EXE", None, "focus"),
+                                                      (LAPTOP, "14:00", "POWERPNT.EXE", None, "focus"),
+                                                      (LAPTOP, "14:40", "Teams.exe", None, "focus"),
+                                                      (LAPTOP, "14:50", "POWERPNT.EXE", None, "focus"),
+                                                      (DESK, "16:05", "WINWORD.EXE", None, "resume"),
+                                                      (DESK, "16:20", "OUTLOOK.EXE", None, "focus")]
+    if i == 3:
+        # Thursday: the endpoint's events stop from 14:10 to 15:10 while the proxy shows the user browsing from the
+        # desktop (source silence: dropped events, not idleness); the personal browsing is flights.
+        plan = [p if p[1] != "12:00" else (DESK, "12:00", "chrome.exe", "flights", "focus") for p in plan]
+        plan = [p if p[1] != "13:15" else (DESK, "13:15", "chrome.exe", "flights", "resume") for p in plan]
+        plan = [p for p in plan if p[1] != "14:30"]
+    if i == 4:
+        # Friday: a half day; the proposal is copied to removable media.
+        plan = [p for p in plan if p[1] < "12:30"]
+    return plan
+
+def locks(i, day):
+    # Each host's logon/unlock (idle_end) and lock/logoff (idle_start) times, and the unlocks dropped.
+    if i == 2:
+        return {DESK: [("idle_end", "08:30"), ("idle_start", "12:30"), ("idle_start", "13:55"), ("idle_end", "16:05"),
+                       ("idle_start", "17:30")],
+                LAPTOP: [("idle_end", "13:58"), ("idle_start", "15:30")]}
+    if i == 4:
+        return {DESK: [("idle_end", "08:30"), ("idle_start", "12:30")]}
+    return {DESK: [("idle_end", "08:30"), ("idle_start", "12:30"), ("idle_end", "13:15"), ("idle_start", "17:30")]}
+
+def activity_week():
+    rows = []
+    sessions = []
+    sent = [0]
+    for i, day in enumerate(WEEK):
+        plan = sorted(day_plan(i, day), key=lambda p: (p[0], p[1]))
+        lock_times = locks(i, day)
+        opened = {}
+        for host in sorted({p[0] for p in plan}):
+            mine = [p for p in plan if p[0] == host]
+            idle_starts = sorted(t for k, t in lock_times.get(host, []) if k == "idle_start")
+            for n, (h, start, process, page, kind) in enumerate(mine):
+                nexts = [mine[n + 1][1]] if n + 1 < len(mine) else []
+                end = min(nexts + [t for t in idle_starts if t > start])
+                t0, t1 = at(day, start), at(day, end)
+                sessions.append([host, process, ts(t0), ts(t1)])
+                title = PAGES[page][0] if page else APPS[process]
+                if process not in opened.get(host, set()):
+                    opened.setdefault(host, set()).add(process)
+                    rows.append((t0 - dt.timedelta(seconds=30), "endpoint", "jsmith", host, process, title,
+                                 "w-" + process.split(".")[0].lower() + "-" + str(i), "open", "", ""))
+                if kind == "focus":
+                    rows.append((t0, "endpoint", "jsmith", host, process, title, "", "focus", "", ""))
+                silent = i == 3 and host == DESK and start == "14:10"
+                # Signs of activity at most every 20 minutes, so no interval meets the 30-minute cap: the endpoint's
+                # own (a clipboard copy, a save), and the proxy's or the messages' beside them.
+                t = t0 + dt.timedelta(minutes=ra.randint(3, 8))
+                while t < t1 - dt.timedelta(minutes=1):
+                    if process == "chrome.exe":
+                        rows.append((t, "proxy", "jsmith", host, "", "", "", "web", PAGES[page][1], ""))
+                    if process == "Teams.exe":
+                        # Each message in turn, so every one is sent in the week.
+                        rows.append((t, "messages", "jsmith", host, process, "", "", "message", "",
+                                     MESSAGES[sent[0] % len(MESSAGES)]))
+                        sent[0] += 1
+                    if not silent:
+                        rows.append((t + dt.timedelta(seconds=20), "endpoint", "jsmith", host, process, title, "",
+                                     "clipboard" if process in ("chrome.exe", "OUTLOOK.EXE", "Teams.exe")
+                                     else ra.choice(["clipboard", "save"]), title.split(" - ")[0], ""))
+                    t += dt.timedelta(minutes=ra.randint(5, 15) if not silent else 5)
+                if process == "chrome.exe" and page == "research":
+                    rows.append((t0 + dt.timedelta(minutes=2), "aichat", "jsmith", host, "", "", "", "prompt",
+                                 "https://chat.example.ai/c/" + str(100 + i), PROMPTS[i % 2]))
+                if process == "chrome.exe" and page == "legal":
+                    rows.append((t0 + dt.timedelta(minutes=2), "aichat", "jsmith", host, "", "", "", "prompt",
+                                 "https://chat.example.ai/c/" + str(200 + i), PROMPTS[2]))
+            if i == 4 and host == DESK:
+                rows.append((at(day, "11:30"), "endpoint", "jsmith", host, "explorer.exe", "", "", "removable_copy",
+                             "E:\\Q3 Finance Proposal v2.docx", ""))
+            # Windows closed before the host's last lock; Tuesday's Excel window is left open (no close).
+            last = max(t for k, t in lock_times[host] if k == "idle_start")
+            for process in sorted(opened.get(host, set())):
+                if not (i == 1 and process == "EXCEL.EXE"):
+                    rows.append((at(day, last) - dt.timedelta(minutes=1), "endpoint", "jsmith", host, process, "",
+                                 "w-" + process.split(".")[0].lower() + "-" + str(i), "close", "", ""))
+            for kind, t in lock_times.get(host, []):
+                rows.append((at(day, t), "windows", "CORP\\jsmith", host, "", "", "", "unlock" if kind == "idle_end"
+                             else "lock", "", ""))
+        # Another user, the same day: their events must never reach jsmith's timeline.
+        for start, process in [("09:00", "OUTLOOK.EXE"), ("09:40", "WINWORD.EXE"), ("11:10", "chrome.exe")]:
+            rows.append((at(day, start), "endpoint", "akhan", "ws-akhan-01", process, APPS[process] or "News - Chrome",
+                         "", "focus", "", ""))
+        rows.append((at(day, "08:40"), "windows", "CORP\\akhan", "ws-akhan-01", "", "", "", "unlock", "", ""))
+        rows.append((at(day, "12:00"), "windows", "CORP\\akhan", "ws-akhan-01", "", "", "", "lock", "", ""))
+    # In time order, as the stream holds them (event ids rise with time).
+    rows.sort(key=lambda r: (r[0], r[1], r[3], r[7]))
+    by_app = {}
+    for host, process, start, end in sessions:
+        minutes = (dt.datetime.strptime(end, "%Y-%m-%dT%H:%M:%S.000Z") -
+                   dt.datetime.strptime(start, "%Y-%m-%dT%H:%M:%S.000Z")).total_seconds() / 60
+        key = (host, process)
+        count, total = by_app.get(key, (0, 0.0))
+        by_app[key] = (count + 1, total + minutes)
+    expected = {"user": "jsmith", "time_from": "2026-11-09T00:00:00.000Z", "time_to": "2026-11-14T00:00:00.000Z",
+                "sessions": sorted(sessions, key=lambda s: (s[2], s[0])),
+                "by_application": sorted([[h, p, c, round(m, 1)] for (h, p), (c, m) in by_app.items()],
+                                         key=lambda r: (-r[3], r[0], r[1])),
+                "planted": {"idle_start_without_end": 1, "source_silence": 1, "open_without_close": 1,
+                            "removable_copies": 1},
+                "other_users": ["akhan"]}
+    lines = ["EventTime,Source,UserName,Host,Process,WindowTitle,WindowId,EventType,Object,Text"]
+    for r in rows:
+        assert not any("," in str(v) for v in r[1:]), r
+        lines.append(",".join([ts(r[0])] + [str(v) for v in r[1:]]))
+    return lines, expected
+
 import os
 
 # The lines the tests read of each file.
@@ -432,3 +595,10 @@ for name, fn, n in [("pega", pega, 5000), ("azure-audit", azure, 3000), ("collec
         kept = KEPT[f"{name}-{s + 1}"]
         with open(f"{out}/{name}/{name}-{s + 1}.json", "w") as f:
             f.write("\n".join(fn(n, day)[:kept]) + "\n")
+
+os.makedirs(f"{out}/activity-timeline", exist_ok=True)
+lines, expected = activity_week()
+with open(f"{out}/activity-timeline/activity-timeline.csv", "w") as f:
+    f.write("\n".join(lines) + "\n")
+with open(f"{out}/activity-timeline/activity-timeline-expected.json", "w") as f:
+    f.write(json.dumps(expected, indent=1) + "\n")

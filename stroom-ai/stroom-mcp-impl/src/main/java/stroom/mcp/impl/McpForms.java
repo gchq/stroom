@@ -149,6 +149,12 @@ class McpForms {
         }
     }
 
+    /// @return The longest a form waits for the user's answer, which a request to the client's model (MCP sampling,
+    /// [McpSampling]) waits too, as the client may ask its user to approve it.
+    Duration formTimeout() {
+        return config().getFormTimeout().getDuration();
+    }
+
     /// @return How many forms are waiting for answers on this node.
     synchronized int waitingCount() {
         return waiting;

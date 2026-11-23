@@ -43,6 +43,7 @@ public final class ToolCallContext {
     private final ToolRunContext runContext;
     private final StroomLinks links;
     private final String localZoneId;
+    private final ModelSideCalls sideCalls;
 
     private ToolCallContext(final Builder builder) {
         this.session = Objects.requireNonNull(builder.session, "session");
@@ -55,6 +56,7 @@ public final class ToolCallContext {
         this.runContext = builder.runContext;
         this.links = Objects.requireNonNullElse(builder.links, StroomLinks.CHAT);
         this.localZoneId = builder.localZoneId;
+        this.sideCalls = Objects.requireNonNullElse(builder.sideCalls, ModelSideCalls.NONE);
     }
 
     /// @param session The session the call is made in.
@@ -162,6 +164,13 @@ public final class ToolCallContext {
         return Optional.ofNullable(localZoneId).filter(id -> !id.isBlank());
     }
 
+    /// @return How the call's tool may ask a model for something outside the chat's conversation (a side call): the
+    /// chat's model in a chat, the client's by MCP sampling over `/mcp` where the client offers it, else
+    /// [ModelSideCalls#NONE].
+    public ModelSideCalls sideCalls() {
+        return sideCalls;
+    }
+
     @Override
     public String toString() {
         return "ToolCallContext{session=" + session.kind() + " " + session.id() + ", caller=" + caller().name()
@@ -181,6 +190,7 @@ public final class ToolCallContext {
         private ToolRunContext runContext;
         private StroomLinks links;
         private String localZoneId;
+        private ModelSideCalls sideCalls;
 
         private Builder(final ToolSession session) {
             this.session = session;
@@ -248,6 +258,14 @@ public final class ToolCallContext {
         /// @return This builder.
         public Builder localZoneId(final String localZoneId) {
             this.localZoneId = localZoneId;
+            return this;
+        }
+
+        /// @param sideCalls How a tool may ask a model outside the chat's conversation; [ModelSideCalls#NONE] if
+        ///                  not given.
+        /// @return This builder.
+        public Builder sideCalls(final ModelSideCalls sideCalls) {
+            this.sideCalls = sideCalls;
             return this;
         }
 

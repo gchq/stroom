@@ -42,6 +42,7 @@ public final class BuiltInToolGroups {
     static final String ADMINISTRATION = "administration";
     static final String SEQUENCES = "sequences";
     static final String SKILLS = "skills";
+    static final String TIMELINES = "timelines";
 
     /// What each group is for, as the tool that turns it on says, in the order the groups are offered.
     static final Map<String, String> PURPOSES = purposes();
@@ -124,6 +125,10 @@ public final class BuiltInToolGroups {
             // data source (StroomTool#isUsable), so a group with none of its tools offered isn't either.
             SEQUENCES, List.of(
                     "sequence_query"),
+            // Asked for when a user's (or entity's) activity over time is: its definition is large, and most chats
+            // never build a timeline. Offered only to a user who can use an Elastic Index (StroomTool#isUsable).
+            TIMELINES, List.of(
+                    "activity_timeline"),
             // Asked for by name, or turned on when a skill fits: the list of skills is in the prompt already.
             SKILLS, List.of(
                     "find_skills",
@@ -190,6 +195,9 @@ public final class BuiltInToolGroups {
         purposes.put(SEQUENCES, "hunt for ordered sequences of events in any data source (X, then Y, by the "
                                        + "same user or host, within N; on Elastic Indexes also N in a row, and X "
                                        + "and then not Y)");
+        purposes.put(TIMELINES, "build a user's (or entity's) activity timeline from several sources: sessions "
+                                + "of active use of each application, the actions in each, missing events "
+                                + "flagged, and what they were working on");
         purposes.put(SKILLS, "find, check and save skills: saved, parameterised procedures (a hunt, a timeline) "
                              + "to read whole and follow, or to write from a chat or a template");
         return Collections.unmodifiableMap(purposes);
