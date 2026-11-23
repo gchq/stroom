@@ -17,6 +17,8 @@
     <suppress files="[\\/]stroom[\\/].*[\\/]AnnotationDaoImpl.java" checks="FileLength"/>
     <suppress files="[\\/]stroom[\\/].*[\\/](Test)?NullSafe.java" checks="FileLength"/>
 
+    <!-- Everything but client packages -->
+    <suppress files="^(?!.*[\\/]client[\\/]).*$" id="ClientLogging"/>
     <!-- The only client code to use the browser's console: Console, which the rest goes through, and
          the workbench, which reports to its test runner by it. AppServlet's is a page's own script -->
     <suppress files="[\\/]stroom[\\/]widget[\\/]util[\\/]client[\\/]Console.java" id="BrowserConsole"/>

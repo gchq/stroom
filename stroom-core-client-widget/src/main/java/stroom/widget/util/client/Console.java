@@ -51,7 +51,10 @@ public class Console {
         }
     }
 
-    // What is logged unless the URL says otherwise
+    /// Says what is logged unless the URL says otherwise.
+    ///
+    /// @param superDevMode Whether this was compiled by Super Dev Mode.
+    /// @return The least severe level logged.
     static Level defaultLevel(final boolean superDevMode) {
         return superDevMode
                 ? Level.DEBUG
@@ -64,6 +67,7 @@ public class Console {
         return "on".equals(System.getProperty("superdevmode", "off"));
     }
 
+    /// @return The least severe level logged.
     static Level getLevel() {
         return level;
     }

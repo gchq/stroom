@@ -105,7 +105,8 @@ public class HyperlinkOpener implements HyperlinkEvent.Handler, HasHandlers {
                 try {
                     hyperlinkType = HyperlinkType.valueOf(type.toUpperCase());
                 } catch (final RuntimeException e) {
-                    Console.warn("Could not parse open type value of " + type);
+                    // Not the type, which comes from the data the link is in
+                    Console.warn("A link's type isn't one that can be opened");
                 }
             }
 

@@ -130,8 +130,8 @@ public class DelegatingAceCompleter {
         final String editorId = editor.getId();
         final String modeShortName = editor.getModeShortName();
 
-        Console.debug(() -> "getProposals() - editorId: " + editorId + ", modeShortName: " + modeShortName
-                + ", prefix: '" + prefix + "'");
+        // Not the prefix, which is what the user typed
+        Console.debug(() -> "getProposals() - editorId: " + editorId + ", modeShortName: " + modeShortName);
 
         final List<AceCompletionProvider> completionProviders = getApplicableCompletionProviders(
                 editorId, modeShortName);

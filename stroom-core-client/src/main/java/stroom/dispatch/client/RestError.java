@@ -81,13 +81,13 @@ public class RestError {
                 try {
                     unwrapped = getThrowableFromJsonResponse(method, throwable, responseText);
                 } catch (final Exception e) {
-                    // Not all are JSON
-                    Console.debug(() -> "Error parsing response as json: " + e.getMessage());
+                    // Not all are JSON. Not why, which quotes the response
+                    Console.debug("Error parsing response as json");
                     try {
                         // Try parsing it as text
                         unwrapped = getThrowableFromStringResponse(method, throwable, responseText);
                     } catch (final Exception e2) {
-                        Console.warn(() -> "Error parsing response as text: " + e2.getMessage());
+                        Console.warn("Error parsing response as text");
                     }
                 }
             }

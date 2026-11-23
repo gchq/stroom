@@ -338,8 +338,6 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     /// @param callback    The lamda to call when this chain is complete.
     public void onSaveAs(final D source, final D newDocument, final Consumer<D> callback) {
 
-        Console.info("onSaveAs for " + source + " to " + newDocument);
-
         String updatedContentPath = null;
         byte[] updatedContent = null;
         if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {

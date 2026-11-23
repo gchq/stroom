@@ -192,15 +192,22 @@
              stroom-gwt/UI-GUIDE.md). -->
         <module name="RegexpSinglelineJava">
             <property name="id" value="GwtLog"/>
-            <property name="format" value="\bGWT\s*\.\s*log\s*\("/>
+            <property name="format" value="\bGWT\s*(\.|::)\s*log\b"/>
             <property name="ignoreComments" value="true"/>
             <property name="message" value="Do not use GWT.log: use stroom.widget.util.client.Console (see stroom-gwt/UI-GUIDE.md)."/>
+        </module>
+        <!-- Only in client packages (suppressions.xml) -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="ClientLogging"/>
+            <property name="format" value="\b(java\.util|com\.google\.gwt)\.logging\."/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Do not use java.util.logging: use stroom.widget.util.client.Console (see stroom-gwt/UI-GUIDE.md)."/>
         </module>
         <!-- Nor does its JSNI write to the browser's console, which is in a comment, so comments are
              checked. Allowed (suppressions.xml) in Console itself, the workbench and a served page's script. -->
         <module name="RegexpSinglelineJava">
             <property name="id" value="BrowserConsole"/>
-            <property name="format" value="\bconsole\s*\.\s*(log|debug|info|warn|error|trace)\s*\("/>
+            <property name="format" value="\bconsole\s*(\[|\.\s*[a-zA-Z]+\s*\()"/>
             <property name="message" value="Do not use the browser''s console: use stroom.widget.util.client.Console (see stroom-gwt/UI-GUIDE.md)."/>
         </module>
 
