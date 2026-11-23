@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.11] - 2026-11-23
+
+* Dependency : Uplift java in docker images from 25.0.5_8 to 25.0.5.1_2.
+
+
 ## [v7.13.10] - 2026-11-13
 
 * Bug **#6023** : Fix S3 stream processing when optional metadata or context streams are absent.
@@ -2679,7 +2684,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.11...HEAD
+[v7.13.11]: https://github.com/gchq/stroom/compare/v7.13.10...v7.13.11
 [v7.13.10]: https://github.com/gchq/stroom/compare/v7.13.9...v7.13.10
 [v7.13.9]: https://github.com/gchq/stroom/compare/v7.13.8...v7.13.9
 [v7.13.8]: https://github.com/gchq/stroom/compare/v7.13.7...v7.13.8
