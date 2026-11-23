@@ -80,7 +80,8 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
                              + "joined ones too, and whether it groups rows), or the parser's error. Validate a "
                              + "query before you show or propose it.")
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(QUERY_ARG, "The StroomQL query.")
+                        .addStringProperty(QUERY_ARG, "The StroomQL query (a field whose name has a space is "
+                                + "${Field Name}; double quotes give text).")
                         .required(QUERY_ARG)
                         .build())
                 .build();
@@ -123,7 +124,8 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
                                             .collect(Collectors.joining(", ")))
                                    + (result.isGroupBy()
                                     ? ". It groups rows."
-                                    : "."));
+                                    : ".")
+                                   + QuotedSelectFields.note(queryService, dataSource, query));
         }
         return ToolResult.text("The query is not valid: "
                                + StroomQlErrorHints.appendTo(NullSafe.nonBlankStringElse(NullSafe.get(result,

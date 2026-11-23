@@ -1340,6 +1340,12 @@ Runs a StroomQL query as the user and writes the results to a Markdown table in 
 `/outputs/queries/query-<yyyyMMdd-HHmmss>.md`. The model gets the path and a profile of the table (row count,
 columns, common values).
 
+A field named in `select` in double quotes (`select "Create Time"`) is that text in every row to StroomQL, not the
+field, and the query runs without an error; when the text is one of the data source's fields (ignoring case),
+`QuotedSelectFields` adds a note to the result saying to write `${Create Time}`, as `validate_stroomql` does to its
+OK. A column name after `as`, a function's argument and `where` (where Stroom takes a quoted name as a field) are left
+alone.
+
 The search is never unbounded. `StroomQlLimit` reads the query with Stroom's own tokeniser, so text in strings and
 comments is never taken for a keyword. It adds `limit <max>` to a query with none, and lowers a larger limit, where
 max is `stroom.ai.workspace.maxQueryRows` (default 10,000). Only the query's own `select` and `limit` count, outside

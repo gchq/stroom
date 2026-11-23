@@ -174,7 +174,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                                   + "EventId and the streams holding every match, use search_events with index.")
                         .build())
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(QUERY_ARG, "The StroomQL query.")
+                        .addStringProperty(QUERY_ARG, "The StroomQL query (a field whose name has a space is "
+                                + "${Field Name}; double quotes give text).")
                         .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("A .md file in /outputs/ for the results (default "
@@ -249,7 +250,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
             return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, given,
-                    new Written(limited, changed, zone, datePoints), maxRows)
+                    new Written(limited, changed, zone, datePoints,
+                            QuotedSelectFields.note(queryService, dataSource, given)), maxRows)
                                    + esqlHint(queryService, dataSource, given, context));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
@@ -457,6 +459,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                    + (warnings.isEmpty()
                     ? ""
                     : " Stroom warned: " + String.join("; ", warnings))
+                   + written.quotedFields()
                    + "\n\n" + profile;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -512,10 +515,10 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // The query as run: its limit, whether it differs from the agent's, the time zone it ran in, and the times its
-    // conditions' date points stood for.
+    // The query as run: its limit, whether it differs from the agent's, the time zone it ran in, the times its
+    // conditions' date points stood for, and what to say of fields its select names in double quotes.
     private record Written(StroomQlLimit.Limited limited, boolean changed, ToolTimeZone zone,
-                           List<String> datePoints) {
+                           List<String> datePoints, String quotedFields) {
 
     }
 }

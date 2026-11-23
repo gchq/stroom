@@ -2761,7 +2761,7 @@ Runs a StroomQL query as the user (e.g. 'from "My View" where EventTime > day() 
       "type" : "string"
     },
     "query" : {
-      "description" : "The StroomQL query.",
+      "description" : "The StroomQL query (a field whose name has a space is ${Field Name}; double quotes give text).",
       "type" : "string"
     },
     "timeZone" : {
@@ -3670,7 +3670,7 @@ Checks a StroomQL query without running it: OK (with the data sources it reads, 
 {
   "properties" : {
     "query" : {
-      "description" : "The StroomQL query.",
+      "description" : "The StroomQL query (a field whose name has a space is ${Field Name}; double quotes give text).",
       "type" : "string"
     }
   },

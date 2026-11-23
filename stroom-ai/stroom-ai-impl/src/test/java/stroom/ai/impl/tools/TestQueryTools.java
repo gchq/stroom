@@ -336,6 +336,19 @@ class TestQueryTools {
     }
 
     @Test
+    void validateStroomQlSaysAFieldInDoubleQuotesInSelectIsText() {
+        final String quoted = "from \"Windows events\" select \"User Id\"";
+        Mockito.when(queryService.getReferencedDataSource(quoted)).thenReturn(Optional.of(WINDOWS));
+        Mockito.when(queryService.validateQuery(quoted)).thenReturn(new ValidateExpressionResult(true, quoted, false));
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.createText("User Id"))));
+
+        assertThat(run(validateTool(), "{\"query\":\"" + quoted.replace("\"", "\\\"") + "\"}"))
+                .startsWith("OK. The query is valid")
+                .contains("In select, \"User Id\" is that text in every row, not the field: write ${User Id}");
+    }
+
+    @Test
     void validateStroomQlGivesTheParsersError() {
         final String bad = "from \"Windows events\" selectt User";
         Mockito.when(queryService.getReferencedDataSource(bad)).thenReturn(Optional.of(WINDOWS));
