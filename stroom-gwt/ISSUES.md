@@ -1247,7 +1247,7 @@ shows one), and the app itself.
 | A list keeps the old object selected after an edit | **Fixed** (6 November 2026): it was worse than reported, a second notification edit added a duplicate row; see "A list's selection kept a stale row" under Fixed |
 | Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs; the light theme's two **Fixed** (23 November 2026), as the entry below |
 | `TraceOverviewChart` draws its fixed text and ARIA as HTML | Still open |
-| The floor map Layers drag never forgets `dragFromIndex` after a drop | Still open (`FloorMapLayers.java:498-511`) |
+| The floor map Layers drag never forgets `dragFromIndex` after a drop | **Fixed** (23 November 2026), as the entry below |
 | No story hovers or drags on the floor map canvas but Set Scale | Still open |
 | A sized `PopupType.POPUP` sets an inline width and height | **Fixed**: `--popup__width` and `--popup__height` with `popup--sized-*` classes (`PopupUtil.java:159-168`, `popup.css`) |
 | A dialog's New shows its busy spinner on Cancel | **Fixed** (19 November 2026): the pressed button shows it (`DialogFrame`), as the entry below |
@@ -1441,12 +1441,18 @@ to delete them by hand.~~
   unused since before wave 7 (wave 7 deleted `stroom.query.client.ExpressionUiHandlers`, its
   twin). Delete it once removals are allowed.~~ **Deleted** (checked 30 October 2026: no
   `ExpressionUiHandlers` is left).
-* The floor map's Layers panel can reorder its layers wrongly after a drag (found 26 October 2026, in
+* ~~The floor map's Layers panel can reorder its layers wrongly after a drag (found 26 October 2026, in
   wave 7's audit; master has it too). A drop that moves a layer rebuilds the list before the
   dragged row's `dragend`, so its handler, which forgets the row dragged (`dragFromIndex`), never
   runs; a later drop of something dragged in from elsewhere then moves that layer again. The fix is
   to forget it in the drop handler (`FloorMapLayers.buildRow`). Not fixed yet: the workbench has
-  no way to fire HTML drag and drop events (with a `DataTransfer`) for its regression story.
+  no way to fire HTML drag and drop events (with a `DataTransfer`) for its regression story.~~
+  **Fixed** (23 November 2026): the drop handler forgets the layer dragged before it moves it. The
+  plays can fire HTML drag and drop now (`play.fireEvent().dragStart`, `dragOver`, `drop`,
+  `dragLeave`, `dragEnd`, each a `DragEvent` with a new `DataTransfer`; `TestFireEvent`), and
+  `App/Editors/FloorMapEditor` `LayerDragThenDropFromElsewhere` drags the desk layer below the gate,
+  then drops below the desk with nothing dragged from the list, and checks the order is kept (the
+  second drop moved the gate layer down again before the fix).
 * ~~The floor map follows no read-only state (found 26 October 2026, in wave 7's audit; master has it
   too): nothing under `stroom.floormap.client` watches `Contexts.READ_ONLY`, and `FloorMapLayers`
   has no `onReadOnlyChange`, so a floor map the user can only view can still have its layers
@@ -1598,8 +1604,10 @@ to delete them by hand.~~
   and header `data-grid__cell--tick-box` and `data-grid__header-cell--tick-box`: a column under
   twice CHECKBOX_COL (so not a 66px Enabled column, whose box stays under its left-aligned header)
   whose cell or header draws only a tick box (not one with other content, e.g. a column values
-  filter's value). `data-grid.css` centres their boxes without the side padding, so the header's
-  select-all box lines up with the rows'. `TestGridHtml`; `Widgets/Cell Renderers/TickBoxCell`
+  filter's value). The width tested is the column's declared one, not its width now, so a user's
+  resize doesn't mark some rows and not others (code review, 23 November 2026). `data-grid.css`
+  centres their boxes without the side padding, so the header's select-all box lines up with the
+  rows'. `TestGridHtml`; `Widgets/Cell Renderers/TickBoxCell`
   `BoxFitsItsColumn` checks a row's box and the header's are whole and centred to a pixel at
   compact and Default density (it failed at Default before), and `WideColumnKeepsItsBoxLeft` that
   an Enabled column's box stays at the left.
@@ -1705,6 +1713,10 @@ to delete them by hand.~~
     as Escape closes the dialog, and its blur would apply it again after Cancel's revert. Not seen:
     `App/Main/AppShell` `EscapeUndoesCustomFormat` passes with or without the guard, as the
     workbench's Chromium fires no blur when the dialog goes; the guard is for browsers that do.
+    **Open decision** (code review, 23 November 2026): a custom format is applied to the screens as
+    it's committed (leaving the field or Enter), before OK, with no check that it's a valid
+    pattern, so a broken one shows on every open screen until it's corrected or the dialog is
+    cancelled. Whether to check it first, or apply it only on OK, is to be decided.
   * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
     (`AnalyticProcessingController.setProcessType`).~~ **Fixed** (19 November 2026): showing the
@@ -1752,6 +1764,12 @@ to delete them by hand.~~
   (`XPathFilterEditorController.write`), both failing on the null, so Change Step Filters didn't
   open. **Fixed**: the list shows no condition, and Edit shows a new filter's, Exists, which OK
   writes. `App/Main/StepFilterDialog` `FilterWithNoCondition` (failed before).
+  Also (code review, 23 November 2026; older): OK failed in the same way on a filter with no search
+  type (saved before there were search types), which Edit now shows as an XPath filter if it has a
+  path (other than All text's), keeping it; and stepping on the server failed on a filter with no
+  condition beside one that applies (`SAXEventRecorder` read the null condition), which now skips
+  it, as `SteppingFilterSettings.isFilterApplied` already ignored it (`TestPersistedFilterEvaluator`
+  `testXPathWithNoCondition`, failed before). `FilterWithNoCondition` covers the search type too.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter. The parser
   built is always a Data Splitter (`ParserFactoryPoolImpl`), but the guess isn't without effect:
   `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives

@@ -72,6 +72,28 @@ class TestFireEvent {
                 "fireEvent.mouseMove(document.body, { clientX: 360, clientY: 150 })");
     }
 
+    /// A drag's events are described as Testing Library's are, and fired as the browser names them.
+    @Test
+    void testDragDescriptions() {
+        final Play play = new Play();
+        final Query row = play.getByText("Countries");
+        final Query other = play.getByText("Cities");
+        final FireEvent fireEvent = play.fireEvent();
+        fireEvent.dragStart(row);
+        fireEvent.dragOver(other, EventInit.create().relativeTo(other, 3, 2));
+        fireEvent.dragLeave(other);
+        fireEvent.drop(other, EventInit.create().relativeTo(other, 3, 2));
+        fireEvent.dragEnd(row);
+        final String q = row.describe();
+        final String o = other.describe();
+        assertThat(play.getSteps()).extracting(step -> step.describe(null)).containsExactly(
+                "fireEvent.dragStart(" + q + ")",
+                "fireEvent.dragOver(" + o + ", { clientX: left + 3, clientY: top + 2 of " + o + " })",
+                "fireEvent.dragLeave(" + o + ")",
+                "fireEvent.drop(" + o + ", { clientX: left + 3, clientY: top + 2 of " + o + " })",
+                "fireEvent.dragEnd(" + q + ")");
+    }
+
     @Test
     void testEventClass() {
         assertThat(FireEvent.eventClass("mousedown")).isEqualTo("MouseEvent");
@@ -85,6 +107,10 @@ class TestFireEvent {
         assertThat(FireEvent.eventClass("input")).isEqualTo("InputEvent");
         assertThat(FireEvent.eventClass("wheel")).isEqualTo("WheelEvent");
         assertThat(FireEvent.eventClass("change")).isEqualTo("Event");
+        assertThat(FireEvent.eventClass("dragstart")).isEqualTo("DragEvent");
+        assertThat(FireEvent.eventClass("dragover")).isEqualTo("DragEvent");
+        assertThat(FireEvent.eventClass("drop")).isEqualTo("DragEvent");
+        assertThat(FireEvent.eventClass("dragend")).isEqualTo("DragEvent");
     }
 
     @Test
@@ -95,6 +121,12 @@ class TestFireEvent {
         assertThat(FireEvent.defaultBubbles("mouseenter")).isFalse();
         assertThat(FireEvent.defaultCancelable("mousedown")).isTrue();
         assertThat(FireEvent.defaultCancelable("change")).isFalse();
+        // As the browser's: a drag's start, over and drop can be cancelled, its leave and end can't
+        assertThat(FireEvent.defaultCancelable("dragover")).isTrue();
+        assertThat(FireEvent.defaultCancelable("drop")).isTrue();
+        assertThat(FireEvent.defaultCancelable("dragleave")).isFalse();
+        assertThat(FireEvent.defaultCancelable("dragend")).isFalse();
+        assertThat(FireEvent.defaultBubbles("drop")).isTrue();
         // The default button and buttons (0, as Testing Library leaves them, even for
         // contextMenu) are checked in the browser by test-runner/selftest
         assertThat(FireEvent.defaultKeyCode("keydown", "u")).isEqualTo(85);

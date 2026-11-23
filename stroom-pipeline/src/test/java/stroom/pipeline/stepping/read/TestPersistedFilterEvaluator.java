@@ -124,6 +124,19 @@ class TestPersistedFilterEvaluator {
     private static final String EVENTS_XML =
             "<Events xmlns=\"events:1\"><Event><Id>hello world</Id></Event></Events>";
 
+    /// A filter saved without a condition (its matchType missing) does nothing, as
+    /// `SteppingFilterSettings.isFilterApplied` has it: alone it applies no filter, and beside one that
+    /// does it is skipped rather than failing on the missing condition.
+    @Test
+    void testXPathWithNoCondition() {
+        final CapturedElementData data = xmlOutput(EVENTS_XML);
+        assertThat(matches(data, xpath("/Events/Event", null, null))).isFalse();
+        final SteppingFilterSettings withAnApplied = new SteppingFilterSettings(null, null, List.of(
+                new XPathFilter("/Events/Event", null, null, false, null, null),
+                new XPathFilter("/Events/Event", XPathFilter.MatchType.EXISTS, null, false, null, null)));
+        assertThat(matches(data, withAnApplied)).isTrue();
+    }
+
     @Test
     void testXPathExists() {
         final CapturedElementData data = xmlOutput(EVENTS_XML);

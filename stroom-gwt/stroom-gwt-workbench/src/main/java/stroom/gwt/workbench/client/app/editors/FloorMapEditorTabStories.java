@@ -406,6 +406,30 @@ public final class FloorMapEditorTabStories {
                     play.waitFor(() -> play.expect(play.getByRole("button", DESK_GRIP)).toHaveFocus());
                     DocEditors.expectNoProblems(play);
                 })
+                // A layer dragged below another moves there. The move rebuilds the rows before the
+                // drag's end, which then never reaches a row, so the drop itself forgets the layer
+                // dragged: a later drop of something dragged in from elsewhere (no drag start here)
+                // moves nothing. It moved the layer first dragged from again
+                .story("LayerDragThenDropFromElsewhere", context -> render(context, fixtures(DOC_WITH_TWO_LAYERS)))
+                .withPlay(play -> {
+                    play.findByRole("button", DESK_GRIP);
+                    play.fireEvent().dragStart(layerRow(play, "desk"));
+                    play.fireEvent().dragOver(layerRow(play, "gate"),
+                            EventInit.create().relativeTo(layerRow(play, "gate"), 10, 20));
+                    play.fireEvent().drop(layerRow(play, "gate"),
+                            EventInit.create().relativeTo(layerRow(play, "gate"), 10, 20));
+                    play.waitFor(() -> play.expect(layerNames(play).nth(0)).toHaveTextContent("gate"));
+                    play.expect(layerNames(play).nth(1)).toHaveTextContent("desk");
+                    // Dropped from elsewhere, below the desk layer: nothing was dragged from the list
+                    play.fireEvent().dragOver(layerRow(play, "desk"),
+                            EventInit.create().relativeTo(layerRow(play, "desk"), 10, 20));
+                    play.fireEvent().drop(layerRow(play, "desk"),
+                            EventInit.create().relativeTo(layerRow(play, "desk"), 10, 20));
+                    play.sleep(300);
+                    play.expect(layerNames(play).nth(0)).toHaveTextContent("gate");
+                    play.expect(layerNames(play).nth(1)).toHaveTextContent("desk");
+                    DocEditors.expectNoProblems(play);
+                })
                 // A layer's eye dims it, then hides it, and its name fades with it; its lock
                 // locks it. Each state is a class, named in the button's title
                 .story("LayerVisibilityAndLock", context -> render(context, fixtures(DOC_WITH_LAYER)))
@@ -607,5 +631,15 @@ public final class FloorMapEditorTabStories {
                                         .method(res -> res.fetch(DOC_REF.getUuid())),
                                 (restFactory, doc) -> restFactory.create(resource)
                                         .method(res -> res.update(doc.getUuid(), doc)))));
+    }
+
+    // A layer's row in the Layers panel, by its type's name
+    private static Query layerRow(final Play play, final String type) {
+        return play.getByText(type, ".floor-map-layers__name").closest(".floor-map-layers__row");
+    }
+
+    // The layers' names, in the panel's order
+    private static Query layerNames(final Play play) {
+        return play.querySelectorAll(".floor-map-layers__row .floor-map-layers__name");
     }
 }

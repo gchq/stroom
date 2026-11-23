@@ -350,10 +350,13 @@ final class GridHtml<R> {
     // Whether a column is a tick box column (CHECKBOX_COL, 22px), its cell or header drawing only a
     // tick box. Its cells and header are marked so the grid's stylesheet centres the box at every
     // density; a wider column holding a tick box (e.g. an Enabled column, ENABLED_COL, 66px) keeps it
-    // under its left-aligned header. Widths scale with the text size, so the test is under twice
-    // CHECKBOX_COL, which a tick box column stays under and an Enabled column over at every size
+    // under its left-aligned header. The width is the one the column was declared with (scaled with
+    // the text size), not its width now, so a user's resize doesn't mark some rows and not others.
+    // It scales with the text size, so the test is under twice CHECKBOX_COL, which a tick box column
+    // stays under and an Enabled column over at every size
     private boolean isTickBoxColumn(final int index, final String html) {
-        return columnModel.getWidth(index) < 2 * ColumnSizeConstants.CHECKBOX_COL && isOnlyTickBox(html);
+        return columnModel.getSizing(index).getWidth() < 2 * ColumnSizeConstants.CHECKBOX_COL
+               && isOnlyTickBox(html);
     }
 
     /// Tells whether a cell's or header's HTML is only a grid tick box ([stroom.cell.tickbox.client.TickBoxCell]'s

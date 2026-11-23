@@ -27,7 +27,6 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.XPathFilter;
-import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
@@ -142,12 +141,13 @@ public final class StepFilterDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
-                // A filter saved without a condition (its matchType missing) is listed with none, and
-                // Edit shows it with a new filter's condition, Exists, which OK writes. Listing it and
-                // OK both failed on the missing condition
+                // A filter saved without a condition or a search type (from before there were search
+                // types) is listed with no condition, and Edit shows it as an XPath filter, keeping its
+                // path, with a new filter's condition, Exists, which OK writes. Listing it and OK failed
+                // on the missing condition, and OK on the missing search type
                 .story("FilterWithNoCondition", context -> render(context, Map.of("xsltFilter",
                         new SteppingFilterSettings(null, null, List.of(
-                                new XPathFilter("//record", null, null, null, null, SearchType.XPATH))))))
+                                new XPathFilter("//record", null, null, null, null, null))))))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE);
@@ -157,8 +157,10 @@ public final class StepFilterDialogStories {
                     play.click(screen.getByTitle("Edit Selected XPath Filter"));
                     final Play edit = dialog(screen, "Edit XPath Filter");
                     play.waitFor(() -> play.expect(edit.getByText("Exists")).toBeInTheDocument());
+                    play.expect(edit.getByDisplayValue("//record")).toBeVisible();
                     play.click(edit.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(xpathList.getByText("Exists")).toBeInTheDocument());
+                    play.expect(xpathList.getByText("//record")).toBeInTheDocument();
                     play.click(dialog(screen, "Change Step Filters").getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ON_APPLY)).toHaveBeenCalledWith(
                             "xsltFilter: 1 filter(s) EXISTS"));
