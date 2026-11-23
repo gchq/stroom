@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl;
 
+import stroom.ai.impl.tools.FormText;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.workspace.ToolDeadline;
 
@@ -70,6 +71,8 @@ final class McpUserQuestions implements UserQuestions {
                             final String callId,
                             final String intro,
                             final Map<String, Object> form) {
-        return slot.releasedWhile(() -> ToolDeadline.paused(() -> forms.ask(session, exchange, intro, form)));
+        // In sentence case, as every form reads (FormText); not bold, as a client may show the text as it is.
+        final String text = FormText.sentenceCase(intro);
+        return slot.releasedWhile(() -> ToolDeadline.paused(() -> forms.ask(session, exchange, text, form)));
     }
 }

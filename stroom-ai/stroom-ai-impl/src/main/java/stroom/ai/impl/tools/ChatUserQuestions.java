@@ -71,7 +71,8 @@ public final class ChatUserQuestions implements UserQuestions {
                             final String intro,
                             final Map<String, Object> form) {
         try {
-            return elicitationsProvider.get().askUser(chatId, toolName, callId, intro, form);
+            // In sentence case, its labels bold, as every form in the chat reads (FormText).
+            return elicitationsProvider.get().askUser(chatId, toolName, callId, FormText.forChat(intro), form);
         } catch (final AiChatRunManager.WaitingForUserException e) {
             waitingForUser = e;
             throw e;

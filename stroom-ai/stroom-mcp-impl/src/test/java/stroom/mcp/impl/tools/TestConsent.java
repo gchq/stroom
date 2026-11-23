@@ -115,7 +115,7 @@ class TestConsent {
 
         Mockito.verify(elicitations, Mockito.times(2)).askUser(Mockito.eq(7), Mockito.eq("create_feed"),
                 Mockito.startsWith("call-1" + UserQuestions.FORM_SEPARATOR + "confirmation-"),
-                Mockito.eq("Create feed A\n\n- feed name: A"), Mockito.anyMap());
+                Mockito.eq("Create feed A\n\n- **Feed name:** A"), Mockito.anyMap());
     }
 
     @Test
