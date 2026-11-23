@@ -967,6 +967,22 @@ window, its buckets limit or ES|QL's 10,000 rows.
 * **Through Stroom, as the user**: a core service added beside `ElasticEsqlService` and `ElasticEqlService` (additive,
   in Stroom's Elasticsearch module), so permissions, the query time limit and auditing hold; results go to a
   workspace file, a summary to the model.
+* **A new interface, none amended** (decided 2026-11-23): `ElasticKeyStreams` (name to settle) in `stroom-ai-api`,
+  implemented in `stroom-search-elastic`; `ElasticEql` and `ElasticEsql` unchanged (`sequence_query` keeps EQL where
+  it fits, the tool choosing the engine by size and shape; a size estimate is `ElasticEsql.query` with `countTotal`).
+  Paged and stateless, each call taking and giving its own position, so the tool drives the paging, its workers each
+  stream a key range through the same methods, and a run stops at any page:
+
+  | Method | What it does |
+  | --- | --- |
+  | `target(List<DocRef>)` | Use on each, one cluster, the time field and the key field's type; refuses with why |
+  | `keyPage(KeyRequest)` | A page of a composite aggregation on the join key: the step's filter, an optional key range, `after_key` in and out, a count a key |
+  | `openScan(ScanRequest)`, `scanPage(ScanPage)`, `close(Scan)` | A point-in-time search sorted by key then time: the fields needed, a key range or a terms list (a pushed-down side), `search_after` in and out, the point in time kept alive between pages and closed at the end |
+  | `sampleKeys(SampleRequest)` | Every Nth key in key order, to cut the key space into the workers' ranges |
+
+  Each call runs as the user, checks Use, takes the user's query time limit and a stop flag (as
+  `ElasticEsql.Request` takes `stopped`), and is audited. The "one cluster, Use on each, one time field" check shared
+  with `ElasticEql.target` by a helper inside the implementations, no interface method changed.
 * **Cost first**: each side's size estimated before it streams (an ES|QL or count query), the plan ordered so the
   most selective side filters first, a cap on keys and rows, progress shown while it runs.
 * **Keys must compare**: equal values as stored, so it rests on normalised entity fields at onboarding (below) or on
