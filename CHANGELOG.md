@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.19-parallel-pathways] - 2026-11-23
+
 * Bug : Fix the clean up of temporary files created by the the FS stream store during path validation.
 
 * Bug **#6051** : Fix processor profile periods that run past midnight never matching after midnight.
@@ -2986,7 +2988,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.18-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.19-parallel-pathways...HEAD
+[v7.14-beta.19-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.18-parallel-pathways...v7.14-beta.19-parallel-pathways
 [v7.14-beta.18-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.17-parallel-pathways...v7.14-beta.18-parallel-pathways
 [v7.14-beta.17-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...v7.14-beta.17-parallel-pathways
 [v7.14-beta.16-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...v7.14-beta.16-parallel-pathways
