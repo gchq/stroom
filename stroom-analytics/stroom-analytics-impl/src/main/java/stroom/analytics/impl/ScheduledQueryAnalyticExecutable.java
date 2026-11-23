@@ -53,6 +53,8 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.RowValueFilter;
 import stroom.query.common.v2.SimpleMapper;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.SizesProvider;
 import stroom.query.common.v2.ValFilter;
 import stroom.query.common.v2.WholeWindowFilter;
 import stroom.query.common.v2.format.ColumnFormatter;
@@ -101,6 +103,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
     private final SecurityContext securityContext;
     final WordListProvider wordListProvider;
+    private final SizesProvider sizesProvider;
 
     @Inject
     ScheduledQueryAnalyticExecutable(final AnalyticRuleStore analyticRuleStore,
@@ -116,7 +119,8 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                      final ExpressionPredicateFactory expressionPredicateFactory,
                                      final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
                                      final WordListProvider wordListProvider,
-                                     final SecurityContext securityContext) {
+                                     final SecurityContext securityContext,
+                                     final SizesProvider sizesProvider) {
         super(analyticErrorWriterProvider, errorReceiverProxyProvider, analyticRuleHolderProvider);
         this.analyticRuleStore = analyticRuleStore;
         this.securityContext = securityContext;
@@ -130,6 +134,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.wordListProvider = wordListProvider;
+        this.sizesProvider = sizesProvider;
     }
 
     @Override
@@ -170,7 +175,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                     ? getRowLimit(mappedRequestBundle.mappedRequest)
                     : Long.MAX_VALUE;
             final SearchRequest mappedRequest = wholeWindowFilter != null
-                    ? removeRowLimits(mappedRequestBundle.mappedRequest)
+                    ? raiseRowLimits(mappedRequestBundle.mappedRequest, sizesProvider.getDefaultMaxResultsSizes())
                     : mappedRequestBundle.mappedRequest;
 
             // Fix table result requests.
@@ -629,18 +634,41 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                 : Long.MAX_VALUE;
     }
 
-    // Takes the query's limits off its tables, so that the store keeps the rows of every window.
-    private static SearchRequest removeRowLimits(final SearchRequest searchRequest) {
+    /// Raises the limit of the top level of each table of a query to at least the store's default,
+    /// so that the store keeps the rows of windows that the rule does not judge as well as those it
+    /// does. The limits of the lower levels are kept.
+    ///
+    /// @param searchRequest The request of the query.
+    /// @param defaultSizes  The most rows a store keeps at each level if a query gives no limit.
+    /// @return The request with its limits raised. A table with no limit keeps none.
+    static SearchRequest raiseRowLimits(final SearchRequest searchRequest, final Sizes defaultSizes) {
         final List<ResultRequest> resultRequests = NullSafe.list(searchRequest.getResultRequests())
                 .stream()
                 .map(resultRequest -> resultRequest.copy()
                         .mappings(NullSafe.list(resultRequest.getMappings())
                                 .stream()
-                                .map(tableSettings -> tableSettings.copy().maxResults(null).build())
+                                .map(tableSettings -> tableSettings.copy()
+                                        .maxResults(raiseTopLimit(tableSettings.getMaxResults(), defaultSizes))
+                                        .build())
                                 .toList())
                         .build())
                 .toList();
         return searchRequest.copy().resultRequests(resultRequests).build();
+    }
+
+    // Raises the first limit to at least the default for the top level. A single limit is also the
+    // limit of every lower level, so it is kept for them.
+    private static List<Long> raiseTopLimit(final List<Long> maxResults, final Sizes defaultSizes) {
+        final Long top = NullSafe.first(maxResults);
+        if (top == null) {
+            return maxResults;
+        }
+        final List<Long> raised = new ArrayList<>(maxResults);
+        raised.set(0, Math.max(top, defaultSizes.size(0)));
+        if (maxResults.size() == 1) {
+            raised.add(top);
+        }
+        return raised;
     }
 
     private record MappedRequestBundle(SearchRequest mappedRequest,
