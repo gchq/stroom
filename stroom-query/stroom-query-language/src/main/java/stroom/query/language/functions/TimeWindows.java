@@ -158,7 +158,7 @@ public final class TimeWindows {
             return TimeLiteral.parse(string);
         } catch (final RuntimeException e) {
             throw new IllegalArgumentException(
-                    "The " + name + " '" + string + "' is not a duration, such as 1d", e);
+                    "The " + name + " '" + string + "' is not a duration, such as 1d: " + e.getMessage(), e);
         }
     }
 

@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.TokenException;
 import stroom.query.language.token.StructureBuilder;
 import stroom.query.language.token.Tokeniser;
 
@@ -181,9 +182,24 @@ class TestDateExpressionParser {
                 .isEqualTo(ZonedDateTime.parse("2015-02-03T01:22:33.005Z"));
         assertThat(DateExpressionParser.parse(tokens("second()+1M"), dateTimeSettings).orElseThrow())
                 .isEqualTo(ZonedDateTime.parse("2015-03-03T01:22:33.000Z"));
-        assertThatThrownBy(() -> DateExpressionParser.parse(tokens("second()+1H"), dateTimeSettings))
-                .isInstanceOf(DateTimeException.class)
-                .hasMessageContaining("Unknown unit 'H'");
+    }
+
+    @Test
+    void testBadDurationTokens() {
+        assertBadDurationToken("1H", "Unknown unit 'H'");
+        assertBadDurationToken("1ns", "held to the millisecond");
+        assertBadDurationToken("99999999999999999999s", "too large");
+        // These can be read, but take the time out of range.
+        assertBadDurationToken("9223372036854775807s", "");
+        assertBadDurationToken("9223372036854775807w", "");
+    }
+
+    private void assertBadDurationToken(final String duration, final String message) {
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().referenceTime(nowEpochMilli).build();
+        assertThatThrownBy(() -> DateExpressionParser.parse(tokens("second()+" + duration), dateTimeSettings))
+                .isInstanceOfSatisfying(TokenException.class, e ->
+                        assertThat(e.getToken().getText()).isEqualTo(duration))
+                .hasMessageContaining(message);
     }
 
     @Test

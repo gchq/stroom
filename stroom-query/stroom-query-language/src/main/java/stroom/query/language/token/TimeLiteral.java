@@ -28,7 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// The one reader of time literals such as `30m` and `1M`, so that the same text means the same thing
-/// in an expression, in a `where` term or time range, and in a `window` clause.
+/// in an expression, in a `where` term or time range, in a `window` clause and in the `within` clause of
+/// a join.
 ///
 /// Unit letters are case-sensitive: `m` is a minute and `M` is a month.
 public final class TimeLiteral {

@@ -37,6 +37,7 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -557,7 +558,7 @@ public class ExpressionPredicateFactory {
                 final ZonedDateTime zonedDateTime = optionalZonedDateTime.orElseThrow(() ->
                         new NumberFormatException("Unexpected: " + valueStr));
                 return zonedDateTime.toInstant().toEpochMilli();
-            } catch (final NumberFormatException e) {
+            } catch (final NumberFormatException | DateTimeException e) {
                 throw new MatchException(
                         "Unable to parse a date/time from value for field \"" +
                         term.getField() +

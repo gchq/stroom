@@ -147,11 +147,15 @@ public class DateExpressionParser {
                 if (operator == null) {
                     throw new TokenException(token, "Unexpected duration without operator");
                 }
-                final TimeFunction function = parseDuration(token.getUnescapedText(),
-                        operator == TokenType.PLUS
-                                ? '+'
-                                : '-');
-                computedDateTime = function.apply(computedDateTime);
+                try {
+                    final TimeFunction function = parseDuration(token.getUnescapedText(),
+                            operator == TokenType.PLUS
+                                    ? '+'
+                                    : '-');
+                    computedDateTime = function.apply(computedDateTime);
+                } catch (final DateTimeException | ArithmeticException e) {
+                    throw new TokenException(token, e.getMessage());
+                }
                 operator = null;
 
             } else if (TokenType.NUMBER.equals(token.getTokenType())) {

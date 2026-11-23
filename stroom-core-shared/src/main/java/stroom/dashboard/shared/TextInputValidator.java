@@ -38,8 +38,9 @@ public final class TextInputValidator {
     // The date point functions understood by the server side date expression parser.
     private static final String DATE_POINT_REGEX = "(now|second|minute|hour|day|week|month|year)\\(\\)";
 
-    // One or more signed durations, e.g. -1d, + 2h30m
-    private static final String DURATIONS_REGEX = "(\\s*[+-]\\s*(\\d+[smhdwMy])+)*";
+    // One or more signed durations, e.g. -1d, + 2h30m. The server only takes nanoseconds that make whole
+    // milliseconds, e.g. 5000000ns
+    private static final String DURATIONS_REGEX = "(\\s*[+-]\\s*(\\d+(ms|[smhdwMy])|\\d*0{6}ns)+)*";
 
     private static final String DATE_TIME_REGEX = "\\s*("
                                                   + ISO_DATE_TIME_REGEX

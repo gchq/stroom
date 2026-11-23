@@ -100,6 +100,10 @@ class TestTextInputValidator {
             "now() - 1d|true",
             "day()+2h30m|true",
             "now()-1w+3d-12h|true",
+            "now()-5ms|true",
+            "now() + 1s500ms|true",
+            "now()-5000000ns|true",
+            "now()-1h5000000ns|true",
             "month()-1M|true",
             "year()-1y|true",
             "2026-01-31T13:45:00.000Z-1d|true",
@@ -114,6 +118,12 @@ class TestTextInputValidator {
             "now|false",
             "now()-1|false",
             "now()-1x|false",
+            // Units are case-sensitive
+            "now()-1H|false",
+            "now()-5MS|false",
+            // The server refuses anything finer than a millisecond
+            "now()-1ns|false",
+            "now()-1500000ns|false",
             "now()1d|false",
             "-1d|false",
             "now()now()|false",

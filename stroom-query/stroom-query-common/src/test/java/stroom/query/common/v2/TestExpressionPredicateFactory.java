@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestExpressionPredicateFactory {
 
@@ -731,6 +732,25 @@ class TestExpressionPredicateFactory {
                     .orElseThrow();
 
             assertThat(predicate).as(values).accepts("a", "b").rejects("c", "a,", "a, b", "");
+        }
+    }
+
+    @Test
+    void badDateTermNamesItsField() {
+        for (final String value : List.of("now()-99999999999999999999d", "now()-1ns", "yesterday")) {
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addTerm(ExpressionTerm.builder()
+                            .field("test")
+                            .condition(ExpressionTerm.Condition.GREATER_THAN)
+                            .value(value)
+                            .build())
+                    .build();
+
+            assertThatThrownBy(() -> new ExpressionPredicateFactory()
+                    .createOptional(expression, DATE_VALUE_FUNCTION_FACTORIES, DateTimeSettings.builder().build()))
+                    .as(value)
+                    .hasMessage("Unable to parse a date/time from value for field \"test\" but was given string \""
+                                + value + "\"");
         }
     }
 
