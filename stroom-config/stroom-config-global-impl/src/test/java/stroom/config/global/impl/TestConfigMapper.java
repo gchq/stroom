@@ -591,6 +591,25 @@ class TestConfigMapper {
     }
 
     @Test
+    void testReadOnlyDatabaseValueIgnored() {
+        // XSLT secure mode can only be set in the configuration file.
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.pipeline.xslt.secureMode");
+
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        assertThat(configProperty.isEditable()).isFalse();
+        final ConfigProperty decorated = configMapper.decorateDbConfigProperty(copyConfigProperty(configProperty)
+                .copy()
+                .databaseOverrideValue("false")
+                .build());
+
+        assertThat(decorated.hasDatabaseOverride()).isFalse();
+        assertThat(configMapper.getConfigObject(TestConfig.class).getPipelineConfig().getXsltConfig().isSecureMode())
+                .isTrue();
+    }
+
+    @Test
     void update_enumList() {
         final TestConfig testConfig = new TestConfig();
         final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);

@@ -17,6 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.filter.XsltConfig;
 import stroom.util.config.OkHttpClientConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientUtil;
@@ -30,6 +31,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
+import jakarta.inject.Provider;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -39,10 +42,17 @@ public class CommonHttpClient {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonHttpClient.class);
 
     private final HttpClientProviderCache httpClientProviderCache;
+    private final Provider<XsltConfig> xsltConfigProvider;
     private final Map<String, HttpClientConfiguration> configCache = new HashMap<>();
 
-    CommonHttpClient(final HttpClientProviderCache httpClientProviderCache) {
+    CommonHttpClient(final HttpClientProviderCache httpClientProviderCache,
+                     final Provider<XsltConfig> xsltConfigProvider) {
         this.httpClientProviderCache = httpClientProviderCache;
+        this.xsltConfigProvider = xsltConfigProvider;
+    }
+
+    private boolean isSecureMode() {
+        return xsltConfigProvider.get().isSecureMode();
     }
 
     public HttpClientProvider createClientProvider(final String clientConfigStr) {
@@ -76,9 +86,24 @@ public class CommonHttpClient {
 
             return httpClientConfiguration;
         });
+        return createClientProvider(configuration);
+    }
 
+    /// Gets a client for a parsed configuration. In secure mode it only connects to allowed addresses.
+    ///
+    /// @param configuration The client configuration.
+    /// @return The client provider, to be closed after use.
+    HttpClientProvider createClientProvider(final HttpClientConfiguration configuration) {
         LOGGER.debug(() -> "Creating client");
-        return httpClientProviderCache.get(configuration);
+        if (!isSecureMode()) {
+            return httpClientProviderCache.get(configuration);
+        }
+        // The client checks the address of every host it connects to, which for a proxy is the proxy itself.
+        if (configuration.getProxyConfiguration() != null) {
+            throw ProcessException.create(
+                    "A proxy can't be set in the HTTP client configuration while secure mode is on");
+        }
+        return httpClientProviderCache.getAddressChecked(configuration);
     }
 
     @Deprecated // Moving to Apache HttpClientConfiguration

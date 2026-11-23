@@ -18,6 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.analytics.api.EmailMessage;
 import stroom.analytics.api.EmailService;
+import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.state.PipelineContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -25,16 +26,24 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// `stroom:send-email($to, $subject, $body)` and `stroom:send-email($to, $subject, $body, $cc, $bcc)`.
 /// Sends an email using the SMTP server configured for analytics.
 ///
 /// One email is sent per call, so a pipeline that calls this for every record sends an email per record.
 /// Nothing is sent while stepping, so that stepping through data never emails anyone.
+/// The recipients and the number of emails sent in one run are limited by [XsltConfig].
 @XsltFunctionDef(
         name = SendEmail.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.OTHER,
@@ -47,7 +56,8 @@ import net.sf.saxon.trans.XPathException;
                 If the body contains HTML tags it is sent as HTML, otherwise as plain text.
 
                 An email is sent every time the function is called, so calling it for every record will send
-                an email for every record.
+                an email for every record, up to the limit set by `stroom.pipeline.xslt.maxEmailsPerRun`.
+                If `stroom.pipeline.xslt.allowedEmailRecipients` is set, every recipient must be one of those.
                 No email is sent while stepping. Instead an INFO message shows the email that would have
                 been sent.
 
@@ -95,14 +105,23 @@ class SendEmail extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "send-email";
 
+    // A single address with no display name, so it can be compared with the allowed recipients.
+    private static final String ADDRESS_PART = "[^\\s@<>,;:\"()\\[\\]\\\\]+";
+    private static final Pattern PLAIN_ADDRESS = Pattern.compile(ADDRESS_PART + "@" + ADDRESS_PART);
+
     private final EmailService emailService;
     private final PipelineContext pipelineContext;
+    private final Provider<XsltConfig> xsltConfigProvider;
+    // A new instance is made for each run of an XSLT, so this counts the emails sent in one run.
+    private int emailsSent;
 
     @Inject
     SendEmail(final EmailService emailService,
-              final PipelineContext pipelineContext) {
+              final PipelineContext pipelineContext,
+              final Provider<XsltConfig> xsltConfigProvider) {
         this.emailService = emailService;
         this.pipelineContext = pipelineContext;
+        this.xsltConfigProvider = xsltConfigProvider;
     }
 
     @Override
@@ -114,12 +133,24 @@ class SendEmail extends StroomExtensionFunctionCall {
             final String cc = getOptionalString(functionName, context, arguments, 3);
             final String bcc = getOptionalString(functionName, context, arguments, 4);
             final EmailMessage emailMessage = new EmailMessage(to, cc, bcc, subject, body);
+            final XsltConfig xsltConfig = xsltConfigProvider.get();
+            final String refusedRecipient = findRefusedRecipient(
+                    xsltConfig.getAllowedEmailRecipients(), to, cc, bcc);
 
-            if (pipelineContext.isStepping()) {
+            if (refusedRecipient != null) {
+                log(context, Severity.ERROR, LogUtil.message(
+                        "Email not sent as '{}' is not an allowed recipient", refusedRecipient), null);
+            } else if (pipelineContext.isStepping()) {
                 log(context, Severity.INFO, LogUtil.message(
                         "Email not sent while stepping. To: '{}', Cc: '{}', Bcc: '{}', Subject: '{}'",
                         to, cc, bcc, subject), null);
+            } else if (emailsSent >= xsltConfig.getMaxEmailsPerRun()) {
+                log(context, Severity.ERROR, LogUtil.message(
+                        "Email not sent as the limit of {} emails in one run has been reached",
+                        xsltConfig.getMaxEmailsPerRun()), null);
             } else {
+                // Counted before sending, so failed sends count too.
+                emailsSent++;
                 LOGGER.debug("Sending email {}", emailMessage);
                 emailService.sendEmail(emailMessage);
             }
@@ -128,6 +159,37 @@ class SendEmail extends StroomExtensionFunctionCall {
         }
 
         return EmptyAtomicSequence.getInstance();
+    }
+
+    /// Finds the first recipient that is not allowed.
+    ///
+    /// @param allowedRecipients The allowed addresses and `@domain` entries, or empty to allow any recipient.
+    /// @param addressLists      The `;` separated recipient lists, any of which may be null.
+    /// @return The first recipient that is not allowed, or null if all are allowed.
+    static String findRefusedRecipient(final List<String> allowedRecipients, final String... addressLists) {
+        if (allowedRecipients.isEmpty()) {
+            return null;
+        }
+        final Set<String> allowed = allowedRecipients.stream()
+                .map(recipient -> recipient.trim().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+        for (final String addressList : addressLists) {
+            if (addressList != null) {
+                // Split as the email service does.
+                for (final String part : addressList.split(";")) {
+                    final String address = part.trim().toLowerCase(Locale.ROOT);
+                    if (!address.isEmpty() && !isAllowed(allowed, address)) {
+                        return part.trim();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isAllowed(final Set<String> allowed, final String address) {
+        return PLAIN_ADDRESS.matcher(address).matches()
+               && (allowed.contains(address) || allowed.contains(address.substring(address.indexOf('@'))));
     }
 
     private String getOptionalString(final String functionName,

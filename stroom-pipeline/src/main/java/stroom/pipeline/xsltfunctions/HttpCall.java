@@ -17,6 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.filter.XsltConfig;
 import stroom.util.io.StreamUtil;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
@@ -26,6 +27,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -112,8 +114,9 @@ class HttpCall extends StroomExtensionFunctionCall {
     private final CommonHttpClient commonHttpClient;
 
     @Inject
-    HttpCall(final HttpClientProviderCache httpClientProviderCache) {
-        commonHttpClient = new CommonHttpClient(httpClientProviderCache);
+    HttpCall(final HttpClientProviderCache httpClientProviderCache,
+             final Provider<XsltConfig> xsltConfigProvider) {
+        commonHttpClient = new CommonHttpClient(httpClientProviderCache, xsltConfigProvider);
     }
 
     @Override
