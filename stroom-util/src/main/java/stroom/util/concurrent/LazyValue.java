@@ -20,7 +20,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * A value that is lazily evaluated using a provided {@link Supplier}.
+ * An immutable value that is lazily initialised using a provided {@link Supplier}.
+ * Can either be used in a lock free (CAS) way or with synchronised locks, depending
+ * on whether initialisation is idempotent and how costly it is.
  *
  * @param <T> The type of the lazy value.
  */
