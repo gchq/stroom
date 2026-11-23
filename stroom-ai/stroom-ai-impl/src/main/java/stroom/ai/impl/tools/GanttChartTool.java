@@ -88,7 +88,8 @@ class GanttChartTool extends AbstractWorkspaceTool {
                                  + "of a label merged, short ones left out, the top labels kept and the rest as "
                                  + "Other), the result saying how. Never write chart code yourself.")
                         .chatOnly(" Where a timeline is asked for and the user hasn't said where, ask them "
-                                  + "(ask_user): in the chat, or a dashboard. " + CHAT_DRAWS)
+                                  + "(ask_user): in the chat, or a dashboard (propose_visualisation, kind "
+                                  + "timeline, from the same columns). " + CHAT_DRAWS)
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, ToolDescription.builder()

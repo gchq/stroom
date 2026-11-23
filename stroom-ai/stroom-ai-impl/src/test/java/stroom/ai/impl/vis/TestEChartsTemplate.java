@@ -129,6 +129,41 @@ class TestEChartsTemplate {
     }
 
     @Test
+    void timelineTemplateMapsItsColumnsWithItsZoomSliderOn() {
+        final String json = EChartsTemplate.settingsJson(ChartKind.TIMELINE,
+                Map.of("start", "start", "end", "end", "label", "process", "lane", "host"),
+                Map.of("maxCategories", "8"), null);
+
+        final Map<?, ?> settings = JsonUtil.readValue(json, Map.class);
+        final List<?> tabs = (List<?>) settings.get("tabs");
+        final Map<String, Map<String, Object>> controls = controls(tabs);
+        assertThat(controls.get("start")).containsEntry("type", "field").containsEntry("label", "Start")
+                .containsEntry("defaultValue", "start");
+        assertThat(controls.get("end")).containsEntry("label", "End").containsEntry("defaultValue", "end");
+        assertThat(controls.get("label")).containsEntry("label", "Label").containsEntry("defaultValue", "process");
+        assertThat(controls.get("lane")).containsEntry("label", "Lane (Optional)").containsEntry("defaultValue",
+                "host");
+        assertThat(controls.get("colour")).containsEntry("label", "Colour (Optional)")
+                .doesNotContainKey("defaultValue");
+        // Zoomed along its time axis with a slider, unless turned off.
+        assertThat(controls.get("zoomSlider")).containsEntry("type", "boolean").containsEntry("defaultValue", "true");
+        assertThat(controls.get("maxCategories")).containsEntry("defaultValue", "8");
+        assertThat(controls.get("maxValues")).containsEntry("defaultValue", "5000");
+        assertThat(controls).containsKeys("xAxisName", "yAxisName", "legend", "legendClick")
+                .doesNotContainKeys("units", "trendLine", "autoInterval");
+        assertThat(controls.get("kind")).containsEntry("defaultValue", "timeline");
+        assertThat(controls.get("fields")).containsEntry("defaultValue", "start,end,label,lane,colour");
+        // Stroom gives the adapter a row per table row, its values in that order.
+        final VisSettings visSettings = JsonUtil.readValue(json, VisSettings.class);
+        assertThat(visSettings.getData().getStructure().getValues().getFields())
+                .extracting(VisSettings.Field::getId)
+                .containsExactly("${start}", "${end}", "${label}", "${lane}", "${colour}");
+        assertThat(EChartsTemplate.rebuilt(json)).contains(json);
+        assertThat(ChartKind.find("Gantt chart")).contains(ChartKind.TIMELINE);
+        assertThat(ChartKind.find("timeline")).contains(ChartKind.TIMELINE);
+    }
+
+    @Test
     void fieldOrderFollowsTheRoles() {
         assertThat(EChartsTemplate.fieldOrder(ChartKind.BAR)).isEqualTo("category,value,series");
         assertThat(EChartsTemplate.fieldOrder(ChartKind.SCATTER)).isEqualTo("x,y,size,series");
@@ -155,6 +190,21 @@ class TestEChartsTemplate {
         for (final String key : VisualisationPlan.OPTION_KEYS) {
             assertThat(adapter).contains("        " + key + ": true");
         }
+    }
+
+    @Test
+    void theD3AdapterDrawsEveryKindWithTheTemplatesIds() {
+        final String adapter = new ChartLibraries(null, null, null, null, null, null).adapterSource(ChartLibrary.D3);
+
+        assertThat(adapter).contains("visualisations.D3Generic = function");
+        for (final ChartKind kind : ChartKind.values()) {
+            final String drawn = "draw" + Character.toUpperCase(kind.id().charAt(0)) + kind.id().substring(1);
+            assertThat(adapter).contains(kind.id() + ": " + drawn);
+            for (final ChartRole role : kind.roles()) {
+                assertThat(adapter).as("role %s of %s", role.id(), kind).contains("\"" + role.id() + "\"");
+            }
+        }
+        assertThat(adapter).contains("\"maxCategories\"", "\"zoomSlider\"");
     }
 
     @SuppressWarnings("unchecked")

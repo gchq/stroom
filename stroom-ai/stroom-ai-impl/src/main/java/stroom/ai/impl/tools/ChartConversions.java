@@ -362,11 +362,14 @@ final class ChartConversions {
         return "selection " + String.join(" and ", described);
     }
 
-    // Whether a chart has a time axis: a line chart's or scatter plot's x of dates.
+    // Whether a chart has a time axis: a line chart's or scatter plot's x of dates, or a timeline's.
     private static boolean timeAxis(final ChartKind kind,
                                     final Map<String, String> mappings,
                                     final List<TableColumn> columns,
                                     final Sample sample) {
+        if (kind == ChartKind.TIMELINE) {
+            return isDate(mappings.get("start"), columns, sample);
+        }
         if (kind != ChartKind.LINE && kind != ChartKind.SCATTER) {
             return false;
         }

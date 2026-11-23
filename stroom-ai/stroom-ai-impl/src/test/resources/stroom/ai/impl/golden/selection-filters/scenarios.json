@@ -200,6 +200,83 @@
   }, {
     "cases" : [ {
       "keeps" : [ 2 ],
+      "name" : "mchen's bar from 15 October 09:00 to 16 October 12:00",
+      "selections" : [ {
+        "Desk" : "Desk 1",
+        "End" : "2026-10-16T12:00:00.000Z",
+        "Start" : "2026-10-15T09:00:00.000Z",
+        "end" : "2026-10-16T12:00:00.000Z",
+        "from" : "2026-10-15T09:00:00.000Z",
+        "label" : "mchen",
+        "lane" : "Desk 1",
+        "sender" : "mchen",
+        "start" : "2026-10-15T09:00:00.000Z",
+        "to" : "2026-10-16T12:00:00.000Z"
+      } ]
+    }, {
+      "keeps" : [ 0 ],
+      "name" : "a marker of devans at 14 October 09:00",
+      "selections" : [ {
+        "End" : "2026-10-14T09:00:00.000Z",
+        "Start" : "2026-10-14T09:00:00.000Z",
+        "end" : "2026-10-14T09:00:00.000Z",
+        "from" : "2026-10-14T09:00:00.000Z",
+        "label" : "devans",
+        "sender" : "devans",
+        "start" : "2026-10-14T09:00:00.000Z",
+        "to" : "2026-10-14T09:00:00.000Z"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.from}"
+      }, {
+        "condition" : "LESS_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.to}"
+      }, {
+        "condition" : "EQUALS",
+        "field" : "sender",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.label}"
+      } ],
+      "type" : "operator"
+    },
+    "name" : "timeline of senders' sessions: the clicked bar's sender, within its start and end"
+  }, {
+    "cases" : [ {
+      "keeps" : [ 3, 4 ],
+      "name" : "a bar from 16 October 11:00 to 12:00",
+      "selections" : [ {
+        "end" : "2026-10-16T12:00:00.000Z",
+        "from" : "2026-10-16T11:00:00.000Z",
+        "label" : "cdavis",
+        "start" : "2026-10-16T11:00:00.000Z",
+        "to" : "2026-10-16T12:00:00.000Z"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.from}"
+      }, {
+        "condition" : "LESS_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.to}"
+      } ],
+      "type" : "operator"
+    },
+    "name" : "timeline of senders' sessions: the time a clicked bar spans, whoever sent"
+  }, {
+    "cases" : [ {
+      "keeps" : [ 2 ],
       "name" : "mchen on 15 October",
       "selections" : [ {
         "from" : "2026-10-15T00:00:00.000Z",

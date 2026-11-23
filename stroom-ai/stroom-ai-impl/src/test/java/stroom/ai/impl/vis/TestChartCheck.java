@@ -39,6 +39,14 @@ class TestChartCheck {
             new TableColumn("EventTime", "DATE_TIME"),
             new TableColumn("Note", "GENERAL"));
 
+    private static final List<TableColumn> SESSION_COLUMNS = List.of(
+            new TableColumn("Host", "TEXT"),
+            new TableColumn("Process", "TEXT"),
+            new TableColumn("Start", "DATE_TIME"),
+            new TableColumn("End", "DATE_TIME"));
+    private static final Map<String, String> TIMELINE_ROLES = Map.of("start", "Start", "end", "End", "label",
+            "Process", "lane", "Host");
+
     private static final Sample MESSAGES = new Sample(
             List.of("Sender", "Recipient", "Count", "EventTime", "Note"),
             List.of(
@@ -607,5 +615,133 @@ class TestChartCheck {
                 Map.of("trendLine", "none"), columns, null).problems()).isEmpty();
         assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Unknown", "value", "Count"), linear, columns,
                 null).problems()).isEmpty();
+    }
+
+    @Test
+    void aTimelineOfSessionsIsOkCountingItsBarsMarkersLanesAndRows() {
+        // A sessions table as activity_timeline writes it: on pc-1 a bar overlapping another and a marker in it,
+        // so three rows; on pc-2 one bar.
+        final Result result = ChartCheck.check(ChartKind.TIMELINE, TIMELINE_ROLES, Map.of(), SESSION_COLUMNS,
+                sessions(
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T09:00:00.000Z", "2026-11-23T09:30:00.000Z"),
+                        List.of("pc-1", "OUTLOOK.EXE", "2026-11-23T09:10:00.000Z", "2026-11-23T09:20:00.000Z"),
+                        List.of("pc-1", "lock", "2026-11-23T09:15:00.000Z", "2026-11-23T09:15:00.000Z"),
+                        List.of("pc-2", "chrome.exe", "2026-11-23T09:05:00.000Z", "2026-11-23T09:50:00.000Z")));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).isEmpty();
+        assertThat(result.stats())
+                .containsEntry("rows", 4)
+                .containsEntry("bars", 3)
+                .containsEntry("markers", 1)
+                .containsEntry("lanes", 2)
+                .containsEntry("mostRowsInALane", 3)
+                .doesNotContainKey("endBeforeStart");
+    }
+
+    @Test
+    void aTimelinesRowsEndingBeforeTheyStartAreLeftOutAndCounted() {
+        final Result result = ChartCheck.check(ChartKind.TIMELINE, TIMELINE_ROLES, Map.of(), SESSION_COLUMNS,
+                sessions(
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T09:00:00.000Z", "2026-11-23T09:30:00.000Z"),
+                        List.of("pc-1", "OUTLOOK.EXE", "2026-11-23T10:00:00.000Z", "2026-11-23T09:20:00.000Z"),
+                        List.of("pc-2", "chrome.exe", "2026-11-23T11:00:00.000Z", "2026-11-23T10:50:00.000Z")));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.stats()).containsEntry("endBeforeStart", 2).containsEntry("bars", 1);
+        assertThat(result.warnings()).containsExactly("2 rows end before they start: those rows won't be drawn, "
+                                                      + "and the render report counts them.");
+    }
+
+    @Test
+    void aTimelineWithNoRowItCanDrawIsAProblem() {
+        final Result result = ChartCheck.check(ChartKind.TIMELINE, TIMELINE_ROLES, Map.of(), SESSION_COLUMNS,
+                sessions(
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T10:00:00.000Z", "2026-11-23T09:30:00.000Z"),
+                        List.of("pc-1", "", "2026-11-23T09:00:00.000Z", "2026-11-23T09:20:00.000Z")));
+
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).containsExactly("None of the 2 rows sampled can be drawn: 1 row ends before "
+                                                      + "it starts, 1 row has no label. A timeline needs a start and "
+                                                      + "an end that are dates, the end not before the start, and a "
+                                                      + "label.");
+    }
+
+    @Test
+    void aTimelinesRowsWithoutALabelOrDatesAreLeftOut() {
+        final Result result = ChartCheck.check(ChartKind.TIMELINE, TIMELINE_ROLES, Map.of(), SESSION_COLUMNS,
+                sessions(
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T09:00:00.000Z", "2026-11-23T09:30:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T09:40:00.000Z", "2026-11-23T09:50:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T10:00:00.000Z", "2026-11-23T10:10:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T10:20:00.000Z", "2026-11-23T10:30:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T10:40:00.000Z", "2026-11-23T10:50:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T11:00:00.000Z", "2026-11-23T11:10:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T11:20:00.000Z", "2026-11-23T11:30:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T11:40:00.000Z", "2026-11-23T11:50:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T12:00:00.000Z", "2026-11-23T12:10:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T12:20:00.000Z", "2026-11-23T12:30:00.000Z"),
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T12:40:00.000Z", ""),
+                        List.of("pc-1", " ", "2026-11-23T13:00:00.000Z", "2026-11-23T13:10:00.000Z")));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.stats()).containsEntry("bars", 10).containsEntry("lanes", 1)
+                .containsEntry("mostRowsInALane", 1);
+        assertThat(result.warnings()).contains("1 row has a start or end that isn't a date, 1 row has no label: "
+                                               + "those rows won't be drawn, and the render report counts them.");
+    }
+
+    @Test
+    void aTimelineNeedsDatesForItsStartAndEnd() {
+        final List<TableColumn> columns = List.of(new TableColumn("Host", "TEXT"),
+                new TableColumn("Process", "TEXT"), new TableColumn("Start", "TEXT"),
+                new TableColumn("End", "DATE_TIME"));
+
+        final Result result = ChartCheck.check(ChartKind.TIMELINE, TIMELINE_ROLES, Map.of(), columns, sessions(
+                List.of("pc-1", "WINWORD.EXE", "2026-11-23T09:00:00.000Z", "2026-11-23T09:30:00.000Z")));
+
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).containsExactly("'Start' can't be start: its format is TEXT and start needs "
+                                                      + "dates. Set the column's format to Date Time, or map another "
+                                                      + "column.");
+        // Its required columns.
+        assertThat(ChartCheck.check(ChartKind.TIMELINE, Map.of("start", "Start", "label", "Process"), Map.of(),
+                SESSION_COLUMNS, null).problems()).singleElement().asString().startsWith("Map a column to end");
+    }
+
+    @Test
+    void aTimelineWhoseStartIsItsEndIsMarkersOnly() {
+        final Result result = ChartCheck.check(ChartKind.TIMELINE,
+                Map.of("start", "Start", "end", "Start", "label", "Process"), Map.of(), SESSION_COLUMNS, sessions(
+                        List.of("pc-1", "WINWORD.EXE", "2026-11-23T09:00:00.000Z", "2026-11-23T09:30:00.000Z"),
+                        List.of("pc-1", "OUTLOOK.EXE", "2026-11-23T09:00:00.000Z", "2026-11-23T09:20:00.000Z")));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.stats()).containsEntry("markers", 2).containsEntry("bars", 0)
+                .containsEntry("mostRowsInALane", 2);
+        assertThat(result.warnings()).containsExactly("Start and end are both 'Start', so every row is a marker (a "
+                                                      + "moment, not a span). Map the column of each row's end to "
+                                                      + "end for bars.");
+    }
+
+    @Test
+    void timesAreReadAsASampleGivesThem() {
+        final Instant nine = Instant.parse("2026-11-23T09:00:00Z");
+        assertThat(ChartCheck.parseTime("2026-11-23T09:00:00.000Z")).hasValue(nine);
+        assertThat(ChartCheck.parseTime("2026-11-23 09:00:00")).hasValue(nine);
+        assertThat(ChartCheck.parseTime("2026-11-23T09:00")).hasValue(nine);
+        assertThat(ChartCheck.parseTime("2026-11-23T19:00:00+1000")).hasValue(nine);
+        assertThat(ChartCheck.parseTime("2026-11-23T19:00:00+10:00")).hasValue(nine);
+        assertThat(ChartCheck.parseTime("2026-11-23")).hasValue(Instant.parse("2026-11-23T00:00:00Z"));
+        assertThat(ChartCheck.parseTime(Long.toString(nine.toEpochMilli()))).hasValue(nine);
+        assertThat(ChartCheck.parseTime("")).isEmpty();
+        assertThat(ChartCheck.parseTime("yesterday")).isEmpty();
+        assertThat(ChartCheck.parseTime("2026-13-45T09:00:00Z")).isEmpty();
+    }
+
+    // A sessions table's rows: host, process, start and end.
+    @SafeVarargs
+    private static Sample sessions(final List<String>... rows) {
+        return new Sample(List.of("Host", "Process", "Start", "End"), List.of(rows));
     }
 }

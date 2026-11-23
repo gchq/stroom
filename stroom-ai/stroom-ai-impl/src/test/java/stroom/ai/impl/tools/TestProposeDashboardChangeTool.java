@@ -888,6 +888,23 @@ class TestProposeDashboardChangeTool {
                 "D3", "vis-2", null, null, "Events", Map.of("gridSeries", "X")))).isEmpty();
     }
 
+    @Test
+    void aTimelinesSelectionKeysAreItsBarsLabelLaneStartAndEndAndATimeRange() {
+        assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation",
+                "Sessions", "vis-1", null, null, "Sessions", Map.of("kind", "timeline", "start", "Start", "end",
+                "End", "label", "Process", "lane", "Host", "colour", "Kind"))))
+                .containsExactlyInAnyOrder("start", "Start", "end", "End", "label", "Process", "lane", "Host",
+                        "range");
+        // Its start and end, Date Time columns, are dates: a term on them keeps a field within the bar's time.
+        final Component chart = new Component("Visualisation", "Sessions", "vis-1", null, null, "Sessions",
+                Map.of("start", "Start", "end", "End", "label", "Process"));
+        assertThat(ProposeDashboardChangeTool.dateKeys(chart, "## Table 'Sessions' (id table-1)\nColumns:\n"
+                                                              + "- Start: ${StartTime} (format Date Time)\n"
+                                                              + "- End: ${EndTime} (format Date Time)\n"
+                                                              + "- Process: ${Process}\n"))
+                .containsExactlyInAnyOrder("start", "Start", "end", "End");
+    }
+
     // The dashboard with a bar chart 'Chart' of table 'Events', its category UserId.
     private void chartTab() {
         dashboardTab(false, SETTINGS + "## Visualisation 'Chart' (id vis-1)\n"
@@ -1070,6 +1087,26 @@ class TestProposeDashboardChangeTool {
                                         "x", "2026-10-16T00:00:00.000Z", "Day", "2026-10-16T00:00:00.000Z",
                                         "from", "2026-10-16T00:00:00.000Z",
                                         "to", "2026-10-16T23:59:59.999Z")), 3, 4))),
+                scenario("timeline of senders' sessions: the clicked bar's sender, within its start and end",
+                        "all", List.of(term("EventTime", "start"), term("sender", "label")),
+                        Set.of("start", "Start", "end", "End"), List.of(
+                                filterCase("mchen's bar from 15 October 09:00 to 16 October 12:00", List.of(Map.of(
+                                        "label", "mchen", "sender", "mchen", "lane", "Desk 1", "Desk", "Desk 1",
+                                        "start", "2026-10-15T09:00:00.000Z", "Start", "2026-10-15T09:00:00.000Z",
+                                        "end", "2026-10-16T12:00:00.000Z", "End", "2026-10-16T12:00:00.000Z",
+                                        "from", "2026-10-15T09:00:00.000Z", "to", "2026-10-16T12:00:00.000Z")), 2),
+                                filterCase("a marker of devans at 14 October 09:00", List.of(Map.of(
+                                        "label", "devans", "sender", "devans",
+                                        "start", "2026-10-14T09:00:00.000Z", "Start", "2026-10-14T09:00:00.000Z",
+                                        "end", "2026-10-14T09:00:00.000Z", "End", "2026-10-14T09:00:00.000Z",
+                                        "from", "2026-10-14T09:00:00.000Z", "to", "2026-10-14T09:00:00.000Z")),
+                                        0))),
+                scenario("timeline of senders' sessions: the time a clicked bar spans, whoever sent",
+                        "all", List.of(term("EventTime", "end")), Set.of("start", "Start", "end", "End"), List.of(
+                                filterCase("a bar from 16 October 11:00 to 12:00", List.of(Map.of(
+                                        "label", "cdavis", "start", "2026-10-16T11:00:00.000Z",
+                                        "end", "2026-10-16T12:00:00.000Z", "from", "2026-10-16T11:00:00.000Z",
+                                        "to", "2026-10-16T12:00:00.000Z")), 3, 4))),
                 scenario("line per sender over days: the clicked point's day and sender",
                         "all", List.of(term("EventTime", "x"), term("sender", "series")), Set.of("x", "Day"),
                         List.of(filterCase("mchen on 15 October", List.of(Map.of(

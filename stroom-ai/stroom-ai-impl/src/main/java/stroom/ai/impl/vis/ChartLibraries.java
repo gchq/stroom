@@ -549,5 +549,15 @@ public class ChartLibraries {
     /// @param generated    True if the agent generated it (it is drawn by the ECharts adapter).
     public record InstalledVisualisation(DocRef docRef, String functionName, boolean generated) {
 
+        /// @return True if it is a timeline or Gantt chart of its own, not one Stroom AI generated (e.g. a content
+        /// pack's), by its name or vis class: never offered, as timelines are generated ([ChartKind#TIMELINE]).
+        public boolean isOwnTimeline() {
+            if (generated) {
+                return false;
+            }
+            final String text = (NullSafe.string(NullSafe.get(docRef, DocRef::getName)) + " "
+                                 + NullSafe.string(functionName)).toLowerCase(Locale.ROOT);
+            return text.contains("gantt") || text.contains("timeline");
+        }
     }
 }

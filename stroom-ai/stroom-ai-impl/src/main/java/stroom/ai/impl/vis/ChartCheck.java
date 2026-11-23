@@ -22,6 +22,9 @@ import stroom.util.shared.NullSafe;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -463,6 +466,7 @@ public final class ChartCheck {
             case CALENDAR -> result.stats.put("days", distinct(sample, mapped.get("date")));
             case HISTOGRAM -> seriesWarning(mapped, sample, maxSeries, result);
             case SUNBURST -> result.stats.put("innerSegments", distinct(sample, mapped.get("name")));
+            case TIMELINE -> timelineSize(mapped, sample, result);
             case GAUGE -> {
                 final int gauges = mapped.containsKey("name")
                         ? distinct(sample, mapped.get("name"))
@@ -646,6 +650,131 @@ public final class ChartCheck {
             return span.toDays() + " days";
         }
         return Math.max(1, span.toHours()) + " hours";
+    }
+
+    // A timeline's bars, markers and lanes, and the rows it leaves out: those whose start or end isn't a date (the
+    // values check says when too many aren't), that end before they start, or that have no label. Each lane's bars
+    // are packed into rows as the adapters pack them (TimelineRows), to say how many the busiest needs.
+    private static void timelineSize(final Map<String, String> mapped,
+                                     final Sample sample,
+                                     final Result result) {
+        final int startIndex = sample.index(mapped.get("start"));
+        final int endIndex = sample.index(mapped.get("end"));
+        final int labelIndex = sample.index(mapped.get("label"));
+        final int laneIndex = mapped.containsKey("lane")
+                ? sample.index(mapped.get("lane"))
+                : -1;
+        final Map<String, List<TimelineRows.Bar>> lanes = new LinkedHashMap<>();
+        int notDates = 0;
+        int endsBeforeStart = 0;
+        int noLabel = 0;
+        int markers = 0;
+        for (final List<String> row : sample.rows()) {
+            final Optional<Instant> start = parseTime(cell(row, startIndex));
+            final Optional<Instant> end = parseTime(cell(row, endIndex));
+            if (start.isEmpty() || end.isEmpty()) {
+                notDates++;
+            } else if (end.get().isBefore(start.get())) {
+                endsBeforeStart++;
+            } else if (cell(row, labelIndex).isBlank()) {
+                noLabel++;
+            } else {
+                final TimelineRows.Bar bar = new TimelineRows.Bar(start.get().toEpochMilli(),
+                        end.get().toEpochMilli());
+                if (bar.isMarker()) {
+                    markers++;
+                }
+                lanes.computeIfAbsent(cell(row, laneIndex), lane -> new ArrayList<>()).add(bar);
+            }
+        }
+        final int drawn = lanes.values().stream().mapToInt(List::size).sum();
+        final int mostRows = lanes.values().stream()
+                .mapToInt(TimelineRows::rowCount)
+                .max()
+                .orElse(0);
+        result.stats.put("bars", drawn - markers);
+        result.stats.put("markers", markers);
+        result.stats.put("lanes", lanes.size());
+        result.stats.put("mostRowsInALane", mostRows);
+        if (endsBeforeStart > 0) {
+            result.stats.put("endBeforeStart", endsBeforeStart);
+        }
+        if (drawn == 0) {
+            result.problems.add("None of the " + sample.rows().size() + " rows sampled can be drawn: "
+                                + describeLeftOut(notDates, endsBeforeStart, noLabel) + ". A timeline needs a "
+                                + "start and an end that are dates, the end not before the start, and a label.");
+            return;
+        }
+        if (notDates + endsBeforeStart + noLabel > 0) {
+            result.warnings.add(describeLeftOut(notDates, endsBeforeStart, noLabel) + ": those rows won't be drawn, "
+                                + "and the render report counts them.");
+        }
+        if (Objects.equals(mapped.get("start"), mapped.get("end"))) {
+            result.warnings.add("Start and end are both '" + mapped.get("start") + "', so every row is a marker "
+                                + "(a moment, not a span). Map the column of each row's end to end for bars.");
+        }
+        if (lanes.size() > MAX_READABLE_CATEGORIES) {
+            result.warnings.add(lanes.size() + " lanes is too many to read. Map a coarser lane (e.g. a host rather "
+                                + "than a process), or filter the table.");
+        }
+    }
+
+    // What a timeline leaves out, e.g. "3 rows end before they start".
+    private static String describeLeftOut(final int notDates, final int endsBeforeStart, final int noLabel) {
+        final List<String> parts = new ArrayList<>();
+        if (notDates > 0) {
+            parts.add(notDates + " " + rows(notDates) + " a start or end that isn't a date");
+        }
+        if (endsBeforeStart > 0) {
+            parts.add(endsBeforeStart + (endsBeforeStart == 1
+                    ? " row ends"
+                    : " rows end") + " before " + (endsBeforeStart == 1
+                    ? "it starts"
+                    : "they start"));
+        }
+        if (noLabel > 0) {
+            parts.add(noLabel + " " + rows(noLabel) + " no label");
+        }
+        return capitalise(String.join(", ", parts));
+    }
+
+    private static String rows(final int count) {
+        return count == 1
+                ? "row has"
+                : "rows have";
+    }
+
+    /// Reads a time as a sample gives it: ISO 8601 with or without a zone (UTC if none), with a space or `T` before
+    /// the time, the time optional; or milliseconds since 1970.
+    ///
+    /// @param text The time.
+    /// @return The instant, or empty if it isn't one.
+    static Optional<Instant> parseTime(final String text) {
+        final String trimmed = NullSafe.string(text).strip();
+        if (trimmed.isEmpty()) {
+            return Optional.empty();
+        }
+        if (trimmed.chars().allMatch(Character::isDigit) && trimmed.length() <= 15) {
+            return Optional.of(Instant.ofEpochMilli(Long.parseLong(trimmed)));
+        }
+        if (!DATE.matcher(trimmed).matches()) {
+            return Optional.empty();
+        }
+        final String withTime = trimmed.length() == 10
+                ? trimmed + "T00:00:00"
+                : trimmed.replace(' ', 'T');
+        // An offset without its colon (+1000), as OffsetDateTime reads it with one.
+        final String iso = withTime.replaceFirst("([+-]\\d{2})(\\d{2})$", "$1:$2");
+        try {
+            return Optional.of(OffsetDateTime.parse(iso).toInstant());
+        } catch (final DateTimeParseException e) {
+            // No zone: UTC.
+        }
+        try {
+            return Optional.of(LocalDateTime.parse(iso).toInstant(ZoneOffset.UTC));
+        } catch (final DateTimeParseException e) {
+            return Optional.empty();
+        }
     }
 
     // Nodes and links: a network graph's, a Sankey diagram's or a chord diagram's.

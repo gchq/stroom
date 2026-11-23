@@ -21,7 +21,8 @@
 // code is ever generated: the AI only chooses a kind, maps columns and sets a few style settings.
 //
 // Settings (all strings, as Stroom passes them):
-//   kind     - bar | line | pie | scatter | graph | heatmap | calendar | histogram | sankey | chord | gauge
+//   kind     - bar | line | pie | scatter | graph | heatmap | calendar | histogram | sankey | chord | gauge |
+//              sunburst | timeline
 //   fields   - comma separated ids of the field controls, in the order of the values in each data row
 //   options  - optional JSON object; with D3 only its color list is used
 //   plus the field controls themselves (their values are column names) and the style controls.
@@ -41,7 +42,7 @@ if (!window.visualisations) {
     var ADAPTER_VERSION = "1";
 
     var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord",
-        "gauge", "sunburst"];
+        "gauge", "sunburst", "timeline"];
 
     // A gauge's bands: below the first band's start, then the first band, then above the second.
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
@@ -776,7 +777,7 @@ if (!window.visualisations) {
     }
 
     // The ids of the columns a click picks out, in the order the selection bar names them.
-    var SELECTION_ROLES = ["category", "name", "series", "x", "y", "date"];
+    var SELECTION_ROLES = ["category", "name", "series", "x", "y", "date", "label", "lane"];
 
     // What a click selected, for the selection bar: a node, a link's two ends, or the values it picks out.
     function selectionLabel(selection) {
@@ -2662,8 +2663,9 @@ if (!window.visualisations) {
     // True if the chart has a zoom slider: a chart on axes, with the Zoom Slider setting on.
     function hasZoomSlider(ctx) {
         var kind = String(ctx.settings.kind || "").toLowerCase();
-        return boolSetting(ctx.settings, "zoomSlider", false) && ["bar", "line", "scatter", "histogram"]
-            .indexOf(kind) >= 0;
+        // A timeline's is on unless turned off.
+        return boolSetting(ctx.settings, "zoomSlider", kind === "timeline")
+            && ["bar", "line", "scatter", "histogram", "timeline"].indexOf(kind) >= 0;
     }
 
     // The legend's position and the space it takes, once drawn, with an icon for the kind of series (see
@@ -5153,6 +5155,309 @@ if (!window.visualisations) {
         ctx.zoomKind = "geo";
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Timeline: a bar from each row's start to its end, a lane per value of a column
+    // ------------------------------------------------------------------------------------------
+
+    // The tallest a row of a lane's bars is drawn, and the gap between rows, in pixels.
+    var TIMELINE_ROW_HEIGHT = 24;
+    var TIMELINE_ROW_GAP = 2;
+    // The narrowest a bar is drawn, so a short one can still be seen and clicked. A row ending as it starts is a
+    // marker (a diamond) instead.
+    var MIN_BAR_WIDTH = 2;
+    var MARKER_RADIUS = 6;
+
+    // Packs a lane's bars ({start, end}) into rows so that none hides another, as Stroom AI's TimelineRows does
+    // (and the chat's Gantt chart, by time rather than pixels, so the rows don't change as the chart zooms): in
+    // order of start, then end, each into the first row whose last bar ends before it starts, or as it starts where
+    // neither is a marker. Gives each bar's row, in the order given, and how many rows there are.
+    function timelinePack(bars) {
+        var order = bars.map(function (bar, i) {
+            return i;
+        });
+        order.sort(function (a, b) {
+            return (bars[a].start - bars[b].start) || (bars[a].end - bars[b].end) || (a - b);
+        });
+        var rows = new Array(bars.length);
+        var last = [];
+        order.forEach(function (index) {
+            var bar = bars[index];
+            var row = 0;
+            while (row < last.length && !timelineFitsAfter(last[row], bar)) {
+                row++;
+            }
+            last[row] = bar;
+            rows[index] = row;
+        });
+        return {rows: rows, count: last.length};
+    }
+
+    // Whether a bar can follow the last one in a row without either hiding the other.
+    function timelineFitsAfter(last, bar) {
+        if (last.end < bar.start) {
+            return true;
+        }
+        return last.end === bar.start && last.end > last.start && bar.end > bar.start;
+    }
+
+    // A timeline's bars from the rows: those whose start and end are dates, the end not before the start, with a
+    // label (the rest left out and counted in the report); their lanes in order of their first start (or their
+    // own order, for lanes of dates or numbers); each lane's bars packed into rows (timelinePack). A bar's colour
+    // is its colour column's value, or its label's: the colours with the most time (Max Categories) each have their
+    // own, the rest are combined as Other groups.
+    function timelineBars(rows, fields, settings, prefs, report) {
+        requireFields(fields, ["start", "end", "label"]);
+        var bars = [];
+        var notDates = 0;
+        var endsBefore = 0;
+        var noLabel = 0;
+        rows.forEach(function (row) {
+            var start = toNumber(fields.value(row, "start"));
+            var end = toNumber(fields.value(row, "end"));
+            if (isNaN(start) || isNaN(end)) {
+                notDates++;
+                return;
+            }
+            if (end < start) {
+                endsBefore++;
+                return;
+            }
+            var rawLabel = fields.value(row, "label");
+            if (rawLabel === null || rawLabel === undefined || String(rawLabel).trim() === "") {
+                noLabel++;
+                return;
+            }
+            var label = fields.label(row, "label", prefs);
+            bars.push({
+                start: start,
+                end: end,
+                label: label,
+                rawLabel: rawLabel,
+                lane: fields.has("lane") ? fields.label(row, "lane", prefs) : "",
+                rawLane: fields.has("lane") ? fields.value(row, "lane") : null,
+                colour: fields.has("colour") ? fields.label(row, "colour", prefs) : label
+            });
+        });
+        addDropped(report, "start or end not a date", notDates);
+        addDropped(report, "end before start", endsBefore);
+        addDropped(report, "label empty", noLabel);
+
+        var firstStart = Object.create(null);
+        bars.forEach(function (bar) {
+            if (firstStart[bar.lane] === undefined || bar.start < firstStart[bar.lane]) {
+                firstStart[bar.lane] = bar.start;
+            }
+        });
+        var lanes = Object.keys(firstStart).sort(function (a, b) {
+            return (firstStart[a] - firstStart[b]) || (a < b ? -1 : (a > b ? 1 : 0));
+        });
+        if (fields.has("lane")) {
+            sortNatural(lanes, fields, "lane");
+        }
+        var laneIndex = Object.create(null);
+        var byLane = lanes.map(function (lane, i) {
+            laneIndex[lane] = i;
+            return [];
+        });
+        bars.forEach(function (bar) {
+            bar.laneIndex = laneIndex[bar.lane];
+            byLane[bar.laneIndex].push(bar);
+        });
+        var rowsInLane = byLane.map(function (laneBars) {
+            var packed = timelinePack(laneBars);
+            laneBars.forEach(function (bar, i) {
+                bar.row = packed.rows[i];
+            });
+            return packed.count;
+        });
+        bars.forEach(function (bar) {
+            bar.rows = rowsInLane[bar.laneIndex];
+        });
+
+        // The colours, those with the most time first.
+        var time = Object.create(null);
+        var first = Object.create(null);
+        bars.forEach(function (bar, i) {
+            if (time[bar.colour] === undefined) {
+                time[bar.colour] = 0;
+                first[bar.colour] = i;
+            }
+            time[bar.colour] += bar.end - bar.start;
+        });
+        var ranked = Object.keys(time).sort(function (a, b) {
+            return (time[b] - time[a]) || (first[a] - first[b]);
+        });
+        var maxCategories = intSetting(settings, "maxCategories", MAX_NAMED_CLUSTERS, 1, 100);
+        var kept = ranked.slice(0, maxCategories);
+        var groups = kept.map(function (name) {
+            return {name: name, other: false};
+        });
+        if (ranked.length > maxCategories) {
+            groups.push({name: OTHER_GROUPS, other: true});
+            report.warnings.push((ranked.length - maxCategories) + " colours beyond Max Categories, those with the "
+                + "least time, are combined as " + OTHER_GROUPS);
+        }
+        var groupIndex = Object.create(null);
+        kept.forEach(function (name, i) {
+            groupIndex[name] = i;
+        });
+        bars.forEach(function (bar) {
+            bar.group = groupIndex[bar.colour] !== undefined ? groupIndex[bar.colour] : kept.length;
+        });
+
+        report.series = groups.length;
+        report.points = bars.length;
+        var min = Infinity;
+        var max = -Infinity;
+        bars.forEach(function (bar) {
+            min = Math.min(min, bar.start);
+            max = Math.max(max, bar.end);
+        });
+        if (!isFinite(min)) {
+            min = 0;
+            max = HOUR;
+        }
+        // Room either side, so the first and last bars (and markers) aren't on the plot's edge.
+        var pad = max > min ? (max - min) * 0.02 : HOUR / 2;
+        return {bars: bars, lanes: lanes, groups: groups, extent: [min - pad, max + pad]};
+    }
+
+    // Where a bar's row is drawn in its lane's band of the y axis (from laneTop, laneHeight high): the lane's rows
+    // centred in it, each at most TIMELINE_ROW_HEIGHT high, with a gap between them.
+    function timelineRowPlace(laneTop, laneHeight, row, rows) {
+        var count = Math.max(1, rows);
+        var rowHeight = Math.min(TIMELINE_ROW_HEIGHT, laneHeight * 0.9 / count);
+        var gap = rowHeight > 4 * TIMELINE_ROW_GAP ? TIMELINE_ROW_GAP : 0;
+        var top = laneTop + (laneHeight - rowHeight * count) / 2 + row * rowHeight;
+        return {top: top + gap / 2, height: Math.max(1, rowHeight - gap)};
+    }
+
+    // What a click on a bar selects: its label, its lane (if mapped), its start and end, and its time as from and
+    // to, so a filter keeping a date field within from and to narrows to the bar's interval.
+    function timelineSelection(fields, bar) {
+        var pairs = [["label", bar.rawLabel]];
+        if (fields.has("lane")) {
+            pairs.push(["lane", bar.rawLane]);
+        }
+        pairs.push(["start", bar.start]);
+        pairs.push(["end", bar.end]);
+        var selection = fields.selection(pairs);
+        selection.from = new Date(bar.start).toISOString();
+        selection.to = new Date(bar.end).toISOString();
+        return selection;
+    }
+
+    // A bar's tooltip: its label, lane and colour (where mapped), start, end and duration; a marker's time.
+    function timelineTooltip(fields, bar, prefs) {
+        var lines = [bar.label];
+        if (fields.has("lane")) {
+            lines.push((fields.column("lane") || "lane") + ": " + bar.lane);
+        }
+        if (fields.has("colour") && bar.colour !== bar.label) {
+            lines.push((fields.column("colour") || "colour") + ": " + bar.colour);
+        }
+        if (bar.start === bar.end) {
+            lines.push("At: " + formatTime(bar.start, prefs.timePattern, prefs.timeZone));
+        } else {
+            lines.push("Start: " + formatTime(bar.start, prefs.timePattern, prefs.timeZone));
+            lines.push("End: " + formatTime(bar.end, prefs.timePattern, prefs.timeZone));
+            lines.push("Duration: " + duration(bar.end - bar.start));
+        }
+        return lines;
+    }
+
+    // What a legend item stands for, as the dashboard's filters read it: a label, when the bars are coloured by
+    // their labels; nothing when they are coloured by another column (which a click doesn't select), or for the
+    // colours combined.
+    function timelineLegendSelect(fields) {
+        return function (name) {
+            if (name === OTHER_GROUPS || (fields.has("colour") && fields.column("colour") !== fields.column("label"))) {
+                return [];
+            }
+            return [fields.selection([["label", fields.rawOf("label", name)]])];
+        };
+    }
+
+    // A timeline, as the ECharts adapter draws one: each bar a rectangle (a marker a diamond) in its lane's row,
+    // lanes down the left, time along the bottom, zoomed and panned along the time axis.
+    function drawTimeline(ctx) {
+        var fields = ctx.fields;
+        var settings = ctx.settings;
+        var timeline = timelineBars(ctx.rows, fields, settings, ctx.prefs, ctx.report);
+        var names = timeline.groups.map(function (group) {
+            return group.name;
+        });
+        var palette = paletteOf(ctx.options, names.length, ctx.style);
+        var colours = timeline.groups.map(function (group, i) {
+            return group.other ? ctx.style.subtleText : palette[i % palette.length];
+        });
+        var legend = legendOf(ctx, names, colours, "rect", timelineLegendSelect(fields));
+        var hasLanes = fields.has("lane");
+        var laneName = textSetting(settings, "yAxisName") || (hasLanes ? fields.column("lane") : "");
+        var xName = textSetting(settings, "xAxisName") || "";
+        var labelsWidth = hasLanes ? Math.min(140, timeline.lanes.reduce(function (most, lane) {
+            return Math.max(most, textWidth(shorten(lane, 20), SMALL_FONT_SIZE));
+        }, 0) + 16) : 8;
+        var plot = plotArea(ctx, legend, labelsWidth + (laneName ? 24 : 0), xName ? 16 : 0);
+        var x = xScaleOf(ctx, timeline.extent, true, plot);
+        var groups = plotGroup(ctx, plot);
+        var band = bands(timeline.lanes.length, plot.height, 0, null);
+        for (var i = 1; i < timeline.lanes.length; i++) {
+            gridLine(groups.axes.gridLayer, 0, band.position(i), plot.width, band.position(i), ctx.style);
+        }
+        timeline.bars.forEach(function (bar) {
+            if (ctx.hidden[names[bar.group]]) {
+                return;
+            }
+            var from = x(new Date(bar.start));
+            var to = x(new Date(bar.end));
+            if (to < -MARKER_RADIUS || from > plot.width + MARKER_RADIUS) {
+                return;
+            }
+            var place = timelineRowPlace(band.position(bar.laneIndex), band.step, bar.row, bar.rows);
+            var colour = colours[bar.group];
+            var node;
+            if (bar.start === bar.end) {
+                var radius = Math.max(3, Math.min(MARKER_RADIUS, place.height / 2));
+                var y = place.top + place.height / 2;
+                node = groups.marks.append("path")
+                    .attr("d", "M" + from + "," + (y - radius) + "L" + (from + radius) + "," + y + "L" + from + ","
+                        + (y + radius) + "L" + (from - radius) + "," + y + "Z")
+                    .attr("fill", colour);
+            } else {
+                node = groups.marks.append("rect").attr("x", from).attr("y", place.top)
+                    .attr("width", Math.max(MIN_BAR_WIDTH, to - from)).attr("height", place.height)
+                    .attr("fill", colour);
+            }
+            var selection = timelineSelection(fields, bar);
+            outline(node, ctx, ctx.isSelected(selection));
+            ctx.mark(node, selection, timelineTooltip(fields, bar, ctx.prefs).join(" · "));
+        });
+        if (hasLanes) {
+            drawCategoryAxis(groups.axes, timeline.lanes, band, false, plot, ctx.style, laneName);
+        }
+        drawValueAxis(groups.axes, x, true, plot, timeFormat(ctx), ctx.style, xName, true);
+        ctx.zoomKind = "axis";
+        ctx.plot = plot;
+        // The slider's shadow: how many bars are under way across the time shown.
+        var span = timeline.extent[1] - timeline.extent[0] || 1;
+        var counts = [];
+        for (var b = 0; b < 50; b++) {
+            counts.push(0);
+        }
+        timeline.bars.forEach(function (bar) {
+            var first = Math.max(0, Math.floor((bar.start - timeline.extent[0]) / span * 50));
+            var last = Math.min(49, Math.floor((bar.end - timeline.extent[0]) / span * 50));
+            for (var c = first; c <= last; c++) {
+                counts[c]++;
+            }
+        });
+        ctx.sliderShadow = counts.map(function (count, c) {
+            return [(c + 0.5) / 50, count];
+        });
+        ctx.timeAxis = timeRangeAxis(x, plot, groups.axes);
+    }
+
     var DRAW = {
         bar: drawBar,
         line: drawLine,
@@ -5165,7 +5470,8 @@ if (!window.visualisations) {
         sankey: drawSankey,
         chord: drawChord,
         gauge: drawGauge,
-        sunburst: drawSunburst
+        sunburst: drawSunburst,
+        timeline: drawTimeline
     };
 
     // ------------------------------------------------------------------------------------------
@@ -6201,6 +6507,7 @@ if (!window.visualisations) {
     visualisations.D3Generic.internals = {
         majorVersion: majorVersion,
         drawChart: drawChart,
+        timelinePack: timelinePack,
         compat: compat,
         lttb: lttb,
         forceLayout: forceLayout,

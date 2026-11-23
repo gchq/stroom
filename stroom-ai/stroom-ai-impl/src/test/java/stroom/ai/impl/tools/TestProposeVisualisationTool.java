@@ -824,6 +824,79 @@ class TestProposeVisualisationTool {
     }
 
     @Test
+    void aTimelinesClickSelectsItsBarsLabelLaneAndInterval() {
+        final String note = ProposeVisualisationTool.clickFilterNote(ChartKind.TIMELINE,
+                Map.of("start", "Start", "end", "End", "label", "Process", "lane", "Host"),
+                Map.of("Start", "${StartTime}", "End", "${EndTime}", "Process", "${Process}", "Host", "${Host}"),
+                Map.of("Start", "DATE_TIME", "End", "DATE_TIME"), false, "Sessions");
+
+        assertThat(note)
+                .contains("a click on it selects ")
+                .contains("label (column 'Process')", "lane (column 'Host')", "start (column 'Start')",
+                        "end (column 'End')")
+                .contains("by field(s) ")
+                .contains("Process (by label)", "Host (by lane)")
+                .contains("Dates: a term giving a date field (or a table's date column) the selection start or end "
+                          + "keeps it within the clicked bar's time, from its start to its end (or within a range "
+                          + "dragged along the time axis, its range tool), never equal to it, e.g. the query's field ")
+                .contains("with a term on label or lane too, a click narrows the dashboard to that bar's label (or "
+                          + "lane) in its interval.");
+        // A colour column isn't selected.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.TIMELINE,
+                Map.of("start", "Start", "end", "End", "label", "Process", "colour", "Kind"), Map.of(),
+                Map.of("Start", "DATE_TIME", "End", "DATE_TIME"), false, "Sessions"))
+                .doesNotContain("Kind");
+    }
+
+    @Test
+    void aTimelineOfASessionsTableIsOfferedWithEitherLibrary() throws IOException {
+        sessionsTab();
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "timeline",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("start", "start", "end", "end", "label", "process",
+                        "lane", "host"),
+                ProposeVisualisationTool.NAME_ARG, "Sessions",
+                ProposeVisualisationTool.SUMMARY_ARG, "What each host was used for.");
+
+        final String result = call(args);
+
+        assertThat(result)
+                .contains("shown a 'Create visualisation' button for a timeline of table 'Sessions' (start = "
+                          + "'start', end = 'end', label = 'process', lane = 'host'), drawn with ECharts 6.1.0")
+                .contains("rows 5", "bars 3", "markers 1", "lanes 2", "mostRowsInALane 2", "endBeforeStart 1")
+                .contains("1 row ends before it starts: those rows won't be drawn, and the render report counts "
+                          + "them.")
+                .contains("a click on it selects ")
+                .contains("label (column 'process')", "lane (column 'host')", "start (column 'start')");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.chartKind()).isEqualTo(ChartKind.TIMELINE);
+            assertThat(plan.chartLibrary()).isEqualTo(ChartLibrary.ECHARTS);
+            assertThat(plan.mappings()).containsExactlyEntriesOf(mapOf("start", "start", "end", "end", "label",
+                    "process", "lane", "host"));
+            assertThat(plan.table()).isEqualTo("Sessions");
+        });
+
+        d3Installed();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.STYLE_ARG, mapOf("zoomSlider", "false", "maxCategories", "4"));
+
+        assertThat(call(args)).contains("a timeline of table 'Sessions'").contains("drawn with D3 7.9.0");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.chartLibrary()).isEqualTo(ChartLibrary.D3);
+            assertThat(plan.style()).containsExactlyEntriesOf(mapOf("zoomSlider", "false", "maxCategories", "4"));
+        });
+
+        // Only generated: the content pack has no timeline of its own to offer.
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
+        args.remove(ProposeVisualisationTool.STYLE_ARG);
+        assertThat(call(args)).startsWith("No chart was offered: the visualisations content pack has no D3 "
+                                          + "timeline. Generate it instead (library echarts or d3).");
+    }
+
+    @Test
     void severalChartsAreOfferedTogetherAndAChartTheDataCantMakeIsLeftOut() {
         final Map<String, Object> args = chartsArgs();
 
@@ -1293,6 +1366,41 @@ class TestProposeVisualisationTool {
 
     private void dashboardTab(final List<AiTabSearch> tables, final boolean cut) {
         dashboardTab(tables, cut, DASHBOARD_TEXT);
+    }
+
+    // A dashboard with a table 'Sessions' of activity_timeline's sessions: host and process, start and end times.
+    // Its snapshot: on pc-1 two bars overlapping and a marker; on pc-2 a bar, and a row ending before it starts.
+    private void sessionsTab() throws IOException {
+        final Path sample = tempDir.resolve("sessions.csv");
+        Files.writeString(sample, """
+                host,process,start,end
+                pc-1,WINWORD.EXE,2026-11-23T09:00:00.000Z,2026-11-23T09:30:00.000Z
+                pc-1,OUTLOOK.EXE,2026-11-23T09:10:00.000Z,2026-11-23T09:20:00.000Z
+                pc-1,lock,2026-11-23T09:40:00.000Z,2026-11-23T09:40:00.000Z
+                pc-2,chrome.exe,2026-11-23T09:05:00.000Z,2026-11-23T09:50:00.000Z
+                pc-2,backwards,2026-11-23T11:00:00.000Z,2026-11-23T10:00:00.000Z
+                """);
+        Mockito.when(workspace.localFile(CHAT, WorkspacePath.parse("/tabs/1/results/sessions.csv")))
+                .thenReturn(sample);
+        Mockito.when(currentResultsTool.outcome(Mockito.any(ToolCall.class), Mockito.any(ToolCallContext.class)))
+                .thenReturn(new CurrentResultsTool.Outcome("Snapshot of table 'Sessions'.",
+                        "/tabs/1/results/sessions.csv"));
+        final List<Column> columns = List.of(
+                Column.builder().id("c1").name("host").expression("${host}").format(Format.TEXT).build(),
+                Column.builder().id("c2").name("process").expression("${process}").format(Format.TEXT).build(),
+                Column.builder().id("c3").name("start").expression("${start}").format(Format.DATE_TIME).build(),
+                Column.builder().id("c4").name("end").expression("${end}").format(Format.DATE_TIME).build());
+        final DashboardTableContext live = new DashboardTableContext("Dashboard 'Messages'", null,
+                DashboardSearchRequest.builder()
+                        .componentResultRequests(List.of(TableResultRequest.builder()
+                                .componentId("table-2")
+                                .tableSettings(TableSettings.builder().columns(columns).build())
+                                .build()))
+                        .build());
+        dashboardTab(List.of(new AiTabSearch("Sessions", "table-2", null, live,
+                List.of("host", "process", "start", "end"), 5L, false)), false,
+                "## Table 'Sessions' (id table-2)\n- host\n- process\n- start (format Date Time)\n"
+                + "- end (format Date Time)\n");
     }
 
     private void dashboardTab(final List<AiTabSearch> tables, final boolean cut, final String text) {

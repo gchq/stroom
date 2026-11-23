@@ -1439,7 +1439,7 @@ offered in modes:
 
 ### Description
 
-Draws a table of times as a timeline in the chat: gives a ```mermaid gantt block to put in your reply as it is, which the chat draws (a bar from each row's start to its end, a marker where it has no end, a section per lane or per day, a colour per label). Large tables are folded to stay readable (bars of a label merged, short ones left out, the top labels kept and the rest as Other), the result saying how. Never write chart code yourself. Where a timeline is asked for and the user hasn't said where, ask them (ask_user): in the chat, or a dashboard. The chat draws only timelines (Mermaid gantt). For any other kind of chart (a heat map, network, pie, bars or lines, a map) offer only a dashboard (propose_dashboard, or propose_visualisation for the attached one), never a chat chart that approximates it.
+Draws a table of times as a timeline in the chat: gives a ```mermaid gantt block to put in your reply as it is, which the chat draws (a bar from each row's start to its end, a marker where it has no end, a section per lane or per day, a colour per label). Large tables are folded to stay readable (bars of a label merged, short ones left out, the top labels kept and the rest as Other), the result saying how. Never write chart code yourself. Where a timeline is asked for and the user hasn't said where, ask them (ask_user): in the chat, or a dashboard (propose_visualisation, kind timeline, from the same columns). The chat draws only timelines (Mermaid gantt). For any other kind of chart (a heat map, network, pie, bars or lines, a map) offer only a dashboard (propose_dashboard, or propose_visualisation for the attached one), never a chat chart that approximates it.
 
 ### Parameters
 
@@ -1814,7 +1814,7 @@ offered in modes:
 
 ### Description
 
-Lists the charting libraries installed in Stroom (ECharts and the visualisations content pack's D3 ones), the chart kinds that can be generated with each (bar, line, pie, scatter, network graph) with the table columns and style settings each takes, and the Visualisation docs already in Stroom. Call it before propose_visualisation, and ask the user which library to use when more than one is installed.
+Lists the charting libraries installed in Stroom (ECharts and the visualisations content pack's D3 ones), the chart kinds that can be generated with each (bar, line, pie, scatter, network graph, timeline and more) with the table columns and style settings each takes, and the Visualisation docs already in Stroom. Call it before propose_visualisation, and ask the user which library to use when more than one is installed.
 
 ### Parameters
 
@@ -2742,7 +2742,7 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           },
           "kind" : {
             "description" : "The chart kind.",
-            "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge", "sunburst" ],
+            "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge", "sunburst", "timeline" ],
             "type" : "string"
           },
           "name" : {
@@ -2776,8 +2776,24 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The column for category.",
           "type" : "string"
         },
+        "colour" : {
+          "description" : "The column for colour.",
+          "type" : "string"
+        },
         "date" : {
           "description" : "The column for date.",
+          "type" : "string"
+        },
+        "end" : {
+          "description" : "The column for end.",
+          "type" : "string"
+        },
+        "label" : {
+          "description" : "The column for label.",
+          "type" : "string"
+        },
+        "lane" : {
+          "description" : "The column for lane.",
           "type" : "string"
         },
         "level2" : {
@@ -2818,6 +2834,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "sourceGroup" : {
           "description" : "The column for sourceGroup.",
+          "type" : "string"
+        },
+        "start" : {
+          "description" : "The column for start.",
           "type" : "string"
         },
         "target" : {
@@ -2891,8 +2911,8 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "object"
     },
     "kind" : {
-      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections, or its links' total (nodeSize); each link is as wide as its weight, or the rows it comes from); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight); gauge (a dial showing a value against its range; one per name, when a name column is mapped); sunburst (rings of a whole: the inner ring by name, each ring out splitting the one inside it by a further column).",
-      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge", "sunburst" ],
+      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections, or its links' total (nodeSize); each link is as wide as its weight, or the rows it comes from); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight); gauge (a dial showing a value against its range; one per name, when a name column is mapped); sunburst (rings of a whole: the inner ring by name, each ring out splitting the one inside it by a further column); timeline (a bar from each row's start to its end on a time axis, a lane per value of a column (e.g. a host or a day), bars overlapping in a lane drawn one under another, and a row ending as it starts drawn as a marker).",
+      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge", "sunburst", "timeline" ],
       "type" : "string"
     },
     "layout" : {

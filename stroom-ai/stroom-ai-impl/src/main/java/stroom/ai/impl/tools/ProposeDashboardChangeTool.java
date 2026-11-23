@@ -111,7 +111,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     // The column ids a click on a generated chart selects.
     // A network's sourceGroup and targetGroup are selected by its legend (a group shown there).
     static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
-            "target", "date", "level2", "level3", "level4", "level5", "level6", "sourceGroup", "targetGroup");
+            "target", "date", "level2", "level3", "level4", "level5", "level6", "sourceGroup", "targetGroup",
+            "label", "lane", "start", "end");
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
     /// The selection key of a time range dragged on a time-series chart: its terms keep what is within the
     /// selection's from and to.
@@ -1260,8 +1261,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             keys.add("node");
         }
         // A time-series chart's range tool selects a range of its x axis (bars of dates have one too, which
-        // the filter's check adds as their category is a date).
-        if (keys.contains("x")) {
+        // the filter's check adds as their category is a date), as a timeline's does of its time axis.
+        if (keys.contains("x") || NullSafe.isNonBlankString(NullSafe.map(chart.settings()).get("start"))) {
             keys.add(RANGE_SELECTION);
         }
         return keys;

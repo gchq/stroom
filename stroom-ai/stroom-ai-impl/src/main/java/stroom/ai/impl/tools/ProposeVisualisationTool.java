@@ -1304,6 +1304,16 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (dates.isEmpty()) {
             return "";
         }
+        if (kind == ChartKind.TIMELINE) {
+            return " Dates: a term giving a date field (or a table's date column) the selection start or end keeps "
+                   + "it within the clicked bar's time, from its start to its end (or within a range dragged along "
+                   + "the time axis, its range tool), never equal to it"
+                   + (fields.isEmpty()
+                    ? ""
+                    : ", e.g. the query's field " + String.join(" or ", fields.stream().distinct().toList()))
+                   + "; with a term on label or lane too, a click narrows the dashboard to that bar's label (or "
+                   + "lane) in its interval. Offer that too.";
+        }
         final String x = NullSafe.get(mappings, map -> map.get("x"));
         final boolean timeAxis = (kind == ChartKind.LINE || kind == ChartKind.SCATTER) && NullSafe.isNonBlankString(x)
                                  && "DATE_TIME".equals(NullSafe.get(formats, map -> map.get(x)));

@@ -89,6 +89,8 @@ public enum StyleSetting {
             "cuts the value axis when a few values dwarf the rest, so the others can be read"),
     ZOOM_SLIDER("zoomSlider", "Zoom Slider", Control.BOOLEAN, "false", List.of(), null, null,
             "shows a zoom bar under the chart (the mouse wheel zooms anyway)"),
+    ZOOM_SLIDER_ON("zoomSlider", "Zoom Slider", Control.BOOLEAN, "true", List.of(), null, null,
+            "shows a zoom bar under the chart (the mouse wheel zooms anyway)"),
     AUTO_INTERVAL("autoInterval", "Auto Interval", Control.BOOLEAN, "false", List.of(), null, null,
             "groups the rows over time into an interval that suits the time shown, coarser zoomed out and finer "
             + "zoomed in (never finer than the table's own grouping, e.g. its floorMinute() times); for a line "

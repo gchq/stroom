@@ -4,9 +4,11 @@ A chart of a table's results, on a dashboard or in a StroomQL query, generated f
 write a chart's code or its settings JSON: you choose a chart kind, the table columns it draws and its style, and
 Stroom builds the Visualisation from a fixed template, drawn by its own reviewed adapter.
 
-In Stroom AI's chat, a timeline (bars from a table's start and end times, markers, a lane per host or day) can
-instead be drawn in the reply itself, by `gantt_chart`: the only chart the chat draws. Where both fit, which is the
-user's choice; any other chart is a dashboard's.
+A timeline (bars from a table's start and end times, markers, a lane per host or day) fits both: on a dashboard as
+the `timeline` kind, or, in Stroom AI's chat, drawn in the reply itself by `gantt_chart` (the only chart the chat
+draws), from the same columns. Which is the user's choice; any other chart is a dashboard's. A timeline is only
+ever the generated `timeline` kind: a content pack's own timeline or Gantt visualisation is never offered or
+mentioned.
 
 ## Steps
 
@@ -52,9 +54,16 @@ user's choice; any other chart is a dashboard's.
 | chord | **source**, **target**, weight, level3 to level6 | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
 | sunburst | **name**, level2 to level6, value | A whole split by levels, as rings, e.g. events by region, then host, then process; a click selects a segment's path (its name and each level out to it) |
 | gauge | **value**, name | A value against its range, e.g. the latest or the maximum; a gauge per name when a name column is mapped, else the first row's value |
+| timeline | **start**, **end**, **label**, lane, colour | Spans of time, e.g. `activity_timeline`'s sessions (start, end, label process, lane host); start and end Date Time |
 
 A histogram counts rows itself, so its table should have one row per event (not grouped), and clicking its bars
 selects nothing (they are ranges). A Sankey diagram's or chord diagram's links are added up per pair.
+
+A timeline draws a bar per row, coloured by `colour` (by `label` if not mapped; the colours with the most time,
+up to `maxCategories`, each their own, the rest grey), in a lane per `lane` value; bars overlapping in a lane are
+drawn one under another, and a row ending as it starts is a diamond marker. Rows ending before they start, or
+without a label, are left out and counted in the render report. It zooms along its time axis (a slider by
+default). A click on a bar selects its `label`, `lane`, `start` and `end`, and its time as from and to.
 
 A Sankey diagram, network graph or chord diagram can follow more than two columns: map level3 (then level4 to
 level6) to the columns after target, e.g. source IP, destination IP, then port. Each row links each column to the
@@ -157,7 +166,7 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
 - Dates are filtered by time, never by equality. A term giving a date field (or a table's date column) a date
   the chart selects (a time axis's x, a calendar's date, any Date Time column) keeps it within the selected
   time: the range dragged along a line chart's or scatter plot's time axis, or across a bar chart's bars of
-  dates in time order (its range tool), or the time a clicked point stands for (its whole day, for `floorDay()` values; its hour, for `floorHour()`). E.g.
+  dates in time order (its range tool), or the time a clicked point stands for (its whole day, for `floorDay()` values; its hour, for `floorHour()`; a timeline's bar, from its start to its end). E.g.
   `{"field": "EventTime", "selection": "x"}` (or `"range"`, the same) narrows the dashboard to a period. It
   becomes two terms (on or after the start, on or before the end); `between` isn't used, as its value would be a
   bare comma while nothing is selected. Say so as it is: the result reads "within its selected time".

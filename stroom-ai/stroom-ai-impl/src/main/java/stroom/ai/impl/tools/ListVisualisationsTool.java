@@ -92,7 +92,8 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
                 .description(ToolDescription.builder()
                         .general("Lists the charting libraries installed in Stroom (ECharts and the "
                                  + "visualisations content pack's D3 ones), the chart kinds that can be "
-                                 + "generated with each (bar, line, pie, scatter, network graph) with the table "
+                                 + "generated with each (bar, line, pie, scatter, network graph, timeline and "
+                                 + "more) with the table "
                                  + "columns and style settings each takes, and the Visualisation docs already in "
                                  + "Stroom.")
                         .chatOnly(" Call it before propose_visualisation, and ask the user which library to use "
@@ -177,7 +178,8 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
         sb.append("\nClicks (echarts and d3): clicking a slice, bar, point, cell, link or node selects it "
                   + "(clicking it again, or empty space, clears it). The selection holds each column id it maps "
                   + "(e.g. category and series) and the same value under the table column's name, dates as ISO "
-                  + "8601 text; a network graph's node gives node, and its link source and target. The legend "
+                  + "8601 text; a network graph's node gives node, and its link source and target; a timeline's "
+                  + "bar gives label, lane, start and end, with its time as from and to. The legend "
                   + "selects too, while it shows only some items and nothing is clicked (Legend Click show only: "
                   + "a click shows only that item, later clicks add others): one selection per item shown, a "
                   + "series by series, a pie's slice by name, a network's group by sourceGroup and targetGroup, a "
@@ -191,7 +193,10 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
                         + "again replaces all of them, so keep the ones wanted.\n")
                 .append("Options (d3): only color, a list of colours for the series or categories.\n");
 
-        final List<InstalledVisualisation> installed = chartLibraries.listVisualisations();
+        // A timeline or Gantt chart of a content pack's own isn't listed: timelines are generated (kind timeline).
+        final List<InstalledVisualisation> installed = chartLibraries.listVisualisations().stream()
+                .filter(vis -> !vis.isOwnTimeline())
+                .toList();
         sb.append("\n# Visualisations in Stroom\n\n");
         if (installed.isEmpty()) {
             sb.append("None the user can see.\n");

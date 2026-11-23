@@ -193,7 +193,27 @@ public enum ChartKind {
                     ring(6, "splits each level 5 segment"),
                     new ChartRole("value", "Value (Optional)", false, ChartRole.Values.NUMBER,
                             "each segment's size, e.g. a count() column; each row counts once if not given")),
-            List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.UNITS, StyleSetting.MAX_VALUES));
+            List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.UNITS, StyleSetting.MAX_VALUES)),
+
+    TIMELINE("timeline", "Timeline", "a bar from each row's start to its end on a time axis, a lane per value of a "
+                                     + "column (e.g. a host or a day), bars overlapping in a lane drawn one under "
+                                     + "another, and a row ending as it starts drawn as a marker",
+            List.of(
+                    new ChartRole("start", "Start", true, ChartRole.Values.DATE,
+                            "when each bar starts, e.g. a session's start, formatted as Date Time"),
+                    new ChartRole("end", "End", true, ChartRole.Values.DATE,
+                            "when it ends, formatted as Date Time; a row ending as it starts is a marker, one ending "
+                            + "before it starts is left out"),
+                    new ChartRole("label", "Label", true, ChartRole.Values.ANY,
+                            "what each bar is, e.g. the application; in its tooltip, and its colour unless colour "
+                            + "is mapped"),
+                    new ChartRole("lane", "Lane (Optional)", false, ChartRole.Values.ANY,
+                            "a lane of bars per value of this column, e.g. a host or a day; one lane if not given"),
+                    new ChartRole("colour", "Colour (Optional)", false, ChartRole.Values.ANY,
+                            "colours the bars by this column, shown in the legend; by label if not given")),
+            List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
+                    StyleSetting.LEGEND_CLICK, StyleSetting.ZOOM_SLIDER_ON, StyleSetting.MAX_CATEGORIES,
+                    StyleSetting.MAX_VALUES));
 
     private final String id;
     private final String displayName;
@@ -267,7 +287,8 @@ public enum ChartKind {
                 .findFirst();
     }
 
-    /// Finds a kind by its id or name, ignoring case, e.g. `graph`, `network graph` or `NETWORK`.
+    /// Finds a kind by its id or name, ignoring case, e.g. `graph`, `network graph` or `NETWORK` (and `gantt` for a
+    /// timeline).
     ///
     /// @param text The id or name.
     /// @return The kind, if one matches.
@@ -280,7 +301,8 @@ public enum ChartKind {
                 .filter(kind -> kind.id.equals(wanted)
                                 || kind.name().toLowerCase(Locale.ROOT).equals(wanted)
                                 || kind.displayName.toLowerCase(Locale.ROOT).equals(wanted)
-                                || (kind == GRAPH && (wanted.contains("network") || wanted.contains("force"))))
+                                || (kind == GRAPH && (wanted.contains("network") || wanted.contains("force")))
+                                || (kind == TIMELINE && wanted.contains("gantt")))
                 .findFirst();
     }
 
