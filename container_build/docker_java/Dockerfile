@@ -18,7 +18,7 @@
 # It also contains plantuml for plant uml image generation
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b
+FROM eclipse-temurin:25.0.5.1_2-jdk-alpine-3.23@sha256:6170e653e8d7077550dbbd75efa3a45c4828272474665bd1580f6300e5a0430f
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared

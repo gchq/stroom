@@ -13,6 +13,47 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug : Fix the clean up of temporary files created by the the FS stream store during path validation.
+
+* Bug **#6051** : Fix processor profile periods that run past midnight never matching after midnight.
+
+* Bug **#6050** : Fix the dialog for replaying a report or rule execution being titled `Edit Schedule` rather than `Create Schedule`.
+
+* Bug **#6052** : Fix an index's `No partition` setting being saved as `Month`.
+
+* Bug : Fix index searches with a time range missing shards written before the index's Partition By or Partition Size was changed.
+
+* Feature : Index volumes can now be marked as shared or local. A shared volume is one mount that every node sees, so it has no node. Marking a volume as shared merges the other nodes' volumes for the same path into it. New shards are created on a volume group's shared volumes when it has any.
+
+* Feature : Index shards on shared index volumes can now be searched by any node, so a search no longer depends on the node that wrote a shard being up. If a search cannot be started on a node, its shards on shared volumes are searched by other nodes. Writers keep the commits they replace on shared volumes for `stroom.index.writer.replacedCommitRetention` (default 30 minutes) so that searches on other nodes can finish.
+
+* Feature : Upgrade note for searching shards on shared index volumes: while a cluster has nodes on different versions, a search may lose results if it cannot be started on one node and that node's shards are given to a node still on the older version. Finish upgrading all nodes before marking index volumes as shared.
+
+* Feature : A node must now hold a timed lease to write to an index shard on a shared index volume. The lease is released when the shard is closed, so any node can then write to it, and a node uses a closed shard with room in it before creating a new one. A writer that cannot renew its lease stops and discards what it has not committed. See `stroom.index.writer.shardLeaseDuration` and `shardLeaseRenewInterval`. Retention, deletion and shard actions for shards on shared volumes are now done by whichever running node is responsible for the shard, not only the node that wrote it. Replaced commits left in closed shards are removed once their retention period has passed.
+
+* Feature : Record the streams that have documents in an index shard that are not yet committed, in the new `index_shard_pending_stream` table. When an indexing task fails part way, an index shard's commit fails, or a shard's writer stops without a final commit, the affected streams' documents are removed from every shard they were written to and their processor tasks are put back to run again, with an error stream saying why. After three failed attempts the task is set to failed. A new job, `Index Shard Stream Recovery`, does this every minute. An indexing failure part way through a stream no longer leaves the stream part indexed with its task complete.
+
+* Feature : Take index shards on shared index volumes from a node that has stopped renewing its leases on them, e.g. because it died. Once a lease has been expired for longer than `stroom.index.writer.shardLeaseTakeoverGrace` (default 5 minutes) the shard is closed and released for any node to write to, and the streams the old node had not committed are removed from the index and indexed again.
+
+* Feature **#4127** : Replace the StroomQL `window` clause with true tumbling and hopping time windows, written as `window <time field> by <size> [advance <duration>] [offset <duration>]`, with the functions `windowStart()` and `windowEnd()`. The automatic `periodN` columns, the `period()` function and `using` are removed, and a query that uses them is refused with a message that shows the new form.
+
+* Feature **#4127** : Add the StroomQL functions `lag()` and `lead()`, which give the value of an aggregate in an earlier or later time window of a query with a `window` clause, e.g. `lag(count(), 1)`.
+
+* Feature **#4127** : Allow expressions in a StroomQL `having` clause, e.g. `having count() > lag(count(), 1) * 2`.
+
+* Feature **#4127** : Add the property `maxWindowCopiesPerEvent` to the search result store config, to limit how many times a query with a `window` clause may add one event to its results.
+
+* Bug **#4127** : Change table builder rules with a `window` clause to judge a time window only once it is closed, so that a window is judged once and on all of its events.
+
+* Bug **#4127** : Fix detections holding the values of hidden columns that the `select` clause of the query does not name.
+
+* Bug **#4127** : Change scheduled query rules with a `window` clause to judge only the time windows that lie wholly inside the time range of the query, so that a window is not judged on part of its events.
+
+* Dependency : Uplift java in docker images from 25.0.5_8 to 25.0.5.1_2.
+
+* Bug **#6076** : Invalidate _S3 Volume Cache_ when data volumes are created/edited/deleted. Also fix _datasource in use_ exception when receiving S3 based data.
+
+
 ## [v7.14-beta.18-parallel-pathways] - 2026-11-18
 
 * Feature : Add joins to StroomQL: `join`, `left join`, `semi join` and `anti join` lines after `from` (also written `inner join`, `left outer join`, `left semi join` and `left anti join`) join another data source or a bracketed query to the query's rows, as the rows arrive.
@@ -148,9 +189,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ## [v7.14-beta.9-parallel-pathways] - 2026-10-29
 
 * Refactor : Replace the cache `Plan B State Doc Cache` (property `stateDocCache`) with two caches; `Plan B Doc Cache (by name)` (property `docByNameCache`) and `Plan B Doc Cache (by DocRef)` (property `docByDocRefCache`).
-
-
-## [v7.14-beta.9] - 2026-10-29
 
 * Feature **#5834** : Add Enterprise Floor Mapping: a new Floor Map document type that plots entities on a floor plan from a SQL Temporal Store of facts and a Plan B Temporal State store of events, with a timeline, playback, entity tracking and clustering, areas, layers, a properties editor and per-document assets.
 
@@ -2951,20 +2989,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 [Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.18-parallel-pathways...HEAD
 [v7.14-beta.18-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.17-parallel-pathways...v7.14-beta.18-parallel-pathways
 [v7.14-beta.17-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...v7.14-beta.17-parallel-pathways
-[v7.14-beta.17]: https://github.com/gchq/stroom/compare/v7.14-beta.16...v7.14-beta.17
 [v7.14-beta.16-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...v7.14-beta.16-parallel-pathways
-[v7.14-beta.16]: https://github.com/gchq/stroom/compare/v7.14-beta.15...v7.14-beta.16
 [v7.14-beta.15-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.11-parallel-pathways...v7.14-beta.15-parallel-pathways
-[v7.14-beta.15]: https://github.com/gchq/stroom/compare/v7.14-beta.14...v7.14-beta.15
-[v7.14-beta.14]: https://github.com/gchq/stroom/compare/v7.14-beta.13...v7.14-beta.14
-[v7.14-beta.13]: https://github.com/gchq/stroom/compare/v7.14-beta.12...v7.14-beta.13
-[v7.14-beta.12]: https://github.com/gchq/stroom/compare/v7.14-beta.11...v7.14-beta.12
 [v7.14-beta.11-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...v7.14-beta.11-parallel-pathways
-[v7.14-beta.11]: https://github.com/gchq/stroom/compare/v7.14-beta.10...v7.14-beta.11
 [v7.14-beta.10-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...v7.14-beta.10-parallel-pathways
-[v7.14-beta.10]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.10
 [v7.14-beta.9-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.9-parallel-pathways
-[v7.14-beta.9]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.9
 [v7.14-beta.8-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.8-parallel-pathways
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
 [v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7

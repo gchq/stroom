@@ -38,6 +38,13 @@ public class Expression implements Function {
         this.hasAggregate = function.hasAggregate();
     }
 
+    /// Gets the function that the expression works out.
+    ///
+    /// @return The function, or `null` if the expression has not been given one.
+    Function getFunction() {
+        return function;
+    }
+
     @Override
     public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
         if (function != null) {

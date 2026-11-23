@@ -35,6 +35,11 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
+    public ValidationResult validatePath(final IndexVolume indexVolume) {
+        return ValidationResult.ok();
+    }
+
+    @Override
     public IndexVolume create(final IndexVolume indexVolume) {
         return null;
     }

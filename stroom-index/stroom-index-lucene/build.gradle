@@ -52,6 +52,7 @@ dependencies {
     runtimeOnly "org.apache.lucene:lucene-backward-codecs:10.5.1"
 
     implementation libs.jackson.databind
+    implementation libs.fastutil
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.langchain4j

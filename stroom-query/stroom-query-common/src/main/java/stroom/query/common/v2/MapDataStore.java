@@ -93,6 +93,10 @@ public class MapDataStore implements DataStore {
                         final ResultStoreMapConfig resultStoreMapConfig,
                         final Provider<Executor> executorProvider) {
         this.componentId = componentId;
+        if (tableSettings.getWindow() != null) {
+            // Only the LMDB store puts rows into windows.
+            throw new IllegalArgumentException("A window can't be used with this kind of result store");
+        }
         final List<Column> columns = tableSettings.getColumns();
         this.dateTimeSettings = expressionContext == null
                 ? null

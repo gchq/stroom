@@ -17,6 +17,7 @@
 package stroom.core.dataprocess;
 
 import stroom.processor.api.ProcessorTaskExecutorBinder;
+import stroom.processor.api.ProcessorTaskRecovery;
 import stroom.processor.shared.ProcessorType;
 
 import com.google.inject.AbstractModule;
@@ -25,6 +26,8 @@ public class PipelineStreamTaskModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(ProcessorTaskRecovery.class).to(ProcessorTaskRecoveryImpl.class);
+
         ProcessorTaskExecutorBinder.create(binder())
                 .bind(ProcessorType.PIPELINE, StandardProcessorTaskExecutor.class);
     }

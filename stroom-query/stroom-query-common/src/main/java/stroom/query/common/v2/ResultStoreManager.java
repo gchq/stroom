@@ -429,6 +429,18 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         return searchProvider.createResultStore(modifiedRequest);
     }
 
+    /// Gets the field of a data source that the time range of a query is applied to.
+    ///
+    /// @param dataSource The data source.
+    /// @return The name of the field, or empty if the time range of a query on the data source is
+    ///         not applied.
+    public Optional<String> getTimeRangeField(final DocRef dataSource) {
+        return searchProviderRegistry
+                .getSearchProvider(dataSource)
+                .flatMap(searchProvider -> searchProvider.getTimeField(dataSource))
+                .map(QueryField::getFldName);
+    }
+
     private SearchRequest addQueryKey(final SearchRequest searchRequest) {
         // Create a new search UUID.
         final String searchUuid = UUID.randomUUID().toString();

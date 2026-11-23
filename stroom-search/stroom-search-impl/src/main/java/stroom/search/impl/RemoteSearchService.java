@@ -90,7 +90,10 @@ public class RemoteSearchService {
         LOGGER.debug(() -> "startSearch " + nodeSearchTask);
         final RemoteSearchResultFactory remoteSearchResultFactory
                 = new RemoteSearchResultFactory(taskManager, securityContext);
-        remoteSearchResults.put(nodeSearchTask.getKey().getUuid(), remoteSearchResultFactory);
+        // A node may be sent more than one task for a search, so each has its own results.
+        remoteSearchResults.put(
+                RemoteSearchResults.createKey(nodeSearchTask.getKey().getUuid(), nodeSearchTask.getDispatchId()),
+                remoteSearchResultFactory);
 
         // Create coprocessors.
         securityContext.useAsRead(() -> {

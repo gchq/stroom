@@ -17,8 +17,10 @@
 package stroom.index.client.view;
 
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.item.client.SelectionBox;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,6 +37,10 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     private final Widget widget;
 
     @UiField
+    SelectionBox<VolumeType> volumeType;
+    @UiField
+    FormGroup nodeNameGroup;
+    @UiField
     SelectionBox<String> nodeName;
     @UiField
     TextBox path;
@@ -46,6 +52,13 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     @Inject
     public IndexVolumeEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        volumeType.addItems(VolumeType.values());
+        volumeType.addValueChangeHandler(event -> updateNodeVisibility());
+    }
+
+    // A shared volume has no node, so only ask for one when the volume is local.
+    private void updateNodeVisibility() {
+        nodeNameGroup.setVisible(VolumeType.SHARED != volumeType.getValue());
     }
 
     @Override
@@ -55,7 +68,18 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
 
     @Override
     public void focus() {
-        nodeName.focus();
+        volumeType.focus();
+    }
+
+    @Override
+    public VolumeType getVolumeType() {
+        return volumeType.getValue();
+    }
+
+    @Override
+    public void setVolumeType(final VolumeType volumeType) {
+        this.volumeType.setValue(volumeType);
+        updateNodeVisibility();
     }
 
     @Override

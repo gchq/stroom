@@ -37,8 +37,15 @@ class IndexerImpl implements Indexer {
 
     @Override
     public void addDocument(final IndexShardKey indexShardKey, final IndexDocument document) {
+        addDocument(indexShardKey, document, null);
+    }
+
+    @Override
+    public void addDocument(final IndexShardKey indexShardKey,
+                            final IndexDocument document,
+                            final PendingStreamTracker tracker) {
         if (document != null) {
-            activeShardsCache.get(indexShardKey).addDocument(document);
+            activeShardsCache.get(indexShardKey).addDocument(document, tracker);
         }
     }
 }
