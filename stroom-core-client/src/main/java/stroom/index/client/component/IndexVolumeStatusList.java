@@ -41,7 +41,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
-/// An index volume group's volumes, a row each (its node, path and status, its total, limit, used and
+/// An index volume group's volumes, a row each (its type, node, path and status, its total, limit, used and
 /// free space, how full it is and when it was last written to), faded unless active; several can be
 /// selected.
 public class IndexVolumeStatusList extends Component {
@@ -67,12 +67,23 @@ public class IndexVolumeStatusList extends Component {
     ///
     /// @param dateTimeFormat Formats a time in milliseconds since the epoch, with how long ago it was.
     public void addColumns(final Function<Long, String> dateTimeFormat) {
+        // Type.
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((IndexVolume indexVolume) ->
+                                indexVolume.getVolumeType().getDisplayValue())
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("Local if only the volume's node can see it, Shared if every node can.")
+                        .build(),
+                70);
+
         // Node.
         dataGrid.addResizableColumn(DataGridUtil.textWithTooltipColumnBuilder(IndexVolume::getNodeName)
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder(IndexVolumeFields.FIELD_NODE_NAME)
-                        .withToolTip("The node that this index volume is owned by.")
+                        .withToolTip("The node that a local index volume is owned by. A shared volume has no node.")
                         .build(),
                 90);
 

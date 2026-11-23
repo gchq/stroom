@@ -19,7 +19,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
-    <g:FlowPanel styleName="max dock-container-vertical form-padding form">
+    <g:FlowPanel styleName="max dock-container-vertical form">
         <!-- Facts Store (SQL Temporal Store) Selection -->
         <form:FormGroup label="Facts Store"
                         identity="floorMapInitFactsStore"

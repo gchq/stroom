@@ -511,20 +511,25 @@ public class SessionDb extends AbstractDb<Session, Session> {
             try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi)) {
                 for (final LmdbEntry entry : iterable) {
                     Session session = keySerde.read(writer.getWriteTxn(), entry.getKey().duplicate());
+                    // The session so far: the one being built, or else the last one read. Compared with
+                    // it rather than the last one read, so a session inside it but after a shorter one
+                    // nested in it still joins it
+                    final Session merged = newSession != null
+                            ? newSession
+                            : lastSession;
 
                     if (lastSession != null &&
                         lastSession.getPrefix().equals(session.getPrefix()) &&
                         session.getStart().isBefore(condenseBefore) &&
-                        (lastSession.getEnd().isAfter(session.getStart()) ||
-                         lastSession.getEnd().equals(session.getStart()))) {
+                        !merged.getEnd().isBefore(session.getStart())) {
 
-                        // Extend the session.
+                        // Extend the session, to whichever ends later, as one may be nested in the other
                         newSession = new Session(
                                 session.getPrefix(),
-                                newSession == null
-                                        ? lastSession.getStart()
-                                        : newSession.getStart(),
-                                session.getEnd());
+                                merged.getStart(),
+                                merged.getEnd().isAfter(session.getEnd())
+                                        ? merged.getEnd()
+                                        : session.getEnd());
 
                         // Delete the previous session as we are extending it.
                         deleteSession(writer, lastSession);

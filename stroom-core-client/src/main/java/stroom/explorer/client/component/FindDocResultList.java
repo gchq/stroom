@@ -21,6 +21,7 @@ import stroom.explorer.shared.FindResult;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.HasFiltered;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -36,7 +37,7 @@ import java.util.function.Consumer;
 
 /// The documents found: a striped list of a page of them, the one with the focus chosen. Enter, or
 /// a double click, opens one, and Up on the first goes back to the filter.
-public class FindDocResultList extends Component {
+public class FindDocResultList extends Component implements HasFiltered {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -98,6 +99,12 @@ public class FindDocResultList extends Component {
     /// @param onOpen Given a result to open (Enter, or a double click, on it).
     public void setOnOpen(final Consumer<FindResult> onOpen) {
         this.onOpen = onOpen;
+    }
+
+    /// @param filtered Whether a filter is set, so that with nothing found it says "No matches".
+    @Override
+    public void setFiltered(final boolean filtered) {
+        resultList.setFiltered(filtered);
     }
 
     /// @param onUpFromFirst Run when Up is pressed on the first result.

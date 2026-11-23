@@ -196,7 +196,8 @@ public final class ValueSpinnerCellStories {
 
         final SimplePanel panel = new SimplePanel(grid);
         panel.getElement().getStyle().setProperty("height", "160px");
-        panel.getElement().getStyle().setProperty("width", "320px");
+        // As wide as its columns at every text size and spacing, so the spinners' arrows are in view
+        panel.getElement().getStyle().setProperty("width", "calc(320px * var(--text-scale))");
         return panel;
     }
 }

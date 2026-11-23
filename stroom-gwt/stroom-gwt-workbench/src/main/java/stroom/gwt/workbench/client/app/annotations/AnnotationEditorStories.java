@@ -28,6 +28,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.selectors.UserFixture;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
@@ -133,6 +134,18 @@ public final class AnnotationEditorStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // Choose Annotation left open (the screenshot and the dialog measurement show it)
+                .story("ChooseAnnotationOpen", context -> render(context, AnnotationFixtures.editorRoutes(
+                        RestFixtures.builder(), ENTRIES, "[]", AnnotationFixtures.page(RELATED_ALERT)).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(tab(play, "Link To"));
+                    play.click(play.findByTitle("Add Annotation Link"));
+                    final Play chooser = screen.within(screen.findByText("Choose Annotation", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    chooser.findByText("Related alert");
+                })
                 // Link To tab: removing the link to the annotation selected (once confirmed) leaves
                 // nothing selected, so Remove is disabled. Before, the annotation stayed selected
                 // once it was no longer listed, with Remove enabled for it
@@ -173,6 +186,17 @@ public final class AnnotationEditorStories {
                                             + "\"events\": [{\"streamId\": 1234, \"eventId\": 5}]}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Link An Event left open (the screenshot and the dialog measurement show it)
+                .story("LinkAnEventOpen", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(tab(play, "Events"));
+                    play.click(play.findByTitle("Add Event Link"));
+                    final Play dialog = screen.within(screen.findByText("Link An Event", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByRole("textbox");
                 })
                 // Link An Event refuses an id that isn't streamId:eventId, and stays open; Cancel
                 // then links nothing
@@ -218,6 +242,16 @@ public final class AnnotationEditorStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Set Retention Period", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Set Retention Period left open (the screenshot and the dialog measurement show it)
+                .story("SetRetentionPeriodOpen", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByRole("button", "Change Retention Period"));
+                    final Play dialog = screen.within(screen.findByText("Set Retention Period", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByRole("checkbox", "Keep Forever");
                 })
                 // Events tab preview: the first linked event is selected and its data shown (record
                 // index = event id - 1); selecting another shows its data
@@ -293,6 +327,18 @@ public final class AnnotationEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/deleteAnnotationEntry").toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Edit Comment left open (the screenshot and the dialog measurement show it)
+                .story("EditCommentOpen", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Looking into it.");
+                    play.fireEvent().mouseDown(play.querySelectorAll(".annotation-history__comment-header").nth(0));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    // The comment is in a code editor, which shows it in its lines, not its text box
+                    dialog.findByText("Looking into it.");
                 })
                 // An entry's menu also opens from the keyboard: each entry's actions icon is a button,
                 // named for the entry, that opens the menu with Enter or Space, or Shift+F10 or the
@@ -567,6 +613,31 @@ public final class AnnotationEditorStories {
                                             + "\"tag\": {\"name\": \"Closed\"}}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // The status chooser open with its filter focused: the filter's focus ring is whole,
+                // not cut by the chooser's edges (the screenshot shows it)
+                .story("StatusChooserFilterFocused", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Status"));
+                    screen.findByRole("listbox", "Statuses");
+                    final Query filter = screen.getByRole("searchbox", "Filter choices");
+                    play.click(filter);
+                    play.expect(filter).toHaveFocus();
+                })
+                // The Assigned To picker open with its filter focused, as above
+                .story("AssignedToFilterFocused", context -> render(context, fixtures(ENTRIES)
+                        .post(UserFixture.FIND, request -> RestReply.json(
+                                UserFixture.fixtureUsers().find(request.getBody())))
+                        .build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Assigned To"));
+                    final Query filter = screen.findByRole("searchbox", "Filter users and groups");
+                    play.click(filter);
+                    play.expect(filter).toHaveFocus();
                 });
     }
 

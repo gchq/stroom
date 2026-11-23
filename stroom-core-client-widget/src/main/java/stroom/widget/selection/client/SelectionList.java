@@ -98,6 +98,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     /// Makes an empty list, e.g. one a template declares; [#setModel] gives it its options.
     public SelectionList() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        quickFilter.addFilteredGrid(grid);
         // Only while the list is on the page: a filter cleared while it is not is applied by
         // whatever cleared it
         quickFilter.addValueChangeHandler(e -> {

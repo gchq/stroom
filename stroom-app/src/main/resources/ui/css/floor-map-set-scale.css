@@ -14,34 +14,19 @@
  * limitations under the License.
  */
 
-/* The Set Scale dialog's content (FloorMapSetScale) */
+/* The Set Scale dialog's content (FloorMapSetScale): a form, at a fixed width */
 
 .floor-map-set-scale {
-    display: flex;
-    flex-direction: column;
-    width: 420px;
-    padding: 4px;
+    width: calc(420px * var(--text-scale));
 }
 
-.floor-map-set-scale__fields {
-    border-spacing: 8px 10px;
-}
-
-.floor-map-set-scale__fields td {
-    vertical-align: middle;
-}
-
-.floor-map-set-scale__fields td:first-child {
-    color: var(--text-color--low-emphasis);
-    white-space: nowrap;
-}
-
+/* The distance and its unit, side by side */
 .floor-map-set-scale__row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--control__gap--horizontal);
 }
 
 .floor-map-set-scale__distance {
-    width: 110px;
+    width: calc(110px * var(--text-scale));
 }

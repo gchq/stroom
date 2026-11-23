@@ -17,6 +17,7 @@
 package stroom.query.language.functions;
 
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.HoppingWindow;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -28,12 +29,14 @@ public class ExpressionContext {
     private final DateTimeSettings dateTimeSettings;
     private final StateProvider stateProvider;
     private final AiProvider aiProvider;
+    private final HoppingWindow window;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
         this.dateTimeSettings = DateTimeSettings.builder().build();
         this.stateProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
         this.aiProvider = (modelNameOrUuid, systemPrompt, message) -> ValNull.INSTANCE;
+        this.window = null;
     }
 
     @JsonCreator
@@ -41,10 +44,19 @@ public class ExpressionContext {
                              final DateTimeSettings dateTimeSettings,
                              final StateProvider stateProvider,
                              final AiProvider aiProvider) {
+        this(maxStringLength, dateTimeSettings, stateProvider, aiProvider, null);
+    }
+
+    private ExpressionContext(final Integer maxStringLength,
+                              final DateTimeSettings dateTimeSettings,
+                              final StateProvider stateProvider,
+                              final AiProvider aiProvider,
+                              final HoppingWindow window) {
         this.maxStringLength = Objects.requireNonNullElse(maxStringLength, 0);
         this.dateTimeSettings = dateTimeSettings;
         this.stateProvider = stateProvider;
         this.aiProvider = aiProvider;
+        this.window = window;
     }
 
     public int getMaxStringLength() {
@@ -63,6 +75,15 @@ public class ExpressionContext {
         return aiProvider;
     }
 
+    /// Gets the time windows of the query being parsed, which the window functions written in it,
+    /// such as `windowStart()`, work with.
+    ///
+    /// @return The windows of the query's `window` clause, or `null` if the query has none or is
+    ///         not being parsed from StroomQL.
+    public HoppingWindow getWindow() {
+        return window;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -73,12 +94,13 @@ public class ExpressionContext {
         }
         final ExpressionContext that = (ExpressionContext) o;
         return maxStringLength == that.maxStringLength &&
-                Objects.equals(dateTimeSettings, that.dateTimeSettings);
+                Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
+                Objects.equals(window, that.window);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxStringLength, dateTimeSettings);
+        return Objects.hash(maxStringLength, dateTimeSettings, window);
     }
 
     @Override
@@ -86,6 +108,7 @@ public class ExpressionContext {
         return "ExpressionContext{" +
                 "maxStringLength=" + maxStringLength +
                 ", dateTimeSettings=" + dateTimeSettings +
+                ", window=" + window +
                 '}';
     }
 
@@ -107,6 +130,7 @@ public class ExpressionContext {
         private DateTimeSettings dateTimeSettings;
         private StateProvider stateProvider;
         private AiProvider aiProvider;
+        private HoppingWindow window;
 
         private Builder() {
         }
@@ -116,6 +140,7 @@ public class ExpressionContext {
             this.dateTimeSettings = expressionContext.dateTimeSettings;
             this.stateProvider = expressionContext.stateProvider;
             this.aiProvider = expressionContext.aiProvider;
+            this.window = expressionContext.window;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -138,8 +163,17 @@ public class ExpressionContext {
             return this;
         }
 
+        /// Sets the time windows of the query being parsed.
+        ///
+        /// @param window The windows of the query's `window` clause, or `null` for none.
+        /// @return This builder.
+        public Builder window(final HoppingWindow window) {
+            this.window = window;
+            return this;
+        }
+
         public ExpressionContext build() {
-            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider, aiProvider);
+            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider, aiProvider, window);
         }
     }
 }

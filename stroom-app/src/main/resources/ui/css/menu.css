@@ -42,7 +42,7 @@
     padding: 5px;
     overflow: auto;
     min-width: 50px;
-    max-width: 400px;
+    max-width: calc(400px * var(--text-scale));
     max-height: 500px;
 }
 
@@ -75,7 +75,7 @@
     gap: var(--row__gap--horizontal);
     border: 1px solid transparent;
     border-radius: 5px;
-    min-width: 180px;
+    min-width: calc(180px * var(--text-scale));
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     vertical-align: middle;
     overflow: hidden;
@@ -200,7 +200,21 @@
         outline-offset: 2px;
     }
 
+    /* Its item shows a row's focus, so not the outline base.css gives whatever has the keyboard
+       focus there (important, to win over it) */
+    .menu__viewport [role]:focus-visible {
+        outline: none !important;
+    }
+
     .menu__separator {
         border-top-color: CanvasText;
+    }
+
+    /* A disabled item is the system's GrayText, not faded (fading the system's colours was all but
+       invisible in the light palette); highlighted, still faded HighlightText, as GrayText on
+       Highlight can't be read */
+    .menu__row:not(.menu__row--active)[aria-disabled="true"] > .menu__item:not(.menu__item--info) > * {
+        opacity: 1;
+        color: GrayText;
     }
 }

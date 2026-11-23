@@ -325,3 +325,15 @@
     --vis-tip-text__color: #bbb;
 
 }
+
+/* In forced colours (e.g. Windows high contrast) secondary text is GrayText, as in the light theme
+   (theme-root.css) */
+@media (forced-colors: active) {
+    .stroom-theme-dark {
+        --text-color--muted: GrayText;
+        /* Popups and dialogs are solid: forced colours keep a background's transparency, so
+           over the code editor they turned grey and looked disabled */
+        --transparency__background-color: Canvas;
+        --transparency__backdrop-filter: none;
+    }
+}

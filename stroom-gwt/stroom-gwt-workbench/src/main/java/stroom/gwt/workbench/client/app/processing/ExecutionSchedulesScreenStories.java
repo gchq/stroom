@@ -212,6 +212,15 @@ public final class ExecutionSchedulesScreenStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     expectNoErrors(play);
                 })
+                // Filter Schedules left open (the screenshot and the dialog measurement show it)
+                .story("FilterSchedulesOpen", context -> render(context, FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Hourly rollup");
+                    play.click(play.getByTitle("Filter Schedules"));
+                    final Play filter = dialog(screen, "Filter Schedules");
+                    play.waitFor(() -> play.expect(filter.getByRole("tree", "Expression")).toBeVisible());
+                })
                 // An invalid filter says why, and once that is closed the dialog can be used again: its OK
                 // and Cancel once stayed disabled, as the validation never told the dialog it failed
                 .story("InvalidFilterKeepsDialogUsable", context -> render(context, INVALID_FILTER_FIXTURES, false))

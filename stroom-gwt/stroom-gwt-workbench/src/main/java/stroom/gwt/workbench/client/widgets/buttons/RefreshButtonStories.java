@@ -82,7 +82,7 @@ public final class RefreshButtonStories {
                         grid.add(StoryPanels.note((refreshing ? "refreshing " : "")
                                 + (pausable ? "pausable " : "")
                                 + (paused ? "paused" : "")
-                                + (combination == 0 ? "idle" : ""), "#dce4e5", "12px"));
+                                + (combination == 0 ? "idle" : ""), "#dce4e5", "var(--font-size-11)"));
                         grid.add(refreshButton(button -> {
                             button.setAllowPause(pausable);
                             button.setPaused(paused);

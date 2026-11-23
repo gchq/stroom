@@ -445,7 +445,8 @@ public class ImportConfigConfirmController extends Controller {
                 return "Error";
             }
         };
-        dataGrid.addResizableColumn(column, "Action", 50);
+        // Room for "Update", the longest (50 pixels cut it short)
+        dataGrid.addResizableColumn(column, "Action", 60);
     }
 
     private void addTypeColumn() {

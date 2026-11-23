@@ -20,6 +20,7 @@ package stroom.gwt.workbench.client.app.dashboard;
 import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -30,6 +31,8 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
+import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -134,6 +137,11 @@ public final class DashboardPaneStories {
 
     // The Text component's Step button
     private static final String STEP = "Enter Stepping Mode";
+
+    // The explorer tree of the 'Choose Query To Copy' dialog
+    private static final ExplorerFixture QUERIES = new ExplorerFixture(ExplorerFixture.folder("System",
+            ExplorerFixture.doc("Saved Query", "Query"),
+            ExplorerFixture.doc("Other Query", "Query")));
 
     private DashboardPaneStories() {
         // Static utility
@@ -318,6 +326,20 @@ public final class DashboardPaneStories {
                                     .toSpyMatcher()));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Download Options left open (the screenshot and the dialog measurement show it)
+                .story("DownloadOptionsOpen", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Download Table Results")).toBeEnabled());
+                    play.click(play.getByRole("button", "Download Table Results"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Download Options");
+                    play.waitFor(() -> play.expect(dialog.getByLabelText("Sample Size (%)")).toBeInTheDocument());
+                })
                 // Rename starts with the column's name; Enter renames it
                 .story("TableColumnRename", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))
@@ -426,8 +448,10 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect("Name is first",
                             () -> labels.textContents().get().indexOf("Name")).toBe(0));
 
-                    // Resize it to 200 pixels
+                    // Resize it to 200 pixels, a width at the medium text size, drawn larger or smaller
+                    // with the text size
                     final String moved = "Name";
+                    final int drawn200 = DataGridStories.drawn(200);
                     StroomDom.clickHeader(play, DashboardPlays.header(play, moved));
                     play.click(screen.findByText("Resize Column", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = DashboardPlays.dialog(screen, "Column Width");
@@ -440,7 +464,8 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Column Width", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.waitFor(() -> play.expect(DashboardPlays.headerCell(play, moved).width())
-                            .toSatisfy("200 pixels wide", w -> Math.abs((Double) w - 200) <= 1));
+                            .toSatisfy("200 pixels wide (at medium)",
+                                    w -> Math.abs((Double) w - drawn200) <= 1));
 
                     // Cancel leaves it as it is
                     StroomDom.clickHeader(play, DashboardPlays.header(play, moved));
@@ -454,7 +479,8 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Column Width", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.expect(DashboardPlays.headerCell(play, moved).width())
-                            .toSatisfy("still 200 pixels wide", w -> Math.abs((Double) w - 200) <= 1);
+                            .toSatisfy("still 200 pixels wide (at medium)",
+                                    w -> Math.abs((Double) w - drawn200) <= 1);
                     DashboardPlays.expectNoProblems(play);
                 })
                 // Add Column's button opens its list, and a second press closes it. A column chosen
@@ -557,12 +583,15 @@ public final class DashboardPaneStories {
                     // The first not in the table has the line above it
                     play.expect(valueRow(screen, "gamma")).toHaveClass(FIRST_UNAVAILABLE);
                     // A 9px gap with the line in its middle, in the tick boxes' border colour (the
-                    // dark theme's #696d77), which can be seen
+                    // dark theme's #696d77), which can be seen; in forced colours (e.g. Windows
+                    // high contrast), the text colour, CanvasText, as the tick boxes' borders are
                     play.expect(valueRow(screen, "gamma")).toHaveStyle("margin-top", "9px");
                     play.expect("the line is drawn in the tick boxes' border colour", () -> lineColour(
-                            valueRow(screen, "gamma").element().get())).toBe(StroomThemeDecorator.isDark()
-                                    ? "rgb(105, 109, 119)"
-                                    : "rgb(140, 144, 152)");
+                            valueRow(screen, "gamma").element().get())).toBe(ForcedColours.active()
+                                    ? ForcedColours.colour("CanvasText")
+                                    : StroomThemeDecorator.isDark()
+                                            ? "rgb(105, 109, 119)"
+                                            : "rgb(140, 144, 152)");
                     play.expect(valueRow(screen, "gamma")).toHaveAttribute("aria-description", NOT_IN_TABLE);
                     play.expect(valueText(screen, "gamma")).toHaveStyle("opacity", "0.6");
 
@@ -666,6 +695,25 @@ public final class DashboardPaneStories {
                             () -> visOnlySearches(requests) - before.get()).toBeGreaterThan(0));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // The Selection Query tab of the settings: its handlers' grid, whose header reaches
+                // across the grid (the screenshot shows it)
+                .story("SelectionQueryTab", DashboardSupport.story(DashboardDocs.DASHBOARD_DOC, routes ->
+                        routes.route(RequestMatcher.post("/query/v1/fetchDataSourceFromQueryString"),
+                                        RestReply.json(
+                                                "{\"type\": \"Index\", \"uuid\": \"idx-1\", \"name\": \"index\"}"))
+                                .route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json(
+                                        "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, "
+                                        + "\"total\": 0, \"exact\": true}}"))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "My Panel");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(settings.getByText("Expression", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
+                })
                 // An Embedded Query's settings find the fields of its query's data source, for its
                 // selection handlers
                 .story("EmbeddedQuerySettingsFields", DashboardSupport.story(DashboardDocs.DASHBOARD_DOC, routes ->
@@ -716,6 +764,27 @@ public final class DashboardPaneStories {
 
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Choose Query To Copy left open (the screenshot and the dialog measurement show it): an
+                // Embedded Query that keeps a copy of its query (My Panel) has Copy Query in its settings
+                .story("ChooseQueryToCopyOpen", DashboardSupport.story(DashboardDocs.DASHBOARD_DOC, routes ->
+                        routes.route(RequestMatcher.post("/query/v1/fetchDataSourceFromQueryString"),
+                                        RestReply.json(
+                                                "{\"type\": \"Index\", \"uuid\": \"idx-1\", \"name\": \"index\"}"))
+                                .route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json(
+                                        "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, "
+                                        + "\"total\": 0, \"exact\": true}}"))
+                                .post("/explorer/v2/fetchExplorerNodes",
+                                        request -> RestReply.json(QUERIES.fetch(request.getBody())))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "My Panel");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    play.click(settings.findByRole("button", StroomDom.button("Copy Query")));
+                    final Play chooser = DashboardPlays.dialog(screen, "Choose Query To Copy");
+                    play.waitFor(() -> play.expect(chooser.getByText("Saved Query")).toBeInTheDocument());
+                })
                 // The table's settings have its conditional formatting rules
                 .story("TableConditionalFormatting", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         routes -> {
@@ -760,10 +829,46 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect(swatch).toHaveStyle("backgroundColor", "rgb(255, 0, 0)"));
                     // The light example's own text colour
                     play.expect(swatch).toHaveStyle("color", "rgb(21, 21, 21)");
+                    // Each example says the contrast of its text on its background, the dark one's
+                    // the theme's own colours
+                    final Query lightContrast = style.querySelector(".cf-light-example + .cf-contrast");
+                    play.expect(lightContrast).toHaveTextContent("Contrast 4.5:1");
+                    play.expect(style.querySelector(".cf-dark-example + .cf-contrast"))
+                            .toHaveTextContent(TextMatch.regex("^Contrast \\d+\\.\\d:1$"));
+                    // Below WCAG's minimum for text it warns, and OK still keeps the colours
+                    play.clear(style.getByLabelText("Light Text Colour"));
+                    play.type(style.getByLabelText("Light Text Colour"), "#ffcccc");
+                    play.tab();
+                    play.waitFor(() -> play.expect(lightContrast).toHaveTextContent(
+                            "Contrast 2.8:1: below 4.5:1, so the text may be hard to read"));
+                    play.expect(lightContrast).toHaveClass("cf-contrast--low");
                     play.click(style.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit Custom Row Style",
                             StroomDom.DIALOG_TITLE)).toBeNull());
                     DashboardPlays.expectNoProblems(play);
+                })
+                // Edit Custom Row Style left open (the screenshot and the dialog measurement show it)
+                .story("EditCustomRowStyleOpen", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "The Table");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    play.click(settings.getByText("Conditional Formatting", StroomDom.LINK_TAB_LABEL));
+                    play.click(settings.findByTitle("New Formatting Rule"));
+                    final Play rule = DashboardPlays.dialog(screen, "Add New Rule");
+                    play.click(rule.within(rule.getByText("Formatting Type", "label").closest(".form-group"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Custom", ".selection-popup *"));
+                    // The button, not its form group's help button
+                    play.click(rule.within(rule.findByText("Custom Style", "label").closest(".form-group"))
+                            .querySelector("button:not(.form-group__help)"));
+                    final Play style = DashboardPlays.dialog(screen, "Edit Custom Row Style");
+                    play.waitFor(() -> play.expect(style.getByLabelText("Light Background Colour"))
+                            .toBeInTheDocument());
                 })
                 // A visualisation's settings show the controls its settings define
                 .story("VisDynamicControls", DashboardSupport.story(DashboardDocs.VIS_DYNAMIC_DASHBOARD,
@@ -1050,6 +1155,17 @@ public final class DashboardPaneStories {
                                     .withJsonBodyContaining("{\"name\": \"My Fav\", \"favourite\": true}")
                                     .toSpyMatcher());
                     DashboardPlays.expectNoProblems(play);
+                })
+                // Query History left open (the screenshot and the dialog measurement show it)
+                .story("QueryHistoryOpen", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        DashboardPaneStories::storedQueryRoutes))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    play.click(play.getByRole("button", "Show Query History"));
+                    final Play history = DashboardPlays.dialog(screen, "Query History");
+                    final Play queries = screen.within(history.findByRole("listbox", "Query history"));
+                    play.waitFor(() -> play.expect(queries.getAllByRole("option").nth(0)).toBeInTheDocument());
                 });
     }
 

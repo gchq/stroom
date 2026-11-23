@@ -114,6 +114,19 @@ public final class DataVolumesScreenStories {
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // New Data Volume left open (the screenshot and the dialog measurement show it)
+                .story("NewDataVolumeOpen", DataVolumesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText("Edit Data Volume Group - Default")
+                            .closest(StroomDom.DIALOG));
+                    groupDialog.findByText("/data1");
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    volumeDialog.findByLabelText("Path");
+                })
                 // Editing the selected volume saves it and fetches the volumes again, with its new
                 // path: its row stays selected. It once showed unselected, as the fetched volume
                 // wasn't equal to the one selected

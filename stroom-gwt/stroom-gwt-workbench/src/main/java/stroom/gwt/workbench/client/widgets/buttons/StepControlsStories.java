@@ -54,7 +54,7 @@ public final class StepControlsStories {
                 // All navigation buttons enabled; the last click is reported below
                 .story("AllEnabled", context -> {
                     final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
-                    final InlineLabel last = StoryPanels.note("—", "#dce4e5", "12px");
+                    final InlineLabel last = StoryPanels.note("—", "#dce4e5", "var(--font-size-11)");
                     final StepControl view = new StepControl();
                     stepControls(harness, view, false, last::setText);
                     enableAll(view);

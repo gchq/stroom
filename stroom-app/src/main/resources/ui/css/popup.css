@@ -88,3 +88,14 @@
 .popup {
     --data-grid__head-background-color: var(--popup__background-color);
 }
+
+/* In forced colours (e.g. Windows high contrast) the glass behind a modal popup took the page's colour,
+   so the page wasn't dimmed and didn't look inactive. There it keeps its own colours: a faint veil in
+   the text colour */
+@media (forced-colors: active) {
+    .popup__glass {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+        opacity: 0.25;
+    }
+}

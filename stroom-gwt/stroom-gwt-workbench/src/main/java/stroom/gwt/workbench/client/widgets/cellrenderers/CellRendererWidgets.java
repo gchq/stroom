@@ -64,7 +64,7 @@ final class CellRendererWidgets {
     /// @return The label, showing that nothing has been done yet.
     static InlineLabel lastAction() {
         final InlineLabel label = new InlineLabel("Last action: " + NO_ACTION);
-        label.getElement().getStyle().setProperty("fontSize", "12px");
+        label.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         return label;
     }
 

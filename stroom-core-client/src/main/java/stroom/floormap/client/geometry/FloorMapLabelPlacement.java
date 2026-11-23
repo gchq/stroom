@@ -46,7 +46,8 @@ import java.util.Set;
 ///
 /// Greedy placement in **priority order**: the most important
 /// caption is placed first and keeps its spot, and any caption that would overlap
-/// something already placed is dropped for this frame. So crowding costs the
+/// something already placed, or comes within a small gap of it, is dropped for
+/// this frame (captions that touch run together and read as one). So crowding costs the
 /// *least* important names, never the most important ones, and nothing is
 /// ever drawn illegibly on top of anything else.
 ///
@@ -66,6 +67,17 @@ public final class FloorMapLabelPlacement {
     /// the cells a candidate touches are tested against, which keeps a crowded
     /// frame from degenerating into comparing every label with every other one.
     private static final double CELL_PX = 128;
+
+    /// Clear space (screen px) kept between two captions side by side. Each
+    /// caption has a 3px halo (1.5px beyond its glyphs), so captions that merely
+    /// touch run together and read as one ("dave desk-1"); this leaves a gap
+    /// wider than a word space once both halos are drawn.
+    static final double MIN_GAP_X_PX = 8;
+
+    /// Clear space (screen px) kept between two captions one above the other. The
+    /// caption's line box already has room above and below its 11px text, so this
+    /// only has to clear the halos.
+    static final double MIN_GAP_Y_PX = 2;
 
     private FloorMapLabelPlacement() {
         // Utility class.
@@ -124,10 +136,18 @@ public final class FloorMapLabelPlacement {
                 || rect[1] > viewportHeightPx;
     }
 
-    /// `true` if the rectangle overlaps one already placed. Touching edges do
-    /// not count — two captions exactly abutting are still both readable.
-    private static boolean collides(final double[] rect,
+    /// `true` if the rectangle overlaps one already placed, or comes closer to it
+    /// than [#MIN_GAP_X_PX] across or [#MIN_GAP_Y_PX] down. Exactly the gap apart
+    /// does not count.
+    private static boolean collides(final double[] candidate,
                                     final Map<String, List<double[]>> placedByCell) {
+        // The candidate grown by the gap on every side: anything placed that this
+        // overlaps is too close
+        final double[] rect = new double[]{
+                candidate[0] - MIN_GAP_X_PX,
+                candidate[1] - MIN_GAP_Y_PX,
+                candidate[2] + MIN_GAP_X_PX,
+                candidate[3] + MIN_GAP_Y_PX};
         final int minCx = cellIndex(rect[0]);
         final int maxCx = cellIndex(rect[2]);
         final int minCy = cellIndex(rect[1]);

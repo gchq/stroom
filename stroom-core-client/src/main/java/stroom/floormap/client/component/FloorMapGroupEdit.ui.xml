@@ -5,37 +5,36 @@
              xmlns:colour="urn:import:stroom.widget.colour.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      The group edit dialog's content (floor-map-group-edit.css): the group's name and colour, and a
-      filterable tick list of its members. The table only lays the labels beside their controls, so
-      it is presentation to assistive technology
+      The group edit dialog's content (floor-map-group-edit.css): a form, as every dialog's is, of the
+      group's name and colour, and a filterable tick list of its members, in a box as every list in a
+      dialog is
     -->
-    <g:HTMLPanel styleName="floor-map-group-edit">
-        <table class="floor-map-group-edit__fields" role="presentation">
-            <tbody>
-                <tr>
-                    <td ui:field="nameLabel">Name</td>
-                    <td><form:TextBox ui:field="nameBox"/></td>
-                </tr>
-                <tr>
-                    <td ui:field="colourLabel">Colour</td>
-                    <td><colour:ColourBox ui:field="colourBox"/></td>
-                </tr>
-            </tbody>
-        </table>
-        <tx:Label ui:field="membersLabel" addStyleNames="floor-map-group-edit__label" text="Members"/>
-        <!-- A placeholder is not an accessible name: it is not exposed by every screen reader
-             and it disappears as soon as anything is typed -->
-        <form:TextBox ui:field="filterBox" addStyleNames="floor-map-group-edit__filter"
-                        placeholder="Filter by name, type or id"
-                        ariaLabel="Filter members by name, type or id"/>
-        <g:ScrollPanel ui:field="memberScroll" addStyleNames="floor-map-group-edit__scroll">
-            <g:FlowPanel ui:field="memberList" addStyleNames="floor-map-group-edit__members">
-                <tx:Label ui:field="empty"
-                         addStyleNames="floor-map-group-edit__empty"
-                         text="No entities have been seen on this map yet — run the map's queries first."
-                         visible="false"/>
-            </g:FlowPanel>
-        </g:ScrollPanel>
-        <tx:Label ui:field="summary" addStyleNames="floor-map-group-edit__summary"/>
-    </g:HTMLPanel>
+    <g:FlowPanel styleName="form floor-map-group-edit">
+        <form:FormGroup identity="floorMapGroupName" label="Name"
+                        helpText="The group's name, shown in the map's list of groups.">
+            <form:TextBox ui:field="nameBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="floorMapGroupColour" label="Colour"
+                        helpText="The colour the group's members are highlighted in on the map.">
+            <colour:ColourBox ui:field="colourBox"/>
+        </form:FormGroup>
+        <!-- The members' heading names the list (in Java); the filter box has a name of its own -->
+        <g:FlowPanel styleName="floor-map-group-edit__members-group">
+            <tx:Label ui:field="membersLabel" addStyleNames="form-label" text="Members"/>
+            <!-- A placeholder is not an accessible name: it is not exposed by every screen reader
+                 and it disappears as soon as anything is typed -->
+            <form:TextBox ui:field="filterBox" addStyleNames="w-100"
+                          placeholder="Filter by name, type or id"
+                          ariaLabel="Filter members by name, type or id"/>
+            <g:ScrollPanel ui:field="memberScroll" addStyleNames="control-box floor-map-group-edit__scroll">
+                <g:FlowPanel ui:field="memberList" addStyleNames="floor-map-group-edit__members">
+                    <tx:Label ui:field="empty"
+                              addStyleNames="floor-map-group-edit__empty"
+                              text="No entities have been seen on this map yet — run the map's queries first."
+                              visible="false"/>
+                </g:FlowPanel>
+            </g:ScrollPanel>
+            <tx:Label ui:field="summary" addStyleNames="floor-map-group-edit__summary"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

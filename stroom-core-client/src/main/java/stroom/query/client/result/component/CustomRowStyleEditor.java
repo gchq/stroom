@@ -20,24 +20,33 @@ import stroom.query.api.TextAttributes;
 import stroom.query.client.result.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.util.client.ColourContrast;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /// The Edit Custom Row Style dialog's content: a rule's background and text colours in the light
-/// and dark themes, each with an example of how its rows look.
+/// and dark themes, each with an example of how its rows look and the contrast of its text on its
+/// background, with a warning when that is below WCAG's minimum for text (the colours are still
+/// kept: the author may have a reason).
 public class CustomRowStyleEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final String BACKGROUND_COLOUR = "--cf-swatch__background-color";
     private static final String TEXT_COLOUR = "--cf-swatch__color";
+    private static final String CONTRAST_CLASS = "cf-contrast";
+    private static final String LOW_CONTRAST_CLASS = CONTRAST_CLASS + " cf-contrast--low";
 
     @UiField
     TextBox lightBackgroundColour;
@@ -46,11 +55,15 @@ public class CustomRowStyleEditor extends Component {
     @UiField
     DivElement lightSwatch;
     @UiField
+    DivElement lightContrast;
+    @UiField
     TextBox darkBackgroundColour;
     @UiField
     TextBox darkTextColour;
     @UiField
     DivElement darkSwatch;
+    @UiField
+    DivElement darkContrast;
 
     private TextAttributes textAttributes;
 
@@ -61,6 +74,13 @@ public class CustomRowStyleEditor extends Component {
         lightTextColour.addValueChangeHandler(e -> updateLightSwatch());
         darkBackgroundColour.addValueChangeHandler(e -> updateDarkSwatch());
         darkTextColour.addValueChangeHandler(e -> updateDarkSwatch());
+        // The contrast is of the colours as shown, which are known only once they are
+        addAttachHandler(e -> {
+            if (e.isAttached()) {
+                updateContrast(lightSwatch, lightContrast);
+                updateContrast(darkSwatch, darkContrast);
+            }
+        });
     }
 
     /// Puts the focus in the light background colour.
@@ -111,11 +131,66 @@ public class CustomRowStyleEditor extends Component {
 
     private void updateLightSwatch() {
         updateSwatch(lightSwatch, lightBackgroundColour.getValue(), lightTextColour.getValue());
+        updateContrast(lightSwatch, lightContrast);
     }
 
     private void updateDarkSwatch() {
         updateSwatch(darkSwatch, darkBackgroundColour.getValue(), darkTextColour.getValue());
+        updateContrast(darkSwatch, darkContrast);
     }
+
+    // Says the contrast of the example's text on its background, as shown (a colour not given is
+    // the theme's), warning when it is below the minimum; says nothing if it can't be worked out
+    // (e.g. the dialog isn't shown yet)
+    private static void updateContrast(final Element swatch, final Element contrast) {
+        final Double ratio = isConnected(swatch)
+                ? ColourContrast.ratio(computedColour(swatch), backgroundLayers(swatch))
+                : null;
+        if (ratio == null) {
+            contrast.setInnerText("");
+            contrast.setClassName(CONTRAST_CLASS);
+        } else if (ratio < ColourContrast.MINIMUM) {
+            contrast.setInnerText("Contrast " + ColourContrast.format(ratio) + ": below "
+                                  + ColourContrast.format(ColourContrast.MINIMUM)
+                                  + ", so the text may be hard to read");
+            contrast.setClassName(LOW_CONTRAST_CLASS);
+        } else {
+            contrast.setInnerText("Contrast " + ColourContrast.format(ratio));
+            contrast.setClassName(CONTRAST_CLASS);
+        }
+    }
+
+    // The computed background colours from the element out to the first opaque one (or the page)
+    private static List<String> backgroundLayers(final Element element) {
+        final JsArrayString found = computedBackgrounds(element);
+        final List<String> layers = new ArrayList<>();
+        for (int i = 0; i < found.length(); i++) {
+            layers.add(found.get(i));
+        }
+        return layers;
+    }
+
+    private static native boolean isConnected(Element element) /*-{
+        return element.isConnected;
+    }-*/;
+
+    private static native String computedColour(Element element) /*-{
+        return $wnd.getComputedStyle(element).color;
+    }-*/;
+
+    private static native JsArrayString computedBackgrounds(Element element) /*-{
+        var layers = [];
+        for (var e = element; e && e.nodeType === 1; e = e.parentElement) {
+            var colour = $wnd.getComputedStyle(e).backgroundColor;
+            layers.push(colour);
+            var match = /^rgba\((.*)\)$/.exec(colour);
+            var alpha = match ? parseFloat(match[1].split(',')[3]) : 1;
+            if (colour !== 'transparent' && !(alpha < 1)) {
+                break;
+            }
+        }
+        return layers;
+    }-*/;
 
     // A colour that isn't one is left out, so the example shows the theme's
     private void updateSwatch(final Element swatch, final String background, final String text) {

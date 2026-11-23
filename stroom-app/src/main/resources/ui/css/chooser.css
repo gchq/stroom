@@ -28,6 +28,13 @@
     flex-flow: column;
 }
 
+/* It clips, so it has room inside for the filter's focus ring (focus-ring-room), and reaches as far
+   outside; its least size (default-min-sizes) is that of what shows, so grows by the room too */
+.chooser.focus-ring-room {
+    min-width: calc(200px * var(--text-scale) + 2 * var(--focus-ring__room));
+    min-height: calc(200px + 2 * var(--focus-ring__room));
+}
+
 .chooser__bar {
     display: flex;
     /* The separator between the links in line with their text, not at the top of the bar */
@@ -53,7 +60,7 @@
 .chooser__values {
     flex-grow: 1;
     max-height: 400px;
-    max-width: 420px;
+    max-width: calc(420px * var(--text-scale));
     overflow-x: hidden;
     overflow-y: auto;
     padding: 0px 2px;
@@ -62,7 +69,7 @@
 
 .chooser__item {
     padding: 5px;
-    min-width: 200px;
+    min-width: calc(200px * var(--text-scale));
 }
 
 .chooser--multi .chooser__tick-box {

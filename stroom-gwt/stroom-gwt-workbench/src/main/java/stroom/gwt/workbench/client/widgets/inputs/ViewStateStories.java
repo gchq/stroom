@@ -394,7 +394,7 @@ public final class ViewStateStories {
 
     private static Label note(final String text) {
         final Label label = new Label(text);
-        label.getElement().getStyle().setProperty("fontSize", "12px");
+        label.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         label.getElement().getStyle().setProperty("fontStyle", "italic");
         label.getElement().getStyle().setProperty("maxWidth", "240px");
         label.getElement().getStyle().setProperty("whiteSpace", "normal");

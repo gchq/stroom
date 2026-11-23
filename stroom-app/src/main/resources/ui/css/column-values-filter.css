@@ -46,7 +46,7 @@
 }
 
 .popupContent .column-values-filter {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
     height: 400px;
 }
 

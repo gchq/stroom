@@ -102,6 +102,16 @@ public final class ApiKeysScreenStories {
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 })
+                // Create new API key left open (the screenshot and the dialog measurement show it)
+                .story("CreateNewApiKeyOpen", ApiKeysScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("CI pipeline key");
+                    play.click(play.getByTitle("New API Key"));
+                    final Play dialog = screen.within(screen.findByText("Create new API key", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("API Key Name");
+                })
                 // The pager's Refresh keeps the key chosen selected (once, every fetch selected the
                 // first key)
                 .story("RefreshKeepsSelection", context -> render(context, TWO_KEYS))

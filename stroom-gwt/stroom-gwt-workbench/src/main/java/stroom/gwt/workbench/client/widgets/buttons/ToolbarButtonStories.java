@@ -116,7 +116,7 @@ public final class ToolbarButtonStories {
                     return StoryPanels.row(8,
                             iconButton(context, SvgImage.ADD, "Visible"),
                             hidden,
-                            StoryPanels.note("(the edit button is hidden)", "#dce4e5", "12px"));
+                            StoryPanels.note("(the edit button is hidden)", "#dce4e5", "var(--font-size-11)"));
                 });
     }
 
@@ -151,7 +151,7 @@ public final class ToolbarButtonStories {
 
     /// Equivalent of `<span style={{fontSize: 12}}>{prefix}{count}{suffix}</span>`.
     private static InlineLabel counter(final String prefix, final String suffix) {
-        return StoryPanels.note(prefix + 0 + suffix, "#dce4e5", "12px");
+        return StoryPanels.note(prefix + 0 + suffix, "#dce4e5", "var(--font-size-11)");
     }
 
     private static void countClicks(final ToolbarButton button,

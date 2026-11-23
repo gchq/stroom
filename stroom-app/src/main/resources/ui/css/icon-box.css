@@ -32,7 +32,7 @@
     height: 100%;
     width: 100%;
     padding-right: 30px;
-    min-width: 200px;
+    min-width: calc(200px * var(--text-scale));
 }
 
 /* A box whose field has no least width, as narrow as its box, e.g. in a grid's cell, an expression's

@@ -24,33 +24,34 @@ import stroom.widget.button.client.Button;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.RadioGroup;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Html;
-import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The layer appearance dialog's content, which its [FloorMapLayerStyleController] shows.
 ///
 /// ```
-/// Graphic   (•) Shape   ( ) Icon   ( ) Image
-/// Shape     [ Circle            ▾ ]
-/// Icon      [ ▦ grid of built-in icons ]
-/// Image     [ /assets/…/van.svg   ] [Upload]
-/// Colour    [ ■ ]
-/// ─────────────────────────────────
-/// Preview   [▣]  fixed size on the map
+/// Graphic
+/// (•) Shape   ( ) Icon   ( ) Image
+/// Shape
+/// [ Circle            ▾ ]
+/// Icon
+/// [ ▦ grid of built-in icons ]
+/// Image
+/// [ /assets/…/van.svg   ] [Upload]
+/// Colour
+/// [ ■ ]
+/// Preview
+/// [▣]  fixed size on the map
 /// ```
 ///
-/// The Shape, Icon and Image rows are mutually exclusive — the `Graphic`
+/// The Shape, Icon and Image groups are mutually exclusive — the `Graphic`
 /// radios disable the two the mode does not use, so it is always clear which one
 /// the layer will actually draw. Colour stays enabled throughout: a shape and an
 /// icon are both filled with it, and even in image mode it still colours areas of
@@ -65,37 +66,22 @@ public class FloorMapLayerStyle extends Component {
     /// Size of the preview graphic in pixels.
     private static final int PREVIEW_SIZE_PX = 32;
 
-    /// Applied to whichever of the Shape / Icon / Image rows the mode ignores.
-    private static final String DIMMED_ROW_STYLE = "floor-map-layer-style__row--dimmed";
-
-    @UiField
-    TableCellElement graphicLabel;
     @UiField
     RadioGroup<GraphicMode> modeGroup;
     @UiField
-    TableRowElement shapeRow;
-    @UiField
-    TableCellElement shapeLabel;
+    FormGroup shapeGroup;
     @UiField
     SelectionBox<String> shapeBox;
     @UiField
-    TableRowElement iconRow;
-    @UiField
-    TableCellElement iconLabel;
+    FormGroup iconGroup;
     @UiField
     FloorMapIconPicker iconPicker;
     @UiField
-    TableRowElement imageRow;
-    @UiField
-    TableCellElement imageLabel;
-    @UiField
-    SimplePanel assetPickerPanel;
+    FormGroup imageGroup;
     @UiField
     DropDownBox assetBox;
     @UiField
     Button uploadButton;
-    @UiField
-    TableCellElement colourLabel;
     @UiField
     ColourBox colourBox;
     @UiField
@@ -119,19 +105,6 @@ public class FloorMapLayerStyle extends Component {
         modeGroup.addItem(GraphicMode.ICON, "Icon", "Draw one of the built-in icons, in this layer's colour");
         modeGroup.addItem(GraphicMode.IMAGE, "Image", "Draw an image from this document's assets");
 
-        // Each row's label is <td> text, which names nothing on its own. The Graphic row's radio
-        // group is named by its cell too, and each radio button by its own text
-        labelledBy(graphicLabel, modeGroup);
-        // A selection box: its combobox is the text box inside it
-        AriaUtil.labelledByInnerControl(shapeBox, id(shapeLabel));
-        labelledBy(colourLabel, colourBox);
-        // The icon grid is a group of choices rather than one control, so the row label names the
-        // group, as it does the asset picker's
-        labelledBy(iconLabel, iconPicker);
-        labelledBy(imageLabel, assetPickerPanel);
-        // The picker is a button named by the value it shows, so the row's name hangs off its
-        // container as a group
-        AriaUtil.group(assetPickerPanel, "Image");
         uploadButton.setOnClick(() -> onUpload.run());
         //noinspection unused e
         shapeBox.addValueChangeHandler(e -> onChange.run());
@@ -229,22 +202,10 @@ public class FloorMapLayerStyle extends Component {
         iconPicker.setEnabled(mode == GraphicMode.ICON);
         uploadButton.setEnabled(mode == GraphicMode.IMAGE);
         assetBox.setEnabled(mode == GraphicMode.IMAGE);
-        UIObject.setStyleName(shapeRow, DIMMED_ROW_STYLE, mode != GraphicMode.SHAPE);
-        UIObject.setStyleName(iconRow, DIMMED_ROW_STYLE, mode != GraphicMode.ICON);
-        UIObject.setStyleName(imageRow, DIMMED_ROW_STYLE, mode != GraphicMode.IMAGE);
-    }
-
-    // Names a control after the text in its row's label cell
-    private static void labelledBy(final TableCellElement label, final UIObject control) {
-        AriaUtil.labelledBy(control, id(label));
-    }
-
-    // The label cell's id, given one
-    private static String id(final TableCellElement label) {
-        if (label.getId() == null || label.getId().isEmpty()) {
-            label.setId(AriaUtil.uniqueId("floormap-label"));
-        }
-        return label.getId();
+        // The labels of the groups the mode doesn't use are greyed, as their controls are
+        shapeGroup.setDisabled(mode != GraphicMode.SHAPE);
+        iconGroup.setDisabled(mode != GraphicMode.ICON);
+        imageGroup.setDisabled(mode != GraphicMode.IMAGE);
     }
 
 

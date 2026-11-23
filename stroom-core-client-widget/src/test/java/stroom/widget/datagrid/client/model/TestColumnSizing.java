@@ -71,4 +71,32 @@ class TestColumnSizing {
 
         assertThat(sizing.getWidth()).isZero();
     }
+
+    @Test
+    void testScaled_scalesPixelWidthsOnly() {
+        final ColumnSizing sizing = ColumnSizing.fill(50, 150).withMinWidth(40).withMovable(false);
+
+        final ColumnSizing scaled = sizing.scaled(1.26);
+
+        assertThat(scaled.getWidth()).isEqualTo(189);
+        assertThat(scaled.getMinWidth()).isEqualTo(50);
+        assertThat(scaled.getFillWeight()).isEqualTo(50);
+        assertThat(scaled.getType()).isEqualTo(ColumnWidthType.FILL);
+        assertThat(scaled.isResizable()).isTrue();
+        assertThat(scaled.isMovable()).isFalse();
+    }
+
+    @Test
+    void testScaled_atMediumIsUnchanged() {
+        final ColumnSizing sizing = ColumnSizing.resizable(120);
+
+        assertThat(sizing.scaled(TextScale.MEDIUM)).isEqualTo(sizing);
+    }
+
+    @Test
+    void testScaled_keepsPercent() {
+        final ColumnSizing sizing = ColumnSizing.percent(25);
+
+        assertThat(sizing.scaled(1.26).getPercent()).isEqualTo(25);
+    }
 }

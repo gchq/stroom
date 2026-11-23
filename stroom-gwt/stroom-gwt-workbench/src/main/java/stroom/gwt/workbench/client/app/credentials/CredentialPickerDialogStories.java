@@ -94,6 +94,14 @@ public final class CredentialPickerDialogStories {
                                     .toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Credentials left open (the screenshot and the dialog measurement show it)
+                .story("CredentialsOpen", CredentialPickerDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Credentials", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText("github-token")).toBeInTheDocument());
                 });
     }
 

@@ -16,16 +16,20 @@
 
 package stroom.gwt.workbench.client.app.processing;
 
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -35,12 +39,15 @@ import com.google.gwt.user.client.ui.Widget;
 /// with the UI config's process limits.
 ///
 /// In Stroom the pipeline is chosen first, in its own 'Choose Pipeline To Process Results With'
-/// popup, so this dialog only has the limits. Creating the filter (which `QueryPaneController` does
-/// after OK, as `POST /processorFilter/v1`) isn't reached by the story.
+/// popup (shown by `ChoosePipelineToProcessResultsWithOpen`), so this dialog only has the limits.
+/// Creating the filter (which `QueryPaneController` does after OK, as `POST /processorFilter/v1`)
+/// isn't reached by the story.
 public final class ProcessorLimitsDialogStories {
 
     /// The name of the spy given the limits on OK.
     static final String ON_OK = "onOk";
+
+    private static final String CHOOSER_CAPTION = "Choose Pipeline To Process Results With";
 
     private ProcessorLimitsDialogStories() {
         // Static utility
@@ -88,6 +95,15 @@ public final class ProcessorLimitsDialogStories {
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Process Search Results")).toBeNull());
                     play.expect(play.spy(ON_OK)).not().toHaveBeenCalled();
+                })
+                // Choose Pipeline To Process Results With left open (the screenshot and the dialog
+                // measurement show it)
+                .story("ChoosePipelineToProcessResultsWithOpen", ProcessorLimitsDialogStories::renderChooser)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(
+                            screen.findByText(CHOOSER_CAPTION, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByText("System");
                 });
     }
 
@@ -106,6 +122,37 @@ public final class ProcessorLimitsDialogStories {
                         (recordLimit, timeLimitMins) -> onOk.call(recordLimit, timeLimitMins));
             }
         }));
+        return harness.asWidget();
+    }
+
+    // The pipeline chooser shown before the dialog, as QueryPaneController.choosePipeline shows it; a
+    // pipeline chosen then shows the dialog
+    private static Widget renderChooser(final StoryContext context) {
+        final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context,
+                        TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree()).build())
+                .injector(injector)
+                .build();
+        final Spy onOk = harness.fn(ON_OK);
+        harness.afterStartUp(() -> {
+            final DocumentChooserController chooser = injector.getDocumentChooserController();
+            chooser.setIncludeNullSelection(false);
+            chooser.setCaption(CHOOSER_CAPTION);
+            chooser.setIncludedTypes(PipelineDoc.TYPE);
+            chooser.setRequiredPermissions(DocumentPermission.USE);
+            chooser.showOnce(harness.getAppRoot(), pipeline -> {
+                if (pipeline != null) {
+                    harness.getUiConfigCache().get(result -> {
+                        if (result != null) {
+                            injector.getProcessorLimitsController().show(harness.getAppRoot(),
+                                    result.getProcess().getDefaultRecordLimit(),
+                                    result.getProcess().getDefaultTimeLimit(),
+                                    (recordLimit, timeLimitMins) -> onOk.call(recordLimit, timeLimitMins));
+                        }
+                    });
+                }
+            });
+        });
         return harness.asWidget();
     }
 }

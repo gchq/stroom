@@ -5,6 +5,8 @@
 @import url("../fonts/Roboto_Mono/Roboto_Mono.css");
 
 :root {
+    /* Medium, until a page sets a text size preference (see below) */
+    --text-scale: 1;
     --regular-font-family: Roboto, Arial Unicode MS, Arial, tahoma, verdana, sans-serif;
     --monospace-font-family: "courier new", courier, sans-serif;
 }
@@ -32,7 +34,19 @@
 
 
 
+/* --text-scale: how much bigger ordinary text (--font-size-13, which the root and every element
+   take, so it applies twice) is than at medium (14.44px): sizes given at medium, e.g. a grid's
+   column widths (DataGrid, TextScale) and the width of anything holding text
+   (calc(200px * var(--text-scale)), as TestStylesheets requires), are drawn multiplied by it. Where text is bigger, it allows
+   for text growing more than its font size: on Linux, Chrome rounds each letter's width to a whole
+   pixel, so Roboto grows by about 1.26 from medium to large, and shrinks only to about 0.93 at
+   small. These are the least it is: the page measures how much wider it draws a reference text
+   than at medium (TextScaleMeter) and sets --text-scale on the root to that when it is more, so
+   that widths follow text spacing a user sets (WCAG 1.4.12) and other platforms' fonts too. */
+
 .stroom-font-size-small {
+    /* 13px / 14.44px is 0.9003; text measures down to 0.93 times as wide */
+    --text-scale: 0.93;
     --font-size-6: 6px;
     --font-size-7: 7px;
     --font-size-8: 8px;
@@ -55,6 +69,7 @@
 }
 
 .stroom-font-size-medium {
+    --text-scale: 1;
     --font-size-6: .625rem;
     --font-size-7: .65rem;
     --font-size-8: .7rem;
@@ -77,6 +92,8 @@
 }
 
 .stroom-font-size-large {
+    /* 1.05rem of 1.05rem (17.64px) / 14.44px is 1.2216; text measures up to 1.26 times wider */
+    --text-scale: 1.26;
     --font-size-6: .7rem;
     --font-size-7: .725rem;
     --font-size-8: .75rem;

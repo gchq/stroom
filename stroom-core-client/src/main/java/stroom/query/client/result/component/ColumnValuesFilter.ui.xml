@@ -12,7 +12,7 @@
             <tx:Html styleName="text-label"><span aria-hidden="true">-</span></tx:Html>
             <btn:LinkButton ui:field="selectNoneLink" addStyleNames="column-values-filter__link" text="Select None"/>
         </g:FlowPanel>
-        <g:FlowPanel styleName="dock-max dock-container-vertical quick-filter-layout overflow-hidden">
+        <g:FlowPanel styleName="dock-max dock-container-vertical quick-filter-layout overflow-hidden focus-ring-room">
             <view:QuickFilter accessibleName="Filter values" ui:field="quickFilter" addStyleNames="dock-min"/>
             <g:SimplePanel styleName="dock-max control-box overflow-hidden">
                 <!-- The values, each ticked or not -->

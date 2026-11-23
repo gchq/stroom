@@ -93,6 +93,8 @@ public class FloorMapClusterDialog extends Component {
     /// Makes an empty dialog content, with no members.
     public FloorMapClusterDialog() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        quickFilter.addFilteredGrid(dataGrid);
         trackButton.setOnClick(this::onTrackButton);
 
         // The widget's default help text describes the platform's field-qualified quick filter,

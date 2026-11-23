@@ -125,7 +125,7 @@ public final class AceEditorFormatStories {
         style.setProperty("flexDirection", "column");
         style.setProperty("gap", "12px");
         style.setProperty("fontFamily", "monospace");
-        style.setProperty("fontSize", "12px");
+        style.setProperty("fontSize", "var(--font-size-11)");
         for (final Case aCase : cases) {
             final FlowPanel casePanel = new FlowPanel();
             final Label name = new Label(aCase.name());

@@ -104,3 +104,96 @@
     color: var(--icon-colour__off-white);
 }
 
+/* Forced colours (e.g. Windows high contrast) don't change an SVG's colour set on the SVG itself
+   (e.g. a toolbar button's icon, or one of the classes above) or its fill set from these variables,
+   so icons kept the theme's colours: light grey ones all but vanished on a light background, and
+   coloured ones (green stepping buttons, blue dashboard query buttons) didn't follow the system's.
+   There an icon is drawn in the text colour around it, as the system's own are: CanvasText, or
+   HighlightText where its row or button is filled with Highlight; its white parts in Canvas. An
+   icon is an SVG hidden from screen readers (SvgMarkup.decorative) or in an element with an
+   svg-image class (SvgImageUtil's svg-image, or an icon's own, e.g. svg-image__add, as FabButton
+   gives it); others (e.g. a visualisation's) keep their colours. Important, as many sheets colour
+   their icons */
+@media (forced-colors: active) {
+    :root,
+    .stroom-theme-dark {
+        --icon-colour__black: currentColor;
+        --icon-colour__black__on: currentColor;
+        --icon-colour__white: Canvas;
+        --icon-colour__white__on: Canvas;
+        --icon-colour__blue: currentColor;
+        --icon-colour__dark-green: currentColor;
+        --icon-colour__dirty-amber: currentColor;
+        --icon-colour__green: currentColor;
+        --icon-colour__grey: currentColor;
+        --icon-colour__info-blue: currentColor;
+        --icon-colour__off-white: currentColor;
+        --icon-colour__orange: currentColor;
+        --icon-colour__pale-yellow: currentColor;
+        --icon-colour__safety-yellow: currentColor;
+        --icon-colour__purple: currentColor;
+        --icon-colour__red: currentColor;
+        --icon-colour__xml-background: Canvas;
+        --icon-colour__xsd-background: Canvas;
+        --icon-colour__xsl-background: Canvas;
+        --icon-colour__yellow: currentColor;
+    }
+
+    svg[aria-hidden="true"],
+    [class*="svg-image"] svg {
+        color: inherit !important;
+    }
+
+    /* Some icons have their colours written into the SVG, which forced colours keep: white parts
+       (the tick in an error's circle, a help's question mark) are Canvas, like the white variables
+       above. Where the white part is the whole icon (a tick, the stepping glyph), and for the status
+       icons' coloured shapes (error, info, fatal, warning, alert), the text colour */
+    /* (Classes are listed, not grouped in :is(), as TestStylesheets reads a selector's commas as
+       separate selectors) */
+    :is(svg[aria-hidden="true"], [class*="svg-image"] svg) :is([style="fill:#fff"], [style="fill:#ffffff"]) {
+        fill: Canvas !important;
+    }
+
+    .svg-image__tick svg [style="fill:#fff"],
+    .svg-image__stepping svg [style="fill:#fff"],
+    .svg-image__error svg [style="fill:#d32f2e"],
+    .svg-image__info svg [style="fill:#1976d3"],
+    .svg-image__fatal svg [style^="fill:#000"],
+    .svg-image__fatal-dark svg [style^="fill:#000"],
+    .svg-image__warning svg [style="fill:#eed201"] {
+        fill: currentColor !important;
+    }
+
+    .svg-image__warning svg [style="fill:#000"],
+    .svg-image__alert svg [style="fill:#000"] {
+        fill: Canvas !important;
+    }
+
+    .svg-image__warning svg [style*="stroke:"],
+    .svg-image__alert svg [style*="stroke:"],
+    .svg-image__fatal-dark svg [style*="stroke:"] {
+        stroke: currentColor !important;
+    }
+
+    /* On a Highlight fill (a selected row, the current step, a pressed button), where the icon is
+       HighlightText, its white parts are Highlight, not Canvas: an error's cross on the current step
+       of the stepping path bar was lost, Canvas on HighlightText being the same in the dark palette */
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"]) {
+        --icon-colour__white: Highlight;
+        --icon-colour__white__on: Highlight;
+    }
+
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
+            :is(svg[aria-hidden="true"], [class*="svg-image"] svg)
+            :is([style="fill:#fff"], [style="fill:#ffffff"]) {
+        fill: Highlight !important;
+    }
+
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
+            .svg-image__tick svg [style="fill:#fff"],
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
+            .svg-image__stepping svg [style="fill:#fff"] {
+        fill: currentColor !important;
+    }
+}
+

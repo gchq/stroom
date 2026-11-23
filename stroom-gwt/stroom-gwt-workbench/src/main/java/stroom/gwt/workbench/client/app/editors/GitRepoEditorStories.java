@@ -190,6 +190,15 @@ public final class GitRepoEditorStories {
                             RequestMatcher.post("/gitRepo/v1/pushToGit").toSpyMatcher());
                     DocEditors.expectNoUnhandledRequests(play);
                 })
+                // Git Push left open (the screenshot and the dialog measurement show it)
+                .story("GitPushOpen", context -> render(context, new Fixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button", StroomDom.button("Push to Git")));
+                    final Play dialog = screen.within(screen.findByText("Git Push", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("Commit message");
+                })
                 // Pull shows the result, and closing the alert refreshes the explorer tree
                 .story("PullSuccess", context -> render(context, new Fixtures()
                         .reply("/gitRepo/v1/pullFromGit", "{\"ok\": true, \"message\": \"Pulled 7 files.\"}")))

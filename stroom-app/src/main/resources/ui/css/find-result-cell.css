@@ -122,3 +122,13 @@
 .data-grid__row--selected .find-result-cell__uuid {
     color: inherit;
 }
+
+/* In forced colours (e.g. Windows high contrast) a match was shown by its fill alone, which is
+   replaced; there it is the system's colours for marked text */
+@media (forced-colors: active) {
+    .find-result-cell__highlight {
+        forced-color-adjust: none;
+        background-color: Mark;
+        color: MarkText;
+    }
+}

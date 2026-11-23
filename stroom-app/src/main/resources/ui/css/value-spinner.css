@@ -29,17 +29,17 @@
    or dock-max) is the field's */
 .value-spinner {
     display: inline-block;
-    width: 200px;
+    width: calc(200px * var(--text-scale));
     vertical-align: middle;
 }
 
 /* A narrow spinner, for a value of a few digits, and a wide one, as wide as the default */
 .value-spinner.value-spinner--narrow {
-    width: 80px;
+    width: calc(80px * var(--text-scale));
 }
 
 .value-spinner.value-spinner--wide {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* The field and the arrows over its end */
@@ -173,4 +173,15 @@
 
 .data-grid__row--selected .data-grid__cell--disabled .value-spinner__input {
     color: var(--text-color--disabled--selected);
+}
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(.value-spinner, .value-spinner *) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+    }
 }

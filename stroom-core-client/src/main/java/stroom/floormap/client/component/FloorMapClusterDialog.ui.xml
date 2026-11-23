@@ -22,7 +22,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:view="urn:import:stroom.widget.quickfilter.client">
-    <g:FlowPanel styleName="max dock-container-vertical">
+    <g:FlowPanel styleName="max form">
         <!-- Search and filters on one line: all three narrow the same list, so
              none of them outranks the others. The search box takes the slack
              because what is typed into it is the only unbounded value here.
@@ -30,7 +30,7 @@
              The row layout is the feature's own class rather than the usual
              "dock-container-horizontal form" pair: .form sets
              flex-direction: column and, being on the same element, wins. -->
-        <g:FlowPanel styleName="dock-min form-padding floor-map-cluster-dialog__filters">
+        <g:FlowPanel styleName="dock-min floor-map-cluster-dialog__filters">
             <form:FormGroup identity="clusterSearch" label="Search"
                             addStyleNames="floor-map-cluster-dialog__search">
                 <view:QuickFilter ui:field="quickFilter"/>
@@ -52,7 +52,7 @@
             </form:FormGroup>
         </g:FlowPanel>
         <g:SimplePanel styleName="dock-max overflow-hidden">
-            <dg:PagerPanel toolbarName="Cluster member actions">
+            <dg:PagerPanel toolbarName="Cluster member actions" addStyleNames="control-box">
                 <b:ToolbarButton ui:field="trackButton" svg="LOCATE" title="Track this entity" enabled="false"/>
                 <!-- Says which of the two empty states this is: a filter that matched
                      nothing looks exactly like a broken dialog otherwise. -->

@@ -20,6 +20,7 @@
 // real Tab from one control to the next while editing.
 
 import assert from 'node:assert/strict';
+import { withForcedColours } from './forced-colours.mjs';
 
 const GRID = '[data-testid="grid"]';
 
@@ -165,8 +166,7 @@ export const CHECKS = {
       return { background: s.backgroundColor, outlineStyle: s.outlineStyle, outlineWidth: s.outlineWidth,
         outlineColor: s.outlineColor };
     });
-    await page.emulateMedia({ forcedColors: 'active' });
-    try {
+    await withForcedColours(page, async () => {
       const system = await page.evaluate(() => {
         const probe = document.createElement('div');
         probe.style.cssText = 'forced-color-adjust: none; background-color: Highlight; color: HighlightText';
@@ -191,9 +191,7 @@ export const CHECKS = {
       assert.equal(focused.outlineStyle, 'solid', 'keyboard focus shows as an outline');
       assert.equal(focused.outlineWidth, '2px', 'the outline is 2px wide');
       assert.equal(focused.outlineColor, system.highlightText, 'on a chosen row, in HighlightText');
-    } finally {
-      await page.emulateMedia({ forcedColors: 'none' });
-    }
+    });
   },
 
   // A density change made by the page alone, with no key or click after it (as a preference change

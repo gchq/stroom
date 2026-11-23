@@ -103,6 +103,16 @@ public final class ItemNavigatorStories {
                     play.expect(play.spy(ON_SET_ITEM_NO)).toHaveBeenCalledWith("6");
                     play.findByText("Record 7 of 10");
                 })
+                // Select Record left open (the screenshot and the dialog measurement show it)
+                .story("SelectRecordOpen", context -> render(context, TEN))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.getByRole("button", "Select Record (Record 3 of 10)"));
+                    final Play dialog = screen.within(screen.findByText(DIALOG, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByRole("spinbutton", "Item number"))
+                            .toHaveValue("3"));
+                })
                 // An item beyond the largest int is chosen as it is: it was once cut to an int
                 .story("SelectLargeRecordNumber", context -> render(context, THREE_BILLION))
                 .withPlay(play -> {

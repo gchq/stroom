@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-/* The documents changed, to choose which to save (stroom.pipeline.client.component.SaveChangedDocuments):
-   the list scrolls */
-.save-changed-documents__list {
-    overflow: auto;
+package stroom.widget.datagrid.client;
+
+/// A list that can be told whether a filter or search is set on its rows, so that with no rows it
+/// says "No matches" rather than that there is nothing. [DataGrid] is one; a component that shows
+/// one passes it on, so that a filter outside it (`QuickFilter.addFilteredGrid`) can reach it.
+public interface HasFiltered {
+
+    /// @param filtered Whether a filter or search is set.
+    void setFiltered(boolean filtered);
 }

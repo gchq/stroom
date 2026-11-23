@@ -33,14 +33,14 @@
     margin: calc(-1 * var(--control__gap--vertical)) calc(-1 * var(--control__gap--horizontal)) 0;
 }
 
-/* In a dialog, the details are framed as a control, and inset to line up with the controls above
-   them (which have form-padding), as the list's table is */
+/* In a dialog, the details are framed and filled as a control-box is (form-controls.css), and inset to
+   line up with the controls above them (which have form-padding), as the list's table is */
 .dialog__content .document-user-permissions-tab__details {
     width: auto;
     margin: 0 var(--control__gap--horizontal);
     border: 1px solid var(--control__border-color);
     border-radius: .25rem;
-    background-color: var(--content-box__background-color);
+    background-color: var(--control__background-color);
     overflow: hidden;
 }
 

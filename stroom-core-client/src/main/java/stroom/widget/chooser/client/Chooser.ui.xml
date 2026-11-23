@@ -10,7 +10,7 @@
       filter above a list of values, which its controller fills. A choice is made with a click,
       Enter or Space; moving through the list chooses nothing
     -->
-    <g:FlowPanel styleName="chooser max default-min-sizes dock-container-vertical quick-filter-layout overflow-hidden">
+    <g:FlowPanel styleName="chooser max default-min-sizes dock-container-vertical quick-filter-layout overflow-hidden focus-ring-room">
         <g:FlowPanel ui:field="selectBar" styleName="chooser__bar" visible="false">
             <btn:LinkButton ui:field="selectAllLink" addStyleNames="chooser__link" text="Select All"/>
             <!-- Only drawn between the two buttons, not read out -->

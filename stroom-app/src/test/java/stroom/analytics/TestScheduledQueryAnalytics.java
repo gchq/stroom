@@ -88,6 +88,36 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
     private static final String RULE_DOCUMENTATION = "Internal notes that must not leave Stroom.";
 
+    // The test events of user5 are one in each of five months of 2007, which are all whole windows
+    // of the time that the rule searches.
+    @Test
+    void testWindowScheduledQuery() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                group by UserId
+                select windowStart() as Month, UserId, count() as Events""";
+        basicTest(query, 9, 6);
+        assertThat(readNewestStream())
+                .contains("<value name=\"Month\">2007-01-01T00:00:00.000Z</value>")
+                .doesNotContain("__window__");
+    }
+
+    // A window that is still filling when the rule is run is not judged, so there are no detections.
+    @Test
+    void testWindowCutShortIsNotJudged() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1000y
+                group by UserId
+                select windowStart() as Start, UserId, count() as Events""";
+        createScheduleAndRun(writeRule(ruleBuilder().query(query).build()));
+
+        analyticsDataSetup.checkStreamCount(8);
+    }
+
     @Test
     void testSingleEventScheduledQuery() {
         basicTest(QUERY, 9, 6);

@@ -18,6 +18,7 @@ package stroom.index.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,6 +32,8 @@ public class IndexVolumeGroupEditor extends Component {
 
     @UiField
     TextBox name;
+    @UiField
+    Label mixedWarning;
     @UiField
     IndexVolumeStatusList list;
 
@@ -52,6 +55,13 @@ public class IndexVolumeGroupEditor extends Component {
     /// @param name The group's name.
     public void setName(final String name) {
         this.name.setText(name);
+    }
+
+    /// Shows or hides the warning that the group holds both shared and local volumes.
+    ///
+    /// @param visible True to show the warning.
+    public void setMixedWarningVisible(final boolean visible) {
+        mixedWarning.setVisible(visible);
     }
 
     /// @return The group's volumes, which its controller attaches the list's controller to.

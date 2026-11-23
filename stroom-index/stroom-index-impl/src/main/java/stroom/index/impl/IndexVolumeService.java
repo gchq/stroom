@@ -27,6 +27,13 @@ public interface IndexVolumeService {
 
     ValidationResult validate(final IndexVolume request);
 
+    /// Checks that this node can use the path of a volume, creating the directory if it does not exist.
+    /// Every node has to be able to use the path of a shared volume, so this is run on each of them.
+    ///
+    /// @param indexVolume The volume whose path is to be checked.
+    /// @return Ok if this node can write to the path, otherwise an error.
+    ValidationResult validatePath(IndexVolume indexVolume);
+
     IndexVolume create(IndexVolume indexVolume);
 
     IndexVolume read(int id);
@@ -39,7 +46,9 @@ public interface IndexVolumeService {
 
     /**
      * Uses the configured volume selector to select an index volume from group
-     * groupName and belonging to node nodeName.
+     * groupName that node nodeName can use. The shared volumes of the group are
+     * used if it has any that can take a shard, otherwise the local volumes
+     * belonging to node nodeName.
      *
      * @throws stroom.index.shared.IndexException When no suitable {@link IndexVolume} can
      *                                            be found.

@@ -14,46 +14,21 @@
  * limitations under the License.
  */
 
-/* The group edit dialog's content (FloorMapGroupEdit) */
-
+/* The group edit dialog's content (FloorMapGroupEdit): a form, at a fixed width */
 .floor-map-group-edit {
+    width: calc(420px * var(--text-scale));
+}
+
+/* The members' heading, filter box, list and summary, one under another */
+.floor-map-group-edit__members-group {
     display: flex;
     flex-direction: column;
-    width: 420px;
-    padding: 4px;
 }
 
-.floor-map-group-edit__fields {
-    border-spacing: 8px 10px;
-}
-
-.floor-map-group-edit__fields td {
-    vertical-align: middle;
-}
-
-.floor-map-group-edit__fields td:first-child {
-    color: var(--text-color--low-emphasis);
-    white-space: nowrap;
-}
-
-.floor-map-group-edit__fields input[type="text"] {
-    width: 300px;
-}
-
-.floor-map-group-edit__label {
-    margin: 6px 0 4px 8px;
-    color: var(--text-color--low-emphasis);
-}
-
-.floor-map-group-edit__filter {
-    margin: 0 8px 6px;
-}
-
+/* The list of members (in a control-box), under the filter box */
 .floor-map-group-edit__scroll {
     height: 240px;
-    margin: 0 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    margin-top: var(--control__gap--vertical);
 }
 
 .floor-map-group-edit__members {
@@ -93,7 +68,7 @@
 .floor-map-group-edit__member-detail {
     flex: 0 0 auto;
     margin-left: auto;
-    font-size: 11px;
+    font-size: var(--font-size-9);
     color: var(--text-color--low-emphasis);
 }
 
@@ -109,7 +84,7 @@
 }
 
 .floor-map-group-edit__summary {
-    margin: 6px 8px 2px;
-    font-size: 11px;
+    margin-top: .25rem;
+    font-size: var(--font-size-9);
     color: var(--text-color--low-emphasis);
 }

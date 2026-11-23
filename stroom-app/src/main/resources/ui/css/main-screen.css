@@ -50,7 +50,7 @@
 
 /* The main area, below the maintenance banner while it is shown */
 .main-screen__main--banner {
-    top: 20px;
+    top: calc(20px * var(--text-scale));
 }
 
 .main-screen__banner {
@@ -58,7 +58,8 @@
     left: 0px;
     right: 0px;
     top: 0px;
-    height: 20px;
+    /* Its line of text, growing with the text size */
+    height: calc(20px * var(--text-scale));
     overflow: hidden;
     text-align: center;
     font-weight: 500;

@@ -24,6 +24,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Value;
@@ -140,11 +141,16 @@ public final class ServerTasksScreenStories {
                     play.findByText("Stream Processor B");
                     // The expander column widens for the deeper tree, taking its width from the Info
                     // column (a fill column), so the columns still end within the grid (they once
-                    // ran past its edge, under a horizontal scroll bar)
+                    // ran past its edge, under a horizontal scroll bar). At a large text size the
+                    // columns are wider than the grid from the start, and Info can give up nothing
+                    // below its minimum
                     final Value<Double> lastRight = play.querySelector("[data-hcol=\"8\"]").right();
+                    final Value<Double> info = play.querySelector("[data-hcol=\"8\"]").width();
                     final Value<Double> gridRight = play.querySelector(".data-grid").right();
-                    play.waitFor(() -> play.expect("the space right of the columns",
-                            () -> gridRight.get() - lastRight.get()).toBeGreaterThanOrEqual(0));
+                    final int infoMinimum = DataGridStories.drawn(200);
+                    play.waitFor(() -> play.expect("the columns end within the grid, or Info is at its minimum",
+                            () -> gridRight.get() - lastRight.get() >= 0
+                                  || Math.abs(info.get() - infoMinimum) <= 1).toBe(true));
                     // Tick child A (a TickBoxCell, not an <input>) and terminate it
                     play.click(play.within(play.getByText("Stream Processor A").closest(StroomDom.GRID_ROW))
                             .querySelector(".tick-box"));

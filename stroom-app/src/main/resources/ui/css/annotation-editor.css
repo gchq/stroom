@@ -46,14 +46,14 @@
     display: flex;
     flex-flow: column;
     flex-shrink: 0;
-    width: 400px;
+    width: calc(400px * var(--text-scale));
     padding-right: 20px;
     min-width: 0;
 }
 
 .annotation-editor__right {
     flex-shrink: 1;
-    min-width: 300px;
+    min-width: calc(300px * var(--text-scale));
 }
 
 .annotation-editor__title-container {
@@ -137,7 +137,7 @@
 
 .annotation-editor__copy-history {
     flex-grow: 0;
-    width: 200px;
+    width: calc(200px * var(--text-scale));
     margin-top: 10px;
     align-self: flex-end;
 }
@@ -154,7 +154,7 @@
 
 /* Choose Comment and Create, below the comment */
 .annotation-editor__button {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* A label or collection, a lozenge (lozenge.css), one under another */

@@ -47,6 +47,8 @@ public class KeyboardShortcuts extends Component {
     /// Makes the content, with no rows.
     public KeyboardShortcuts() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        quickFilter.addFilteredGrid(dataGrid);
         dataGrid.addDefaultSelectionModel(false);
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(ShortcutRow::action).build(),

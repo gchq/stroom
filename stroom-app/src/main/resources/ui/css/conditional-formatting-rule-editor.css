@@ -18,10 +18,10 @@
 
 /* Set Custom Style, the width of the example below it */
 .conditional-formatting-rule-editor__custom-style {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* The example of a matching row */
 .conditional-formatting-rule-editor__example {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }

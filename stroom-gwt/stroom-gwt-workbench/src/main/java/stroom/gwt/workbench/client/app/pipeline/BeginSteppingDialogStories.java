@@ -112,6 +112,14 @@ public final class BeginSteppingDialogStories {
                     play.waitFor(() -> play.expect(screen.queryByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Choose Pipeline To Step With left open (the screenshot and the dialog measurement show it)
+                .story("ChoosePipelineToStepWithOpen", BeginSteppingDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(
+                            screen.findByText(CAPTION, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByText("Guessed Pipeline");
                 });
     }
 
@@ -127,37 +135,41 @@ public final class BeginSteppingDialogStories {
         final StepLocation stepLocation = StepLocation.first(42);
         final String childStreamType = "RAW";
 
-        // As PipelinePlugin.onBeginStepping does for an event with no pipeline
-        final DocumentChooserController chooser = injector.getDocumentChooserController();
-        chooser.setIncludeNullSelection(false);
-        chooser.setCaption(CAPTION);
-        chooser.setIncludedTypes(PipelineDoc.TYPE);
-        chooser.setRequiredPermissions(DocumentPermission.VIEW);
-        final Runnable showChooser = () -> chooser.showOnce(harness.getAppRoot(), pipeline -> {
-            if (pipeline != null) {
-                // PipelinePlugin.step
-                restFactory
-                        .create(metaResource)
-                        .method(res -> res.findMetaRow(FindMetaCriteria.createFromId(stepLocation.getMetaId())))
-                        .onSuccess(result -> {
-                            if (result != null && result.size() == 1) {
-                                final MetaRow row = result.getFirst();
-                                harness.spy(ON_BEGIN, "pipeline=" + pipeline.getUuid()
-                                                      + ", childStreamType=" + childStreamType
-                                                      + ", metaId=" + row.getMeta().getId());
-                            }
-                        })
-                        .taskMonitorFactory(new DefaultTaskMonitorFactory(chooser))
-                        .exec();
-            }
-        }, PopupType.CREATE_OK_CANCEL_DIALOG);
-        harness.afterStartUp(() -> restFactory
-                .create(steppingResource)
-                .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
-                        stepLocation.getMetaId(), null)))
-                .onSuccess(docRef -> chooser.setSelectedEntityReference(docRef, showChooser))
-                .taskMonitorFactory(new DefaultTaskMonitorFactory(chooser))
-                .exec());
+        // Each opening makes the chooser, as the plugin does, so the leak check can open it again
+        harness.afterStartUp(() -> {
+            // As PipelinePlugin.onBeginStepping does for an event with no pipeline
+            final DocumentChooserController chooser = injector.getDocumentChooserController();
+            chooser.setIncludeNullSelection(false);
+            chooser.setCaption(CAPTION);
+            chooser.setIncludedTypes(PipelineDoc.TYPE);
+            chooser.setRequiredPermissions(DocumentPermission.VIEW);
+            final Runnable showChooser = () -> chooser.showOnce(harness.getAppRoot(), pipeline -> {
+                if (pipeline != null) {
+                    // PipelinePlugin.step
+                    restFactory
+                            .create(metaResource)
+                            .method(res -> res.findMetaRow(
+                                    FindMetaCriteria.createFromId(stepLocation.getMetaId())))
+                            .onSuccess(result -> {
+                                if (result != null && result.size() == 1) {
+                                    final MetaRow row = result.getFirst();
+                                    harness.spy(ON_BEGIN, "pipeline=" + pipeline.getUuid()
+                                                          + ", childStreamType=" + childStreamType
+                                                          + ", metaId=" + row.getMeta().getId());
+                                }
+                            })
+                            .taskMonitorFactory(new DefaultTaskMonitorFactory(chooser))
+                            .exec();
+                }
+            }, PopupType.CREATE_OK_CANCEL_DIALOG);
+            restFactory
+                    .create(steppingResource)
+                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
+                            stepLocation.getMetaId(), null)))
+                    .onSuccess(docRef -> chooser.setSelectedEntityReference(docRef, showChooser))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(chooser))
+                    .exec();
+        });
         return harness.asWidget();
     }
 }

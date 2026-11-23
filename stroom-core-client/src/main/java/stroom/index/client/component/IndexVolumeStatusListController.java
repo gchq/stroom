@@ -35,6 +35,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -47,6 +48,7 @@ public class IndexVolumeStatusListController extends Controller {
     private final DateTimeFormatter dateTimeFormatter;
     private IndexVolumeStatusList view;
     private Consumer<ResultPage<IndexVolume>> consumer;
+    private Consumer<List<IndexVolume>> dataHandler;
     private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
 
     /// Made by GIN; [#attach(IndexVolumeStatusList)] gives it its list.
@@ -114,6 +116,9 @@ public class IndexVolumeStatusListController extends Controller {
                         .method(res -> res.find(criteria))
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
+                            if (dataHandler != null) {
+                                dataHandler.accept(result.getValues());
+                            }
                             // Only the first page, not a later page or refresh
                             final Consumer<ResultPage<IndexVolume>> first = consumer;
                             consumer = null;
@@ -134,6 +139,14 @@ public class IndexVolumeStatusListController extends Controller {
             }
         };
         view.setDataProvider(dataProvider);
+    }
+
+    /// Sets a handler that is given the listed volumes each time they are found, including on a
+    /// refresh.
+    ///
+    /// @param dataHandler The handler, or null for none.
+    public void setDataHandler(final Consumer<List<IndexVolume>> dataHandler) {
+        this.dataHandler = dataHandler;
     }
 
     /// @return The task monitor that spins the list's pager's refresh button.

@@ -40,14 +40,14 @@ public final class DateTimeWidgets {
         // Static utility
     }
 
-    /// A small paragraph (`margin-top: 8px`, `font-size: 12px`) showing the value.
+    /// A small paragraph (`margin-top: 8px`, `font-size: var(--font-size-11)`) showing the value.
     ///
     /// @param text The text.
     /// @return A label.
     static Label valueLabel(final String text) {
         final Label label = new Label(text);
         label.getElement().getStyle().setProperty("marginTop", "8px");
-        label.getElement().getStyle().setProperty("fontSize", "12px");
+        label.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         return label;
     }
 

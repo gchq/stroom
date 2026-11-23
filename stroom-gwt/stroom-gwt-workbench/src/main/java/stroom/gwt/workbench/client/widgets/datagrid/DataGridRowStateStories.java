@@ -21,6 +21,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxState;
 import stroom.cell.valuespinner.client.EditableInteger;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.ComponentStories;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -101,6 +102,10 @@ public final class DataGridRowStateStories {
         play.waitFor(() -> play.expect(section.title + " selected rows",
                         () -> countSelected(play.getByTestId(testId).element().get()))
                 .toBe(RowState.selectedCount()));
+        if (ForcedColours.active()) {
+            playForcedColours(play, section, testId);
+            return;
+        }
         // Mouse over: the hovered colour, which fades in
         play.waitFor(() -> play.expect(section.title + " mouse over",
                         () -> background(play, testId, RowState.HOVER)
@@ -128,6 +133,23 @@ public final class DataGridRowStateStories {
         play.expect(section.title + " focused cell's row has no ring",
                         () -> boxShadow(row(play, testId, RowState.SELECTED_FOCUSED_CELL)))
                 .toBe("none");
+    }
+
+    // In forced colours (e.g. Windows high contrast) the theme's colours give way to the system's
+    // (data-grid.css): a selected row, focused or not, is filled with Highlight, and the keyboard
+    // focus is an outline on the focused row or cell, not a box shadow
+    private static void playForcedColours(final Play play, final Section section, final String testId) {
+        for (final RowState state : new RowState[]{RowState.SELECTED, RowState.SELECTED_FOCUSED}) {
+            play.expect(section.title + " " + state.label + " is Highlight",
+                            () -> background(play, testId, state).equals(ForcedColours.colour("Highlight")))
+                    .toBe(true);
+        }
+        play.expect(section.title + " focused row's outline",
+                        () -> ForcedColours.hasOutline(row(play, testId, RowState.FOCUSED)))
+                .toBe(true);
+        play.expect(section.title + " focused cell's outline",
+                        () -> ForcedColours.hasOutline(cell(row(play, testId, RowState.SELECTED_FOCUSED_CELL))))
+                .toBe(true);
     }
 
     private static Element row(final Play play, final String testId, final RowState state) {

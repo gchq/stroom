@@ -3,7 +3,7 @@
  */
 
 .about {
-    width: 500px;
+    width: calc(500px * var(--text-scale));
     height: 288px;
     display: flex;
     flex-direction: column;

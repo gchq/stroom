@@ -21,11 +21,13 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
+import stroom.widget.datagrid.client.model.EmptyMessage;
 import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
 import stroom.widget.datagrid.client.model.SortRebuild;
+import stroom.widget.datagrid.client.model.TextScale;
 import stroom.widget.hyperlink.client.HyperlinkEvent;
 import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.hyperlink.client.OpenHyperlinkRequest;
@@ -34,6 +36,7 @@ import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.TextScaleMeter;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
@@ -102,7 +105,7 @@ import java.util.function.Function;
 ///
 /// @param <R> The row type.
 public class DataGrid<R> extends Widget
-        implements GridDisplay<R>, HasKeyboardSelectionPolicy, Focusable {
+        implements GridDisplay<R>, HasKeyboardSelectionPolicy, Focusable, HasFiltered {
 
     /// The default page size.
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
@@ -210,7 +213,11 @@ public class DataGrid<R> extends Widget
     // How many handle the grid's links (addHyperlinkHandler)
     private int hyperlinkHandlerCount;
     private String tableName;
-    private String emptyMessage;
+    // What the grid says with no rows (R-D5)
+    private final EmptyMessage emptyMessage = new EmptyMessage();
+    // What the empty message last showed, so that only a change is written (renderEmptyMessage)
+    private String renderedEmptyText;
+    private boolean renderedEmptyShown;
 
     // Render state.
     private boolean renderScheduled;
@@ -221,6 +228,8 @@ public class DataGrid<R> extends Widget
     private boolean frameScheduled;
     private int savedScrollTop;
     private int savedScrollLeft;
+    // The text scale the column widths are drawn at (see followTextScale)
+    private double drawnScale = textScale();
 
     // Listeners added outside GWT's event system.
     private final List<JavaScriptObject> nativeListeners = new ArrayList<>();
@@ -249,6 +258,8 @@ public class DataGrid<R> extends Widget
         // The parts (see the template), which key events bubble from to the root, where they are
         // handled
         final Element root = BINDER.createAndBindUi(this);
+        // The grid's description while the empty message shows
+        empty.setId(Document.get().createUniqueId());
         scrollbars = new OverlayScrollbars(root,
                 scroller,
                 verticalTrack,
@@ -400,7 +411,7 @@ public class DataGrid<R> extends Widget
                              final Column<R, ?> column,
                              final Header<?> header,
                              final ColumnSizing sizing) {
-        columnModel.insert(beforeIndex, column, sizing);
+        columnModel.insert(beforeIndex, column, sizing.scaled(followTextScale()));
         headers.put(column, header);
         // A column made afresh takes back the sort of the one it replaces
         if (sortRebuild.isPending()) {
@@ -466,10 +477,23 @@ public class DataGrid<R> extends Widget
     /// Set a column's width as a user resize would, telling the heading listener first.
     ///
     /// @param index The column index.
-    /// @param width The width in pixels.
+    /// @param width The width in pixels at the medium text size (see [TextScale]).
     public void resizeColumn(final int index, final int width) {
         if (headingListener != null) {
             headingListener.resizeColumn(index, width);
+        }
+        columnModel.setWidth(index, TextScale.toDrawn(width, followTextScale()));
+        scheduleRender();
+    }
+
+    /// Set a column's width to one drawn at the page's text size, as a user resize would (e.g. to
+    /// fit its content), telling the heading listener the width at the medium text size first.
+    ///
+    /// @param index The column index.
+    /// @param width The width in pixels, as drawn.
+    void resizeColumnDrawn(final int index, final int width) {
+        if (headingListener != null) {
+            headingListener.resizeColumn(index, TextScale.toMedium(width, drawnScale));
         }
         columnModel.setWidth(index, width);
         scheduleRender();
@@ -478,11 +502,11 @@ public class DataGrid<R> extends Widget
     /// Set a column's width programmatically.
     ///
     /// @param column The column.
-    /// @param width  The width in pixels.
+    /// @param width  The width in pixels at the medium text size (see [TextScale]).
     public void setColumnWidth(final Column<R, ?> column, final int width) {
         final int index = columnModel.indexOf(column);
         if (index != -1) {
-            columnModel.setWidth(index, width);
+            columnModel.setWidth(index, TextScale.toDrawn(width, followTextScale()));
             scheduleRender();
         }
     }
@@ -500,15 +524,16 @@ public class DataGrid<R> extends Widget
     /// giving back what it gains where the columns would otherwise run past the grid's edge.
     ///
     /// @param column The column.
-    /// @param width  The width in pixels.
+    /// @param width  The width in pixels at the medium text size (see [TextScale]).
     public void setColumnWidthWithinFill(final Column<R, ?> column, final int width) {
         final int index = columnModel.indexOf(column);
         if (index != -1) {
+            final int drawnWidth = TextScale.toDrawn(width, followTextScale());
             final int outerWidth = getElement().getClientWidth();
             if (isAttached() && columnModel.isResolved() && outerWidth > 0) {
-                columnModel.setWidthWithinFill(index, width, outerWidth);
+                columnModel.setWidthWithinFill(index, drawnWidth, outerWidth);
             } else {
-                columnModel.setWidth(index, width);
+                columnModel.setWidth(index, drawnWidth);
             }
             scheduleRender();
         }
@@ -568,10 +593,37 @@ public class DataGrid<R> extends Widget
     }
 
     /// @param index The column index.
-    /// @return The column's current width in pixels.
+    /// @return The column's current width in pixels at the medium text size (see [TextScale]).
     public int getColumnWidth(final int index) {
-        return columnModel.getWidth(index);
+        return TextScale.toMedium(columnModel.getWidth(index), followTextScale());
     }
+
+    /// @return The scale of the text size preference: column widths are given at medium and drawn
+    /// multiplied by it (see [TextScale]).
+    public static double textScale() {
+        return TextScale.parse(readTextScale());
+    }
+
+    /// Draw the columns at the page's text scale if it has changed since they were drawn (e.g. the
+    /// text size preference changing, or the scale measured again once fonts load: see
+    /// `TextScaleMeter`), so that they hold the same text as before.
+    ///
+    /// @return The page's text scale.
+    private double followTextScale() {
+        final double scale = textScale();
+        if (scale != drawnScale) {
+            columnModel.rescale(drawnScale, scale, isAttached()
+                    ? getElement().getClientWidth()
+                    : 0);
+            drawnScale = scale;
+            scheduleRender();
+        }
+        return scale;
+    }
+
+    private static native String readTextScale() /*-{
+        return $wnd.getComputedStyle($doc.documentElement).getPropertyValue('--text-scale');
+    }-*/;
 
     /// @return The column model. Exposed for the column interaction controllers.
     ColumnModel<Column<R, ?>> getColumnModel() {
@@ -592,10 +644,10 @@ public class DataGrid<R> extends Widget
     /// does when a resize ends.
     ///
     /// @param index The column index.
-    /// @param width The column's new width in pixels.
+    /// @param width The column's new width in pixels, as drawn.
     void commitColumnResize(final int index, final int width) {
         if (headingListener != null) {
-            headingListener.resizeColumn(index, width);
+            headingListener.resizeColumn(index, TextScale.toMedium(width, drawnScale));
         }
         scheduleRender();
     }
@@ -1043,10 +1095,33 @@ public class DataGrid<R> extends Widget
         return tableName;
     }
 
-    /// @param emptyMessage Text to show when there are no rows, or `null` for none (the default).
+    /// Text to show when there are no rows, in place of the default ("No data" for a table, "No
+    /// items" for a list or tree). "No matches" still shows while a filter is set
+    /// ([#setFiltered(boolean)]).
+    ///
+    /// @param emptyMessage The text, or `null` for no message at all.
     public void setEmptyMessage(final String emptyMessage) {
-        this.emptyMessage = emptyMessage;
-        empty.setInnerText(NullSafe.string(emptyMessage));
+        this.emptyMessage.setOwn(emptyMessage);
+        scheduleRender();
+    }
+
+    /// Says whether a filter is set on the rows, so that with none the grid says "No matches"
+    /// rather than that there is nothing. A `QuickFilterPage` sets it for the grids it holds. A
+    /// change hides the message until rows arrive, as those held were filtered by the old one.
+    ///
+    /// @param filtered Whether a filter is set.
+    @Override
+    public void setFiltered(final boolean filtered) {
+        emptyMessage.setFiltered(filtered);
+        scheduleRender();
+    }
+
+    /// Says whether another message covers the grid, e.g. its errors in a `PagerPanel`'s
+    /// [MessagePanel], so that what it says with no rows doesn't show under it or describe it.
+    ///
+    /// @param covered Whether another message covers the grid.
+    public void setEmptyMessageCovered(final boolean covered) {
+        emptyMessage.setCovered(covered);
         scheduleRender();
     }
 
@@ -1348,6 +1423,7 @@ public class DataGrid<R> extends Widget
         // selected as that object, so the selection never holds a stale row (after the rows are
         // stored, as a changed row's selection event may look at them)
         NullSafe.consume(multiSelectionModel(), model -> model.followRows(values));
+        emptyMessage.rowsArrived();
         rowsArrived = true;
         updateLoadingState();
         scheduleRender();
@@ -1360,6 +1436,10 @@ public class DataGrid<R> extends Widget
 
     @Override
     public void setRowCount(final int count, final boolean isExact) {
+        // A count, even an unchanged one, is the answer to a changed filter
+        if (emptyMessage.rowsArrived()) {
+            scheduleRender();
+        }
         if (pageState.setRowCount(count, isExact)) {
             rowsArrived = true;
             updateLoadingState();
@@ -1453,6 +1533,49 @@ public class DataGrid<R> extends Widget
     /// @return The registration.
     public HandlerRegistration addLoadingStateChangeHandler(final LoadingStateChangeEvent.Handler handler) {
         return addHandler(handler, LoadingStateChangeEvent.TYPE);
+    }
+
+    // Shows what the grid says with no rows, once it knows it has none (R-D5). The message is
+    // outside the scroller, which is the grid, list or tree to assistive technology and may hold
+    // only rows, and describes it instead (aria-describedby), so an empty grid given the focus says
+    // why it is empty. It sits where the first row would be, below the header, and the rows' area
+    // keeps the room it took when it was among them (data-grid.css, from --data-grid__empty-top
+    // and --data-grid__empty-height, which snapHeaderHeight and the message's resize observer
+    // set). Only a change is written, so a render of an empty grid neither rewrites the text nor
+    // has it announced again.
+    private void renderEmptyMessage() {
+        final boolean cells = profile.hasCells();
+        final String text = NullSafe.string(emptyMessage.getText(cells));
+        final boolean shown = emptyMessage.isShown(
+                pageState.getRowDataSize(), pageState.getRowCount(), pageState.isRowCountExact(), cells);
+        if (!text.equals(renderedEmptyText)) {
+            empty.setInnerText(text);
+            renderedEmptyText = text;
+        }
+        if (shown != renderedEmptyShown) {
+            // Which shows the message (data-grid.css)
+            setStyleName("data-grid--empty", shown);
+            if (shown) {
+                scroller.setAttribute("aria-describedby", empty.getId());
+            } else {
+                scroller.removeAttribute("aria-describedby");
+            }
+            renderedEmptyShown = shown;
+        }
+    }
+
+    // Snaps the header to its height (GridHeader.snapHeight) and places the empty message below it
+    private void snapHeaderHeight() {
+        final int height = gridHeader.snapHeight(hideHeader);
+        if (height > 0) {
+            CssProperties.set(empty, "--data-grid__empty-top", height + "px");
+        }
+    }
+
+    // The rows' area keeps the room the empty message takes, measured as it changes size: shown,
+    // given other text, or its text size changed
+    private void onEmptyMessageResize() {
+        CssProperties.set(content, "--data-grid__empty-height", empty.getOffsetHeight() + "px");
     }
 
     private void updateLoadingState() {
@@ -1633,7 +1756,7 @@ public class DataGrid<R> extends Widget
         if (headerChanged || widthsChanged) {
             // Only once the column widths apply, or the header is measured in the wrong layout. A
             // width change can change the header's height too, e.g. when its text wraps.
-            gridHeader.snapHeight(hideHeader);
+            snapHeaderHeight();
         }
 
         resolveKeyboardRow();
@@ -1647,9 +1770,7 @@ public class DataGrid<R> extends Widget
         renderedWidthVersion = columnModel.getWidthVersion();
         headersDirty = false;
 
-        final boolean isEmpty = pageState.getRowDataSize() == 0;
-        // Which shows the empty message (data-grid.css)
-        setStyleName("data-grid--empty", isEmpty && emptyMessage != null);
+        renderEmptyMessage();
         if (profile.hasCells()) {
             scroller.setAttribute("aria-rowcount", String.valueOf(pageState.getRowCount() + 1));
             scroller.setAttribute("aria-colcount", String.valueOf(columnModel.size()));
@@ -1899,6 +2020,10 @@ public class DataGrid<R> extends Widget
         // its field's text when its row is drawn again (ValueSpinnerCell) records
         nativeListeners.add(DataGridDom.addListener(getElement(), "input", false,
                 events::dispatch));
+        // Columns follow the text as it grows or shrinks, while shown and when shown again
+        nativeListeners.add(DataGridDom.addListener(Document.get().getDocumentElement(),
+                TextScaleMeter.CHANGE_EVENT, false, e -> followTextScale()));
+        followTextScale();
         scrollbars.attach();
         columnInteractions.attach();
         GlobalResizeObserver.addListener(getElement(), element -> onResize());
@@ -1906,9 +2031,10 @@ public class DataGrid<R> extends Widget
         // height follows its content, e.g. when the density or text size preference changes. That
         // changes the rows' height too, which virtual rendering measures.
         GlobalResizeObserver.addListener(headerRow, element -> {
-            gridHeader.snapHeight(hideHeader);
+            snapHeaderHeight();
             forgetRowHeight();
         });
+        GlobalResizeObserver.addListener(empty, element -> onEmptyMessageResize());
 
         scroller.setScrollTop(savedScrollTop);
         scroller.setScrollLeft(savedScrollLeft);
@@ -1923,6 +2049,7 @@ public class DataGrid<R> extends Widget
         savedScrollLeft = scroller.getScrollLeft();
         GlobalResizeObserver.removeListener(getElement());
         GlobalResizeObserver.removeListener(headerRow);
+        GlobalResizeObserver.removeListener(empty);
         for (final JavaScriptObject handle : nativeListeners) {
             DataGridDom.removeListener(handle);
         }

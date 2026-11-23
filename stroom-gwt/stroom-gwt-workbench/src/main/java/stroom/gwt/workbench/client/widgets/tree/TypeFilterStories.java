@@ -120,7 +120,7 @@ public final class TypeFilterStories {
         // A text button, which shows how many types are chosen
         final Button button = new Button("Type filter");
         final Label echo = new Label();
-        echo.getElement().getStyle().setProperty("fontSize", "12px");
+        echo.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         echo.getElement().getStyle().setProperty("marginTop", "12px");
         final boolean showCount = included == null;
         final Runnable update = () -> {

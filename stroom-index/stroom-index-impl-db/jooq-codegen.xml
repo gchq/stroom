@@ -23,7 +23,7 @@
             <!-- The schema name to use in the generated classes, instead of inputSchema -->
             <outputSchema>stroom</outputSchema>
             <!-- Each entry is a Java regex. Whitespace is ignored and comments are allowed. -->
-            <includes>index.volume|index.volume.group|index.shard|index.field.source|index.field</includes>
+            <includes>index.volume|index.volume.group|index.shard|index.shard.pending.stream|index.field.source|index.field</includes>
             <!-- We don't want to include the Flyway schema history table -->
             <excludes>index.schema.history</excludes>
             <!-- Specify 'version' for use in optimistic concurrency control -->

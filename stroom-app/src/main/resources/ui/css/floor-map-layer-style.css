@@ -14,59 +14,33 @@
  * limitations under the License.
  */
 
-/* The layer appearance dialog's content (FloorMapLayerStyle) — align the graphic/shape/image/colour rows */
+/* The layer appearance dialog's content (FloorMapLayerStyle): a form */
 .floor-map-layer-style {
-    border-spacing: 8px 10px;
-    /* Shared by the two wide rows below — five icon columns plus their gaps. */
-    --floor-map-layer-style__control-width: 388px;
+    /* Shared by the wide controls below — seven icon columns plus their gaps. */
+    --floor-map-layer-style__control-width: 544px;
 }
 
-.floor-map-layer-style td {
-    vertical-align: middle;
-}
-
-.floor-map-layer-style td:first-child {
-    text-align: right;
-    white-space: nowrap;
-    color: var(--text-color--low-emphasis);
-}
-
-.floor-map-layer-style td:last-child > * {
-    width: 260px;
-}
-
-/* Whichever of the Shape / Image rows the current mode does not use: its controls dimmed (they
-   are disabled), its label in the disabled text colour, which can still be read (faded by opacity,
-   it fell to 2.35:1) */
-.floor-map-layer-style__row--dimmed td {
-    opacity: 0.45;
-}
-
-.floor-map-layer-style .floor-map-layer-style__row--dimmed td:first-child {
-    opacity: 1;
-    color: var(--text-color--disabled);
+/* The shape's drop-down */
+.floor-map-layer-style__control {
+    width: calc(260px * var(--text-scale));
 }
 
 /* Asset picker + Upload button on one line, picker taking the slack */
 .floor-map-layer-style__image {
     display: flex;
-    gap: 6px;
+    gap: var(--control__gap--horizontal);
     align-items: center;
 }
 
 /*
- * The two wide rows — the icon grid and the picker-plus-Upload pair — share one
- * width, so the dialog has a single edge down its right-hand side rather than a
- * ragged one.
+ * The wide controls — the icon grid, the picker-plus-Upload pair and the preview — share one
+ * width, so the dialog has a single edge down its right-hand side rather than a ragged one.
  *
- * It has to be a *definite* width, not 100%. These sit in an auto-layout table,
- * where a column stretches to its content: sized to fit, the drop-down's label
- * pulled the whole dialog past 1200px on a deeply nested asset path. A definite
- * width caps the column, and the label truncates instead, which is what its own
- * `overflow: hidden` was always for.
+ * It has to be a *definite* width: sized to fit, the drop-down's label pulled the whole dialog
+ * past 1200px on a deeply nested asset path. A definite width caps it, and the label truncates
+ * instead, which is what its own `overflow: hidden` was always for.
  */
-.floor-map-layer-style td:last-child > .floor-map-layer-style__image,
-.floor-map-layer-style td:last-child > .floor-map-layer-style__icon-picker {
+.floor-map-layer-style__wide {
     width: var(--floor-map-layer-style__control-width);
 }
 

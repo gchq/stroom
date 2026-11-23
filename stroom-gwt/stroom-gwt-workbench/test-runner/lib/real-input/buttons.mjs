@@ -19,6 +19,7 @@
 // crossed with real keys.
 
 import assert from 'node:assert/strict';
+import { activeFocusRing } from './focus-ring.mjs';
 
 // The name of the element with the focus (its title, else aria-label, else text), or null if none
 async function focused(page) {
@@ -31,9 +32,9 @@ async function focused(page) {
   });
 }
 
-// The focused element's drawn focus ring (its box shadow), or 'none'
+// The focused element's drawn focus ring, or 'none' (see focus-ring.mjs)
 function ring(page) {
-  return page.evaluate(() => getComputedStyle(document.activeElement).boxShadow);
+  return activeFocusRing(page);
 }
 
 // The text of the focus tooltip (FocusTooltip) if it is showing, otherwise null

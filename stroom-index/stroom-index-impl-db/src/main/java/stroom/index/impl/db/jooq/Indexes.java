@@ -10,6 +10,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
 import stroom.index.impl.db.jooq.tables.IndexShard;
+import stroom.index.impl.db.jooq.tables.IndexShardPendingStream;
 
 
 /**
@@ -23,4 +24,7 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index INDEX_SHARD_INDEX_SHARD_INDEX_UUID = Internal.createIndex(DSL.name("index_shard_index_uuid"), IndexShard.INDEX_SHARD, new OrderField[] { IndexShard.INDEX_SHARD.INDEX_UUID }, false);
+    public static final Index INDEX_SHARD_INDEX_SHARD_LEASE_INSTANCE_ID = Internal.createIndex(DSL.name("index_shard_lease_instance_id"), IndexShard.INDEX_SHARD, new OrderField[] { IndexShard.INDEX_SHARD.LEASE_INSTANCE_ID }, false);
+    public static final Index INDEX_SHARD_PENDING_STREAM_INDEX_SHARD_PENDING_STREAM_STATE = Internal.createIndex(DSL.name("index_shard_pending_stream_state"), IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM, new OrderField[] { IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM.STATE }, false);
+    public static final Index INDEX_SHARD_PENDING_STREAM_INDEX_SHARD_PENDING_STREAM_STREAM_TASK = Internal.createIndex(DSL.name("index_shard_pending_stream_stream_task"), IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM, new OrderField[] { IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM.STREAM_ID, IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM.TASK_ID }, false);
 }

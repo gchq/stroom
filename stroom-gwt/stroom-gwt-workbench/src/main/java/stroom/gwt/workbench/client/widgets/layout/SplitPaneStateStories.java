@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.layout;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -105,13 +106,18 @@ public final class SplitPaneStateStories {
                                             () -> lineOffset(shown.get(), kind.vertical))
                                     .toBe(0.0);
                         }
-                        // With the keyboard focus, the line is in the focus colour and ringed
+                        // With the keyboard focus, the line is in the focus colour and ringed; in
+                        // forced colours, where no ring is drawn, a 3px line in Highlight
                         final Value<Element> focused = splitter(play, kind, State.FOCUS);
                         expectColour(play, kind, State.FOCUS, "--splitter__focus-color");
-                        expectThickness(play, kind, State.FOCUS, 1);
-                        play.expect(kind.label + " focused line's ring",
-                                        () -> shadow(focused.get(), "::before"))
-                                .not().toBe("none");
+                        if (ForcedColours.active()) {
+                            expectThickness(play, kind, State.FOCUS, 3);
+                        } else {
+                            expectThickness(play, kind, State.FOCUS, 1);
+                            play.expect(kind.label + " focused line's ring",
+                                            () -> shadow(focused.get(), "::before"))
+                                    .not().toBe("none");
+                        }
                         // No handle
                         play.expect(kind.label + " focused splitter's ::after",
                                         () -> content(focused.get(), "::after"))
@@ -228,8 +234,17 @@ public final class SplitPaneStateStories {
                                      final State state,
                                      final String variable) {
         final Value<Element> splitter = splitter(play, kind, state);
-        play.expect(Value.of(kind.label + " " + state.label + " splitter is drawn in " + variable,
-                        () -> splitterColour(splitter.get()).equals(variableColour(variable))))
+        // In forced colours (e.g. Windows high contrast) the line is in a system colour instead
+        // (split-pane.css): CanvasText at rest and hovered, Highlight held or focused
+        final String expected = ForcedColours.active()
+                ? (state == State.NORMAL || state == State.HOVER
+                        ? "CanvasText"
+                        : "Highlight")
+                : variable;
+        play.expect(Value.of(kind.label + " " + state.label + " splitter is drawn in " + expected,
+                        () -> splitterColour(splitter.get()).equals(ForcedColours.active()
+                                ? ForcedColours.colour(expected)
+                                : variableColour(variable))))
                 .toBe(true);
     }
 

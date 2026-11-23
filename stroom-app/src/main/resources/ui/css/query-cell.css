@@ -22,10 +22,17 @@
 	padding: 5px;
 }
 
+/* The time, in secondary text (gray was 3.9:1 on a striped row, under WCAG 1.4.3's 4.5:1) */
 .query-cell__time {
 	white-space: nowrap;
-	color: gray;
+	color: var(--text-color--muted);
 	padding-right: 10px;
+}
+
+/* On a selected row the muted colour is too faint against the selection, so the time takes the
+   row's text colour */
+.data-grid__row--selected .query-cell__time {
+	color: inherit;
 }
 
 .query-cell__expression {

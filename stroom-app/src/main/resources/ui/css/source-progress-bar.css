@@ -65,3 +65,22 @@
 .source-progress-bar__track--clickable {
     cursor: pointer;
 }
+
+/* In forced colours (e.g. Windows high contrast) the bar, a background, vanished (forced colours
+   replace backgrounds), leaving only its number or nothing. There the track is edged in the text colour, and the window (where the data shown is) filled in it
+   (GrayText when disabled), its own colours kept */
+@media (forced-colors: active) {
+    .source-progress-bar__track {
+        box-sizing: border-box;
+        border: 1px solid CanvasText;
+    }
+
+    .source-progress-bar__window {
+        forced-color-adjust: none;
+        background-color: CanvasText !important;
+    }
+
+    .source-progress-bar__window--disabled {
+        background-color: GrayText !important;
+    }
+}

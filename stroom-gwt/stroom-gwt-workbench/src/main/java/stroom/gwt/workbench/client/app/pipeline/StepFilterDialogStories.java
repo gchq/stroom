@@ -104,6 +104,15 @@ public final class StepFilterDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // Add XPath Filter left open (the screenshot and the dialog measurement show it)
+                .story("AddXPathFilterOpen", StepFilterDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByTitle("New XPath Filter"));
+                    final Play addDialog = dialog(screen, "Add XPath Filter");
+                    play.waitFor(() -> play.expect(addDialog.getByText("Condition", "label")).toBeVisible());
+                })
                 // A filter added and then cancelled isn't kept; Edit shows a filter and OK changes it
                 .story("EditFilterAndCancel", StepFilterDialogStories::render)
                 .withPlay(play -> {

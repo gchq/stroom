@@ -64,6 +64,25 @@ public class LinkValue {
      * for any reason.
      */
     public static LinkValue create(final String value, final int pos) {
+        return parse(value, pos, null);
+    }
+
+    /// The length of the link at a position in a value, as it is written there: its text and address
+    /// as they are, not encoded as [#toString()] gives them, so longer where they have characters
+    /// that are encoded (e.g. `?`, `=` or `&`).
+    ///
+    /// @param value The value holding the link.
+    /// @param pos   The index in value of the link's `[`.
+    /// @return The number of characters the link takes in value, or 0 if there is no link there.
+    public static int lengthAt(final String value, final int pos) {
+        final int[] end = new int[1];
+        return parse(value, pos, end) != null
+                ? end[0] - pos
+                : 0;
+    }
+
+    // The link at a position in a value, or null; end, if given, is set to the index after it
+    private static LinkValue parse(final String value, final int pos, final int[] end) {
         LinkValue hyperlink = null;
 
         try {
@@ -79,6 +98,12 @@ public class LinkValue {
                         index = index + type.length() + 2;
                     }
                     final String target = nextToken(value, index, '<', '>');
+                    if (target != null) {
+                        index = index + target.length() + 2;
+                    }
+                    if (end != null) {
+                        end[0] = index;
+                    }
                     hyperlink = new Builder()
                             .text(decode(text))
                             .href(decode(href))
