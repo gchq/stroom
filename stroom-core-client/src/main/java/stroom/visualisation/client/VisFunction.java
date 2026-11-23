@@ -16,7 +16,11 @@
 
 package stroom.visualisation.client;
 
+import stroom.visualisation.shared.VisualisationDoc;
+
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class VisFunction {
@@ -26,6 +30,9 @@ public class VisFunction {
     private Set<StatusHandler> statusHandlers;
     private LoadStatus status = LoadStatus.NOT_LOADED;
     private String statusMessage;
+    private VisualisationDoc visualisationDoc;
+    private String fetchFailure;
+    private List<Runnable> fetchWaiters;
 
     public VisFunction(final int id) {
         this.id = id;
@@ -84,6 +91,45 @@ public class VisFunction {
             if (statusHandlers.size() == 0) {
                 statusHandlers = null;
             }
+        }
+    }
+
+    /// @return The visualisation fetched for this function, or null until it has been.
+    public VisualisationDoc getVisualisationDoc() {
+        return visualisationDoc;
+    }
+
+    /// @return Why the last fetch of the visualisation failed, or null if it did not.
+    public String getFetchFailure() {
+        return fetchFailure;
+    }
+
+    /// Waits for the visualisation to be fetched, so it is fetched once however many ask for it
+    /// while it is.
+    ///
+    /// @param onFetched Called once the fetch succeeds or fails.
+    /// @return True if nothing else was waiting, so the caller must start the fetch.
+    public boolean awaitFetch(final Runnable onFetched) {
+        final boolean first = fetchWaiters == null;
+        if (first) {
+            fetchWaiters = new ArrayList<>();
+        }
+        fetchWaiters.add(onFetched);
+        return first;
+    }
+
+    /// Records the outcome of fetching the visualisation and tells all that wait for it.
+    ///
+    /// @param visualisationDoc The fetched visualisation, or null if the fetch failed.
+    /// @param fetchFailure     Why the fetch failed, or null if it did not.
+    public void fetched(final VisualisationDoc visualisationDoc, final String fetchFailure) {
+        this.visualisationDoc = visualisationDoc;
+        this.fetchFailure = fetchFailure;
+        final List<Runnable> waiters = fetchWaiters;
+        // A later fetch, after a failure, starts afresh
+        fetchWaiters = null;
+        if (waiters != null) {
+            waiters.forEach(Runnable::run);
         }
     }
 

@@ -20,6 +20,7 @@ import stroom.dashboard.client.component.TableController;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
+import stroom.query.api.ColumnRef;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
@@ -143,6 +144,17 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return htmlBuilder.toSafeHtml();
     }
 
+    /// The selection keys the current selection shows without values, for panes with nothing
+    /// selected, e.g. `component.abc.selection.series`.
+    ///
+    /// @return The keys, pane by pane in the order shown.
+    List<String> getKeysWithoutSelection() {
+        return getComponentStates()
+                .stream()
+                .flatMap(componentState -> componentState.getKeysWithoutSelection().stream())
+                .collect(Collectors.toList());
+    }
+
     private List<ComponentState> getComponentStates() {
         return getComponentStates("", "", this);
     }
@@ -161,6 +173,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                     namePrefix + "Time Range",
                     timeRangeParams,
                     Collections.emptyList(),
+                    Collections.emptyList(),
                     Collections.emptyList()));
 
             if (linkParams != null) {
@@ -176,6 +189,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         namePrefix + "Link Parameters",
                         linkParams,
                         Collections.emptyList(),
+                        Collections.emptyList(),
                         Collections.emptyList()));
             }
 
@@ -188,6 +202,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
             for (final DashboardPane component : componentList) {
                 List<Param> paramList = new ArrayList<>();
                 final List<List<Param>> selectionList = new ArrayList<>();
+                final List<String> selectionKeys = new ArrayList<>();
                 final List<ColumnSelectionFilter> filterList = new ArrayList<>();
                 if (component instanceof final HasParams hasParams) {
                     final String start = keyPrefix + "component." + component.getId() + ".param.";
@@ -200,14 +215,22 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 }
 
                 if (component instanceof final HasComponentSelection hasComponentSelection) {
+                    final String start = keyPrefix + "component." + component.getId() + ".selection.";
                     final List<ComponentSelection> selections = hasComponentSelection.getSelection();
                     for (final ComponentSelection selection : selections) {
-                        final String start = keyPrefix + "component." + component.getId() + ".selection.";
                         final List<Param> selectionParams = selection.getParams()
                                 .stream()
                                 .map(param -> new Param(start + param.getKey(), param.getValue()))
                                 .collect(Collectors.toList());
                         selectionList.add(selectionParams);
+                    }
+                    // The keys its selections have, e.g. a table's columns or the ones a
+                    // visualisation declares, so they can be used before anything is selected
+                    for (final ColumnRef columnRef : NullSafe.list(hasComponentSelection.getColumnRefs())) {
+                        final String name = NullSafe.get(columnRef, ColumnRef::getName);
+                        if (NullSafe.isNonBlankString(name) && !selectionKeys.contains(start + name)) {
+                            selectionKeys.add(start + name);
+                        }
                     }
                 }
 
@@ -237,6 +260,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         namePrefix + component.getDisplayValue(),
                         paramList,
                         selectionList,
+                        selectionKeys,
                         filterList));
             }
 
@@ -272,6 +296,12 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                                     HtmlTableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                         }
                         first = false;
+                    }
+                } else {
+                    for (final String selectionKey : componentState.getKeysWithoutSelection()) {
+                        final String key = ParamUtil.create(selectionKey);
+                        tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                                HtmlTableCell.data(""));
                     }
                 }
 
@@ -559,17 +589,21 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         private final String name;
         private final List<Param> params;
         private final List<List<Param>> selectionList;
+        // The keys of its selections' params, whether or not anything is selected
+        private final List<String> selectionKeys;
         private final List<ColumnSelectionFilter> filterList;
 
         public ComponentState(final String id,
                               final String name,
                               final List<Param> params,
                               final List<List<Param>> selectionList,
+                              final List<String> selectionKeys,
                               final List<ColumnSelectionFilter> filterList) {
             this.id = id;
             this.name = name;
             this.params = params;
             this.selectionList = selectionList;
+            this.selectionKeys = selectionKeys;
             this.filterList = filterList;
         }
 
@@ -579,6 +613,14 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
         public String getName() {
             return name;
+        }
+
+        // When nothing is selected, the keys its selections have, shown without values so they can
+        // be inserted; none when something is, as the selection's own keys and values are shown
+        private List<String> getKeysWithoutSelection() {
+            return NullSafe.hasItems(selectionList)
+                    ? Collections.emptyList()
+                    : selectionKeys;
         }
     }
 
