@@ -925,6 +925,219 @@ other data source, as a StroomQL windowed join. Decided with the user:
   triggers (after an empty result on a value the user named, or when the format is unknown); on Lucene, bounded
   lookups only, with a sampled profile on request; a per-chat cache, and lasting formats recorded as AGENTS lines.
 
+### Activity timelines, streaming joins and skills (proposed 2026-11-23)
+
+Proposed, not built: designed with the product owner from analysts' questions that join entities across indexes
+and order their events in time, "which users in team A accessed abc.com and downloaded a file, then copied that file
+to removable media?" (proxy, identity and endpoint indexes, 100,000 users), and "build a timeline of a user's
+activity over the past 7 days" (window open, close and focus, clipboard copies, web accesses, file copies, from
+endpoint and Windows event logs across several hosts; thousands of events a user). Four parts, built in this order
+because each later part stands on the earlier:
+
+1. **A streaming, key-ordered join** (the engine): both sides of a join read in join-key order and merged in Stroom.
+2. **An activity timeline** derived from a user's events: sessions of active use of each application, and the
+   actions taken in each.
+3. **Charts of derived results**: a small subset drawn in the chat (tool-written Mermaid, Stroom's own SVG renderer),
+   or a dashboard over a CSV Data Connection (stroom#6010), at the user's choice.
+4. **Skills**: saved, parameterised procedures (a hunt, a timeline) an analyst or the agent runs again.
+
+**Today** (what the agent does without these): `sequence_query` runs "X then Y by the same entity" as one EQL
+sequence when every step is on an Elastic Index of one cluster, else a two-step StroomQL windowed join; `esql_query`
+refuses `LOOKUP JOIN` and `ENRICH` and never names another index; `search_events` and `table` (with `join`) pull rows
+into workspace tables and join them there, within their row caps. A team filter is an `IN` list typed by the model
+or a join after the fact; join values must be equal as stored (EQL can't transform them); "the same file" needs a
+value both indexes hold alike.
+
+#### 1. Streaming, key-ordered join
+
+Neither side is joined in Elasticsearch: each is read in join-key order and the two streams merged in Stroom, holding
+only the current key's rows (a sort-merge join), so neither side's size is bounded by Elasticsearch's 10,000-hit
+window, its buckets limit or ES|QL's 10,000 rows.
+
+* **Entity level** ("the users who did X"): a composite aggregation on the join key, paged by its `after_key` in key
+  order, with the step's conditions as its query: every key, a page at a time, without `max_buckets`.
+* **Event level** ("every download, then every copy"): a point-in-time search sorted by key then time, paged with
+  `search_after`, the fields the steps need only.
+* **A small side is a filter, pushed down** (a semi-join): a side under a size the tool sets (a team's users) is
+  read first and its keys become a terms condition on the other side, batched under Elasticsearch's terms limit
+  (65,536 by default), so the large side is cut before it streams.
+* **Steps in time within a key**: "X then Y within N after X", across indexes, clusters or data sources, is a time
+  condition applied to each key's rows as they merge; it lifts EQL's per-sequence fetch caps and the StroomQL join's
+  two steps.
+* **Through Stroom, as the user**: a core service added beside `ElasticEsqlService` and `ElasticEqlService` (additive,
+  in Stroom's Elasticsearch module), so permissions, the query time limit and auditing hold; results go to a
+  workspace file, a summary to the model.
+* **Cost first**: each side's size estimated before it streams (an ES|QL or count query), the plan ordered so the
+  most selective side filters first, a cap on keys and rows, progress shown while it runs.
+* **Keys must compare**: equal values as stored, so it rests on normalised entity fields at onboarding (below) or on
+  a transform of the join field (lowercase, the domain stripped, a path's file name) applied as the rows stream.
+* **Workers, by key range** (asked for by the product owner, 2026-11-23): the key space cut into ranges from a sample
+  of the join key's values (a composite aggregation taking every Nth key, so ranges hold about the same rows, not an
+  even cut of the alphabet), one worker a range streaming both sides restricted to it and merging alone (a key never
+  spans two ranges), results written as each range finishes, still in key order; a pushed-down small side sent per
+  range, its batches shrinking as workers grow. Not Elasticsearch's sliced search, which splits by document and so
+  puts one key's rows in different slices. One tool call, one run slot; its workers share the call's query time limit,
+  within Stroom's search thread limits; progress across them all.
+* **Limits** (decided 2026-11-23, all `stroom.ai` settings): 4 workers; the small side pushed down under 50,000 keys
+  (batched per range under Elasticsearch's 65,536 terms limit); a join capped at 1,000,000 keys and 10,000,000 rows
+  read; the size estimated first ("about 2 million rows, 4 workers, about 3 minutes") and the user asked before a join
+  near the caps runs, as four workers put four times the search load on the cluster.
+* **Benchmark after the build** (asked for by the product owner): one worker against four on the same joins, the
+  time, the cluster's search load and the memory each takes, before the default is kept.
+
+**Normalised entity fields at onboarding** (the cheapest way to make joins work): every index plan writes the same
+fields the same way whatever the source writes: user (`user.name` without its domain, `user.domain`,
+`user.email`), host (`host.name` short and lowercase, `host.ip`), process (`process.name`, `process.executable`),
+file (`file.name`, `file.path`, `file.hash.*`), URL (`url.domain`, `url.path`); and `verify_index` samples these
+fields' values in the sibling indexes of the same cluster and says where their formats differ.
+
+#### 2. Activity timeline
+
+A tool (its name to decide) derives a user's timeline for a period from several sources; deterministic, in the tool,
+never by the model. Generic: it knows roles, an entity (user), a place (host), an application (process) and a time;
+which conditions mean "focus" for a product is given at the call (or by a skill, part 4, or the source's
+documentation).
+
+* **Sources**, each `{index, user, host, process, title, time, roles}`: the fields that hold the user, host,
+  process, window title and time, and **roles**, each a set of conditions as `sequence_query` steps take them:
+  `focus` (a window gained focus), `open`, `close`, `idle_start` (lock, screensaver, sleep, logoff; e.g. Windows
+  4800), `idle_end` (unlock, wake, logon; e.g. 4801), `action` (a clipboard copy, a file copy, a web access, a
+  process started...), with an action's own `kind` label.
+* **Gather**: the user's events of each source over the period, streamed in time order (part 1), to the workspace.
+* **Sessions, per host**: an *active interval* on process P starts at a focus on P and ends at the next focus (any
+  process), an `idle_start`, or a cap (no event for N minutes), marked `end: uncertain`; a window's *lifetime* runs
+  from `open` to `close`. Hosts used at once are parallel lanes, never merged.
+* **Actions attached**: an action on a host belongs to the active interval it falls in, and to its process where it
+  names one (marked `by: process` or `by: time`); an action naming no host (a proxy's web access) is attached by user
+  and time to the interval active then (often a browser's), marked `by: time`.
+* **Output**: sessions (start, end, active minutes, host, process, window titles, actions by kind with counts, the
+  marks); per day, active time by application; the actions not in any session; the raw events by their stream and
+  event Ids. Written to the workspace and, at the user's choice, as a CSV Data Connection (part 3).
+* **Idle: roles plus a cap** (decided 2026-11-23): `idle_start`/`idle_end` end and resume intervals where the sources
+  hold them; a cap (no event for N minutes) ends the rest, marked uncertain.
+* **Missing events are flagged, never smoothed over** (asked for by the product owner, 2026-11-23: data quality can
+  drop events, rarely): an interval is still made, with why its start or end is uncertain, and the output has a
+  data-quality section, counts with examples: unpaired bounds (`open` without `close` and the reverse; `idle_start`
+  without `idle_end` before the next activity and the reverse; a focus on an application whose window never opened
+  in the period); intervals ended only by the cap; *source silence* (a source with no events for a host while
+  another shows the user active there, e.g. endpoint focus events stopping while the proxy shows browsing from that
+  host: likely dropped events, not idleness); events out of time order beyond a tolerance, future-dated, or two
+  sources disagreeing on one host's clock; two applications focused at once on one host (a missing focus-out).
+* **The same for bounded sequences** (part 1 and `sequence_query`): the keys with an opening step but no closing one
+  are counted, with their source, so "it didn't happen" is told apart from "the source may be missing events".
+
+#### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
+
+Decided with the product owner (2026-11-23): a small set of charts drawn in the chat, from a workspace table, with
+nothing created beforehand; or a dashboard, for what the chat's charts can't show or when the user wants one. Which,
+is the user's choice.
+
+* **The choice**: where the chart the user asks for is one the chat draws (a timeline, a pie, bars or lines over
+  time), both are offered: shown in the chat, or a dashboard. Where it is one the chat doesn't draw (a heat map, a
+  network, a map, anything outside the subset below), only the dashboard is offered: never a chat chart that
+  approximates it. The tool says which kinds it draws, so the choice is made from that, not the model's guess.
+* **In the chat, Mermaid written by a tool**: a tool turns a workspace table into a ```` ```mermaid ```` block of a
+  small fixed subset, the same layout every time, every value from the data escaped (Mermaid's `:`, `;`, `#`,
+  quotes, line breaks), never `click`, callbacks or `%%{init}%%`; the model places the block in its reply or a
+  document, never writes chart code. Large inputs are folded to stay readable (consecutive sessions of one
+  application merged, intervals under a minimum length left out, the top N kept and the rest as "Other", one section
+  a day), saying what was folded and linking the whole table. Times in the user's time zone, named in the title.
+* **The subset**: `gantt` (`title`, `dateFormat`, `axisFormat`, `section`, task lines: a timeline's sessions by host
+  or day, zero-length tasks as markers), `pie` (`title`, `"label" : value`), `xychart-beta` (`title`, `x-axis`,
+  `y-axis`, `bar`, `line`) and `timeline` (`title`, `section`, `period : event`). Standard Mermaid, so the Markdown
+  renders the same in other apps (GitHub, GitLab, VS Code, Obsidian; Confluence and Notion with plugins) and can be
+  shared as it is.
+* **Drawn by Stroom's own SVG renderer**, not the Mermaid library: the client parses only the subset and draws SVG
+  (as the chat overview, `AiChatOverview`, is drawn), themed by Stroom's light and dark CSS, its text selectable;
+  a block outside the subset (one the model wrote itself, say) is shown as code, never run: no third-party script, no
+  sandbox needed, no new dependency. SVG rather than canvas: crisp, selectable, themeable, saved as an image; the
+  folding keeps shapes far below where canvas would pay.
+* **One grammar at both ends**: the parser in `stroom-core-shared` (GWT and the server alike); the tool checks every
+  block it writes parses under it (round trip), JUnit tests pin the subset and hostile labels, and a set of example
+  blocks is checked against Mermaid's own grammar so other apps render them the same.
+* **Where it renders**: chat replies first; then Documentation docs (pipeline docs, skills, investigation notes),
+  whose Markdown is rendered to HTML in a sandboxed frame, the renderer called after it.
+* **Not at first**: hover, zoom and pan (an SVG `title` a bar's tooltip, cheap later).
+
+**The dashboard route**: the derived rows written as a CSV Data Connection (stroom#6010,
+`stroom-data-connection/DESIGN.md`: rows a text part of the document, a columns table with types, a time column the
+dashboard's time range filters), confirmed in a form as other documents are, then `propose_dashboard` /
+`propose_visualisation` unchanged: every chart kind Stroom's visualisations have. Limits: `maxStoredDataSize` (5 MB
+by default), so derived summaries, never raw events (which stay in their indexes, linked by Ids); a snapshot,
+re-derived for another user or period.
+
+**Later, in core**: a Data Connection type that derives at query time (its `Connector` running part 2 on each
+search, as the user), so a dashboard with a `user` parameter shows any user's timeline live, with no agent: for the
+Stroom developers, if the CSV route proves useful.
+
+#### 4. Skills
+
+A skill is how to do one kind of work (a hunt, a timeline, an investigation), saved so the agent, or an analyst, does
+it again with new parameters. AGENTS docs hold rules, guides facts, skills procedures. Decided with the product owner
+(2026-11-23):
+
+* **Markdown only, in Documentation docs**: no new document type and no rigid format; a doc named `SKILLS` by default
+  (as AGENTS docs are), marked by its front matter whatever it is called, holding several skills, one a `#` heading.
+* **Front matter** (YAML between `---` lines): `stroom: skills` (what the doc is) and its change history, each entry
+  a version, date, author, how (`agent`, by the authoring tool, or `user`, edited by hand), the skill it changed and
+  what changed; written by the tools, never by hand. Rendered as metadata, not text (showdown reads front matter), the
+  history shown as a small table, as a pipeline doc's versions are; other apps read it too (GitHub's table,
+  Obsidian's properties).
+* **A skill, by convention** (headings the tools understand, not a format to get exactly right): its `#` heading the
+  name; the first paragraph under it the description; `## When to use` (how people ask for it, in their words: what
+  the agent matches); `## Parameters` (a list: a name, required or a default, a description); `## Steps` (numbered,
+  plain language, an example call in fenced JSON where a tool is used); `## Output` (a chart in the chat, a dashboard,
+  a table). The model follows the steps as it follows a guide: no deterministic replay at first (a step marked to
+  run exactly can be a later convention, without changing existing skills).
+* **Authoring tool**: from a chat ("save this as a skill": the parameters picked out of what the agent did, its calls
+  as the steps' examples, the output chosen) or from a description; it checks its own draft (below) and offers the doc
+  in a form for the user to edit and approve, adding the history entry; never writes without approval.
+* **Checking tool**: reads a skill and reports problems and suggestions, each with a proposed fix. Problems: no
+  description; no steps; a parameter used but not listed, or listed and unused; a tool that doesn't exist or the
+  reader's policies don't allow; an example call whose arguments don't match the tool's schema; an index or field
+  that doesn't exist or the reader can't Use; a hand edit since the last history entry (offered to record). Suggestions:
+  a vague step (a concrete call proposed); a hard-coded value that should be a parameter; a chart outside the chat's
+  subset (dashboard only); a thin "When to use"; a near-duplicate of another skill. The same checks run when a skill
+  is used, so one broken since it was written (a renamed index, a changed tool) says so before it starts.
+* **Discovery: global, the model deciding** (a chat with no context must still find skills; folder scope alone would
+  find only the top level): the code extracts every readable skill's name and description (cached per doc version)
+  and gives the model the list, a line a skill (name, folder, description); skills in the folders of the question's
+  context and their parents come first, marked "near this context"; the model decides which applies, if any, and
+  reads only that one whole. The list sits in the stable part of the prompt, so prompt caching keeps its cost low.
+  Over a size (about 50 skills or 6,000 characters) the code sends the near-context skills and those sharing words
+  with the question, up to the size, then "… N more: search with the finding tool". Asked for by name, a skill is
+  found by its name. Two of one name are told apart by folder, the nearer to the context first.
+* **Learning from use**: which skills were offered and which chosen is recorded (as `instruction_evidence` does for
+  AGENTS suggestions); the checking tool reports a skill often offered and never chosen (a misleading description) or
+  asked for by name and not offered (missing phrasings).
+* **In the chat**: a skill picker, and slash commands to list skills and invoke one by name with its parameters
+  (decided 2026-11-23); a client change beside the tools.
+* **Tools**: `propose_skill` (authoring), `check_skill` (checking), `find_skills` (searching by words or name);
+  anyone who may write the doc saves a skill, every save approved in a form.
+* **First skill**: the user activity timeline, its role conditions for the site's endpoint products held in it.
+
+#### Open questions
+
+To settle with the product owner before building; listed in [Open questions](#open-questions) as they are answered.
+
+1. ~~Streaming join scope~~: Elastic indexes first; Lucene and other data sources later, by time-window partitions
+   (decided 2026-11-23).
+2. ~~Join sizes~~: 4 workers by key range, pushed down under 50,000 keys, caps of 1,000,000 keys and 10,000,000 rows,
+   all settings; one against four workers benchmarked after the build (decided 2026-11-23).
+3. ~~Join values~~: both: normalised entity fields at onboarding (with `verify_index` flagging mismatched formats
+   across sibling indexes) and a small set of join-field transforms for data already indexed (decided 2026-11-23).
+4. ~~Timeline~~: a tool of its own, in a group offered when asked for; idle by roles plus a cap, missing events
+   flagged (decided 2026-11-23). Open: the cap's default (30 minutes proposed).
+5. ~~Timeline privacy~~: the existing tool policies only, no permission of its own (decided 2026-11-23).
+6. ~~Charts~~: in the chat (a Mermaid subset, Stroom's own SVG renderer) or a dashboard, at the user's choice;
+   only the dashboard where the chart asked for is outside the subset; a dashboard route's CSV Data Connection in a
+   folder the user agrees to, kept until deleted (decided 2026-11-23).
+7. ~~Skills' form~~: Markdown only in Documentation docs (default name `SKILLS`, several skills a doc, a `#` heading
+   each), front matter for the marker and the change history, guided steps; discovery global with the model deciding
+   from every readable skill's name and description, context ordering them (decided 2026-11-23).
+8. ~~Skills' tools~~: `propose_skill`, `check_skill`, `find_skills`; anyone who may write the doc saves one (approved
+   in a form); in the chat, a skill picker and slash commands to list and invoke skills (decided 2026-11-23).
+
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
 * **Stop reaches the query.** Stop sets the run's flag (`AiChatRunManager.LocalRun.requestStop`), which the agent
@@ -4738,6 +4951,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | Activity timelines, streaming key-ordered joins, derived results as CSV Data Connections and skills designed (proposed, not built), in that order of building; open questions listed for the product owner | Activity timelines, streaming joins and skills (proposed) |
 | 2026-11-23 | Chat 189 (an Entra ID group of the Azure audit feed after its Messaging group): (1) a group's own value for a shared part (EventTime, System, Generator, Device) is written in its own XSLT in place of the common module's part, for that group only; a group build never changes the shared module: the registry promoted into the feed's own folder (`<feed folder>/<feed>`, where promotion files it beside other sources) is found there (`DocumentPlaces.documentationInOwnFolder`), a build's registry naming no module takes the promoted registry's (`SourceTypeGroups.promotedModule`), and a later group whose feed's common module can't be found is refused, never made anew from its mapping; (2) the shared Generator is the feed's, naming no source type: a group's Generator naming the registry's source types (their names, matched values or System Names, any case or spacing, or a name's last word not the feed's; `FeedGenerators`) stays the group's, and the common module takes the feed's own, asked once in a form (proposed with the source types' wording taken out) or given as `feed_generator`, kept in the registry (`generator`); without either, the module says `TODO generator` with a note, replaced once given; (3) the old/new question proposes by the value keys' names first (old, previous, prev, before, original, from against new, current, after, updated, to; whole words or camel/snake parts), else key order, the no-forms fallback the same (`NameValueLists.oldKeyByName`); (4a) a record the group passes over is told even when its values hold control characters or NUL (read as XML 1.1, NUL left out), and its warnings are listed apart as benign groups naming its source type (`passed_over_source_type`), not this build's to decide; (4b) `step_records locations_from=` steps only the group's source types' locations (`locations_left_out`), a record of another passed over labelled with its source type; (5) the catalogue's proposals (check) results carry no user table: only `confirm=true`'s `needs_showing` does. | Aggregated feeds: source types and source type groups; Old/new property-change lists; Stepping; Event type catalogue; TOOLS.md (build_translation_xslt, step_sample, step_records, catalogue_event_types, draft_translation_mapping) |
 | 2026-11-23 | A message body's plain text from its HTML (an `html_text` transform) is written up as a future addition, not built: the product owner chose not now | HTML bodies to plain text (future) |
 | 2026-11-23 | Four fixes from eval case 76 and chat 188. (1) An Update's old/new lists are a Data per property of each snapshot by default, whatever wrote the mapping (`SnapshotChanges`, run by the draft after the catalogue's translation and by build_translation_xslt on the sample's records, the mapping then generated and checked again): a group below a snapshot over items holding one gains its side's Data per property (a field reading the list whole, or a group over it, replaced: converted as a name/value list read whole as Data is), a plain Data of a record's list becomes its side's (or both snapshots' below an Update), an object reading the list by name gains the rest; a group over targets in one snapshot gets a copy in the other (as a group reading a change is written in both), and where both are placed each keeps its own fields; a group's field writing the list whole at a typed element is refused by the catalogue's check. (2) The sample check takes a Data per pair or per property for the loop it is and a pair or property by name for one value (no several-values warning), counts the lists pairs and changes read as read, and checks a change's values without the generator's `mcp:` unwrapping. (3) A failed verify_index gives `failed`, the checks that didn't pass without their samples or traces, among the parts a large result's stub gives in full (`LargeResults.ACT_ON`, 8,000 characters). (4) promote_build's final result is `needs_showing`, so Stroom AI's chat gives its layout and tidy-up whole (up to 64,000 characters), as other content to show as it is. (5) A parsed XPath node reads its text from the expression it was parsed from, shared by all its nodes (`XPathNode.inSource`), and `XPathTrees.normal` keeps a node whose children it leaves unchanged as parsed (`withChildren`), instead of each node copying its own text: TestConditionParity's 200,000-character condition (some 1,500 nested nodes) held over 300 MB of copies, and once this change moved test classes between forks, the fork running it ran out of its 640 MB heap and nine classes never ran. | Old/new property-change lists; Ask Stroom AI (large results); TOOLS.md (build_translation_xslt, catalogue_event_types, draft_translation_mapping, verify_index, promote_build, large results) |
