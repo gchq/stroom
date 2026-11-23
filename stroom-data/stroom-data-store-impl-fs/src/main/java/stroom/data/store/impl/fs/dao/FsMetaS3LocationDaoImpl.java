@@ -93,7 +93,7 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
         Objects.requireNonNull(fsVolume);
         return JooqUtil.transactionResult(fsDataStoreDbConnProvider, txnContext -> {
             // Ensure the link to the volume
-            DataVolume dataVolume = dataVolumeDaoImpl.findDataVolume(metaId);
+            DataVolume dataVolume = dataVolumeDaoImpl.findDataVolume(txnContext, metaId);
             if (dataVolume == null) {
                 dataVolume = dataVolumeDaoImpl.createDataVolume(txnContext, metaId, fsVolume);
             }

@@ -21,7 +21,6 @@ import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.FsOrphanedMetaDao;
 import stroom.data.store.impl.fs.FsTypePathDao;
-import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
