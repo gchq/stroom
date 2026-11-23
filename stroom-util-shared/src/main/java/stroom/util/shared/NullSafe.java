@@ -36,6 +36,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -509,6 +511,220 @@ public class NullSafe {
                 : 0;
     }
 
+    /// Returns val if it is non-null, else other.
+    /// @param val   The value to check.
+    /// @param other The value to return if val is null.
+    /// @return val if it is non-null, else other.
+    public static int getIntOrElse(final Integer val, final int other) {
+        return val != null
+                ? val
+                : other;
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive int getter to apply to value.
+    /// @return The result of applying getter to value, or zero if value is null.
+    public static <T1> int getInt(final T1 value,
+                                  final ToIntFunction<T1> getter) {
+        if (value == null) {
+            return 0;
+        } else {
+            return Objects.requireNonNull(getter).applyAsInt(value);
+        }
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive int getter to apply to value.
+    /// @param other  The value to return if value is null.
+    /// @return The result of applying getter to value, or other if value is null.
+    public static <T1> int getIntOrElse(final T1 value,
+                                        final ToIntFunction<T1> getter,
+                                        final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            return Objects.requireNonNull(getter).applyAsInt(value);
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive int getter to apply.
+    /// @return The result of applying getter2, or zero if any preceding value is null.
+    public static <T1, T2> int getInt(final T1 value,
+                                      final Function<T1, T2> getter1,
+                                      final ToIntFunction<T2> getter2) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsInt(value2);
+            }
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive int getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter2, or other if any preceding value is null.
+    public static <T1, T2> int getIntOrElse(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final ToIntFunction<T2> getter2,
+                                            final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsInt(value2);
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive int getter to apply.
+    /// @return The result of applying getter3, or zero if any preceding value is null.
+    public static <T1, T2, T3> int getInt(final T1 value,
+                                          final Function<T1, T2> getter1,
+                                          final Function<T2, T3> getter2,
+                                          final ToIntFunction<T3> getter3) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsInt(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive int getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter3, or other if any preceding value is null.
+    public static <T1, T2, T3> int getIntOrElse(final T1 value,
+                                                final Function<T1, T2> getter1,
+                                                final Function<T2, T3> getter2,
+                                                final ToIntFunction<T3> getter3,
+                                                final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsInt(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive int getter to apply.
+    /// @return The result of applying getter4, or zero if any preceding value is null.
+    public static <T1, T2, T3, T4> int getInt(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, T3> getter2,
+                                              final Function<T3, T4> getter3,
+                                              final ToIntFunction<T4> getter4) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return 0;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsInt(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive int getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter4, or other if any preceding value is null.
+    public static <T1, T2, T3, T4> int getIntOrElse(final T1 value,
+                                                    final Function<T1, T2> getter1,
+                                                    final Function<T2, T3> getter2,
+                                                    final Function<T3, T4> getter3,
+                                                    final ToIntFunction<T4> getter4,
+                                                    final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return other;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsInt(value4);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @return The un-boxed value if non-null, else zero.
      */
@@ -516,6 +732,220 @@ public class NullSafe {
         return val != null
                 ? val
                 : 0;
+    }
+
+    /// Returns val if it is non-null, else other.
+    /// @param val   The value to check.
+    /// @param other The value to return if val is null.
+    /// @return val if it is non-null, else other.
+    public static long getLongOrElse(final Long val, final long other) {
+        return val != null
+                ? val
+                : other;
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive long getter to apply to value.
+    /// @return The result of applying getter to value, or zero if value is null.
+    public static <T1> long getLong(final T1 value,
+                                    final ToLongFunction<T1> getter) {
+        if (value == null) {
+            return 0;
+        } else {
+            return Objects.requireNonNull(getter).applyAsLong(value);
+        }
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive long getter to apply to value.
+    /// @param other  The value to return if value is null.
+    /// @return The result of applying getter to value, or other if value is null.
+    public static <T1> long getLongOrElse(final T1 value,
+                                          final ToLongFunction<T1> getter,
+                                          final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            return Objects.requireNonNull(getter).applyAsLong(value);
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive long getter to apply.
+    /// @return The result of applying getter2, or zero if any preceding value is null.
+    public static <T1, T2> long getLong(final T1 value,
+                                        final Function<T1, T2> getter1,
+                                        final ToLongFunction<T2> getter2) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsLong(value2);
+            }
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive long getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter2, or other if any preceding value is null.
+    public static <T1, T2> long getLongOrElse(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final ToLongFunction<T2> getter2,
+                                              final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsLong(value2);
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive long getter to apply.
+    /// @return The result of applying getter3, or zero if any preceding value is null.
+    public static <T1, T2, T3> long getLong(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final Function<T2, T3> getter2,
+                                            final ToLongFunction<T3> getter3) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsLong(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive long getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter3, or other if any preceding value is null.
+    public static <T1, T2, T3> long getLongOrElse(final T1 value,
+                                                  final Function<T1, T2> getter1,
+                                                  final Function<T2, T3> getter2,
+                                                  final ToLongFunction<T3> getter3,
+                                                  final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsLong(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive long getter to apply.
+    /// @return The result of applying getter4, or zero if any preceding value is null.
+    public static <T1, T2, T3, T4> long getLong(final T1 value,
+                                                final Function<T1, T2> getter1,
+                                                final Function<T2, T3> getter2,
+                                                final Function<T3, T4> getter3,
+                                                final ToLongFunction<T4> getter4) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return 0;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsLong(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive long getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter4, or other if any preceding value is null.
+    public static <T1, T2, T3, T4> long getLongOrElse(final T1 value,
+                                                      final Function<T1, T2> getter1,
+                                                      final Function<T2, T3> getter2,
+                                                      final Function<T3, T4> getter3,
+                                                      final ToLongFunction<T4> getter4,
+                                                      final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return other;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsLong(value4);
+                    }
+                }
+            }
+        }
     }
 
     /**

@@ -2092,6 +2092,216 @@ class TestNullSafe {
                 .build();
     }
 
+    @Test
+    void testGetIntWithGetters() {
+        assertThat(NullSafe.getInt(nullLevel1, Level1::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(nonNullLevel1, Level1::getLevelNoAsInt))
+                .isEqualTo(1);
+
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNoAsInt))
+                .isEqualTo(2);
+
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNoAsInt))
+                .isEqualTo(3);
+
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNoAsInt))
+                .isEqualTo(4);
+    }
+
+    @Test
+    void testGetLongWithGetters() {
+        assertThat(NullSafe.getLong(nullLevel1, level1 -> level1.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(nonNullLevel1, level1 -> level1.getLevelNo()))
+                .isEqualTo(1L);
+
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                level2 -> level2.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                level2 -> level2.getLevelNo()))
+                .isEqualTo(2L);
+
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                level3 -> level3.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                level3 -> level3.getLevelNo()))
+                .isEqualTo(3L);
+
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                level4 -> level4.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                level4 -> level4.getLevelNo()))
+                .isEqualTo(4L);
+    }
+
+    @Test
+    void testGetIntOrElse() {
+        assertThat(NullSafe.getIntOrElse(null, 99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(1, 99))
+                .isEqualTo(1);
+
+        assertThat(NullSafe.getIntOrElse(nullLevel1, Level1::getLevelNoAsInt, 99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(nonNullLevel1, Level1::getLevelNoAsInt, 99))
+                .isEqualTo(1);
+
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNoAsInt,
+                99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNoAsInt,
+                99))
+                .isEqualTo(2);
+
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNoAsInt,
+                99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNoAsInt,
+                99))
+                .isEqualTo(3);
+
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNoAsInt,
+                99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNoAsInt,
+                99))
+                .isEqualTo(4);
+    }
+
+    @Test
+    void testGetLongOrElse() {
+        assertThat(NullSafe.getLongOrElse(null, 99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(1L, 99L))
+                .isEqualTo(1L);
+
+        assertThat(NullSafe.getLongOrElse(nullLevel1, Level1::getLevelNo, 99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(nonNullLevel1, Level1::getLevelNo, 99L))
+                .isEqualTo(1L);
+
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo,
+                99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNo,
+                99L))
+                .isEqualTo(2L);
+
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNo,
+                99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNo,
+                99L))
+                .isEqualTo(3L);
+
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNo,
+                99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNo,
+                99L))
+                .isEqualTo(4L);
+    }
+
 //    @TestFactory
 //    Stream<DynamicTest> testDuration() {
 //        return TestUtil.buildDynamicTestStream()
@@ -2848,8 +3058,12 @@ class TestNullSafe {
             return nonNullLevel2;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
@@ -2907,8 +3121,12 @@ class TestNullSafe {
             return nonNullLevel3;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
@@ -2966,8 +3184,12 @@ class TestNullSafe {
             return nonNullLevel4;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         public Long getNullLevelNo() {
@@ -3025,8 +3247,12 @@ class TestNullSafe {
             return nonNullLevel5;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
@@ -3074,8 +3300,12 @@ class TestNullSafe {
         }
 
         @SuppressWarnings("unused")
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
