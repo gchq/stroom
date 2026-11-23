@@ -1256,7 +1256,7 @@ shows one), and the app itself.
 | Others still read `READ_ONLY` once | Still open (`QueryEditorController`, `StreamingProcessingController`, `DuplicateManagementListController`, `PathwayEditorController`; Solr's expression editor and pipeline) |
 | Templates given `SafeHtml.asString()` for a `title` | Still open: `ExplorerCell.java:150`, so a name with an apostrophe shows `&#39;` in its tooltip; the others weren't traced |
 | Server Tasks as a tree is 20px wider than its pane | **Fixed** (`TreeRowHandler.java:68`, `ServerTasksScreenStories`), as the entry under Fixed |
-| The 22px tick box column clips its box | Still open (the box is 20px now, not 16px); seeing the clip needs a render |
+| The 22px tick box column clips its box | **Gone** (checked 23 November 2026), as the entry below |
 | Ask Stroom AI's dock type offers only Dialog and Dock | Still so; nothing handles Tab or Float, so it looks deliberate |
 | Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Solr's still open; Plan B's **Fixed** (19 November 2026): `BucketGranularity` has display names |
 | Elastic's rerank suffix tooltip `$\{BaseField.score\}` | **Gone** (checked 19 November 2026): the rerank settings moved, and the tooltip went with them |
@@ -1586,8 +1586,13 @@ to delete them by hand.~~
   pane, so the last column's resize handle starts off screen; the tree's expander column is 45px
   (6px flat) and the widths aren't fitted again.~~ **Fixed** (25 October 2026; struck through 23
   November 2026): see "a tree grid's columns ran past its edge" above.
-* A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
-  so the box is clipped flush left rather than centred.
+* ~~A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
+  so the box is clipped flush left rather than centred.~~ **Gone** (checked 23 November 2026, by
+  measuring): since the tick box and its grid cell became one block (`e80ac67f3b`, 19 October 2026)
+  the cell's box is an icon's size with no padding of its own (`.tick-box.tick-box--cell`, which
+  outweighs the grid's cell padding), so at every density the 16px box sits whole in the 22px
+  column with 3px either side. `Widgets/Cell Renderers/TickBoxCell` `BoxFitsItsColumn` checks the
+  box is within its cell and centred to a pixel; it passed before any change.
 
 * In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,

@@ -70,6 +70,25 @@ public final class TickBoxCellStories {
                 .withPlay(TickBoxCellStories::playInGrid)
                 // A grid the user can't change: read-only tick boxes (the normal box with a grey tick), no
                 // header tick box, and clicks do nothing
+                // A row's box is whole and centred in its column (CHECKBOX_COL): the column was 22px,
+                // narrower than the box and the cell's padding, so the box sat at the left with its
+                // right edge cut off
+                .story("BoxFitsItsColumn", context -> grid(context, true, "Bravo"))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(rowTickBox(play, "Alpha")).toBeInTheDocument());
+                    final Query mark = play.within(rowTickBox(play, "Alpha")).querySelector(".tick-box__mark");
+                    final Query cell = rowTickBox(play, "Alpha").closest(".data-grid__cell");
+                    play.expect("the box's left edge within its cell", () ->
+                            mark.element().get().getAbsoluteLeft()
+                            >= cell.element().get().getAbsoluteLeft()).toBe(true);
+                    play.expect("the box's right edge within its cell", () ->
+                            mark.element().get().getAbsoluteRight()
+                            <= cell.element().get().getAbsoluteRight()).toBe(true);
+                    play.expect("the box centred in its cell, to a pixel", () -> Math.abs(
+                            (mark.element().get().getAbsoluteLeft() - cell.element().get().getAbsoluteLeft())
+                            - (cell.element().get().getAbsoluteRight() - mark.element().get().getAbsoluteRight()))
+                            <= 1).toBe(true);
+                })
                 .story("ReadOnly", context -> grid(context, false, "Bravo", "Delta"))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getAllByTitle(TICKED)).toHaveLength(2));
