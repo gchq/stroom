@@ -26,7 +26,6 @@ import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -50,7 +49,6 @@ public class UserTabPlugin extends AbstractTabPlugin<UserRef, UserTabController>
         this.securityContext = securityContext;
 
         getEventBus().addHandler(OpenUserEvent.getType(), event -> {
-            GWT.log("handling event");
             open(event.getUserRef(), true);
         });
 

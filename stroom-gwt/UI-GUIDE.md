@@ -71,6 +71,8 @@ says.
 
 * **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the controller is disposed before the reply.
 
+* **Log through `Console`.** Client code writes to the browser's console only through `stroom.widget.util.client.Console`, at a level that fits (`debug`, `info`, `warn`, `error`; a message that is built is a supplier), never `GWT.log` (checkstyle refuses it, `GwtLog`) or `java.util.logging`. Super Dev Mode logs everything, and any other build `warn` and above; the `consoleLevel` URL parameter (e.g. `?consoleLevel=debug`) changes it. Anyone can turn it up, so never log a secret at any level (a token, a password, a request's body or a query string).
+
 * **A list whose rows are replaced has a key.** A grid whose rows are fetched again, polled or replaced by an edited copy is given a key provider (`dataGrid.setKeyProvider(Row::getId)`), unless its rows are already equal by their id. The selection follows a selected row to its new object by that key, so `getSelected()` is the row as it now is. Find a row to replace by its id, never by `indexOf(selected)` of an object that may be stale, and never add the edited row when the old one can't be found: warn that it was removed meanwhile (R-S13 in `stroom-core-client-widget/DATA_GRID_DESIGN.md`).
 
 * **What a list selects.** After each action a list selects as every other does (R-S14 in `DATA_GRID_DESIGN.md`):

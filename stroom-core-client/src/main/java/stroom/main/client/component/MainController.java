@@ -38,12 +38,12 @@ import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.task.client.TaskEndEvent;
 import stroom.widget.task.client.TaskStartEvent;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.GlobalKeyHandler;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -199,7 +199,7 @@ public class MainController extends Controller {
 
     private void updateSpinnerState() {
         if (taskCount < 0) {
-            GWT.log("Negative task count");
+            Console.warn("Negative task count");
         }
 
         // Always try and start spinner even if it might be spinning

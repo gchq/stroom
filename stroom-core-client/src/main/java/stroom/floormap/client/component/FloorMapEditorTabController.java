@@ -53,7 +53,6 @@ import stroom.sqlstore.shared.FetchAtTimeRequest;
 import stroom.sqlstore.shared.SqlTemporalStoreResource;
 import stroom.sqlstore.shared.TemporalStoreTimeRange;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.Console;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TemporalEntry;
@@ -65,6 +64,7 @@ import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;

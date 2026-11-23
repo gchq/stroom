@@ -38,7 +38,6 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.Console;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -47,6 +46,7 @@ import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;

@@ -44,8 +44,8 @@ import stroom.widget.hyperlink.client.HyperlinkTargetType;
 import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.URL;
@@ -85,16 +85,10 @@ public class HyperlinkOpener implements HyperlinkEvent.Handler, HasHandlers {
         eventBus.addHandler(HyperlinkEvent.getType(), this);
     }
 
-    private static native void nativeConsoleLog(String s) /*-{
-        $wnd.console.log(s);
-    }-*/;
-
     @Override
     public void onLink(final HyperlinkEvent event) {
         try {
             final LinkValue hyperlink = event.getHyperlink();
-            nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
-
             final String href = hyperlink.getHref();
             String type = hyperlink.getType();
             String customTitle = null;
@@ -111,7 +105,7 @@ public class HyperlinkOpener implements HyperlinkEvent.Handler, HasHandlers {
                 try {
                     hyperlinkType = HyperlinkType.valueOf(type.toUpperCase());
                 } catch (final RuntimeException e) {
-                    GWT.log("Could not parse open type value of " + type);
+                    Console.warn("Could not parse open type value of " + type);
                 }
             }
 
@@ -159,7 +153,7 @@ public class HyperlinkOpener implements HyperlinkEvent.Handler, HasHandlers {
                 Window.open(href, "_blank", "");
             }
         } catch (final Exception e) {
-            GWT.log(e.getMessage(), e);
+            Console.error(e::getMessage, e);
         }
     }
 

@@ -35,8 +35,8 @@ import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.RequestCloseTabsEvent;
 import stroom.widget.tab.client.event.RequestMoveTabEvent;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -146,7 +146,7 @@ public class ContentManager implements HasHandlers {
             final CloseContentEvent event = new CloseContentEvent(dirtyMode, callback);
             closeHandler.onCloseRequest(event);
         } else {
-            GWT.log("No close handler for " + tabData.getType() + " - " + tabData.getLabel());
+            Console.warn(() -> "No close handler for " + tabData.getType() + " - " + tabData.getLabel());
         }
     }
 

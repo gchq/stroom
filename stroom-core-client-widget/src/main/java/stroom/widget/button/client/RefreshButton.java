@@ -20,10 +20,10 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.task.client.Task;
 import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 
@@ -140,7 +140,7 @@ public class RefreshButton
     /// tasks started by its task monitors.
     private void updateRefreshState() {
         if (taskCount < 0) {
-            GWT.log("Negative task count");
+            Console.warn("Negative task count");
         }
 
         final boolean refreshState = refreshing || taskCount > 0;

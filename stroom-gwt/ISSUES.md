@@ -1765,6 +1765,24 @@ to delete them by hand.~~
     ("SearchModel - stop()" and the like), `DataViewerController` ("Setting active tab to …"),
     `AnnotationEditorController` ("currentValue: …") and `MessageSupport` ("Received selection from
     vis"). `GWT.log` does nothing in a production compile, so it costs only noise in development.
+    **Decided** (23 November 2026, the user's decision): all client logging goes through
+    `stroom.util.client.Console` (74 `GWT.log` calls in 37 files, and `java.util.logging` in
+    `DashboardBodyController` and `RestDispatcher`), with a checkstyle rule refusing `GWT.log`.
+    Nothing calls `Console.setLevel`, so a production build prints every `Console` debug line:
+    production is to default to WARN, development to DEBUG, with a URL parameter to turn it up.
+    **Fixed** (23 November 2026): all of it goes through `Console`, now
+    `stroom.widget.util.client.Console` (in `stroom-core-client-widget`, which logs too), and
+    checkstyle's `GwtLog` refuses `GWT.log`. Errors that were reduced to their message are logged
+    with their stack, and lines that were only noise are gone. The parameter is `consoleLevel`, as
+    GWT's own logging reads `logLevel` and fails on a level it doesn't know. `App` no longer logs
+    the page's query string (a password reset link's token) nor `RestDispatcher` a request's body
+    or query string (a password), as anyone can turn the level up. `RestError` named the wrong
+    exception when a reply couldn't be read as text. Tests: `TestConsole`.
+    From the code review (23 November 2026): `GWT.isProdMode()` is true of all compiled JavaScript,
+    so development is now Super Dev Mode (the `superdevmode` property), and draft compiles and the
+    workbench log as production does; warnings and errors use the console's own levels; a dashboard
+    link's parameters and every link clicked are no longer logged; and a reply's handler that fails
+    is logged with its stack, not the reply.
     Also found: `DocumentationTabController.updateEditState` runs on every `setText` and
     `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
     and shows the preview, and a blank document opens the editor when it becomes editable. It

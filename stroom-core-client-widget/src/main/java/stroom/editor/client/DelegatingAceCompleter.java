@@ -16,7 +16,8 @@
 
 package stroom.editor.client;
 
-import com.google.gwt.core.client.GWT;
+import stroom.widget.util.client.Console;
+
 import com.google.inject.Singleton;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionCallback;
@@ -129,7 +130,7 @@ public class DelegatingAceCompleter {
         final String editorId = editor.getId();
         final String modeShortName = editor.getModeShortName();
 
-        GWT.log("getProposals() - editorId: " + editorId + ", modeShortName: " + modeShortName
+        Console.debug(() -> "getProposals() - editorId: " + editorId + ", modeShortName: " + modeShortName
                 + ", prefix: '" + prefix + "'");
 
         final List<AceCompletionProvider> completionProviders = getApplicableCompletionProviders(
@@ -175,7 +176,7 @@ public class DelegatingAceCompleter {
 
         final List<AceCompletionProvider> completionProviders = editorIdToCompletionProviderMap.get(mapKey);
         if (completionProviders != null) {
-            GWT.log("Adding " + completionProviders.size() + " providers for " + mapKey);
+            Console.debug(() -> "Adding " + completionProviders.size() + " providers for " + mapKey);
             allCompletionProviders.addAll(completionProviders);
         }
     }

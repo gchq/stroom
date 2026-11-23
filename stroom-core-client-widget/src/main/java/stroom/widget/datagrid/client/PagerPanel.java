@@ -22,6 +22,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.task.client.Task;
 import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -231,7 +232,7 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
                 taskCount--;
 
                 if (taskCount < 0) {
-                    GWT.log("Negative task count");
+                    Console.warn("Negative task count");
                 }
 
                 pager.getRefreshButton().setRefreshing(taskCount > 0);

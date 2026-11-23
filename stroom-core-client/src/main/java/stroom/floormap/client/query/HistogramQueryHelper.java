@@ -30,10 +30,10 @@ import stroom.query.client.QueryModel;
 import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.model.ResultStoreModel;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.util.client.Console;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 import stroom.widget.histogram.client.Histogram;
+import stroom.widget.util.client.Console;
 
 import com.google.web.bindery.event.shared.EventBus;
 

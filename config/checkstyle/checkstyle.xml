@@ -188,6 +188,15 @@
             <message key="import.illegal" value="Do not use @UiHandler: wire the handler in Java, in the constructor (see stroom-gwt/UI-GUIDE.md)."/>
         </module>
 
+        <!-- Client code logs through Console, which has one level to turn it up or down (see
+             stroom-gwt/UI-GUIDE.md). -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="GwtLog"/>
+            <property name="format" value="\bGWT\s*\.\s*log\s*\("/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Do not use GWT.log: use stroom.widget.util.client.Console (see stroom-gwt/UI-GUIDE.md)."/>
+        </module>
+
         <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
         <module name="SuppressWarningsHolder"/>
 

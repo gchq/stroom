@@ -37,7 +37,6 @@ import stroom.query.client.result.table.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
@@ -46,6 +45,7 @@ import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;

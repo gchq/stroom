@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.task.client.Task;
 import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.GWT;
@@ -286,7 +287,7 @@ public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
                 taskCount--;
 
                 if (taskCount < 0) {
-                    GWT.log("Negative task count");
+                    Console.warn("Negative task count");
                 }
 
                 setLoading(taskCount > 0);
