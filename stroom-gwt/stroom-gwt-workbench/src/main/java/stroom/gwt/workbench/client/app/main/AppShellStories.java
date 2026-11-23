@@ -412,6 +412,58 @@ public final class AppShellStories {
                     play.click(screen.getByRole("button", StroomDom.button("Close")));
                     expectNoProblems(play);
                 })
+                // OK refuses a custom format Java can't read, saying why under the field, rather than
+                // save a format that breaks every date shown
+                .story("InvalidCustomFormatRefusesOk", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("checkbox", "Custom"));
+                    final Query customFormat = dialog.within(dialog.getByText("Custom Format", "label")
+                            .closest(".form-group")).querySelector("input");
+                    play.type(customFormat, "#");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(dialog.getByText("'#' is reserved")).toBeInTheDocument();
+                    play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    expectNoProblems(play);
+                })
+                // OK and Set As Default refuse it with another tab showing too, and show its tab: the
+                // tabs not showing are off the page, so the field wasn't found and the format was saved
+                .story("InvalidCustomFormatInHiddenTab", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("checkbox", "Custom"));
+                    final Query customFormat = dialog.within(dialog.getByText("Custom Format", "label")
+                            .closest(".form-group")).querySelector("input");
+                    play.type(customFormat, "#");
+                    for (final String button : List.of("OK", "Set As Default")) {
+                        play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
+                        play.waitFor(() -> play.expect(dialog.queryByText("Custom Format", "label")).toBeNull());
+                        play.click(dialog.getByRole("button", StroomDom.button(button)));
+                        play.waitFor(() -> play.expect(customFormat).toHaveFocus());
+                        play.expect(customFormat).toHaveAttribute("aria-invalid", "true");
+                        play.expect(screen.queryByText(TextMatch.containing("defaults for ALL users"))).toBeNull();
+                    }
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/preferences/v1").toSpyMatcher());
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    expectNoProblems(play);
+                })
                 // The Keyboard Shortcuts tab lists each action the user can bind, one row per
                 // shortcut, with the built-in arrow keys that can't be changed
                 .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))

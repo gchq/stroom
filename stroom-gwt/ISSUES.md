@@ -1716,7 +1716,23 @@ to delete them by hand.~~
     **Open decision** (code review, 23 November 2026): a custom format is applied to the screens as
     it's committed (leaving the field or Enter), before OK, with no check that it's a valid
     pattern, so a broken one shows on every open screen until it's corrected or the dialog is
-    cancelled. Whether to check it first, or apply it only on OK, is to be decided.
+    cancelled. **Decided** (23 November 2026, the user's decision): keep the preview, but only for a
+    valid pattern; an invalid one shows the field's error and blocks OK.
+    **Fixed** (23 November 2026): `JavaDateTimePattern` checks a pattern as Java's
+    `DateTimeFormatter.ofPattern` reads it (its test agrees with `java.time` for every letter and
+    count and 400,000 random patterns, including the padded number followed by another that Java
+    fails on with a `ClassCastException`). The custom format box is given it, so a format that
+    can't be read is said under the field when it is left, OK and Set As Default refuse, and
+    `TimePreferences` writes the format before it in its place, so no other change previews it
+    either. From the code review (23 November 2026): the fields of a tab not showing are looked at
+    too (`UserPreferencesEditorController` is a `RefusesInvalidInput`); padding narrower than its
+    field (`pdd`), which Java accepts and then can't format any date with, is refused; and choosing a
+    standard format clears the error. A play for that found that a saved custom format never ticked
+    Custom, so one that can't be used was neither said nor refused: `SelectionBox` keeps a value that
+    isn't in its list, and the tick looked for it having none. Now the tick is whether the format is
+    a standard one (`SavedCustomFormat`). Plays: `App/Main/TimePreferences`
+    `InvalidCustomFormatNotReported`, `StandardFormatClearsError` and `SavedInvalidCustomFormat`, and
+    `App/Main/AppShell` `InvalidCustomFormatRefusesOk` and `InvalidCustomFormatInHiddenTab`.
   * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
     (`AnalyticProcessingController.setProcessType`).~~ **Fixed** (19 November 2026): showing the

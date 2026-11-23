@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.preferences.client.component.TimePreferences;
@@ -70,8 +71,7 @@ public final class TimePreferencesStories {
                     play.click(play.getByRole("checkbox", "Custom"));
                     play.waitFor(() -> play.expect(reported)
                             .toHaveTextContent("2 " + FORMAT + " | Id Europe/London 0"));
-                    final Query customFormat = play.within(play.getByText("Custom Format", "label")
-                            .closest(".form-group")).querySelector("input");
+                    final Query customFormat = customFormat(play);
                     play.type(customFormat, "x");
                     // Nothing yet: the format is still being typed
                     play.expect(reported).toHaveTextContent("2 " + FORMAT + " | Id Europe/London 0");
@@ -87,7 +87,82 @@ public final class TimePreferencesStories {
                     play.keyboard("{ArrowUp}");
                     play.waitFor(() -> play.expect(reported)
                             .toHaveTextContent("5 " + FORMAT + "x | Offset Europe/London 1"));
+                })
+                // A custom format Java can't use is never reported, so the screens never show it:
+                // it is said under the field, and another change is reported with the format before
+                // it, until it is put right. It used to be applied as it was committed
+                .story("InvalidCustomFormatNotReported", context -> render())
+                .withPlay(play -> {
+                    final Query reported = play.getByTestId(REPORTED);
+                    play.click(play.getByRole("checkbox", "Custom"));
+                    play.waitFor(() -> play.expect(reported).toHaveTextContent(TextMatch.startingWith("1 ")));
+                    final Query customFormat = customFormat(play);
+                    play.clear(customFormat);
+                    play.type(customFormat, "dd/bb/yyyy");
+                    play.tab();
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(customFormat).toHaveAccessibleDescription(
+                            TextMatch.containing("Unknown pattern letter 'b'"));
+                    play.expect(reported).toHaveTextContent(TextMatch.startingWith("1 "));
+
+                    play.click(selection(play, "userPreferencesTimeZone"));
+                    play.click(play.screen().findByText("UTC", ".selection-popup .selection-item-cell__text"));
+                    play.waitFor(() -> play.expect(selection(play, "userPreferencesTimeZone"))
+                            .toHaveValue("UTC"));
+                    play.waitFor(() -> play.expect(reported)
+                            .toHaveTextContent(TextMatch.startingWith("2 " + FORMAT + " | UTC ")));
+                    play.expect(customFormat).toHaveAttribute("aria-invalid", "true");
+
+                    play.clear(customFormat);
+                    play.type(customFormat, "dd/MM/yyyy");
+                    play.tab();
+                    play.waitFor(() -> play.expect(reported)
+                            .toHaveTextContent(TextMatch.startingWith("3 dd/MM/yyyy | UTC ")));
+                    play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
+                })
+                // Choosing a standard format clears the custom format's error with its text, which
+                // used to stay under the box showing the standard format
+                .story("StandardFormatClearsError", context -> render())
+                .withPlay(play -> {
+                    play.click(play.getByRole("checkbox", "Custom"));
+                    final Query customFormat = customFormat(play);
+                    play.type(customFormat, "#");
+                    play.tab();
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.click(selection(play, "userPreferencesDateFormat"));
+                    play.click(play.screen().findByText("dd/MM/yyyy", ".selection-popup .selection-item-cell__text"));
+                    play.waitFor(() -> play.expect(customFormat).toHaveValue("dd/MM/yyyy"));
+                    play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
+                    play.expect(play.queryByText("'#' is reserved")).toBeNull();
+                })
+                // A saved format that isn't offered is the user's own: Custom is ticked (it never was, and
+                // the list showed the format as if it offered it). Unticking goes to a standard one
+                .story("SavedCustomFormat", context -> render("dd-MM-yyyy"))
+                .withPlay(play -> {
+                    final Query custom = play.getByRole("checkbox", "Custom");
+                    play.expect(custom).toBeChecked();
+                    play.expect(customFormat(play)).toHaveValue("dd-MM-yyyy");
+                    play.expect(customFormat(play)).toBeEnabled();
+                    play.expect(selection(play, "userPreferencesDateFormat")).toHaveValue("");
+                    play.click(custom);
+                    play.waitFor(() -> play.expect(play.getByTestId(REPORTED))
+                            .toHaveTextContent(TextMatch.startingWith("1 " + FORMAT + " | ")));
+                    play.expect(selection(play, "userPreferencesDateFormat")).toHaveValue(FORMAT);
+                })
+                // A format saved before formats were checked is said to be wrong as it is shown, not
+                // only once it is left
+                .story("SavedInvalidCustomFormat", context -> render("pdd/MM/yyyy"))
+                .withPlay(play -> {
+                    final Query customFormat = customFormat(play);
+                    play.expect(customFormat).toHaveValue("pdd/MM/yyyy");
+                    play.expect(customFormat).toHaveAttribute("aria-invalid", "true");
+                    play.expect(customFormat).toHaveAccessibleDescription(
+                            TextMatch.containing("Too few 'p' letters to pad 'd' (2 at least)"));
                 });
+    }
+
+    private static Query customFormat(final Play play) {
+        return play.within(play.getByText("Custom Format", "label").closest(".form-group")).querySelector("input");
     }
 
     private static Query selection(final Play play, final String identity) {
@@ -95,9 +170,13 @@ public final class TimePreferencesStories {
     }
 
     private static FlowPanel render() {
+        return render(FORMAT);
+    }
+
+    private static FlowPanel render(final String format) {
         final TimePreferences view = new TimePreferences();
         view.read(UserPreferences.builder()
-                .dateTimePattern(FORMAT)
+                .dateTimePattern(format)
                 .timeZone(UserTimeZone.builder().use(Use.ID).id("UTC").build())
                 .build());
         final Label reported = new Label("0");

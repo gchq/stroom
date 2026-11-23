@@ -16,12 +16,14 @@
 
 package stroom.preferences.client.component;
 
+import stroom.preferences.client.JavaDateTimePattern;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.MomentJs;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.InvalidInputs;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
@@ -39,7 +41,9 @@ import java.util.Objects;
 
 /// The Date and Time tab of the user's preferences: the format dates and times are shown in, a
 /// standard one or the user's own, and the time zone they are shown in. It reads and writes the
-/// preferences itself, as nothing it shows comes from the server.
+/// preferences itself, as nothing it shows comes from the server. A custom format that Java can't
+/// use is never applied: it is said under the field, the format before it is written in its place,
+/// and the dialog's OK refuses until it is put right.
 public class TimePreferences extends Component {
 
     /// The formats offered; another is the user's own.
@@ -84,6 +88,8 @@ public class TimePreferences extends Component {
     };
     // The custom format last shown or reported, so leaving it unedited reports nothing
     private String committedText;
+    // The format to write while the custom one can't be used: the last one shown or reported
+    private String usablePattern;
 
     /// Makes an empty tab.
     public TimePreferences() {
@@ -102,24 +108,31 @@ public class TimePreferences extends Component {
         timeZoneOffsetHours.setValue(0);
         timeZoneOffsetMinutes.setValue(0);
 
+        text.setInvalidReason(JavaDateTimePattern::invalidReason);
         custom.addValueChangeHandler(event -> {
             text.setEnabled(custom.getValue());
-            onChange.run();
+            if (!custom.getValue() && format.getValue() == null) {
+                // The user's own format was shown, so there is no standard one to go back to
+                //noinspection SequencedCollectionMethodCanBeUsed
+                format.setValue(STANDARD_FORMATS.get(0));
+            }
+            InvalidInputs.showReason(text);
+            reportChange();
         });
         format.addValueChangeHandler(event -> {
             setPattern(format.getValue());
-            onChange.run();
+            reportChange();
         });
         timeZoneUse.addValueChangeHandler(event -> {
             changeVisible();
-            onChange.run();
+            reportChange();
         });
         // The rest report their changes too, so the screens show them before OK, as they do the
         // above: the time zone Id when it is chosen, and the offsets and the custom format when
         // committed (an arrow, Enter or leaving the field), so a half-typed format is never applied
-        timeZoneId.addValueChangeHandler(event -> onChange.run());
-        timeZoneOffsetHours.setOnChange(value -> onChange.run());
-        timeZoneOffsetMinutes.setOnChange(value -> onChange.run());
+        timeZoneId.addValueChangeHandler(event -> reportChange());
+        timeZoneOffsetHours.setOnChange(value -> reportChange());
+        timeZoneOffsetMinutes.setOnChange(value -> reportChange());
         text.addBlurHandler(event -> onCustomFormatCommitted());
         text.addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
@@ -128,12 +141,24 @@ public class TimePreferences extends Component {
         });
     }
 
-    // Reports the custom format if it differs from the one last shown or reported
+    // Says whether the custom format can be used, and reports it if it can and differs from the one
+    // last shown or reported
     private void onCustomFormatCommitted() {
+        InvalidInputs.showReason(text);
         if (!Objects.equals(text.getText(), committedText)) {
             committedText = text.getText();
-            onChange.run();
+            if (text.getInvalidReason() == null) {
+                reportChange();
+            }
         }
+    }
+
+    // Reports a change, for the screens to show it
+    private void reportChange() {
+        if (custom.getValue() && text.getInvalidReason() == null) {
+            usablePattern = text.getText();
+        }
+        onChange.run();
     }
 
     /// Shows the user's date and time preferences.
@@ -155,7 +180,8 @@ public class TimePreferences extends Component {
         }
     }
 
-    /// Writes the preferences shown into the user's preferences' builder.
+    /// Writes the preferences shown into the user's preferences' builder, with the format before it
+    /// in place of a custom format that can't be used.
     ///
     /// @param builder The builder.
     public void write(final UserPreferences.Builder builder) {
@@ -166,10 +192,18 @@ public class TimePreferences extends Component {
                 .offsetMinutes(nullIfZero(timeZoneOffsetMinutes.getIntValue()))
                 .build();
         builder
-                .dateTimePattern(custom.getValue()
-                        ? text.getText()
-                        : format.getValue())
+                .dateTimePattern(getPattern())
                 .timeZone(timeZone);
+    }
+
+    // The format to write. One that can't be used would break every date the screens show
+    private String getPattern() {
+        if (!custom.getValue()) {
+            return format.getValue();
+        }
+        return text.getInvalidReason() == null
+                ? text.getText()
+                : usablePattern;
     }
 
     /// @param onChange What to run when the user changes a preference.
@@ -184,15 +218,19 @@ public class TimePreferences extends Component {
             patternText = STANDARD_FORMATS.get(0);
         }
 
-        if (!patternText.equals(format.getValue())) {
-            format.setValue(patternText);
-        }
-
-        final boolean isCustom = format.getValue() == null;
+        // A format that isn't offered is the user's own (the box would show one that isn't in its list)
+        final boolean isCustom = !STANDARD_FORMATS.contains(patternText);
+        format.setValue(isCustom
+                ? null
+                : patternText);
         custom.setValue(isCustom);
         text.setEnabled(isCustom);
         text.setText(patternText);
         committedText = patternText;
+        usablePattern = patternText;
+        // The box's error goes with the text it was about, and one saved before formats were
+        // checked is said at once
+        InvalidInputs.showReason(text);
     }
 
     private void changeVisible() {
