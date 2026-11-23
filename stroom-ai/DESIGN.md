@@ -936,7 +936,7 @@ because each later part stands on the earlier:
 
 1. **A streaming, key-ordered join** (the engine): both sides of a join read in join-key order and merged in Stroom.
 2. **An activity timeline** derived from a user's events: sessions of active use of each application, and the
-   actions taken in each.
+   actions taken in each; and above it (2b) the activities they make up, what the user was working on.
 3. **Charts of derived results**: a small subset drawn in the chat (tool-written Mermaid, Stroom's own SVG renderer),
    or a dashboard over a CSV Data Connection (stroom#6010), at the user's choice.
 4. **Skills**: saved, parameterised procedures (a hunt, a timeline) an analyst or the agent runs again.
@@ -1026,6 +1026,48 @@ documentation).
 * **The same for bounded sequences** (part 1 and `sequence_query`): the keys with an opening step but no closing one
   are counted, with their source, so "it didn't happen" is told apart from "the source may be missing events".
 
+#### 2b. Activity characterisation (what the user was working on)
+
+A level above the timeline (asked for by the product owner, 2026-11-23): from events to sessions (part 2) to
+*activities*, threads of sessions across applications and sources tied together by what they touched ("working on
+the Q3 finance proposal": editing the document, web research, AI chat use, messages about it), from the indexed
+data and, when a question or a skill asks, the backing Event XML.
+
+* **Artifacts link sessions**: documents (a file name and path, a window title, a document store's file access),
+  web (a URL's domain and path, a page title, a search's terms), AI chat use (a chat service's domain; the prompt only
+  where a source holds it), mail and messages (subjects, attachment names, channel names). Names normalised ("Q3
+  Finance Proposal v2.docx" and "Q3 Finance Proposal.docx" one document).
+* **Pass 1, code (anchors)**: a graph of sessions and artifacts, linked by an artifact a session touched, artifacts
+  sharing significant terms, and sessions close in time (quick switching between applications most of all); its
+  communities (the Leiden clustering built for the chart analytics) are the anchor activities, each with a profile:
+  its artifacts, key terms, applications and time spans. Deterministic, cheap, repeatable.
+* **Pass 2, the model (loose links)**: items the graph can't place confidently, whose words needn't match ("how do I
+  phrase a discount clause politely?" in an AI chat; "can you send last quarter's numbers?" in Teams), are classified
+  by the model: an existing activity, a new one (named, where several items share a theme no anchor has), or not
+  work-related or unclear; with a confidence and a short reason ("asks for a pricing clause's wording while *Q3
+  Finance Proposal.docx* was in focus"). Each item goes with its text (capped), time, host and source, the session
+  it fell in and the one before (time is a strong prior even with no shared word), and the activities' profiles.
+* **Side calls, not tool calls** (decided 2026-11-23): the tool makes its own model calls, batched (about 50 items a
+  call), outside the chat's conversation, as step and compaction summaries are (`callUnseen`); the chat model sees
+  only the outcome (counts, the activities' labels). So hundreds of messages never fill its context, each call holds
+  only what it needs (a smaller utility model will do), a wrong answer is retried for its batch alone, and untrusted
+  text stays in calls whose only power is to pick an activity Id. Answers are constrained (an activity Id, `new`,
+  `unclear`, `not_work`) and checked in code; message text is data, never instructions. Batches run in parallel up to
+  the workers setting; cached by item text and activity profiles (a longer period classifies only new items); their
+  tokens counted in the chat's usage; a budget of items and calls a run, the user asked beyond it; progress shown.
+* **Labels**: the model names each activity from its evidence (top artifacts, terms, applications, time); every label
+  shows its evidence and is marked as an inference; every placement keeps how it was made (shared document, terms,
+  time, or model) and why.
+* **Decided 2026-11-23**: content (a message, an AI chat prompt) sent to the configured model as other tool results
+  are; a capped excerpt (500 characters by default, a setting); the model answers high, medium or low, low staying
+  "unclear", listed apart with its reason; analysts' corrections (an item moved, activities merged or renamed) kept
+  per investigation so a re-run keeps them, a skill updated from them only when the analyst asks; over `/mcp` with no
+  Stroom model, MCP sampling (the client's model, approved there), else strong links only, saying so.
+* **Kept generic**: no source names or domain lists in code; categories ("AI chat", "webmail", "research") come
+  from a skill or an AGENTS doc, or from the model's general knowledge, marked as its inference.
+* **Output**: a Gantt with a section per activity, its sessions as bars; under it each activity's time, applications,
+  artifacts and evidence, and the sessions in no activity.
+
 #### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
 
 Decided with the product owner (2026-11-23): a small set of charts drawn in the chat, from a workspace table, with
@@ -1042,9 +1084,10 @@ is the user's choice.
   document, never writes chart code. Large inputs are folded to stay readable (consecutive sessions of one
   application merged, intervals under a minimum length left out, the top N kept and the rest as "Other", one section
   a day), saying what was folded and linking the whole table. Times in the user's time zone, named in the title.
-* **The subset**: `gantt` (`title`, `dateFormat`, `axisFormat`, `section`, task lines: a timeline's sessions by host
-  or day, zero-length tasks as markers), `pie` (`title`, `"label" : value`), `xychart-beta` (`title`, `x-axis`,
-  `y-axis`, `bar`, `line`) and `timeline` (`title`, `section`, `period : event`). Standard Mermaid, so the Markdown
+* **The subset: `gantt` only, for timelines** (decided 2026-11-23): `title`, `dateFormat`, `axisFormat`, `section`,
+  task lines (a timeline's sessions by host, day or activity; zero-length tasks as markers). Later candidates: `pie`,
+  `xychart-beta` (Mermaid's bar and line chart, still marked beta: its keyword may change and older renderers lack
+  it) and `timeline`. Standard Mermaid, so the Markdown
   renders the same in other apps (GitHub, GitLab, VS Code, Obsidian; Confluence and Notion with plugins) and can be
   shared as it is.
 * **Drawn by Stroom's own SVG renderer**, not the Mermaid library: the client parses only the subset and draws SVG
@@ -1137,6 +1180,14 @@ To settle with the product owner before building; listed in [Open questions](#op
    from every readable skill's name and description, context ordering them (decided 2026-11-23).
 8. ~~Skills' tools~~: `propose_skill`, `check_skill`, `find_skills`; anyone who may write the doc saves one (approved
    in a form); in the chat, a skill picker and slash commands to list and invoke skills (decided 2026-11-23).
+9. ~~Characterisation content~~: sent to the configured model, as other tool results are (decided 2026-11-23).
+10. ~~Text size~~: a capped excerpt, the first 500 characters by default (a setting) (decided 2026-11-23).
+11. ~~Confidence~~: the model answers high, medium or low; low stays "unclear", listed apart with its reason
+    (decided 2026-11-23).
+12. ~~Corrections~~: kept per investigation (with that timeline's results, its workspace and any Data Connection), so a
+    re-run keeps them; a skill updated from them by `propose_skill` only when the analyst asks (decided 2026-11-23).
+13. ~~Over `/mcp` with no Stroom model~~: MCP sampling (the client's model, approved there), else strong links only,
+    the result saying the loose items weren't classified (decided 2026-11-23).
 
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
