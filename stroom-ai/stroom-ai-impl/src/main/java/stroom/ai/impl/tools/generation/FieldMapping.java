@@ -91,6 +91,9 @@ import java.util.regex.Pattern;
 /// @param pair         A JSON name/value list read by its pairs' names ([ListPair], 2026-11-23): one pair's value
 ///                     (read as the xpath it gives, held in xpath), or at a Data path a Data per pair (its xpath the
 ///                     pairs written, its data_name the list's, as the entry's own name). Null for none.
+/// @param change       A JSON old/new property-change list ([ListChange], 2026-11-23), its side the path's (Before
+///                     the old values, After the new): one property's value (held in xpath, as a pair's), or at a
+///                     Data path a Data per property. Null for none.
 public record FieldMapping(String path,
                            String field,
                            List<String> anyOf,
@@ -119,7 +122,8 @@ public record FieldMapping(String path,
                            FillTemplate fillTemplate,
                            MaskNames maskNames,
                            Integer maxLength,
-                           ListPair pair) {
+                           ListPair pair,
+                           ListChange change) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
@@ -129,7 +133,7 @@ public record FieldMapping(String path,
     private static final List<String> GROUP_REFUSES = List.of("field", "any_of", "join", "value", "xpath", "meta",
             "lookup", "dictionary", "transform", "repeat", "scope", "time_format", "timezone", "map", "default",
             "data_parent", "separator", "rollover", "time_fallback", "meta_fallback", "item", "fill_template",
-            "mask_names", "max_length", "pair");
+            "mask_names", "max_length", "pair", "change");
     // An Event's own children: a group's field path starting with one is a path from Event, not from the group.
     private static final Set<String> EVENT_SECTIONS = Set.of("EventTime", "EventSource", "EventDetail", "EventChain",
             "Meta", "Followers");
@@ -151,7 +155,8 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName, null, null, null, false, null, null, null, null, null, null, null, null, null);
+                null, null, dataName, null, null, null, false, null, null, null, null, null, null, null, null, null,
+                null);
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -207,7 +212,8 @@ public record FieldMapping(String path,
                 fields.has("max_length")
                         ? (int) fields.integer("max_length", 1, 1)
                         : null,
-                fields.optionalModel("pair", (value, at) -> ListPair.read(reader, value, at)));
+                fields.optionalModel("pair", (value, at) -> ListPair.read(reader, value, at)),
+                fields.optionalModel("change", (value, at) -> ListChange.read(reader, value, at)));
         if (!fields.ok()) {
             return null;
         }
@@ -224,6 +230,19 @@ public record FieldMapping(String path,
                 : read.withPath(enclosing.getLast().relative(read.strippedPath()));
         if (placed.pair != null) {
             return placed.withPairRead(List.of());
+        }
+        if (placed.change != null) {
+            final String whole = enclosing.isEmpty()
+                    ? placed.strippedPath()
+                    : enclosing.getLast().path() + "/" + placed.strippedPath();
+            final Boolean before = ListChange.sideOf(whole);
+            if (before == null) {
+                fields.valueError("'" + whole + "': change writes a property's old value below Before and its new "
+                                  + "value below After (e.g. 'EventDetail/Update/Before/User/Name' and "
+                                  + "'EventDetail/Update/After/User/Name'): its path is below one of them");
+                return null;
+            }
+            return placed.withChange(placed.change.onSide(before)).withChangeRead(List.of());
         }
         return placed.meta == null
                 ? placed
@@ -315,7 +334,7 @@ public record FieldMapping(String path,
                 ? path
                 : relative, null, null, null, null, null, null, null, null, false, null, null, null, null, null,
                 dataName, null, null, null, false, null, null, null, header.withFields(entries), null, null, null,
-                null, null);
+                null, null, null);
     }
 
     // Whether an input of a group's field (or of a group's for_each) reads what it may: item names a group it is in,
@@ -427,6 +446,10 @@ public record FieldMapping(String path,
         final String pairProblem = pairProblem();
         if (pairProblem != null) {
             return pairProblem;
+        }
+        final String changeProblem = changeProblem();
+        if (changeProblem != null) {
+            return changeProblem;
         }
         if (meta != null) {
             // Stream meta is read as stroom:meta('Name'), which the generator, the documentation and rebuild_mapping
@@ -604,6 +627,9 @@ public record FieldMapping(String path,
         if (pair != null) {
             out.add("pair");
         }
+        if (change != null) {
+            out.add("change");
+        }
         return out;
     }
 
@@ -636,7 +662,7 @@ public record FieldMapping(String path,
                 : dataName;
         return new FieldMapping(path, field, anyOf, value, read, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, named, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, change);
     }
 
     /// @param except The names of the list's pairs the event's other entries read.
@@ -652,11 +678,64 @@ public record FieldMapping(String path,
         return pair != null && pair.perPair();
     }
 
+    // A change's checks: a Data per property is the entry's only content, at a path ending Data, unnamed.
+    private String changeProblem() {
+        if (change == null || !change.perProperty()) {
+            return null;
+        }
+        final String where = "'" + path + "': ";
+        if (!strippedPath().endsWith("/Data") && !"Data".equals(strippedPath())) {
+            return where + "a change without name writes a Data per property of the list, so its path ends in Data "
+                   + "(e.g. 'EventDetail/Update/After/User/Data'); to read one property's value give its name";
+        }
+        if (dataName != null || dataParent != null || !given().equals(List.of("change")) || transform != null
+            || hasMap() || defaultValue != null || isSet(timeFormat) || repeat || maxLength != null) {
+            return where + "a Data per property is named by each property's name and holds its value: give path and "
+                   + "change only (no data_name, other input or conversion); a property read by its name may have "
+                   + "them";
+        }
+        return null;
+    }
+
+    // The change read as its xpath on its side: one property's value, or the properties a Data per property writes
+    // (but those of the names given), its data_name the list's.
+    private FieldMapping withChangeRead(final Collection<String> except) {
+        final String read = change.perProperty()
+                ? change.perPropertyXpath(except)
+                : change.valueXpath();
+        final String named = change.perProperty()
+                ? change.list()
+                : dataName;
+        return new FieldMapping(path, field, anyOf, value, read, meta, lookup, dictionary, transform, repeat, scope,
+                timeFormat, timezone, map, defaultValue, named, dataParent, join, separator, rollover, timeFallback,
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, change);
+    }
+
+    private FieldMapping withChange(final ListChange placed) {
+        return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, placed);
+    }
+
+    /// @param except The names of the list's properties the event's other entries read.
+    /// @return This Data per property ([ListChange#perProperty()]) without those properties; any other entry as it
+    /// is.
+    public FieldMapping withChangesExcept(final Collection<String> except) {
+        return dataPerChange()
+                ? withChangeRead(except)
+                : this;
+    }
+
+    /// @return True if it is a Data per property of an old/new list ([ListChange#perProperty()]).
+    public boolean dataPerChange() {
+        return change != null && change.perProperty();
+    }
+
     private FieldMapping withMetaRead() {
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + ToolText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
                 join, separator, rollover, timeFallback, zoneSource, metaFallback, group, item, fillTemplate,
-                maskNames, maxLength, pair);
+                maskNames, maxLength, pair, change);
     }
 
     /// @param defaultValue The output when the input is empty.
@@ -664,7 +743,7 @@ public record FieldMapping(String path,
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, change);
     }
 
     /// @param dataName The Data element's Name.
@@ -672,7 +751,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, change);
     }
 
     /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
@@ -688,7 +767,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataParent(final String dataParent) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, change);
     }
 
     /// @return This entry (a `repeat` of a field) as a group's field reads the same values: the group's own item,
@@ -696,7 +775,7 @@ public record FieldMapping(String path,
     FieldMapping asGroupItem() {
         return new FieldMapping(path, null, anyOf, value, xpath, meta, lookup, dictionary, transform, false, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, "", fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group, "", fillTemplate, maskNames, maxLength, pair, change);
     }
 
     /// @param path The path.
@@ -704,7 +783,7 @@ public record FieldMapping(String path,
     public FieldMapping withPath(final String path) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames, maxLength, pair, change);
     }
 
     /// @param fields A group entry's fields.
@@ -712,7 +791,8 @@ public record FieldMapping(String path,
     public FieldMapping withGroupFields(final List<FieldMapping> fields) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group.withFields(fields), item, fillTemplate, maskNames, maxLength, pair);
+                zoneSource, metaFallback, group.withFields(fields), item, fillTemplate, maskNames,
+                maxLength, pair, change);
     }
 
     /// @return True if it is a group (for_each): its element written once per item.
@@ -749,7 +829,7 @@ public record FieldMapping(String path,
                 .put("field", field, null)
                 .put("any_of", anyOf, null)
                 .put("value", value, null)
-                .put("xpath", pair == null
+                .put("xpath", pair == null && change == null
                         ? xpath
                         : null, null)
                 .put("meta", meta, null)
@@ -766,7 +846,7 @@ public record FieldMapping(String path,
                         ? null
                         : new LinkedHashMap<>(map), null)
                 .put("default", defaultValue, null)
-                .put("data_name", dataPerPair()
+                .put("data_name", dataPerPair() || dataPerChange()
                         ? null
                         : dataName, null)
                 .putIfSet("data_parent", dataParent)
@@ -787,6 +867,9 @@ public record FieldMapping(String path,
                 .putIfSet("pair", pair == null
                         ? null
                         : pair.toJson(mode))
+                .putIfSet("change", change == null
+                        ? null
+                        : change.toJson(mode))
                 .putIfSet("item", item == null
                         ? null
                         : item.isEmpty()

@@ -293,6 +293,10 @@
   "pair": {
    "description": "JSON input: one pair of a name/value list (items each a setting's name and its value) read by its name; without name, at a path ending Data, a Data per pair named by its pair's name, but those the event's other entries read by pair.",
    "model": "ListPair"
+  },
+  "change": {
+   "description": "JSON input: one property of an old/new property-change list (items each a property's name, its old value and its new value) read by its name, its old value below Update/Before, its new below Update/After (the path says which); without name, at a path ending Data, a Data per property of that side's values, but those the event's other entries read by change. In a group's fields the list is a key of the item.",
+   "model": "ListChange"
   }
  },
  "Lookup": {
@@ -490,6 +494,28 @@
   },
   "value_key": {
    "description": "The items' key holding its value, e.g. 'Value'; '*' where each item holds it under a key of its own (value, boolValue, multiValue...).",
+   "model": null
+  }
+ },
+ "ListChange": {
+  "list": {
+   "description": "The list field, e.g. 'event.ModifiedProperties' (in a group's fields a key of the item, e.g. 'modifiedProperties').",
+   "model": null
+  },
+  "name": {
+   "description": "The property read, by its name, e.g. 'DisplayName'; omit for a Data per property.",
+   "model": null
+  },
+  "name_key": {
+   "description": "The items' key holding each property's name, e.g. 'Name'.",
+   "model": null
+  },
+  "old_key": {
+   "description": "The items' key holding its value before the change, e.g. 'OldValue'.",
+   "model": null
+  },
+  "new_key": {
+   "description": "The items' key holding its value after the change, e.g. 'NewValue'.",
    "model": null
   }
  }

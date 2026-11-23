@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.NameValueLists;
+import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
 import stroom.ai.impl.tools.sample.NameValueLists.NameValueList;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.TimePatterns;
@@ -69,7 +70,10 @@ import java.util.regex.Pattern;
 ///   has once; values that, converted as the translation converts them (transform, map, default, time_format), the
 ///   element's type, values or pattern refuse, named with the fix; a pair (2026-11-23) of a list that isn't a
 ///   name/value list ([NameValueLists]) or has no pair of its name (naming those it has), and a for_each group over a
-///   name/value list (each setting would be one element, its value in an element meaning something else).
+///   name/value list (each setting would be one element, its value in an element meaning something else); a change
+///   (2026-11-23) on an action element with no Before and After, of a list that isn't an old/new list
+///   ([NameValueLists#changes(java.util.Collection)]), with keys that aren't its items', or no property of its name,
+///   and a for_each group over an old/new list (its path checked in both snapshots, its values both sides').
 /// * **Not checked** (said, never refused): the values of a placement read by an xpath or a lookup (2026-11-22),
 ///   which only the translation reads; its path, and a lookup's key field, are checked as the others are.
 /// * **Unplaced** (refuses confirmation, never proposals): an element the schema requires of the action element (or
@@ -142,6 +146,11 @@ final class PlacementCheck {
     private List<BitSet> byRule;
     // Each list field told a name/value list (or not), over every record holding it.
     private final Map<String, Optional<NameValueList>> nameValueLists = new HashMap<>();
+    // Each list field told an old/new list (or not), over every record holding it; a list inside an array's items by
+    // the array and its key.
+    private final Map<List<String>, Optional<ChangeList>> changeLists = new HashMap<>();
+    // The user's answers of which key of each old/new list holds the value before the change, by the list.
+    private final Map<String, String> changeSides;
 
     /// @param schema    The event-logging schema.
     /// @param index     The scope's records.
@@ -160,6 +169,7 @@ final class PlacementCheck {
         this.missing = missing;
         this.catalogue = catalogue;
         this.rules = drafted.rules();
+        this.changeSides = drafted.changeSides();
         this.recognises = recognises;
         final TranslationMapping reading = index.sample().reading();
         this.common = new HashSet<>(drafted.commonFields());
@@ -340,15 +350,35 @@ final class PlacementCheck {
         final String base = source
                 ? ""
                 : EVENT_DETAIL + detail + "/";
-        final String below = source
+        final String given = source
                 ? placement.path()
                 : placement.pathBelow(detail);
-        if (below == null || below.isEmpty()) {
+        if (given == null || given.isEmpty()) {
             problems.add(said + ": its path is below its action element, " + detail + " (e.g. 'Email/Subject', "
                          + "or 'EventDetail/" + detail + "/Email/Subject'), or in EventSource (e.g. "
                          + "'EventSource/Client/Name')");
             return;
         }
+        if (placement.snapshots()) {
+            if (source || !schema.hasPath(base + "After")) {
+                problems.add(said + ": change writes the Before and After snapshots of an Update, which " + detail
+                             + " hasn't: read a property's new value by its name with pair, e.g. {path: "
+                             + "'<element>', pair: {list: '<list>', name: '<name>', value_key: '<the key of the new "
+                             + "value>'}}");
+                return;
+            }
+            if (!recognised.isEmpty()) {
+                final String changeProblem = changeProblem(placement);
+                if (changeProblem != null) {
+                    problems.add(said + ": " + changeProblem);
+                    return;
+                }
+            }
+        }
+        // A change's values are checked where they go in After (Before has the same elements).
+        final String below = placement.snapshots()
+                ? "After/" + placement.snapshotPath(detail)
+                : given;
         if (placement.pair() != null && !recognised.isEmpty()) {
             // No sampled record of it: its pair's list can't be looked for here (its form is checked).
             final String pairProblem = pairProblem(placement);
@@ -425,7 +455,7 @@ final class PlacementCheck {
                 return;
             }
         }
-        valueProblems(said, base, below, placement, recognised, leaves).ifPresent(problems::add);
+        valueProblems(said, base, below, completed(placement), recognised, leaves).ifPresent(problems::add);
     }
 
     // The mapping's own reading of the entry (its for_each form, its conversions); null when it reads.
@@ -514,6 +544,12 @@ final class PlacementCheck {
         final ItemKeys found = itemKeys(field, recognised, false);
         if (found == null) {
             return null;
+        }
+        final Optional<ChangeList> changes = changeList(field);
+        if (changes.isPresent()) {
+            return field + " is an old/new list (" + namesSaid(changes.get().names()) + "): " + below + " takes one "
+                   + "value, so each property's name and values would be written run together: read the property "
+                   + "whose name means " + below + " by its name, " + changeExample(field, changes.get(), below);
         }
         final Optional<NameValueList> pairs = nameValueList(field);
         if (pairs.isPresent()) {
@@ -760,6 +796,8 @@ final class PlacementCheck {
             values = anyOf(JsonValues.strings(entry.get("any_of")), recognised);
         } else if (placement.pair() != null) {
             values = pairValues(placement, recognised);
+        } else if (placement.change() != null) {
+            values = changeValues(placement, recognised);
         } else {
             // A join's parts each a value of its own, an xpath's and a lookup's values the translation's: not read
             // here.
@@ -1161,6 +1199,10 @@ final class PlacementCheck {
                 // One pair of a list typed: counted as a field typed, the list's other pairs still Data.
                 typed.add(placement.pair().get("list") + " (" + placement.pair().get("name") + ")");
             }
+            if (placement.change() != null) {
+                // One property of an old/new list typed in both snapshots: as a pair's.
+                typed.add(placement.change().get("list") + " (" + placement.change().get("name") + ")");
+            }
         });
         if (NullSafe.isNonBlankString(type.actor())) {
             typed.add(type.actor());
@@ -1191,7 +1233,7 @@ final class PlacementCheck {
         final CouldType couldType = note == null
                 ? null
                 : new CouldType(dataFields(data, codes, recognised), homes(detail, written, sourceWritten),
-                        arraysOfObjects(type, data, codes, recognised));
+                        arraysOfObjects(type, detail, data, codes, recognised));
         return new Typing(typedCount, data.size(), fill, note, couldType);
     }
 
@@ -1235,10 +1277,17 @@ final class PlacementCheck {
     // apart, with its pairs' names (2026-11-23, chat 187: each {Name, Value} pair written as a View/Object, its value
     // in Description, as the group suggestion said each item could be typed): its pairs are Data, each named by its
     // pair's name, but those whose names mean an element, read by the pair form.
+    //
+    // An old/new list (2026-11-23) is listed apart too, with its properties' names: written as Before and After
+    // snapshots under an Update, each property Data of the object, but those whose names mean an element, read by the
+    // change form for both; elsewhere one side's value read as a pair. An array of objects each holding an old/new
+    // list (targets, each with its changed properties) says so, with the group writing each target in both.
     private List<String> arraysOfObjects(final EventType type,
+                                         final String detail,
                                          final Set<String> data,
                                          final Set<String> codes,
                                          final BitSet recognised) {
+        final boolean snapshots = schema.hasPath(EVENT_DETAIL + detail + "/After");
         final List<String> out = new ArrayList<>();
         final List<String> pairLists = new ArrayList<>();
         int found = 0;
@@ -1255,6 +1304,16 @@ final class PlacementCheck {
             if (out.size() + pairLists.size() >= ARRAYS_SHOWN) {
                 continue;
             }
+            final Optional<ChangeList> changes = changeList(field);
+            if (changes.isPresent()) {
+                final Map<String, Integer> names = new LinkedHashMap<>(NameValueLists.namesIn(heldBy(field,
+                        recognised), changes.get().nameKey()));
+                placedChanges(type, field).forEach(names::remove);
+                if (!names.isEmpty()) {
+                    out.add(changeSaid(field, changes.get(), names, snapshots, changeSides.containsKey(field)));
+                }
+                continue;
+            }
             final Optional<NameValueList> pairs = nameValueList(field);
             if (pairs.isPresent()) {
                 final Map<String, Integer> names = new LinkedHashMap<>(NameValueLists.namesIn(heldBy(field,
@@ -1267,7 +1326,8 @@ final class PlacementCheck {
             }
             out.add(field + ": items with " + cappedTo(items.keys(), ITEM_KEYS_SHOWN) + (groupSaid
                     ? ""
-                    : " — a for_each group on an element the schema repeats types each"));
+                    : " — a for_each group on an element the schema repeats types each")
+                    + nestedChangesSaid(field, items.keys(), snapshots));
             groupSaid = true;
         }
         if (!pairLists.isEmpty()) {
@@ -1280,6 +1340,53 @@ final class PlacementCheck {
             out.add("… " + (found - ARRAYS_SHOWN) + " more");
         }
         return out;
+    }
+
+    // An old/new list in words: its keys, its properties' names (capped), and how its properties are typed.
+    private static String changeSaid(final String field,
+                                     final ChangeList changes,
+                                     final Map<String, Integer> names,
+                                     final boolean snapshots,
+                                     final boolean answered) {
+        final String head = field + ": an old/new list (old values in " + changes.oldKey() + ", new in "
+                            + changes.newKey() + (answered
+                ? ", as the user said"
+                : ", by the items' order: give old_key and new_key where the keys say otherwise") + "); properties: "
+                            + namesSaid(names);
+        final String name = names.keySet().iterator().next();
+        return head + (snapshots
+                ? " — written as Before and After snapshots, each property Data of the object; a property whose name "
+                  + "means an element goes there in both by name, e.g. {path: 'User/Name', change: {list: '" + field
+                  + "', name: '" + name + "'}}"
+                : " — a property whose new value means an element is read by name, e.g. {path: '<element>', pair: "
+                  + "{list: '" + field + "', name: '" + name + "', value_key: '" + changes.newKey() + "'}}");
+    }
+
+    // The old/new lists inside an array's items (targets, each with the properties changed), in words; "" for none.
+    private String nestedChangesSaid(final String field, final List<String> keys, final boolean snapshots) {
+        for (final String key : keys) {
+            final Optional<ChangeList> changes = nestedChangeList(field, key);
+            if (changes.isPresent()) {
+                final String name = changes.get().names().keySet().iterator().next();
+                return "; each item's " + key + " is an old/new list (properties: " + namesSaid(
+                        changes.get().names()) + ")" + (snapshots
+                        ? ": a for_each group over " + field + " at the object of both snapshots writes each item "
+                          + "in Before and After, e.g. {path: 'User', for_each: {array: '" + field + "'}, fields: "
+                          + "[{path: 'Id', field: '<its id>'}, {path: 'Name', change: {list: '" + key + "', name: '"
+                          + name + "'}}]} (its other properties Data of each)"
+                        : "");
+            }
+        }
+        return "";
+    }
+
+    // The names of a list's properties the event type's placements read by the change form.
+    private static List<String> placedChanges(final EventType type, final String field) {
+        return type.allPlacements().stream()
+                .map(Placement::change)
+                .filter(change -> change != null && field.equals(change.get("list")))
+                .map(change -> ToolText.str(change.get("name")))
+                .toList();
     }
 
     // The names of a list's pairs the event type's placements read.
@@ -1334,7 +1441,7 @@ final class PlacementCheck {
         if (!index.untold(list) && !index.anyHas(list)) {
             return nearest(list);
         }
-        final Optional<NameValueList> found = pairList(list, name);
+        final Optional<NameValueList> found = pairList(list, name, pair.get("value_key"));
         if (found.isEmpty()) {
             return list + " isn't a name/value list holding a pair named '" + name + "' (its items aren't each a "
                    + "name and its value): place its items with a for_each group, or read one with an xpath";
@@ -1358,25 +1465,35 @@ final class PlacementCheck {
         return null;
     }
 
-    // The list a pair by its name reads: told by shape, else (a sample too small to tell) by its name.
-    private Optional<NameValueList> pairList(final String list, final String name) {
+    // The list a pair by its name reads: told by shape (an old/new list read on the side its value key names, else
+    // its new values), else (a sample too small to tell) by its name.
+    private Optional<NameValueList> pairList(final String list, final String name, final Object valueKey) {
         final Optional<NameValueList> told = nameValueList(list);
         if (told.isPresent()) {
             return told;
         }
+        return NameValueLists.forPair(heldBy(list, everyRecord()), name, valueKey instanceof final String key
+                ? key
+                : null);
+    }
+
+    private BitSet everyRecord() {
         final BitSet all = new BitSet();
         all.set(0, index.sample().records().size());
-        return NameValueLists.forPair(heldBy(list, all), name);
+        return all;
     }
 
     // The placement with its pair's keys, as the list's items have them (as given where they can't be read here: no
     // record holds the list, the form alone checked, with stand-in keys where none are given).
     private Placement completed(final Placement placement) {
+        if (placement.snapshots()) {
+            return withChangeKeys(placement);
+        }
         final Map<String, Object> pair = placement.pair();
         if (pair == null) {
             return placement;
         }
-        return pairList(ToolText.str(pair.get("list")), ToolText.str(pair.get("name")))
+        return pairList(ToolText.str(pair.get("list")), ToolText.str(pair.get("name")), pair.get("value_key"))
                 .map(pairs -> placement.withPairKeys(pairs.nameKey(), pairs.valueKey()))
                 .orElseGet(() -> placement.withPairKeys(Objects.toString(pair.get("name_key"), "name"),
                         Objects.toString(pair.get("value_key"), "value")));
@@ -1389,6 +1506,14 @@ final class PlacementCheck {
         final Object array = JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array");
         if (!(array instanceof final String field) || field.isBlank()) {
             return null;
+        }
+        final Optional<ChangeList> changes = changeList(field);
+        if (changes.isPresent()) {
+            return field + " is an old/new list (" + namesSaid(changes.get().names()) + "): each item is a "
+                   + "property's change, named by its " + changes.get().nameKey() + ", not one thing " + below
+                   + " means. Read the property whose name means an element by its name, "
+                   + changeExample(field, changes.get(), "User/Name") + "; the other properties are Data of the "
+                   + "snapshots' object, each named by its property";
         }
         return nameValueList(field)
                 .map(pairs -> field + " is a name/value list (" + namesSaid(pairs.names()) + "): each item is a "
@@ -1404,7 +1529,7 @@ final class PlacementCheck {
     private List<String> pairValues(final Placement placement, final BitSet recognised) {
         final String list = ToolText.str(placement.pair().get("list"));
         final String name = ToolText.str(placement.pair().get("name"));
-        final Optional<NameValueList> found = pairList(list, name);
+        final Optional<NameValueList> found = pairList(list, name, placement.pair().get("value_key"));
         if (found.isEmpty()) {
             return List.of();
         }
@@ -1415,6 +1540,129 @@ final class PlacementCheck {
                 if (name.equals(item.get(found.get().nameKey())) && held != null && !held.isBlank()
                     && !nil.contains(ToolText.strip(held)) && out.size() < VALUES_READ) {
                     out.add(held);
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Properties of old/new lists
+
+    // A field told an old/new list over every record holding it, or empty.
+    private Optional<ChangeList> changeList(final String field) {
+        return changeLists.computeIfAbsent(List.of(field), key -> NameValueLists.changes(heldBy(field,
+                everyRecord())).map(list -> list.oriented(changeSides.get(field))));
+    }
+
+    // A key of an array's items told an old/new list over every item holding it, or empty.
+    private Optional<ChangeList> nestedChangeList(final String array, final String key) {
+        return changeLists.computeIfAbsent(List.of(array, key), ignored -> NameValueLists.changes(
+                NameValueLists.heldIn(heldBy(array, everyRecord()), key)).map(list -> list.oriented(
+                changeSides.get(NameValueLists.nestedName(array, key)))));
+    }
+
+    // A change placement's example, for a message.
+    private static String changeExample(final String field, final ChangeList changes, final String at) {
+        return "e.g. {path: '" + at + "', change: {list: '" + field + "', name: '" + changes.names().keySet()
+                .iterator().next() + "'}} (an Update's Before and After: old and new value)";
+    }
+
+    // Why a placement's changes can't be read: the input isn't JSON's own, a list no record has, isn't an old/new
+    // list, its keys aren't the items', or no property has the name. Null when they read.
+    private String changeProblem(final Placement placement) {
+        final TranslationMapping reading = index.sample().reading();
+        final String array = placement.group()
+                ? ToolText.str(JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array"))
+                : null;
+        final List<Map<String, Object>> changes = new ArrayList<>();
+        if (placement.change() != null) {
+            changes.add(placement.change());
+        }
+        JsonValues.maps(placement.entry().get(Placement.FIELDS)).stream()
+                .filter(field -> field.get(Placement.CHANGE) instanceof Map)
+                .forEach(field -> changes.add(JsonValues.mapOrEmpty(field.get(Placement.CHANGE))));
+        for (final Map<String, Object> change : changes) {
+            final String list = ToolText.str(change.get("list"));
+            final String read = array == null
+                    ? list
+                    : array;
+            if (!"json".equals(reading.input()) || NullSafe.list(reading.jsonFields()).stream()
+                    .anyMatch(held -> read.equals(held) || read.startsWith(held + "."))) {
+                return "change reads an old/new list of a JSON input's records; " + list + " isn't one (read a "
+                       + "value of it with an xpath)";
+            }
+            if (array == null && !index.untold(list) && !index.anyHas(list)) {
+                return nearest(list);
+            }
+            final Optional<ChangeList> found = array == null
+                    ? changeList(list)
+                    : nestedChangeList(array, list);
+            if (found.isEmpty()) {
+                return (array == null
+                        ? list
+                        : array + "'s items' " + list) + " isn't an old/new list (its items aren't each a "
+                       + "property's name with its old and new values): place its items with a for_each group, or "
+                       + "read one with an xpath";
+            }
+            final ChangeList keys = found.get();
+            final Set<String> three = Set.of(keys.nameKey(), keys.oldKey(), keys.newKey());
+            for (final String key : List.of("name_key", "old_key", "new_key")) {
+                if (change.get(key) != null && !three.contains(ToolText.str(change.get(key)))) {
+                    return list + "'s items name each property by " + keys.nameKey() + " and hold its values in "
+                           + keys.oldKey() + " and " + keys.newKey() + " (old first, by the items' order): give "
+                           + "those as name_key, old_key and new_key, or leave them out";
+                }
+            }
+            final String name = change.get("name") instanceof final String named
+                    ? named
+                    : null;
+            if (name != null && !keys.names().containsKey(name)) {
+                final List<String> close = CloseMatches.closeMatches(name, keys.names().keySet(), SHOWN,
+                        CloseMatches.DEFAULT_CUTOFF);
+                return list + " has no property named '" + name + "' in the sample" + (close.isEmpty()
+                        ? ""
+                        : " (did you mean " + String.join(", ", close) + "?)") + "; its properties: "
+                       + namesSaid(keys.names());
+            }
+        }
+        return null;
+    }
+
+    // The placement with its changes' keys, as the lists' items have them: a key given kept, the rest the sample's
+    // (stand-ins where the list can't be read here, the form alone checked).
+    private Placement withChangeKeys(final Placement placement) {
+        final String array = placement.group()
+                ? ToolText.str(JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array"))
+                : null;
+        final Map<String, List<String>> keys = new LinkedHashMap<>();
+        for (final String list : placement.changeLists()) {
+            final Optional<ChangeList> found = array == null
+                    ? changeList(list)
+                    : nestedChangeList(array, list);
+            keys.put(list, found.map(changes -> List.of(changes.nameKey(), changes.oldKey(), changes.newKey()))
+                    .orElse(List.of("name", "old_value", "new_value")));
+        }
+        return placement.withChangeKeys(keys);
+    }
+
+    // The values of a placement's change in the records given: the property's old and new values, unwrapped.
+    private List<String> changeValues(final Placement placement, final BitSet recognised) {
+        final Map<String, Object> change = placement.change();
+        final String list = ToolText.str(change.get("list"));
+        final String name = ToolText.str(change.get("name"));
+        final String nameKey = ToolText.str(change.get("name_key"));
+        final Set<String> out = new LinkedHashSet<>();
+        for (final Object value : heldBy(list, recognised)) {
+            for (final Map<?, ?> item : objects(value)) {
+                if (!name.equals(item.get(nameKey))) {
+                    continue;
+                }
+                for (final String side : List.of("old_key", "new_key")) {
+                    final String held = NameValueLists.changeText(item.get(ToolText.str(change.get(side))));
+                    if (!held.isBlank() && !nil.contains(ToolText.strip(held)) && out.size() < VALUES_READ) {
+                        out.add(held);
+                    }
                 }
             }
         }

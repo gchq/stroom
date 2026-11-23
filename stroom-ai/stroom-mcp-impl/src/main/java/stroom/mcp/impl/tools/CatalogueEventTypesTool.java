@@ -196,6 +196,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final TranslationBuilds builds;
     private final LongSupplier clock;
+    private final Provider<BuildRecords> buildRecords;
     private Provider<CatalogueNotes> catalogueNotesProvider;
 
     @Inject
@@ -203,8 +204,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                             final SampleStreamTexts sampleStreamTexts,
                             final Consent consent,
                             final BuildPlan plan,
-                            final TranslationBuilds builds) {
-        this(notes, sampleStreamTexts, consent, plan, builds, System::currentTimeMillis);
+                            final TranslationBuilds builds,
+                            final Provider<BuildRecords> buildRecords) {
+        this(notes, sampleStreamTexts, consent, plan, builds, buildRecords, System::currentTimeMillis);
     }
 
     /// As the injected constructor, with the clock given, for tests.
@@ -214,13 +216,17 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     /// @param consent           Asks the user.
     /// @param plan              The build's plan.
     /// @param builds            The builds.
+    /// @param buildRecords      The build records: the user's answers of which key of each old/new list holds the
+    ///                          value before the change, which the check follows as the draft does.
     /// @param clock             The time now, in milliseconds.
     CatalogueEventTypesTool(final RecordSourceNotesTool notes,
                             final SampleStreamTexts sampleStreamTexts,
                             final Consent consent,
                             final BuildPlan plan,
                             final TranslationBuilds builds,
+                            final Provider<BuildRecords> buildRecords,
                             final LongSupplier clock) {
+        this.buildRecords = buildRecords;
         this.notes = notes;
         this.sampleStreamTexts = sampleStreamTexts;
         this.consent = consent;
@@ -671,7 +677,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     ? " (and " + (couldType.size() - 5) + " more)"
                     : "") + " are kept as Data (check.typing.<TypeId>.could_type: the fields, the schema's "
                      + "elements below the action element and in EventSource, the arrays of objects a for_each "
-                     + "group could type, and the name/value lists with their pairs' names; the schema's elements "
+                     + "group could type, the name/value lists with their pairs' names, and the old/new lists with "
+                     + "their properties' names; the schema's elements "
                      + "every one of them has open said once, in "
                      + "check." + CatalogueCheckResult.COULD_TYPE_ALL + "). " + SHOULD_BE_TYPED
                      + typingExample(couldType.getFirst()));
@@ -714,8 +721,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final EventSchema schema = notes.schemaOrNull(calling.context(), calling.build());
         // What the draft writes: for every event (not an event type's Data, its user Authenticate's), and by its own
         // rules, which the translation's rules start from.
+        // Old/new lists by the user's answers for the build, as the draft takes them (2026-11-23).
         return CatalogueCheck.check(catalogue, read.sample(), schema, CatalogueCheck.Drafted.of(
-                JsonValues.mapOrEmpty(read.draft().get("mapping"))));
+                JsonValues.mapOrEmpty(read.draft().get("mapping"))).withChangeSides(ChangeSides.kept(
+                buildRecords.get(), calling.build())));
     }
 
     // The full listing (the catalogue and its check, in full) saved to the session's workspace: its path, or empty
@@ -1800,7 +1809,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                + "path>\"}]}] (the path below the action element, or from EventSource/ as EventSource/Client/Name, one "
                + "placement per field, at the element that means it; a name/value list's pair by its name, "
                + "{\"path\": \"Configuration/Name\", \"pair\": {\"list\": \"<the list>\", \"name\": \"<the "
-               + "pair's name>\"}}).";
+               + "pair's name>\"}}; an old/new list's property by its name for an Update's Before and After, "
+               + "{\"path\": \"User/Name\", \"change\": {\"list\": \"<the list>\", \"name\": \"<the "
+               + "property's name>\"}}).";
     }
 
     // The confirmation's marks cleared (no set shown or amended), the streams kept.

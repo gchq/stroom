@@ -1125,6 +1125,10 @@ public final class XsltGenerator {
         if (entry.value() != null || entry.defaultValue() != null) {
             return null;
         }
+        if (entry.dataPerChange() && entry.change().after()) {
+            // The object changed is written in After whatever the list holds: the schema requires After.
+            return null;
+        }
         if (entry.repeat() && !entry.hasMap()) {
             // Several values (a key given again, as rcpt= once per recipient): whether any has text. Seen in eval
             // case 50: normalize-space() over them all, which takes one, failed every record with two recipients.
@@ -1434,6 +1438,10 @@ public final class XsltGenerator {
             emitDataPerPair(parent, entry);
             return;
         }
+        if (entry.dataPerChange()) {
+            emitDataPerChange(parent, entry);
+            return;
+        }
         final XmlElement holder;
         if (entry.repeat()) {
             warnOfRendered(parent, entry);
@@ -1487,6 +1495,20 @@ public final class XsltGenerator {
         final XmlElement element = loop.addElement(ns, "Data");
         element.addElement(XSL, "attribute", "name", "Name", "select", pair.nameOfItem());
         element.addElement(XSL, "attribute", "name", "Value", "select", pair.valueOfItem());
+    }
+
+    // An old/new list's Data per property on its side (ListChange, 2026-11-23): a loop over the properties it writes,
+    // each a Data named by its property, holding its old value (Before) or its new value (After), unwrapped. In a
+    // group's fields the list is a key of the item.
+    private void emitDataPerChange(final XmlElement parent, final FieldMapping entry) {
+        final ListChange change = entry.change();
+        final String items = frames.isEmpty()
+                ? source(null, entry.xpath(), null)
+                : itemXpath(entry.item(), entry.xpath());
+        final XmlElement loop = parent.addElement(XSL, "for-each", "select", items);
+        final XmlElement element = loop.addElement(ns, "Data");
+        element.addElement(XSL, "attribute", "name", "Name", "select", change.nameOfItem());
+        element.addElement(XSL, "attribute", "name", "Value", "select", change.valueOfItem());
     }
 
     // A Data entry written out in full, as a template would hold it: equal tokens write the same Data.
@@ -2365,7 +2387,9 @@ public final class XsltGenerator {
                            + "('').");
         }
         final boolean usesDictMap = m.allEntries().stream().anyMatch(entry -> isSet(entry.dictionary()));
-        final boolean callsJson = JSON_CALL.matcher(ToolJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find();
+        // A change (ListChange) unwraps values held as JSON text with the guarded json-to-xml.
+        final boolean callsJson = JSON_CALL.matcher(ToolJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find()
+                                  || m.everyEntry().stream().anyMatch(entry -> entry.change() != null);
         final boolean usesJson = !m.jsonFields().isEmpty() || !m.xmlFields().isEmpty() || callsJson
                                  || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty() || zoneFunctionWanted
                                  || dataFunctionWanted || module != null || fillsTemplates || namesMasks

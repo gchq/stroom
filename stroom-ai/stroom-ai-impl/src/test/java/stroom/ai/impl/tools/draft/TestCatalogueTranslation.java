@@ -98,6 +98,32 @@ class TestCatalogueTranslation extends DraftFixtures {
             "Parameters": [{"Name": "Name", "Value": "Junk"}, {"Name": "From", "Value": "c@d.example"}]}}
             """;
 
+    // Users updated, each with the properties changed (an old/new list), as a directory's audit log nests them.
+    private static final String USERS = """
+            {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Update user.", "UserId": "jo@acme.example", \
+            "event": {"Target": "sam@acme.example", "ModifiedProperties": [{"Name": "DisplayName", "OldValue": \
+            "Sam T", "NewValue": "Sam Taylor"}, {"Name": "JobTitle", "OldValue": "", "NewValue": "Analyst"}]}}
+            {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "Update user.", "UserId": "jo@acme.example", \
+            "event": {"Target": "kate@acme.example", "ModifiedProperties": [{"Name": "DisplayName", "OldValue": \
+            "Kate", "NewValue": "Kate Jones"}, {"Name": "Department", "OldValue": "Ops", "NewValue": "Finance"}]}}
+            {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "Update user.", "UserId": "al@acme.example", \
+            "event": {"Target": "sam@acme.example", "ModifiedProperties": [{"Name": "JobTitle", "OldValue": \
+            "Analyst", "NewValue": "Lead"}, {"Name": "Department", "OldValue": "", "NewValue": "Ops"}]}}
+            """;
+    // Users updated as a directory's API writes them: targets, each with the properties changed, values JSON text.
+    private static final String TARGETS = """
+            {"activityDateTime": "2026-11-01T10:00:00Z", "activityDisplayName": "Update user", "event": \
+            {"targetResources": [{"id": "u-1", "type": "User", "modifiedProperties": [{"displayName": "DisplayName", \
+            "oldValue": "[\\"Sam T\\"]", "newValue": "[\\"Sam Taylor\\"]"}, {"displayName": "JobTitle", \
+            "oldValue": "[]", "newValue": "[\\"Analyst\\"]"}]}]}}
+            {"activityDateTime": "2026-11-01T10:01:00Z", "activityDisplayName": "Update user", "event": \
+            {"targetResources": [{"id": "u-2", "type": "User", "modifiedProperties": [{"displayName": "DisplayName", \
+            "oldValue": "[\\"Kate\\"]", "newValue": "[\\"Kate Jones\\"]"}]}, {"id": "u-3", "type": "User", \
+            "modifiedProperties": [{"displayName": "JobTitle", "oldValue": "[\\"Analyst\\"]", "newValue": \
+            "[\\"Lead\\"]"}, {"displayName": "DisplayName", "oldValue": "[\\"Al\\"]", "newValue": \
+            "[\\"Al Smith\\"]"}]}]}}
+            """;
+
     @Test
     void aRulePerWayOfRecognisingEachEventTypeInTheCataloguesOrderThenTheCatchAll() {
         final Map<String, Object> draft = draft(CODES, notes(List.of(
@@ -517,6 +543,85 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(fields).anySatisfy(field -> assertThat(field).containsEntry("path", "EventDetail/Create/Data")
                 .containsEntry("data_name", "From"));
         assertThat(dataNames(rules(draft).get("create_inboxrule"))).doesNotContain("event.Parameters");
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void aChangePlacedByNameIsTypedInBothSnapshotsAndTheListsOtherPropertiesAreDataOfTheAffectedObject() {
+        // Decided by the user 2026-11-23: {path: User/Name, change: {list, name}} writes Before/User/Name (old) and
+        // After/User/Name (new); the list's other properties Data of the object the event type acts on (affected_as).
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("Operation", "Update user.")));
+        update.put("affected", "event.Target");
+        update.put("affected_as", "After/User/Id");
+        update.put("placements", List.of(Map.of("path", "User/Name", "change",
+                Map.of("list", "event.ModifiedProperties", "name", "DisplayName"))));
+        final Map<String, Object> draft = draft(USERS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        final Map<String, Object> keys = Map.of("list", "event.ModifiedProperties", "name", "DisplayName",
+                "name_key", "Name", "old_key", "OldValue", "new_key", "NewValue");
+        for (final String side : List.of("Before", "After")) {
+            assertThat(fields).anySatisfy(field -> assertThat(field)
+                    .containsEntry("path", "EventDetail/Update/" + side + "/User/Name").containsEntry("change", keys));
+            assertThat(fields).anySatisfy(field -> assertThat(field)
+                    .containsEntry("path", "EventDetail/Update/" + side + "/User/Data")
+                    .containsEntry("change", Map.of("list", "event.ModifiedProperties", "name_key", "Name",
+                            "old_key", "OldValue", "new_key", "NewValue")));
+        }
+        assertThat(dataNames(rules(draft).get("update_user"))).doesNotContain("event.ModifiedProperties");
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void theUsersAnswerOfWhichKeyHoldsTheOldValueSetsTheSnapshotsAndAKeyGivenInAPlacementWins() {
+        // Decided by the user 2026-11-23: the build's answer (put in the notes by the draft's tool) over key order;
+        // keys a placement gives over both.
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("Operation", "Update user.")));
+        update.put("affected", "event.Target");
+        update.put("affected_as", "After/User/Id");
+        update.put("placements", List.of(Map.of("path", "User/Name", "change",
+                Map.of("list", "event.ModifiedProperties", "name", "DisplayName", "old_key", "OldValue",
+                        "new_key", "NewValue"))));
+        final Map<String, Object> notes = notes(List.of(update), true);
+        notes.put(SourceNotes.CHANGE_SIDES, Map.of("event.ModifiedProperties", "NewValue"));
+        final Map<String, Object> draft = draft(USERS, notes);
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        assertThat(fields).anySatisfy(field -> assertThat(field)
+                .containsEntry("path", "EventDetail/Update/Before/User/Data")
+                .containsEntry("change", Map.of("list", "event.ModifiedProperties", "name_key", "Name",
+                        "old_key", "NewValue", "new_key", "OldValue")));
+        assertThat(fields).anySatisfy(field -> assertThat(field)
+                .containsEntry("path", "EventDetail/Update/Before/User/Name")
+                .containsEntry("change", Map.of("list", "event.ModifiedProperties", "name", "DisplayName",
+                        "name_key", "Name", "old_key", "OldValue", "new_key", "NewValue")));
+    }
+
+    @Test
+    void aGroupOverTargetsReadingAChangeIsWrittenInBothSnapshotsWithEachTargetsOtherPropertiesAsData() {
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("activityDisplayName", "Update user")));
+        update.put("placements", List.of(Map.of("path", "User", "for_each",
+                Map.of("array", "event.targetResources"), "fields", List.of(Map.of("path", "Id", "field", "id"),
+                        Map.of("path", "Name", "change", Map.of("list", "modifiedProperties", "name",
+                                "DisplayName"))))));
+        final Map<String, Object> draft = draft(TARGETS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        final Map<String, Object> named = Map.of("path", "Name", "change", Map.of("list", "modifiedProperties",
+                "name", "DisplayName", "name_key", "displayName", "old_key", "oldValue", "new_key", "newValue"));
+        final Map<String, Object> perProperty = Map.of("path", "Data", "change", Map.of("list",
+                "modifiedProperties", "name_key", "displayName", "old_key", "oldValue", "new_key", "newValue"));
+        for (final String side : List.of("Before", "After")) {
+            assertThat(fields).anySatisfy(field -> {
+                assertThat(field).containsEntry("path", "EventDetail/Update/" + side + "/User");
+                assertThat(JsonValues.maps(field.get("fields"))).contains(named, perProperty);
+            });
+        }
         assertThat(generate(mappingOf(draft)).problems()).as("generates")
                 .allMatch(problem -> problem.contains("EventSource/Device is required"));
     }

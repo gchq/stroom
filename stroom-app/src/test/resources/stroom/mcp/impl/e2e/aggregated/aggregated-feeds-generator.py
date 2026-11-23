@@ -1,10 +1,11 @@
 # Synthetic aggregated feeds for Stroom AI's source type e2e tests (TestE2eSourceType*, TestE2eAggregatedFeedWalks).
 # Not real data: PEGA logs in a JSON wrapper (messages of text, JSON or SOAP XML), Azure audit records chosen by
-# Workload, and collector records chosen by LogFilePath.
+# Workload, collector records chosen by LogFilePath, and Entra ID directory audit records as Microsoft Graph writes
+# them (targets each with the properties changed, old and new values as JSON text; eval case 76).
 #
 # Usage: python3 aggregated-feeds-generator.py <dir>
-# Writes <dir>/{pega,azure-audit,collector-paths}/<name>-{1,2}.json. Each file is the first lines of a fixed,
-# seeded run (the full run is made so the slices don't change with the number of lines kept).
+# Writes <dir>/{pega,azure-audit,collector-paths,entra-audit}/<name>-{1,2}.json. Each file is the first lines of a
+# fixed, seeded run (the full run is made so the slices don't change with the number of lines kept).
 import json, random, sys, datetime as dt, uuid
 out = sys.argv[1]
 r = random.Random(6061)
@@ -290,6 +291,111 @@ def azure(n, day):
         lines.append(json.dumps(record, ensure_ascii=False))
     return lines
 
+# Entra ID's directory audit records have a generator of their own, so adding them left every other value the same.
+re_ = random.Random(6063)
+DEPARTMENTS = ["Finance", "Operations", "Engineering", "People"]
+TITLES = ["Analyst", "Senior Analyst", "Engineer", "Team Lead", "Manager"]
+GROUPS = {"Finance Team": "7b0e6c1a-2f3d-4e5a-9b8c-0d1e2f3a4b5c", "Ops On-Call": "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
+          "Contractors": "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b"}
+LICENCES = ["ENTERPRISEPACK", "EMS", "POWER_BI_PRO"]
+
+def entra_guid():
+    return str(uuid.UUID(int=re_.getrandbits(128)))
+
+def json_text(value):
+    # Graph writes each old and new value as JSON text: a string, or an array.
+    return json.dumps(value, ensure_ascii=False)
+
+def changed(name, old, new):
+    return {"displayName": name, "oldValue": None if old is None else json_text(old),
+            "newValue": None if new is None else json_text(new)}
+
+# Each user's directory state, changed as the records change it: a later record's old value is an earlier's new.
+STATE = {x: {"DisplayName": NAMES[x], "JobTitle": re_.choice(TITLES), "Department": re_.choice(DEPARTMENTS),
+             "AccountEnabled": True, "AssignedLicense": ["ENTERPRISEPACK"]}
+         for x in users if not x.startswith("svc-")}
+
+def user_target(name, properties):
+    return {"id": entra_guid(), "displayName": None, "type": "User", "userPrincipalName": name + "@contoso.example",
+            "groupType": None, "modifiedProperties": properties}
+
+def update_user(name):
+    state = STATE[name]
+    props = []
+    for key in re_.sample(["DisplayName", "JobTitle", "Department", "AssignedLicense"], re_.randint(1, 3)):
+        old = state[key]
+        if key == "DisplayName":
+            new = NAMES[name] if old != NAMES[name] else NAMES[name].split(" ")[0] + " " + NAMES[name].split(" ")[1][0]
+        elif key == "JobTitle":
+            new = re_.choice([t for t in TITLES if t != old])
+        elif key == "Department":
+            new = re_.choice([d for d in DEPARTMENTS if d != old])
+        else:
+            extra = [x for x in LICENCES if x not in old]
+            new = old + [re_.choice(extra)] if extra and re_.random() < .7 else ["ENTERPRISEPACK"]
+            if new == old:
+                new = old + extra[:1] if extra else ["ENTERPRISEPACK"]
+        # A property set for the first time has no old value now and then (Graph writes []).
+        props.append(changed(key, [] if re_.random() < .15 else (old if isinstance(old, list) else [old]),
+                             new if isinstance(new, list) else [new]))
+        state[key] = new
+    # Graph says which properties an update changed as a property of its own.
+    props.append(changed("Included Updated Properties", None, ", ".join(p["displayName"] for p in props)))
+    return [user_target(name, props)]
+
+def entra(n, day):
+    t = dt.datetime(2026, 11, day, 0, 0, 0)
+    people = [x for x in users if not x.startswith("svc-")]
+    lines = []
+    for _ in range(n):
+        t += dt.timedelta(seconds=re_.randint(30, 900))
+        activity = re_.choices(["Update user", "Disable account", "Enable account", "Add member to group",
+                                "Update group"], [.45, .1, .1, .2, .15])[0]
+        name = re_.choice(people)
+        actor = re_.choice(["kate.jones", "svc-batch", "omar.haddad"])
+        category = "GroupManagement" if "group" in activity else "UserManagement"
+        if activity == "Update user":
+            targets = update_user(name)
+        elif activity in ("Disable account", "Enable account"):
+            enabled = activity == "Enable account"
+            STATE[name]["AccountEnabled"] = enabled
+            targets = [user_target(name, [changed("AccountEnabled", [not enabled], [enabled]),
+                                          changed("Included Updated Properties", None, "AccountEnabled")])]
+        elif activity == "Add member to group":
+            group = re_.choice(list(GROUPS))
+            # Two targets: the user added, with the group as its new values, and the group.
+            targets = [user_target(name, [changed("Group.ObjectID", None, GROUPS[group]),
+                                          changed("Group.DisplayName", None, group)]),
+                       {"id": GROUPS[group], "displayName": group, "type": "Group", "userPrincipalName": None,
+                        "groupType": "unifiedGroups", "modifiedProperties": []}]
+        else:
+            group = re_.choice(list(GROUPS))
+            old = re_.choice(["", "Team mailbox", "On-call rota"])
+            targets = [{"id": GROUPS[group], "displayName": group, "type": "Group", "userPrincipalName": None,
+                        "groupType": "unifiedGroups",
+                        "modifiedProperties": [changed("Description", [old] if old else [], [old + " (" + day_text(t) + ")"]),
+                                               changed("Included Updated Properties", None, "Description")]}]
+        failed = re_.random() < .05
+        lines.append(json.dumps({
+            "id": "Directory_" + entra_guid(), "category": category, "correlationId": entra_guid(),
+            "result": "failure" if failed else "success",
+            "resultReason": "Insufficient privileges" if failed else "",
+            "activityDisplayName": activity, "activityDateTime": t.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "loggedByService": "Core Directory", "operationType": "Update" if activity != "Add member to group" else "Assign",
+            "initiatedBy": {"user": {"id": entra_guid(), "displayName": None,
+                                     "userPrincipalName": actor + "@contoso.example",
+                                     "ipAddress": f"203.0.113.{re_.randint(1, 254)}"}, "app": None},
+            "targetResources": targets,
+            # A name/value list: each detail's key and value.
+            "additionalDetails": [{"key": "UserType", "value": re_.choice(["Member", "Member", "Guest"])},
+                                  {"key": "User-Agent", "value": re_.choice(["Mozilla/5.0 (Windows NT 10.0)",
+                                                                             "Microsoft Graph PowerShell"])}]},
+            ensure_ascii=False))
+    return lines
+
+def day_text(t):
+    return t.strftime("%Y-%m-%d")
+
 def collector(n, day):
     t = dt.datetime(2026, 11, day, 0, 0, 0)
     paths = [("/var/log/mail/maillog", .35), ("/var/log/mail/audit/mailaudit.log", .05), ("/var/log/httpd/access_log", .30),
@@ -318,8 +424,9 @@ import os
 
 # The lines the tests read of each file.
 KEPT = {"pega-1": 3000, "pega-2": 2000, "azure-audit-1": 1000, "azure-audit-2": 1000,
-        "collector-paths-1": 1000, "collector-paths-2": 1000}
-for name, fn, n in [("pega", pega, 5000), ("azure-audit", azure, 3000), ("collector-paths", collector, 2000)]:
+        "collector-paths-1": 1000, "collector-paths-2": 1000, "entra-audit-1": 200, "entra-audit-2": 200}
+for name, fn, n in [("pega", pega, 5000), ("azure-audit", azure, 3000), ("collector-paths", collector, 2000),
+                    ("entra-audit", entra, 200)]:
     os.makedirs(f"{out}/{name}", exist_ok=True)
     for s, day in enumerate([10, 11]):
         kept = KEPT[f"{name}-{s + 1}"]

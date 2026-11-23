@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /// One typed placement of an event type (its `placements`, decided by the user 2026-11-21): a field of its records
@@ -37,7 +38,11 @@ import java.util.Set;
 /// (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and its repeated groups (`for_each` with
 /// `fields`, each reading the item with `item: true` or a key of it), or (2026-11-23) one pair of a name/value list
 /// read by its name, `pair: {list, name}` (its keys filled from the sample by the check, the list's other pairs Data
-/// named by their names); `also_data: true` keeps the field as Data too.
+/// named by their names), or (2026-11-23) one property of an old/new property-change list read by its name for an
+/// Update's both snapshots, `change: {list, name}` (`{"path": "User/Name", "change": {...}}` writes `Before/User/Name`
+/// from its old value and `After/User/Name` from its new; the list's other properties Data of the snapshots' object;
+/// in a group's fields over targets each holding a list, the list a key of the item, the group written in both
+/// snapshots); `also_data: true` keeps the field as Data too.
 /// The agent places a field from what it knows of the source; nothing matches field names to schema names. A path
 /// starting `EventSource/` (2026-11-22: `EventSource/Client/Name` for a field naming the client application) is
 /// written by the event type's rule in its EventSource, checked the same way.
@@ -63,16 +68,20 @@ public record Placement(Map<String, Object> entry) {
     public static final String ALSO_DATA = "also_data";
     /// A placement's pair of a name/value list, read by its name (2026-11-23).
     public static final String PAIR = "pair";
+    /// A placement's property of an old/new list, read by its name for both snapshots (2026-11-23).
+    public static final String CHANGE = "change";
     /// The keys a placement may have: the mapping's for a field, a constant, an xpath, a lookup or a pair, its
     /// conversions and its groups.
     public static final List<String> KEYS = List.of(PATH, FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, "separator",
             "transform", "time_format", "timezone", "map", "default", "repeat", FOR_EACH, "as", FIELDS, "item",
-            "scope", ALSO_DATA, PAIR);
+            "scope", ALSO_DATA, PAIR, CHANGE);
 
     /// A placement's path starting here is in the event's EventSource, not below its action element (2026-11-22).
     public static final String EVENT_SOURCE = "EventSource/";
 
     private static final String EVENT_DETAIL = "EventDetail/";
+    private static final String BEFORE = "Before/";
+    private static final String AFTER = "After/";
 
     /// Copies the entry, in its order.
     public Placement {
@@ -144,7 +153,18 @@ public record Placement(Map<String, Object> entry) {
                        + "pair's name)";
             }
         }
-        final long inputs = List.of(FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, PAIR).stream()
+        if (entry.containsKey(CHANGE)) {
+            final Map<String, Object> change = JsonValues.mapOrEmpty(entry.get(CHANGE));
+            final boolean named = change.get("name") instanceof final String name && !name.isBlank();
+            final boolean data = "Data".equals(ToolText.strip(ToolText.str(entry.get(PATH)).strip(), "/"));
+            if (!(change.get("list") instanceof final String list) || list.isBlank() || !named && (top || !data)) {
+                return "change reads one property of an old/new list by its name, for both snapshots: {\"list\": "
+                       + "\"<the list field>\", \"name\": \"<the property's name>\"} (in a group's fields over "
+                       + "targets, the list a key of the item; the list's other properties are Data of the "
+                       + "snapshots' object)";
+            }
+        }
+        final long inputs = List.of(FIELD, VALUE, "any_of", "join", XPATH, LOOKUP, PAIR, CHANGE).stream()
                 .filter(entry::containsKey)
                 .count() + (entry.containsKey("item")
                 ? 1
@@ -152,8 +172,9 @@ public record Placement(Map<String, Object> entry) {
                 ? 1
                 : 0);
         if (inputs != 1) {
-            return "give one of field (a field of the records), value (a constant), any_of, join, xpath, lookup or "
-                   + "pair (one pair of a name/value list, by its name)";
+            return "give one of field (a field of the records), value (a constant), any_of, join, xpath, lookup, "
+                   + "pair (one pair of a name/value list, by its name) or change (one property of an old/new list, "
+                   + "by its name)";
         }
         return null;
     }
@@ -229,6 +250,62 @@ public record Placement(Map<String, Object> entry) {
         return new Placement(out);
     }
 
+    /// @return Its change, `{list, name}` (with `name_key`, `old_key` and `new_key` where given), or null for none.
+    public Map<String, Object> change() {
+        return entry.get(CHANGE) instanceof final Map<?, ?> given
+                ? JsonValues.mapOrEmpty(given)
+                : null;
+    }
+
+    /// @return True if it writes both of an Update's snapshots: a change, or a group whose fields read one.
+    public boolean snapshots() {
+        return change() != null || JsonValues.maps(entry.get(FIELDS)).stream()
+                .anyMatch(field -> field.get(CHANGE) instanceof Map);
+    }
+
+    /// @return The lists its changes read: its own, or its group's fields' (keys of the item).
+    public Set<String> changeLists() {
+        final Set<String> out = new LinkedHashSet<>();
+        final List<Map<String, Object>> all = new ArrayList<>(JsonValues.maps(entry.get(FIELDS)));
+        all.add(entry);
+        for (final Map<String, Object> one : all) {
+            if (one.get(CHANGE) instanceof final Map<?, ?> change && change.get("list") instanceof final String list) {
+                out.add(list);
+            }
+        }
+        return out;
+    }
+
+    /// @param keys Each list's keys (its name's, its old value's and its new value's), by the list.
+    /// @return It with its changes' keys (as the mapping's entries read them, [stroom.ai.impl.tools.generation
+    /// .ListChange]): a key given and the list's kept; itself if it has no change.
+    public Placement withChangeKeys(final Map<String, List<String>> keys) {
+        if (!snapshots()) {
+            return this;
+        }
+        final Map<String, Object> out = withKeys(new LinkedHashMap<>(entry), keys);
+        if (entry.containsKey(FIELDS)) {
+            out.put(FIELDS, JsonValues.maps(entry.get(FIELDS)).stream()
+                    .map(field -> withKeys(new LinkedHashMap<>(field), keys))
+                    .toList());
+        }
+        return new Placement(out);
+    }
+
+    private static Map<String, Object> withKeys(final Map<String, Object> one, final Map<String, List<String>> keys) {
+        if (!(one.get(CHANGE) instanceof final Map<?, ?> given) || !(given.get("list") instanceof final String list)
+            || !keys.containsKey(list)) {
+            return one;
+        }
+        final Map<String, Object> change = new LinkedHashMap<>(JsonValues.mapOrEmpty(given));
+        final List<String> three = keys.get(list);
+        change.putIfAbsent("name_key", three.get(0));
+        change.putIfAbsent("old_key", three.get(1));
+        change.putIfAbsent("new_key", three.get(2));
+        one.put(CHANGE, change);
+        return one;
+    }
+
     /// @return True if it is a repeated group (`for_each`).
     public boolean group() {
         return entry.containsKey(FOR_EACH);
@@ -298,12 +375,77 @@ public record Placement(Map<String, Object> entry) {
 
     /// @param detail The event type's action element.
     /// @return It as the translation mapping's fields entry: its path from `EventDetail/<element>/` (or in
-    /// EventSource, as given), without `also_data`.
+    /// EventSource, as given), without `also_data`; a change's, its After snapshot's ([#mappingEntries(String)]).
     public Map<String, Object> mappingEntry(final String detail) {
+        return mappingEntries(detail).getLast();
+    }
+
+    /// @param detail The event type's action element.
+    /// @return It as the translation mapping's fields entries: one ([#mappingEntry(String)]), or for a change
+    /// ([#snapshots()]) two, its Before snapshot's (`EventDetail/Update/Before/User/Name`) and its After's; a group's
+    /// fields reading a list by name gain its Data per property, each list's other properties Data of the item's
+    /// object.
+    public List<Map<String, Object>> mappingEntries(final String detail) {
         final Map<String, Object> out = new LinkedHashMap<>(JsonValues.deepCopy(entry));
         out.remove(ALSO_DATA);
-        out.put(PATH, fullPath(detail));
+        if (!snapshots()) {
+            out.put(PATH, fullPath(detail));
+            return List.of(out);
+        }
+        if (group()) {
+            out.put(FIELDS, withDataPerProperty(JsonValues.maps(out.get(FIELDS))));
+        }
+        final String head = EVENT_DETAIL + ToolText.strip(detail.strip(), "/") + "/";
+        final String below = snapshotPath(detail);
+        final List<Map<String, Object>> both = new ArrayList<>();
+        for (final String side : List.of(BEFORE, AFTER)) {
+            final Map<String, Object> one = JsonValues.deepCopy(out);
+            one.put(PATH, head + side + below);
+            both.add(one);
+        }
+        return both;
+    }
+
+    // A group's fields with a Data per property for each list they read by name and don't already write as Data.
+    private static List<Map<String, Object>> withDataPerProperty(final List<Map<String, Object>> fields) {
+        final List<Map<String, Object>> out = new ArrayList<>(fields);
+        final Set<String> perProperty = new LinkedHashSet<>();
+        final Set<String> named = new LinkedHashSet<>();
+        for (final Map<String, Object> field : fields) {
+            if (field.get(CHANGE) instanceof final Map<?, ?> change
+                && change.get("list") instanceof final String list) {
+                if (change.get("name") instanceof String) {
+                    named.add(list);
+                } else {
+                    perProperty.add(list);
+                }
+            }
+        }
+        for (final Map<String, Object> field : fields) {
+            if (field.get(CHANGE) instanceof final Map<?, ?> change && change.get("list") instanceof final String list
+                && named.contains(list) && perProperty.add(list)) {
+                final Map<String, Object> keys = new LinkedHashMap<>(JsonValues.mapOrEmpty(change));
+                keys.remove("name");
+                final Map<String, Object> data = new LinkedHashMap<>();
+                data.put(PATH, "Data");
+                data.put(CHANGE, keys);
+                out.add(data);
+            }
+        }
         return out;
+    }
+
+    /// @param detail The event type's action element.
+    /// @return A change's path below the snapshot ([#snapshots()]): below the action element, without a `Before/` or
+    /// `After/` given (`User/Name`).
+    String snapshotPath(final String detail) {
+        final String below = Objects.requireNonNullElse(pathBelow(detail), path());
+        if (below.startsWith(BEFORE)) {
+            return below.substring(BEFORE.length());
+        }
+        return below.startsWith(AFTER)
+                ? below.substring(AFTER.length())
+                : below;
     }
 
     /// @param detail The event type's action element.
@@ -315,6 +457,13 @@ public record Placement(Map<String, Object> entry) {
             return List.of();
         }
         final List<String> out = new ArrayList<>();
+        if (snapshots()) {
+            // Both snapshots, as the translation writes them.
+            final String own = snapshotPath(detail);
+            writes(entry, BEFORE + own, out);
+            writes(entry, AFTER + own, out);
+            return out;
+        }
         writes(entry, below, out);
         return out;
     }
@@ -337,6 +486,10 @@ public record Placement(Map<String, Object> entry) {
             out.add(path);
         }
         for (final Map<String, Object> field : inner) {
+            if (field.get(CHANGE) instanceof final Map<?, ?> change && !(change.get("name") instanceof String)) {
+                // A Data per property: Data, not a typed element.
+                continue;
+            }
             final String own = ToolText.strip(ToolText.str(field.get(PATH)).strip(), "/");
             writes(field, own.isEmpty()
                     ? path
@@ -364,6 +517,11 @@ public record Placement(Map<String, Object> entry) {
         if (entry.get(PAIR) != null) {
             final Map<String, Object> pair = JsonValues.mapOrEmpty(entry.get(PAIR));
             return pair.get("list") + "'s pair " + pair.get("name");
+        }
+        if (entry.get(CHANGE) != null) {
+            final Map<String, Object> change = JsonValues.mapOrEmpty(entry.get(CHANGE));
+            return change.get("list") + "'s property " + Objects.requireNonNullElse(change.get("name"), "each")
+                   + " (old in Before, new in After)";
         }
         return entry.get("any_of") != null
                 ? "any of " + JsonValues.strings(entry.get("any_of"))

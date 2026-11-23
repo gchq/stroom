@@ -3639,6 +3639,80 @@ placement. Decided by the user:
 * **Eval**: a typed entry's `not_typed` (`EvalScore`) lists texts no element outside Data may hold, cases 56 and 61
   naming the pair names of OperationProperties and Parameters; their references read the lists by the pair form.
 
+### Old/new property-change lists (built 2026-11-23)
+
+The follow-up of name/value lists: a JSON array whose items each give a property's name, its old value and its new
+value, Microsoft 365's `ModifiedProperties: [{"Name": "DisplayName", "OldValue": "Sam T", "NewValue": "Sam
+Taylor"}]` and Graph's `targetResources: [{id, type, modifiedProperties: [{displayName, oldValue, newValue}]}]`
+(values JSON text: `"[\"Sam T\"]"`, `"[true]"`, `"[]"`). Decided by the user:
+
+* **Detection by shape** (`NameValueLists.changes`, beside `detect`, no key names): every item an object of the same
+  three keys, each text, a number, a boolean, null or a list of scalars; over the sample at least 2 lists hold items;
+  one key the name by the name/value list's tests (text in every item, unique per list, words not codes, recurring;
+  of two that pass the one with fewer values, else the first); the other two one property's values before and after:
+  a value under both keys somewhere (a setting turned on and off, a title changed twice), else some item holding one
+  without the other (a property set or cleared) and, where both hold a value, most items' two of one shape (runs of
+  letters and digits each `x`: `Sam T` and `Sam Taylor` are `x x`, a GUID and a display name differ). Entities of
+  three keys (`{UPN, DisplayName, Role}`, `{Type, ID, Name}`, `{id, type, displayName}` with names now and then
+  null) show neither and aren't (tests with those shapes).
+* **Which key is old: the user's answer, else key order** (decided by the user 2026-11-23, after the first build
+  took key order alone: Microsoft 365 writes `NewValue` before `OldValue`, Graph `oldValue` before `newValue`). The
+  draft reports each list it found (`DraftMapping.CHANGE_LISTS`: name, keys, `by: user|order`, an item holding both
+  values). In a build with forms, `draft_translation_mapping` (`ChangeSides`, mcp-impl) asks of each list taken by
+  order which key holds the value before the change (`ChangeSides.QUESTION`, the list, its two keys and the example
+  item; the order's guess first), keeps the answer in the build record's `draft_choices` (`change_sides`, list ->
+  key, as the time source is kept) and drafts again with it, so the draft's snapshots and a catalogue placement's
+  keys follow it; a redraft in the build isn't asked (its note says "as the user said earlier for this build"). The
+  answers reach the draft through the source notes (`SourceNotes.CHANGE_SIDES`, put there by the tool, never in the
+  user's documentation; `ListFields`, `CatalogueTranslation`) and `catalogue_event_types`' check through
+  `CatalogueCheck.Drafted.withChangeSides` (`PlacementCheck`: `could_type` says "as the user said"). A list inside an
+  array's items goes by `targetResources[].modifiedProperties` (`NameValueLists.nestedName`). Without forms or a
+  build, key order stands, with the note to check it and swap. `old_key` and `new_key` given in a placement or an
+  entry win over both. The eval reference answers the question from the case's `reference.change_sides`; cases 60
+  and 76 say in `user_knows` which key holds the old value.
+* **Change form** (`ListChange`, a mapping entry's `change: {list, name, name_key, old_key, new_key}`): its side is
+  its path's (the nearer of `Before` and `After`): below Before the old value, below After the new. With `name`, one
+  property's value; without, at a path ending Data, a Data per property holding a value on that side, named by the
+  property, but the properties the event's other entries (a group's fields too) read by `change` from the same list
+  (`TranslationMapping.withListChangesExcepted`). A value as JSON text of a string or of an array of at most one
+  scalar is unwrapped (in XPath, `matches()` on `NameValueLists.JSON_ONE_VALUE_REGEX`, then the guarded
+  `mcp:json-to-xml`); a longer array or an object stays as its JSON text; a JSON array as parsed is joined with `, `
+  as a pair's is (list-valued properties written whole, no Changes/Add/Remove diffing). An added property (old empty)
+  is in After only, a removed one in Before only; the After side's Data per property is never guarded, so After's
+  object is always written (the schema requires After). In a group's fields the list is a key of the item (targets,
+  each with its own properties): one object per target in Before and After, in the same order. JSON input only. The
+  mapping keeps the change form (`toJson` writes `change`, not its xpath).
+* **Placements**: `{path: "User/Name", change: {list, name}}` (path below the action element, a `Before/` or
+  `After/` given dropped) writes `Before/User/Name` and `After/User/Name` (`Placement.mappingEntries`); a group whose
+  fields read a change (`{path: "User", for_each: {array: "targetResources"}, fields: [{path: "Id", field: "id"},
+  {path: "Name", change: {list: "modifiedProperties", name: "DisplayName"}}]}`) is written in both, gaining a Data
+  per property of each list it reads. The check (`PlacementCheck`) refuses a change on an action element without
+  Before and After (a `pair` with `value_key` the new value's key suggested: `forPair` reads an old/new list on the
+  side its value key names, else the new), a list no record has or that isn't an old/new list (an array's items' key
+  for a group's), keys that aren't the items', a name no property has (naming close ones); it fills the keys, checks
+  the paths in both snapshots and the values of both sides at the After element; a `for_each` over an old/new list
+  and the list at a leaf are refused with the change form suggested.
+* **Typing check**: `could_type.arrays` lists an old/new list apart, `<list>: an old/new list (old values in K1, new
+  in K2, by the items' order: give old_key and new_key where the keys say otherwise); properties: DisplayName (4), …`
+  (properties placed by name left out) with the change form (Update) or a one-sided pair (elsewhere); an array of
+  objects whose items hold one says so, with the group writing each item in both snapshots.
+* **Which object**: the event type's target. The draft (`ListFields`) takes the object another entry of the rule
+  writes in a snapshot (the catalogue's `affected_as: After/User/Id` gives `User`), else `Object`; for a list of
+  targets it notes an item key of few words (`type: User, Group`) as what may name the object.
+* **Draft**: under an Update, a plain Data entry of an old/new list becomes the Before and After entries
+  (`{"path": "EventDetail/Update/Before/Object/Data", "change": {...}}` and After's), an array of targets holding one
+  a group over the targets in each snapshot (a Data per scalar key, a Data per property); elsewhere such a list is an
+  array of objects as before. The note names each list's properties and keys, says old is the first value key and
+  to swap the keys where they say otherwise, and gives the change form for a property whose name means an element.
+* **Eval**: case 76 (Entra ID directory audit, `aggregated/entra-audit`, Graph-style targets, several in some
+  records, `additionalDetails` a name/value list) checks a user's display name typed in both snapshots with its
+  values unwrapped, the other properties Data of each side (`AccountEnabled` true before, false after), property
+  names never typed (`not_typed`) and JSON text never kept whole. Case 60's role is read by `pair` with `value_key:
+  NewValue` in place of its hand xpaths (an Authorise has no snapshots). The reference catalogue
+  (`EvalCatalogues`) keeps a change's After entry as its one placement.
+* **Known gap**: `rebuild_mapping`'s XSLT reader doesn't recognise the Data per property loop (as with the Data per
+  pair loop): a rebuild relies on the kept mapping.
+
 ### Saxon limits (built)
 
 Stroom runs Saxon-HE 9.9.
@@ -4572,6 +4646,8 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | Which key of an old/new list is old is the user's to say, not key order alone: in a build with forms, `draft_translation_mapping` asks of each list it took by order (`ChangeSides.QUESTION`: the list, its two keys and an item holding both values, the order's guess first), keeps the answer in the build record's `draft_choices` (`change_sides`) and drafts again with it; a redraft isn't asked; the catalogue's check follows the build's answer (`Drafted.withChangeSides`); without forms or a build, key order and the note; keys given in a placement or entry win. | Old/new property-change lists; TOOLS.md (draft_translation_mapping) |
+| 2026-11-23 | Old/new property-change lists (`ModifiedProperties: [{Name, OldValue, NewValue}]`, Graph's `targetResources[].modifiedProperties` holding JSON text): told by shape (`NameValueLists.changes`: three keys the same in every item, a name passing the name/value list's name tests, the other two one property's values before and after, a value under both or one side empty with like shapes; old the first of the two in the items' order, never by key names, `old_key`/`new_key` given where the order says otherwise); written as an Update's Before and After snapshots (`ListChange`, a mapping entry's `change`, its side its path's): a property placed by name typed in both, the others Data of the object named by the property, JSON text of one value unwrapped, a longer array kept as its text, an added property in After only, a removed one in Before only, After's object always written; the object the catalogue's affected one (the rule's entries in a snapshot), else `Object`; targets each with a list a `for_each` group written in both; the catalogue's `change: {list, name}` placement checked (no snapshots, not an old/new list, keys, a name it hasn't refused), `could_type.arrays` naming the lists' properties, a group or leaf over one refused; a `pair` reads one side (`value_key`) where there are no snapshots; the draft writes the snapshots with a note; eval case 76 (Entra ID audit), case 60's role read by `pair`. | Old/new property-change lists; TOOLS.md (catalogue_event_types, draft_translation_mapping, build_translation_xslt) |
 | 2026-11-23 | A variable placed just in time (`XsltGenerator.justInTime`) is placed by the reads under its own parent only, so a loop's variable never leaves its loop: two groups in one element, each with the default loop variable `item`, took each other's reads and were both moved out of their loops, so each group read the record (seen in user test chat 187: `View/Folder/Id` held the record's Id, `View/Folder/Path` was never written, and `View/Object` from the operation's properties was alike) | Translation XSLT generation |
 | 2026-11-23 | Two fixes from chat 187 (qwen). (1) The workspace `jq` tool takes `slurp` (as jq -s: every JSON value in the file in one array, the query run once), and a query that fails on one value of a file holding several says how many it holds, which failed, that the query ran on each on its own, and to give `slurp: true` (seen: `group_by(.Operation)` and `[.[] \| select(...)]` on 600 fetched records saved one per line failed per record, and the agent gave up for grep). (2) write_documentation without `pipeline_uuid` or `index_uuid` continues the session's one documentation waiting for descriptions, as if named, its result saying so (`continued`); none or several waiting is refused, several each named (seen: a second round with `build` and `field_descriptions` only was refused). Rounds are otherwise unchanged. | TOOLS.md (jq, write_documentation) |
 | 2026-11-23 | Name/value lists (chat 187: each `{Name, Value}` pair typed as a View/Object, its value in Description): told by shape (`NameValueLists`: two-key items, a text name unique per list, words not codes, recurring, values varying by name; the varying-value-key variant too), never by key names; `could_type.arrays` lists them apart with their pairs' names (capped at 10); a placement and a mapping entry read one pair by name (`pair: {list, name}`, keys filled from the sample, checked), a group over one refused; the draft writes a Data per pair (`pair` without name) leaving out the pairs read elsewhere; "the element that means it" is the one test in the hint, note, example and guide; eval cases 56 and 61 check `not_typed`. | Name/value lists; TOOLS.md (catalogue_event_types, draft_translation_mapping) |

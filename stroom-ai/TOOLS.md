@@ -3775,11 +3775,20 @@ and `data_parent` stay refused), or (2026-11-23) a `pair` of a name/value list r
 the tool fills the items' `name_key` and `value_key` from the sample, and refuses a list that isn't one, a key that
 isn't the items', or a name no pair has, naming the names it has; the pair's values are checked as a field's are;
 a sample too small to tell the list by shape reads it as the pair's name says, and an event type with no sampled
-record has only the pair's form checked),
+record has only the pair's form checked; an old/new list's one side by `value_key` where the action element has no
+Before and After, 2026-11-23), or (2026-11-23) a `change` of an old/new property-change list read by its name for an
+Update's both snapshots, `{path: "User/Name", change: {list: "event.ModifiedProperties", name: "DisplayName"}}`
+writing `Before/User/Name` (old) and `After/User/Name` (new) (the list told by shape, `NameValueLists.changes`; the
+tool fills `name_key`, `old_key` and `new_key`, old the first value key in the items' order, keys given kept; refused
+on an action element without Before and After, with a one-sided `pair` suggested, for a list that isn't one, keys
+that aren't the items' or a name no property has; both sides' values checked at the After element); a group's
+fields may read a change of each item's list (targets: `{path: "User", for_each: {array: "targetResources"},
+fields: [{path: "Id", field: "id"}, {path: "Name", change: {list: "modifiedProperties", name: "DisplayName"}}]}`),
+the group then written in both snapshots, each item's other properties Data of its object,
 the mapping's `transform`, `time_format`, `timezone`, `map`, `default`, `repeat`, or
 a `for_each` group with `fields` (refused over a name/value list, 2026-11-23: each setting would be one element, its
 value in an element meaning something else, as chat 187 wrote View/Object Name=MailAccessType, Description=Bind;
-the pair form is suggested); `also_data: true` keeps the field (a pair: as a Data of its name) as Data too; a `change`
+the pair form is suggested; over an old/new list, the change form); `also_data: true` keeps the field (a pair: as a Data of its name) as Data too; a `change`
 giving `placements` replaces the list), `recognised_by` (`[{when: [conditions], names: []}]`, each way an AND of conditions; a second way
 when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`, `documentation`), `confidence`
 (high, medium, low), `one_type_because` and, optionally, `doubt` (why the agent is unsure of it: said to the user
@@ -3878,8 +3887,14 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   placements read left out), the first saying its pairs are Data named by their names, a pair whose name means an
   element placed by name (`event.Parameters: a name/value list; names: Name (30), SubjectContainsWords (30), … —
   its pairs are Data, each named by its pair's name; a pair whose name means an element goes there by name, e.g.
-  {path: 'Configuration/Name', pair: {list: '<list>', name: '<name>'}}`). A list field placed at a leaf is refused
-  with the pair form suggested where it is a name/value list (else a group or an xpath, as before). Where two or more event types have a
+  {path: 'Configuration/Name', pair: {list: '<list>', name: '<name>'}}`); an old/new list (2026-11-23) listed among
+  them with its keys and properties' names (`event.ModifiedProperties: an old/new list (old values in OldValue, new
+  in NewValue, by the items' order: give old_key and new_key where the keys say otherwise); properties: DisplayName
+  (4), … — written as Before and After snapshots, each property Data of the object; a property whose name means an
+  element goes there in both by name, e.g. {path: 'User/Name', change: {...}}`, or a one-sided pair where the action
+  element has no snapshots), and an array of objects whose items each hold one says so with the group writing each
+  item in both snapshots. A list field placed at a leaf is refused with the pair form suggested where it is a
+  name/value list, the change form where it is an old/new list (else a group or an xpath, as before). Where two or more event types have a
   `could_type`, the `schema` entries every one of them has (e.g. EventSource's and the Outcome's) are said once, in
   the compact check's `could_type_all` (`schema`, and `said`), and left out of each one's `schema` (dropped where
   nothing else is left); the listing saved whole keeps each event type's as it is (2026-11-22, seen in chats 184 to
@@ -3887,7 +3902,7 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   times). The hint says these fields should be typed (2026-11-23, one test everywhere: each one whose meaning an
   element carries belongs in a placement at the element that means it, from what the agent knows of the source; the
   rest stay as Data; never a value in an element that means something else, e.g. a setting's value in a
-  Description), with an example call for the first such event type (and the pair form); the note itself says
+  Description), with an example call for the first such event type (and the pair and change forms); the note itself says
   "place each whose meaning an element carries at the element that means it"; nothing is refused or paused, and no
   field is matched to an element by its name.
 * `order`: the catalogue's.
@@ -5246,6 +5261,25 @@ Data, with a note naming each list and its names (at most 10) and the pair form,
 ..., "name": "<its name>", "name_key": ..., "value_key": ...}}`, for the pairs whose names mean an element; a pair
 read so is left out of the list's Data per pair. A mapping entry's `pair` is JSON input only, outside groups, and
 names both keys (`value_key: "*"` for items holding their values under keys of their own).
+An old/new property-change list (2026-11-23, told by shape, `NameValueLists.changes`: see DESIGN.md, Old/new
+property-change lists) under an Update is drafted as its Before and After snapshots, `{"path":
+"EventDetail/Update/Before/<Object>/Data", "change": {"list": ..., "name_key": ..., "old_key": ..., "new_key":
+...}}` and the same in After (a Data per property of that side's value, JSON text of one value unwrapped, an added
+property in After only, a removed one in Before only), the object the one another entry of the rule writes in a
+snapshot (the catalogue's affected object), else `Object`; an array of targets each holding one is a group over the
+targets in each snapshot, an object per target with a Data per key and a Data per property. Elsewhere it is an array
+of objects as before. Which key holds the old value (2026-11-23) is the user's to say: the result's `change_lists`
+names each list found (its keys, `by: user` or `order`, an item holding both values); in a build with forms the
+tool asks of each list taken by order ("Which key of an old/new list holds a property's value before the
+change?", the order's guess first), keeps the answer with the build (`draft_choices.change_sides`, so a redraft
+isn't asked) and drafts again with it, `catalogue_event_types` checking the build's placements by it too; without
+forms or a build, the first value key in the items' order is taken, and the note says to check it and swap
+`old_key` and `new_key` (Microsoft 365 writes NewValue first); keys given in a placement or entry win. The note
+also gives the change form for a property whose name means an element, typed in both snapshots; an item key
+of few words in a list of targets (`type: User, Group`) is noted as what may name the object. A mapping entry's
+`change` is JSON input only, its side its path's (below Before the old value, below After the new), allowed in a
+group's fields (the list a key of the item). `rebuild_mapping` doesn't read the Data per property loop back from the
+XSLT (as with the Data per pair loop): a rebuild relies on the kept mapping.
 Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
 (1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Before
 cataloguing, a naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values,

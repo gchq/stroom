@@ -20,6 +20,8 @@ user_knows: >
   Users' Ids stay whole, with their domain (sam.taylor@contoso.example), as Messaging writes them.
   String values longer than Stroom's JSON parser keeps (mail and message bodies past 10,000 characters) may be
   cut: the user is happy for them to be cut rather than kept whole.
+  In event.ModifiedProperties, OldValue holds a property's value before the change and NewValue its value after
+  (the records write NewValue first).
 expected:
   # The event type catalogue: Verb-Object TypeIds (the vendor's code as Data), at least so many event types,
   # and, once catalogue_event_types confirms one, its checks.
@@ -85,6 +87,8 @@ expected:
 reference:
   # The user chose to cut values longer than the JSON parser keeps (user_knows): recorded with the draft.
   long_values: cut
+  # Which key of event.ModifiedProperties holds the value before the change (user_knows), as the draft asks it.
+  change_sides: ["OldValue holds the value before, NewValue the value after"]
   source_types:
     group: Identity
     source_types: [AzureActiveDirectory]
@@ -137,11 +141,12 @@ reference:
           - {path: EventDetail/Description, value: A member was added to a role}
           - {path: EventDetail/Authorise/Data, data_name: Operation, field: Operation}
           - {path: EventDetail/Authorise/Action, value: Modify}
-          # The member added: the target that is a user principal name (Type 5); the role, by its new values.
+          # The member added: the target that is a user principal name (Type 5); the role, by its properties' new
+          # values (an old/new list read on one side by the pair form: an Authorise has no Before and After).
           - {path: EventDetail/Authorise/User/Id, xpath: "*[@key='event']/*[@key='Target']/*[*[@key='Type'] = '5']/*[@key='ID']"}
-          - {path: EventDetail/Authorise/AddGroups/Group/Id,
-             xpath: "*[@key='event']/*[@key='ModifiedProperties']/*[*[@key='Name'] = 'Role.TemplateId']/*[@key='NewValue']"}
-          - {path: EventDetail/Authorise/AddGroups/Group/Name,
-             xpath: "*[@key='event']/*[@key='ModifiedProperties']/*[*[@key='Name'] = 'Role.DisplayName']/*[@key='NewValue']"}
+          - {path: EventDetail/Authorise/AddGroups/Group/Id, pair: {list: event.ModifiedProperties,
+             name: Role.TemplateId, name_key: Name, value_key: NewValue}}
+          - {path: EventDetail/Authorise/AddGroups/Group/Name, pair: {list: event.ModifiedProperties,
+             name: Role.DisplayName, name_key: Name, value_key: NewValue}}
           - {path: EventDetail/Authorise/Outcome/Success, field: event.ResultStatus,
              map: {Success: 'true', Failed: 'false'}}

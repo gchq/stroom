@@ -81,7 +81,15 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   writes it whole), never to a leaf. A **name/value list** (items each a setting's name and its value, `[{"Name":
   "From", "Value": "..."}]`, told by shape and named in `could_type`) is not one thing: its pairs are Data, each named
   by its pair's name, and a pair whose name means an element is placed by name, `{path: "Configuration/Name", pair:
-  {list: "event.Parameters", name: "Name"}}` (never a group). The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
+  {list: "event.Parameters", name: "Name"}}` (never a group). An **old/new list** (items each a property's name, its
+  old value and its new value, `[{"Name": "DisplayName", "OldValue": "Sam T", "NewValue": "Sam Taylor"}]`, told by
+  shape) is an Update's Before and After snapshots: each property Data of the object changed (the event type's
+  affected object, else Object) with its old value in Before and its new in After, and a property whose name means an
+  element is placed by name for both, `{path: "User/Name", change: {list: "event.ModifiedProperties", name:
+  "DisplayName"}}`; targets each holding one (`targetResources[].modifiedProperties`) are a `for_each` group at the
+  object, its fields reading the item's list by `change`, written in both snapshots. Old is the first of the two value
+  keys in the items' order: give `old_key` and `new_key` where the keys say otherwise. Without Before and After (an
+  Authorise), one side's value is a `pair` with `value_key` the new value's key. The objects under an action element are Email, File, Folder, Group, User, Configuration, Object, Chat,
   GroupChat, Document...: `read_document type=XMLSchema element=EventDetail/<element>` lists them. The draft writes
   each as a typed entry of the event type's rule; every field no placement takes is kept as Data, each field once
   (`also_data: true` keeps a placed one as Data too; the vendor's code is always Data too). `affected` with
@@ -93,14 +101,15 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
   repeats (`repeat: true`) or a `for_each`; the values, converted as the translation converts them, are valid for the
   element's type, values or pattern (refused naming the values and the fix: transform, time_format, map, for_each, or
   leaving the field as Data); items with fields of their own aren't placed at a leaf; a pair's list is a name/value
-  list holding that name (else refused naming its names); an xpath's or a lookup's values aren't checked (said in
+  list holding that name (else refused naming its names); a change's list an old/new list holding that property, on
+  an action element with Before and After (its values both sides'); an xpath's or a lookup's values aren't checked (said in
   `not_checked`), its path is.
   A proposal bringing one of these is refused. An element the schema requires of the
   action element (Update's After, Send's Source and Destination, the object View, Create or Delete is of,
   Authenticate's Action and user) that nothing is placed at is `unplaced`: the set isn't put to the user until it is.
   Most of a type's fields kept as Data is only worth a look (`typing`); its `could_type` lists those fields and the
-  schema's elements below the action element and in EventSource that nothing writes yet, the arrays of things and the
-  name/value lists with their pairs' names: place each field at the element that means it, from what you know of the
+  schema's elements below the action element and in EventSource that nothing writes yet, the arrays of things, the
+  name/value lists with their pairs' names and the old/new lists with their properties' names: place each field at the element that means it, from what you know of the
   source.
 - **Recognised by**: `recognised_by: [{when: [conditions], names: []}]`, each way an AND of conditions; a second way
   when the type is written two ways (two line formats, two loggers): one event type, not two. A condition is
@@ -171,6 +180,7 @@ varies; `not: true` for
 | `meta` | A stream meta attribute |
 | `lookup: {map, field}` | A reference data lookup; `key_fields: [a, b]` in place of `field` for a key of several fields (reference-data guide) |
 | `pair: {list, name, name_key, value_key}` | One pair of a JSON name/value list, by its name: `name_key` holds each pair's name, `value_key` its value (`*`: each item's one other key, as `{"name": "IS_ADMIN", "boolValue": true}`); the draft and the catalogue give the keys |
+| `change: {list, name, name_key, old_key, new_key}` | One property of a JSON old/new list, by its name: its old value below `Update/Before`, its new below `Update/After` (the path says which); JSON text of one value unwrapped (`["true"]` is `true`), a longer array kept as its text; in a group's fields the list is a key of the item; the draft and the catalogue give the keys |
 
 | Modifier | |
 | --- | --- |
@@ -249,7 +259,10 @@ rule's `"data": ["rule_id", "bytes"]` is short for Data entries of its action el
 A name/value list is drafted as a Data per pair, `{"path": "EventDetail/Create/Data", "pair": {"list":
 "event.Parameters", "name_key": "Name", "value_key": "Value"}}` (no `name`): each Data named by its pair's name,
 holding its value, but the pairs the event's other entries read by `pair` (written there once; a Data entry reading
-one by name keeps it as Data too).
+one by name keeps it as Data too). An old/new list is drafted as `{"path": "EventDetail/Update/Before/Object/Data",
+"change": {"list": ..., "name_key": ..., "old_key": ..., "new_key": ...}}` and the same in After: a Data per property
+holding a value on that side (an added property in After only, a removed one in Before only; After's object always
+written), but the properties the event's other entries read by `change`.
 
 ## Groups: arrays of objects
 

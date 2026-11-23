@@ -450,7 +450,8 @@ class TestPlacementCheck {
         assertThat(Placement.read(both, Map.of("path", "Email/Subject", "field", "a", "xpath", "b"), List.of()))
                 .isNull();
         assertThat(both.errors()).singleElement().satisfies(error -> assertThat(error.message())
-                .contains("give one of", "xpath, lookup or pair"));
+                .contains("give one of", "xpath, lookup, pair (one pair of a name/value list, by its name) or "
+                          + "change"));
 
         final ModelReader badLookup = new ModelReader();
         final Placement noMap = Placement.read(badLookup, Map.of("path", "Destination/User/Id", "lookup",
@@ -714,6 +715,188 @@ class TestPlacementCheck {
                 .singleElement().asString()
                 .contains("event.Parameters is a name/value list",
                         "{path: 'Configuration/Name', pair: {list: 'event.Parameters', name: 'Name'}}");
+    }
+
+    @Test
+    void whatCouldBeTypedListsAnOldNewListApartWithItsPropertiesAndTheChangeForm() {
+        // Decided by the user 2026-11-23: an Update's old/new list is written as Before and After snapshots, each
+        // property Data of the object, a property whose name means an element placed by name for both.
+        final EventType update = type("Update-User", "Update", "Update user.", List.of());
+
+        final Map<String, Object> couldType = couldType(CatalogueCheck.check(catalogue(update), userSample(), SCHEMA),
+                "Update-User");
+
+        assertThat(strings(couldType.get("arrays"))).as(ToolJson.dumps(couldType)).contains(
+                "event.ModifiedProperties: an old/new list (old values in OldValue, new in NewValue, by the items' "
+                + "order: give old_key and new_key where the keys say otherwise); properties: DisplayName (4), "
+                + "JobTitle (2), Department (2) — written as Before and After snapshots, each property Data of the "
+                + "object; a property whose name means an element goes there in both by name, e.g. {path: "
+                + "'User/Name', change: {list: 'event.ModifiedProperties', name: 'DisplayName'}}");
+    }
+
+    @Test
+    void theUsersAnswerOfWhichKeyHoldsTheOldValueIsFollowedOverTheItemsOrder() {
+        // Decided by the user 2026-11-23: the build's answer (kept by the draft's tool) wins over the key order.
+        final EventType update = type("Update-User", "Update", "Update user.", List.of());
+        final CatalogueCheck.Drafted answered = CatalogueCheck.Drafted.NONE.withChangeSides(Map.of(
+                "event.ModifiedProperties", "NewValue"));
+
+        final Map<String, Object> couldType = couldType(CatalogueCheck.check(catalogue(update), userSample(), SCHEMA,
+                answered), "Update-User");
+
+        assertThat(strings(couldType.get("arrays"))).anyMatch(line -> line.startsWith(
+                "event.ModifiedProperties: an old/new list (old values in NewValue, new in OldValue, as the user "
+                + "said); properties:"));
+    }
+
+    @Test
+    void aChangeReadByItsNameIsAcceptedInBothSnapshotsAndItsNameNoLongerListed() {
+        final EventType update = type("Update-User", "Update", "Update user.", List.of(Map.of(
+                "path", "User/Name", "change", Map.of("list", "event.ModifiedProperties", "name", "DisplayName"))));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(update), userSample(), SCHEMA);
+
+        assertThat(said(check.problems())).isEmpty();
+        assertThat(strings(couldType(check, "Update-User").get("arrays")))
+                .anyMatch(line -> line.contains("properties: JobTitle (2), Department (2) —"));
+        // The keys swapped where the order says otherwise: kept as given.
+        final EventType swapped = type("Update-User", "Update", "Update user.", List.of(Map.of(
+                "path", "User/Name", "change", Map.of("list", "event.ModifiedProperties", "name", "DisplayName",
+                        "old_key", "NewValue", "new_key", "OldValue"))));
+        assertThat(said(CatalogueCheck.check(catalogue(swapped), userSample(), SCHEMA).problems())).isEmpty();
+    }
+
+    @Test
+    void aChangeWhereTheActionElementHasNoSnapshotsIsRefusedWithAPairOfOneSideSuggested() {
+        final EventType authorise = type("Add-RoleMember", "Authorise", "Update user.", List.of(Map.of(
+                "path", "AddGroups/Group/Name", "change", Map.of("list", "event.ModifiedProperties", "name",
+                        "DisplayName"))));
+        final EventType pair = type("Add-RoleMember", "Authorise", "Update user.", List.of(Map.of(
+                "path", "AddGroups/Group/Name", "pair", Map.of("list", "event.ModifiedProperties", "name",
+                        "DisplayName", "value_key", "NewValue"))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(authorise), userSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("change writes the Before and After snapshots of an Update, which Authorise hasn't",
+                        "value_key");
+        assertThat(said(CatalogueCheck.check(catalogue(pair), userSample(), SCHEMA).problems())).isEmpty();
+    }
+
+    @Test
+    void aChangeOfAListThatIsntOneOrOfANameItHasntIsRefusedNamingWhatItHas() {
+        final EventType things = type("Update-User", "Update", "Update user.", List.of(Map.of(
+                "path", "User/Name", "change", Map.of("list", "event.Members", "name", "Al"))));
+        final EventType unknownName = type("Update-User", "Update", "Update user.", List.of(Map.of(
+                "path", "User/Name", "change", Map.of("list", "event.ModifiedProperties", "name", "DisplayNme"))));
+        final EventType wrongKeys = type("Update-User", "Update", "Update user.", List.of(Map.of(
+                "path", "User/Name", "change", Map.of("list", "event.ModifiedProperties", "name", "DisplayName",
+                        "old_key", "Before"))));
+        final EventType leaf = type("Update-User", "Update", "Update user.", List.of(Map.of(
+                "path", "User", "change", Map.of("list", "event.ModifiedProperties", "name", "DisplayName"))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(things), userSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("event.Members isn't an old/new list");
+        assertThat(said(CatalogueCheck.check(catalogue(unknownName), userSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("has no property named 'DisplayNme'", "did you mean DisplayName?");
+        assertThat(said(CatalogueCheck.check(catalogue(wrongKeys), userSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("give those as name_key, old_key and new_key");
+        assertThat(said(CatalogueCheck.check(catalogue(leaf), userSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("Before/User holds elements, not a value");
+    }
+
+    @Test
+    void aGroupOrALeafOverAnOldNewListIsRefusedWithTheChangeFormSuggested() {
+        final EventType group = type("Update-User", "Update", "Update user.", List.of(
+                Map.of("path", "After/Object", "for_each", Map.of("array", "event.ModifiedProperties"),
+                        "fields", List.of(Map.of("path", "Name", "field", "Name")))));
+        final EventType leaf = type("Update-User", "Update", "Update user.", List.of(
+                placement("After/User/Name", "event.ModifiedProperties")));
+
+        assertThat(said(CatalogueCheck.check(catalogue(group), userSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.ModifiedProperties is an old/new list",
+                        "change: {list: 'event.ModifiedProperties', name: 'DisplayName'}");
+        assertThat(said(CatalogueCheck.check(catalogue(leaf), userSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("event.ModifiedProperties is an old/new list",
+                        "change: {list: 'event.ModifiedProperties', name: 'DisplayName'}");
+    }
+
+    @Test
+    void aGroupOverTargetsReadsEachTargetsOldNewListByNameAndIsSaidOfTheTargets() {
+        final EventType none = type("Update-User", "Update", "Update user.", List.of());
+        final EventType group = type("Update-User", "Update", "Update user.", List.of(
+                Map.of("path", "User", "for_each", Map.of("array", "event.Targets"),
+                        "fields", List.of(Map.of("path", "Id", "field", "id"),
+                                Map.of("path", "Name", "change", Map.of("list", "modifiedProperties", "name",
+                                        "DisplayName"))))));
+        final EventType missing = type("Update-User", "Update", "Update user.", List.of(
+                Map.of("path", "User", "for_each", Map.of("array", "event.Targets"),
+                        "fields", List.of(Map.of("path", "Name", "change", Map.of("list", "modifiedProperties",
+                                "name", "Title"))))));
+
+        assertThat(strings(couldType(CatalogueCheck.check(catalogue(none), targetSample(), SCHEMA), "Update-User")
+                .get("arrays"))).anyMatch(line -> line.startsWith("event.Targets: items with id, type, "
+                                                                  + "modifiedProperties")
+                                                  && line.contains("each item's modifiedProperties is an old/new "
+                                                                   + "list"));
+        assertThat(said(CatalogueCheck.check(catalogue(group), targetSample(), SCHEMA).problems())).isEmpty();
+        assertThat(said(CatalogueCheck.check(catalogue(missing), targetSample(), SCHEMA).problems()))
+                .singleElement().asString().contains("modifiedProperties has no property named 'Title'");
+    }
+
+    // Four users updated, each with the properties changed (an old/new list, a name's old and new values) and the
+    // members told (a list of things), and fields enough kept as Data for what could be typed to be said.
+    private static CatalogueSample userSample() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 4; n++) {
+            final List<Object> changes = new ArrayList<>(List.of(change("DisplayName", "User " + n,
+                    "User Name " + n)));
+            if (n % 2 == 0) {
+                changes.add(change("JobTitle", n == 0
+                        ? ""
+                        : "Analyst", n == 0
+                        ? "Analyst"
+                        : "Lead"));
+            } else {
+                changes.add(change("Department", "Ops", "Finance"));
+            }
+            lines.add(line("Update user.", "UserId", "jo@acme.com", "ClientIP", "10.0.0." + n, "Workload",
+                    "Directory", "OrganizationId", "o1", "ResultStatus", "Success", "RecordType", "8",
+                    "ModifiedProperties", changes, "Members", List.of(member("al" + n + "@acme.com", "Al " + n))));
+        }
+        return CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    // Three users updated as a directory's API writes them: targets, each with its properties changed.
+    private static CatalogueSample targetSample() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 3; n++) {
+            final Map<String, Object> target = new LinkedHashMap<>();
+            target.put("id", "u-" + n);
+            target.put("type", "User");
+            target.put("modifiedProperties", List.of(change("DisplayName", "[\"U" + n + "\"]", "[\"User " + n
+                                                                                             + "\"]"),
+                    change("AccountEnabled", n % 2 == 0
+                            ? "[true]"
+                            : "[false]", n % 2 == 0
+                            ? "[false]"
+                            : "[true]")));
+            lines.add(line("Update user.", "UserId", "jo@acme.com", "ClientIP", "10.0.0." + n, "Workload",
+                    "Directory", "OrganizationId", "o1", "ResultStatus", "Success", "RecordType", "8",
+                    "Targets", List.of(target)));
+        }
+        return CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    // A property changed, its keys in that order (its name, then its old and new values).
+    private static Map<String, Object> change(final String name, final String old, final String now) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("Name", name);
+        out.put("OldValue", old);
+        out.put("NewValue", now);
+        return out;
     }
 
     // Four inbox rules created, each with its parameters (a name/value list) and the members told (a list of things),

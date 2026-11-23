@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +37,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Fields whose values are lists, drafted as Data groups: which values are lists (and which aren't), the groups
 /// written, and a long list costing little.
 class TestListFields extends DraftFixtures {
+
+    private static final List<String> CHANGES = List.of("""
+            [{"Name": "DisplayName", "OldValue": "Sam T", "NewValue": "Sam Taylor"},
+             {"Name": "JobTitle", "OldValue": "", "NewValue": "Analyst"}]""", """
+            [{"Name": "DisplayName", "OldValue": "Kate", "NewValue": "Kate Jones"}]""", """
+            [{"Name": "JobTitle", "OldValue": "Analyst", "NewValue": "Lead"},
+             {"Name": "Department", "OldValue": "Ops", "NewValue": "Finance"}]""", """
+            [{"Name": "DisplayName", "OldValue": "Al", "NewValue": "Al Smith"},
+             {"Name": "Department", "OldValue": "", "NewValue": "Ops"}]""");
 
     private static ListFields.Split split(final String... values) {
         return ListFields.splitOf(List.of(values));
@@ -264,5 +274,99 @@ class TestListFields extends DraftFixtures {
         assertThat(ListFields.valueArrays(List.of("[{\"id\": 1}]"))).isFalse();
         assertThat(ListFields.valueArrays(List.of("[\"a\", [\"b\"]]"))).isFalse();
         assertThat(ListFields.valueArrays(List.of())).isFalse();
+    }
+
+    // A rule's mapping, its fields given, the common entries a translation needs.
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> ruleMapping(final String fields) {
+        return (Map<String, Object>) ToolJson.loads("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"},
+                            {"path": "EventSource/System/Name", "value": "Directory"},
+                            {"path": "EventSource/System/Environment", "value": "Dev"},
+                            {"path": "EventSource/Generator", "value": "audit"},
+                            {"path": "EventSource/Device/HostName", "value": "dir01"}],
+                 "events": [{"name": "update", "fields": [{"path": "EventDetail/TypeId", "value": "Update-User"},
+                             %s]}]}""".formatted(fields));
+    }
+
+    private static List<Map<String, Object>> fieldsOf(final Map<String, Object> mapping) {
+        return JsonValues.maps(JsonValues.maps(mapping.get("events")).getFirst().get("fields"));
+    }
+
+    @Test
+    void anOldNewListUnderAnUpdateIsDraftedAsSnapshotsOfTheObjectTheRuleWrites() {
+        // Decided by the user (2026-11-23): Before/After snapshots of the changed object, each property Data of its
+        // side's value; the object the one the rule's other entries write in a snapshot (an affected user).
+        final Map<String, Object> mapping = ruleMapping("""
+                {"path": "EventDetail/Update/After/User/Id", "field": "target"},
+                {"path": "EventDetail/Update/Data", "data_name": "ModifiedProperties",
+                 "field": "ModifiedProperties"}""");
+
+        final List<String> notes = ListFields.propose(mapping, Map.of("ModifiedProperties", CHANGES), true);
+
+        final List<Map<String, Object>> fields = fieldsOf(mapping);
+        assertThat(fields).extracting(field -> field.get("path")).containsExactly("EventDetail/TypeId",
+                "EventDetail/Update/After/User/Id", "EventDetail/Update/Before/User/Data",
+                "EventDetail/Update/After/User/Data");
+        assertThat(String.valueOf(fields.get(2).get("change")))
+                .isEqualTo("{list=ModifiedProperties, name_key=Name, old_key=OldValue, new_key=NewValue}");
+        assertThat(notes).anySatisfy(note -> assertThat(note)
+                .startsWith("'ModifiedProperties' (properties DisplayName (3), JobTitle (2), Department (2); named "
+                            + "by Name, old values in OldValue, new in NewValue) is an old/new list")
+                .contains("swap old_key and new_key")
+                .contains("\"change\": {\"list\": \"ModifiedProperties\""));
+        assertThat(XsltGenerator.generate(TranslationMapping.fromJson(mapping), SCHEMA, "4.1.0").ok()).isTrue();
+    }
+
+    @Test
+    void theSnapshotsObjectIsObjectWhereNothingBetterIsKnownAndOtherElementsKeepAnArrayGroup() {
+        final Map<String, Object> mapping = ruleMapping("""
+                {"path": "EventDetail/Update/Data", "data_name": "ModifiedProperties",
+                 "field": "ModifiedProperties"}""");
+
+        ListFields.propose(mapping, Map.of("ModifiedProperties", CHANGES), true);
+
+        assertThat(fieldsOf(mapping)).extracting(field -> field.get("path")).containsExactly("EventDetail/TypeId",
+                "EventDetail/Update/Before/Object/Data", "EventDetail/Update/After/Object/Data");
+
+        // An Authorise has no snapshots: its list is an array of objects as before.
+        final Map<String, Object> other = ruleMapping("""
+                {"path": "EventDetail/Authorise/Data", "data_name": "ModifiedProperties",
+                 "field": "ModifiedProperties"}""");
+        ListFields.propose(other, Map.of("ModifiedProperties", CHANGES), true);
+        assertThat(fieldsOf(other).get(1)).containsEntry("path", "EventDetail/Authorise/Data")
+                .containsKey("for_each");
+    }
+
+    @Test
+    void targetsEachHoldingAnOldNewListAreAnObjectEachInBothSnapshots() {
+        final List<String> targets = List.of("""
+                [{"id": "u-1", "type": "User", "modifiedProperties": [{"displayName": "DisplayName",
+                  "oldValue": "[\\"Sam T\\"]", "newValue": "[\\"Sam Taylor\\"]"}]},
+                 {"id": "g-1", "type": "Group", "modifiedProperties": [{"displayName": "Description",
+                  "oldValue": "[]", "newValue": "[\\"Ops team\\"]"}]}]""", """
+                [{"id": "u-2", "type": "User", "modifiedProperties": [{"displayName": "AccountEnabled",
+                  "oldValue": "[true]", "newValue": "[false]"}, {"displayName": "DisplayName",
+                  "oldValue": "[\\"Kate\\"]", "newValue": "[\\"Kate Jones\\"]"}]}]""", """
+                [{"id": "u-3", "type": "User", "modifiedProperties": [{"displayName": "AccountEnabled",
+                  "oldValue": "[false]", "newValue": "[true]"}, {"displayName": "Description",
+                  "oldValue": "[]", "newValue": "[\\"Lead\\"]"}]}]""");
+        final Map<String, Object> mapping = ruleMapping("""
+                {"path": "EventDetail/Update/Data", "data_name": "targetResources", "field": "targetResources"}""");
+
+        final List<String> notes = ListFields.propose(mapping, Map.of("targetResources", targets), true);
+
+        final List<Map<String, Object>> fields = fieldsOf(mapping);
+        assertThat(fields).extracting(field -> field.get("path")).containsExactly("EventDetail/TypeId",
+                "EventDetail/Update/Before/Object", "EventDetail/Update/After/Object");
+        assertThat(String.valueOf(fields.get(1).get("fields"))).contains("data_name=id, field=id")
+                .contains("change={list=modifiedProperties, name_key=displayName, old_key=oldValue, "
+                          + "new_key=newValue}");
+        assertThat(notes).anySatisfy(note -> assertThat(note)
+                .startsWith("'modifiedProperties' in each item of 'targetResources' (properties")
+                .contains("each item's type is one of User, Group"));
+        assertThat(notes).noneSatisfy(note -> assertThat(note).startsWith("Not drafted"));
+        assertThat(XsltGenerator.generate(TranslationMapping.fromJson(mapping), SCHEMA, "4.1.0").ok()).isTrue();
     }
 }

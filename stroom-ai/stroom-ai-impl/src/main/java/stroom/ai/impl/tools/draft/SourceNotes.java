@@ -91,6 +91,10 @@ public final class SourceNotes {
     public static final List<String> CATALOGUE_KEYS = List.of(EVENT_TYPES, CATCH_ALL, "scope");
     /// In what [#applyToDraft] returns: true when the rules are the catalogue's.
     public static final String CATALOGUED = "catalogued";
+    /// The notes' key for the user's answers of which value key of each old/new list holds the value before the
+    /// change (2026-11-23): the list's name ([NameValueLists#nestedName] for a list inside an array's items) to its
+    /// key. Put there by the draft's tool from the build's record; never in the user's documentation.
+    public static final String CHANGE_SIDES = "change_sides";
     private static final String EVENT_DETAIL = "EventDetail/";
 
     private SourceNotes() {
@@ -419,8 +423,23 @@ public final class SourceNotes {
         }
         applied.put(CATALOGUED, true);
         applied.putAll(CatalogueTranslation.apply(mapping, names, values, catalogue, catchAllReason(notes, catalogue),
-                detailFields, detailCheck, records, matches));
+                detailFields, detailCheck, records, matches, changeSides(notes)));
         return applied;
+    }
+
+    /// @param notes The source notes, or null.
+    /// @return The user's answers of which key of each old/new list holds the value before the change
+    /// ([#CHANGE_SIDES]), by the list; none where none were given.
+    public static Map<String, String> changeSides(final Map<String, Object> notes) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        if (notes != null && notes.get(CHANGE_SIDES) instanceof final Map<?, ?> given) {
+            given.forEach((list, key) -> {
+                if (key instanceof final String before && !before.isBlank()) {
+                    out.put(String.valueOf(list), before);
+                }
+            });
+        }
+        return out;
     }
 
     /// @param notes The source notes ([#readNotes], [#merged]), or null.

@@ -679,6 +679,76 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void anOldNewListsOldKeyIsAskedOnceForTheBuildAndTheDraftFollowsTheAnswer() {
+        // Decided by the user 2026-11-23: not by key order alone (Microsoft 365 writes NewValue before OldValue). In a
+        // build with forms, asked with the order's guess first; kept for the build, so a redraft isn't asked again.
+        final String users = """
+                {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Update user.", "UserId": "jo", \
+                "ClientIP": "10.0.0.1", "Workload": "Directory", "event": {"Target": "sam", "ResultStatus": \
+                "Success", "ModifiedProperties": [{"Name": "DisplayName", "NewValue": "Sam Taylor", "OldValue": \
+                "Sam T"}, {"Name": "JobTitle", "NewValue": "Analyst", "OldValue": ""}]}}
+                {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "Update user.", "UserId": "al", \
+                "ClientIP": "10.0.0.2", "Workload": "Directory", "event": {"Target": "kate", "ResultStatus": \
+                "Success", "ModifiedProperties": [{"Name": "JobTitle", "NewValue": "Lead", "OldValue": "Analyst"}, \
+                {"Name": "DisplayName", "NewValue": "Kate Jones", "OldValue": "Kate"}]}}
+                {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "Update user.", "UserId": "bo", \
+                "ClientIP": "10.0.0.3", "Workload": "Directory", "event": {"Target": "al", "ResultStatus": \
+                "Success", "ModifiedProperties": [{"Name": "Department", "NewValue": "Ops", "OldValue": ""}, \
+                {"Name": "DisplayName", "NewValue": "Al Smith", "OldValue": "Al"}]}}
+                """;
+        final String types = "{\"type_id\": \"Update-User\", \"title\": \"Update user\", \"event_detail\": "
+                             + "\"Update\", \"recognised_by\": [{\"when\": [{\"field\": \"Operation\", "
+                             + "\"equals\": \"Update user.\"}]}], \"status\": \"confirmed\"}";
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", "
+                      + "\"fields\": [], \"event_types\": [" + types + "], \"catch_all\": {\"status\": "
+                      + "\"confirmed\"}, \"confirming\": {\"reading\": {\"input\": \"json\", "
+                      + "\"json_layout\": \"lines\"}}}\n-->\n")
+                .build());
+        world.forms = true;
+        world.answers.put(ChangeSides.QUESTION, "OldValue holds the value before, NewValue the value after");
+        world.answers.put(TimeSources.TIME_QUESTION, "When Stroom received the stream (an approximation)");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+        final Map<String, Object> samples = Map.of("users.json", users);
+
+        final Map<String, Object> first = world.call(tool, Map.of("samples", samples, "build", "acme-v1"));
+
+        assertThat(world.asked).anySatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION)
+                .contains("event.ModifiedProperties", "NewValue or OldValue", "\"OldValue\": \"Sam T\""));
+        assertThat(ToolJson.dumps(first.get("change_lists"))).contains("\"old_key\": \"OldValue\", \"new_key\": "
+                                                                      + "\"NewValue\", \"by\": \"user\"");
+        // The snapshots follow the answer: Before reads OldValue, After NewValue.
+        assertThat(ToolJson.dumps(first.get("mapping")))
+                .contains("\"path\": \"EventDetail/Update/Before/Object/Data\", \"change\": {\"list\": "
+                          + "\"event.ModifiedProperties\", \"name_key\": \"Name\", \"old_key\": \"OldValue\", "
+                          + "\"new_key\": \"NewValue\"}");
+        assertThat(ToolJson.dumps(first.get("notes"))).contains("takes its old values from OldValue and its new from "
+                                                               + "NewValue, as the user said");
+
+        // A redraft in the same build isn't asked.
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("samples", samples, "build", "acme-v1"));
+        assertThat(world.asked).noneSatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION));
+        assertThat(ToolJson.dumps(again.get("change_lists"))).contains("\"old_key\": \"OldValue\"");
+        assertThat(ToolJson.dumps(again.get("notes"))).contains("as the user said earlier for this build");
+
+        // Another build is asked its own.
+        world.call(tool, Map.of("samples", samples, "build", "other-v1"));
+        assertThat(world.asked).anySatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION));
+
+        // Without forms the items' key order stands, with the note to check it.
+        world.asked.clear();
+        world.forms = false;
+        final Map<String, Object> unasked = world.call(tool, Map.of("samples", samples, "build", "third-v1"));
+        assertThat(world.asked).isEmpty();
+        assertThat(ToolJson.dumps(unasked.get("change_lists"))).contains("\"old_key\": \"NewValue\", "
+                                                                        + "\"new_key\": \"OldValue\", \"by\": "
+                                                                        + "\"order\"");
+        assertThat(ToolJson.dumps(unasked.get("notes"))).contains("swap old_key and new_key");
+    }
+
+    @Test
     void aCatalogueReadingWholeRecordsDraftsWholeRecords() {
         notes("confirmed", "confirmed");
 

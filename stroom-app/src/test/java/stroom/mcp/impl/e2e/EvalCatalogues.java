@@ -43,7 +43,8 @@ import java.util.Set;
 /// dropped, a group left with none dropped too), as Data is what no placement takes. Only the keys a placement has
 /// are kept (the mapping's field, value, any_of, join, xpath and lookup, its conversions and groups). The other rules
 /// recognising the same event type write the same elements (one reference mapping, one event type), so the first
-/// rule's placements are its.
+/// rule's placements are its. An old/new list's property (`change`, 2026-11-23) is one placement for both snapshots:
+/// the After entry (or group) is kept, its Before twin left out, as the placement writes both.
 ///
 /// The catch-all rule (`catch_all: true`, or one writing Unknown with `allow_unknown`) is the catalogue's catch-all,
 /// not an event type. The scope is the case's source types where it has some.
@@ -176,6 +177,10 @@ final class EvalCatalogues {
             if (isData(below, field) || (actionGiven && "Action".equals(below) && field.get("value") != null)) {
                 continue;
             }
+            if (below.startsWith("Before/") && readsChange(field)) {
+                // The After entry's placement writes both snapshots.
+                continue;
+            }
             final Map<String, Object> placement = placement(field);
             if (placement != null) {
                 placement.put(PATH, below);
@@ -207,6 +212,11 @@ final class EvalCatalogues {
             out.put(FIELDS, inner);
         }
         return out;
+    }
+
+    // An entry (or a group's field) reading an old/new list by the change form.
+    private static boolean readsChange(final Map<String, Object> field) {
+        return field.get("change") != null || list(field.get(FIELDS)).stream().anyMatch(EvalCatalogues::readsChange);
     }
 
     // An entry writing Data: a path through Data, or one naming its Data.

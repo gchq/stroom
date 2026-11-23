@@ -24,5 +24,6 @@
  "57_jsonl_collector_paths/collector.json": "87dad68d170f3553ab176f9c4adf5aff82db8848dd6216f07193250e755aa303",
  "58_jsonl_pega_wrapper/pega.json": "a376c0e59924cdc38ef23d5f0bebf6ea02e04af7ad7bf2d6b38db6330c23b1ef",
  "66_jsonl_pega_loggers_event_types/pega-loggers.log": "b35a4e6dd0e7ab2aa14588f51951725ddd5e3f4717fdf1c2cfa5b0292fe15d85",
- "68_csv_documented_codes_many/erp-audit-2026-10-11.csv": "e8ef0e5f309f1c552cbf52ba850387d03610b3d76c8f9dcd4755dd34899d44a8"
+ "68_csv_documented_codes_many/erp-audit-2026-10-11.csv": "e8ef0e5f309f1c552cbf52ba850387d03610b3d76c8f9dcd4755dd34899d44a8",
+ "76_jsonl_entra_audit_changes/entra-audit.json": "621ec4574f3f709690a37206d5f6f9dc42d8b7dc1914724529c53d3bc577f71c"
 }

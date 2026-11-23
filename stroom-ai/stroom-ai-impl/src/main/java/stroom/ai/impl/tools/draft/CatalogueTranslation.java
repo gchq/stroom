@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.sample.NameValueLists;
+import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -100,7 +101,10 @@ final class CatalogueTranslation {
     private final WayCheck check;
     private final List<Map<String, Object>> sampled;
     private final List<String> unread = new ArrayList<>();
+    // The user's answers of which key of each old/new list holds the value before the change, by the list.
+    private final Map<String, String> changeSides;
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     private CatalogueTranslation(final Map<String, Object> mapping,
                                  final List<String> names,
                                  final Map<String, List<String>> values,
@@ -108,8 +112,10 @@ final class CatalogueTranslation {
                                  final List<Map<String, Object>> detailFields,
                                  final Function<String, String> detailCheck,
                                  final List<Map<String, Object>> records,
-                                 final PairMatches matches) {
+                                 final PairMatches matches,
+                                 final Map<String, String> changeSides) {
         this.mapping = mapping;
+        this.changeSides = Map.copyOf(changeSides);
         this.names = new ArrayList<>(names);
         this.values = new LinkedHashMap<>(values);
         this.catalogue = catalogue;
@@ -134,6 +140,8 @@ final class CatalogueTranslation {
     /// @param detailCheck    Why an `event_detail` can't be an action element, or null.
     /// @param records        The sample's records, as the draft reads them.
     /// @param matches        The call's regex matches, each regex's first in a text found once.
+    /// @param changeSides    The user's answers of which key of each old/new list holds the value before the change,
+    ///                       by the list ([SourceNotes#CHANGE_SIDES]); none where none were given.
     /// @return What was done: `events` (each rule, said), `not_in_sample` (TypeIds no sampled record has),
     /// `uncatalogued` (how many sampled records no event type recognises), `dropped` and `unread_fields`.
     @SuppressWarnings("checkstyle:ParameterNumber")
@@ -145,9 +153,10 @@ final class CatalogueTranslation {
                                      final List<Map<String, Object>> detailFields,
                                      final Function<String, String> detailCheck,
                                      final List<Map<String, Object>> records,
-                                     final PairMatches matches) {
+                                     final PairMatches matches,
+                                     final Map<String, String> changeSides) {
         return new CatalogueTranslation(mapping, names, values, catalogue, detailFields, detailCheck, records,
-                matches)
+                matches, changeSides)
                 .apply(catchAllReason);
     }
 
@@ -434,24 +443,34 @@ final class CatalogueTranslation {
                         : "affected '" + placement.field() + "'") + " isn't a field of the records");
                 continue;
             }
-            final Placement keyed = withPairKeys(placement);
-            if (keyed == null) {
+            final Placement paired = withPairKeys(placement);
+            if (paired == null) {
                 unread.add(typeId + ": placement '" + placement.path() + "' reads a pair of '"
                            + placement.pair().get("list") + "', which isn't a name/value list of the records");
                 continue;
             }
-            final Map<String, Object> entry = keyed.mappingEntry(detail);
+            final Placement keyed = withChangeKeys(paired);
+            if (keyed == null) {
+                unread.add(typeId + ": placement '" + placement.path() + "' reads a change of "
+                           + String.join(", ", placement.changeLists()) + ", which isn't an old/new list of the "
+                           + "records");
+                continue;
+            }
+            // A change is two entries, its Before snapshot's and its After's.
+            final List<Map<String, Object>> entries = keyed.mappingEntries(detail);
+            final Set<String> paths = new HashSet<>();
+            entries.forEach(entry -> paths.add(ToolText.str(entry.get(PATH))));
             final Set<String> inputs = placement.inputs();
             // Another placement of the same field is kept: a field may be typed in two places.
             fields.removeIf(existing -> {
                 final String path = ToolText.str(existing.get(PATH));
-                return path.equals(entry.get(PATH))
+                return paths.contains(path)
                        || !written.contains(existing) && path.startsWith(prefix)
                           && existing.get(FIELD) instanceof final String read && inputs.contains(read)
                           && !(placement.alsoData() && path.endsWith("/Data"));
             });
-            fields.add(entry);
-            written.add(entry);
+            fields.addAll(entries);
+            written.addAll(entries);
             if (keyed.pair() != null && placement.alsoData()) {
                 // The pair kept as Data too, named by its name: the list's Data per pair leaves it out.
                 fields.add(entry(PATH, prefix + "Data", DATA_NAME, ToolText.str(keyed.pair().get(NAME)), "pair",
@@ -470,10 +489,42 @@ final class CatalogueTranslation {
         if (placement.pair() == null) {
             return placement;
         }
+        final String valueKey = placement.pair().get("value_key") instanceof final String given
+                ? given
+                : null;
         return NameValueLists.forPair(values.getOrDefault(ToolText.str(placement.pair().get("list")), List.of()),
-                        ToolText.str(placement.pair().get(NAME)))
+                        ToolText.str(placement.pair().get(NAME)), valueKey)
                 .map(pairs -> placement.withPairKeys(pairs.nameKey(), pairs.valueKey()))
                 .orElse(null);
+    }
+
+    // A placement with its changes' keys as the records' lists have them (the mapping's entries name them; a key
+    // given kept); as it is without a change; null where a list isn't an old/new list of the records (a group's, a
+    // key of its array's items).
+    private Placement withChangeKeys(final Placement placement) {
+        if (!placement.snapshots()) {
+            return placement;
+        }
+        final String array = placement.group()
+                ? ToolText.str(JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array"))
+                : null;
+        final Map<String, List<String>> keys = new LinkedHashMap<>();
+        for (final String list : placement.changeLists()) {
+            final List<String> held = values.getOrDefault(array == null
+                    ? list
+                    : array, List.of());
+            final Optional<ChangeList> found = NameValueLists.changes(array == null
+                    ? held
+                    : NameValueLists.heldIn(held, list));
+            if (found.isEmpty()) {
+                return null;
+            }
+            final ChangeList sided = found.get().oriented(changeSides.get(array == null
+                    ? list
+                    : NameValueLists.nestedName(array, list)));
+            keys.put(list, List.of(sided.nameKey(), sided.oldKey(), sided.newKey()));
+        }
+        return placement.withChangeKeys(keys);
     }
 
     // The paths the entries write.

@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -178,15 +179,24 @@ public record TranslationMapping(String input,
             fields.valueError(pairProblem);
             return null;
         }
-        return mapping.withPairsAsExtract().withDataNamesInStyle().withListPairsExcepted();
+        return mapping.withPairsAsExtract().withDataNamesInStyle().withListPairsExcepted().withListChangesExcepted();
     }
 
-    // A pair (ListPair) reads a list of the JSON input's records: not another input's, nor JSON a field holds as
-    // text. Null when every pair does.
+    // A pair (ListPair) or a change (ListChange) reads a list of the JSON input's records: not another input's, nor
+    // JSON a field holds as text. Null when every pair and change does.
     private String listPairProblem() {
-        final List<FieldMapping> entries = new ArrayList<>(common);
-        events.forEach(rule -> entries.addAll(rule.fields()));
-        for (final FieldMapping entry : entries) {
+        for (final FieldMapping entry : everyEntry()) {
+            final ListChange change = entry.change();
+            if (change != null && !"json".equals(input)) {
+                return "'" + entry.path() + "': change reads an old/new list of a JSON input's records; this "
+                       + "mapping's input is " + input + ": read the values with an xpath";
+            }
+            if (change != null && (MappingFacts.heldJsonField(jsonFields, change.list()) != null
+                                   || jsonFields.contains(change.list()))) {
+                return "'" + entry.path() + "': change reads a list of the records themselves, and " + change.list()
+                       + " is in JSON a field holds as text (json_fields): read the values with an xpath over "
+                       + "json-to-xml()";
+            }
             final ListPair pair = entry.pair();
             if (pair == null) {
                 continue;
@@ -218,6 +228,50 @@ public record TranslationMapping(String input,
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
                 extract, forEach, nilValues, dropWhen, excepted(common, List.of()), rules, unmatched,
                 ignoredFields, logUnmappedFields, style, imports, shared, functions, module, seenSourceTypes);
+    }
+
+    // Each Data per property (ListChange) without the properties its event's other entries (its rule's and the common
+    // ones, a group's fields too) read from the same list by name: each property written once, in its typed element
+    // on both sides (decided by the user 2026-11-23).
+    private TranslationMapping withListChangesExcepted() {
+        if (everyEntry().stream().noneMatch(FieldMapping::dataPerChange)) {
+            return this;
+        }
+        final List<EventRule> rules = events.stream()
+                .map(rule -> {
+                    final List<FieldMapping> all = new ArrayList<>(common);
+                    all.addAll(rule.fields());
+                    return rule.withFields(changesExcepted(rule.fields(), changesRead(all)));
+                })
+                .toList();
+        return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
+                extract, forEach, nilValues, dropWhen, changesExcepted(common, changesRead(common)), rules, unmatched,
+                ignoredFields, logUnmappedFields, style, imports, shared, functions, module, seenSourceTypes);
+    }
+
+    // The properties read by name from each list (ListChange), over the entries and their groups' fields.
+    private static Map<String, Set<String>> changesRead(final List<FieldMapping> entries) {
+        final Map<String, Set<String>> out = new LinkedHashMap<>();
+        FieldGroup.everyEntry(entries).stream()
+                .filter(entry -> entry.change() != null && !entry.change().perProperty())
+                .forEach(entry -> out.computeIfAbsent(entry.change().list(), ignored -> new LinkedHashSet<>())
+                        .add(entry.change().name()));
+        return out;
+    }
+
+    // The entries, each Data per property (a group's fields' too) without the properties read by name.
+    private static List<FieldMapping> changesExcepted(final List<FieldMapping> entries,
+                                                      final Map<String, Set<String>> read) {
+        return entries.stream()
+                .map(entry -> {
+                    if (entry.group() != null) {
+                        return entry.withGroupFields(changesExcepted(entry.group().fields(), read));
+                    }
+                    return entry.dataPerChange()
+                            ? entry.withChangesExcept(read.getOrDefault(entry.change().list(), Set.of()))
+                            : entry;
+                })
+                .toList();
     }
 
     private List<FieldMapping> excepted(final List<FieldMapping> entries, final List<FieldMapping> others) {

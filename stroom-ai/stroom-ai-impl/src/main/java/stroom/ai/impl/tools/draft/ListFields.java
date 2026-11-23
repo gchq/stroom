@@ -19,12 +19,14 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.NameValueLists;
+import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
 import stroom.ai.impl.tools.sample.NameValueLists.NameValueList;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +40,12 @@ import java.util.regex.Pattern;
 /// values of one kind (addresses, ids, hosts...) parted by `,` or `;` is split, each piece a Data of its own; a JSON
 /// field holding an array of objects gives a Data per object, holding a Data per key of the objects. Asked for by the
 /// user: a mail gateway's recipients were drafted as one Data holding the whole comma list.
+///
+/// An old/new property-change list (2026-11-23, [NameValueLists#changes(java.util.Collection)]) under an Update is
+/// drafted as its Before and After snapshots: the object changed (the one the rule's other entries write in a snapshot,
+/// else `Object`) in each, every property a Data of the side's value; an array whose items each hold one (targets, each
+/// with the properties changed) as a group over the items in each snapshot, an object per item. Elsewhere such a list
+/// is an array of objects as any other.
 ///
 /// Format-level knowledge only: what a list looks like, never a source's field names. A value is never run through a
 /// regex whole: it is split by plain string search, and only its first [#MAX_PIECES] pieces, each at most
@@ -80,6 +88,14 @@ final class ListFields {
     private static final String FIELDS = "fields";
     private static final String DATA = "Data";
     private static final String DATA_SUFFIX = "/Data";
+    private static final String CHANGE = "change";
+    // An Update's Data, whose old/new lists are drafted as its snapshots.
+    private static final String UPDATE = "EventDetail/Update/";
+    // The object a snapshot holds where nothing better is known.
+    private static final String OBJECT = "Object";
+    // The most distinct values a key saying what each target is may have.
+    private static final int MAX_KINDS = 5;
+    private static final Pattern WORD = Pattern.compile("\\p{L}+");
     private static final Set<String> PLAIN_DATA_KEYS = Set.of(PATH, DATA_NAME, FIELD);
 
     private ListFields() {
@@ -96,9 +112,35 @@ final class ListFields {
     static List<String> propose(final Map<String, Object> mapping,
                                 final Map<String, List<String>> values,
                                 final boolean json) {
+        return propose(mapping, values, json, Map.of(), new ArrayList<>());
+    }
+
+    /// As [#propose(Map, Map, boolean)], with the user's answers of which key of each old/new list holds the value
+    /// before the change (2026-11-23), and the old/new lists found said for the draft's tool to ask of.
+    ///
+    /// @param mapping The draft's mapping, changed in place.
+    /// @param values  Each field's non-empty values in the sample.
+    /// @param json    True if the input is JSON, whose fields may hold arrays of objects.
+    /// @param sides   The user's answers, by the list ([NameValueLists#nestedName] for a list inside an array's
+    ///                items): the key holding the value before; a list with none taken in its items' key order.
+    /// @param found   Filled with each old/new list found ([#changeListFound]).
+    /// @return The notes to add to the draft.
+    static List<String> propose(final Map<String, Object> mapping,
+                                final Map<String, List<String>> values,
+                                final boolean json,
+                                final Map<String, String> sides,
+                                final List<Map<String, Object>> found) {
         final Map<String, Split> splits = new LinkedHashMap<>();
         final Map<String, List<String>> arrays = new LinkedHashMap<>();
         final Map<String, NameValueList> pairLists = new LinkedHashMap<>();
+        final Map<String, ChangeList> changeLists = new LinkedHashMap<>();
+        // The arrays of objects whose items each hold an old/new list: the key holding it, and the list.
+        final Map<String, Map.Entry<String, ChangeList>> targetLists = new LinkedHashMap<>();
+        // The entries drafted as snapshots: each Before entry with the After entry that follows it in its rule.
+        final Map<Map<String, Object>, Map<String, Object>> afters = new IdentityHashMap<>();
+        final Map<Map<String, Object>, String> objects = objectsOfEntries(mapping);
+        // The arrays drafted as Data groups (not as snapshots).
+        final Set<String> grouped = new LinkedHashSet<>();
         final Set<String> repeated = new LinkedHashSet<>();
         // Each field examined once, though many rules carry its Data.
         final Set<String> examined = new HashSet<>();
@@ -115,10 +157,24 @@ final class ListFields {
                 final List<String> keys = json && pairs.isEmpty()
                         ? arrayKeys(held)
                         : List.of();
+                final Optional<ChangeList> changes = json && pairs.isEmpty()
+                        ? NameValueLists.changes(held).map(list -> list.oriented(sides.get(field)))
+                        : Optional.empty();
+                if (changes.isPresent()) {
+                    changeLists.put(field, changes.get());
+                    found.add(changeListFound(field, changes.get(), held, sides.containsKey(field)));
+                }
                 if (pairs.isPresent()) {
                     pairLists.put(field, pairs.get());
                 } else if (!keys.isEmpty()) {
                     arrays.put(field, keys);
+                    nestedChanges(held).ifPresent(nested -> {
+                        final String name = NameValueLists.nestedName(field, nested.getKey());
+                        final ChangeList sided = nested.getValue().oriented(sides.get(name));
+                        targetLists.put(field, Map.entry(nested.getKey(), sided));
+                        found.add(changeListFound(name, sided, NameValueLists.heldIn(held, nested.getKey()),
+                                sides.containsKey(name)));
+                    });
                 } else if (json && valueArrays(held)) {
                     repeated.add(field);
                 } else {
@@ -128,10 +184,22 @@ final class ListFields {
                     }
                 }
             }
-            if (pairLists.containsKey(field)) {
+            final String path = (String) entry.get(PATH);
+            final boolean update = path.startsWith(UPDATE) && objects.containsKey(entry);
+            if (update && changeLists.containsKey(field)) {
+                final List<Map<String, Object>> both = snapshots(field, changeLists.get(field), objects.get(entry));
+                replace(entry, both.get(0));
+                afters.put(entry, both.get(1));
+            } else if (update && targetLists.containsKey(field)) {
+                final List<Map<String, Object>> both = targetSnapshots(field, arrays.get(field),
+                        targetLists.get(field), objects.get(entry));
+                replace(entry, both.get(0));
+                afters.put(entry, both.get(1));
+            } else if (pairLists.containsKey(field)) {
                 replace(entry, dataPerPair((String) entry.get(PATH), field, pairLists.get(field)));
             } else if (arrays.containsKey(field)) {
                 replace(entry, arrayGroup((String) entry.get(PATH), field, arrays.get(field)));
+                grouped.add(field);
             } else if (repeated.contains(field)) {
                 // Stroom's JSON as XML runs an array's values together as its text: a Data per value.
                 entry.put("repeat", true);
@@ -139,7 +207,11 @@ final class ListFields {
                 replace(entry, splitGroup((String) entry.get(PATH), field, splits.get(field).separator()));
             }
         }
+        insertAfters(mapping, afters);
         final List<String> notes = new ArrayList<>();
+        if (!changeLists.isEmpty() || !targetLists.isEmpty()) {
+            notes.add(changeNote(changeLists, targetLists, values));
+        }
         if (!splits.isEmpty()) {
             notes.add(splitNote(splits));
         }
@@ -152,6 +224,7 @@ final class ListFields {
         if (!pairLists.isEmpty()) {
             notes.add(pairNote(pairLists));
         }
+        arrays.keySet().retainAll(grouped);
         if (!arrays.isEmpty()) {
             notes.add(arrayNote(arrays));
             // Lists inside the objects are left out of the groups: said, so they aren't lost unsaid.
@@ -525,6 +598,157 @@ final class ListFields {
         return entry;
     }
 
+    /// An old/new list's Before and After snapshots: the object in each, holding a Data per property of the side's
+    /// value ([stroom.ai.impl.tools.generation.ListChange]).
+    ///
+    /// @param field   The list field.
+    /// @param changes The list's keys.
+    /// @param object  The object changed (`User`, `Group`; `Object` where nothing better is known).
+    /// @return The Before entry, then the After entry.
+    static List<Map<String, Object>> snapshots(final String field, final ChangeList changes, final String object) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final String side : List.of("Before", "After")) {
+            final Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put(PATH, UPDATE + side + "/" + object + "/" + DATA);
+            entry.put(CHANGE, changeKeys(field, changes));
+            out.add(entry);
+        }
+        return out;
+    }
+
+    /// An array of targets' Before and After snapshots, each item holding an old/new list: a group over the items in
+    /// each, an object per item, holding a Data per key of the item's and a Data per property of the side's value.
+    ///
+    /// @param field   The array field.
+    /// @param keys    The items' keys (those holding lists left out).
+    /// @param held    The items' key holding the old/new list, with the list's keys.
+    /// @param object  The object each item is (`Object` where nothing better is known).
+    /// @return The Before group, then the After group.
+    static List<Map<String, Object>> targetSnapshots(final String field,
+                                                     final List<String> keys,
+                                                     final Map.Entry<String, ChangeList> held,
+                                                     final String object) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final String side : List.of("Before", "After")) {
+            final List<Map<String, Object>> fields = new ArrayList<>();
+            for (final String key : keys) {
+                final Map<String, Object> data = new LinkedHashMap<>();
+                data.put(PATH, DATA);
+                data.put(DATA_NAME, key);
+                data.put(FIELD, key);
+                fields.add(data);
+            }
+            final Map<String, Object> perProperty = new LinkedHashMap<>();
+            perProperty.put(PATH, DATA);
+            perProperty.put(CHANGE, changeKeys(held.getKey(), held.getValue()));
+            fields.add(perProperty);
+            final Map<String, Object> forEach = new LinkedHashMap<>();
+            forEach.put("array", field);
+            final Map<String, Object> group = new LinkedHashMap<>();
+            group.put(PATH, UPDATE + side + "/" + object);
+            group.put("for_each", forEach);
+            group.put("as", itemName(field));
+            group.put(FIELDS, fields);
+            out.add(group);
+        }
+        return out;
+    }
+
+    /// An old/new list found, for the draft's tool to ask the user which key holds the value before the change.
+    ///
+    /// @param list     The list's name (a field, or [NameValueLists#nestedName]).
+    /// @param changes  Its keys, as drafted.
+    /// @param values   Its values.
+    /// @param answered True if the user's answer set its old key, false if the items' key order did.
+    /// @return `list`, `name_key`, `old_key`, `new_key`, `by` (`user` or `order`) and `example` (an item holding
+    /// both values, where one does).
+    static Map<String, Object> changeListFound(final String list,
+                                               final ChangeList changes,
+                                               final List<?> values,
+                                               final boolean answered) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("list", list);
+        out.put("name_key", changes.nameKey());
+        out.put("old_key", changes.oldKey());
+        out.put("new_key", changes.newKey());
+        out.put("by", answered
+                ? "user"
+                : "order");
+        final Map<String, Object> example = NameValueLists.example(values, changes);
+        if (!example.isEmpty()) {
+            out.put("example", example);
+        }
+        return out;
+    }
+
+    private static Map<String, Object> changeKeys(final String list, final ChangeList changes) {
+        final Map<String, Object> change = new LinkedHashMap<>();
+        change.put("list", list);
+        change.put("name_key", changes.nameKey());
+        change.put("old_key", changes.oldKey());
+        change.put("new_key", changes.newKey());
+        return change;
+    }
+
+    // The first key of an array's items holding an old/new list (targets, each with its properties changed).
+    private static Optional<Map.Entry<String, ChangeList>> nestedChanges(final List<String> values) {
+        for (final String key : nestedListKeys(values)) {
+            if (key.contains(".")) {
+                continue;
+            }
+            final Optional<ChangeList> found = NameValueLists.changes(NameValueLists.heldIn(values, key));
+            if (found.isPresent()) {
+                return Optional.of(Map.entry(key, found.get()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The object each Update rule's snapshots hold, by each of its Data entries reading one field: the one another
+    // of its entries writes in a snapshot (an event type's affected user, EventDetail/Update/After/User/Id), else
+    // Object. Rules of other action elements have none.
+    private static Map<Map<String, Object>, String> objectsOfEntries(final Map<String, Object> mapping) {
+        final Map<Map<String, Object>, String> out = new IdentityHashMap<>();
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            final List<Map<String, Object>> fields = JsonValues.maps(rule.get(FIELDS));
+            String object = null;
+            for (final Map<String, Object> entry : fields) {
+                final List<String> steps = ToolText.split(ToolText.str(entry.get(PATH)), "/");
+                if (object == null && steps.size() >= 4 && "EventDetail".equals(steps.get(0))
+                    && "Update".equals(steps.get(1))
+                    && (steps.get(2).equals("Before") || steps.get(2).equals("After")) && !DATA.equals(steps.get(3))) {
+                    object = steps.get(3);
+                }
+            }
+            for (final Map<String, Object> entry : fields) {
+                if (ToolText.str(entry.get(PATH)).startsWith(UPDATE)) {
+                    out.put(entry, object == null
+                            ? OBJECT
+                            : object);
+                }
+            }
+        }
+        return out;
+    }
+
+    // Each snapshot's After entry put in its rule's fields after its Before entry.
+    private static void insertAfters(final Map<String, Object> mapping,
+                                     final Map<Map<String, Object>, Map<String, Object>> afters) {
+        if (afters.isEmpty()) {
+            return;
+        }
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            final List<Map<String, Object>> fields = new ArrayList<>();
+            for (final Map<String, Object> entry : JsonValues.maps(rule.get(FIELDS))) {
+                fields.add(entry);
+                if (afters.containsKey(entry)) {
+                    fields.add(afters.get(entry));
+                }
+            }
+            rule.put(FIELDS, fields);
+        }
+    }
+
     private static Map<String, Object> group(final String path,
                                              final String field,
                                              final Map<String, Object> forEach,
@@ -595,6 +819,60 @@ final class ListFields {
                + example.getValue().nameKey() + "\", \"value_key\": \"" + example.getValue().valueKey() + "\"}}, "
                + "and is then not written as Data too. Never put a "
                + "value in an element that means something else (a setting's value in a Description).";
+    }
+
+    // The old/new lists, each with its keys and properties (capped): drafted as an Update's snapshots, every property
+    // Data; the properties whose names mean an element are the agent's to place by name, the object its to choose.
+    private static String changeNote(final Map<String, ChangeList> lists,
+                                     final Map<String, Map.Entry<String, ChangeList>> targets,
+                                     final Map<String, List<String>> values) {
+        final List<String> said = new ArrayList<>();
+        lists.forEach((field, changes) -> said.add(ToolText.repr(field) + " (" + changeKeysSaid(changes) + ")"));
+        targets.forEach((field, held) -> said.add(ToolText.repr(held.getKey()) + " in each item of "
+                                                  + ToolText.repr(field) + " (" + changeKeysSaid(held.getValue())
+                                                  + kindsSaid(field, values.getOrDefault(field, List.of())) + ")"));
+        final Map.Entry<String, ChangeList> example = lists.isEmpty()
+                ? targets.values().iterator().next()
+                : lists.entrySet().iterator().next();
+        return String.join(", ", said) + (said.size() == 1
+                ? " is an old/new list"
+                : " are old/new lists") + " of property changes: under an Update drafted as its Before and After "
+               + "snapshots, the object changed (the one the rule writes in a snapshot, else Object) holding a Data "
+               + "per property of its old value in Before and its new value in After (one in each object per item of a "
+               + "list of targets); elsewhere as any array of objects. The old values are taken from the first of "
+               + "the two value keys in the items' order: if the keys say otherwise, swap old_key and new_key. Write "
+               + "the snapshots' object as the element the changed thing is (User, Group...), and place a property "
+               + "whose name means an element by name, typed in both snapshots, e.g. {\"path\": "
+               + "\"EventDetail/Update/After/User/Name\", \"change\": {\"list\": \"" + example.getKey()
+               + "\", \"name\": \"<its name>\", ...}} with the same in Before (an event type's placement "
+               + "{\"path\": \"User/Name\", \"change\": {\"list\": ..., \"name\": ...}} writes both); "
+               + "it is then not written as Data too.";
+    }
+
+    private static String changeKeysSaid(final ChangeList changes) {
+        return "properties " + NameValueLists.said(changes.names(), NameValueLists.NAMES_SHOWN) + "; named by "
+               + changes.nameKey() + ", old values in " + changes.oldKey() + ", new in " + changes.newKey();
+    }
+
+    // The items' key that may say what each target is (few distinct words), with its values; "" for none.
+    private static String kindsSaid(final String field, final List<String> values) {
+        for (final String key : arrayKeys(values)) {
+            final Set<String> kinds = new LinkedHashSet<>();
+            int held = 0;
+            for (final Object value : NameValueLists.heldIn(values, key)) {
+                held++;
+                if (!(value instanceof final String kind) || !WORD.matcher(kind).matches()) {
+                    kinds.clear();
+                    break;
+                }
+                kinds.add(kind);
+            }
+            if (!kinds.isEmpty() && kinds.size() <= MAX_KINDS && held >= 2 * kinds.size()) {
+                return "; each item's " + key + " is one of " + String.join(", ", kinds) + ": if that says what "
+                       + "each item of " + field + " is, it names the snapshots' object";
+            }
+        }
+        return "";
     }
 
     private static String arrayNote(final Map<String, List<String>> arrays) {

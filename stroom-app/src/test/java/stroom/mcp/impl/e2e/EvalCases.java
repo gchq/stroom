@@ -64,7 +64,8 @@ final class EvalCases {
             "67_jsonl_flat_and_nested_keys", "68_csv_documented_codes_many", "69_json_array_membership_alerts",
             "70_jsonl_uncatalogued_records_proposals", "71_stroomql_join_exports_by_department",
             "72_stroomql_leavers_still_logging_on", "73_sequence_logon_then_export_lucene",
-            "74_sequence_logon_then_export_elastic", "75_stroomql_join_exports_past_the_row_limit");
+            "74_sequence_logon_then_export_elastic", "75_stroomql_join_exports_past_the_row_limit",
+            "76_jsonl_entra_audit_changes");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");

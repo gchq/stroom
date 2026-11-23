@@ -308,8 +308,24 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final String draftName = bySourceType.isEmpty()
                 ? SystemNames.single(system.systemName())
                 : bySourceType.values().iterator().next();
-        final Map<String, Object> result = drafted(samples, call, draftName, system.environment(), sourceNotes,
-                detailCheck(context, build, sourceNotes, version), splitter, forEach);
+        // An old/new list's old key as the user said for the build, else asked (with forms) and drafted again where
+        // the answer isn't the items' key order (decided by the user 2026-11-23).
+        final Map<String, String> sides = ChangeSides.kept(build == null
+                ? null
+                : buildRecords.get(), build);
+        final Function<String, String> detailCheck = detailCheck(context, build, sourceNotes, version);
+        final Map<String, Object> first = drafted(samples, call, draftName, system.environment(),
+                ChangeSides.withSides(sourceNotes, sides), detailCheck, splitter, forEach);
+        final Map<String, String> answered = ChangeSides.ask(call, context, consent, NAME, build == null
+                ? null
+                : buildRecords.get(), build, first);
+        final Map<String, String> all = new LinkedHashMap<>(sides);
+        all.putAll(answered);
+        final Map<String, Object> result = answered.isEmpty()
+                ? first
+                : drafted(samples, call, draftName, system.environment(), ChangeSides.withSides(sourceNotes, all),
+                        detailCheck, splitter, forEach);
+        ChangeSides.noted(result, sides);
         if (readWith != null) {
             result.put("read_with", "the build's Data Splitter '" + readWith + "'");
         }

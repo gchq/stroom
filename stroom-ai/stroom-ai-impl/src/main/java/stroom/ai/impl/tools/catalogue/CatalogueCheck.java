@@ -1026,16 +1026,31 @@ public final class CatalogueCheck {
     /// @param commonUser   The field EventSource/User/Id is read from, or null.
     /// @param commonPaths  The paths the common entries write, below Event (`EventDetail/Authenticate/User/Id`).
     /// @param rules        The draft's own rules with conditions, in order.
-    public record Drafted(Set<String> commonFields, String commonUser, List<String> commonPaths, List<Rule> rules) {
+    /// @param changeSides  The user's answers of which key of each old/new list holds the value before the change
+    ///                     (2026-11-23, kept with the build), by the list; none where none were given.
+    public record Drafted(Set<String> commonFields,
+                          String commonUser,
+                          List<String> commonPaths,
+                          List<Rule> rules,
+                          Map<String, String> changeSides) {
 
         /// Nothing drafted.
-        public static final Drafted NONE = new Drafted(Set.of(), null, List.of(), List.of());
+        public static final Drafted NONE = new Drafted(Set.of(), null, List.of(), List.of(), Map.of());
 
         /// Copies the parts.
         public Drafted {
             commonFields = Set.copyOf(Objects.requireNonNullElse(commonFields, Set.of()));
             commonPaths = List.copyOf(Objects.requireNonNullElse(commonPaths, List.of()));
             rules = List.copyOf(Objects.requireNonNullElse(rules, List.of()));
+            changeSides = Map.copyOf(Objects.requireNonNullElse(changeSides, Map.of()));
+        }
+
+        /// @param sides The user's answers of which key of each old/new list holds the value before the change, by
+        ///              the list ([stroom.ai.impl.tools.sample.NameValueLists#nestedName] for a list inside an
+        ///              array's items).
+        /// @return It with those answers, which the check's old/new lists follow as the draft does.
+        public Drafted withChangeSides(final Map<String, String> sides) {
+            return new Drafted(commonFields, commonUser, commonPaths, rules, sides);
         }
 
         /// @param mapping A draft's mapping (JSON): `common` and `events`, or null.
@@ -1071,7 +1086,7 @@ public final class CatalogueCheck {
                     // A rule whose conditions don't read takes no records here.
                 }
             }
-            return new Drafted(fields, user, commonPaths, rules);
+            return new Drafted(fields, user, commonPaths, rules, Map.of());
         }
 
 

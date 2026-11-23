@@ -69,7 +69,7 @@ class TestCatalogueEventTypesTool {
     private final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
     private final AtomicLong now = new AtomicLong(1_800_000_000_000L);
     private final CatalogueEventTypesTool tool = new CatalogueEventTypesTool(notesTool, sampleStreamTexts, consent,
-            plan, builds, now::get);
+            plan, builds, world::records, now::get);
 
     @BeforeEach
     void setUp() {
@@ -211,6 +211,10 @@ class TestCatalogueEventTypesTool {
                 "belongs in a placement at the element that means it", "the rest stay as Data",
                 "Never put a value in an element that means something else (e.g. a setting's value in a "
                 + "Description)", "a name/value list's pair by its name",
+                // Old/new lists (2026-11-23): a property by its name for both snapshots.
+                "and the old/new lists with their properties' names",
+                "an old/new list's property by its name for an Update's Before and After, {\"path\": \"User/Name\", "
+                + "\"change\": {",
                 "E.g. catalogue_event_types proposals=[{\"op\": \"change\", \"type_id\": \"Delete-Records\", "
                 + "\"placements\": [{\"path\": ");
         // The set summary the user is shown is unchanged.

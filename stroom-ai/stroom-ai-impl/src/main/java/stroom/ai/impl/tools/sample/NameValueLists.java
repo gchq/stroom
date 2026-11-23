@@ -56,7 +56,8 @@ import java.util.regex.Pattern;
 /// A list whose items share only the name's key, each holding its value under a key of its own kind
 /// (`{"name": "IS_ADMIN", "boolValue": true}`, `{"name": "GROUPS", "multiValue": ["a", "b"]}`), is one too where the
 /// name passes the same tests and each value is a scalar or a list of scalars: its value key is [#ANY_VALUE_KEY]
-/// (2026-11-23). An item of three keys (a name with its old and new values) is never one.
+/// (2026-11-23). An item of three keys (a name with its old and new values) is never one: such a list may be an
+/// old/new property-change list ([#changes(Collection)]), told by the same name tests.
 public final class NameValueLists {
 
     /// The value key of a list whose items each hold their value under a key of its own (`value`, `boolValue`,
@@ -64,6 +65,10 @@ public final class NameValueLists {
     public static final String ANY_VALUE_KEY = "*";
     /// The most names a listing gives before "… N more".
     public static final int NAMES_SHOWN = 10;
+    /// JSON text holding one value: a string, or an array of at most one scalar (an old or new value a source writes
+    /// as JSON, unwrapped: [#changeText(Object)]). The translation tests a value with the same pattern.
+    public static final String JSON_ONE_VALUE_REGEX = "^\\s*(\\[\\s*(\"([^\"\\\\]|\\\\.)*\"|-?[0-9][0-9.eE+-]*|true"
+                                                      + "|false|null)?\\s*\\]|\"([^\"\\\\]|\\\\.)*\")\\s*$";
     /// The fewest lists with items for a field to be told a name/value list.
     static final int MIN_LISTS = 2;
     /// The shortest a name is (most names): anything shorter is a code.
@@ -74,6 +79,10 @@ public final class NameValueLists {
     // The share of the distinct names that must be words or identifiers.
     private static final double WORDY_SHARE = 0.9;
     private static final Pattern LETTER = Pattern.compile("\\p{L}");
+    // The keys of an old/new list's items: a name, its old value and its new value.
+    private static final int CHANGE_KEYS = 3;
+    private static final Pattern ALPHANUMERIC_RUN = Pattern.compile("[\\p{L}\\p{N}]+");
+    private static final Pattern JSON_ONE_VALUE = Pattern.compile(JSON_ONE_VALUE_REGEX, Pattern.DOTALL);
 
     private NameValueLists() {
         // Static only.
@@ -232,9 +241,30 @@ public final class NameValueLists {
     /// @param name   The pair's name.
     /// @return The list, or empty where it isn't one, or no pair has the name (where it can't be told by shape).
     public static Optional<NameValueList> forPair(final Collection<?> values, final String name) {
+        return forPair(values, name, null);
+    }
+
+    /// The list a pair placed by its name reads, as [#forPair(Collection, String)] tells it, or an old/new list
+    /// ([#changes(Collection)]) read on one side (2026-11-23: an event type with no Before and After, an Authorise
+    /// adding a role, reads a property's new value as a pair): its value key the one given where it is the list's old
+    /// or new key, else its new key.
+    ///
+    /// @param values The field's values.
+    /// @param name   The pair's name.
+    /// @param given  The value key given, or null.
+    /// @return The list, or empty where it isn't one, or no pair has the name (where it can't be told by shape).
+    public static Optional<NameValueList> forPair(final Collection<?> values, final String name,
+                                                  final String given) {
         final Optional<NameValueList> told = detect(values);
         if (told.isPresent()) {
             return told;
+        }
+        final Optional<ChangeList> changes = changes(values);
+        if (changes.isPresent()) {
+            final ChangeList found = changes.get();
+            return Optional.of(new NameValueList(found.nameKey(), found.oldKey().equals(given)
+                    ? found.oldKey()
+                    : found.newKey(), found.names()));
         }
         Set<String> common = null;
         String nameKey = null;
@@ -276,6 +306,241 @@ public final class NameValueLists {
         final String valueKey = common.stream().filter(other -> !other.equals(key)).findFirst()
                 .orElse(ANY_VALUE_KEY);
         return Optional.of(new NameValueList(key, valueKey, namesIn(values, key)));
+    }
+
+    /// Old/new property-change lists (decided by the user 2026-11-23): a JSON array field whose items each give a
+    /// property's name, its old value and its new value (`[{"Name": "DisplayName", "OldValue": "Sam T", "NewValue":
+    /// "Sam Taylor"}]`), told by shape alone, never by the keys' names. A field is one where, over the values given
+    /// (each a list as read, or JSON text holding one):
+    ///
+    /// * every item is an object of the same three keys, each holding text, a number, a boolean, null or a list of
+    ///   scalars;
+    /// * one key, the name, passes the name's tests of a name/value list ([#detect(Collection)]): text in every
+    ///   item, unique within each list, words or identifiers, recurring across the sample; where two keys pass, the
+    ///   one with fewer distinct values is the name, else the first;
+    /// * the other two are one property's values before and after: a value held under one key in an item is held
+    ///   under the other in some item (a setting turned on and off, a title changed twice); else some item holds
+    ///   one without the other (a property set or cleared) and, where both hold a value in an item, most such
+    ///   items' two values are of one shape ([#shape(String)]: `Sam T` and `Sam Taylor` are, an id and a display
+    ///   name aren't). A list of things of three keys ({UPN, DisplayName, Role}, {Type, ID, Name}) shows neither;
+    /// * at least [#MIN_LISTS] lists hold items.
+    ///
+    /// Which of the two is old: the first in the items' key order (decided by the user: by order, the keys never
+    /// matched by name; a placement or entry names them, `old_key` and `new_key`, where the order says otherwise).
+    ///
+    /// @param values A field's values: each a list (as read) or JSON text holding one; any other value skipped.
+    /// @return The field as an old/new list, or empty where its values aren't one.
+    public static Optional<ChangeList> changes(final Collection<?> values) {
+        final List<List<Map<?, ?>>> lists = new ArrayList<>();
+        List<String> keys = null;
+        int read = 0;
+        for (final Object value : values) {
+            if (read++ >= VALUES_READ) {
+                break;
+            }
+            final List<?> list = items(value);
+            if (list == null) {
+                if (value != null && !(value instanceof final String text && text.isBlank())) {
+                    return Optional.empty();
+                }
+                continue;
+            }
+            if (list.isEmpty()) {
+                continue;
+            }
+            final List<Map<?, ?>> changes = new ArrayList<>();
+            for (final Object item : list) {
+                if (!(item instanceof final Map<?, ?> change) || change.size() != CHANGE_KEYS) {
+                    return Optional.empty();
+                }
+                final List<String> own = change.keySet().stream().map(String::valueOf).toList();
+                if (keys == null) {
+                    keys = own;
+                } else if (!Set.copyOf(keys).equals(Set.copyOf(own))) {
+                    return Optional.empty();
+                }
+                for (final Object held : change.values()) {
+                    if (held != null && scalarText(held) == null) {
+                        return Optional.empty();
+                    }
+                }
+                changes.add(change);
+            }
+            lists.add(changes);
+        }
+        if (keys == null || lists.size() < MIN_LISTS) {
+            return Optional.empty();
+        }
+        final String nameKey = changeName(lists, keys);
+        if (nameKey == null) {
+            return Optional.empty();
+        }
+        final List<String> sides = keys.stream().filter(key -> !key.equals(nameKey)).toList();
+        if (!beforeAndAfter(lists, sides.get(0), sides.get(1))) {
+            return Optional.empty();
+        }
+        return Optional.of(new ChangeList(nameKey, sides.get(0), sides.get(1), namesIn(values, nameKey)));
+    }
+
+    // The key of the items' three that names each property: text in every item, passing a name's tests; of two that
+    // pass, the one with fewer distinct values, else the first. Null where none does.
+    private static String changeName(final List<List<Map<?, ?>>> lists, final List<String> keys) {
+        String best = null;
+        int fewest = Integer.MAX_VALUE;
+        for (final String key : keys) {
+            final Tally tally = new Tally();
+            boolean text = true;
+            for (final List<Map<?, ?>> list : lists) {
+                final Set<String> seen = new HashSet<>();
+                for (final Map<?, ?> item : list) {
+                    if (!(item.get(key) instanceof final String name) || name.isBlank()) {
+                        text = false;
+                        break;
+                    }
+                    tally.add(name, "", seen);
+                }
+            }
+            if (text && tally.isName() && tally.values.size() < fewest) {
+                best = key;
+                fewest = tally.values.size();
+            }
+        }
+        return best;
+    }
+
+    // Whether two keys hold one property's values before and after: a value under both (a setting turned on and
+    // off); else one held without the other somewhere, and of one shape where both hold a value.
+    private static boolean beforeAndAfter(final List<List<Map<?, ?>>> lists, final String first, final String second) {
+        final Set<String> firsts = new HashSet<>();
+        final Set<String> seconds = new HashSet<>();
+        int both = 0;
+        int alike = 0;
+        boolean oneSided = false;
+        for (final List<Map<?, ?>> list : lists) {
+            for (final Map<?, ?> item : list) {
+                final String one = changeText(item.get(first));
+                final String two = changeText(item.get(second));
+                if (!one.isBlank()) {
+                    firsts.add(one);
+                }
+                if (!two.isBlank()) {
+                    seconds.add(two);
+                }
+                if (!one.isBlank() && !two.isBlank()) {
+                    both++;
+                    if (shape(one).equals(shape(two))) {
+                        alike++;
+                    }
+                } else if (!one.isBlank() || !two.isBlank()) {
+                    oneSided = true;
+                }
+            }
+        }
+        if (firsts.stream().anyMatch(seconds::contains)) {
+            return true;
+        }
+        return oneSided && (both == 0 || alike * 2 >= both);
+    }
+
+    /// A value's shape: each run of letters and digits one `x`, everything else as it is (`Sam Taylor` and `Sam T`
+    /// are `x x`, a GUID `x-x-x-x-x`, `[false]` `[x]`): two values of one property are mostly of one shape.
+    ///
+    /// @param value A value.
+    /// @return Its shape.
+    static String shape(final String value) {
+        return ALPHANUMERIC_RUN.matcher(value.strip()).replaceAll("x");
+    }
+
+    /// An old or new value as a translation writes it (decided by the user 2026-11-23): JSON text holding a string
+    /// or an array of one scalar is unwrapped to its value (`"[\"true\"]"` is `true`, `"\"Sam T\""` is `Sam T`, `[]`
+    /// nothing); a longer array or an object stays as its JSON text; a list of scalars (as read) is joined with
+    /// `, `, as a name/value list's is.
+    ///
+    /// @param value An item's value (text, a scalar, a list of scalars), or null.
+    /// @return Its text, empty for none.
+    public static String changeText(final Object value) {
+        final String text = value == null
+                ? null
+                : scalarText(value);
+        if (text == null) {
+            return "";
+        }
+        if (!(value instanceof String) || !JSON_ONE_VALUE.matcher(text).matches()) {
+            return text;
+        }
+        try {
+            final Object parsed = ToolJson.loads(text.strip());
+            final Object one = parsed instanceof final List<?> list
+                    ? (list.isEmpty()
+                            ? null
+                            : list.getFirst())
+                    : parsed;
+            return one == null
+                    ? ""
+                    : String.valueOf(one);
+        } catch (final ToolJson.JsonDecodeException e) {
+            return text;
+        }
+    }
+
+    /// @param array The array field whose items hold the list.
+    /// @param key   The items' key holding it.
+    /// @return The name an old/new list inside an array's items goes by, where the user's answer of which key holds
+    /// the old value is kept (`targetResources[].modifiedProperties`); a list of the records goes by its field.
+    public static String nestedName(final String array, final String key) {
+        return array + "[]." + key;
+    }
+
+    /// @param values  The list field's values, as [#changes(Collection)] reads them.
+    /// @param changes The list's keys.
+    /// @return The first item holding both an old and a new value (as the user is shown it to say which is which),
+    /// or empty where none does.
+    public static Map<String, Object> example(final Collection<?> values, final ChangeList changes) {
+        int read = 0;
+        for (final Object value : values) {
+            if (read++ >= VALUES_READ) {
+                break;
+            }
+            final List<?> list = items(value);
+            if (list == null) {
+                continue;
+            }
+            for (final Object item : list) {
+                if (item instanceof final Map<?, ?> map && !changeText(map.get(changes.oldKey())).isBlank()
+                    && !changeText(map.get(changes.newKey())).isBlank()) {
+                    final Map<String, Object> out = new LinkedHashMap<>();
+                    map.forEach((key, held) -> out.put(String.valueOf(key), held));
+                    return out;
+                }
+            }
+        }
+        return Map.of();
+    }
+
+    /// The values of a key of an array field's items, each item's its own value: the lists inside the items
+    /// (`targetResources[].modifiedProperties`), to tell by shape as a field's are.
+    ///
+    /// @param values The array field's values: each a list (as read) or JSON text holding one.
+    /// @param key    The items' key.
+    /// @return Each item's value of the key, in order.
+    public static List<Object> heldIn(final Collection<?> values, final String key) {
+        final List<Object> out = new ArrayList<>();
+        int read = 0;
+        for (final Object value : values) {
+            if (read++ >= VALUES_READ) {
+                break;
+            }
+            final List<?> list = items(value);
+            if (list == null) {
+                continue;
+            }
+            for (final Object item : list) {
+                if (item instanceof final Map<?, ?> map && map.get(key) != null) {
+                    out.add(map.get(key));
+                }
+            }
+        }
+        return out;
     }
 
     /// @param values The field's values (as [#detect(Collection)] reads them).
@@ -392,5 +657,24 @@ public final class NameValueLists {
     /// @param names    How many items hold each name over the values it was told from, most first.
     public record NameValueList(String nameKey, String valueKey, Map<String, Integer> names) {
 
+    }
+
+
+    /// A field told an old/new property-change list ([#changes(Collection)]).
+    ///
+    /// @param nameKey The items' key holding each property's name.
+    /// @param oldKey  The key holding its value before (the first of the other two in the items' order).
+    /// @param newKey  The key holding its value after.
+    /// @param names   How many items hold each property's name over the values it was told from, most first.
+    public record ChangeList(String nameKey, String oldKey, String newKey, Map<String, Integer> names) {
+
+        /// @param before The key the user said holds the value before the change (2026-11-23), or null.
+        /// @return It with that key as its old one (the other its new); itself where none is given or the key isn't
+        /// one of its two.
+        public ChangeList oriented(final String before) {
+            return newKey.equals(before)
+                    ? new ChangeList(nameKey, newKey, oldKey, names)
+                    : this;
+        }
     }
 }

@@ -151,6 +151,10 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     // The fields that say which event a question's record is.
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
+    // The start of draft_translation_mapping's question of which key of an old/new list holds the value before the
+    // change (ChangeSides.QUESTION), answered by the case's reference (`change_sides`).
+    private static final String CHANGE_SIDES_QUESTION = "Which key of an old/new list holds a property's value "
+                                                        + "before the change?";
     // Where run_stroomql says it wrote its results.
     private static final Pattern STROOMQL_RESULTS = Pattern.compile("The results are in (\\S+\\.md)\\.");
     // run_stroomql's note when its rows reached the most a query may return (RunStroomQlTool.limitNote).
@@ -158,6 +162,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
 
     // The forms the user answered in the case's own build: each its message and the answer's content.
     private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
+    // The case's reference answers of which key of each old/new list holds the value before the change (2026-11-23):
+    // the options picked, e.g. "OldValue holds the value before, NewValue the value after".
+    private List<String> changeSides = List.of();
 
     @Inject
     private Injector injector;
@@ -254,6 +261,11 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                       final String build,
                       final String feed,
                       final Setup setup) {
+        final Object sides = ((Map<String, Object>) evalCase.getOrDefault("reference", Map.of())).get(
+                "change_sides");
+        changeSides = sides instanceof final List<?> given
+                ? given.stream().map(String::valueOf).toList()
+                : List.of();
         build(evalCase, score, build, feed, setup, null);
     }
 
@@ -916,7 +928,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     // The user's answers, each form and its answer kept.
     private void answering(final Function<ElicitFormRequest, ElicitResult> user) {
         client.answeringWith(form -> {
-            final ElicitResult answer = user.apply(form);
+            final ElicitResult answer = form.message().startsWith(CHANGE_SIDES_QUESTION) && !changeSides.isEmpty()
+                    ? choosing(changeSides.toArray(String[]::new)).apply(form)
+                    : user.apply(form);
             final Map<String, Object> answered = new LinkedHashMap<>();
             answered.put("message", form.message());
             answered.put("content", answer.content());
