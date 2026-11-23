@@ -28,7 +28,8 @@
          data-grid__body           the rows drawn (role rowgroup)
            data-grid__row          a row (role row); --probe: one drawn to measure a row's height
              data-grid__cell       a cell (role gridcell); --align-right, --align-center,
-                                   --valign-top, --valign-middle, --valign-bottom
+                                   --valign-top, --valign-middle, --valign-bottom; --tick-box:
+                                   a tick box column's, centred (and its header-cell's)
        data-grid__empty            what shows with no rows; --text: setEmptyText's
      data-grid__track              an overlay scrollbar's track (--vertical, --horizontal)
        data-grid__thumb            its thumb (--active while dragged)
@@ -311,6 +312,24 @@
 .data-grid--multiline .data-grid__header-cell > div,
 .data-grid--multiline .data-grid__cell > div {
     white-space: normal;
+}
+
+/* A tick box column (CHECKBOX_COL, 22px; GridHtml marks its cells and header) centres its 16px box
+   without the side padding: at Default density the padding left the box against the column's
+   right edge. The header's select-all box is centred the same way, so the two line up */
+.data-grid__cell.data-grid__cell--tick-box > div {
+    display: flex;
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.data-grid__header-cell.data-grid__header-cell--tick-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .data-grid--multiline .data-grid__cell,

@@ -303,7 +303,10 @@ run of 22 October 2026 (1,538 stories).
   #5796. Fails every time. Fix: the story should expect the type in the secret, unless the
   credential is meant to carry it too (then `CredentialEditorController` should set it).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
-  full run, with 8 workers, and passes when run alone.
+  full run, with 8 workers, and passes when run alone. Seen again 23 November 2026 with 3 workers under a load
+  average of about 20, with `TwoLinksInACell`: `HyperlinksByKeyboard` opened the cell's first link
+  rather than its second (`showData` got `1001:4`, not `1002:4`), and `TwoLinksInACell` failed its
+  `toHaveFocus()`; both passed when `App/Editors/QueryEditor` was run again on its own.
 * **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (13 open: `Embedded`, below, is fixed, and master's
   `7ad091e2e6` and later fixed the `target-size` stories, `ImpactAbort`, `PauseButtonReportsUp` and `KeyStore`; the 13
   open ones fail on master `9ddf5f0b07` too, so they don't come from the remove_gwtp branch), and fail the
@@ -1242,7 +1245,7 @@ shows one), and the app itself.
 | Item | Now |
 |---|---|
 | A list keeps the old object selected after an edit | **Fixed** (6 November 2026): it was worse than reported, a second notification edit added a duplicate row; see "A list's selection kept a stale row" under Fixed |
-| Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs |
+| Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs; the light theme's two **Fixed** (23 November 2026), as the entry below |
 | `TraceOverviewChart` draws its fixed text and ARIA as HTML | Still open |
 | The floor map Layers drag never forgets `dragFromIndex` after a drop | Still open (`FloorMapLayers.java:498-511`) |
 | No story hovers or drags on the floor map canvas but Set Scale | Still open |
@@ -1256,7 +1259,7 @@ shows one), and the app itself.
 | Others still read `READ_ONLY` once | Still open (`QueryEditorController`, `StreamingProcessingController`, `DuplicateManagementListController`, `PathwayEditorController`; Solr's expression editor and pipeline) |
 | Templates given `SafeHtml.asString()` for a `title` | Still open: `ExplorerCell.java:150`, so a name with an apostrophe shows `&#39;` in its tooltip; the others weren't traced |
 | Server Tasks as a tree is 20px wider than its pane | **Fixed** (`TreeRowHandler.java:68`, `ServerTasksScreenStories`), as the entry under Fixed |
-| The 22px tick box column clips its box | **Gone** (checked 23 November 2026), as the entry below |
+| The 22px tick box column clips its box | **Fixed** (23 November 2026), as the entry below |
 | Ask Stroom AI's dock type offers only Dialog and Dock | Still so; nothing handles Tab or Float, so it looks deliberate |
 | Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Solr's still open; Plan B's **Fixed** (19 November 2026): `BucketGranularity` has display names |
 | Elastic's rerank suffix tooltip `$\{BaseField.score\}` | **Gone** (checked 19 November 2026): the rerank settings moved, and the tooltip went with them |
@@ -1587,16 +1590,28 @@ to delete them by hand.~~
   (6px flat) and the widths aren't fitted again.~~ **Fixed** (25 October 2026; struck through 23
   November 2026): see "a tree grid's columns ran past its edge" above.
 * ~~A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
-  so the box is clipped flush left rather than centred.~~ **Gone** (checked 23 November 2026, by
-  measuring): since the tick box and its grid cell became one block (`e80ac67f3b`, 19 October 2026)
-  the cell's box is an icon's size with no padding of its own (`.tick-box.tick-box--cell`, which
-  outweighs the grid's cell padding), so at every density the 16px box sits whole in the 22px
-  column with 3px either side. `Widgets/Cell Renderers/TickBoxCell` `BoxFitsItsColumn` checks the
-  box is within its cell and centred to a pixel; it passed before any change.
+  so the box is clipped flush left rather than centred.~~ **Fixed** (23 November 2026). Measured:
+  since the tick box and its grid cell became one block (`e80ac67f3b`, 19 October 2026) the cell's
+  box is an icon's size (16px), so it was no longer clipped, and at compact density (the
+  workbench's) it fitted with 3px either side; but at Default density the cell's side padding put it
+  5.6px from the left and against the right edge. `GridHtml` now marks a tick box column's cells
+  and header `data-grid__cell--tick-box` and `data-grid__header-cell--tick-box`: a column under
+  twice CHECKBOX_COL (so not a 66px Enabled column, whose box stays under its left-aligned header)
+  whose cell or header draws only a tick box (not one with other content, e.g. a column values
+  filter's value). `data-grid.css` centres their boxes without the side padding, so the header's
+  select-all box lines up with the rows'. `TestGridHtml`; `Widgets/Cell Renderers/TickBoxCell`
+  `BoxFitsItsColumn` checks a row's box and the header's are whole and centred to a pixel at
+  compact and Default density (it failed at Default before), and `WideColumnKeepsItsBoxLeft` that
+  an Enabled column's box stays at the left.
 
-* In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
+* ~~In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
-  the suite's default, passes them.
+  the suite's default, passes them.~~ **Fixed** (23 November 2026): both failed axe's colour
+  contrast on the calendar's days of the months before and after, drawn in the disabled text
+  colour (#6e6e6e), which is 4.5:1 on white but not on a light dialog with the transparency option
+  (white at 80% over the page's shade, about #ebebeb). Those days can be read and clicked, so they
+  are the muted text colour now (`calendar.css`), as other secondary text is. Both pass in the light
+  theme.
 
 * ~~After editing a processor profile's period, Remove does nothing until another row is chosen: the
   edit replaces the row with an unequal copy, but the selection keeps the old one, which
@@ -1732,6 +1747,11 @@ to delete them by hand.~~
   whether to show them from `MatchType.isNeedsValue()` rather than its own list of the four
   conditions that take a value. Opening the dialog always reads the filter's condition, so what
   shows is the same and no story can show a difference; `App/Main/StepFilterDialog` still passes.
+  Found by the code review (23 November 2026; older): a filter saved without a condition (its
+  `matchType` missing) couldn't be listed (`XPathList`'s Condition column) or written by OK
+  (`XPathFilterEditorController.write`), both failing on the null, so Change Step Filters didn't
+  open. **Fixed**: the list shows no condition, and Edit shows a new filter's, Exists, which OK
+  writes. `App/Main/StepFilterDialog` `FilterWithNoCondition` (failed before).
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter. The parser
   built is always a Data Splitter (`ParserFactoryPoolImpl`), but the guess isn't without effect:
   `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives

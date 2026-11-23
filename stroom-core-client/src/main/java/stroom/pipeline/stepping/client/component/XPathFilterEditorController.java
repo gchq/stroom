@@ -71,7 +71,10 @@ public class XPathFilterEditorController extends Controller {
     private void read(final XPathFilter xPathFilter) {
         view.setXPath(xPathFilter.getPath());
         view.setSearchType(xPathFilter.getSearchType());
-        view.setMatchType(xPathFilter.getMatchType());
+        // A filter saved without a condition is shown with a new filter's, so OK can write it
+        view.setMatchType(xPathFilter.getMatchType() == null
+                ? XPathFilter.DEFAULT_MATCH_TYPE
+                : xPathFilter.getMatchType());
         view.setValue(xPathFilter.getValue() == null
                 ? ""
                 : xPathFilter.getValue());
