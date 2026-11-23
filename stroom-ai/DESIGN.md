@@ -4027,6 +4027,14 @@ Not planned now (user, 2026-11-23); recorded for a later, non-AI change by the S
   third-party code. The chat renders inline in the GWT page, so Mermaid there would mean loading it into the whole UI
   or a sandboxed iframe per diagram. `gantt_chart` already writes standard Mermaid, so switching later changes only
   the drawing.
+* **If Mermaid comes to the chat: one sandboxed iframe per diagram** (user, 2026-11-23), not the whole chat in an
+  iframe. The chat stays inline as now (its forms, "Review and apply" and other buttons, links into Stroom, streaming
+  and selection unchanged); each diagram is drawn in its own `<iframe sandbox="allow-scripts">` (no
+  `allow-same-origin`, so an opaque origin with no access to Stroom's page, session or API), its content by `srcdoc`
+  with its own strict CSP (no network), Mermaid loaded inside it, and a single `postMessage` back with its height,
+  which the parent checks and treats as untrusted. Diagrams have no buttons, so nothing more crosses. The whole chat
+  in an iframe was weighed and declined: containment for a sanitiser gap, but every interactive part would need a
+  message bridge, and streaming, sizing, theme, focus, selection and find get harder.
 * **Costs to weigh**: a bundle of a few megabytes shipped with every release; a third-party renderer of untrusted text
   in a security product (strict security level, a pinned version, its advisories tracked); AGENTS.md's rule against
   new external dependencies (approval needed, MIT licence noted). Stroom's default CSP (`'self'`, `'unsafe-eval'`)
