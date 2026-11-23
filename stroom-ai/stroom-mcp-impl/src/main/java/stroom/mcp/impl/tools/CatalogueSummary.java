@@ -25,6 +25,7 @@ import stroom.util.shared.NullSafe;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -108,17 +109,28 @@ final class CatalogueSummary {
                           final Amendments amendments) {
         final String confidence = confidenceOf(set);
         final boolean doubtful = !HIGH.equals(confidence);
+        final List<Unusual> unusual = worthALook(set, check, amendments);
+        // Those the table lists are only in the table, not in the list by what happened as well (seen in chat 192:
+        // four of seven event types in both).
+        final List<Unusual> listed = unusual.subList(0, Math.min(MOST_LISTED, unusual.size()));
+        final Set<EventType> inTable = new HashSet<>();
+        listed.forEach(one -> inTable.add(one.type()));
+        final List<EventType> rest = set.stream()
+                .filter(type -> !inTable.contains(type))
+                .toList();
         final List<String> lines = new ArrayList<>();
         lines.add("**" + set.size() + " " + confidence + "-confidence event type" + plural(set.size()) + "**, by "
                   + "what happened" + (doubtful
                 ? ": each is doubtful, so each is worth a look below"
-                : "") + ". Each one, row by row, is in the source notes " + notesDoc + "; ask about any of them in "
-                  + "the chat.");
+                : whereListed(listed.size(), rest.size())) + ". Each one, row by row, is in the source notes "
+                  + notesDoc + "; ask about any of them in the chat.");
         lines.add("");
-        for (final Group group : groups(set, check)) {
-            lines.add("- " + said(group, check));
+        if (!rest.isEmpty()) {
+            for (final Group group : groups(rest, check)) {
+                lines.add("- " + said(group, check));
+            }
+            lines.add("");
         }
-        lines.add("");
         final List<String> removed = amendments.removed().stream()
                 .filter(typeId -> set.stream().noneMatch(type -> typeId.equalsIgnoreCase(type.typeId())))
                 .toList();
@@ -126,7 +138,6 @@ final class CatalogueSummary {
             lines.add("Removed since shown: " + String.join(", ", removed) + ".");
             lines.add("");
         }
-        final List<Unusual> unusual = worthALook(set, check, amendments);
         if (unusual.isEmpty()) {
             lines.add("Worth a look: none. Every one is in the sample, written as an event under its action "
                       + "element, with a description of its own.");
@@ -136,7 +147,7 @@ final class CatalogueSummary {
         lines.add("");
         lines.add(UNUSUAL_HEADER);
         lines.add("| --- | --- | --- | --- | --- |");
-        for (final Unusual one : unusual.subList(0, Math.min(MOST_LISTED, unusual.size()))) {
+        for (final Unusual one : listed) {
             final EventType type = one.type();
             lines.add("| " + CatalogueTables.cell("`" + type.typeId() + "` " + NullSafe.string(type.title()))
                       + " | " + CatalogueTables.cell(CatalogueTables.recognisedBy(type)) + " | "
@@ -150,6 +161,20 @@ final class CatalogueSummary {
                       + notesDoc + ".");
         }
         return String.join("\n", lines);
+    }
+
+    // Where a high set's event types are, when some are worth a look: those in the table aren't in the list too.
+    private static String whereListed(final int listed, final int rest) {
+        if (listed == 0) {
+            return "";
+        }
+        return rest == 0
+                ? "; " + (listed == 1
+                ? "it is"
+                : "all " + listed + " are") + " worth a look, in the table below"
+                : "; the " + listed + " worth a look " + (listed == 1
+                ? "is"
+                : "are") + " in the table below, not in this list";
     }
 
     /// The event types of a set worth a look, by the rule in this class's description, in the order listed: the

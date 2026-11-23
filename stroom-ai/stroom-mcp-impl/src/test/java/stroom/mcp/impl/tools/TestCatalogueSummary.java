@@ -61,6 +61,41 @@ class TestCatalogueSummary {
     }
 
     @Test
+    void anEventTypeWorthALookIsOnlyInTheTableNotInTheListByWhatHappenedToo() {
+        // Chat 192: four of seven high-confidence event types were in the list by what happened and again in the
+        // table of those worth a look below it.
+        final List<EventType> set = List.of(type("Authenticate-Logon", "Authenticate", "Logon"),
+                withoutDescription(type("Authenticate-Logoff", "Authenticate", "Logoff")),
+                type("Process-Request", "Process", null));
+        final CatalogueCheckResult check = check(set, Map.of("Authenticate-Logon", 8, "Authenticate-Logoff", 5,
+                "Process-Request", 3));
+
+        final String summary = CatalogueSummary.summary(set, check, DOC);
+
+        assertThat(summary)
+                .startsWith("**3 high-confidence event types**, by what happened; the 1 worth a look is in the "
+                            + "table below, not in this list.")
+                .contains("- Authenticate: 1 event type, 8 records; Authenticate-Logon (8)")
+                .contains("- Process: 1 event type, 3 records; Process-Request (3)")
+                .contains("| `Authenticate-Logoff`");
+        assertThat(summary.lines().filter(line -> line.startsWith("- ")))
+                .noneMatch(line -> line.contains("Authenticate-Logoff"));
+    }
+
+    @Test
+    void whenEveryEventTypeIsWorthALookTheyAreOnlyInTheTable() {
+        final List<EventType> set = List.of(withoutDescription(type("Authenticate-Logon", "Authenticate", "Logon")),
+                withoutDescription(type("Process-Request", "Process", null)));
+
+        final String summary = CatalogueSummary.summary(set, check(set, Map.of("Authenticate-Logon", 8,
+                "Process-Request", 3)), DOC);
+
+        assertThat(summary).startsWith("**2 high-confidence event types**, by what happened; all 2 are worth a "
+                                       + "look, in the table below.");
+        assertThat(summary.lines()).noneMatch(line -> line.startsWith("- "));
+    }
+
+    @Test
     void aLargeGroupNamesItsCommonestTypeIdsAndCountsTheRest() {
         final List<EventType> set = new ArrayList<>();
         final Map<String, Integer> counts = new LinkedHashMap<>();
@@ -232,7 +267,8 @@ class TestCatalogueSummary {
 
         assertThat(summary).startsWith("**16 medium-confidence event types**, by what happened: each is doubtful, so "
                                        + "each is worth a look below.")
-                .contains("- Process: 15 event types, 47 records")
+                // The ten in the table aren't in the list too: the other six are.
+                .contains("- Process: 6 event types, 18 records")
                 .contains("**Worth a look** (16 event types):")
                 .doesNotContain(CatalogueTables.SET_HEADER + "\n")
                 .endsWith("And 6 more worth a look, in the source notes 'acme source notes'.");
