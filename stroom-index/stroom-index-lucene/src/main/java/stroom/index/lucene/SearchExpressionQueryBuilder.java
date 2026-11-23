@@ -837,13 +837,9 @@ class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return DateExpressionParser.parse(value, dateTimeSettings)
-                    .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow(() -> new SearchException("Expected a standard date value for field \"" + fieldName
-                                                           + "\" but was given string \"" + value + "\""));
+            return DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
         } catch (final RuntimeException e) {
-            throw new SearchException("Expected a standard date value for field \"" + fieldName
-                                      + "\" but was given string \"" + value + "\"");
+            throw new SearchException(e.getMessage(), e);
         }
     }
 

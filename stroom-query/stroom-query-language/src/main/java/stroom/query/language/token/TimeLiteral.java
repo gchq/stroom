@@ -38,9 +38,16 @@ public final class TimeLiteral {
     /// unit never starts with a digit, which saves backtracking into a long run of digits with no unit.
     public static final String REGEX = "\\d++(?:ns|ms|s|m|h|d|w|M|y)";
 
+    /// A regular expression for a literal of one or more numbers and units, such as `1d2h`, with no
+    /// capturing groups.
+    public static final String COMPOUND_REGEX = "(?:" + REGEX + ")+";
+
     private static final Pattern PART_PATTERN = Pattern.compile("(\\d++)([A-Za-z]++)");
     private static final String UNITS_MESSAGE = "Use ms, s, m, h, d, w, M (month) or y";
     private static final long NANOS_PER_MILLI = 1_000_000L;
+    private static final long MILLIS_PER_SECOND = 1_000L;
+    private static final long MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+    private static final long MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
     private static final long DAYS_PER_WEEK = 7L;
 
     private TimeLiteral() {
@@ -92,6 +99,33 @@ public final class TimeLiteral {
         } catch (final NumberFormatException e) {
             throw new DateTimeException("The number in '" + text + "' is too large", e);
         }
+    }
+
+    /// Writes a length as one literal, in the largest unit up to hours that is exact. Days are not used, as
+    /// not every day is 24 hours long.
+    ///
+    /// @param millis The length in milliseconds.
+    /// @return The literal, such as `90m`.
+    public static String formatExactMillis(final long millis) {
+        final TimeUnit timeUnit;
+        final long divisor;
+        if (millis == 0) {
+            timeUnit = TimeUnit.MILLISECONDS;
+            divisor = 1L;
+        } else if (millis % MILLIS_PER_HOUR == 0) {
+            timeUnit = TimeUnit.HOURS;
+            divisor = MILLIS_PER_HOUR;
+        } else if (millis % MILLIS_PER_MINUTE == 0) {
+            timeUnit = TimeUnit.MINUTES;
+            divisor = MILLIS_PER_MINUTE;
+        } else if (millis % MILLIS_PER_SECOND == 0) {
+            timeUnit = TimeUnit.SECONDS;
+            divisor = MILLIS_PER_SECOND;
+        } else {
+            timeUnit = TimeUnit.MILLISECONDS;
+            divisor = 1L;
+        }
+        return millis / divisor + timeUnit.getShortForm();
     }
 
     /// Gets the exact length of a literal, with a day as 24 hours and a week as 7 of those days.

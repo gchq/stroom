@@ -30,7 +30,14 @@ public class ParamFactory {
         this.expressionReference = expressionReference;
     }
 
-    public Param create(final FieldIndex fieldIndex,
+    /// Creates the parameter that a token of an expression stands for.
+    ///
+    /// @param expressionContext The context of the expression, whose time zone a date with no offset is in.
+    /// @param fieldIndex        The fields of the expression, which any field the token names is added to.
+    /// @param token             The token.
+    /// @return The parameter.
+    public Param create(final ExpressionContext expressionContext,
+                        final FieldIndex fieldIndex,
                         final Token token) {
         try {
             // Token should be string or number or field.
@@ -42,7 +49,10 @@ public class ParamFactory {
                     return createRef(token.getUnescapedText(), fieldIndex);
 
                 case DATE_TIME:
-                    return ValDate.create(DateUtil.parseNormalDateTimeString(token.getText()));
+                    return ValDate.create(DateUtil.parse(
+                            token.getText(),
+                            DateUtil.DEFAULT_ISO_PARSER,
+                            UserTimeZoneUtil.getZoneId(expressionContext)));
 
                 case DURATION:
                     return ValDuration.create(TimeLiteral.toExactMillis(TimeLiteral.parse(token.getText())));

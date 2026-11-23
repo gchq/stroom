@@ -1445,8 +1445,8 @@ class TestSearchExpressionQueryBuilder {
     void testUnparseableDate(final String value) {
         assertThatThrownBy(() -> buildSingleTerm(DATE_FIELD, Condition.EQUALS, value))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Expected a standard date value for field \"" + DATE_FIELD +
-                            "\" but was given string \"" + value + "\"");
+                .hasMessageStartingWith("Expected a standard date value for field \"" + DATE_FIELD +
+                                        "\" but was given string \"" + value + "\": Text '" + value + "'");
     }
 
     @ParameterizedTest

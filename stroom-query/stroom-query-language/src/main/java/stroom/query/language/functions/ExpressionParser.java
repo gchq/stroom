@@ -307,7 +307,7 @@ public class ExpressionParser {
 
         Object result = object;
         if (object instanceof final Token token) {
-            result = paramFactory.create(fieldIndex, token);
+            result = paramFactory.create(expressionContext, fieldIndex, token);
 
         } else if (object instanceof final FunctionGroup functionGroup) {
             result = getFunction(

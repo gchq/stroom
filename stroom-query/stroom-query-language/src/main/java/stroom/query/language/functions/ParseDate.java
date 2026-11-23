@@ -38,8 +38,9 @@ import java.util.function.Supplier;
                                 name = "dateString",
                                 argType = ValString.class,
                                 description = "The date string, e.g. '2014 02 22'"),
-                        description = "Parse dateString using the default date format pattern (" +
-                                      DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
+                        description = "Parse dateString as an ISO 8601 date and time, " +
+                                      "e.g. '2014-02-22T12:12:12.888Z'. If dateString has no offset then it " +
+                                      "is in the time zone of the query."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -50,8 +51,9 @@ import java.util.function.Supplier;
                                         name = "pattern",
                                         argType = ValString.class,
                                         description = "The format pattern, e.g. 'yyyy MM dd'")},
-                        description = "Parse dateString using the supplied date format pattern and " +
-                                      "the default timezone (UTC)."),
+                        description = "Parse dateString using the supplied date format pattern. If dateString " +
+                                      "has no offset then it is in the time zone of the query, or UTC if the " +
+                                      "pattern ends with a quoted 'Z', 'UTC' or 'GMT'."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -68,35 +70,40 @@ import java.util.function.Supplier;
                                         argType = ValString.class,
                                         description = "The timezone, e.g. '+0400'"),
                         },
-                        description = "Parse dateString using the supplied date format pattern and timezone.")})
+                        description = "Parse dateString using the supplied date format pattern. If dateString " +
+                                      "has no offset then it is in the supplied timezone.")})
 class ParseDate extends AbstractFunction {
 
     static final String NAME = "parseDate";
-    private String pattern = DateUtil.DEFAULT_PATTERN;
-    private String timeZone;
+
+    private final ExpressionContext expressionContext;
+    private DateTimeFormatter formatter = DateUtil.DEFAULT_ISO_PARSER;
+    private ZoneId zoneId;
 
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
 
-    public ParseDate(final String name) {
+    public ParseDate(final ExpressionContext expressionContext, final String name) {
         super(name, 1, 3);
+        this.expressionContext = expressionContext;
     }
 
     @Override
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
-        DateTimeFormatter formatter = DateUtil.DEFAULT_ISO_PARSER;
-        ZoneId zoneId = ZoneOffset.UTC;
-
         if (params.length >= 2) {
-            pattern = ParamParseUtil.parseStringParam(params, 1, name);
+            final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
             formatter = FormatterCache.getFormatter(pattern, Mode.PARSE);
         }
         if (params.length >= 3) {
-            timeZone = ParamParseUtil.parseStringParam(params, 2, name);
-            zoneId = FormatterCache.getZoneId(timeZone);
+            zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
+        } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
+            // The text says that it is in UTC, so the time must be.
+            zoneId = ZoneOffset.UTC;
+        } else {
+            zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
         }
 
         final Param param = params[0];
@@ -112,7 +119,7 @@ class ParseDate extends AbstractFunction {
             final Val val;
             if (!NullSafe.isBlankString(string)) {
                 final long millis = DateUtil.parse(string, formatter, zoneId);
-                val = ValLong.create(millis);
+                val = ValDate.create(millis);
             } else {
                 val = ValNull.INSTANCE;
             }
@@ -123,7 +130,7 @@ class ParseDate extends AbstractFunction {
             if (millis == null) {
                 throw new ParseException("Unable to convert first argument of '" + name + "' function to long", 0);
             }
-            gen = new StaticValueFunction(ValLong.create(millis)).createGenerator();
+            gen = new StaticValueFunction(ValDate.create(millis)).createGenerator();
         }
     }
 
@@ -134,7 +141,7 @@ class ParseDate extends AbstractFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, pattern, timeZone);
+        return new Gen(childGenerator, formatter, zoneId);
     }
 
     @Override
@@ -152,13 +159,13 @@ class ParseDate extends AbstractFunction {
 
     private static final class Gen extends AbstractSingleChildGenerator {
 
-        private final String pattern;
-        private final String timeZone;
+        private final DateTimeFormatter formatter;
+        private final ZoneId zoneId;
 
-        Gen(final Generator childGenerator, final String pattern, final String timeZone) {
+        Gen(final Generator childGenerator, final DateTimeFormatter formatter, final ZoneId zoneId) {
             super(childGenerator);
-            this.pattern = pattern;
-            this.timeZone = timeZone;
+            this.formatter = formatter;
+            this.zoneId = zoneId;
         }
 
         @Override
@@ -174,7 +181,7 @@ class ParseDate extends AbstractFunction {
             }
 
             try {
-                return ValDate.create(FormatterCache.parse(val.toString(), pattern, timeZone));
+                return ValDate.create(DateUtil.parse(val.toString(), formatter, zoneId));
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

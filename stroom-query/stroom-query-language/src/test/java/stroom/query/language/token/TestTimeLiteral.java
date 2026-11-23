@@ -96,6 +96,22 @@ class TestTimeLiteral {
 
     @ParameterizedTest
     @CsvSource({
+            "0,0ms",
+            "5,5ms",
+            "1500,1500ms",
+            "61000,61s",
+            "5400000,90m",
+            "3600000,1h",
+            "129600000,36h",
+            "604800000,168h",
+            "9223372036854775807,9223372036854775807ms"})
+    void testFormatExactMillis(final long millis, final String expected) {
+        assertThat(TimeLiteral.formatExactMillis(millis)).isEqualTo(expected);
+        assertThat(TimeLiteral.toExactMillis(TimeLiteral.parse(expected))).isEqualTo(millis);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
             "1M,months and years vary",
             "1y,months and years vary",
             "1ns,held to the millisecond",

@@ -243,7 +243,7 @@ public class StatStoreCriteriaBuilder {
         try {
             return DateExpressionParser.getMs(type, value, dateTimeSettings);
         } catch (final Exception e) {
-            throw RestUtil.badRequest("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+            throw RestUtil.badRequest("DateTime term has an invalid '" + type + "' value. " + e.getMessage());
         }
     }
 }

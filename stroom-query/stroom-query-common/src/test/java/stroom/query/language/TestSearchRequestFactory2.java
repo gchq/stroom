@@ -17,17 +17,21 @@
 package stroom.query.language;
 
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,5 +125,54 @@ public class TestSearchRequestFactory2 {
         assertThat(expressionMap.get("EventTime")).isEqualTo("floorMinute(${EventTime})");
         assertThat(expressionMap.get("Field1")).isEqualTo("${Field1}");
         assertThat(expressionMap.get("Field2")).isEqualTo("${Field2}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "now()-1d2h",
+            "2024-01-01T00:00:00Z",
+            "2024-01-01T00:00:00+01:00",
+            "2024-01-01T00:00:00.000+0100",
+            "2024-01-01T00:00:00Z-1d"})
+    void testDateTerms(final String value) {
+        final SearchRequest searchRequest = create("from test where EventTime > " + value + " select EventTime");
+
+        final ExpressionTerm term = (ExpressionTerm) searchRequest.getQuery().getExpression().getChildren().getFirst();
+        assertThat(term.getValue()).isEqualTo(value);
+        assertThat(DateExpressionParser.parse(term.getValue(), searchRequest.getDateTimeSettings())).isPresent();
+    }
+
+    @Test
+    void testDateLiteralsInExpressions() {
+        final SearchRequest searchRequest = create("""
+                from test
+                eval Late = EventTime > 2024-07-01T09:00:00+01:00
+                select Late""");
+
+        final String expression = searchRequest.getResultRequests().getFirst()
+                .getMappings().getFirst()
+                .getColumns().getFirst()
+                .getExpression();
+        // The columns are compiled again from this text.
+        assertThat(expression).contains("2024-07-01T08:00:00.000Z");
+    }
+
+    private static SearchRequest create(final String input) {
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().referenceTime(0L).build();
+        return new SearchRequestFactory(
+                (keywordGroup, parentTableSettings) -> null,
+                MockDataSourceResolver.getInstance(),
+                () -> criteria -> null,
+                MockSecurityContext.getInstance())
+                .create(
+                        input,
+                        new SearchRequest(
+                                null,
+                                new QueryKey("test"),
+                                Query.builder().build(),
+                                new ArrayList<>(0),
+                                dateTimeSettings,
+                                false),
+                        ExpressionContext.builder().dateTimeSettings(dateTimeSettings).maxStringLength(100).build());
     }
 }

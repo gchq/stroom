@@ -24,6 +24,7 @@ import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
 import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.query.language.token.TimeLiteral;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
@@ -32,8 +33,6 @@ import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -55,9 +54,12 @@ public class DateExpressionParser {
     // The digit run of a literal is possessive: it is always terminated by a unit letter, so no backtracking
     // into the digits is ever needed. This avoids O(n^2) scanning (ReDoS) on a long run of digits with no
     // trailing unit.
-    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:" + TimeLiteral.REGEX + ")+");
+    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*" + TimeLiteral.COMPOUND_REGEX);
+    // A signed run of numbers and letters, whether or not the letters are units, but not the day and hour of
+    // a date.
+    private static final Pattern SIGNED_PATTERN =
+            Pattern.compile("[+-]\\s*+(?!\\d{2}[Tt]\\d)((?:\\d++[A-Za-z]++)++)");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
-    private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
     private DateExpressionParser() {
     }
@@ -90,14 +92,19 @@ public class DateExpressionParser {
         try {
             return parse(value, dateTimeSettings)
                     .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow();
+                    .orElseThrow(() -> new DateTimeException("There is no date"));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            // Only these say what is wrong with the value in words that are fit for its author.
+            final String reason = e instanceof DateTimeException || e instanceof ArithmeticException
+                    ? ": " + e.getMessage()
+                    : "";
             throw new RuntimeException("Expected a standard date value for field \"" +
                     fieldName +
                     "\" but was given string \"" +
                     value +
-                    "\"");
+                    "\"" +
+                    reason, e);
         }
     }
 
@@ -128,7 +135,7 @@ public class DateExpressionParser {
                 ZonedDateTime dateTime = null;
                 for (final DatePoint datePoint : DatePoint.values()) {
                     if (datePoint.getFunction().equals(function)) {
-                        dateTime = convertDatePoint(datePoint, fromEpochMillis(referenceTime));
+                        dateTime = convertDatePoint(datePoint, fromEpochMillis(referenceTime, dateTimeSettings));
                         break;
                     }
                 }
@@ -167,7 +174,7 @@ public class DateExpressionParser {
                 }
 
                 if (computedDateTime == null) {
-                    computedDateTime = fromEpochMillis(millis);
+                    computedDateTime = fromEpochMillis(millis, dateTimeSettings);
 
                 } else {
                     if (operator == null) {
@@ -203,8 +210,8 @@ public class DateExpressionParser {
                 } else {
                     try {
                         computedDateTime = parseTimeString(token.getUnescapedText(), dateTimeSettings);
-                    } catch (final RuntimeException e) {
-                        throw new TokenException(token, "Unexpected token");
+                    } catch (final DateTimeException e) {
+                        throw new TokenException(token, e.getMessage());
                     }
                 }
             }
@@ -221,7 +228,7 @@ public class DateExpressionParser {
         final Part[] parts = new Part[chars.length];
         final long referenceTime = Objects
                 .requireNonNullElseGet(dateTimeSettings.getReferenceTime(), System::currentTimeMillis);
-        parseConstants(chars, parts, referenceTime);
+        parseConstants(chars, parts, referenceTime, dateTimeSettings);
         parseDurations(chars, parts);
 
         // Find index of any remaining date.
@@ -234,8 +241,14 @@ public class DateExpressionParser {
 
         if (index != -1) {
             final String trimmed = new String(chars).trim();
-            final ZonedDateTime time = parseTimeString(trimmed, dateTimeSettings);
-            parts[index] = new Part(trimmed, time);
+            try {
+                final ZonedDateTime time = parseTimeString(trimmed, dateTimeSettings);
+                parts[index] = new Part(trimmed, time);
+            } catch (final DateTimeParseException e) {
+                // If this is down to a duration that can't be read then say so.
+                checkDurations(expression);
+                throw e;
+            }
         }
 
         // Now validate and try and perform date calculation.
@@ -265,8 +278,18 @@ public class DateExpressionParser {
         return Optional.ofNullable(time);
     }
 
-    private static void parseConstants(final char[] chars, final Part[] parts, final long nowEpochMilli) {
-        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMilli), ZoneOffset.UTC);
+    // Throws an exception that says what is wrong with the first duration that can't be read, if there is one.
+    private static void checkDurations(final String expression) {
+        final Matcher matcher = SIGNED_PATTERN.matcher(expression);
+        while (matcher.find()) {
+            TimeLiteral.parseCompound(matcher.group(1));
+        }
+    }
+
+    private static void parseConstants(final char[] chars,
+                                       final Part[] parts,
+                                       final long nowEpochMilli,
+                                       final DateTimeSettings dateTimeSettings) {
         final String expression = new String(chars);
         for (final DatePoint datePoint : DatePoint.values()) {
             final String function = datePoint.getFunction();
@@ -278,7 +301,8 @@ public class DateExpressionParser {
                 // Obliterate the matched part of the expression, so it can't be matched by any other matcher.
                 Arrays.fill(chars, start, end, ' ');
 
-                final ZonedDateTime time = convertDatePoint(datePoint, now);
+                final ZonedDateTime time = convertDatePoint(
+                        datePoint, fromEpochMillis(nowEpochMilli, dateTimeSettings));
                 parts[start] = new Part(function, time);
 
                 start = expression.indexOf(function, end);
@@ -294,14 +318,14 @@ public class DateExpressionParser {
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
             try {
-                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings);
-                return LocalDateTime.parse(trimmed).atZone(zoneId);
-            } catch (final RuntimeException ex) {
+                // The offset may have no colon, as formatDate() writes it.
+                return ZonedDateTime.parse(trimmed, DateUtil.DEFAULT_ISO_PARSER);
+            } catch (final DateTimeParseException ex) {
                 // Ignore error
             }
 
             // If no time zone was specified then try and parse as a local datetime.
-            return LocalDateTime.parse(trimmed).atZone(DEFAULT_TIME_ZONE);
+            return LocalDateTime.parse(trimmed).atZone(UserTimeZoneUtil.getZoneId(dateTimeSettings));
         }
     }
 
@@ -331,8 +355,10 @@ public class DateExpressionParser {
         }
     }
 
-    private static ZonedDateTime fromEpochMillis(final long nowEpochMilli) {
-        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMilli), ZoneOffset.UTC);
+    private static ZonedDateTime fromEpochMillis(final long epochMillis, final DateTimeSettings dateTimeSettings) {
+        return ZonedDateTime.ofInstant(
+                Instant.ofEpochMilli(epochMillis),
+                UserTimeZoneUtil.getZoneId(dateTimeSettings));
     }
 
     private static void parseDurations(final char[] chars, final Part[] parts) {

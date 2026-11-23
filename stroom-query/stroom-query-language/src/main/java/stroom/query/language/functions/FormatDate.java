@@ -38,7 +38,7 @@ import java.util.function.Supplier;
                                 description = "The date as milliseconds since the epoch (1 Jan 1970)"),
                         returnDescription = "A date string in the default date format pattern.",
                         description = "Convert the date to a string using the default date format pattern (" +
-                                DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
+                                DateUtil.DEFAULT_PATTERN + ") and the time zone of the query."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -51,7 +51,8 @@ import java.util.function.Supplier;
                                         description = "The format pattern, e.g. 'yyyy MM dd'")},
                         returnDescription = "A date string in the supplied date format pattern.",
                         description = "Convert the date to a string using the supplied date format pattern and " +
-                                "the default timezone (UTC)."),
+                                "the time zone of the query, or UTC if the pattern ends with a quoted 'Z', 'UTC' or " +
+                                "'GMT'."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -68,36 +69,40 @@ import java.util.function.Supplier;
                                         argType = ValString.class,
                                         description = "The timezone, e.g. '+0400'")},
                         returnDescription = "A date string in the supplied date format pattern.",
-                        description = "Convert the date to a string using the supplied date format" +
+                        description = "Convert the date to a string using the supplied date format " +
                                 "pattern and timezone.")})
 class FormatDate extends AbstractFunction {
 
     static final String NAME = "formatDate";
-    private String pattern = DateUtil.DEFAULT_PATTERN;
-    private String timeZone;
+
+    private final ExpressionContext expressionContext;
+    private DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
+    private ZoneId zoneId;
 
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
 
-    public FormatDate(final String name) {
+    public FormatDate(final ExpressionContext expressionContext, final String name) {
         super(name, 1, 3);
+        this.expressionContext = expressionContext;
     }
 
     @Override
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
-        DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
-        ZoneId zoneId = ZoneOffset.UTC;
-
         if (params.length >= 2) {
-            pattern = ParamParseUtil.parseStringParam(params, 1, name);
+            final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
             formatter = FormatterCache.getFormatter(pattern, Mode.FORMAT);
         }
         if (params.length >= 3) {
-            timeZone = ParamParseUtil.parseStringParam(params, 2, name);
-            zoneId = FormatterCache.getZoneId(timeZone);
+            zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
+        } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
+            // The text says that it is in UTC, so the time must be.
+            zoneId = ZoneOffset.UTC;
+        } else {
+            zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
         }
 
         final Param param = params[0];
@@ -123,7 +128,7 @@ class FormatDate extends AbstractFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, pattern, timeZone);
+        return new Gen(childGenerator, formatter, zoneId);
     }
 
     @Override
@@ -146,13 +151,13 @@ class FormatDate extends AbstractFunction {
     private static class Gen extends AbstractSingleChildGenerator {
 
 
-        private final String pattern;
-        private final String timeZone;
+        private final DateTimeFormatter formatter;
+        private final ZoneId zoneId;
 
-        Gen(final Generator childGenerator, final String pattern, final String timeZone) {
+        Gen(final Generator childGenerator, final DateTimeFormatter formatter, final ZoneId zoneId) {
             super(childGenerator);
-            this.pattern = pattern;
-            this.timeZone = timeZone;
+            this.formatter = formatter;
+            this.zoneId = zoneId;
         }
 
         @Override
@@ -172,7 +177,7 @@ class FormatDate extends AbstractFunction {
             }
 
             try {
-                return ValString.create(FormatterCache.format(millis, pattern, timeZone));
+                return ValString.create(DateUtil.format(millis, formatter, zoneId));
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

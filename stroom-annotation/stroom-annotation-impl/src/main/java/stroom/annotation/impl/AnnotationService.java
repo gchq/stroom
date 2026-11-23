@@ -57,6 +57,7 @@ import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DateTermResolver;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -240,6 +241,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
         ExpressionOperator expression = criteria.getExpression();
         expression = expressionFilter.copy(expression);
+        expression = DateTermResolver.resolve(expression, AnnotationFields.FIELDS, dateTimeSettings);
+        expression = DateTermResolver.resolve(
+                expression, AnnotationDecorationFields.DECORATION_FIELDS, dateTimeSettings);
         criteria.setExpression(expression);
 
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();

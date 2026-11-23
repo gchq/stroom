@@ -558,13 +558,14 @@ public class ExpressionPredicateFactory {
                 final ZonedDateTime zonedDateTime = optionalZonedDateTime.orElseThrow(() ->
                         new NumberFormatException("Unexpected: " + valueStr));
                 return zonedDateTime.toInstant().toEpochMilli();
-            } catch (final NumberFormatException | DateTimeException e) {
+            } catch (final NumberFormatException | DateTimeException | ArithmeticException e) {
                 throw new MatchException(
                         "Unable to parse a date/time from value for field \"" +
                         term.getField() +
                         "\" but was given string \"" +
                         value +
-                        "\"");
+                        "\": " +
+                        e.getMessage());
             }
         } else {
             throw new MatchException(

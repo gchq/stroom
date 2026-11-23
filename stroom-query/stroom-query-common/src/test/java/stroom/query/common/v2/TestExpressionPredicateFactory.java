@@ -737,7 +737,8 @@ class TestExpressionPredicateFactory {
 
     @Test
     void badDateTermNamesItsField() {
-        for (final String value : List.of("now()-99999999999999999999d", "now()-1ns", "yesterday")) {
+        for (final String value : List.of("now()-99999999999999999999d", "now()-1ns", "yesterday",
+                "now()+9223372036854775807w")) {
             final ExpressionOperator expression = ExpressionOperator.builder()
                     .addTerm(ExpressionTerm.builder()
                             .field("test")
@@ -749,8 +750,8 @@ class TestExpressionPredicateFactory {
             assertThatThrownBy(() -> new ExpressionPredicateFactory()
                     .createOptional(expression, DATE_VALUE_FUNCTION_FACTORIES, DateTimeSettings.builder().build()))
                     .as(value)
-                    .hasMessage("Unable to parse a date/time from value for field \"test\" but was given string \""
-                                + value + "\"");
+                    .hasMessageStartingWith("Unable to parse a date/time from value for field \"test\" but was given "
+                                            + "string \"" + value + "\": ");
         }
     }
 

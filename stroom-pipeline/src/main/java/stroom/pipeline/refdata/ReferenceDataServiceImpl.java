@@ -44,6 +44,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.DateTermResolver;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -749,6 +750,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                        final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer) {
+        if (criteria != null) {
+            criteria.setExpression(DateTermResolver.resolve(
+                    criteria.getExpression(), getFields(), dateTimeSettings));
+        }
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
                                 doSearch(criteria, fieldIndex, valuesConsumer, taskContext))

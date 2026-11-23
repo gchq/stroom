@@ -44,7 +44,10 @@ class TestFormatterCache {
                     final String dateStr = testCase.getInput()._1;
                     final String pattern = testCase.getInput()._2;
                     final String timeZone = testCase.getInput()._3;
-                    final long epochMs = FormatterCache.parse(dateStr, pattern, timeZone);
+                    final long epochMs = stroom.query.language.functions.DateUtil.parse(
+                            dateStr,
+                            FormatterCache.getFormatter(pattern, Mode.PARSE),
+                            FormatterCache.getZoneId(timeZone));
 
                     // Make sure FormatterCache is dishing out same instances each time
                     final DateTimeFormatter formatter1 = FormatterCache.getFormatter(pattern, Mode.PARSE);
