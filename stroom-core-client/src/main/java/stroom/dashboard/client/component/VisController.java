@@ -55,6 +55,7 @@ import stroom.visualisation.client.VisFunction.LoadStatus;
 import stroom.visualisation.client.VisFunction.StatusHandler;
 import stroom.visualisation.client.VisFunctionCache;
 import stroom.visualisation.shared.VisPalette;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
@@ -62,6 +63,7 @@ import stroom.widget.component.client.Layer;
 import stroom.widget.component.client.LayerContainer;
 import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
 import stroom.widget.preferences.client.CurrentPreferences;
+import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -395,31 +397,24 @@ public class VisController
                     currentData = getJSONData(visResult);
                 }
 
-                // Put a new function in the cache if there isn't one already.
                 final DocRef visualisation = getVisSettings().getVisualisation();
-                final VisFunction visFunction = visFunctionCache.get(visualisation);
-                if (visFunction == null) {
-                    // Create a new function and put it into the cache.
-                    final VisFunction function = visFunctionCache.create(visualisation);
+                final VisFunction visFunction = getOrCreateFunction(visualisation);
+                if (currentFunction != visFunction && currentFunction != null) {
+                    currentFunction.removeStatusHandler(this);
+                }
+                currentFunction = visFunction;
 
+                if (LoadStatus.NOT_LOADED.equals(visFunction.getStatus())) {
                     // Add a handler to act when the function has been loaded.
-                    if (currentFunction != null) {
-                        currentFunction.removeStatusHandler(this);
-                    }
-                    currentFunction = function;
-                    function.addStatusHandler(this);
-
-                    // Load the visualisation.
-                    loadVisualisation(function, visualisation);
-
+                    visFunction.addStatusHandler(this);
+                    loadVisualisation(visFunction, visualisation);
                 } else {
-                    if (currentFunction != visFunction) {
-                        if (currentFunction != null) {
-                            currentFunction.removeStatusHandler(this);
-                        }
+                    // A visualisation loaded before brings its own settings, not the last one's
+                    // (one still being fetched brings them when it is)
+                    if (!LoadStatus.LOADING_ENTITY.equals(visFunction.getStatus())) {
+                        applyVisualisationDoc(visualisation, visFunction);
                     }
                     // Ensure the function has this as a handler.
-                    currentFunction = visFunction;
                     visFunction.addStatusHandler(this);
                 }
             } else if (currentFunction != null) {
@@ -469,83 +464,128 @@ public class VisController
         return settings;
     }
 
+    // The pane's function for the visualisation, put in the cache if there isn't one already
+    private VisFunction getOrCreateFunction(final DocRef visualisation) {
+        final VisFunction visFunction = visFunctionCache.get(visualisation);
+        return visFunction != null
+                ? visFunction
+                : visFunctionCache.create(visualisation);
+    }
+
+    // Fetches the function's visualisation once, however many ask for it while it is fetched
+    private void fetchVisualisationDoc(final VisFunction function,
+                                       final DocRef visualisation,
+                                       final TaskMonitorFactory taskMonitorFactory,
+                                       final Runnable onFetched) {
+        if (function.getVisualisationDoc() != null) {
+            onFetched.run();
+        } else if (function.awaitFetch(onFetched)) {
+            restFactory
+                    .create(VISUALISATION_RESOURCE)
+                    .method(res -> res.fetch(visualisation.getUuid()))
+                    .onSuccess(result -> function.fetched(result, result == null
+                            ? "No visualisation found for: " + visualisation
+                            : null))
+                    .onFailure(caught -> function.fetched(null, caught.getMessage()))
+                    .owner(this)
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        }
+    }
+
+    // Takes the settings of a fetched visualisation, and the keys its selections have for other
+    // panes' selection handlers, if it is still the pane's (the name/value ones if it couldn't
+    // be fetched)
+    private void applyVisualisationDoc(final DocRef visualisation, final VisFunction function) {
+        final VisComponentSettings visSettings = getVisSettings();
+        if (visSettings == null || !Objects.equals(visualisation, visSettings.getVisualisation())) {
+            return;
+        }
+        JSONObject settings = null;
+        try {
+            settings = parseSettings(function.getVisualisationDoc());
+        } catch (final RuntimeException e) {
+            // Loading it to draw says its settings can't be read
+            GWT.log(e.getMessage(), e);
+        }
+        possibleSettings = settings;
+        visSelectionModel.setVisSettings(settings);
+    }
+
+    private static JSONObject parseSettings(final VisualisationDoc visualisationDoc) {
+        return visualisationDoc != null && visualisationDoc.getSettings() != null
+                ? JSONUtil.getObject(JSONUtil.parse(visualisationDoc.getSettings()))
+                : null;
+    }
+
     private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
+        fetchVisualisationDoc(function, visualisationDocRef, view.getRefreshButton(), () -> {
+            final VisualisationDoc result = function.getVisualisationDoc();
+            if (result != null) {
+                function.setFunctionName(result.getFunctionName());
 
-        restFactory
-                .create(VISUALISATION_RESOURCE)
-                .method(res -> res.fetch(visualisationDocRef.getUuid()))
-                .onSuccess(result -> {
-                    if (result != null) {
-                        function.setFunctionName(result.getFunctionName());
+                try {
+                    parseSettings(result);
+                } catch (final RuntimeException e) {
+                    failure(function, "Unable to parse settings for visualisation: "
+                                      + visualisationDocRef);
+                }
+                // All possible settings for this visualisation
+                applyVisualisationDoc(visualisationDocRef, function);
 
-                        // Get all possible settings for this visualisation.
-                        possibleSettings = null;
-                        try {
-                            if (result.getSettings() != null) {
-                                possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
-                            }
-                        } catch (final RuntimeException e) {
-                            failure(function, "Unable to parse settings for visualisation: "
-                                              + getVisSettings().getVisualisation());
-                        }
+                // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
+                restFactory
+                        .create(DOCUMENT_ASSET_RESOURCE)
+                        .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
+                        .onSuccess(indexAssetExists -> {
+                            if (indexAssetExists) {
+                                loadIframeHandlerRegistration = visFrame.addLoadHandler(event -> {
+                                    function.setStatus(LoadStatus.LOADED);
 
-                        // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
-                        restFactory
-                                .create(DOCUMENT_ASSET_RESOURCE)
-                                .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
-                                .onSuccess(indexAssetExists -> {
-                                    if (indexAssetExists) {
-                                        loadIframeHandlerRegistration = visFrame.addLoadHandler(event -> {
-                                            function.setStatus(LoadStatus.LOADED);
-
-                                            // Remove the load handler again
-                                            if (loadIframeHandlerRegistration != null) {
-                                                loadIframeHandlerRegistration.removeHandler();
-                                                loadIframeHandlerRegistration = null;
-                                            }
-                                        });
-
-                                        // Load the index.html into the iframe
-                                        final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
-                                        visFrame.setUrl("/assets/"
-                                                        + safeDocRef.asString()
-                                                        + "/index.html");
-
-                                    } else {
-                                        // Do we have required scripts.
-                                        if (result.getScriptRef() != null) {
-                                            // Now we have loaded the visualisation, load all
-                                            // associated scripts.
-                                            loadScripts(function, result.getScriptRef());
-
-                                        } else {
-                                            // Set the function status to loaded. This will tell all
-                                            // handlers that the function is ready for use.
-                                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
-                                                function.setStatus(LoadStatus.LOADED);
-                                            }
-                                        }
+                                    // Remove the load handler again
+                                    if (loadIframeHandlerRegistration != null) {
+                                        loadIframeHandlerRegistration.removeHandler();
+                                        loadIframeHandlerRegistration = null;
                                     }
-                                })
-                                .onFailure(caught -> {
-                                    AlertEvent.fireError(this,
-                                            "There was an error checking if the visualisation document "
-                                            + "has an index.html asset: " + caught.getMessage(),
-                                            null);
-                                })
-                                .owner(this)
-                                .taskMonitorFactory(view.getRefreshButton())
-                                .exec();
-                    } else {
-                        failure(function,
-                                "No visualisation found for: " + getVisSettings().getVisualisation());
-                    }
-                })
-                .onFailure(caught -> failure(function, caught.getMessage()))
-                .owner(this)
-                .taskMonitorFactory(view.getRefreshButton())
-                .exec();
+                                });
+
+                                // Load the index.html into the iframe
+                                final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
+                                visFrame.setUrl("/assets/"
+                                                + safeDocRef.asString()
+                                                + "/index.html");
+
+                            } else {
+                                // Do we have required scripts.
+                                if (result.getScriptRef() != null) {
+                                    // Now we have loaded the visualisation, load all
+                                    // associated scripts.
+                                    loadScripts(function, result.getScriptRef());
+
+                                } else {
+                                    // Set the function status to loaded. This will tell all
+                                    // handlers that the function is ready for use.
+                                    if (!LoadStatus.FAILURE.equals(function.getStatus())) {
+                                        function.setStatus(LoadStatus.LOADED);
+                                    }
+                                }
+                            }
+                        })
+                        .onFailure(caught -> {
+                            AlertEvent.fireError(this,
+                                    "There was an error checking if the visualisation document "
+                                    + "has an index.html asset: " + caught.getMessage(),
+                                    null);
+                        })
+                        .owner(this)
+                        .taskMonitorFactory(view.getRefreshButton())
+                        .exec();
+            } else {
+                failure(function, function.getFetchFailure());
+                applyVisualisationDoc(visualisationDocRef, function);
+            }
+        });
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
@@ -683,6 +723,22 @@ public class VisController
             setSettings(VisComponentSettings.builder().build());
         }
         updateFrameTitle();
+        updateSelectionKeys();
+    }
+
+    // Takes the keys the visualisation's selections have, for other panes' selection handlers to
+    // offer before it has any data to show (it is only loaded to draw once it has). The fetch is
+    // shared with loading it to draw, and does not spin the refresh button as a search does.
+    private void updateSelectionKeys() {
+        final DocRef visualisation = getVisSettings().getVisualisation();
+        if (visualisation == null) {
+            possibleSettings = null;
+            visSelectionModel.setVisSettings(null);
+        } else {
+            final VisFunction function = getOrCreateFunction(visualisation);
+            fetchVisualisationDoc(function, visualisation, null,
+                    () -> applyVisualisationDoc(visualisation, function));
+        }
     }
 
     // The frame is named after the component, as its tab is
@@ -709,6 +765,8 @@ public class VisController
         // The component may have been renamed
         updateFrameTitle();
         updateTableId(getVisSettings().getTableId());
+        // Another visualisation may have been chosen
+        updateSelectionKeys();
 
         // Update the current settings JSON and refresh the visualisation.
         currentSettings = getJSONSettings();

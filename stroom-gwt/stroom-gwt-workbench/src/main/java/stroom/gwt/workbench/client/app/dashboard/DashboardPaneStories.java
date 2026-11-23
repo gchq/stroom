@@ -30,6 +30,8 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
+import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -95,6 +97,10 @@ public final class DashboardPaneStories {
             "/dashboard/v1/columnValues/" + RequestMatcher.PATH_WILDCARD);
 
     // A visualisation with no settings of its own
+    // The visualisations the Chart's settings offer to choose from
+    private static final ExplorerFixture VISUALISATIONS = new ExplorerFixture(ExplorerFixture.folder("System",
+            ExplorerFixture.doc("My Vis", "Visualisation")));
+
     private static final String VISUALISATION = "{\"type\": \"Visualisation\", \"uuid\": \"vis-1\", \"name\": \"Bar\", "
                                                 + "\"functionName\": \"stub\", \"settings\": \"{}\"}";
 
@@ -105,6 +111,14 @@ public final class DashboardPaneStories {
             + "\\\"controls\\\": [{\\\"id\\\": \\\"x\\\", \\\"type\\\": \\\"field\\\", \\\"label\\\": \\\"X Axis\\\"}, "
             + "{\\\"id\\\": \\\"title\\\", \\\"type\\\": \\\"text\\\", \\\"label\\\": \\\"Title\\\", "
             + "\\\"defaultValue\\\": \\\"Chart\\\"}]}]}\"}";
+
+    // A visualisation whose settings declare the keys its selections have
+    private static final String VISUALISATION_WITH_SELECTION_KEYS = "{\"type\": \"Visualisation\", "
+            + "\"uuid\": \"vis-1\", \"name\": \"Bar\", \"functionName\": \"stub\", "
+            + "\"settings\": \"{\\\"selection\\\": ["
+            + "{\\\"key\\\": \\\"series\\\", \\\"label\\\": \\\"Series\\\", \\\"type\\\": \\\"TEXT\\\"}, "
+            + "{\\\"key\\\": \\\"x\\\", \\\"label\\\": \\\"X\\\", \\\"type\\\": \\\"DATE_TIME\\\"}, "
+            + "{\\\"key\\\": \\\"y\\\", \\\"label\\\": \\\"Y\\\", \\\"type\\\": \\\"NUMBER\\\"}]}\"}";
 
     // A favourite saved by the stories' 'My Fav'
     private static final String MY_FAV = "{\"id\": 100, \"name\": \"My Fav\", \"favourite\": true, "
@@ -228,6 +242,58 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect("the overlay's grab area, less the splitter's, after the drag",
                             () -> grabMismatch(splitter.element().get())).toBe("none"));
                     DashboardPlays.expectNoProblems(play);
+                })
+                // A selection handler's current selection offers the keys a visualisation declares
+                // before anything is selected in it (gchq/stroom#6059)
+                .story("SelectionHandlerOffersVisKeys", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_VIS_DASHBOARD, routes -> selectionKeyRoutes(routes,
+                                VISUALISATION_WITH_SELECTION_KEYS)))
+                .withPlay(play -> expectOfferedSelectionKeys(play,
+                        List.of("series", "x", "y"),
+                        List.of("name", "value")))
+                // A visualisation that declares no keys is taken to give name and value, as before
+                .story("SelectionHandlerOffersUndeclaredVisKeys", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_VIS_DASHBOARD, routes -> selectionKeyRoutes(routes,
+                                VISUALISATION)))
+                .withPlay(play -> expectOfferedSelectionKeys(play,
+                        List.of("name", "value"),
+                        List.of("series")))
+                // Choosing no visualisation in the Chart's settings drops the keys its last one
+                // declared, for name and value
+                .story("SelectionHandlerFollowsVisSettings", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_VIS_DASHBOARD, routes -> {
+                            selectionKeyRoutes(routes, VISUALISATION_WITH_SELECTION_KEYS);
+                            // The Chart's settings check its visualisation, and offer others
+                            DocumentEditors.decorated(routes,
+                                    "{\"type\": \"Visualisation\", \"uuid\": \"vis-1\", \"name\": \"Bar\"}");
+                            routes.post(TreeFixtures.FETCH_EXPLORER_NODES,
+                                    request -> RestReply.json(VISUALISATIONS.fetch(request.getBody())));
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    expectOfferedSelectionKeys(play, List.of("series"), List.of("name"));
+                    play.click(DashboardPlays.dialog(screen, "Add New Selection Handler")
+                            .getByRole("button", StroomDom.button("Cancel")));
+                    play.click(DashboardPlays.dialog(screen, "Settings")
+                            .getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Settings", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+
+                    DashboardPlays.openTabMenu(play, "Chart");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    // The visualisation picker shows the chosen one, Bar
+                    play.click(settings.findByText("Bar"));
+                    final Play chooser = screen.within(screen.findByRole("searchbox", "Filter documents")
+                            .closest(StroomDom.DIALOG));
+                    play.dblClick(chooser.findByText("None"));
+                    play.waitFor(() -> play.expect(screen.queryByRole("searchbox", "Filter documents"))
+                            .toBeNull());
+                    play.click(settings.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Settings", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+
+                    expectOfferedSelectionKeysNow(play, List.of("name", "value"), List.of("series"));
                 })
                 // A component's settings rename it
                 .story("ComponentSettings", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
@@ -1226,6 +1292,46 @@ public final class DashboardPaneStories {
         return DashboardSupport.tableResponse("t1", "[" + DashboardDocs.NAME_FIELD + "]",
                 "[{\"values\": [\"alpha\"], \"depth\": 0}, {\"values\": [\"beta\"], \"depth\": 0, "
                 + "\"matchingRule\": \"" + ruleId + "\"}]", 2);
+    }
+
+    // The Chart's visualisation, and the query's index, which its settings look up
+    private static void selectionKeyRoutes(final RestFixtures.Builder routes, final String visualisation) {
+        routes.get("/visualisation/v1/vis-1", RestReply.json(visualisation))
+                .post("/script/v1/fetchLinkedScripts", RestReply.json("[]"));
+        DocumentEditors.decorated(routes, DashboardDocs.INDEX);
+    }
+
+    // Waits for the Chart's visualisation to load, then opens a new selection handler of the
+    // query's and checks the Chart's keys its current selection offers to insert
+    private static void expectOfferedSelectionKeys(final Play play,
+                                                   final List<String> offered,
+                                                   final List<String> notOffered) {
+        DashboardPlays.opened(play);
+        play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                RequestMatcher.get("/visualisation/v1/vis-1").toSpyMatcher()));
+        expectOfferedSelectionKeysNow(play, offered, notOffered);
+    }
+
+    // Opens a new selection handler of the query's and checks the Chart's keys its current
+    // selection offers to insert, leaving the dialogs open
+    private static void expectOfferedSelectionKeysNow(final Play play,
+                                                      final List<String> offered,
+                                                      final List<String> notOffered) {
+        final Play screen = play.screen();
+        DashboardPlays.openTabMenu(play, "Q");
+        play.click(DashboardPlays.menuItem(screen, "Settings"));
+        final Play settings = DashboardPlays.dialog(screen, "Settings");
+        play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
+        play.click(settings.findAllByTitle("New Selection Handler").nth(0));
+        final Play handler = DashboardPlays.dialog(screen, "Add New Selection Handler");
+        for (final String key : offered) {
+            play.waitFor(() -> play.expect(handler.getByText("${component.v1.selection." + key + "}"))
+                    .toBeInTheDocument());
+        }
+        for (final String key : notOffered) {
+            play.expect(handler.queryByText("${component.v1.selection." + key + "}")).toBeNull();
+        }
+        DashboardPlays.expectNoProblems(play);
     }
 
     // A visualisation's routes

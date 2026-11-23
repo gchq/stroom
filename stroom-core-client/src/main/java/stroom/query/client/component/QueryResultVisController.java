@@ -45,6 +45,7 @@ import stroom.visualisation.client.VisFunction.StatusHandler;
 import stroom.visualisation.client.VisFunctionCache;
 import stroom.visualisation.shared.VisColourList;
 import stroom.visualisation.shared.VisPalette;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.button.client.RefreshButton;
 import stroom.widget.component.client.ContextValue;
@@ -176,6 +177,7 @@ public class QueryResultVisController
     /// @param visSelectionModel Given what the user selects in the visualisation.
     public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
         this.visSelectionModel = visSelectionModel;
+        visSelectionModel.setVisSettings(possibleSettings);
         visFrame.setOnSelection(visSelectionModel::onSelection);
     }
 
@@ -341,8 +343,14 @@ public class QueryResultVisController
                             currentFunction.removeStatusHandler(this);
                         }
                     }
-                    // Ensure the function has this as a handler.
                     currentFunction = visFunction;
+                    // A visualisation loaded before brings its own settings, not the last one's
+                    // (one still being fetched brings them when it is)
+                    if (!LoadStatus.LOADING_ENTITY.equals(visFunction.getStatus())) {
+                        applyVisualisationDoc(visFunction);
+                        currentSettings = getJSONSettings(visResult);
+                    }
+                    // Ensure the function has this as a handler.
                     visFunction.addStatusHandler(this);
                 }
 
@@ -410,19 +418,20 @@ public class QueryResultVisController
                 .create(VISUALISATION_RESOURCE)
                 .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
+                    function.fetched(result, null);
                     if (result != null) {
-                        // Get all possible settings for this visualisation.
-                        possibleSettings = null;
                         try {
-                            if (result.getSettings() != null) {
-                                possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
-                            }
+                            parseSettings(result);
                         } catch (final RuntimeException e) {
                             failure(function, "Unable to parse settings for visualisation: "
                                     + visualisationDocRef);
                         }
-
-                        currentSettings = getJSONSettings(visResult);
+                        // All possible settings for this visualisation, unless another has
+                        // replaced it while it was fetched
+                        if (function == currentFunction) {
+                            applyVisualisationDoc(function);
+                            currentSettings = getJSONSettings(visResult);
+                        }
 
                         function.setFunctionName(result.getFunctionName());
 
@@ -442,12 +451,43 @@ public class QueryResultVisController
                     } else {
                         failure(function,
                                 "No visualisation found for: " + visualisationDocRef);
+                        applyVisualisationDoc(function);
                     }
                 })
-                .onFailure(caught -> failure(function, caught.getMessage()))
+                .onFailure(caught -> {
+                    function.fetched(null, caught.getMessage());
+                    failure(function, caught.getMessage());
+                    applyVisualisationDoc(function);
+                })
                 .owner(this)
                 .taskMonitorFactory(getRefreshButton())
                 .exec();
+    }
+
+    // Takes the settings of the current function's fetched visualisation, and the keys its
+    // selections have for other panes' selection handlers (the name/value ones if it couldn't be
+    // fetched)
+    private void applyVisualisationDoc(final VisFunction function) {
+        if (function != currentFunction) {
+            return;
+        }
+        JSONObject settings = null;
+        try {
+            settings = parseSettings(function.getVisualisationDoc());
+        } catch (final RuntimeException e) {
+            // Loading it to draw says its settings can't be read
+            GWT.log(e.getMessage(), e);
+        }
+        possibleSettings = settings;
+        if (visSelectionModel != null) {
+            visSelectionModel.setVisSettings(settings);
+        }
+    }
+
+    private static JSONObject parseSettings(final VisualisationDoc visualisationDoc) {
+        return visualisationDoc != null && visualisationDoc.getSettings() != null
+                ? JSONUtil.getObject(JSONUtil.parse(visualisationDoc.getSettings()))
+                : null;
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
