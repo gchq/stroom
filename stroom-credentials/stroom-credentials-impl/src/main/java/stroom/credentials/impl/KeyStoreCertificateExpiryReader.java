@@ -55,7 +55,8 @@ import java.util.function.Supplier;
 ///
 /// Reading a key store takes a little while and it is done on every use of the credential, so
 /// the result is kept for each credential until the credential is changed or, for a key store
-/// file, the file is.
+/// file, the file is. A key store that can't be read is tried again next time, as it may have been
+/// read while it was being written.
 @Singleton
 public class KeyStoreCertificateExpiryReader {
 
@@ -78,7 +79,7 @@ public class KeyStoreCertificateExpiryReader {
     ///                             'Key Store File' credential.
     /// @param storedSecretSupplier Gets the credential's secret, if the key store must be read.
     /// @return When the certificates expire, or null if the credential is not a key store, has no
-    ///         certificates or can't be read.
+    ///         certificates or can't be read. Never throws.
     public Instant getExpiry(final Credential credential,
                              final Supplier<StoredSecret> storedSecretSupplier) {
         final CredentialType credentialType = NullSafe.get(credential, Credential::getCredentialType);
@@ -100,9 +101,27 @@ public class KeyStoreCertificateExpiryReader {
             return cached.expiry();
         }
 
-        final Instant expiry = read(credential, storedSecretSupplier.get(), keyStoreFilePath);
-        cache.put(credential.getUuid(), new CachedExpiry(version, expiry));
-        return expiry;
+        try {
+            final Instant expiry = read(storedSecretSupplier, keyStoreFilePath);
+            cache.put(credential.getUuid(), new CachedExpiry(version, expiry));
+            return expiry;
+        } catch (final IOException | GeneralSecurityException | RuntimeException e) {
+            // Not kept, so it is read again next time. Using the key store will fail too, with an
+            // error that says why.
+            cache.remove(credential.getUuid());
+            LOGGER.debug(() -> LogUtil.message("Unable to read the certificates of credential '{}' ({}): {}",
+                    credential.getName(),
+                    credential.getUuid(),
+                    e.getMessage()), e);
+            return null;
+        }
+    }
+
+    /// Forgets what was read for a credential, e.g. as it has been deleted.
+    ///
+    /// @param uuid The credential's UUID.
+    public void forget(final String uuid) {
+        cache.remove(uuid);
     }
 
     // The real path of a key store file, or null if it isn't in an allowed directory, as nothing
@@ -112,8 +131,8 @@ public class KeyStoreCertificateExpiryReader {
             return keyStoreFilePathChecker.check(credential.getKeyStorePath());
         } catch (final IllegalArgumentException e) {
             // Using the key store will fail too, with an error that says why
-            LOGGER.debug("Not reading the certificates of credential '{}': {}",
-                    credential.getUuid(), e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Not reading the certificates of credential '{}': {}",
+                    credential.getUuid(), e.getMessage()));
             return null;
         }
     }
@@ -136,28 +155,19 @@ public class KeyStoreCertificateExpiryReader {
         }
     }
 
-    private static Instant read(final Credential credential,
-                                final StoredSecret storedSecret,
-                                final Path keyStoreFilePath) {
-        try {
-            final KeyStore keyStore = switch (NullSafe.get(storedSecret, StoredSecret::secret)) {
-                case final KeyStoreSecret keyStoreSecret -> load(keyStoreSecret.getKeyStoreType(),
-                        keyStoreSecret.getKeyStorePassword(),
-                        NullSafe.get(storedSecret, StoredSecret::keyStore));
-                case final KeyStoreFileSecret keyStoreFileSecret -> load(keyStoreFileSecret.getKeyStoreType(),
-                        keyStoreFileSecret.getKeyStorePassword(),
-                        keyStoreFilePath);
-                case null, default -> null;
-            };
-            return getExpiry(keyStore);
-        } catch (final IOException | GeneralSecurityException | RuntimeException e) {
-            // Using the key store will fail too, with an error that says why
-            LOGGER.debug(() -> LogUtil.message("Unable to read the certificates of credential '{}' ({}): {}",
-                    credential.getName(),
-                    credential.getUuid(),
-                    e.getMessage()), e);
-            return null;
-        }
+    private static Instant read(final Supplier<StoredSecret> storedSecretSupplier,
+                                final Path keyStoreFilePath) throws IOException, GeneralSecurityException {
+        final StoredSecret storedSecret = storedSecretSupplier.get();
+        final KeyStore keyStore = switch (NullSafe.get(storedSecret, StoredSecret::secret)) {
+            case final KeyStoreSecret keyStoreSecret -> load(keyStoreSecret.getKeyStoreType(),
+                    keyStoreSecret.getKeyStorePassword(),
+                    storedSecret.keyStore());
+            case final KeyStoreFileSecret keyStoreFileSecret -> load(keyStoreFileSecret.getKeyStoreType(),
+                    keyStoreFileSecret.getKeyStorePassword(),
+                    keyStoreFilePath);
+            case null, default -> null;
+        };
+        return getExpiry(keyStore);
     }
 
     private static KeyStore load(final KeyStoreType keyStoreType,
@@ -242,8 +252,8 @@ public class KeyStoreCertificateExpiryReader {
     // --------------------------------------------------------------------------------
 
 
-    /// @param version What the expiry was read from (see [#getVersion(Credential)]).
-    /// @param expiry  When the certificates expire, or null if they couldn't be read.
+    /// @param version What the expiry was read from (see [#getVersion(Credential, Path)]).
+    /// @param expiry  When the certificates expire, or null if there are none.
     private record CachedExpiry(String version, Instant expiry) {
 
     }

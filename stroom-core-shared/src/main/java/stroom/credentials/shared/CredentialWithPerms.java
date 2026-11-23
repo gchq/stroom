@@ -62,13 +62,11 @@ public class CredentialWithPerms {
     @JsonProperty
     private final Long expiryWarningPeriodMs;
 
-    /**
-     * Constructor.
-     *
-     * @param credential Must not be null.
-     * @param edit       If the user has edit permission.
-     * @param delete     If the user has delete permission.
-     */
+    /// Constructor, with no certificate expiry or warning period.
+    ///
+    /// @param credential Must not be null.
+    /// @param edit       If the user has edit permission.
+    /// @param delete     If the user has delete permission.
     public CredentialWithPerms(final Credential credential,
                                final Boolean edit,
                                final Boolean delete) {

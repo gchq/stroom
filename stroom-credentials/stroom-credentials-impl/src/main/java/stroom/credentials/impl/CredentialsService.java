@@ -122,15 +122,24 @@ public class CredentialsService implements StoredSecrets {
 
             final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
             final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
-            final Instant certificateExpiry = certificateExpiryReader.getExpiry(
-                    credential,
-                    () -> credentialsDao.getStoredSecretByUuid(credential.getUuid()));
-            return new CredentialWithPerms(credential,
-                    canEdit,
-                    canDelete,
-                    NullSafe.get(certificateExpiry, Instant::toEpochMilli),
-                    credentialExpiryChecker.getWarningPeriod().toMillis());
+            return new CredentialWithPerms(credential, canEdit, canDelete);
         };
+    }
+
+    /// Adds when the certificates expire and the warning period, for the list's expiry column.
+    /// Done only for the credentials on the page being returned, as reading a key store means
+    /// loading its secret.
+    private CredentialWithPerms addExpiry(final CredentialWithPerms credentialWithPerms,
+                                          final long warningPeriodMs) {
+        final Credential credential = credentialWithPerms.getCredential();
+        final Instant certificateExpiry = certificateExpiryReader.getExpiry(
+                credential,
+                () -> credentialsDao.getStoredSecretByUuid(credential.getUuid()));
+        return new CredentialWithPerms(credential,
+                credentialWithPerms.isEdit(),
+                credentialWithPerms.isDelete(),
+                NullSafe.get(certificateExpiry, Instant::toEpochMilli),
+                warningPeriodMs);
     }
 
     private Predicate<Credential> createPermissionFilter(final FindCredentialRequest request) {
@@ -143,7 +152,15 @@ public class CredentialsService implements StoredSecrets {
     /// Returns a list of all the credentials in the database.
     /// Permissions: App, View|Edit|Owner (for all individual permissions)
     public ResultPage<CredentialWithPerms> findCredentialsWithPermissions(final FindCredentialRequest request) {
-        return credentialsDao.findCredentialsWithPermissions(request, createPermissionDecorator(request));
+        final ResultPage<CredentialWithPerms> resultPage = credentialsDao.findCredentialsWithPermissions(
+                request, createPermissionDecorator(request));
+        final long warningPeriodMs = credentialExpiryChecker.getWarningPeriod().toMillis();
+        return resultPage.copy()
+                .values(resultPage.getValues()
+                        .stream()
+                        .map(credentialWithPerms -> addExpiry(credentialWithPerms, warningPeriodMs))
+                        .toList())
+                .build();
     }
 
     /// Returns a list of all the credentials in the database.
@@ -478,6 +495,8 @@ public class CredentialsService implements StoredSecrets {
         checkAppPermission();
         checkPermission(uuid, DocumentPermission.DELETE);
         credentialsDao.deleteCredentialsAndSecret(uuid);
+        certificateExpiryReader.forget(uuid);
+        credentialExpiryChecker.forget(uuid);
         // Creating a credential made its creator the owner (storeCredentials), so the permissions
         // go with it, as the explorer's delete does for a document. Done after the delete so that a
         // failed delete leaves the credential still usable by its owner.

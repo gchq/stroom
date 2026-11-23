@@ -22,6 +22,8 @@ import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.AwsKeySecret;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
+import stroom.credentials.shared.CredentialWithPerms;
+import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.KeyStoreFileSecret;
 import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.PutCredentialRequest;
@@ -34,6 +36,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -54,7 +57,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
+import java.util.function.Function;
 import javax.crypto.spec.SecretKeySpec;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -776,6 +781,52 @@ class TestCredentialsService {
                 .isNotNull();
     }
 
+    /// A key store whose secret can't be loaded is listed without a certificate expiry, rather than
+    /// failing the whole list.
+    @Test
+    void testListingWithAKeyStoreThatCantBeReadStillWorks() {
+        givenTheDaoListsWithPaging(List.of(
+                createListedCredential("uuid-1", "a key store", CredentialType.KEY_STORE),
+                createListedCredential("uuid-2", "a password", CredentialType.USERNAME_PASSWORD)));
+        when(credentialsDao.getStoredSecretByUuid("uuid-1"))
+                .thenThrow(new RuntimeException("Unable to read the secret JSON"));
+
+        final ResultPage<CredentialWithPerms> resultPage = credentialsService.findCredentialsWithPermissions(
+                new FindCredentialRequest(new PageRequest(0, 10), null, null, null, DocumentPermission.USE));
+
+        assertThat(resultPage.getValues())
+                .extracting(credentialWithPerms -> credentialWithPerms.getCredential().getName())
+                .containsExactly("a key store", "a password");
+        assertThat(resultPage.getValues())
+                .allSatisfy(credentialWithPerms -> {
+                    assertThat(credentialWithPerms.getCertificateExpiryTimeMs())
+                            .isNull();
+                    assertThat(credentialWithPerms.getExpiryWarningPeriodMs())
+                            .isEqualTo(Duration.ofDays(14).toMillis());
+                });
+    }
+
+    /// Reading a key store means loading its secret, so it is only done for the page returned.
+    @Test
+    void testListingOnlyReadsTheKeyStoresOnThePageReturned() {
+        givenTheDaoListsWithPaging(List.of(
+                createListedCredential("uuid-1", "key store 1", CredentialType.KEY_STORE),
+                createListedCredential("uuid-2", "key store 2", CredentialType.KEY_STORE),
+                createListedCredential("uuid-3", "key store 3", CredentialType.KEY_STORE)));
+
+        final ResultPage<CredentialWithPerms> resultPage = credentialsService.findCredentialsWithPermissions(
+                new FindCredentialRequest(new PageRequest(1, 1), null, null, null, DocumentPermission.USE));
+
+        assertThat(resultPage.getValues())
+                .extracting(credentialWithPerms -> credentialWithPerms.getCredential().getName())
+                .containsExactly("key store 2");
+        assertThat(resultPage.getPageResponse().getTotal())
+                .isEqualTo(3L);
+        verify(credentialsDao).getStoredSecretByUuid("uuid-2");
+        verify(credentialsDao, never()).getStoredSecretByUuid("uuid-1");
+        verify(credentialsDao, never()).getStoredSecretByUuid("uuid-3");
+    }
+
     /// The file is used where it is, so a key store replaced on disk (e.g. by cert-manager) is
     /// picked up without changing the credential.
     @Test
@@ -875,6 +926,35 @@ class TestCredentialsService {
                 credentialType,
                 null,
                 expiryTimeMs);
+    }
+
+    // The DAO decorates the credentials found and then cuts them to the page asked for
+    private void givenTheDaoListsWithPaging(final List<Credential> credentials) {
+        when(securityContext.hasDocumentPermission(any(DocRef.class), any(DocumentPermission.class)))
+                .thenReturn(true);
+        when(credentialsDao.findCredentialsWithPermissions(any(), any())).thenAnswer(invocation -> {
+            final FindCredentialRequest request = invocation.getArgument(0);
+            final Function<Credential, CredentialWithPerms> decorator = invocation.getArgument(1);
+            return ResultPage.createPageLimitedList(
+                    credentials.stream().map(decorator).toList(),
+                    request.getPageRequest());
+        });
+    }
+
+    private static Credential createListedCredential(final String uuid,
+                                                     final String name,
+                                                     final CredentialType credentialType) {
+        return new Credential(uuid,
+                name,
+                1_000L,
+                1_000L,
+                "creator",
+                "creator",
+                credentialType,
+                credentialType == CredentialType.KEY_STORE
+                        ? KeyStoreType.PKCS12
+                        : null,
+                null);
     }
 
     private Credential createStoredCredential() {

@@ -128,6 +128,31 @@ class TestCredentialExpiryChecker {
     }
 
     @Test
+    void testFirstExpiredWarningIsNotHeldBackByAnExpiringOne() {
+        final Credential credential = createCredential("a", NOW.plus(Duration.ofMinutes(5)));
+
+        assertThat(checker.check(credential))
+                .isTrue();
+        // Expired a minute later, well within the hour since it was warned about as expiring
+        now = NOW.plus(Duration.ofMinutes(6));
+        assertThat(checker.check(credential))
+                .isTrue();
+        assertThat(checker.check(credential))
+                .isFalse();
+    }
+
+    @Test
+    void testForgottenCredentialIsWarnedAboutAgain() {
+        final Credential credential = createCredential("a", NOW.minus(Duration.ofDays(1)));
+
+        assertThat(checker.check(credential))
+                .isTrue();
+        checker.forget(credential.getUuid());
+        assertThat(checker.check(credential))
+                .isTrue();
+    }
+
+    @Test
     void testCertificateExpiringFirstIsRefused() {
         credentialsConfig = createConfig(true, null);
         final Credential credential = createCredential("a", NOW.plus(Duration.ofDays(100)));
@@ -136,6 +161,16 @@ class TestCredentialExpiryChecker {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("The certificate in credential 'a'")
                 .hasMessageContaining("Replace its key store");
+    }
+
+    @Test
+    void testExpiredCertificateOfAKeyStoreFileSaysToReplaceTheFile() {
+        credentialsConfig = createConfig(true, null);
+        final Credential credential = createCredential("a", CredentialType.KEY_STORE_FILE, null);
+
+        assertThatThrownBy(() -> checker.check(credential, NOW.minus(Duration.ofDays(1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Replace its key store file.");
     }
 
     @Test
@@ -169,6 +204,27 @@ class TestCredentialExpiryChecker {
                 .isEqualTo(Duration.ZERO);
     }
 
+    @Test
+    void testNegativeWarningPeriodGivesZero() {
+        credentialsConfig = createConfig(false, StroomDuration.of(Duration.ofDays(-1)));
+
+        assertThat(checker.getWarningPeriod())
+                .isEqualTo(Duration.ZERO);
+        assertThat(checker.check(createCredential("a", NOW.plus(Duration.ofMinutes(1)))))
+                .isFalse();
+    }
+
+    @Test
+    void testHugeWarningPeriodIsCapped() {
+        credentialsConfig = createConfig(false, StroomDuration.of(Duration.ofSeconds(Long.MAX_VALUE)));
+
+        assertThat(checker.getWarningPeriod())
+                .isEqualTo(CredentialExpiryChecker.MAX_WARNING_PERIOD);
+        // Rather than the time overflowing
+        assertThat(checker.check(createCredential("a", NOW.plus(Duration.ofDays(365)))))
+                .isTrue();
+    }
+
     private static CredentialsConfig createConfig(final boolean refuseExpiredCredentials,
                                                   final StroomDuration expiryWarningPeriod) {
         return new CredentialsConfig(null,
@@ -182,13 +238,19 @@ class TestCredentialExpiryChecker {
     }
 
     private static Credential createCredential(final String name, final Instant expiryTime) {
+        return createCredential(name, CredentialType.USERNAME_PASSWORD, expiryTime);
+    }
+
+    private static Credential createCredential(final String name,
+                                               final CredentialType credentialType,
+                                               final Instant expiryTime) {
         return new Credential("uuid-" + name,
                 name,
                 1_000L,
                 1_000L,
                 "creator",
                 "creator",
-                CredentialType.USERNAME_PASSWORD,
+                credentialType,
                 null,
                 expiryTime == null
                         ? null

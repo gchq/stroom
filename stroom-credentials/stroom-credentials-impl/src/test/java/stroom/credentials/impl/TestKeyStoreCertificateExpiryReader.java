@@ -38,9 +38,11 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -146,6 +148,48 @@ class TestKeyStoreCertificateExpiryReader {
         assertThat(reader.getExpiry(createCredential(CredentialType.KEY_STORE, null, 2L),
                 () -> new StoredSecret(credential, new UsernamePasswordSecret("user", "pass"), null)))
                 .isNull();
+    }
+
+    @Test
+    void testSecretThatCantBeLoadedGivesNull() {
+        assertThat(reader.getExpiry(createCredential(CredentialType.KEY_STORE, null, 1L), () -> {
+            throw new RuntimeException("Unable to read the secret JSON");
+        })).isNull();
+    }
+
+    /// A failed read isn't kept, as the key store may have been read while it was being written.
+    @Test
+    void testFailedReadIsTriedAgain() throws Exception {
+        final Path keyStore = allowedDir.resolve("client.p12");
+        final Path certificate = generateKey(keyStore, "key", "-1d", 30);
+        final Credential credential = createCredential(CredentialType.KEY_STORE, null, 1L);
+        final byte[] keyStoreBytes = Files.readAllBytes(keyStore);
+        final byte[] partBytes = Arrays.copyOf(keyStoreBytes, keyStoreBytes.length / 2);
+
+        assertThat(reader.getExpiry(credential, () -> new StoredSecret(credential,
+                new KeyStoreSecret("ks-uuid", KeyStoreType.PKCS12, PASSWORD, null),
+                partBytes)))
+                .isNull();
+        assertThat(reader.getExpiry(credential, () -> keyStoreSecret(keyStore)))
+                .isEqualTo(getNotAfter(certificate));
+    }
+
+    @Test
+    void testForgottenCredentialIsReadAgain() throws Exception {
+        final Path keyStore = allowedDir.resolve("client.p12");
+        generateKey(keyStore, "key", "-1d", 30);
+        final Credential credential = createCredential(CredentialType.KEY_STORE, null, 1L);
+        final AtomicInteger reads = new AtomicInteger();
+        final Supplier<StoredSecret> supplier = () -> {
+            reads.incrementAndGet();
+            return keyStoreSecret(keyStore);
+        };
+
+        reader.getExpiry(credential, supplier);
+        reader.forget(credential.getUuid());
+        reader.getExpiry(credential, supplier);
+
+        assertThat(reads).hasValue(2);
     }
 
     @Test
