@@ -47,6 +47,20 @@ class TestListFields extends DraftFixtures {
             [{"Name": "DisplayName", "OldValue": "Al", "NewValue": "Al Smith"},
              {"Name": "Department", "OldValue": "", "NewValue": "Ops"}]""");
 
+    // Graph-style targets, each with its old/new list of properties (values JSON text).
+    private static final List<String> TARGETS = List.of("""
+            [{"id": "u-1", "type": "User", "userPrincipalName": "sam@x", "modifiedProperties": [
+              {"displayName": "DisplayName", "oldValue": "[\\"Sam T\\"]", "newValue": "[\\"Sam Taylor\\"]"}]},
+             {"id": "g-1", "type": "Group", "modifiedProperties": [{"displayName": "Description",
+              "oldValue": "[]", "newValue": "[\\"Ops team\\"]"}]}]""", """
+            [{"id": "u-2", "type": "User", "userPrincipalName": "kate@x", "modifiedProperties": [
+              {"displayName": "AccountEnabled", "oldValue": "[true]", "newValue": "[false]"},
+              {"displayName": "DisplayName", "oldValue": "[\\"Kate\\"]", "newValue": "[\\"Kate Jones\\"]"}]}]""",
+            """
+            [{"id": "u-3", "type": "User", "userPrincipalName": "al@x", "modifiedProperties": [
+              {"displayName": "AccountEnabled", "oldValue": "[false]", "newValue": "[true]"},
+              {"displayName": "Description", "oldValue": "[]", "newValue": "[\\"Lead\\"]"}]}]""");
+
     private static ListFields.Split split(final String... values) {
         return ListFields.splitOf(List.of(values));
     }
@@ -337,6 +351,71 @@ class TestListFields extends DraftFixtures {
         ListFields.propose(other, Map.of("ModifiedProperties", CHANGES), true);
         assertThat(fieldsOf(other).get(1)).containsEntry("path", "EventDetail/Authorise/Data")
                 .containsKey("for_each");
+    }
+
+    @Test
+    void targetsPlacedAsAGroupInAfterAloneAreWrittenInBothSnapshotsWithADataPerProperty() {
+        // Seen in eval case 76 (Haiku): the catalogue's targets as a group in After alone, its one field the id,
+        // never the change form: no property's old or new value was written.
+        final Map<String, Object> mapping = ruleMapping("""
+                {"path": "EventDetail/Update/After/Object", "for_each": {"array": "targetResources"},
+                 "as": "targetResource", "fields": [{"path": "Id", "field": "id", "item": true}]}""");
+
+        final List<String> notes = ListFields.propose(mapping, Map.of("targetResources", TARGETS), true);
+
+        final List<Map<String, Object>> fields = fieldsOf(mapping);
+        assertThat(fields).extracting(field -> field.get("path")).containsExactly("EventDetail/TypeId",
+                "EventDetail/Update/Before/Object", "EventDetail/Update/After/Object");
+        for (final Map<String, Object> group : fields.subList(1, 3)) {
+            assertThat(JsonValues.maps(group.get("fields"))).extracting(Object::toString).containsExactly(
+                    "{path=Id, field=id, item=true}",
+                    "{path=Data, change={list=modifiedProperties, name_key=displayName, old_key=oldValue, "
+                    + "new_key=newValue}}");
+        }
+        assertThat(notes).anySatisfy(note -> assertThat(note).startsWith(ListFields.SNAPSHOTS_WRITTEN)
+                .contains("each item of 'targetResources' written in both snapshots, "
+                          + "EventDetail/Update/Before/Object too (its old values there) (update)"));
+        assertThat(XsltGenerator.generate(TranslationMapping.fromJson(mapping), SCHEMA, "4.1.0").ok()).isTrue();
+
+        // Drafted again from its own output, it is as it was: nothing added twice.
+        final Map<String, Object> once = JsonValues.deepCopy(mapping);
+        assertThat(ListFields.propose(mapping, Map.of("targetResources", TARGETS), true))
+                .noneSatisfy(note -> assertThat(note).startsWith(ListFields.SNAPSHOTS_WRITTEN));
+        assertThat(mapping).isEqualTo(once);
+    }
+
+    @Test
+    void targetsPlacedInEachSnapshotKeepTheirOwnFieldsEachWithADataPerProperty() {
+        // Seen in eval case 76 (Haiku, then Sonnet's shape without the change form): each snapshot's group placed
+        // by the model, the user's principal name as Name.
+        final String group = """
+                {"path": "EventDetail/Update/%s/User", "for_each": {"array": "targetResources"},
+                 "fields": [{"path": "Id", "field": "id"}%s]}""";
+        final Map<String, Object> mapping = ruleMapping(group.formatted("Before", "") + ", "
+                                                        + group.formatted("After",
+                ", {\"path\": \"Name\", \"field\": \"userPrincipalName\"}"));
+
+        ListFields.propose(mapping, Map.of("targetResources", TARGETS), true);
+
+        final List<Map<String, Object>> fields = fieldsOf(mapping);
+        assertThat(fields).extracting(field -> field.get("path")).containsExactly("EventDetail/TypeId",
+                "EventDetail/Update/Before/User", "EventDetail/Update/After/User");
+        assertThat(JsonValues.maps(fields.get(1).get("fields"))).extracting(field -> field.get("path"))
+                .containsExactly("Id", "Data");
+        assertThat(JsonValues.maps(fields.get(2).get("fields"))).extracting(field -> field.get("path"))
+                .containsExactly("Id", "Name", "Data");
+    }
+
+    @Test
+    void anOldNewListInsideTargetsIsNotOfferedAsAGroupOfItsOwn() {
+        // Seen in eval case 76: the draft's note offered a for_each group over modifiedProperties (each target's
+        // old/new list), which the catalogue refuses, beside the old/new list's own note.
+        final Map<String, Object> mapping = ruleMapping("""
+                {"path": "EventDetail/Unknown/Data", "data_name": "targetResources", "field": "targetResources"}""");
+
+        final List<String> notes = ListFields.propose(mapping, Map.of("targetResources", TARGETS), true);
+
+        assertThat(notes).noneSatisfy(note -> assertThat(note).startsWith("Not drafted"));
     }
 
     @Test

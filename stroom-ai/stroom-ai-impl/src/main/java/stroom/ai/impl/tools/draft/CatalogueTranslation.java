@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.ListChange;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.sample.NameValueLists;
 import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
@@ -456,8 +457,12 @@ final class CatalogueTranslation {
                            + "records");
                 continue;
             }
-            // A change is two entries, its Before snapshot's and its After's.
-            final List<Map<String, Object>> entries = keyed.mappingEntries(detail);
+            // A change is two entries, its Before snapshot's and its After's; one only where the event type places
+            // the other snapshot's object itself (each snapshot's object as its own placement says).
+            final List<Map<String, Object>> entries = new ArrayList<>(keyed.mappingEntries(detail));
+            if (entries.size() > 1 && otherSidePlaced(type, keyed, detail)) {
+                entries.removeIf(entry -> !keyed.fullPath(detail).equals(entry.get(PATH)));
+            }
             final Set<String> paths = new HashSet<>();
             entries.forEach(entry -> paths.add(ToolText.str(entry.get(PATH))));
             final Set<String> inputs = placement.inputs();
@@ -481,6 +486,39 @@ final class CatalogueTranslation {
             }
         }
         return placed;
+    }
+
+    // Whether a placement of both snapshots names its own (`After/User`), and another of the event type's places the
+    // same object over the same items in the other (`Before/User`): seen in eval case 76, a model placing each
+    // snapshot's targets apart, each then written in both, the second's fields over the first's.
+    private static boolean otherSidePlaced(final EventType type, final Placement placement, final String detail) {
+        final String side = sideGiven(placement, detail);
+        if (side == null) {
+            return false;
+        }
+        final String object = placement.snapshotPath(detail);
+        final Object array = JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array");
+        return type.allPlacements().stream()
+                .filter(other -> other != placement)
+                .anyMatch(other -> {
+                    final String otherSide = sideGiven(other, detail);
+                    return otherSide != null && !otherSide.equals(side)
+                           && object.equals(other.snapshotPath(detail))
+                           && Objects.equals(array, JsonValues.mapOrEmpty(other.entry().get(Placement.FOR_EACH))
+                                   .get("array"));
+                });
+    }
+
+    // The snapshot a placement's path names first below the action element (`Before`, `After`), or null.
+    private static String sideGiven(final Placement placement, final String detail) {
+        final String below = placement.pathBelow(detail);
+        if (below == null) {
+            return null;
+        }
+        final String first = below.split("/", 2)[0];
+        return ListChange.BEFORE.equals(first) || ListChange.AFTER.equals(first)
+                ? first
+                : null;
     }
 
     // A placement with its pair's keys as the records' list has them (the mapping's entry names them); as it is

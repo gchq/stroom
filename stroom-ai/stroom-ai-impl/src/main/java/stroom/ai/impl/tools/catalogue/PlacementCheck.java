@@ -443,6 +443,11 @@ final class PlacementCheck {
                 problems.add(said + ": " + items);
                 return;
             }
+            final String changes = groupChangeListProblem(below, placement);
+            if (changes != null) {
+                problems.add(said + ": " + changes);
+                return;
+            }
         } else {
             final String items = itemsProblem(below, placement, recognised);
             if (items != null) {
@@ -608,6 +613,39 @@ final class PlacementCheck {
                + "{path: '" + leaf + "', item: true} writes each item whole at " + at + ", its fields' text run "
                + "together: read a key of the item instead, e.g. {path: '" + leaf + "', field: '" + key + "'}, a "
                + "field of the group for each key the schema has a home for, or leave the rest as Data";
+    }
+
+    // A group's field writing its item's old/new list whole at a typed element (a key read with field, or a group
+    // over it): why it is refused, or null. The list's properties go to Data per property of each snapshot's object
+    // whatever the placement says (2026-11-23, eval case 76), so only one read by its name is typed; at Data the
+    // list is written per property, as the draft writes a list read whole as Data.
+    private String groupChangeListProblem(final String below, final Placement placement) {
+        final Object array = JsonValues.mapOrEmpty(placement.entry().get(Placement.FOR_EACH)).get("array");
+        if (!(array instanceof final String field) || field.isBlank()) {
+            return null;
+        }
+        for (final Map<String, Object> inner : JsonValues.maps(placement.entry().get(Placement.FIELDS))) {
+            final String leaf = ToolText.strip(ToolText.str(inner.get(Placement.PATH)).strip(), "/");
+            final Object forEach = JsonValues.mapOrEmpty(inner.get(Placement.FOR_EACH)).get("array");
+            final Object key = forEach instanceof String
+                    ? forEach
+                    : inner.containsKey(Placement.CHANGE) || inner.containsKey(Placement.PAIR)
+                            ? null
+                            : inner.get(Placement.FIELD);
+            if (!(key instanceof final String list) || DATA.equals(leaf) || leaf.endsWith("/" + DATA)) {
+                continue;
+            }
+            final Optional<ChangeList> changes = nestedChangeList(field, list);
+            if (changes.isPresent()) {
+                return "each item's " + list + " is an old/new list (" + namesSaid(changes.get().names()) + "): "
+                       + below + "/" + leaf + " takes one value, so its properties' names and values would be "
+                       + "written run together. Its properties are written as Data of each item's object in Before "
+                       + "and After; read one whose name means " + below + "/" + leaf + " by its name, e.g. {path: '"
+                       + leaf + "', change: {list: '" + list + "', name: '" + changes.get().names().keySet()
+                               .iterator().next() + "'}}";
+            }
+        }
+        return null;
     }
 
     // A group's field that reads its own item whole: item: true, no key of it, no group of its own, not the record.

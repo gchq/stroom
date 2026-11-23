@@ -90,8 +90,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     static final String CANCELLED = "Verification was stopped: the call was cancelled.";
     /// The role subfolder the dashboard is made in.
     static final String ROLE = "Indexing";
+    /// The key of a failed verification's checks that didn't pass ([#failedChecks]).
+    static final String FAILED = "failed";
 
     private static final int DEFAULT_RETRIES = 6;
+    // The most errors of a failed check given among the failed ones.
+    private static final int FAILED_ERRORS_SHOWN = 3;
     private static final int MAX_RETRIES = 20;
 
     private final IndexChecks checks;
@@ -438,6 +442,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         result.put("dashboard", shown);
         ignoredName(call, name).ifPresent(note -> result.put("dashboard_name_ignored", note));
         result.putAll(searchedResult);
+        if (Boolean.FALSE.equals(searchedResult.get("passed"))) {
+            final List<Map<String, Object>> failed = failedChecks(JsonValues.maps(searchedResult.get("checks")));
+            if (!failed.isEmpty()) {
+                result.put(FAILED, failed);
+            }
+        }
         testIndex.ifPresent(test -> result.put("test_index", "Searched the build's test index " + test.getName()
                                                              + ": the build's pipeline indexes into it in place of "
                                                              + "the production index, which the build leaves as "
@@ -451,6 +461,33 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             }
         }
         return result;
+    }
+
+    /// The checks of a verification that didn't pass, as a large result's stub in Stroom AI's chat gives them in full
+    /// ([stroom.ai.impl.tools.LargeResults#ACT_ON]): each without its sample rows and trace (in the saved result),
+    /// its errors the first few. Seen in chat 188: ten checks of a failed verification past the chat's inline limit,
+    /// the stub showing the dashboard and the first check, which passed, and the agent read 130 lines of the saved
+    /// result to find the failures.
+    ///
+    /// @param checks The verification's checks.
+    /// @return Those that didn't pass, in their order.
+    static List<Map<String, Object>> failedChecks(final List<Map<String, Object>> checks) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final Map<String, Object> check : checks) {
+            if (!Boolean.FALSE.equals(check.get("pass"))) {
+                continue;
+            }
+            final Map<String, Object> failed = new LinkedHashMap<>(check);
+            failed.remove("sample");
+            failed.remove("trace");
+            if (failed.get("errors") instanceof final List<?> errors && errors.size() > FAILED_ERRORS_SHOWN) {
+                final List<Object> shown = new ArrayList<>(errors.subList(0, FAILED_ERRORS_SHOWN));
+                shown.add("... " + (errors.size() - FAILED_ERRORS_SHOWN) + " more (in checks)");
+                failed.put("errors", shown);
+            }
+            out.add(failed);
+        }
+        return out;
     }
 
     /// @param indexDocName The index doc's name.

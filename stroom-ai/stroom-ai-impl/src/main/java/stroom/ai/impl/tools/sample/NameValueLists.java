@@ -543,6 +543,41 @@ public final class NameValueLists {
         return out;
     }
 
+    /// The first key of an array field's items holding an old/new list ([#changes(Collection)]): targets, each with
+    /// the properties changed (Graph's `targetResources[].modifiedProperties`), told by shape.
+    ///
+    /// @param values The array field's values: each a list (as read) or JSON text holding one.
+    /// @return The key, with the list's keys; empty where no key of the items holds one.
+    public static Optional<Map.Entry<String, ChangeList>> heldChanges(final Collection<?> values) {
+        final Set<String> keys = new LinkedHashSet<>();
+        int read = 0;
+        for (final Object value : values) {
+            if (read++ >= VALUES_READ) {
+                break;
+            }
+            final List<?> list = items(value);
+            if (list == null) {
+                continue;
+            }
+            for (final Object item : list) {
+                if (item instanceof final Map<?, ?> map) {
+                    map.forEach((key, held) -> {
+                        if (held instanceof List) {
+                            keys.add(String.valueOf(key));
+                        }
+                    });
+                }
+            }
+        }
+        for (final String key : keys) {
+            final Optional<ChangeList> found = changes(heldIn(values, key));
+            if (found.isPresent()) {
+                return Optional.of(Map.entry(key, found.get()));
+            }
+        }
+        return Optional.empty();
+    }
+
     /// @param values The field's values (as [#detect(Collection)] reads them).
     /// @param nameKey The key holding each pair's name.
     /// @return How many items hold each name, most first (the first seen first among equals).

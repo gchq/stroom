@@ -1111,12 +1111,15 @@ sequenceDiagram
   to read the rest), the parts that say what to act on (`LargeResults.ACT_ON`, in this order: error, refused, notes,
   user_chose, problems, unplaced, the check's problems and unplaced, the draft's schema check's problems and
   unfilled, the check's homes shared by its event types (`could_type_all`) and typing, warnings, the schema check's
-  warnings, user_actions, review_id; a `needs_descriptions` round's fields, a round sized to fit). Where the tool outlines its large results for clients outside
+  warnings, user_actions, review_id; a `needs_descriptions` round's fields, a round sized to fit; from 2026-11-23,
+  `failed` after problems, a failed verify_index's checks that didn't pass without their samples and traces, 8,000
+  characters, seen in chat 188). Where the tool outlines its large results for clients outside
   Stroom, the stub gives the tool's outline, made on a copy against 10,000 characters
   (`LargeResults.chatOutline`, carried by `ToolResult.chatOutline`), in place of the preview (seen in chat 183: 60
   workspace calls fishing out a draft's notes and a catalogue check's problems). Results that need the user
   (`needs_review`, `needs_confirmation`, `needs_approval`, `needs_showing`) are shown in full up to 64,000 characters,
-  and past that stubbed as before, with no outline.
+  and past that stubbed as before, with no outline; promote_build's final result is `needs_showing` (2026-11-23, chat
+  188: its layout and tidy-up, to show as they are, were stubbed and read from the saved file twice).
 * **After the answer**: links to the documents and streams it names, checked by UUID (`AnswerLinks`); a turn digest
   for compaction; the chat title (`ChatTitler`, from the user's questions only, so no planted instructions reach
   it); follow-up suggestions (`FollowUpSuggester`, not when the turn asked the user for anything).
@@ -3740,6 +3743,36 @@ Taylor"}]` and Graph's `targetResources: [{id, type, modifiedProperties: [{displ
   names never typed (`not_typed`) and JSON text never kept whole. Case 60's role is read by `pair` with `value_key:
   NewValue` in place of its hand xpaths (an Authorise has no snapshots). The reference catalogue
   (`EvalCatalogues`) keeps a change's After entry as its one placement.
+* **Data per property by default** (2026-11-23, from eval case 76: Haiku and Sonnet placed the Graph targets as
+  their own `for_each` groups, `{"path": "After/Object", "for_each": {"array": "targetResources"}, "fields":
+  [{"path": "Id", "field": "id"}]}` in After alone or a group in each snapshot, never with the change form, so no
+  property's old or new value was written; in a build, each target's list as a `for_each` group of name and value
+  Data, the values JSON text). `SnapshotChanges` (draft package, shapes only) makes the right result the default
+  whatever wrote the mapping: in each rule, a group below a snapshot over items holding an old/new list
+  (`NameValueLists.heldChanges`) gains a Data per property of its side unless a field writes one, a field reading the
+  list whole (its `field`, or a `for_each` over it) replaced by it; a plain Data of a record's list below a snapshot
+  becomes its side's Data per property, below an Update but no snapshot both snapshots' (the draft's
+  conversion); an object reading a record's list by name in a snapshot gains its Data per property there. The old
+  key: the user's answer, else a change of the list in the mapping, else what a group in Before reads, else the
+  items' order. Conversion, not refusal, as a name/value list read whole as Data is converted to a Data per pair by
+  the draft. Run by the draft after the catalogue's translation (`ListFields.propose`, its note starting
+  `SNAPSHOTS_WRITTEN`) and by build_translation_xslt once the sample is read (`writeSnapshotChanges`: the mapping
+  changed is generated and checked again, kept as changed, a warning starting `SNAPSHOT_CHANGES` naming each change
+  and its rules). **A group over targets placed in one snapshot gets a matching group in the other**, a copy of its
+  fields (each item's identity in both, its old values in Before, its new in After): chosen over refusing, as a
+  group whose fields read a change is already written in both (`Placement.mappingEntries`), so the two ways of
+  placing targets give one result, and the old values have nowhere else to go; where the other snapshot's group is
+  placed too, each keeps its own fields (`CatalogueTranslation.otherSidePlaced`: a change's placement naming its
+  snapshot writes only that one). A group's field writing an item's old/new list whole at a typed element is refused
+  by the catalogue's check with the change form (`PlacementCheck.groupChangeListProblem`), as a list at a leaf is.
+  The draft's "Not drafted" note no longer offers a `for_each` group over an old/new list inside the items.
+* **Sample check** (2026-11-23, chat 188): build_translation_xslt's sample check takes a Data per pair or per
+  property for the loop it is and a pair or property read by name for one value (`MappingSampleCheck.
+  oneValueAnElement`: no "gives N values … without repeat" warning, which had the agent try `repeat: true` three
+  times, refused each time), counts the lists `pair` and `change` entries read as read (`MappingFacts.readsInput`:
+  no "fields in the sample that nothing reads" for them), and checks a change's xpath as the record holds its values
+  (`ListChange.checkedXpath`, without the unwrapping's `mcp:` function, which only the generated XSLT declares: each
+  change had been said to select nothing).
 * **Known gap**: `rebuild_mapping`'s XSLT reader doesn't recognise the Data per property loop (as with the Data per
   pair loop): a rebuild relies on the kept mapping.
 
@@ -4677,6 +4710,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | Date | Decision | Section |
 | --- | --- | --- |
 | 2026-11-23 | A message body's plain text from its HTML (an `html_text` transform) is written up as a future addition, not built: the product owner chose not now | HTML bodies to plain text (future) |
+| 2026-11-23 | Four fixes from eval case 76 and chat 188. (1) An Update's old/new lists are a Data per property of each snapshot by default, whatever wrote the mapping (`SnapshotChanges`, run by the draft after the catalogue's translation and by build_translation_xslt on the sample's records, the mapping then generated and checked again): a group below a snapshot over items holding one gains its side's Data per property (a field reading the list whole, or a group over it, replaced: converted as a name/value list read whole as Data is), a plain Data of a record's list becomes its side's (or both snapshots' below an Update), an object reading the list by name gains the rest; a group over targets in one snapshot gets a copy in the other (as a group reading a change is written in both), and where both are placed each keeps its own fields; a group's field writing the list whole at a typed element is refused by the catalogue's check. (2) The sample check takes a Data per pair or per property for the loop it is and a pair or property by name for one value (no several-values warning), counts the lists pairs and changes read as read, and checks a change's values without the generator's `mcp:` unwrapping. (3) A failed verify_index gives `failed`, the checks that didn't pass without their samples or traces, among the parts a large result's stub gives in full (`LargeResults.ACT_ON`, 8,000 characters). (4) promote_build's final result is `needs_showing`, so Stroom AI's chat gives its layout and tidy-up whole (up to 64,000 characters), as other content to show as it is. (5) A parsed XPath node reads its text from the expression it was parsed from, shared by all its nodes (`XPathNode.inSource`), and `XPathTrees.normal` keeps a node whose children it leaves unchanged as parsed (`withChildren`), instead of each node copying its own text: TestConditionParity's 200,000-character condition (some 1,500 nested nodes) held over 300 MB of copies, and once this change moved test classes between forks, the fork running it ran out of its 640 MB heap and nine classes never ran. | Old/new property-change lists; Ask Stroom AI (large results); TOOLS.md (build_translation_xslt, catalogue_event_types, draft_translation_mapping, verify_index, promote_build, large results) |
 | 2026-11-23 | Which key of an old/new list is old is the user's to say, not key order alone: in a build with forms, `draft_translation_mapping` asks of each list it took by order (`ChangeSides.QUESTION`: the list, its two keys and an item holding both values, the order's guess first), keeps the answer in the build record's `draft_choices` (`change_sides`) and drafts again with it; a redraft isn't asked; the catalogue's check follows the build's answer (`Drafted.withChangeSides`); without forms or a build, key order and the note; keys given in a placement or entry win. | Old/new property-change lists; TOOLS.md (draft_translation_mapping) |
 | 2026-11-23 | Old/new property-change lists (`ModifiedProperties: [{Name, OldValue, NewValue}]`, Graph's `targetResources[].modifiedProperties` holding JSON text): told by shape (`NameValueLists.changes`: three keys the same in every item, a name passing the name/value list's name tests, the other two one property's values before and after, a value under both or one side empty with like shapes; old the first of the two in the items' order, never by key names, `old_key`/`new_key` given where the order says otherwise); written as an Update's Before and After snapshots (`ListChange`, a mapping entry's `change`, its side its path's): a property placed by name typed in both, the others Data of the object named by the property, JSON text of one value unwrapped, a longer array kept as its text, an added property in After only, a removed one in Before only, After's object always written; the object the catalogue's affected one (the rule's entries in a snapshot), else `Object`; targets each with a list a `for_each` group written in both; the catalogue's `change: {list, name}` placement checked (no snapshots, not an old/new list, keys, a name it hasn't refused), `could_type.arrays` naming the lists' properties, a group or leaf over one refused; a `pair` reads one side (`value_key`) where there are no snapshots; the draft writes the snapshots with a note; eval case 76 (Entra ID audit), case 60's role read by `pair`. | Old/new property-change lists; TOOLS.md (catalogue_event_types, draft_translation_mapping, build_translation_xslt) |
 | 2026-11-23 | A variable placed just in time (`XsltGenerator.justInTime`) is placed by the reads under its own parent only, so a loop's variable never leaves its loop: two groups in one element, each with the default loop variable `item`, took each other's reads and were both moved out of their loops, so each group read the record (seen in user test chat 187: `View/Folder/Id` held the record's Id, `View/Folder/Path` was never written, and `View/Object` from the operation's properties was alike) | Translation XSLT generation |

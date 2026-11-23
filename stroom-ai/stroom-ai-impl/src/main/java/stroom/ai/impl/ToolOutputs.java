@@ -98,11 +98,16 @@ public final class ToolOutputs {
     /// 1,200 to 1,450 characters each, once the schema homes every one has open are said once, cut after the first
     /// two at 4,000, 29 times).
     static final int MAX_TYPING_CHARS = 12_000;
+    /// The most characters of a failed verification's checks that didn't pass (verify_index's `failed`, without
+    /// their samples) repeated in its stub: room for a verification's ten checks or so all failing (seen in chat
+    /// 188: ten checks, the failures read from 130 lines of the saved result).
+    static final int MAX_FAILED_CHARS = 8_000;
     /// The parts given more room than [#MAX_ACT_ON_PART_CHARS] in a stub, each with its most characters.
     static final Map<String, Integer> LONG_PART_CHARS = Map.of(
             "notes", MAX_NOTES_CHARS,
             "fields", MAX_FIELDS_TO_DESCRIBE_CHARS,
-            "check.typing", MAX_TYPING_CHARS);
+            "check.typing", MAX_TYPING_CHARS,
+            "failed", MAX_FAILED_CHARS);
     /// The most characters of all the parts that say what to act on repeated in a stub: room for a catalogue
     /// check's problems, unplaced elements (4,000 each), the homes its event types share and their typing
     /// ([#MAX_TYPING_CHARS]) together, or a draft's notes ([#MAX_NOTES_CHARS]), problems and schema check, as each

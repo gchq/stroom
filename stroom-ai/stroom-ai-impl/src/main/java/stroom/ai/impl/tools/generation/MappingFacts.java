@@ -182,6 +182,14 @@ public final class MappingFacts {
             if (entry.fillTemplate() != null) {
                 names.add(entry.fillTemplate().valuesField());
             }
+            // The list a pair or a change reads (2026-11-23, chat 188: lists read by pairs said to be read by
+            // nothing, their xpaths naming the list's keys one by one).
+            if (entry.pair() != null) {
+                names.add(entry.pair().list());
+            }
+            if (entry.change() != null) {
+                names.add(entry.change().list());
+            }
         }
         conditions.forEach(condition -> names.add(condition.field()));
         mapping.extract().forEach(extraction -> names.add(extraction.field()));

@@ -438,7 +438,7 @@ public record Placement(Map<String, Object> entry) {
     /// @param detail The event type's action element.
     /// @return A change's path below the snapshot ([#snapshots()]): below the action element, without a `Before/` or
     /// `After/` given (`User/Name`).
-    String snapshotPath(final String detail) {
+    public String snapshotPath(final String detail) {
         final String below = Objects.requireNonNullElse(pathBelow(detail), path());
         if (below.startsWith(BEFORE)) {
             return below.substring(BEFORE.length());

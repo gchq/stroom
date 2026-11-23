@@ -101,6 +101,23 @@ class TestVerifyIndexTool {
     }
 
     @Test
+    void aFailedVerificationGivesItsFailedChecksWithoutTheirSamples() {
+        // Seen in chat 188: the failures of ten checks found by reading 130 lines of the saved result.
+        final Map<String, Object> passing = Map.of("check", "events with EventId 1", "expected", 1, "returned", 1,
+                "pass", true, "sample", List.of(Map.of("id", "1")));
+        final Map<String, Object> failing = Map.of("check", "events with source.ip 10.0.0.1", "expected", 4,
+                "returned", 0, "pass", false, "errors", List.of("e1", "e2", "e3", "e4", "e5"),
+                "sample", List.of(), "trace", Map.of("record", 1));
+        final Map<String, Object> independent = Map.of("check", "every field is in the index", "pass", false,
+                "missing", List.of("host.name"));
+
+        assertThat(VerifyIndexTool.failedChecks(List.of(passing, failing, independent)))
+                .containsExactly(Map.of("check", "events with source.ip 10.0.0.1", "expected", 4, "returned", 0,
+                                "pass", false, "errors", List.of("e1", "e2", "e3", "... 2 more (in checks)")),
+                        independent);
+    }
+
+    @Test
     void theDashboardsWindowStartsAtTheSamplesEarliestEvent() {
         // Seen in testing: the start was read from the dashboard's own table, newest first, so the earliest of the
         // 100 newest events (2026-10-04) hid a third of a sample reaching back to 2026-08-08.

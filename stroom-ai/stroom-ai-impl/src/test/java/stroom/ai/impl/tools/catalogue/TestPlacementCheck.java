@@ -846,6 +846,23 @@ class TestPlacementCheck {
                 .singleElement().asString().contains("modifiedProperties has no property named 'Title'");
     }
 
+    @Test
+    void aGroupsFieldWritingEachTargetsOldNewListWholeAtATypedElementIsRefusedWithTheChangeForm() {
+        // Eval case 76: each target's list is written as a Data per property of its object in both snapshots
+        // (2026-11-23); written whole at a typed element its properties' names and values would run together.
+        final EventType leaf = type("Update-User", "Update", "Update user.", List.of(
+                Map.of("path", "After/User", "for_each", Map.of("array", "event.Targets"),
+                        "fields", List.of(Map.of("path", "Id", "field", "id"),
+                                Map.of("path", "Name", "field", "modifiedProperties")))));
+
+        assertThat(said(CatalogueCheck.check(catalogue(leaf), targetSample(), SCHEMA).problems()))
+                .singleElement().asString()
+                .contains("each item's modifiedProperties is an old/new list",
+                        "After/User/Name takes one value",
+                        "written as Data of each item's object in Before and After",
+                        "{path: 'Name', change: {list: 'modifiedProperties', name: '");
+    }
+
     // Four users updated, each with the properties changed (an old/new list, a name's old and new values) and the
     // members told (a list of things), and fields enough kept as Data for what could be typed to be said.
     private static CatalogueSample userSample() {

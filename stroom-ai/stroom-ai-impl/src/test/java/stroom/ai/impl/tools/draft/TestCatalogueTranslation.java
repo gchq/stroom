@@ -627,6 +627,55 @@ class TestCatalogueTranslation extends DraftFixtures {
     }
 
     @Test
+    void targetsPlacedAsAGroupInAfterAloneGetAnObjectInBothSnapshotsWithADataPerProperty() {
+        // Seen in eval case 76 (Haiku): the targets placed as a group in After alone, its one field the id, never the
+        // change form; no property's old or new value was written.
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("activityDisplayName", "Update user")));
+        update.put("placements", List.of(Map.of("path", "After/Object", "for_each",
+                Map.of("array", "event.targetResources"), "as", "targetResource",
+                "fields", List.of(Map.of("path", "Id", "field", "id", "item", true)))));
+        final Map<String, Object> draft = draft(TARGETS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        final Map<String, Object> perProperty = Map.of("path", "Data", "change", Map.of("list",
+                "modifiedProperties", "name_key", "displayName", "old_key", "oldValue", "new_key", "newValue"));
+        for (final String side : List.of("Before", "After")) {
+            assertThat(fields).filteredOn(field -> ("EventDetail/Update/" + side + "/Object").equals(field.get("path")))
+                    .singleElement()
+                    .satisfies(group -> assertThat(JsonValues.maps(group.get("fields")))
+                            .containsExactly(Map.of("path", "Id", "field", "id", "item", true), perProperty));
+        }
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void eachSnapshotsOwnPlacementOfTheTargetsKeepsItsOwnFields() {
+        // Seen in eval case 76: each snapshot's targets placed apart; the one reading a change was written in both,
+        // over the other's.
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("activityDisplayName", "Update user")));
+        update.put("placements", List.of(
+                Map.of("path", "Before/User", "for_each", Map.of("array", "event.targetResources"),
+                        "fields", List.of(Map.of("path", "Id", "field", "id"))),
+                Map.of("path", "After/User", "for_each", Map.of("array", "event.targetResources"),
+                        "fields", List.of(Map.of("path", "Id", "field", "id"), Map.of("path", "Name", "change",
+                                Map.of("list", "modifiedProperties", "name", "DisplayName"))))));
+        final Map<String, Object> draft = draft(TARGETS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        assertThat(fields).filteredOn(field -> "EventDetail/Update/Before/User".equals(field.get("path")))
+                .singleElement()
+                .satisfies(group -> assertThat(JsonValues.maps(group.get("fields")))
+                        .extracting(field -> field.get("path")).containsExactly("Id", "Data"));
+        assertThat(fields).filteredOn(field -> "EventDetail/Update/After/User".equals(field.get("path")))
+                .singleElement()
+                .satisfies(group -> assertThat(JsonValues.maps(group.get("fields")))
+                        .extracting(field -> field.get("path")).containsExactly("Id", "Name", "Data"));
+    }
+
+    @Test
     void aPlacementInEventSourceIsWrittenInTheEventTypesRule() {
         // 2026-11-22 (chat 183: the client application's name kept as Data, the user expecting EventSource/Client).
         final Map<String, Object> view = type("View-Folder", "View folder", "View", null, null,

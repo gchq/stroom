@@ -69,9 +69,10 @@ public final class LargeResults {
     /// unplaced fields and typing (what an event type could type), and a build's warnings, each fished out of the
     /// saved result with jq, some in four rounds; in chats 184 to 186, a draft's schema check (its problems, what it
     /// couldn't fill and its warnings), read 17 times, and the schema homes every event type of a check has open
-    /// (`check.could_type_all`, said once for them all).
+    /// (`check.could_type_all`, said once for them all); in chat 188, a failed verification's checks (`failed`,
+    /// verify_index's checks that didn't pass), read from 130 lines of the saved result.
     public static final List<String> ACT_ON = List.of("error", "refused", "notes", "user_chose", "problems",
-            "unplaced", "check.problems", "check.unplaced", "schema_check.problems", "schema_check.unfilled",
+            "failed", "unplaced", "check.problems", "check.unplaced", "schema_check.problems", "schema_check.unfilled",
             "check.could_type_all", "check.typing", "warnings", "schema_check.warnings", "user_actions", "review_id");
     /// By a result's status, the further parts it says to act on: a `needs_descriptions` round's fields to describe
     /// (write_documentation's, which its hint says to describe; a result's `fields` is otherwise often only an

@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.dashboard.shared.ComponentConfig;
@@ -1023,6 +1024,11 @@ class TestPromoteBuildTool {
                 Map.of("document", "Index 'ACME-INDEX-MCP-TEST'", "shards_deleted", 3, "deleted", true),
                 Map.of("document", "Dashboard 'ACME-INDEX-MCP-TEST-VERIFY'", "deleted", true)));
         assertThat(String.valueOf(promoted.get("hint"))).contains("Say what the tidy-up did (tidied_up)");
+        // Its layout and tidy-up are for the user to see as they are: content to show, which Stroom AI's chat gives
+        // its model whole, not in a stub (seen in chat 188: 9,856 characters stubbed, without layout or tidied_up,
+        // and the agent read the saved result twice).
+        assertThat(promoted).containsEntry("status", "needs_showing");
+        assertThat(ToolOutputs.SHOWN_TO_USER_STATUSES).contains(String.valueOf(promoted.get("status")));
         // Streams, then shards, then the documents (a dashboard before the index it searches).
         final InOrder order = Mockito.inOrder(metaService, indexResource, world.explorerService);
         order.verify(metaService).updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),

@@ -41,6 +41,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SnapshotChanges;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
@@ -88,6 +89,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -102,6 +104,11 @@ import java.util.stream.Collectors;
 /// the domain off a user's Id whose values carry one ([DomainSplits]); an edit made by hand in Stroom since the tools
 /// saved the XSLT is kept ([HandEditGate]).
 class BuildTranslationXsltTool extends AbstractBuiltInTool {
+
+    /// How the warning saying which old/new lists were written per property in the snapshots starts.
+    static final String SNAPSHOT_CHANGES = "Old/new lists written as a Data per property in each Update snapshot "
+                                           + "(as the change form writes them, whatever the mapping said; the mapping "
+                                           + "kept says so): ";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildTranslationXsltTool.class);
     // The XSLT's switch for logging fields no rule reads (XsltGenerator.LOG_UNMAPPED), as an element's start tag; a
@@ -551,13 +558,17 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         askBeforeTheCheck(call, context, b);
         checkSample(context, b);
+        final boolean snapshots = writeSnapshotChanges(b);
         final boolean split = splitDomains(call, context, b);
         final boolean leftOut = leavePlaceholdersOut(call, context, b);
-        if (split || leftOut) {
-            // Changed as the user chose: generated and checked again, so what is saved and said is the mapping as
-            // changed.
+        if (split || leftOut || snapshots) {
+            // Changed as the user chose (or old/new lists written per property): generated and checked again, so
+            // what is saved and said is the mapping as changed.
             generate(context, b);
             checkSample(context, b);
+        }
+        if (!b.snapshotChanges.isEmpty()) {
+            TranslationBuilds.warnings(b.result).add(SNAPSHOT_CHANGES + String.join("; ", b.snapshotChanges) + ".");
         }
         dropAnswered(b);
         checkAgainstNotes(b);
@@ -1054,6 +1065,29 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             b.result.put("ok", false);
             b.result.put("xslt", null);
         }
+    }
+
+    // An Update's old/new lists written as a Data per property of each snapshot whatever the mapping says of them
+    // (2026-11-23, eval case 76: targets written as for_each groups of name and value Data, their values JSON text,
+    // or in After alone): as the draft writes them, the sample's records telling the lists by shape. True if the
+    // mapping was changed, which is then generated and checked again.
+    private static boolean writeSnapshotChanges(final Build b) {
+        if (!"json".equals(b.mapping.input()) || b.earlierCheck == null) {
+            return false;
+        }
+        final List<Object> records = b.earlierCheck.found().records();
+        final Map<String, Object> json = JsonValues.deepCopy(b.mapping.toJson(DumpMode.COMPACT));
+        final List<String> written = SnapshotChanges.apply(json, field -> records.stream()
+                .filter(Map.class::isInstance)
+                .map(record -> ((Map<?, ?>) record).get(field))
+                .filter(Objects::nonNull)
+                .toList(), Map.of());
+        if (written.isEmpty()) {
+            return false;
+        }
+        b.mapping = TranslationMapping.fromJson(json);
+        b.snapshotChanges = written;
+        return true;
     }
 
     // With build and name, or uuid, the XSLT is saved.
@@ -2290,6 +2324,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private final List<String> placementNotes = new ArrayList<>();
         // Said when the domain question was answered by the feed's groups, not asked.
         private String domainNote;
+        // The old/new lists written per property in the snapshots, in words (SnapshotChanges).
+        private List<String> snapshotChanges = List.of();
         private String build;
 
         private Build(final Request request) {

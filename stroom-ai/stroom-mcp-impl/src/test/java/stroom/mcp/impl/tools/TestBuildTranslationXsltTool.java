@@ -447,6 +447,61 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void anUpdatesTargetsWrittenAsGroupsOfNameAndValueDataAreWrittenPerPropertyInBothSnapshots() {
+        // Seen in eval case 76 (Haiku): each target in After alone, its modifiedProperties a for_each group of name
+        // and value Data (the values JSON text), and no old value written anywhere.
+        final Map<String, Object> mapping = JsonUtil.readValue("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
+                            {"path": "EventSource/System/Name", "value": "Directory"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "audit"},
+                            {"path": "EventSource/Device/HostName", "value": "dir01"}],
+                 "events": [{"name": "update_user", "fields": [
+                     {"path": "EventDetail/TypeId", "value": "Update-User"},
+                     {"path": "EventDetail/Update/After/User", "for_each": {"array": "targetResources"},
+                      "fields": [{"path": "Id", "field": "id"},
+                                 {"path": "Data", "data_name": "modifiedProperty",
+                                  "for_each": {"array": "modifiedProperties"},
+                                  "fields": [{"path": "Data", "data_name": "name", "field": "displayName"},
+                                             {"path": "Data", "data_name": "value", "field": "newValue"}]}]}]}]}""",
+                Map.class);
+        final String sample = String.join("\n",
+                target("u-1", "DisplayName", "[\\\"Sam T\\\"]", "[\\\"Sam Taylor\\\"]", "JobTitle", "[]",
+                        "[\\\"Lead\\\"]"),
+                target("u-2", "AccountEnabled", "[true]", "[false]", "DisplayName", "[\\\"Kate\\\"]",
+                        "[\\\"Kate J\\\"]"),
+                target("u-3", "AccountEnabled", "[false]", "[true]", "JobTitle", "[\\\"Lead\\\"]",
+                        "[\\\"Manager\\\"]"),
+                target("u-4", "DisplayName", "[\\\"Al\\\"]", "[\\\"Al Smith\\\"]", "JobTitle", "[]",
+                        "[\\\"Analyst\\\"]")) + "\n";
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping, "sample", sample));
+
+        assertThat(findings(result)).anySatisfy(warning -> assertThat(warning)
+                .startsWith(BuildTranslationXsltTool.SNAPSHOT_CHANGES)
+                .contains("EventDetail/Update/Before/User too (its old values there)"));
+        assertThat(String.valueOf(result.get("xslt")))
+                .contains("<Before>")
+                .contains("*[@key='oldValue']")
+                .doesNotContain("modifiedProperty'");
+    }
+
+    // A JSON line of one target, two properties changed.
+    private static String target(final String id,
+                                 final String name1,
+                                 final String old1,
+                                 final String new1,
+                                 final String name2,
+                                 final String old2,
+                                 final String new2) {
+        return "{\"ts\": \"2026-09-28T10:00:00.000Z\", \"targetResources\": [{\"id\": \"" + id + "\", "
+               + "\"modifiedProperties\": [{\"displayName\": \"" + name1 + "\", \"oldValue\": \"" + old1
+               + "\", \"newValue\": \"" + new1 + "\"}, {\"displayName\": \"" + name2 + "\", \"oldValue\": \""
+               + old2 + "\", \"newValue\": \"" + new2 + "\"}]}]}";
+    }
+
+    @Test
     void aGroupWithNeitherBuildNorUuidIsRefused() {
         // It failed with a NullPointerException rather than saying what to give.
         final Map<String, Object> result = world.call(tool, Map.of("mapping", JsonUtil.readValue(GOOD, Map.class),

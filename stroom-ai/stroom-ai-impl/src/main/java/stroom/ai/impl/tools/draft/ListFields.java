@@ -53,6 +53,10 @@ import java.util.regex.Pattern;
 /// of a few hundred KB costs no more than a short one.
 final class ListFields {
 
+    /// How the draft's note on old/new lists written per property in snapshots of entries it didn't draft starts.
+    static final String SNAPSHOTS_WRITTEN = "Old/new lists written as a Data per property in each Update snapshot "
+                                            + "(the change form's, whatever placed them): ";
+
     /// The most pieces of a value examined.
     static final int MAX_PIECES = 50;
     /// The most values of a field examined.
@@ -208,7 +212,16 @@ final class ListFields {
             }
         }
         insertAfters(mapping, afters);
+        // The old/new lists of the groups and entries the draft didn't write itself (a catalogue's placements: seen
+        // in eval case 76, targets placed as a group in After alone, no property written): a Data per property in
+        // each snapshot whatever placed them (2026-11-23).
+        final List<String> written = json
+                ? SnapshotChanges.apply(mapping, field -> values.getOrDefault(field, List.of()), sides)
+                : List.of();
         final List<String> notes = new ArrayList<>();
+        if (!written.isEmpty()) {
+            notes.add(SNAPSHOTS_WRITTEN + String.join("; ", written) + ".");
+        }
         if (!changeLists.isEmpty() || !targetLists.isEmpty()) {
             notes.add(changeNote(changeLists, targetLists, values));
         }
@@ -229,7 +242,10 @@ final class ListFields {
             notes.add(arrayNote(arrays));
             // Lists inside the objects are left out of the groups: said, so they aren't lost unsaid.
             arrays.keySet().forEach(field -> {
-                final List<String> inner = nestedListKeys(values.getOrDefault(field, List.of()));
+                // An old/new list inside the items is said with the old/new lists (a group over it is refused).
+                final List<String> inner = nestedListKeys(values.getOrDefault(field, List.of())).stream()
+                        .filter(key -> !targetLists.containsKey(field) || !key.equals(targetLists.get(field).getKey()))
+                        .toList();
                 if (!inner.isEmpty()) {
                     notes.add("Not drafted: " + String.join(", ", inner.stream().map(key -> ToolText.repr(key))
                             .toList()) + " in each object of " + ToolText.repr(field) + " (a list inside each "

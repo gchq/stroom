@@ -329,6 +329,35 @@ class TestToolOutputs {
     }
 
     @Test
+    void aFailedVerificationsFailedChecksAreGivenInTheStub() {
+        // Seen in chat 188: verify_index's result past the inline limit, its stub showing its first lines (the
+        // dashboard and the first check, which passed), and the agent grepped and read 130 lines of the saved
+        // result to find the checks that failed.
+        final List<Map<String, Object>> checks = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            checks.add(Map.of("check", "events with EventId " + i, "expected", 1, "returned", 1, "pass", true,
+                    "sample", List.of(Map.of("raw", "x".repeat(400)))));
+        }
+        final Map<String, Object> failed = new LinkedHashMap<>();
+        failed.put("check", "events with source.ip 10.0.0.1");
+        failed.put("expected", 4);
+        failed.put("returned", 0);
+        failed.put("pass", false);
+        checks.add(failed);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("dashboard", Map.of("name", "EVAL-VERIFY", "saved", true));
+        result.put("passed", false);
+        result.put("checks", checks);
+        result.put("failed", List.of(failed));
+        final String saved = ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false));
+        assertThat(saved.indexOf("source.ip 10.0.0.1")).isGreaterThan(ToolOutputs.PREVIEW_CHARS);
+
+        assertThat(ToolOutputs.stub(saved, "/p"))
+                .containsPattern("failed:\n- \\{[^\n]*\"check\":\"events with source.ip 10.0.0.1\"[^\n]*"
+                                 + "\"returned\":0");
+    }
+
+    @Test
     void aNeedsDescriptionsRoundCarriesItsFieldsToDescribe() {
         final Map<String, Object> round = new LinkedHashMap<>();
         round.put("status", "needs_descriptions");

@@ -292,11 +292,11 @@ final class MappingSampleCheck {
         }
         final Map<String, List<String>> used = new LinkedHashMap<>();
         mapping.common().stream()
-                .filter(entry -> !entry.repeat())
+                .filter(MappingSampleCheck::oneValueAnElement)
                 .forEach(entry -> add(used, entry.xpath(), entry.path()));
         for (final EventRule rule : mapping.events()) {
             rule.fields().stream()
-                    .filter(entry -> !entry.repeat())
+                    .filter(MappingSampleCheck::oneValueAnElement)
                     .forEach(entry -> add(used, entry.xpath(), "[" + rule.name() + "] " + entry.path()
                                                                + (NullSafe.isNonEmptyString(entry.dataName())
                             ? " " + entry.dataKey()
@@ -311,6 +311,14 @@ final class MappingSampleCheck {
         }
         return XPathChecks.severalValues(used, MappingFacts.mappingNamespaces(mapping),
                 recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping));
+    }
+
+    // Whether the entry writes its xpath's values as one element, so several are written joined: not one with
+    // repeat, nor a pair or a change (2026-11-23, chat 188: a Data per pair said to give several values without
+    // repeat), whose Data per pair or per property is a loop writing an element per item, and whose pair or
+    // property read by its name is one value, the list holding one of each name.
+    private static boolean oneValueAnElement(final FieldMapping entry) {
+        return !entry.repeat() && entry.pair() == null && entry.change() == null;
     }
 
     /// Each extraction's regex run (with XPath's own regex rules) on the text it reads in the sample.
@@ -427,7 +435,11 @@ final class MappingSampleCheck {
     }
 
     private static void entryXPaths(final Map<String, List<String>> used, final FieldMapping entry, final String as) {
-        add(used, entry.xpath(), as);
+        // A change's values as the record holds them: its xpath unwraps JSON text with a function only the
+        // generated XSLT declares.
+        add(used, entry.change() == null
+                ? entry.xpath()
+                : entry.change().checkedXpath(), as);
         if (entry.lookup() != null) {
             add(used, entry.lookup().xpath(), as);
         }

@@ -248,6 +248,49 @@ class TestMappingSampleCheck {
     }
 
     @Test
+    void pairAndChangeEntriesAreTheLoopsTheyAreAndReadTheirLists() {
+        // Seen in chat 188: a Data per pair was warned of as giving several values without repeat (the agent then
+        // tried repeat: true three times, refused each time), and the lists the pair entries read were said to be
+        // read by nothing; a change was said to select nothing.
+        final String sample = String.join("\n",
+                "{\"time\": \"2026-10-01T00:00:00.000Z\", \"op\": \"read\", \"event\": {\"OperationProperties\": "
+                + "[{\"Name\": \"MailAccessType\", \"Value\": \"Sync\"}, {\"Name\": \"IsThrottled\", \"Value\": "
+                + "\"False\"}]}}",
+                "{\"time\": \"2026-10-01T00:00:01.000Z\", \"op\": \"set\", \"Changes\": [{\"Name\": "
+                + "\"DisplayName\", \"OldValue\": \"Sam T\", \"NewValue\": \"Sam Taylor\"}, {\"Name\": \"Title\", "
+                + "\"OldValue\": \"Lead\", \"NewValue\": \"Manager\"}]}") + "\n";
+        final Map<String, Object> pair = Map.of("list", "event.OperationProperties", "name_key", "Name",
+                "value_key", "Value");
+        final Map<String, Object> change = Map.of("list", "Changes", "name_key", "Name", "old_key", "OldValue",
+                "new_key", "NewValue");
+        final Map<String, Object> named = new LinkedHashMap<>(change);
+        named.put("name", "DisplayName");
+        final Map<String, Object> json = new LinkedHashMap<>(Map.of("input", "json", "json_layout", "lines",
+                "common", List.of(Map.of("path", "EventTime/TimeCreated", "field", "time"))));
+        json.put("events", List.of(
+                Map.of("name", "read", "when", List.of(Map.of("field", "op", "equals", "read")), "fields", List.of(
+                        Map.of("path", "EventDetail/TypeId", "value", "Read"),
+                        Map.of("path", "EventDetail/View/Data", "pair", pair))),
+                Map.of("name", "set", "when", List.of(Map.of("field", "op", "equals", "set")), "fields", List.of(
+                        Map.of("path", "EventDetail/TypeId", "value", "Set"),
+                        Map.of("path", "EventDetail/Update/Before/Object/Name", "change", named),
+                        Map.of("path", "EventDetail/Update/After/Object/Name", "change", named),
+                        Map.of("path", "EventDetail/Update/Before/Object/Data", "change", change),
+                        Map.of("path", "EventDetail/Update/After/Object/Data", "change", change)))));
+
+        final List<String> warnings = strings(MappingSampleCheck.check(TranslationMapping.fromJson(json),
+                List.of(sample), null, TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings"));
+
+        assertThat(warnings)
+                .noneSatisfy(warning -> assertThat(warning).contains("values in sample record"))
+                // A change's xpath unwraps JSON text with a function only the generated XSLT declares.
+                .noneSatisfy(warning -> assertThat(warning).contains("selects nothing"))
+                .noneSatisfy(warning -> assertThat(warning).contains("nothing reads").satisfiesAnyOf(
+                        text -> assertThat(text).contains("event.OperationProperties"),
+                        text -> assertThat(text).contains("'Changes'")));
+    }
+
+    @Test
     void aRequiredElementEverySampleRecordFillsIsNoLongerSaidToBeMaybeLeftOut() {
         // Seen in chat 185: the generator's "required [...] are left out when their input fields are empty" kept
         // beside a sample check that found none empty; the agent asked the user and put 'Unknown' in each.

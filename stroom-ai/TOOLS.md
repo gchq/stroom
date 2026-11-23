@@ -303,7 +303,8 @@ and the parts that say what to act on, in full but capped (a draft's notes at 8,
 decisions to take, seen in chat 184; a `needs_descriptions` round's fields at 8,000 and a check's typing at 12,000,
 2026-11-22; each other part at 4,000; 24,000 in all, room for a check's problems, unplaced and typing together; a
 list an entry a line, then `… N more` and the jq query for the rest; `ToolOutputs.LONG_PART_CHARS`), in this order:
-error, refused, notes, user_chose, problems, unplaced, `check.problems`, `check.unplaced`, `schema_check.problems`,
+error, refused, notes, user_chose, problems, `failed` (a failed verify_index's checks that didn't pass, 8,000
+characters, 2026-11-23), unplaced, `check.problems`, `check.unplaced`, `schema_check.problems`,
 `schema_check.unfilled` (a draft's schema check, 2026-11-22; seen in chats 184 to 186: read from the saved draft 17
 times), `check.could_type_all`, `check.typing` (with `could_type`), warnings, `schema_check.warnings`, user_actions
 and review_id (`LargeResults.ACT_ON`, the same list an outline never cuts, but for notes, warnings, the check's
@@ -312,8 +313,8 @@ out of the outline below it, a part within a part too (`schema_check.problems` f
 outlines a copy for the chat against 10,000 characters (`LargeResults.CHAT_OUTLINE_CHARS`), saving its own copy to
 `/outputs/<tool>/<key>.json` as for a client outside Stroom, and the stub gives that outline (less what it says above
 it) in place of the preview of the result's first 30 lines. A result the user must be shown as it is (`needs_review`,
-`needs_confirmation`, `needs_approval`, `needs_showing`) is given whole up to 64,000 characters and stubbed past
-that as before, with neither.
+`needs_confirmation`, `needs_approval`, `needs_showing`, promote_build's final result among them) is given whole up
+to 64,000 characters and stubbed past that as before, with neither.
 
 ## Choosing between tools that overlap
 
@@ -3151,7 +3152,9 @@ feed the build works from, the survey doc and the build record.
   default true; false keeps the test data).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
   role_locations?, follow_on_filters?, follow_on_filters_passed_over?, pipeline_changes?, index_changes?, changed_in_production?, not_promoted?,
-  tidy_up?, hint}`. After approval: `build`,
+  tidy_up?, hint}`. After approval: `status: needs_showing` (2026-11-23: its layout and tidy-up are for the user
+  to see as they are, so Stroom AI's chat gives the result whole up to 64,000 characters; seen in chat 188, a final
+  result of 9,856 characters stubbed without `layout` or `tidied_up`, read from the saved file twice), `build`,
   `tidied_up` (per item: `document`, `streams_marked_deleted` or `shards_deleted`, `deleted`, and `failed` or
   `skipped` where it was left; or `tidy_up: not done ...` when the user unticked it), `layout`,
   `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,
@@ -3784,7 +3787,10 @@ on an action element without Before and After, with a one-sided `pair` suggested
 that aren't the items' or a name no property has; both sides' values checked at the After element); a group's
 fields may read a change of each item's list (targets: `{path: "User", for_each: {array: "targetResources"},
 fields: [{path: "Id", field: "id"}, {path: "Name", change: {list: "modifiedProperties", name: "DisplayName"}}]}`),
-the group then written in both snapshots, each item's other properties Data of its object,
+the group then written in both snapshots, each item's other properties Data of its object (2026-11-23: a group
+below one snapshot over such targets is written so without any change field, its copy in the other snapshot where
+the event type places none there, each snapshot's own group keeping its fields; a group's field writing an item's
+old/new list whole at a typed element is refused with the change form),
 the mapping's `transform`, `time_format`, `timezone`, `map`, `default`, `repeat`, or
 a `for_each` group with `fields` (refused over a name/value list, 2026-11-23: each setting would be one element, its
 value in an element meaning something else, as chat 187 wrote View/Object Name=MailAccessType, Description=Bind;
@@ -5279,7 +5285,13 @@ also gives the change form for a property whose name means an element, typed in 
 of few words in a list of targets (`type: User, Group`) is noted as what may name the object. A mapping entry's
 `change` is JSON input only, its side its path's (below Before the old value, below After the new), allowed in a
 group's fields (the list a key of the item). `rebuild_mapping` doesn't read the Data per property loop back from the
-XSLT (as with the Data per pair loop): a rebuild relies on the kept mapping.
+XSLT (as with the Data per pair loop): a rebuild relies on the kept mapping. Whatever placed them (2026-11-23, eval
+case 76: the catalogue's targets as a group in After alone, no property written), the draft writes an Update's
+old/new lists as a Data per property of each snapshot after the catalogue's translation (`SnapshotChanges`): a group
+below a snapshot over items holding one gains its side's Data per property (a field reading the list whole
+replaced), with a copy in the other snapshot where the rule has none; an object reading a record's list by name
+gains the rest; the note starting "Old/new lists written as a Data per property in each Update snapshot" says what
+was done. The "Not drafted" note leaves out an old/new list inside an array's items (its own note names it).
 Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
 (1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Before
 cataloguing, a naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values,
@@ -5763,11 +5775,26 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
     data_splitter sample with no spec is read with the one inferred from it, as build_data_splitter infers it, and
     a field that guess doesn't name is then only a warning). It reports fields no record has, time formats the
     values don't fit (a problem: it would fail every record), schema values a constant or map gives, xpaths that
-    select nothing, an xpath without `repeat` giving several values, Data a rule's records never hold, required
+    select nothing, an xpath without `repeat` giving several values (not a Data per pair or per property, the loop
+    writing an element per item, nor a pair or property read by name, one value; 2026-11-23, chat 188: the agent
+    tried `repeat: true` on a Data per pair three times, refused each time), Data a rule's records never hold, required
     elements the sample leaves empty, domain-qualified Ids, stand-ins for none, and each extraction regex run with
     XPath's regex rules on the text it reads (`XPathChecks`). It stops after 60 seconds (`CHECK_TIME`), naming the
     extractions left unchecked: a Fortigate sample (10 streams of 1 MB, 60 extract entries) held the call for over
     a minute.
+    The lists `pair` and `change` entries read count as read (no "fields in the sample that nothing reads" for them),
+    and a change's xpath is checked as the record holds its values, without the generated XSLT's `mcp:` unwrapping
+    (2026-11-23, chat 188).
+  * **Old/new lists written per property** (2026-11-23, eval case 76: each target's list written as a `for_each`
+    group of name and value Data, its values JSON text, in After alone): once the sample is read, a JSON input's
+    Update rules are given what the draft gives them (`SnapshotChanges`, the records telling the lists by shape): a
+    group below a snapshot over items holding an old/new list gains its side's Data per property, a field reading
+    the list whole (or a group over it) replaced by it, and a copy in the other snapshot where the rule has none; a
+    plain Data of a record's list below a snapshot becomes its side's Data per property (below an Update but no
+    snapshot, both snapshots' of the object the rule writes); an object reading a record's list by name gains the
+    rest. The old key: a change of the list in the mapping, else what a group in Before reads, else the items'
+    order. The mapping changed is generated and checked again and kept as changed, and a warning starting "Old/new
+    lists written as a Data per property in each Update snapshot" names each change and its rules.
   * Stream meta the mapping reads (`stroom:meta('Name')`) that no sample stream carries is a warning, as is a
     time read in a named zone that the event doesn't record.
   * **Shared templates** (`TranslationDocs.sharedWarnings`, on an `ok` result): a warning for each shared template
@@ -7104,7 +7131,11 @@ with no searches; nothing is marked verified.
   conditions as a dashboard's, default EQUALS); `pipeline_uuid`; `checks` (default true).
 * **Returns**: `dashboard` (`uuid`, `name`, `saved`, `link` when saved, and the design), `passed`, `checks` (each
   with `check`, `pass`, `returned` or `parts`, `errors`, `sample`, `trace`, or `checked: earlier in this session`),
-  `unfinished` and `next` when time ran out, `verified` (pipelines recorded); or `checks_skipped`.
+  `failed` where `passed` is false (2026-11-23, chat 188: the checks that didn't pass, each without its `sample` and
+  `trace`, its `errors` the first 3 and how many more; among the parts a large result's stub gives in full, so the
+  failures reach Stroom AI's chat's model past its 4,000-character inline limit, which before showed the dashboard
+  and the first check, passing, and the agent read 130 lines of the saved result), `unfinished` and `next` when time
+  ran out, `verified` (pipelines recorded); or `checks_skipped`.
 * **Refuses**: missing arguments; `backend` other than the two; `expected_documents` or `retries` not a whole number
   in range; malformed `exact` or `time_range`; a search with no field or a condition dashboards don't take; an
   index doc that can't be read; searches that would mislead (`MisleadingSearches`: on Elasticsearch, Stroom finds

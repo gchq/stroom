@@ -168,6 +168,17 @@ public record ListChange(String list, String name, String nameKey, String oldKey
         return itemsXpath() + "[normalize-space(" + named + ") and normalize-space(" + valueOfItem() + ")]" + left;
     }
 
+    /// @return The xpath the sample check reads it by (2026-11-23): the property of its name's value on its side, or
+    /// the items a Data per property writes, as the record holds them, without the unwrapping of JSON text, whose
+    /// function only the generated XSLT declares (read with it, the check said each change selects nothing).
+    public String checkedXpath() {
+        final String side = "*[@key=" + XPathText.literal(sideKey()) + "]";
+        final String named = "*[@key=" + XPathText.literal(nameKey) + "]";
+        return perProperty()
+                ? itemsXpath() + "[normalize-space(" + named + ") and normalize-space(" + side + ")]"
+                : itemsXpath() + "[" + named + " = " + XPathText.literal(name) + "]/" + side;
+    }
+
     /// @return The xpath of an item's name, relative to the item.
     public String nameOfItem() {
         return "string(*[@key=" + XPathText.literal(nameKey) + "])";

@@ -92,6 +92,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static final String UNCHANGED_COPY = "unchanged working copy, discarded";
 
     private static final String KEEP = "keep";
+    // The status of the result once promoted: content for the user to see as it is.
+    private static final String NEEDS_SHOWING = "needs_showing";
     // What becomes of a build's test feed.
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
@@ -1760,6 +1762,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             updated.add(entry);
         });
         final Map<String, Object> result = new LinkedHashMap<>();
+        // Content the user is to see as it is (the layout as promoted, what the tidy-up did), with no id to send
+        // back: Stroom AI's chat gives its model such a result whole up to a higher limit than other results (seen
+        // in chat 188: a result of 9,856 characters stubbed without its layout or tidied_up, read from the saved
+        // result twice).
+        result.put("status", NEEDS_SHOWING);
         result.put("build", build);
         result.put("layout", tree);
         result.put("folders", links);
