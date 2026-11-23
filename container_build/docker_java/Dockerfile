@@ -16,7 +16,8 @@
 
 # This is our java build image for building stroom
 # It also contains plantuml for plant uml image generation
-# Use the same image tag/sha as in docker/Dockerfile so we can reuse the same layers
+# IMPORTANT - If you change this, copy the tag+sha into docker/Dockerfile
+# so they can both use the same base.
 FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396a4926f183b1d379934248b0d335567282417517
 
 # Work from the shared git repo dir

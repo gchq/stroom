@@ -15,6 +15,14 @@
 #**********************************************************************
 
 
+#**********************************************************************
+# This is the combined dockerfile for both stroom and stroom-proxy.
+# When building, you must use the '--target' arg to specifiy which terminal
+# build stage you want to build, stroom_final_stage or stroom_proxy_final_stage.
+#**********************************************************************
+
+
+
 # Should match jdk base stage image
 ARG JAVA_MAJOR_VERSION="25"
 
@@ -46,7 +54,9 @@ ARG UBI_IMAGE_TAG="redhat/ubi10-minimal:10.2-1794227009@sha256:f0c7b9ae9914fcf18
 
 # ~~~ jdk base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Used only for building our two custom JREs
-FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396a4926f183b1d379934248b0d335567282417517 AS jdk_base_stage
+# IMPORTANT - If you change this, copy the tag+sha into container_build/docker_java/Dockerfile
+# so they can both use the same base.
+FROM eclipse-temurin:25.0.5.1_2-jdk-ubi10-minimal@sha256:d9f1eda186c16a82fb75fb6c6c5777b4378ee3da7dca9518ac97f144de0e8c39 AS jdk_base_stage
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -56,7 +66,7 @@ FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396
 # ~~~ common base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Intermediate build stage that is common to stroom and proxy to speed up
 # the build. Only add binaries common to both.
-FROM redhat/ubi10-minimal:10.2-1794227009@sha256:f0c7b9ae9914fcf183e7c36fc46864903c2d2caf3af327421913ae54b3d29e94 AS common_base_stage
+FROM redhat/ubi10-minimal:10.3-1795196920@sha256:d63890a635f8f19177bce1775f74f587a47f4456844f1392456c4e3673a48753 AS common_base_stage
 
 # bash, jq, openssl and curl are required for Kubernetes lifecycle scripts, which interact with the API.
 # curl is also required for the docker compose healthcheck
