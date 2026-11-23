@@ -32,7 +32,12 @@ public final class XPathNode {
     private final String symbol;
     private final Object value;
     private final List<XPathNode> children;
+    // Its text as given, or null where it is read from the source, start to end, when asked for: a parsed node holds
+    // the expression it was parsed from, shared by all its nodes, not a copy of its own text (2026-11-23: a 200,000
+    // character condition's 1,500 nested nodes, each with its own copy, took over 300 MB and ran a test fork out of
+    // heap).
     private final String text;
+    private final String source;
     private final int start;
     private final int end;
 
@@ -49,12 +54,48 @@ public final class XPathNode {
                      final String text,
                      final int start,
                      final int end) {
+        this(symbol, value, children, text, null, start, end);
+    }
+
+    private XPathNode(final String symbol,
+                      final Object value,
+                      final List<XPathNode> children,
+                      final String text,
+                      final String source,
+                      final int start,
+                      final int end) {
         this.symbol = symbol;
         this.value = value;
         this.children = List.copyOf(children);
         this.text = text;
+        this.source = source;
         this.start = start;
         this.end = end;
+    }
+
+    /// A node whose text is its part of the expression it was parsed from, read from it when asked for: every node of
+    /// a parse shares the one expression.
+    ///
+    /// @param symbol   The node's symbol.
+    /// @param value    Its value, as [#XPathNode(String, Object, List, String, int, int)] takes it.
+    /// @param children Its children.
+    /// @param source   The expression parsed.
+    /// @param start    Where its text starts in the expression.
+    /// @param end      Where its text ends.
+    /// @return The node.
+    public static XPathNode inSource(final String symbol,
+                                     final Object value,
+                                     final List<XPathNode> children,
+                                     final String source,
+                                     final int start,
+                                     final int end) {
+        return new XPathNode(symbol, value, children, null, source, start, end);
+    }
+
+    /// @param others Children in place of its own, each with the same text as the one it replaces.
+    /// @return It with those children, its text (or its source) kept.
+    public XPathNode withChildren(final List<XPathNode> others) {
+        return new XPathNode(symbol, value, others, text, source, start, end);
     }
 
     /// @return The node's symbol, e.g. `/`, `(name)`, `call`.
@@ -92,7 +133,18 @@ public final class XPathNode {
 
     /// @return Its text, exactly as written in the expression.
     public String text() {
-        return text;
+        return text != null
+                ? text
+                : source.substring(start, end);
+    }
+
+    /// @param other Another node.
+    /// @return True if its text is the other's: the same part of one parsed expression, else the same text.
+    public boolean sameText(final XPathNode other) {
+        if (text == null && other.text == null && source == other.source) {
+            return start == other.start && end == other.end || text().equals(other.text());
+        }
+        return text().equals(other.text());
     }
 
     /// @return Where its text starts in the expression parsed.
@@ -134,6 +186,6 @@ public final class XPathNode {
     /// @return The node, its place and its text, for messages.
     @Override
     public String toString() {
-        return symbol + " " + valueText() + " [" + start + "," + end + "] " + text;
+        return symbol + " " + valueText() + " [" + start + "," + end + "] " + text();
     }
 }

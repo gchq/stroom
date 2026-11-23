@@ -68,6 +68,35 @@ class TestXPathTrees {
         }
     }
 
+    @Test
+    void aLongNestedExpressionsNodesReadTheirTextFromItAndNormalGivesWhatCopiedTextsGive() {
+        // 2026-11-23: a condition of 200,000 characters (TestConditionParity's) parsed into 1,500 nested nodes, each
+        // holding a copy of its own text, took over 300 MB and ran a test fork out of heap: a parsed node now reads
+        // its text from the expression, shared by all its nodes.
+        final String expression = IntStream.range(0, 300)
+                .mapToObj(i -> "exists($a/b[(c = '" + i + "')][normalize-space(.)])")
+                .reduce((left, right) -> "(" + left + " and " + right + ")")
+                .orElseThrow();
+        final XPathNode parsed = XPathTreeParser.parserFor(NS).parse(expression);
+
+        assertThat(parsed.walk()).allSatisfy(node -> assertThat(node.text())
+                .isEqualTo(expression.substring(node.start(), node.end())));
+        // normal() as it was, each node holding a copy of its text.
+        final List<XPathNode> normal = XPathTrees.normal(parsed).walk();
+        final List<XPathNode> copied = XPathTrees.normal(copied(parsed)).walk();
+        assertThat(normal).hasSameSizeAs(copied);
+        for (int i = 0; i < normal.size(); i++) {
+            assertThat(normal.get(i).text()).isEqualTo(copied.get(i).text());
+            assertThat(normal.get(i).key()).isEqualTo(copied.get(i).key());
+        }
+    }
+
+    // The node with each node below it holding a copy of its own text.
+    private static XPathNode copied(final XPathNode node) {
+        return new XPathNode(node.symbol(), node.value(), node.children().stream().map(TestXPathTrees::copied)
+                .toList(), node.text(), node.start(), node.end());
+    }
+
     @TestFactory
     Stream<DynamicTest> theTreesAreTheRecordedOnes() {
         final List<Map<String, String>> namespaces = list(CASES.get("namespaces"));

@@ -111,6 +111,13 @@ public final class XPathTrees {
             // transform): the field, for the reader.
             return children.getFirst();
         }
+        final boolean asParsed = sameTexts(node, children);
+        if (asParsed && !("/".equals(node.symbol()) && children.size() == 2 && firstOf(children.get(1)).isPresent()
+                          && "[".equals(children.get(1).symbol()))) {
+            // Nothing taken out below it: its text as parsed, not a copy (a long expression's nested nodes each
+            // copying their text ran a test fork out of heap).
+            return node.withChildren(children);
+        }
         final String text = text(node, children);
         if ("/".equals(node.symbol()) && children.size() == 2 && firstOf(children.get(1)).isPresent()
             && "[".equals(children.get(1).symbol())) {
@@ -122,6 +129,16 @@ public final class XPathTrees {
             return new XPathNode("[", "[", List.of(path, predicate.get(1)), text, node.start(), node.end());
         }
         return new XPathNode(node.symbol(), node.value(), children, text, node.start(), node.end());
+    }
+
+    // Whether each child's normal() text is its text as parsed.
+    private static boolean sameTexts(final XPathNode node, final List<XPathNode> children) {
+        for (int i = 0; i < children.size(); i++) {
+            if (!children.get(i).sameText(node.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // The node's text with each child's replaced by the child's normal() text (what normal() took out, cut).
@@ -136,7 +153,7 @@ public final class XPathTrees {
         for (final int[] pair : order) {
             final XPathNode old = node.get(pair[1]);
             final XPathNode now = children.get(pair[1]);
-            if (!now.text().equals(old.text()) && old.start() >= at) {
+            if (!now.sameText(old) && old.start() >= at) {
                 out.append(slice(node.text(), at - node.start(), old.start() - node.start())).append(now.text());
                 at = old.end();
             }

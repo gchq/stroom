@@ -195,7 +195,7 @@ public final class XPathTreeParser {
             nodes.add(node(child, text, lexemes));
         }
         final int[] span = span(token, text, lexemes);
-        return new XPathNode(symbol, value, nodes, text.substring(span[0], span[1]), span[0], span[1]);
+        return XPathNode.inSource(symbol, value, nodes, text, span[0], span[1]);
     }
 
     private static boolean isPrefixedCall(final Token token) {
