@@ -4014,6 +4014,24 @@ placement. Decided by the user:
 * **Eval**: a typed entry's `not_typed` (`EvalScore`) lists texts no element outside Data may hold, cases 56 and 61
   naming the pair names of OperationProperties and Parameters; their references read the lists by the pair form.
 
+### Mermaid.js for Documentation docs (future, 2026-11-23)
+
+Not planned now (user, 2026-11-23); recorded for a later, non-AI change by the Stroom developers.
+
+* **Documentation docs**: their preview (`MarkdownPreviewPresenter`) renders in its own iframe,
+  `ui/markdown-preview.html`, which already loads a vendored library (Prism, `ui/script/prismjs`). Mermaid would be
+  vendored the same way (`ui/script/mermaid/`, loaded only when a page has a ```` ```mermaid ```` block),
+  `markdown-preview.js` calling `mermaid.run()` after conversion, with Stroom's light/dark theme passed in. About a
+  day, mostly testing. Shared, non-AI code.
+* **The chat stays on our own renderer** (gantt only, `bee42f4fa2`): it draws only what the tools write and carries no
+  third-party code. The chat renders inline in the GWT page, so Mermaid there would mean loading it into the whole UI
+  or a sandboxed iframe per diagram. `gantt_chart` already writes standard Mermaid, so switching later changes only
+  the drawing.
+* **Costs to weigh**: a bundle of a few megabytes shipped with every release; a third-party renderer of untrusted text
+  in a security product (strict security level, a pinned version, its advisories tracked); AGENTS.md's rule against
+  new external dependencies (approval needed, MIT licence noted). Stroom's default CSP (`'self'`, `'unsafe-eval'`)
+  already allows it; vendored, so offline sites are fine.
+
 ### HTML bodies to plain text (future, 2026-11-23)
 
 Not built: written up for a later addition, at the product owner's request (2026-11-23), after the Microsoft 365
