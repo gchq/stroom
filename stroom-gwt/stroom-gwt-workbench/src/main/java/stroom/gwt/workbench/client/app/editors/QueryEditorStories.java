@@ -808,6 +808,36 @@ public final class QueryEditorStories {
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // OK refuses a custom date format Java can't use, which the server failed on, and choosing
+                // the standard format the list last showed leaves Custom and clears the error
+                .story("FormatInvalidCustom", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Name");
+                    play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Format 'Name'");
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Date Time", ".selection-popup *"));
+                    play.click(dialog.findByRole("checkbox", "Use Preferences"));
+                    final Query custom = dialog.getByRole("checkbox", "Custom");
+                    play.click(custom);
+                    final Query customFormat = dialog.getByLabelText("Custom Format");
+                    play.clear(customFormat);
+                    play.type(customFormat, "dd/bb/yyyy");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(dialog.getByText("Unknown pattern letter 'b'")).toBeInTheDocument();
+                    play.expect(screen.queryByText("Format 'Name'", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.click(dialog.getByLabelText("Format"));
+                    play.click(screen.findByText("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+                            ".selection-popup .selection-item-cell__text"));
+                    play.waitFor(() -> play.expect(custom).not().toBeChecked());
+                    play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Format 'Name'", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Conditional formatting: the rules list, a new rule, then OK
                 .story("ConditionalFormattingMenu", context -> render(context, FIXTURES))
                 .withPlay(play -> {

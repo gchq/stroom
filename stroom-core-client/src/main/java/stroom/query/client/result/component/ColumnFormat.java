@@ -16,10 +16,12 @@
 
 package stroom.query.client.result.component;
 
+import stroom.preferences.client.JavaDateTimePattern;
 import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.InvalidInputs;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.tickbox.client.TickBox;
@@ -102,10 +104,22 @@ public class ColumnFormat extends Component {
     @UiField
     TickBox wrap;
 
+    // The standard format to go back to when Custom is unticked. The list is empty while it is ticked,
+    // so that choosing any format from it is a change, even the one it last showed
+    @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
+    private String standardFormat = STANDARD_FORMATS.get(0);
+
     /// Makes the content.
     public ColumnFormat() {
         initWidget(BINDER.createAndBindUi(this));
-        custom.setOnChange(value -> updateEnabledState());
+        // The server formats with it, and fails on one Java can't use
+        text.setInvalidReason(JavaDateTimePattern::invalidReason);
+        custom.setOnChange(value -> {
+            format.setValue(value
+                    ? null
+                    : standardFormat);
+            updateEnabledState();
+        });
         usePreferences.setOnChange(value -> updateEnabledState());
         type.addValueChangeHandler(this::onType);
         format.addValueChangeHandler(this::onFormat);
@@ -190,11 +204,13 @@ public class ColumnFormat extends Component {
         if (text == null || text.trim().isEmpty()) {
             text = STANDARD_FORMATS.get(0);
         }
-        final int formatIndex = STANDARD_FORMATS.indexOf(text);
-        if (formatIndex != -1) {
-            this.format.setValue(text);
+        final boolean custom = !STANDARD_FORMATS.contains(text);
+        if (!custom) {
+            standardFormat = text;
         }
-        final boolean custom = formatIndex == -1;
+        this.format.setValue(custom
+                ? null
+                : text);
         this.custom.setValue(custom);
         this.text.setText(text);
         updateEnabledState();
@@ -292,6 +308,8 @@ public class ColumnFormat extends Component {
         timeZoneId.setEnabled(ownSettings);
         timeZoneOffsetHours.setEnabled(ownSettings);
         timeZoneOffsetMinutes.setEnabled(ownSettings);
+        // Said as it is shown, and cleared with the text it was about or once it isn't used
+        InvalidInputs.showReason(text);
     }
 
     private void onType(final ValueChangeEvent<Type> event) {

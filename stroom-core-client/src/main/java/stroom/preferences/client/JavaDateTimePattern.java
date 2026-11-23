@@ -37,9 +37,6 @@ public final class JavaDateTimePattern {
     private static final int UNPADDED_NUMBER_BEFORE = 1;
     private static final int PADDED_NUMBER_BEFORE = 2;
 
-    // The width of a field that has no widest, e.g. a time zone's name
-    private static final int ANY_WIDTH = -1;
-
     private JavaDateTimePattern() {
         // Static utility
     }
@@ -192,9 +189,6 @@ public final class JavaDateTimePattern {
     // Why a run of one pattern letter, already checked, can't be padded to a width, or null if it can
     private static String paddingReason(final char letter, final int count, final int padWidth) {
         final int widest = widest(letter, count);
-        if (widest == ANY_WIDTH) {
-            return "'" + letter + "' is a time zone's name, which can't be padded";
-        }
         return padWidth >= widest
                 ? null
                 : "Too few 'p' letters to pad '" + letter + "' (" + widest + " at least)";
@@ -269,8 +263,17 @@ public final class JavaDateTimePattern {
                 return count == 4
                         ? 12
                         : 9;
+            // A time zone's id, e.g. America/Argentina/ComodRivadavia
+            case 'V':
+                return 32;
+            // A time zone's name, e.g. GMT+03:00 or Australian Central Western Standard Time
+            case 'v':
+            case 'z':
+                return count == 4
+                        ? 40
+                        : 12;
             default:
-                return ANY_WIDTH;
+                throw new IllegalArgumentException("Not a pattern letter: " + letter);
         }
     }
 

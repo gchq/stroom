@@ -101,7 +101,31 @@ class TestJavaDateTimePattern {
         assertThat(JavaDateTimePattern.invalidReason("ppppppppMMMM"))
                 .isEqualTo("Too few 'p' letters to pad 'M' (9 at least)");
         assertThat(JavaDateTimePattern.invalidReason("ppppppppppppVV"))
-                .isEqualTo("'V' is a time zone's name, which can't be padded");
+                .isEqualTo("Too few 'p' letters to pad 'V' (32 at least)");
+    }
+
+    /// A time zone's id or name can be padded to the width said, which no zone's is wider than, and
+    /// no less.
+    @Test
+    void paddedTimeZones() {
+        for (final String zone : List.of("VV", "z", "zz", "zzz", "zzzz", "v", "vvvv")) {
+            final String tooFew = JavaDateTimePattern.invalidReason("p" + zone);
+            assertThat(tooFew).startsWith("Too few 'p' letters");
+            final int widest = Integer.parseInt(tooFew.replaceAll("\\D", ""));
+            assertThat(JavaDateTimePattern.invalidReason("p".repeat(widest - 1) + zone)).isEqualTo(tooFew);
+            final String padded = "p".repeat(widest) + zone;
+            assertThat(JavaDateTimePattern.invalidReason(padded)).isNull();
+            final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(padded, Locale.ENGLISH);
+            for (final String id : ZoneId.getAvailableZoneIds()) {
+                for (final int year : List.of(1970, 2000, 2026)) {
+                    for (int month = 1; month <= 12; month++) {
+                        assertThat(formatter.format(LocalDateTime.of(year, month, 15, 12, 0).atZone(ZoneId.of(id))))
+                                .as(id)
+                                .hasSize(widest);
+                    }
+                }
+            }
+        }
     }
 
     /// Quotes, optional sections and padding that Java accepts are accepted.
@@ -162,8 +186,9 @@ class TestJavaDateTimePattern {
 
     private static void assertAgrees(final String pattern) {
         final String reason = JavaDateTimePattern.invalidReason(pattern);
-        // Java pads a time zone's name that happens to be short enough
-        if (pattern.trim().isEmpty() || (reason != null && reason.endsWith("which can't be padded"))) {
+        // Java pads the time zone of these dates to less than other zones need (see paddedTimeZones)
+        if (pattern.trim().isEmpty()
+            || (reason != null && reason.matches("Too few 'p' letters to pad '[zvV]'.*"))) {
             return;
         }
         assertThat(reason == null)

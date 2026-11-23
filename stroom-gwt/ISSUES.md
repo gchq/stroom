@@ -1732,8 +1732,13 @@ to delete them by hand.~~
     isn't in its list, and the tick looked for it having none. Now the tick is whether the format is
     a standard one (`SavedCustomFormat`). `InvalidInputs` and `LayerContainer` said that hidden tabs are
     looked in, which is so only of layers that stay on the page; no other tabbed dialog has a checked
-    field in a tab. Plays: `App/Main/TimePreferences`
-    `InvalidCustomFormatNotReported`, `StandardFormatClearsError` and `SavedInvalidCustomFormat`, and
+    field in a tab. From the second review (23 November 2026): ticking Custom again while its text
+    can't be used keeps the standard format shown meanwhile; the list is empty while Custom is ticked,
+    so choosing the format it last showed leaves Custom; a padded time zone is accepted if the padding
+    is wide enough for any zone; and a table column's Format dialog has the same check (`ColumnFormat`:
+    the server failed on such a format; `App/Editors/QueryEditor` `FormatInvalidCustom`). Plays: `App/Main/TimePreferences`
+    `InvalidCustomFormatNotReported`, `StandardFormatClearsError`, `SameStandardFormatLeavesCustom`,
+    `InvalidCustomFormatTickedAgain` and `SavedInvalidCustomFormat`, and
     `App/Main/AppShell` `InvalidCustomFormatRefusesOk` and `InvalidCustomFormatInHiddenTab`.
   * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
@@ -1786,6 +1791,11 @@ to delete them by hand.~~
     link's parameters and every link clicked are no longer logged; and a reply's handler that fails
     is logged with its stack, not the reply. Checkstyle's `BrowserConsole` refuses the browser's
     console in JSNI, and a selection made in a visualisation is logged without its contents.
+    From the second review (23 November 2026): what is typed in a code editor, a link's type and a
+    reply's JSON error (which quotes the reply) aren't logged either, nor a whole document on Save As;
+    checkstyle also refuses `GWT::log`, the console's other methods and `java.util.logging` in client
+    packages (`ClientLogging`). **Kept:** the floor map's warnings name its objects, as they say which
+    can't be placed.
     Also found: `DocumentationTabController.updateEditState` runs on every `setText` and
     `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
     and shows the preview, and a blank document opens the editor when it becomes editable. It
@@ -1794,6 +1804,10 @@ to delete them by hand.~~
     **Fixed** (23 November 2026): `setText` chooses the mode only the first time, and `setReadOnly`
     changes it only to the preview, or to the editor for blank documentation that has become
     editable. Play: `App/Editors/DocumentationEditor` `SaveKeepsEditing` (failed before).
+    **Open decision** (second review, 23 November 2026, from the code; older, and every document
+    editor's): what is typed between Save and the server's reply is lost, as `DocumentPlugin.save`
+    reads the reply into the editor (`DocumentEditorHost.read`) and nothing stops typing meanwhile.
+    Either editing waits for the save, or the reply leaves what has changed since it was sent.
 * ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
   `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides

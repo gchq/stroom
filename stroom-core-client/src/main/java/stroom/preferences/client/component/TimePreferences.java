@@ -90,6 +90,10 @@ public class TimePreferences extends Component {
     private String committedText;
     // The format to write while the custom one can't be used: the last one shown or reported
     private String usablePattern;
+    // The standard format to go back to when Custom is unticked. The list is empty while it is ticked,
+    // so that choosing any format from it is a change, even the one it last showed
+    @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
+    private String standardFormat = STANDARD_FORMATS.get(0);
 
     /// Makes an empty tab.
     public TimePreferences() {
@@ -111,11 +115,9 @@ public class TimePreferences extends Component {
         text.setInvalidReason(JavaDateTimePattern::invalidReason);
         custom.addValueChangeHandler(event -> {
             text.setEnabled(custom.getValue());
-            if (!custom.getValue() && format.getValue() == null) {
-                // The user's own format was shown, so there is no standard one to go back to
-                //noinspection SequencedCollectionMethodCanBeUsed
-                format.setValue(STANDARD_FORMATS.get(0));
-            }
+            format.setValue(custom.getValue()
+                    ? null
+                    : standardFormat);
             InvalidInputs.showReason(text);
             reportChange();
         });
@@ -155,9 +157,7 @@ public class TimePreferences extends Component {
 
     // Reports a change, for the screens to show it
     private void reportChange() {
-        if (custom.getValue() && text.getInvalidReason() == null) {
-            usablePattern = text.getText();
-        }
+        usablePattern = getPattern();
         onChange.run();
     }
 
@@ -220,6 +220,9 @@ public class TimePreferences extends Component {
 
         // A format that isn't offered is the user's own (the box would show one that isn't in its list)
         final boolean isCustom = !STANDARD_FORMATS.contains(patternText);
+        if (!isCustom) {
+            standardFormat = patternText;
+        }
         format.setValue(isCustom
                 ? null
                 : patternText);

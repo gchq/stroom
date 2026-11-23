@@ -135,6 +135,42 @@ public final class TimePreferencesStories {
                     play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
                     play.expect(play.queryByText("'#' is reserved")).toBeNull();
                 })
+                // So does choosing the format the list last showed, which did nothing as it wasn't a change:
+                // the list is empty while Custom is ticked
+                .story("SameStandardFormatLeavesCustom", context -> render())
+                .withPlay(play -> {
+                    final Query custom = play.getByRole("checkbox", "Custom");
+                    play.click(custom);
+                    final Query customFormat = customFormat(play);
+                    play.type(customFormat, "#");
+                    play.tab();
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(selection(play, "userPreferencesDateFormat")).toHaveValue("");
+                    play.click(selection(play, "userPreferencesDateFormat"));
+                    play.click(play.screen().findByText(FORMAT, ".selection-popup .selection-item-cell__text"));
+                    play.waitFor(() -> play.expect(custom).not().toBeChecked());
+                    play.expect(customFormat).toHaveValue(FORMAT);
+                    play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
+                })
+                // Ticking Custom again while its text can't be used keeps the standard format shown
+                // meanwhile, where the screens went back to the custom format before that
+                .story("InvalidCustomFormatTickedAgain", context -> render("dd-MM-yyyy"))
+                .withPlay(play -> {
+                    final Query reported = play.getByTestId(REPORTED);
+                    final Query custom = play.getByRole("checkbox", "Custom");
+                    final Query customFormat = customFormat(play);
+                    play.type(customFormat, "#");
+                    play.tab();
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.click(custom);
+                    play.waitFor(() -> play.expect(reported)
+                            .toHaveTextContent(TextMatch.startingWith("1 " + FORMAT + " | ")));
+                    play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
+                    play.click(custom);
+                    play.waitFor(() -> play.expect(reported)
+                            .toHaveTextContent(TextMatch.startingWith("2 " + FORMAT + " | ")));
+                    play.expect(customFormat).toHaveAttribute("aria-invalid", "true");
+                })
                 // A saved format that isn't offered is the user's own: Custom is ticked (it never was, and
                 // the list showed the format as if it offered it). Unticking goes to a standard one
                 .story("SavedCustomFormat", context -> render("dd-MM-yyyy"))
