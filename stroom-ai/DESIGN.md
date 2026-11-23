@@ -1098,8 +1098,11 @@ is the user's choice.
 * **One grammar at both ends**: the parser in `stroom-core-shared` (GWT and the server alike); the tool checks every
   block it writes parses under it (round trip), JUnit tests pin the subset and hostile labels, and a set of example
   blocks is checked against Mermaid's own grammar so other apps render them the same.
-* **Where it renders**: chat replies first; then Documentation docs (pipeline docs, skills, investigation notes),
-  whose Markdown is rendered to HTML in a sandboxed frame, the renderer called after it.
+* **Where it renders: the chat only** (decided 2026-11-23): the chat's own presenter (`stroom.ai.client`) replaces
+  each rendered `mermaid` code block with the SVG after the shared `MarkdownConverter` has turned the reply to HTML,
+  so no shared code changes. Not in Documentation docs (their tab's `MarkdownPreviewPresenter` is shared by every
+  document type): a ```` ```mermaid ```` block there stays a code block. The GWT work is in `stroom.ai.client`, the
+  parser in `stroom-core-shared`'s `stroom.ai.shared`.
 * **Not at first**: hover, zoom and pan (an SVG `title` a bar's tooltip, cheap later).
 
 **The dashboard route**: the derived rows written as a CSV Data Connection (stroom#6010,
@@ -1123,9 +1126,9 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
   (as AGENTS docs are), marked by its front matter whatever it is called, holding several skills, one a `#` heading.
 * **Front matter** (YAML between `---` lines): `stroom: skills` (what the doc is) and its change history, each entry
   a version, date, author, how (`agent`, by the authoring tool, or `user`, edited by hand), the skill it changed and
-  what changed; written by the tools, never by hand. Rendered as metadata, not text (showdown reads front matter), the
-  history shown as a small table, as a pipeline doc's versions are; other apps read it too (GitHub's table,
-  Obsidian's properties).
+  what changed; written by the tools, never by hand. Shown as it is, not hidden (decided 2026-11-23: no change to the
+  shared Markdown rendering), so a reader of the doc sees the history as YAML text; other apps read it as metadata
+  (GitHub's table, Obsidian's properties).
 * **A skill, by convention** (headings the tools understand, not a format to get exactly right): its `#` heading the
   name; the first paragraph under it the description; `## When to use` (how people ask for it, in their words: what
   the agent matches); `## Parameters` (a list: a name, required or a default, a description); `## Steps` (numbered,
