@@ -318,6 +318,10 @@ public class S3ClientConfig extends AbstractConfig implements IsProxyConfig {
                '}';
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private AwsCredentials credentials;

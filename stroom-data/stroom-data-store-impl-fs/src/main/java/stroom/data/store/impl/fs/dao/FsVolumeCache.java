@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.dao;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.FsVolumeServiceImpl;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -29,6 +31,9 @@ import stroom.util.shared.Clearable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jooq.DSLContext;
+
+import java.util.Objects;
 
 @EntityEventHandler(type = FsVolumeServiceImpl.ENTITY_TYPE, action = {
         EntityAction.UPDATE,
@@ -40,12 +45,12 @@ public class FsVolumeCache implements EntityEvent.Handler, Clearable {
     private static final String CACHE_NAME = "Volume Cache";
 
     private final LoadingStroomCache<Integer, FsVolume> idToVolumeCache;
-    private final FsVolumeDao fsVolumeDao;
+    private final FsVolumeDaoImpl fsVolumeDao;
 
     @Inject
     FsVolumeCache(final CacheManager cacheManager,
                   final Provider<FsVolumeConfig> volumeConfigProvider,
-                  final FsVolumeDao fsVolumeDao) {
+                  final FsVolumeDaoImpl fsVolumeDao) {
         this.fsVolumeDao = fsVolumeDao;
 
         // We have no change handlers due to the complexity of the number of things that can affect this
@@ -53,16 +58,18 @@ public class FsVolumeCache implements EntityEvent.Handler, Clearable {
         idToVolumeCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> volumeConfigProvider.get().getVolumeCache(),
-                this::create);
+                this::fetch);
     }
 
-    public FsVolume get(final int id) {
-        final FsVolume fsVolume = idToVolumeCache.get(id);
-        LOGGER.debug("get() - id: {}, fsVolume: {}", id, fsVolume);
+    FsVolume get(final DSLContext context, final int id) {
+        Objects.requireNonNull(context);
+        final FsVolume fsVolume = idToVolumeCache.get(id, id2 ->
+                fsVolumeDao.fetch(context, id2));
+        LOGGER.debug("get() - context: {}, id: {}, fsVolume: {}", context, id, fsVolume);
         return fsVolume;
     }
 
-    private FsVolume create(final int id) {
+    private FsVolume fetch(final int id) {
         final FsVolume fsVolume = fsVolumeDao.fetch(id);
         LOGGER.debug("create() - id: {}, fsVolume: {}", id, fsVolume);
         return fsVolume;
