@@ -2568,7 +2568,8 @@ public class AskStroomAiPresenter
     }
 
     // Shows the steps held while the agent worked, now that it has stopped (answered, asks the user something, or
-    // ended), at the end of the conversation, in the order they were offered.
+    // ended), in the order they were offered: at the end of the conversation, or above a form or approval waiting
+    // for the user, which stays last.
     private void showHeldUserActions() {
         if (heldUserActions.isEmpty()) {
             return;
@@ -2656,6 +2657,11 @@ public class AskStroomAiPresenter
         final Element existing = findMessageElement(markdownContainer, id);
         if (existing != null) {
             markdownContainer.replaceChild(card, existing);
+        } else if (watchedPrompt != null && watchedPrompt.getParentElement() == markdownContainer) {
+            // Above the form or approval waiting for the user, not below it: the steps held while the agent worked
+            // are shown when it stops to ask, and at the end they took the user's eye off what they had to answer
+            // (seen across chats: a document's card under the form that followed its writing).
+            markdownContainer.insertBefore(card, watchedPrompt);
         } else {
             markdownContainer.appendChild(card);
             keepProgressInPlace(markdownContainer);
