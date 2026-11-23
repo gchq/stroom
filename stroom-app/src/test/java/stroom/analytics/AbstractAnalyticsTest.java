@@ -125,6 +125,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .query(sample.getQuery())
                 .analyticProcessType(sample.getAnalyticProcessType())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
+                .timeRange(sample.getTimeRange())
                 .notifications(new ArrayList<>(sample.getNotifications()))
                 .description(sample.getDescription())
                 .includeRuleDocumentation(sample.isIncludeRuleDocumentation())
