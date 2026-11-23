@@ -3639,6 +3639,36 @@ placement. Decided by the user:
 * **Eval**: a typed entry's `not_typed` (`EvalScore`) lists texts no element outside Data may hold, cases 56 and 61
   naming the pair names of OperationProperties and Parameters; their references read the lists by the pair form.
 
+### HTML bodies to plain text (future, 2026-11-23)
+
+Not built: written up for a later addition, at the product owner's request (2026-11-23), after the Microsoft 365
+messaging samples (an e-mail's `event.Item.Body.Content`, a Teams message's `event.Body.Content`) were kept whole as
+HTML. Today nothing gives a message body's plain text: the transforms (`lower`, `upper`, `trim`, `strip_domain`,
+`domain`, `digits`, `unescape_quotes`, `unescape_backslashes`, `strip_control`, `clean`) leave tags and entities as
+they are (`clean` drops control characters and normalises whitespace only); `HeldMarkup` only keeps such a value
+whole rather than field-mapping it; Saxon HE's `parse-xml()` reads only well-formed XML, which mail HTML seldom is
+(`<br>`, `&nbsp;`, unclosed `<p>`), `saxon:parse-html` is in Saxon's paid editions only, and Stroom has no HTML parser
+element.
+
+A possible `html_text` transform, plain XPath/XSLT so it runs in any Stroom, format-level knowledge of HTML only:
+
+1. Drop `<head>`, `<style>` and `<script>` blocks whole, and comments.
+2. Turn block ends (`<br>`, `</p>`, `</div>`, `</li>`, `</tr>`, `</h1>`..`</h6>`) into line breaks.
+3. Remove every other tag.
+4. Decode the common named entities (`&amp; &lt; &gt; &quot; &apos; &nbsp;`) and numeric ones (`&#233;`, `&#x41;`).
+5. Collapse runs of spaces and of blank lines.
+
+It is not an HTML parser: fine for mail and chat bodies, but odd markup can leave fragments (a `>` inside an
+attribute value), and a table becomes its cells a line each. Questions to settle before building it:
+
+- **Where the text goes**: the element that means the body (`Send/Payload/Email/Content`, `GroupChat/Content`), with
+  the HTML kept beside it as Data, dropped, or the text only.
+- **Who asks for it**: the draft suggesting it where `HeldMarkup` recognises HTML (a content-type field, the HTML
+  vocabulary), or only when the model or the user asks.
+- **Length**: a body is cut at the JSON parser's `stringTruncateLength` (10,000 characters) before the translation
+  sees it; its text is usually far shorter than its HTML, so the cut might better follow the conversion (a parser
+  setting kept higher, the text cut instead).
+
 ### Old/new property-change lists (built 2026-11-23)
 
 The follow-up of name/value lists: a JSON array whose items each give a property's name, its old value and its new
@@ -4646,6 +4676,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-23 | A message body's plain text from its HTML (an `html_text` transform) is written up as a future addition, not built: the product owner chose not now | HTML bodies to plain text (future) |
 | 2026-11-23 | Which key of an old/new list is old is the user's to say, not key order alone: in a build with forms, `draft_translation_mapping` asks of each list it took by order (`ChangeSides.QUESTION`: the list, its two keys and an item holding both values, the order's guess first), keeps the answer in the build record's `draft_choices` (`change_sides`) and drafts again with it; a redraft isn't asked; the catalogue's check follows the build's answer (`Drafted.withChangeSides`); without forms or a build, key order and the note; keys given in a placement or entry win. | Old/new property-change lists; TOOLS.md (draft_translation_mapping) |
 | 2026-11-23 | Old/new property-change lists (`ModifiedProperties: [{Name, OldValue, NewValue}]`, Graph's `targetResources[].modifiedProperties` holding JSON text): told by shape (`NameValueLists.changes`: three keys the same in every item, a name passing the name/value list's name tests, the other two one property's values before and after, a value under both or one side empty with like shapes; old the first of the two in the items' order, never by key names, `old_key`/`new_key` given where the order says otherwise); written as an Update's Before and After snapshots (`ListChange`, a mapping entry's `change`, its side its path's): a property placed by name typed in both, the others Data of the object named by the property, JSON text of one value unwrapped, a longer array kept as its text, an added property in After only, a removed one in Before only, After's object always written; the object the catalogue's affected one (the rule's entries in a snapshot), else `Object`; targets each with a list a `for_each` group written in both; the catalogue's `change: {list, name}` placement checked (no snapshots, not an old/new list, keys, a name it hasn't refused), `could_type.arrays` naming the lists' properties, a group or leaf over one refused; a `pair` reads one side (`value_key`) where there are no snapshots; the draft writes the snapshots with a note; eval case 76 (Entra ID audit), case 60's role read by `pair`. | Old/new property-change lists; TOOLS.md (catalogue_event_types, draft_translation_mapping, build_translation_xslt) |
 | 2026-11-23 | A variable placed just in time (`XsltGenerator.justInTime`) is placed by the reads under its own parent only, so a loop's variable never leaves its loop: two groups in one element, each with the default loop variable `item`, took each other's reads and were both moved out of their loops, so each group read the record (seen in user test chat 187: `View/Folder/Id` held the record's Id, `View/Folder/Path` was never written, and `View/Object` from the operation's properties was alike) | Translation XSLT generation |
@@ -4969,3 +5000,4 @@ behaviour; the settled ones are listed here with the section that records them.
 | Explorer name search stale after a create or delete in another session (core) | Open, for the Stroom devs | `ExplorerServiceImpl.find()` (behind `folder_contents name=`) always uses `ExplorerTreeModel.getModel()`, so for about 2 s after another session creates or deletes a document it lists a deleted one or misses a new one; `getData()` has the Reload button's `refresh` path (`rebuildAndGetModel()`, 9097bfa45a), `find()` doesn't. Found by the ES\|QL evals (2026-11-15); low impact (the agent retries, or `list_data_sources` reads the database), so not worked round in the tools. |
 | The AI end-to-end suite runs in every `./gradlew build` | Open | Recommended: tag it out of the default build, and split the reference evaluation across forks. |
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |
+| HTML bodies to plain text (`html_text` transform) | Future (2026-11-23) | See [HTML bodies to plain text](#html-bodies-to-plain-text-future-2026-11-23). |
