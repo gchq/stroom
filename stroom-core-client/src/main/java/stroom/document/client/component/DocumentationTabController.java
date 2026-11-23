@@ -63,6 +63,9 @@ public class DocumentationTabController extends Controller implements HasToolbar
     private boolean reading;
     private boolean readOnly = true;
     private boolean editMode = false;
+    // Set once the documentation has first been shown, after which reading it again (e.g. after
+    // Save) leaves editing as it is
+    private boolean shown;
     // Made when first shown, so that buttons can be added before its own
     private Toolbar toolbar;
     private ToolbarToggleButton editModeButton;
@@ -135,7 +138,8 @@ public class DocumentationTabController extends Controller implements HasToolbar
         return editor.getText();
     }
 
-    /// Shows Markdown, rendered, or in the editor if there is none and it may be changed.
+    /// Shows Markdown. The first time, it is rendered, or shown in the editor if there is none and it
+    /// may be changed; after that (e.g. after Save) the editor stays open or closed as it was.
     ///
     /// @param rawMarkdown The Markdown, or null for none.
     public void setText(final String rawMarkdown) {
@@ -146,21 +150,29 @@ public class DocumentationTabController extends Controller implements HasToolbar
             editor.setText(raw);
         }
 
-        updateEditState();
+        if (!shown) {
+            shown = true;
+            updateEditState();
+        }
         reading = false;
 
         updatePreview();
     }
 
     /// Sets whether the documentation may be changed, before or after it is read; read only, it
-    /// leaves editing for the preview. Its owner calls it, as it isn't followed from
+    /// leaves editing for the preview, and once it may be changed, documentation with no text opens
+    /// in the editor. Otherwise editing stays as it is. Its owner calls it, as it isn't followed from
     /// [Contexts#READ_ONLY] (true where nothing gives it) unless asked ([#followReadOnly()]).
     ///
     /// @param readOnly True if it may not be changed.
     public void setReadOnly(final boolean readOnly) {
+        final boolean changed = this.readOnly != readOnly;
         this.readOnly = readOnly;
-        // Ensure we are not in edit mode in case this is called after setText
-        updateEditState();
+        if (readOnly) {
+            setEditMode(false);
+        } else if (changed && NullSafe.isBlankString(editor.getText())) {
+            setEditMode(true);
+        }
     }
 
     /// Follows whether its owner may be changed ([Contexts#READ_ONLY]), for a tab of a document
@@ -210,8 +222,8 @@ public class DocumentationTabController extends Controller implements HasToolbar
 
     private void updateEditState() {
         final String rawMarkdown = editor.getText();
-        // Run on every read and read-only change: edit if there is no content and it may be changed,
-        // otherwise show the preview, closing any edit in progress
+        // Run when the documentation is first shown: edit if there is no content and it may be
+        // changed, otherwise show the preview
         if (NullSafe.isBlankString(rawMarkdown) && !readOnly) {
             setEditMode(true);
         } else {

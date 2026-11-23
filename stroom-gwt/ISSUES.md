@@ -1768,7 +1768,11 @@ to delete them by hand.~~
     Also found: `DocumentationTabController.updateEditState` runs on every `setText` and
     `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
     and shows the preview, and a blank document opens the editor when it becomes editable. It
-    predates the controller; whether a Save should keep the editor open needs a decision.
+    predates the controller. **Decided** (23 November 2026, the user's decision): Save keeps the editor
+    open; only Edit and Preview, or the document becoming read only, change the mode.
+    **Fixed** (23 November 2026): `setText` chooses the mode only the first time, and `setReadOnly`
+    changes it only to the preview, or to the editor for blank documentation that has become
+    editable. Play: `App/Editors/DocumentationEditor` `SaveKeepsEditing` (failed before).
 * ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
   `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides

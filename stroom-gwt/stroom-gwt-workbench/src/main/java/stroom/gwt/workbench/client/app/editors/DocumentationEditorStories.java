@@ -22,9 +22,11 @@ import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
+import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -50,6 +52,8 @@ public final class DocumentationEditorStories {
 
     private static final RestFixtures FIXTURES = DocEditors.permissionRoutes(RestFixtures.builder())
             .get("/documentation/v1/documentation-1", RestReply.json(DOC))
+            // Save, which gives back the document saved
+            .put("/documentation/v1/documentation-1", DocumentationEditorStories::echo)
             .post("/documentation/v1/download", RestReply.json(
                     "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
             .build();
@@ -116,6 +120,25 @@ public final class DocumentationEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
+                // Save leaves the editor open, for more typing. Reading the saved document back used
+                // to close it, showing the preview
+                .story("SaveKeepsEditing", context -> render(context, false))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    final Query edit = play.getByRole("button", "Edit Documentation");
+                    play.click(edit);
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_EDITOR)).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_text-input")).toHaveFocus());
+                    play.keyboard("More");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(play.querySelector(ACE_EDITOR)).toBeVisible();
+                    play.expect(edit).toHaveAttribute("aria-pressed", "true");
+                    play.expect(play.querySelector(".ace_content")).toHaveTextContent(TextMatch.containing("More"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // Read only (no EDIT permission): the preview shows, the markdown toolbar is hidden
                 // (getDocumentButtons() is empty) and Save is retitled
                 .story("ReadOnly", context -> render(context, true))
@@ -128,6 +151,10 @@ public final class DocumentationEditorStories {
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });
+    }
+
+    private static RestReply echo(final RecordedRequest request) {
+        return RestReply.json(request.getBody());
     }
 
     private static Widget render(final StoryContext context, final boolean readOnly) {
