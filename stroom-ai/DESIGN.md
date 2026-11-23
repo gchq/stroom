@@ -985,8 +985,8 @@ window, its buckets limit or ES|QL's 10,000 rows.
   with `ElasticEql.target` by a helper inside the implementations, no interface method changed.
 * **Cost first**: each side's size estimated before it streams (an ES|QL or count query), the plan ordered so the
   most selective side filters first, a cap on keys and rows, progress shown while it runs.
-* **Keys must compare**: equal values as stored, so it rests on normalised entity fields at onboarding (below) or on
-  a transform of the join field (lowercase, the domain stripped, a path's file name) applied as the rows stream.
+* **Keys must compare**: equal values as stored, or made equal by a transform of the join field (lowercase, the
+  domain stripped, a path's file name) applied as the rows stream (see "Entity values as indexed" below).
 * **Workers, by key range** (asked for by the product owner, 2026-11-23): the key space cut into ranges from a sample
   of the join key's values (a composite aggregation taking every Nth key, so ranges hold about the same rows, not an
   even cut of the alphabet), one worker a range streaming both sides restricted to it and merging alone (a key never
