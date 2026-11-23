@@ -1247,7 +1247,7 @@ shows one), and the app itself.
 | The floor map Layers drag never forgets `dragFromIndex` after a drop | Still open (`FloorMapLayers.java:498-511`) |
 | No story hovers or drags on the floor map canvas but Set Scale | Still open |
 | A sized `PopupType.POPUP` sets an inline width and height | **Fixed**: `--popup__width` and `--popup__height` with `popup--sized-*` classes (`PopupUtil.java:159-168`, `popup.css`) |
-| A dialog's New shows its busy spinner on Cancel | Still so (`DialogFrame.java:138-142`, on purpose) |
+| A dialog's New shows its busy spinner on Cancel | **Fixed** (19 November 2026): the pressed button shows it (`DialogFrame`), as the entry below |
 | The API key dialog and the start-up activity chooser can't hear a failed config fetch | Still open (`UiConfigCache.java:129-132`) |
 | Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; Chat History, the floor map's Track and the credential picker's empty OK and Cancel don't |
 | Solr fields mark the document changed on key down | Still open |
@@ -1258,10 +1258,10 @@ shows one), and the app itself.
 | Server Tasks as a tree is 20px wider than its pane | **Fixed** (`TreeRowHandler.java:68`, `ServerTasksScreenStories`), as the entry under Fixed |
 | The 22px tick box column clips its box | Still open (the box is 20px now, not 16px); seeing the clip needs a render |
 | Ask Stroom AI's dock type offers only Dialog and Dock | Still so; nothing handles Tab or Float, so it looks deliberate |
-| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Still open |
-| Elastic's rerank suffix tooltip `$\{BaseField.score\}` | Still in the template; what shows needs the app |
-| The dashboard table filter dialog's focus on open | Needs a run; no story checks it (`ColumnFilterTabsController`, was `TableFilterPresenter`) |
-| `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | Still open |
+| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Solr's still open; Plan B's **Fixed** (19 November 2026): `BucketGranularity` has display names |
+| Elastic's rerank suffix tooltip `$\{BaseField.score\}` | **Gone** (checked 19 November 2026): the rerank settings moved, and the tooltip went with them |
+| The dashboard table filter dialog's focus on open | **Fixed** (19 November 2026): `ColumnFilterEditorController` is a `Focus`; `TableFilterFocusesItsEditor` |
+| `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | **Fixed** (19 November 2026), each as its entry below |
 | Debug logging in `DocumentationTabController` | Fixed (20 November 2026): the `GWT.log` calls and the commented code are gone |
 | `XPathFilterEditor`'s default condition | Still so, harmless |
 | `CombinedParser.getMode()`'s guess for a None converter | Still so, and the entry is wrong that it has no effect: `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives a Data Splitter the XML range mode |
@@ -1582,9 +1582,10 @@ to delete them by hand.~~
   "passed")~~ Fixed: such a check stops the run before any story runs (`unknownCheckIds`);
   `--skip-real-input` skips the checks and that test (the runner's own tests use it).
 
-* Server Tasks as a tree (`App/Main/ServerTasksScreen` `TaskTree`): the grid is 20px wider than its
+* ~~Server Tasks as a tree (`App/Main/ServerTasksScreen` `TaskTree`): the grid is 20px wider than its
   pane, so the last column's resize handle starts off screen; the tree's expander column is 45px
-  (6px flat) and the widths aren't fitted again.
+  (6px flat) and the widths aren't fitted again.~~ **Fixed** (25 October 2026; struck through 23
+  November 2026): see "a tree grid's columns ran past its edge" above.
 * A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
   so the box is clipped flush left rather than centred.
 
@@ -1733,10 +1734,18 @@ to delete them by hand.~~
   **Fixed** (20 November 2026): the raw icons give each path its colour as a `fill` attribute in
   place of the `.st0` to `.st7` classes, and `OpenAI.svg` and the pipeline's `hadoop.svg` (found
   by the new test) have no `<title>`; `GenerateSvgImages` remade them and `SvgImage`. Their colours
-  are unchanged. `TestSvgImage` fails if any icon has a `<title>` or a `<style>`.
-  Left: `GenerateSvgImages` copies every file in `raw-images`, so it puts back the eleven
-  `xsdbrowser` PNGs deleted by hand in wave 46; their sources in `raw-images/xsdbrowser/` need
-  deleting too.
+  are unchanged. After the code review (23 November 2026): the `<metadata>` editors leave in six
+  more icons (`field`, `function`, `fields/expression` and the pipeline's `hadoop`, `id` and
+  `xml_search`) added "image/svg+xml", and Hadoop's "Hadoop logo" again, to the text beside them,
+  so those blocks are gone (Hadoop's licence note is kept as an XML comment, which adds no text).
+  `TestSvgImage` fails if any icon has a `<title>`, `<desc>`, `<metadata>` or `<style>`, in any
+  case and with or without a namespace prefix such as `svg:`. The pipeline's `elastic_index`
+  cloud was `#FFF`, which `GenerateSvgImages` doesn't map, so it stayed white in high contrast; it
+  is `#FFFFFF`, so becomes the theme's icon white. `SvgImageTools`' colour report reads colours
+  given as `fill="#…"` attributes as well as in `style`, so the swatches list those icons too.
+  `GenerateSvgImages` copies every file in `raw-images`, so it kept putting back the eleven
+  `xsdbrowser` PNGs deleted by hand in wave 46; their sources in `raw-images/xsdbrowser/` are
+  deleted too (23 November 2026, at the user's approval; nothing names them).
 * ~~Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
   leaves a blank page: the app is never shown and only a reload offers the terms again
   (`SplashPresenter`, `CurrentUser.showSplash`).~~ **Fixed** (30 October 2026): once the warning
