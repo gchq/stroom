@@ -105,7 +105,7 @@ public final class AceEditorStories {
                     editor.getFormatAction().setAvailable(true);
                     final Label note = new Label("Ctrl+Shift+F to format.");
                     note.getElement().getStyle().setProperty("marginTop", "8px");
-                    note.getElement().getStyle().setProperty("fontSize", "12px");
+                    note.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
                     return StoryPanels.column(0, framed(editor), note);
                 })
                 // Typing into the editor; the value is mirrored into a probe

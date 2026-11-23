@@ -24,7 +24,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -213,6 +215,71 @@ class TestDocumentAssetServlet {
         }
     }
 
+    // --------------------------------------------------------------------------------
+    // Allowed image origins
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void withNoAllowedImageOriginsImagesComeOnlyFromStroom() {
+        final String policy = visualisationPolicy();
+
+        assertThat(policy).isEqualTo(DocumentAssetServlet.CONTENT_SECURITY_POLICY_ASSET);
+        assertThat(policy).contains("img-src 'self' data:;");
+    }
+
+    /// Regression test: the image sources were fixed at `'self' data:`, so a GeoMap in an asset-based
+    /// visualisation could not show tiles from its tile server, and there was no way to allow it.
+    @Test
+    void allowedImageOriginsAreAddedToTheImageSources() {
+        final String policy = visualisationPolicy("https://*.tile.osm.org", "https://maps.example.com:8443");
+
+        assertThat(policy).contains("img-src 'self' data: https://*.tile.osm.org https://maps.example.com:8443;");
+    }
+
+    @Test
+    void allowedImageOriginsAreAddedToNothingButTheImageSources() {
+        final String policy = visualisationPolicy("https://tiles.example.com");
+
+        // Scripts may display images from the origin but not fetch from it, so 'default-src' (which
+        // covers connect-src) and 'script-src' stay as they were.
+        assertThat(policy).contains("default-src 'self';");
+        assertThat(policy).contains("script-src 'self' 'unsafe-eval' 'unsafe-inline';");
+        assertThat(policy).doesNotContain("connect-src");
+        assertThat(policy.indexOf("https://tiles.example.com"))
+                .isEqualTo(policy.lastIndexOf("https://tiles.example.com"));
+        // The rest of the policy is untouched.
+        assertThat(policy).endsWith("; object-src 'none'; base-uri 'none'; form-action 'none'; "
+                                    + "frame-ancestors 'self'");
+    }
+
+    @Test
+    void anOriginThatCouldAddMoreThanOneSourceIsLeftOut() {
+        // Each of these would add a directive, a keyword or a second source to the policy.
+        final String policy = visualisationPolicy(
+                "https://a.example.com; script-src *",
+                "https://b.example.com https://c.example.com",
+                "https://d.example.com,https://e.example.com",
+                "'unsafe-inline'",
+                "\"https://f.example.com\"",
+                "*",
+                "https:",
+                "",
+                null,
+                "https://allowed.example.org");
+
+        assertThat(policy).contains("img-src 'self' data: https://allowed.example.org;");
+        assertThat(policy).doesNotContain("a.example.com", "b.example.com", "c.example.com", "d.example.com",
+                "e.example.com", "f.example.com", "script-src *");
+    }
+
+    @Test
+    void allowedImageOriginsDoNotLoosenAnInertAsset() {
+        final Map<String, String> headers = setSecurityHeaders("text/html", false, List.of("https://*.tile.osm.org"));
+
+        assertThat(headers).containsEntry("Content-Security-Policy",
+                DocumentAssetServlet.CONTENT_SECURITY_POLICY_INERT);
+    }
+
     @Test
     void onlyAVisualisationMayServeExecutableContent() {
         assertThat(DocumentAssetServlet.mayServeExecutableContent(
@@ -252,6 +319,18 @@ class TestDocumentAssetServlet {
      * @return The headers that were set, keyed on header name.
      */
     private Map<String, String> setSecurityHeaders(final String mimetype, final boolean visualisation) {
+        return setSecurityHeaders(mimetype, visualisation, List.of());
+    }
+
+    /// Calls the servlet's header logic against a response that records what it was given.
+    ///
+    /// @param mimetype            The mimetype the asset is being served with.
+    /// @param visualisation       Whether the owning document is a Visualisation.
+    /// @param allowedImageOrigins The configured allowed image origins.
+    /// @return The headers that were set, keyed on header name.
+    private Map<String, String> setSecurityHeaders(final String mimetype,
+                                                   final boolean visualisation,
+                                                   final List<String> allowedImageOrigins) {
         final Map<String, String> headers = new HashMap<>();
         final HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
         Mockito.doAnswer(invocation -> {
@@ -259,7 +338,17 @@ class TestDocumentAssetServlet {
             return null;
         }).when(response).setHeader(Mockito.anyString(), Mockito.anyString());
 
-        DocumentAssetServlet.setSecurityHeaders(response, mimetype, visualisation);
+        DocumentAssetServlet.setSecurityHeaders(response, mimetype, visualisation, allowedImageOrigins);
         return headers;
+    }
+
+    /// Calls the servlet's header logic for a Visualisation's HTML asset with the given allowed image origins.
+    ///
+    /// @param allowedImageOrigins The configured allowed image origins.
+    /// @return The content security policy that was set.
+    private String visualisationPolicy(final String... allowedImageOrigins) {
+        // Arrays.asList rather than List.of, which refuses the null a test passes.
+        return setSecurityHeaders("text/html", true, Arrays.asList(allowedImageOrigins))
+                .get("Content-Security-Policy");
     }
 }

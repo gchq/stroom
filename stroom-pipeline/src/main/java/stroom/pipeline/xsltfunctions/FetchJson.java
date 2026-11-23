@@ -16,6 +16,7 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.pipeline.filter.XsltConfig;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
@@ -23,6 +24,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Item;
@@ -74,8 +76,9 @@ class FetchJson extends StroomExtensionFunctionCall {
     private final CommonHttpClient commonHttpClient;
 
     @Inject
-    FetchJson(final HttpClientProviderCache httpClientProviderCache) {
-        commonHttpClient = new CommonHttpClient(httpClientProviderCache);
+    FetchJson(final HttpClientProviderCache httpClientProviderCache,
+              final Provider<XsltConfig> xsltConfigProvider) {
+        commonHttpClient = new CommonHttpClient(httpClientProviderCache, xsltConfigProvider);
     }
 
     @Override

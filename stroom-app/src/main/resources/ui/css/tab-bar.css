@@ -398,6 +398,16 @@
         border-color: Highlight;
     }
 
+    /* Its line shows a tab's focus, so not the outline base.css gives whatever has the keyboard focus
+       there (important, to win over it); a panel's ring is inside it, as it is otherwise */
+    .tab-bar .tab-bar__tab:focus-visible {
+        outline: none !important;
+    }
+
+    .tab-bar__panel:focus-visible {
+        outline-offset: -2px !important;
+    }
+
     /* A selected document tab's line, which would otherwise be replaced */
     .tab-bar--curved .tab-bar__tab[aria-selected="true"]::before {
         forced-color-adjust: none;

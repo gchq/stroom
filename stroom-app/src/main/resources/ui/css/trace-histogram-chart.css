@@ -31,7 +31,6 @@
     box-sizing: border-box;
     padding: 4px var(--control__gap--horizontal) 2px;
     border-bottom: 1px solid var(--border-color);
-    font-size: 8px;
 }
 
 .trace-histogram-chart__y-axis {
@@ -65,7 +64,7 @@
 
 .trace-histogram-chart__y-label,
 .trace-histogram-chart__x-label {
-    font-size: 11px;
+    font-size: var(--font-size-9);
     line-height: 1;
 }
 
@@ -102,5 +101,5 @@
     align-items: center;
     justify-content: center;
     color: var(--text-color--muted);
-    font-size: 13px;
+    font-size: var(--font-size-12);
 }

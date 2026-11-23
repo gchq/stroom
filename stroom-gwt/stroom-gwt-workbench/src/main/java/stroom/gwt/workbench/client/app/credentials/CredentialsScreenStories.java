@@ -111,6 +111,31 @@ public final class CredentialsScreenStories {
             .build()
             .followedBy(FIXTURES);
 
+    // The fixtures with credentials that have expired, whose certificate expires first, that the
+    // server's warning period (100 years here) says are expiring, and that never expire. The times
+    // are 2001-09-09 and 2100-01-01, so the story looks the same whenever it is run.
+    private static final RestFixtures EXPIRY_LIST = RestFixtures.builder()
+            .post(FIND_CREDENTIALS, RestReply.json("""
+                    {"values": [{"credential": {"uuid": "c-5", "name": "Old Token",
+                                                "credentialType": "ACCESS_TOKEN",
+                                                "expiryTimeMs": 1000000000000},
+                                 "edit": true, "delete": true, "expiryWarningPeriodMs": 1209600000},
+                                {"credential": {"uuid": "c-6", "name": "TLS Store",
+                                                "credentialType": "KEY_STORE", "keyStoreType": "PKCS12",
+                                                "expiryTimeMs": 4102444800000},
+                                 "edit": true, "delete": true, "certificateExpiryTimeMs": 1000000000000,
+                                 "expiryWarningPeriodMs": 1209600000},
+                                {"credential": {"uuid": "c-7", "name": "Expiring Creds",
+                                                "credentialType": "USERNAME_PASSWORD",
+                                                "expiryTimeMs": 4102444800000},
+                                 "edit": true, "delete": true, "expiryWarningPeriodMs": 3155760000000},
+                                {"credential": {"uuid": "c-8", "name": "Lasting Creds",
+                                                "credentialType": "USERNAME_PASSWORD"},
+                                 "edit": true, "delete": true, "expiryWarningPeriodMs": 1209600000}],
+                     "pageResponse": {"offset": 0, "length": 4, "total": 4, "exact": true}}"""))
+            .build()
+            .followedBy(FIXTURES);
+
     // The fixtures that delete a credential, whose second find (after the delete) no longer has
     // My Creds
     private static final RestFixtures DELETE_MY_CREDS = RestFixtures.builder()
@@ -181,6 +206,40 @@ public final class CredentialsScreenStories {
                                              "secret": {"type": "usernamePassword", "username": "bob"}}""")
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
+                })
+                // Expired credentials say so, a key store's certificate that expires before its
+                // date is shown instead, and the server's warning period decides what is expiring
+                .story("Expiry", context -> render(context, EXPIRY_LIST, false))
+                .withPlay(play -> {
+                    play.findByText("Old Token");
+                    final Query oldToken = play.getByText("Old Token").closest(ROW);
+                    play.expect(oldToken).toHaveTextContent(TextMatch.containing("(EXPIRED)"));
+                    play.expect(play.within(oldToken).querySelector(".data-grid__alert-text")).toBeInTheDocument();
+
+                    final Query tlsStore = play.getByText("TLS Store").closest(ROW);
+                    play.expect(tlsStore).toHaveTextContent(TextMatch.containing("(EXPIRED)"));
+                    play.expect(tlsStore).toHaveTextContent(TextMatch.containing("(certificate)"));
+
+                    final Query expiring = play.getByText("Expiring Creds").closest(ROW);
+                    play.expect(play.within(expiring).querySelector(".data-grid__alert-text")).toBeInTheDocument();
+                    play.expect(expiring).not().toHaveTextContent(TextMatch.containing("(EXPIRED)"));
+
+                    final Query lasting = play.getByText("Lasting Creds").closest(ROW);
+                    play.expect(lasting).toHaveTextContent(TextMatch.containing("Never"));
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Tab from the Settings tab goes straight to Name: the tab's panel holds fields, so it
+                // isn't a tab stop (it was, as it was checked before the dialog showed, finding none)
+                .story("SettingsTabGoesToName", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    final Query settings = dialog.getByRole("tab", "Settings");
+                    play.waitFor(() -> play.expect(dialog.getByRole("tabpanel", "Settings"))
+                            .not().toHaveAttribute("tabindex"));
+                    play.run("focus the Settings tab", () -> settings.element().get().focus());
+                    play.tab();
+                    play.expect(dialog.getByLabelText("Name")).toHaveFocus();
                 })
                 // Choosing SSH Key swaps in the private key fields
                 .story("SshKeyType", CredentialsScreenStories::render)
@@ -453,6 +512,19 @@ public final class CredentialsScreenStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Replace Username / Password Secret"))
                             .toBeNull());
                     SecurityPlays.expectNoProblems(play);
+                })
+                // Replace Username / Password Secret left open (the screenshot and the dialog measurement
+                // show it)
+                .story("ReplaceSecretOpen", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.click(play.findByText("My Creds"));
+                    final Query replace = play.getByRole("button", TextMatch.containing(REPLACE_SECRET_TITLE));
+                    play.waitFor(() -> play.expect(replace).not().toHaveAttribute("aria-disabled", "true"));
+                    play.click(replace);
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Replace Username / Password Secret",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("User Name");
                 })
                 // Replacing a Key Store File's secret starts from its type and path, which aren't secret
                 .story("ReplaceKeyStoreFileSecret", CredentialsScreenStories::render)

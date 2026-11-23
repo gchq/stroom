@@ -33,10 +33,13 @@ import stroom.util.shared.Severity;
 import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
+import stroom.widget.datagrid.client.model.TextScale;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.quickfilter.client.QuickFilterPage;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -87,6 +90,8 @@ public final class DataGridStories {
     private static final String ROW = ".data-grid__body [data-row]";
     private static final String GRID_ROW = ".data-grid__row";
     private static final String HEADER_CELLS = "[role=\"columnheader\"]";
+    // What a grid says with no rows
+    private static final String EMPTY_MESSAGE = ".data-grid__empty";
     private static final String KEYBOARD_ROW_CLASS = "data-grid__row--keyboard";
 
     // Field names of the sortable columns
@@ -209,7 +214,9 @@ public final class DataGridStories {
                     play.expect(message).toHaveStyle("white-space", "nowrap");
                     play.expect(message).toHaveTextContent(TextMatch.containing("could not be reached"));
                 })
-                // Empty state: no rows, blank as MyDataGrid's
+                // Empty state (R-D5): a table with no rows says "No data" under its header, which
+                // stays, and the message describes the grid, so the grid given the focus says why
+                // it is empty
                 .story("EmptyState", context -> {
                     final DataGrid<Person> grid = personGrid();
                     addPlainColumns(grid);
@@ -220,6 +227,104 @@ public final class DataGridStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(HEADER_CELLS)).toHaveLength(5));
                     play.expect(play.querySelectorAll(ROW)).toHaveLength(0);
+                    final Query message = play.querySelector(EMPTY_MESSAGE);
+                    play.waitFor(() -> play.expect(message).toBeVisible());
+                    play.expect(message).toHaveTextContent("No data");
+                    play.expect(play.querySelector(SCROLLER)).toHaveAccessibleDescription("No data");
+                    // Below the header, not over it
+                    final Value<Element> head = play.querySelector(".data-grid__head").element();
+                    final Value<Element> messageElement = message.element();
+                    play.expect("message top below the header", () -> messageElement.get().getAbsoluteTop()
+                            - head.get().getAbsoluteBottom()).toBeGreaterThanOrEqual(0);
+                })
+                // A list with no rows says "No items", outside the list, which holds only options
+                // (ARIA lets it hold nothing else; axe checks the story)
+                .story("EmptyList", context -> {
+                    final DataGrid<Person> list = personGrid();
+                    list.setProfile(DataGridProfile.LISTBOX);
+                    list.setAccessibleName("People");
+                    list.addColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
+                    list.setRowData(0, Collections.emptyList());
+                    list.setRowCount(0);
+                    return sized(list, "200px", "300px");
+                })
+                .withPlay(play -> {
+                    final Query message = play.querySelector(EMPTY_MESSAGE);
+                    play.waitFor(() -> play.expect(message).toBeVisible());
+                    play.expect(message).toHaveTextContent("No items");
+                    final Query list = play.getByRole("listbox", "People");
+                    play.expect(list).toHaveAccessibleDescription("No items");
+                    play.expect(play.querySelectorAll(SCROLLER + " " + EMPTY_MESSAGE)).toHaveLength(0);
+                    // Tab reaches the empty list, which says why it is empty
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(list).toHaveFocus());
+                })
+                // While the rows are still loading (no count yet), nothing says the grid is empty
+                .story("EmptyWhileLoading", context -> {
+                    final DataGrid<Person> grid = personGrid();
+                    addPlainColumns(grid);
+                    return sized(paged(grid), "200px", null);
+                })
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelectorAll(HEADER_CELLS)).toHaveLength(5));
+                    play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
+                    play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
+                })
+                // A screen can turn the message off (setEmptyMessage(null))
+                .story("EmptyMessageOff", context -> {
+                    final DataGrid<Person> grid = personGrid();
+                    addPlainColumns(grid);
+                    grid.setEmptyMessage(null);
+                    grid.setRowData(0, Collections.emptyList());
+                    grid.setRowCount(0);
+                    return sized(paged(grid), "200px", null);
+                })
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelectorAll(HEADER_CELLS)).toHaveLength(5));
+                    play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
+                    play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
+                })
+                // Paged on to a page still being fetched: no rows are held, but the count is that
+                // of them all, so nothing says the grid is empty
+                .story("EmptyWhilePaging", context -> {
+                    final DataGrid<Person> grid = personGrid();
+                    addPlainColumns(grid);
+                    grid.setRowCount(250, true);
+                    grid.setVisibleRange(100, 100);
+                    return sized(paged(grid), "200px", null);
+                })
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelectorAll(HEADER_CELLS)).toHaveLength(5));
+                    play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
+                    play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
+                })
+                // An empty grid whose errors show over it (the pager panel's message) says
+                // nothing of its own under them
+                .story("EmptyWithErrors", DataGridStories::emptyWithErrors)
+                .withPlay(play -> {
+                    // Its lines are one element, split by <br>
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.containing("The search timed out")))
+                            .toBeVisible());
+                    play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
+                    play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
+                })
+                // With a filter that matches nothing, a grid in a quick filter page says "No
+                // matches"; cleared, the rows come back
+                .story("EmptyFiltered", DataGridStories::emptyFiltered)
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(
+                            DataGridRows.people().size()));
+                    final Query filter = play.querySelector(".quick-filter__input");
+                    play.expect(filter).toHaveAttribute("aria-label", "Filter people");
+                    play.type(filter, "zzz");
+                    final Query message = play.querySelector(EMPTY_MESSAGE);
+                    play.waitFor(() -> play.expect(message).toBeVisible());
+                    play.expect(message).toHaveTextContent("No matches");
+                    play.expect(play.querySelector(SCROLLER)).toHaveAccessibleDescription("No matches");
+                    play.clear(filter);
+                    play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(
+                            DataGridRows.people().size()));
+                    play.expect(message).not().toBeVisible();
                 })
                 // Multi-row selection: plain click replaces, Ctrl+click toggles, Shift+click extends
                 .story("RowSelection", context -> selectionStory(context, true, "Selected rows: "))
@@ -410,7 +515,7 @@ public final class DataGridStories {
                 })
                 // The fill columns share the surplus width by weight
                 .story("ColumnFillWeights", context -> sized(paged(noteGrid(true)), "320px", "900px"))
-                .withPlay(play -> expectHeaderWidths(play, 300L, 260L, 340L))
+                .withPlay(play -> expectFillWidths(play, 900, NOTE_COLUMN_WIDTH, 200, 30, 70))
                 // No fill column, so the declared widths are kept and the table stops short
                 .story("ColumnWidthsScaleWithoutFill", context -> {
                     final DataGrid<Note> grid = noteGridWithoutFill();
@@ -487,7 +592,7 @@ public final class DataGridStories {
 
                 // Percent columns: a share of the grid's initial width, then plain pixels
                 .story("PercentColumns", DataGridStories::percentColumns)
-                .withPlay(play -> expectHeaderWidths(play, 200L, 400L, 200L))
+                .withPlay(play -> expectDrawnWidths(play, 200L, 400L, 200L))
                 // Keyboard: the selection follows the row focus (see DataGridKeyboard, and
                 // Widgets/Data Grid/DataGridKeyboard for the rest of its keys); Ctrl moves without
                 // choosing, and Enter chooses the focused row
@@ -590,6 +695,30 @@ public final class DataGridStories {
                             "\"0\" isn't allowed. Enter a whole number from 1 to 9999.");
                     play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1);
                     // The same screenshot every run, however many polls the play took
+                    play.run("stop polling", InteractiveCellGrids::stopPolling);
+                    play.waitFor(() -> play.expect(play.getAllByText("Stopped")).toHaveLength(4));
+                })
+                // An arrow pressed with the mouse in a grid that polls: the press focuses the field,
+                // so the polls drawing the row again while it is held keep the stepped value, which
+                // is committed when let go, the field keeping the focus
+                .story("ValueSpinnerArrowWhilePolling", InteractiveCellGrids::valueSpinnerGrid)
+                .withPlay(play -> {
+                    final Query input = play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
+                            .querySelector("input");
+                    final Query up = play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
+                            .getByTitle("Increase value");
+                    play.waitFor(() -> play.expect(input).toHaveValue("34"));
+                    // Held for several polls (every 10ms); held long, it may step more than once, so
+                    // the play checks only that the value before the press doesn't come back
+                    play.fireEvent().mouseDown(up);
+                    play.sleep(100);
+                    play.expect(input).not().toHaveValue("34");
+                    play.expect(input).toHaveFocus();
+                    play.fireEvent().mouseUp(up);
+                    play.waitFor(() -> play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1));
+                    play.sleep(100);
+                    play.expect(input).not().toHaveValue("34");
+                    play.expect(input).toHaveFocus();
                     play.run("stop polling", InteractiveCellGrids::stopPolling);
                     play.waitFor(() -> play.expect(play.getAllByText("Stopped")).toHaveLength(4));
                 })
@@ -781,6 +910,18 @@ public final class DataGridStories {
         final DataGrid<Person> grid = plainGrid();
         final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
+        pagerView.getMessagePanel().showMessage(List.of(
+                new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
+        return sized(pagerView.asWidget(), "260px", "600px");
+    }
+
+    private static Widget emptyWithErrors(final StoryContext context) {
+        final DataGrid<Person> grid = personGrid();
+        addPlainColumns(grid);
+        final PagerPanel pagerView = new PagerPanel();
+        pagerView.setDataWidget(grid);
+        grid.setRowData(0, Collections.emptyList());
+        grid.setRowCount(0);
         pagerView.getMessagePanel().showMessage(List.of(
                 new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
         return sized(pagerView.asWidget(), "260px", "600px");
@@ -1085,6 +1226,28 @@ public final class DataGridStories {
     // --------------------------------------------------------------------------------
     // Layout
 
+    /// The people grid in a [QuickFilterPage], its rows those whose name holds the filter's text.
+    private static Widget emptyFiltered(final StoryContext context) {
+        final DataGrid<Person> grid = personGrid();
+        addPlainColumns(grid);
+        grid.setRowData(DataGridRows.people());
+        final QuickFilterPage page = new QuickFilterPage();
+        page.setAccessibleName("Filter people");
+        page.setContent(paged(grid));
+        page.setOnFilterChange(text -> {
+            final String lowerText = text.toLowerCase();
+            final List<Person> matches = new ArrayList<>();
+            for (final Person person : DataGridRows.people()) {
+                if (person.getName().toLowerCase().contains(lowerText)) {
+                    matches.add(person);
+                }
+            }
+            grid.setRowData(0, matches);
+            grid.setRowCount(matches.size());
+        });
+        return sized(page, "300px", null);
+    }
+
     /// The grid in Stroom's [PagerPanel], as Stroom's list controllers show their grids.
     private static Widget paged(final DataGrid<?> grid) {
         final PagerPanel pagerView = new PagerPanel();
@@ -1211,15 +1374,51 @@ public final class DataGridStories {
     }
 
     /// Waits until the header cells have the given widths, rounded to whole pixels.
+    /// Expects the header cells to be these widths, given at the medium text size: drawn larger or
+    /// smaller with the text size, to a pixel.
     private static void expectHeaderWidths(final Play play, final Long... widths) {
+        final Long[] drawn = new Long[widths.length];
+        for (int i = 0; i < widths.length; i++) {
+            drawn[i] = (long) drawn(widths[i]);
+        }
+        expectDrawnWidths(play, drawn);
+    }
+
+    /// Expects a fixed column then two fill columns sharing what is left of the grid by weight, from
+    /// widths given at the medium text size.
+    private static void expectFillWidths(final Play play, final int gridWidth, final int fixed,
+                                         final int fillMinimum, final int firstWeight, final int secondWeight) {
+        // None left over when the text is wide enough (e.g. with a user's text spacing) for the
+        // columns to fill the grid already: the fill columns stay at their least
+        final int surplus = Math.max(0, gridWidth - drawn(fixed) - 2 * drawn(fillMinimum));
+        final double firstShare = firstWeight / (double) (firstWeight + secondWeight);
+        final long first = drawn(fillMinimum) + Math.round(surplus * firstShare);
+        final long second = drawn(fillMinimum) + surplus - (first - drawn(fillMinimum));
+        expectDrawnWidths(play, (long) drawn(fixed), first, second);
+    }
+
+    /// Expects the header cells to be these widths as drawn, to a pixel (percent columns and fill
+    /// shares round).
+    private static void expectDrawnWidths(final Play play, final Long... widths) {
         final Query headers = play.querySelectorAll(HEADER_CELLS);
         play.waitFor(() -> play.expect(headers).toHaveLength(widths.length));
         play.waitFor(() -> {
             for (int i = 0; i < widths.length; i++) {
                 final Value<Double> width = headers.nth(i).width();
-                play.expect("column " + i, () -> Math.round(width.get())).toBe(widths[i]);
+                final long expected = widths[i];
+                play.expect("column " + i, width::get)
+                        .toSatisfy(expected + " pixels wide", w -> Math.abs((Double) w - expected) <= 1);
             }
         });
+    }
+
+    /// @return A width given at the medium text size, as drawn at the page's text size.
+    public static int drawn(final int width) {
+        return TextScale.toDrawn(width, DataGrid.textScale());
+    }
+
+    private static int drawn(final long width) {
+        return drawn((int) width);
     }
 
     /// Whether the element at the row's centre (40px in) is in the row.

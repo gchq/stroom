@@ -319,6 +319,56 @@ class TestSessionDb {
         }
     }
 
+    @Test
+    void testCondenseKeepsTheEndOfASessionWithOneNestedInIt(@TempDir final Path rootDir) {
+        final KeyPrefix prefix = KeyPrefix.create("User1");
+        final Instant refTime = Instant.parse("2025-12-01T00:00:00.000Z");
+        try (final SessionDb db = SessionDb.create(rootDir, BYTE_BUFFERS, DOC, false)) {
+            db.write(writer -> {
+                db.insert(writer, session(prefix, refTime, 0, 10));
+                db.insert(writer, session(prefix, refTime, 2, 5));
+            });
+
+            db.condense(refTime.plus(1, ChronoUnit.DAYS));
+
+            // Before, the merged session took the nested one's end, so ended at 5 hours
+            assertThat(db.count()).isEqualTo(1);
+            assertThat(db.get(session(prefix, refTime, 0, 10))).isNotNull();
+        }
+    }
+
+    @Test
+    void testCondenseMergesASessionInsideTheMergedOne(@TempDir final Path rootDir) {
+        final KeyPrefix prefix = KeyPrefix.create("User1");
+        final Instant refTime = Instant.parse("2025-12-01T00:00:00.000Z");
+        try (final SessionDb db = SessionDb.create(rootDir, BYTE_BUFFERS, DOC, false)) {
+            db.write(writer -> {
+                db.insert(writer, session(prefix, refTime, 0, 10));
+                db.insert(writer, session(prefix, refTime, 2, 5));
+                db.insert(writer, session(prefix, refTime, 7, 8));
+                db.insert(writer, session(prefix, refTime, 9, 12));
+            });
+
+            db.condense(refTime.plus(1, ChronoUnit.DAYS));
+
+            // The 7 to 8 hour session overlaps the merged 0 to 10, though not the 2 to 5 before it
+            assertThat(db.count()).isEqualTo(1);
+            assertThat(db.get(session(prefix, refTime, 0, 12))).isNotNull();
+        }
+    }
+
+    // A session from `startHours` to `endHours` after `refTime`
+    private static Session session(final KeyPrefix prefix,
+                                   final Instant refTime,
+                                   final int startHours,
+                                   final int endHours) {
+        return Session.builder()
+                .prefix(prefix)
+                .start(refTime.plus(startHours, ChronoUnit.HOURS))
+                .end(refTime.plus(endHours, ChronoUnit.HOURS))
+                .build();
+    }
+
     private Ranges testWrite(final Path dbDir) {
         final KeyPrefix key = KeyPrefix.create("TEST");
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");

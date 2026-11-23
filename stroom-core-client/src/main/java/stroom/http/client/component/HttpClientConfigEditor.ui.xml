@@ -7,7 +7,7 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:d="urn:import:stroom.widget.duration.client">
-    <g:FlowPanel styleName="max form-padding form http-client-config-editor">
+    <g:FlowPanel styleName="max form http-client-config-editor">
         <form:FormGroup identity="httpClientTimeout"
                         label="Timeout"
                         helpText="How long to wait for a response once a request has been sent. 0 means wait indefinitely. Default is 3 minutes."

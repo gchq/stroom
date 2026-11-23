@@ -158,3 +158,74 @@
 .tick-box--cell[aria-readonly="true"][aria-checked="mixed"] > .tick-box__mark::after {
     background-color: var(--control__text-color--readonly);
 }
+
+/* Forced colours (e.g. Windows high contrast) drop the blue fill but not the white tick drawn on it,
+   so ticked looked unticked; nor the mixed square, a background. There the box keeps its own
+   colours, in system ones: a box in CanvasText (HighlightText in a selected grid row); ticked,
+   filled in Highlight with the tick in HighlightText, as the system's own tick boxes are; read only,
+   an unfilled box with the tick in CanvasText; disabled, the box, tick and text in GrayText. Not the
+   text colour around it: a grid row keeps its own colours there, the theme's */
+@media (forced-colors: active) {
+    .tick-box__mark,
+    .tick-box__mark svg {
+        forced-color-adjust: none;
+    }
+
+    .tick-box__mark {
+        border-color: CanvasText;
+        background-color: Canvas;
+    }
+
+    .data-grid__row[aria-selected="true"] .tick-box__mark {
+        border-color: HighlightText;
+    }
+
+    .tick-box__input:checked ~ .tick-box__mark,
+    .tick-box--cell[aria-checked="true"] > .tick-box__mark {
+        background-color: Highlight;
+    }
+
+    /* Important, to win over icon-colours.css, which gives an icon the text colour around it */
+    .tick-box__mark svg {
+        color: HighlightText !important;
+    }
+
+    .tick-box--cell[aria-checked="mixed"] > .tick-box__mark::after {
+        forced-color-adjust: none;
+        background-color: Highlight;
+    }
+
+    /* Read only, dotted, as a read-only field's border is there (text-field.css) */
+    .tick-box__input[aria-readonly="true"] ~ .tick-box__mark,
+    .tick-box--cell[aria-readonly="true"] > .tick-box__mark {
+        border-style: dotted;
+    }
+
+    .tick-box__input[aria-readonly="true"]:checked ~ .tick-box__mark,
+    .tick-box--cell[aria-readonly="true"][aria-checked="true"] > .tick-box__mark {
+        background-color: Canvas;
+    }
+
+    .tick-box__input[aria-readonly="true"] ~ .tick-box__mark svg,
+    .tick-box--cell[aria-readonly="true"] > .tick-box__mark svg {
+        color: CanvasText !important;
+    }
+
+    .tick-box--cell[aria-readonly="true"][aria-checked="mixed"] > .tick-box__mark::after {
+        background-color: CanvasText;
+    }
+
+    .tick-box__input:disabled ~ .tick-box__mark,
+    .tick-box__input:disabled:checked ~ .tick-box__mark {
+        border-color: GrayText;
+        background-color: Canvas;
+    }
+
+    .tick-box__input:disabled ~ .tick-box__mark svg {
+        color: GrayText !important;
+    }
+
+    .tick-box__input:is(:disabled, [aria-readonly="true"]) ~ .tick-box__label {
+        color: GrayText;
+    }
+}

@@ -18,6 +18,8 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.xml.event.EventList;
 import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
+import stroom.util.xml.SaxonPolicy;
+import stroom.util.xml.SaxonSecurity;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
@@ -52,7 +54,8 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     private Builder builder;
 
     TinyTreeBufferFilter() {
-        configuration = Configuration.newConfiguration();
+        // Locked as stepping XPath filters are compiled against this configuration.
+        configuration = SaxonSecurity.newConfiguration(SaxonPolicy.LOCKED);
         pipe = configuration.makePipelineConfiguration();
         receivingContentHandler = new ReceivingContentHandler();
     }

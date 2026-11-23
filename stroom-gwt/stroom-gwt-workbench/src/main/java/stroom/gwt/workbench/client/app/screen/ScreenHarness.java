@@ -533,6 +533,10 @@ public final class ScreenHarness {
         };
     }-*/;
 
+    private static native void clearContentFocus() /*-{
+        delete $wnd.__workbenchContentFocus;
+    }-*/;
+
     /// For the leak check's probe (see [LeakProbe]): closes the screen as closing a Stroom tab does,
     /// hiding the popups and removing the widgets its opening added and, if asked, disposing the
     /// controllers made while opening it (as `DocumentPlugin` does) and running the clean ups its
@@ -552,6 +556,9 @@ public final class ScreenHarness {
         for (int i = host.getWidgetCount() - 1; i >= probeWidgetMark; i--) {
             host.remove(i);
         }
+        // The focus check's hook holds the screen it focuses, which would keep the closed screen
+        // while the leak check measures; opening the screen again sets it again
+        clearContentFocus();
         if (dispose) {
             // The clean ups the opening registered, as rendering the story again would run them,
             // among them disposing the story's root and what it owns

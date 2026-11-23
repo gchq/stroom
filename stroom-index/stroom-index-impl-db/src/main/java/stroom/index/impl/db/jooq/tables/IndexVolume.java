@@ -17,13 +17,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -56,7 +57,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     /**
      * The column <code>stroom.index_volume.id</code>.
      */
-    public final TableField<IndexVolumeRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<IndexVolumeRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.index_volume.version</code>.
@@ -127,6 +128,11 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * The column <code>stroom.index_volume.status_ms</code>.
      */
     public final TableField<IndexVolumeRecord, Long> STATUS_MS = createField(DSL.name("status_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.index_volume.volume_type</code>.
+     */
+    public final TableField<IndexVolumeRecord, Byte> VOLUME_TYPE = createField(DSL.name("volume_type"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     private IndexVolume(Name alias, Table<IndexVolumeRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -231,7 +237,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      */
     @Override
     public IndexVolume where(Condition condition) {
-        return new IndexVolume(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new IndexVolume(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -298,7 +304,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexVolume whereExists(Select<?> select) {
+    public IndexVolume whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -306,7 +312,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexVolume whereNotExists(Select<?> select) {
+    public IndexVolume whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

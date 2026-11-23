@@ -17,6 +17,6 @@
 /* The query help's detail, beside its list (QueryHelp). */
 
 .query-help-detail {
-    max-width: 600px;
+    max-width: calc(600px * var(--text-scale));
     overflow: auto;
 }

@@ -16,8 +16,10 @@
 
 package stroom.index.client.component;
 
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.selection.client.SelectionBox;
 
@@ -28,11 +30,15 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// An index volume: its node, path, state and byte limit.
+/// An index volume: its type, its node (only if local), path, state and byte limit.
 public class IndexVolumeEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
+    @UiField
+    SelectionBox<VolumeType> volumeType;
+    @UiField
+    FormGroup nodeNameGroup;
     @UiField
     SelectionBox<String> nodeName;
     @UiField
@@ -42,15 +48,30 @@ public class IndexVolumeEditor extends Component {
     @UiField
     TextBox bytesLimit;
 
-    /// Makes an empty form, offering every state, with no nodes until [#setNodeNames(List)].
+    /// Makes an empty form, offering every type and state, with no nodes until [#setNodeNames(List)].
     public IndexVolumeEditor() {
         initWidget(BINDER.createAndBindUi(this));
+        volumeType.addItems(VolumeType.values());
+        volumeType.addValueChangeHandler(event -> updateNodeVisibility());
         state.addItems(VolumeUseState.values());
     }
 
-    /// Puts the focus on the node.
+    /// Puts the focus on the type.
     public void focus() {
-        nodeName.focus();
+        volumeType.focus();
+    }
+
+    /// Shows the type of the volume, and the node only if the volume is local.
+    ///
+    /// @param volumeType Local or shared.
+    public void setVolumeType(final VolumeType volumeType) {
+        this.volumeType.setValue(volumeType);
+        updateNodeVisibility();
+    }
+
+    /// @return The chosen type of the volume, local or shared.
+    public VolumeType getVolumeType() {
+        return volumeType.getValue();
     }
 
     /// @param nodeNames The nodes the volume can belong to.
@@ -97,6 +118,11 @@ public class IndexVolumeEditor extends Component {
     /// @return The byte limit as typed.
     public String getByteLimit() {
         return bytesLimit.getText();
+    }
+
+    // A shared volume has no node, so only ask for one when the volume is local.
+    private void updateNodeVisibility() {
+        nodeNameGroup.setVisible(VolumeType.SHARED != volumeType.getValue());
     }
 
 

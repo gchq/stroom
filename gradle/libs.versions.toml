@@ -83,7 +83,7 @@ flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 gin = { module = "com.google.gwt.inject:gin", version = "2.1.2" }
 # DropWiz 5.0.2 pulls in 33.6.0-jre but this has a CVE, so manually bring in 33.7.2-jre
-guava = { module = "com.google.guava:guava", version = "33.7.2-jre" } # version controlled by dropwizard-dependencies
+guava = { module = "com.google.guava:guava", version = "33.8.0-jre" } # version controlled by dropwizard-dependencies
 guice-gwt = { module = "com.google.inject:guice", version = "3.0" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
@@ -99,13 +99,13 @@ jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 # and package names so can be used together.
 # -jdk8 and -jsr310 are now included in -databind in v3
 # https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
-jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.2.4" }
+jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.3.0" }
 # jackson-annotations is an exception as it still uses the old v2 maven coords
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by jackson-bom
 jackson-core = { module = "tools.jackson.core:jackson-core" } # version controlled by jackson-bom
 jackson-databind = { module = "tools.jackson.core:jackson-databind" } # version controlled by jackson-bom
 jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by jackson-bom
-jackson-jq = { module = "net.thisptr:jackson-jq", version = "1.2.0" }
+jackson-jq = { module = "net.thisptr:jackson-jq", version = "1.6.5" }
 
 # This is legacy Jackson v2 for anything that needs the old version, e.g. mbknor-jackson-jsonSchema
 # jackson-annotations is the same for both and is included above
@@ -134,7 +134,7 @@ jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version
 jersey-test-framework-grizzly2 = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2" } # version controlled by dropwizard-dependencies
 # DW 5.0.2 pulls in jetty 12.1.9 which has CVEs, so force it up to 12.1.4 for the fix
 # Once we move to DW 5.0.3, we can probably get rid of this and the 'implementation platform(libs.jetty.bom)' in root gradle
-jetty-bom = { module = "org.eclipse.jetty:jetty-bom", version = "12.1.14" }
+jetty-bom = { module = "org.eclipse.jetty:jetty-bom", version = "12.1.15" }
 jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by dropwizard-dependencies
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
 # The ee10 part needs to correspond to the version pulled in by dropwizard-jetty
@@ -157,7 +157,7 @@ junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" } # v
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" } # version controlled by junit-bom
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" } # version controlled by junit-bom
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" } # version controlled by junit-bom
-kryo = { module = "com.esotericsoftware:kryo", version = "5.5.0" }
+kryo = { module = "com.esotericsoftware:kryo", version = "5.7.1" }
 # lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
 # See https:#github.com/gchq/stroom/issues/3485 & https:#github.com/gchq/stroom/issues/4133
 # Potentially caused by https:#github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava

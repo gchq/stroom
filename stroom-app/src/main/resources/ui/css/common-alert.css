@@ -103,3 +103,14 @@
     width: 32px;
     height: 32px;
 }
+
+/* In forced colours (e.g. Windows high contrast) the arrow's transparent sides were drawn, so it
+   was a square. There it keeps them, the arrow in its link's colour */
+@media (forced-colors: active) {
+    .common-alert__show-hide-arrow {
+        forced-color-adjust: none;
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: currentColor;
+    }
+}

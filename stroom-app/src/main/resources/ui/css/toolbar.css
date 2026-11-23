@@ -94,3 +94,12 @@
 .toolbar--end {
     margin-left: auto;
 }
+
+/* In forced colours (e.g. Windows high contrast) a separator, a background, vanished. There it keeps
+   its own colours, in the text colour */
+@media (forced-colors: active) {
+    .toolbar__separator {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+}

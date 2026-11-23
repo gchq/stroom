@@ -21,5 +21,5 @@
 
 /* Wide enough for a path */
 .shared-file-store-settings__path {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }

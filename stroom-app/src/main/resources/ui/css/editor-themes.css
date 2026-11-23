@@ -276,3 +276,196 @@
     background: #1A237E; /* indigo 900 */
     border: none;
 }
+
+/* Forced colours (e.g. Windows high contrast). Ace keeps its theme's colours there
+   (forced-color-adjust: none on .ace_editor, in Ace), so the editor stayed the editor theme's, e.g.
+   dark grey on a light high contrast page. There, whatever editor theme is chosen, the editor takes
+   the system's colours: its background and text, gutter, cursor and brackets, with the selection a
+   tint of Highlight (the text is drawn over it in its own colour). Syntax colours are kept, from
+   Stroom Light's set on a light high contrast background and Stroom Dark's on a dark one (all 4.5:1
+   there), and comments are italic and keywords bold, so syntax isn't told by colour alone.
+   Important, as Ace adds its themes' rules after Stroom's */
+@media (forced-colors: active) {
+    .ace_editor,
+    .ace_editor .ace_gutter,
+    .ace_editor .ace_scroller,
+    .ace_editor .ace_content {
+        background-color: Canvas !important;
+        color: CanvasText !important;
+    }
+
+    .ace_editor {
+        border: 1px solid CanvasText;
+    }
+
+    .ace_editor .ace_gutter {
+        border-right: 1px solid CanvasText;
+    }
+
+    .ace_editor .ace_gutter-cell,
+    .ace_editor .ace_fold-widget {
+        color: CanvasText !important;
+        background-color: transparent !important;
+    }
+
+    /* The colour alone: the active line's gutter cell is also where an error or warning icon is
+       drawn, as a background image */
+    .ace_editor .ace_gutter-active-line,
+    .ace_editor .ace_marker-layer .ace_active-line {
+        background-color: transparent !important;
+        outline: 1px dotted CanvasText;
+        outline-offset: -1px;
+    }
+
+    .ace_editor .ace_marker-layer .ace_selection {
+        background: color-mix(in srgb, Highlight 40%, transparent) !important;
+        border: none !important;
+    }
+
+    .ace_editor .ace_marker-layer .ace_selected-word {
+        background: transparent !important;
+        border: 1px solid Highlight !important;
+    }
+
+    .ace_editor .ace_marker-layer .ace_bracket {
+        border-color: CanvasText !important;
+    }
+
+    .ace_editor .ace_cursor {
+        color: CanvasText !important;
+        border-color: CanvasText !important;
+    }
+
+    .ace_editor .ace_print-margin,
+    .ace_editor .ace_indent-guide,
+    .ace_editor .ace_indent-guide-active {
+        background: none !important;
+        box-shadow: inset -1px 0 GrayText !important;
+    }
+
+    .ace_editor .ace_invisible {
+        color: GrayText !important;
+    }
+
+    .ace_editor .ace_comment {
+        font-style: italic;
+    }
+
+    .ace_editor :is(.ace_keyword, .ace_storage, .ace_meta.ace_tag) {
+        font-weight: bold;
+    }
+
+    .ace_editor .ace_fold {
+        background-color: Canvas !important;
+        border-color: CanvasText !important;
+    }
+
+    .ace_editor .ace_invalid {
+        background-color: transparent !important;
+        color: CanvasText !important;
+        text-decoration: underline wavy;
+    }
+}
+
+/* Stroom Light's syntax colours, on a light high contrast background */
+@media (forced-colors: active) and (prefers-color-scheme: light) {
+    .ace_editor :is(.ace_storage, .ace_keyword, .ace_meta.ace_tag) {
+        color: #930f80 !important;
+    }
+
+    .ace_editor .ace_keyword.ace_operator {
+        color: #5a6676 !important;
+    }
+
+    .ace_editor :is(.ace_constant.ace_buildin, .ace_constant.ace_language) {
+        color: #4a4ee0 !important;
+    }
+
+    .ace_editor :is(.ace_constant.ace_library, .ace_support.ace_constant) {
+        color: #087a0f !important;
+    }
+
+    .ace_editor .ace_constant.ace_numeric {
+        color: #0000cd !important;
+    }
+
+    .ace_editor .ace_support.ace_function {
+        color: #3c4c72 !important;
+    }
+
+    .ace_editor :is(.ace_support.ace_type, .ace_support.ace_class, .ace_support.ace_other) {
+        color: #4f5bc4 !important;
+    }
+
+    .ace_editor .ace_variable {
+        color: #2a7080 !important;
+    }
+
+    .ace_editor .ace_variable.ace_parameter {
+        color: #a35200 !important;
+    }
+
+    .ace_editor .ace_comment {
+        color: #236e24 !important;
+    }
+
+    .ace_editor .ace_xml-pe {
+        color: #68685b !important;
+    }
+
+    .ace_editor .ace_entity.ace_name.ace_function {
+        color: #0000a2 !important;
+    }
+
+    .ace_editor .ace_entity.ace_other.ace_attribute-name {
+        color: #994409 !important;
+    }
+
+    .ace_editor .ace_heading {
+        color: #0c07ff !important;
+    }
+
+    .ace_editor .ace_list {
+        color: #b90690 !important;
+    }
+
+    .ace_editor .ace_string {
+        color: #1a1aa6 !important;
+    }
+
+    .ace_editor .ace_string.ace_regex {
+        color: #c00000 !important;
+    }
+}
+
+/* Stroom Dark's syntax colours, on a dark high contrast background */
+@media (forced-colors: active) and (prefers-color-scheme: dark) {
+    .ace_editor :is(.ace_keyword, .ace_storage, .ace_meta.ace_selector) {
+        color: #d08ae3 !important;
+    }
+
+    .ace_editor :is(.ace_constant, .ace_constant.ace_numeric, .ace_support.ace_class, .ace_xml-pe) {
+        color: #e5c383 !important;
+    }
+
+    .ace_editor .ace_constant.ace_character.ace_escape {
+        color: #71ccc7 !important;
+    }
+
+    .ace_editor :is(.ace_support.ace_function, .ace_entity.ace_name.ace_function, .ace_heading) {
+        color: #f08088 !important;
+    }
+
+    .ace_editor .ace_string {
+        color: #6fb342 !important;
+    }
+
+    .ace_editor .ace_comment {
+        color: #b5bac0 !important;
+    }
+
+    .ace_editor :is(.ace_variable, .ace_doctype, .ace_entity.ace_name.ace_tag,
+            .ace_entity.ace_other.ace_attribute-name, .ace_meta.ace_tag, .ace_string.ace_regexp) {
+        color: #66b2f0 !important;
+    }
+}

@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.layout;
 
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.client.a11y.TabStops;
 import stroom.gwt.workbench.client.a11y.TargetSpacing;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -293,6 +294,17 @@ public final class SplitPaneStories {
                 .withPlay(play -> {
                     final Value<Element> explorer = play.getByRole("separator", "Explorer").element();
                     final Value<Element> content = play.getByRole("separator", "Content").element();
+                    // In forced colours (e.g. Windows high contrast) both are the system's text
+                    // colour instead (split-pane.css)
+                    if (ForcedColours.active()) {
+                        for (final Value<Element> splitter : List.of(explorer, content)) {
+                            play.expect(same(
+                                    Value.of("a splitter's colour", () -> splitterColour(splitter.get())),
+                                    Value.of("CanvasText", () -> ForcedColours.colour("CanvasText"))))
+                                    .toBe(true);
+                        }
+                        return;
+                    }
                     play.expect(same(
                             Value.of("the explorer's splitter colour", () -> splitterColour(explorer.get())),
                             Value.of("red", () -> "rgb(255, 0, 0)")))

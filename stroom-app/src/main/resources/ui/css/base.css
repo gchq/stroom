@@ -559,7 +559,6 @@ p {
 
 td {
 	vertical-align: top;
-	font-size: 1px;
 }
 
 /* The other fields (inputs and text areas that aren't text fields have the same look, in
@@ -615,4 +614,32 @@ select[aria-invalid="true"]:focus-visible {
 /* A rejected value (aria-invalid, as FieldValidity sets it) */
 select[aria-invalid="true"] {
   border: thin solid var(--focus-border--invalid) !important;
+}
+
+/* Forced colours (e.g. Windows high contrast) draw no box shadow, and most focus rings are box
+   shadows (--focus-shadow), so whatever has the keyboard focus gets an outline in the system's
+   Highlight. Important, as many controls remove their outline when focused; 2px, at the border, so
+   it fits the room left for the shadow (--focus-ring__room). A control that draws its own focus
+   in forced colours (an outline of its own, or a line on a pseudo-element) overrides it in its own
+   stylesheet, with important too */
+@media (forced-colors: active) {
+    :focus-visible {
+        outline: 2px solid Highlight !important;
+        outline-offset: 0 !important;
+    }
+
+    /* A rejected value has a thicker, dashed border, as a text field's (text-field.css), as its red
+       one is replaced */
+    select[aria-invalid="true"] {
+        border-width: 2px;
+        border-style: dashed;
+    }
+
+    /* Selected text is in the system's selection colours, also in a field whose text colour is set
+       with -webkit-text-fill-color (text-field.css), which would otherwise draw it over Highlight */
+    ::selection {
+        background-color: Highlight;
+        color: HighlightText;
+        -webkit-text-fill-color: HighlightText;
+    }
 }

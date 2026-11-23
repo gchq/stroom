@@ -129,7 +129,29 @@ public class TestCeilingTime extends AbstractFunctionTest<CeilingTime> {
                         ValDate.create(crossDayExpectedMillis),
                         ValDate.create(crossDayInputMillis),
                         ValString.create("PT15M")
+                ),
+                TestCase.of(
+                        "Before 1970 mid bucket",
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 55, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 52, 30))),
+                        ValString.create("PT5M")
+                ),
+                TestCase.of(
+                        "Before 1970 one milli before the epoch",
+                        ValDate.create(utcMillis(LocalDateTime.of(1970, 1, 1, 0, 0, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1969, 12, 31, 23, 59, 59, 999_000_000))),
+                        ValString.create("PT1H")
+                ),
+                TestCase.of(
+                        "Before 1970 exactly on boundary",
+                        ValDate.create(utcMillis(LocalDateTime.of(1950, 6, 15, 8, 45, 0))),
+                        ValDate.create(utcMillis(LocalDateTime.of(1950, 6, 15, 8, 45, 0))),
+                        ValString.create("PT15M")
                 )
         );
+    }
+
+    private static long utcMillis(final LocalDateTime localDateTime) {
+        return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 }

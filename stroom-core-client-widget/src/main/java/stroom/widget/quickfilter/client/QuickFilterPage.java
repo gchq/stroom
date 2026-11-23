@@ -87,7 +87,7 @@ public class QuickFilterPage extends Component implements HasWidgets {
 
     /// @param content What the filter filters, e.g. a list.
     public void setContent(final IsWidget content) {
-        data.setWidget(content);
+        showContent(Widget.asWidgetOrNull(content));
     }
 
     /// Sets the filter's text; if it changes, the filter change callback is told.
@@ -135,14 +135,14 @@ public class QuickFilterPage extends Component implements HasWidgets {
         if (widget instanceof HelpHTML) {
             formGroup.add(widget);
         } else {
-            data.setWidget(widget);
+            showContent(widget);
         }
     }
 
     /// Removes the content.
     @Override
     public void clear() {
-        data.clear();
+        showContent(null);
     }
 
     /// @return The content, if any.
@@ -155,7 +155,24 @@ public class QuickFilterPage extends Component implements HasWidgets {
     /// @return Whether it was the content, and is removed.
     @Override
     public boolean remove(final Widget widget) {
-        return data.remove(widget);
+        if (!data.remove(widget)) {
+            return false;
+        }
+        quickFilter.removeFilteredGridsIn(widget);
+        return true;
+    }
+
+    // Shows the content, linking the filter to the grids it shows in place of the old content's, so
+    // that with no rows they say "No matches" while it is set and a replaced grid isn't kept
+    private void showContent(final Widget content) {
+        final Widget old = data.getWidget();
+        if (old != null) {
+            quickFilter.removeFilteredGridsIn(old);
+        }
+        data.setWidget(content);
+        if (content != null) {
+            quickFilter.addFilteredGridsIn(content);
+        }
     }
 
 

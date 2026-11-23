@@ -22,10 +22,8 @@ import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
-import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,9 +31,10 @@ import com.google.gwt.user.client.ui.Widget;
 /// The Set Scale dialog's content, which its [FloorMapSetScaleController] shows.
 ///
 /// ```
-/// The line you measured is currently   1 m
-///
-/// It is really   [ 2.4 ] [ Metres (m) v ]
+/// Measured Length
+/// 1 m
+/// Real Length
+/// [ 2.4 ] [ Metres (m) v ]
 /// ```
 ///
 /// The current reading is shown because it is the quantity being corrected —
@@ -51,8 +50,6 @@ public class FloorMapSetScale extends Component {
     @UiField
     Label currentReading;
     @UiField
-    TableCellElement distanceLabel;
-    @UiField
     TextBox distanceBox;
     @UiField
     SelectionBox<Unit> unitListBox;
@@ -66,13 +63,6 @@ public class FloorMapSetScale extends Component {
             }
         }
         unitListBox.setDisplayValueFunction(Unit::getLabel);
-
-        // The label text lives in a <td>, which names nothing on its own. Without this the dialog's
-        // only input is announced as an unnamed edit box
-        distanceLabel.setId(AriaUtil.uniqueId("floormap-label"));
-        AriaUtil.labelledBy(distanceBox, distanceLabel.getId());
-        // The unit list shares the row, so the row label alone would not say what it selects
-        AriaUtil.labelInnerControl(unitListBox, "Unit of the distance you typed");
     }
 
     /// @param reading What the line measures at the map's current scale.

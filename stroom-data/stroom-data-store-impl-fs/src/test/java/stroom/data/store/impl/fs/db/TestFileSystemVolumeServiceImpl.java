@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs.db;
 
 
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.cache.impl.TemplateCacheImpl;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
@@ -136,7 +135,6 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null,
                 null,
                 pathCreator,
-                new TemplateCacheImpl(new CacheManagerImpl()),
                 mockStoreImpl,
                 nodeInfo,
                 new SimpleTaskContextFactory(),

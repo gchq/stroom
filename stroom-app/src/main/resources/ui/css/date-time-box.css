@@ -5,15 +5,16 @@
  */
 
 /* Wide enough for a whole ISO 8601 time with an offset (2024-12-28T23:58:58.888+0530, 241px at the
-   medium font size) beside the calendar: 17 of the field's font size, so it fits at every font
-   size. A screen's width (w-100, or a class of its own) still wins */
+   medium font size) beside the calendar: 17 medium font sizes (245.48px) as wide as the text is
+   drawn, so it fits at every text size and spacing, and holds the field's least width. A screen's
+   width (w-100, or a class of its own) still wins */
 .date-time-box {
-    width: calc(var(--font-size-13) * 17);
+    width: calc(245.48px * var(--text-scale));
 }
 
 /* A time of day (14:30:00) needs no more than a text field's width */
 .date-time-box--time {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* Where it sits: */
@@ -22,6 +23,6 @@
    that (the term editor makes it icon-box--fluid, as icon-box.css gives a field 200px at least). With
    the --narrow modifier, to outrank term-editor.css's width, which comes later */
 .term-editor__item.term-editor__item--narrow.date-time-box {
-    width: calc(var(--font-size-13) * 17);
+    width: calc(245.48px * var(--text-scale));
     min-width: 0;
 }

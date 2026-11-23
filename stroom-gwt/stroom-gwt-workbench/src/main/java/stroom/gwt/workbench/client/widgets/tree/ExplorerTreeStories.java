@@ -348,7 +348,7 @@ public final class ExplorerTreeStories {
     /// Equivalent of `<p style={{fontSize: 12, marginTop: 8}}>`.
     private static Paragraph echo(final String text) {
         final Paragraph echo = new Paragraph();
-        echo.getElement().getStyle().setProperty("fontSize", "12px");
+        echo.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         echo.getElement().getStyle().setProperty("marginTop", "8px");
         echo.setText(text);
         return echo;

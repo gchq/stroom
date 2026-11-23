@@ -5,28 +5,22 @@
              xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
-      The Set Scale dialog's content (floor-map-set-scale.css): what the line measured comes to now, and
-      what it really is, a distance and its unit. The table only lays the labels beside their
-      controls, so it is presentation to assistive technology
+      The Set Scale dialog's content (floor-map-set-scale.css): a form, as every dialog's is, of what the
+      line measured comes to now, and what it really is, a distance and its unit
     -->
-    <g:HTMLPanel styleName="floor-map-set-scale">
-        <table class="floor-map-set-scale__fields" role="presentation">
-            <tbody>
-                <tr>
-                    <td>The line you measured is currently</td>
-                    <td><tx:Label ui:field="currentReading"/></td>
-                </tr>
-                <tr>
-                    <td ui:field="distanceLabel">It is really</td>
-                    <td>
-                        <g:FlowPanel styleName="floor-map-set-scale__row">
-                            <form:TextBox ui:field="distanceBox" addStyleNames="stroom-control floor-map-set-scale__distance"
-                                            placeholder="e.g. 2.4"/>
-                            <i:SelectionBox ui:field="unitListBox"/>
-                        </g:FlowPanel>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </g:HTMLPanel>
+    <g:FlowPanel styleName="form floor-map-set-scale">
+        <form:FormGroup identity="floorMapMeasuredLength" label="Measured Length"
+                        helpText="How long the line you drew measures at the map's current scale.">
+            <tx:Label ui:field="currentReading" addStyleNames="w-100 text-label--value"/>
+        </form:FormGroup>
+        <form:FormGroup identity="floorMapRealLength" label="Real Length"
+                        helpText="How long the line really is. The map is scaled so that the line measures this."
+                        controlNames="Distance, Unit of the distance you typed">
+            <g:FlowPanel styleName="floor-map-set-scale__row">
+                <form:TextBox ui:field="distanceBox" addStyleNames="floor-map-set-scale__distance"
+                              placeholder="e.g. 2.4"/>
+                <i:SelectionBox ui:field="unitListBox"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder>

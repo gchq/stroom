@@ -442,7 +442,7 @@ public final class ValueSpinnerStories {
     private static Widget withValueLabel(final ValueSpinner spinner) {
         final Label value = new Label("Value: " + spinner.getValue());
         value.getElement().getStyle().setProperty("marginTop", "8px");
-        value.getElement().getStyle().setProperty("fontSize", "12px");
+        value.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         spinner.addValueChangeHandler(event -> value.setText("Value: " + event.getValue()));
         return StoryPanels.column(8, spinner, value);
     }

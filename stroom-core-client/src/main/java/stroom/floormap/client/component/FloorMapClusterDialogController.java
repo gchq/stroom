@@ -61,9 +61,10 @@ import java.util.function.Function;
 /// by construction, so that fallback would have nothing to say.
 public class FloorMapClusterDialogController extends Controller {
 
-    /// Room for a dozen or so rows before the grid pages, over the map. Wider than the columns
-    /// strictly need so the search box and both dropdowns sit on one line rather than wrapping.
-    private static final PopupSize POPUP_SIZE = PopupSize.resizable(700, 500);
+    /// Room for a dozen or so rows before the grid pages, over the map, and for all five columns
+    /// (Name, Type, Area, Group and Id, 950px) without scrolling sideways; the search box and both
+    /// dropdowns sit on one line above them.
+    private static final PopupSize POPUP_SIZE = PopupSize.resizable(1000, 500);
 
     private final FloorMapClusterDialog view;
 

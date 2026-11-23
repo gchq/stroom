@@ -51,10 +51,11 @@
 /* In a link bar, as the document bar's: in line with its tabs, as high, the same shape and hover,
    after a "|" as between its tabs (its separators, tab-bar.css), drawn in its margin, which the bar
    leaves room for (AbstractTabBar.getSelectorRoom). Its padding is a link tab's, so the "|" is as
-   far from it as from the tab before */
+   far from it as from the tab before. The "|" is as wide as a separator, which grows with the text
+   size, so the bar measures one (--tab-selector__separator-width) */
 .tab-bar--link .tab-selector {
     top: 4px;
-    margin-left: 17px;
+    margin-left: calc(var(--tab-selector__separator-width, 15px) + 2px);
     box-sizing: border-box;
     height: 24px;
     align-items: center;
@@ -77,7 +78,7 @@
     content: "|";
     position: absolute;
     right: 100%;
-    width: 15px;
+    width: var(--tab-selector__separator-width, 15px);
     text-align: center;
     pointer-events: none;
 }
@@ -125,5 +126,11 @@
 @media (forced-colors: active) {
     .tab-selector:focus-visible::after {
         border-color: Highlight;
+    }
+
+    /* The line shows its focus, so not the outline base.css gives whatever has the keyboard focus
+       there (important, to win over it) */
+    .tab-selector:focus-visible {
+        outline: none !important;
     }
 }

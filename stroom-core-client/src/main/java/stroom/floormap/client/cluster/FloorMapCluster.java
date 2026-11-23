@@ -16,6 +16,8 @@
 
 package stroom.floormap.client.cluster;
 
+import stroom.floormap.client.geometry.FloorMapScreenGeometry;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -31,15 +33,21 @@ import java.util.Objects;
 /// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public final class FloorMapCluster {
 
+    /// How much bigger than a lone entity's a pair's glyph is: the cluster glyph
+    /// size over the point glyph size (32 px over 24 px).
+    private static final double PAIR_SIZE_FACTOR =
+            (double) FloorMapScreenGeometry.CLUSTER_GLYPH_SIZE_PX
+            / FloorMapScreenGeometry.POINT_GLYPH_SIZE_PX;
+
     /// How much wider a cluster's glyph gets per ten-fold increase in its member
-    /// count. A pair is barely bigger than a lone entity; ten are noticeably
-    /// bigger; a hundred bigger again.
+    /// count, as a fraction of a pair's. Twenty are noticeably bigger than a pair;
+    /// two hundred bigger again.
     private static final double GROWTH_PER_DECADE = 0.35;
 
-    /// The widest a cluster glyph may get, as a multiple of a lone entity's. Past
-    /// this the badge starts hiding more of the floor plan than the count is
-    /// worth, and the number in the pill carries the magnitude anyway.
-    private static final double MAX_SIZE_FACTOR = 1.8;
+    /// The widest a cluster glyph may get, as a multiple of a lone entity's (48 px
+    /// to its 24). Past this the badge starts hiding more of the floor plan than
+    /// the count is worth, and the number in the pill carries the magnitude anyway.
+    private static final double MAX_SIZE_FACTOR = 2.0;
 
     private final String key;
     private final String type;
@@ -153,7 +161,9 @@ public final class FloorMapCluster {
     }
 
     /// How much bigger a glyph standing for `memberCount` entities is drawn
-    /// than a lone entity's.
+    /// than a lone entity's: a pair at the cluster glyph size (32 px to a lone
+    /// entity's 24), larger ones growing from there, to at most twice a lone
+    /// entity's.
     ///
     /// Growth is logarithmic and capped: the difference between 2 and 20 should
     /// be visible at a glance, but a crowd of 500 cannot be allowed to blot out the
@@ -168,12 +178,14 @@ public final class FloorMapCluster {
     /// for.
     ///
     /// @param memberCount how many entities the glyph stands for
-    /// @return the multiplier, in `[1,`{@value #MAX_SIZE_FACTOR}`]`
+    /// @return the multiplier: `1` for fewer than two, otherwise in
+    ///         `[32/24,`{@value #MAX_SIZE_FACTOR}`]`
     public static double sizeFactor(final int memberCount) {
         if (memberCount < 2) {
             return 1.0;
         }
-        return Math.min(1.0 + GROWTH_PER_DECADE * Math.log10(memberCount), MAX_SIZE_FACTOR);
+        return Math.min(PAIR_SIZE_FACTOR * (1.0 + GROWTH_PER_DECADE * Math.log10(memberCount / 2.0)),
+                MAX_SIZE_FACTOR);
     }
 
     /// `true` if the given entity is one of this cluster's members.

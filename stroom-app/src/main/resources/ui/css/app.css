@@ -80,6 +80,7 @@
 @import url("code-editor.css");
 @import url("code-editor-overview-tooltip.css");
 @import url("scrollbar-metrics.css");
+@import url("text-scale-meter.css");
 @import url("editor-themes.css");
 @import url("tick-box.css");
 @import url("file-chooser.css");
@@ -153,7 +154,6 @@
 @import url("doc-ref-link.css");
 @import url("command-link.css");
 @import url("pager-panel.css");
-@import url("save-changed-documents.css");
 @import url("inline-label-icon.css");
 @import url("button-group.css");
 @import url("key-binding-preferences.css");
@@ -163,7 +163,6 @@
 @import url("info-table.css");
 @import url("query-help-detail.css");
 @import url("node-ping-bar.css");
-@import url("message-container.css");
 @import url("find-in-content.css");
 @import url("selection-item-cell.css");
 @import url("row-action.css");
@@ -262,6 +261,7 @@
 @import url("document-assets-tab.css");
 @import url("duplicate-management.css");
 @import url("imports-tab.css");
+@import url("index-volume-group-editor.css");
 @import url("users-and-groups.css");
 @import url("pipeline-structure.css");
 @import url("scheduled-processing.css");

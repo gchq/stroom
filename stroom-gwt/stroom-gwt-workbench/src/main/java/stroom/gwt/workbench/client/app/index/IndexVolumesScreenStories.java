@@ -75,6 +75,25 @@ public final class IndexVolumesScreenStories {
             .get("/node/v1/all", RestReply.json("[\"node1\", \"node2\"]"))
             .build();
 
+    // A shared volume (no node) beside a local one, so the group warns that it holds both
+    private static final String MIXED_VOLUMES = """
+            {
+              "values": [
+                {"id": 10, "indexVolumeGroupId": 1, "nodeName": "node1", "path": "/vol1", "state": "ACTIVE",
+                  "bytesTotal": 1000000000, "bytesUsed": 100000000, "bytesFree": 900000000},
+                {"id": 12, "indexVolumeGroupId": 1, "volumeType": "SHARED", "path": "/shared1", "state": "ACTIVE",
+                  "bytesTotal": 1000000000, "bytesUsed": 100000000, "bytesFree": 900000000}
+              ],
+              "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
+            }""";
+
+    private static final RestFixtures MIXED_FIXTURES = RestFixtures.builder()
+            .post("/index/volume/v2/find", RestReply.json(MIXED_VOLUMES))
+            .addAll(FIXTURES)
+            .build();
+
+    private static final String MIXED_WARNING = "This group holds both shared and local volumes.";
+
     // The new volume validates with a warning, e.g. its path doesn't exist yet
     private static final RestFixtures WARNING_FIXTURES = RestFixtures.builder()
             .post("/index/volume/v2/validate", RestReply.json(
@@ -136,6 +155,16 @@ public final class IndexVolumesScreenStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // New Index Volume Group left open (the screenshot and the dialog measurement show it)
+                .story("NewIndexVolumeGroupOpen", context -> render(context, NEW_GROUP_FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Default");
+                    play.click(play.getByTitle(NEW_GROUP));
+                    final Play dialog = screen.within(screen.findByText(NEW_GROUP, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("Name");
+                })
                 .story("Volumes", IndexVolumesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -143,6 +172,8 @@ public final class IndexVolumesScreenStories {
                     final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
                     groupDialog.findByText("/vol1");
                     groupDialog.findByText("Active");
+                    // Both volumes are local, so there is no warning about mixing them
+                    play.expect(groupDialog.getByText(TextMatch.containing(MIXED_WARNING))).not().toBeVisible();
                     // New volume → "New Index Volume" → set the path → OK (validated, then created)
                     play.click(groupDialog.getByTitle(NEW_VOLUME));
                     final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
@@ -154,6 +185,56 @@ public final class IndexVolumesScreenStories {
                                     .withJsonBodyContaining("{\"path\": \"/newvol\", \"indexVolumeGroupId\": 1}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // A shared volume has no node: choosing Shared hides the node, and the volume is saved
+                // without the node chosen before
+                .story("SharedVolume", IndexVolumesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
+                    groupDialog.findByText("/vol1");
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(volumeDialog.findByLabelText("Node"));
+                    play.click(screen.findByRole("option", "node1"));
+                    play.click(volumeDialog.getByLabelText("Type"));
+                    play.click(screen.findByRole("option", "Shared"));
+                    play.waitFor(() -> play.expect(volumeDialog.getByLabelText("Node")).not().toBeVisible());
+                    play.type(volumeDialog.getByLabelText("Path"), "/shared");
+                    play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/index/volume/v2")
+                                    .withJsonBodyContaining("{\"volumeType\": \"SHARED\", \"path\": \"/shared\"}")
+                                    .toSpyMatcher()));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/index/volume/v2").withBodyContaining("node1").toSpyMatcher());
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // A group holding shared and local volumes warns that the local ones' shards are only
+                // searched while their nodes are up
+                .story("MixedVolumesWarning", context -> render(context, MIXED_FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
+                    groupDialog.findByText("/shared1");
+                    play.expect(groupDialog.findByText(TextMatch.containing(MIXED_WARNING))).toBeVisible();
+                    play.expect(groupDialog.getByText("Shared")).toBeInTheDocument();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // New Index Volume left open (the screenshot and the dialog measurement show it)
+                .story("NewIndexVolumeOpen", IndexVolumesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
+                    groupDialog.findByText("/vol1");
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    volumeDialog.findByLabelText("Path");
                 })
                 // Declining the warning about a new volume leaves the dialog usable: OK and Cancel once
                 // stayed disabled, as only accepting the warning was handled

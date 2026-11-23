@@ -50,7 +50,7 @@ import java.util.List;
 /// </dg:PagerPanel>
 /// ```
 
-public class PagerPanel extends Component implements TaskMonitorFactory, HasWidgets {
+public class PagerPanel extends Component implements TaskMonitorFactory, HasWidgets, HasFiltered {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -69,11 +69,17 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
 
     // The children a template declared, in order
     private final List<Widget> children = new ArrayList<>();
+    // The widget paged, e.g. a grid
+    private Widget dataWidget;
+    // Whether a filter is set on the list's rows, for a list set after it was told (setFiltered)
+    private boolean filtered;
     private int taskCount;
 
     /// Makes an empty panel, e.g. one a template declares, or one GIN makes for a list controller.
     public PagerPanel() {
         initWidget(BINDER.createAndBindUi(this));
+        // A grid says nothing of its own with no rows while its errors show over it
+        messagePanel.setOnShownChange(shown -> coverDataWidget());
     }
 
     /// Shows a data widget, e.g. a grid, in the panel, with the pager paging it.
@@ -84,6 +90,9 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
         pager.setDisplay(widget);
         // Under the message, which shows over it
         listContainer.insert(widget, 0);
+        dataWidget = widget;
+        coverDataWidget();
+        setFiltered(filtered);
     }
 
     /// The toolbar beside the pager, for the list's own buttons, e.g.
@@ -149,6 +158,9 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
             // The pager stops paging the list it no longer shows
             pager.setDisplay(null);
         }
+        if (widget == dataWidget) {
+            dataWidget = null;
+        }
         widget.removeFromParent();
         return true;
     }
@@ -166,6 +178,25 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void showList(final Widget widget) {
         setDataWidget((Widget & HasRows) widget);
+    }
+
+    // Tells the grid whether the message covers it, so that its empty message doesn't show under it
+    private void coverDataWidget() {
+        if (dataWidget instanceof final DataGrid<?> grid) {
+            grid.setEmptyMessageCovered(messagePanel.isVisible());
+        }
+    }
+
+    /// Passes on to the list whether a filter is set on its rows, when it can be told
+    /// ([HasFiltered]), so that with none it says "No matches".
+    ///
+    /// @param filtered Whether a filter is set.
+    @Override
+    public void setFiltered(final boolean filtered) {
+        this.filtered = filtered;
+        if (dataWidget instanceof final HasFiltered list) {
+            list.setFiltered(filtered);
+        }
     }
 
     /// @return The pager's refresh button.

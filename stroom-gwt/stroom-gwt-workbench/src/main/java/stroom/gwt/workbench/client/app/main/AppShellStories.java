@@ -185,6 +185,11 @@ public final class AppShellStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The full shell over the rich fixture tree (Explorer left, empty content right)
                 .story("Default", context -> render(context, TreeFixtures.fixtureTree()))
+                // With no activities, no current activity below the explorer, nor its splitter
+                .withPlay(play -> {
+                    navTree(play, "Feeds");
+                    play.expect(play.queryByRole("separator", "Current activity")).toBeNull();
+                })
                 // The explorer's Filter Document Types button opens the type filter (the document types);
                 // turning a type off restricts the tree and lights the button
                 .story("ExplorerTypeFilter", context -> render(context, AppShellFixtures.dictTree(),
@@ -483,6 +488,9 @@ public final class AppShellStories {
                     // GWT's summary is a button with no title
                     final Query summary = play.findByRole("button", TextMatch.startingWith("Current Activity"));
                     play.expect(play.within(summary).getByText("none")).toBeInTheDocument();
+                    // A splitter between the tree and the current activity resizes the activity, to
+                    // give the tree more room or the activity more to show
+                    play.expect(play.getByRole("separator", "Current activity")).toBeInTheDocument();
                     play.click(play.within(summary).getByText("Current Activity"));
                     screen.findByText(ACTIVITY_TITLE, StroomDom.DIALOG_TITLE);
                     play.click(screen.findByText(TextMatch.containing("INV-1002")));
@@ -542,6 +550,17 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
                     play.waitFor(() -> play.expect(play.getByText("Dictionaries")).toBeInTheDocument());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // The splash screen (Terms of Use) left open (the screenshot and the dialog measurement
+                // show it)
+                .story("SplashScreenOpen", context -> render(context, AppShellFixtures.dictTree(),
+                        routes -> routes.post(ACKNOWLEDGE_SPLASH_PATH, RestReply.json("true")),
+                        builder -> builder.uiConfig(QueryFixtures.uiConfigWith(SPLASH)), null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Terms of Use", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByText("Accept to continue.");
                 })
                 // Double-clicking a document opens its editor in a tab; a folder opens too
                 .story("OpensDocument", context -> render(context, AppShellFixtures.dictTree(), routes -> {
@@ -879,6 +898,20 @@ public final class AppShellStories {
                             .toBeNull());
                     expectNoProblems(play);
                 })
+                // Keyboard Shortcuts left open (the screenshot and the dialog measurement show it)
+                .story("KeyboardShortcutsOpen", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    navTree(play).findByText("Countries");
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "User")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "User"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Keyboard Shortcuts")).toBeInTheDocument());
+                    play.click(menuItem(screen, "Keyboard Shortcuts"));
+                    final Play dialog = screen.within(screen.findByText("Keyboard Shortcuts", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText("Refresh list")).toBeInTheDocument());
+                })
                 // #4293: in the explorer, F2 renames the item with the focus and Alt+Enter shows its
                 // info, which its menu shows beside Rename and Show Info; a screen reader is told when
                 // they can't (a feed can't be renamed). #4163: Alt+Shift+S closes the saved tabs. The
@@ -985,6 +1018,21 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalledWith(
                             ValueMatcher.stringContaining("res-1")));
                     expectNoProblems(play);
+                })
+                // The Export dialog with its quick filter focused: the filter's focus ring is whole,
+                // not cut by the edges of the panel round it (the screenshot shows it)
+                .story("ExportFilterFocused", context -> render(context, AppShellFixtures.dictTree(),
+                        routes -> {
+                        },
+                        builder -> builder.appPermissions(AppPermission.EXPORT_CONFIGURATION), null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Export", StroomDom.MENU_ITEM_TEXT));
+                    final Query dialog = screen.findByText("Export", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG);
+                    final Query filter = play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
+                    play.click(filter);
+                    play.expect(filter).toHaveFocus();
                 })
                 // Rename renames the document and relabels its open tab
                 // (the server's rename is seen when the editor reloads the document)
@@ -1152,6 +1200,19 @@ public final class AppShellStories {
                             RequestMatcher.post(COPY_PATH).toSpyMatcher());
                     expectNoProblems(play);
                 })
+                // The Copy dialog with its folder quick filter focused: the filter's focus ring is whole,
+                // not cut by the edges of the panel round it (the screenshot shows it)
+                .story("CopyFilterFocused", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Copy To...", StroomDom.MENU_ITEM_TEXT));
+                    final Query dialog = screen.findByText("Copy Countries", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG);
+                    final Query filter = play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
+                    play.click(filter);
+                    play.expect(filter).toHaveFocus();
+                })
                 // Move: the folder chosen, no name box
                 .story("MoveDocument", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
@@ -1166,6 +1227,16 @@ public final class AppShellStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(MOVE_PATH).toSpyMatcher());
                     expectNoProblems(play);
+                })
+                // Move left open (the screenshot and the dialog measurement show it)
+                .story("MoveDocumentOpen", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Move", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Move Countries", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                 })
                 // On a node the user may only view, Rename, Move and Delete are disabled
                 .story("ContextMenuPermissions", context -> render(context, AppShellFixtures.dictTree(),

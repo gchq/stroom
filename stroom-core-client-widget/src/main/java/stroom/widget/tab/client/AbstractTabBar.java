@@ -79,6 +79,9 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     private static final String TAB_LEFT = "--tab-bar__left";
     private static final String SELECTOR_HIDDEN = "tab-selector--hidden";
     private static final String SELECTOR_LEFT = "--tab-selector__left";
+    // A separator's width, for the "|" before the overflow selector (tab-selector.css), which
+    // grows with the text size as the separators do
+    private static final String SELECTOR_SEPARATOR_WIDTH = "--tab-selector__separator-width";
     // How far the overflow selector is placed after the last tab shown (and its gap)
     private static final int SELECTOR_OFFSET = 2;
     // The panel the tabs show, which shows its keyboard focus (tab-bar.css)
@@ -1228,6 +1231,10 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     // selector's offset, and the selector with its margin before it (tab-selector.css)
     private int getSelectorRoom() {
         final Element selector = getTabSelector().getElement();
+        final int separatorWidth = getSeparatorWidth();
+        if (separatorWidth > 0) {
+            CssProperties.set(selector, SELECTOR_SEPARATOR_WIDTH, separatorWidth + "px");
+        }
         return getTabGap() + SELECTOR_OFFSET + marginLeft(selector) + selector.getOffsetWidth();
     }
 

@@ -18,13 +18,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -58,7 +59,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     /**
      * The column <code>stroom.index_shard.id</code>.
      */
-    public final TableField<IndexShardRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<IndexShardRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.index_shard.node_name</code>.
@@ -125,6 +126,26 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      */
     public final TableField<IndexShardRecord, Long> PARTITION_TO_MS = createField(DSL.name("partition_to_ms"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>stroom.index_shard.lease_instance_id</code>.
+     */
+    public final TableField<IndexShardRecord, String> LEASE_INSTANCE_ID = createField(DSL.name("lease_instance_id"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.index_shard.lease_expiry_ms</code>.
+     */
+    public final TableField<IndexShardRecord, Long> LEASE_EXPIRY_MS = createField(DSL.name("lease_expiry_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.index_shard.prune_commits_after_ms</code>.
+     */
+    public final TableField<IndexShardRecord, Long> PRUNE_COMMITS_AFTER_MS = createField(DSL.name("prune_commits_after_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.index_shard.recover_pending_streams</code>.
+     */
+    public final TableField<IndexShardRecord, Byte> RECOVER_PENDING_STREAMS = createField(DSL.name("recover_pending_streams"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+
     private IndexShard(Name alias, Table<IndexShardRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -161,7 +182,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.INDEX_SHARD_INDEX_SHARD_INDEX_UUID);
+        return Arrays.asList(Indexes.INDEX_SHARD_INDEX_SHARD_INDEX_UUID, Indexes.INDEX_SHARD_INDEX_SHARD_LEASE_INSTANCE_ID);
     }
 
     @Override
@@ -223,7 +244,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      */
     @Override
     public IndexShard where(Condition condition) {
-        return new IndexShard(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new IndexShard(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -290,7 +311,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexShard whereExists(Select<?> select) {
+    public IndexShard whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -298,7 +319,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexShard whereNotExists(Select<?> select) {
+    public IndexShard whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

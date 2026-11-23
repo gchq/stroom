@@ -35,7 +35,10 @@ import stroom.util.shared.ResultPage;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -86,23 +89,32 @@ public class ActiveShards {
     }
 
     public void addDocument(final IndexDocument document) {
+        addDocument(document, (PendingStreamTracker) null);
+    }
+
+    /// Adds a document to one of the shards.
+    ///
+    /// @param document The document.
+    /// @param tracker  Told which shard the document goes to before it is added, or null if no record of
+    ///                 the stream's uncommitted documents is being kept.
+    public void addDocument(final IndexDocument document, final PendingStreamTracker tracker) {
         // Try and add the document silently without locking.
-        final boolean success = addDocument(document, false);
+        final boolean success = addDocument(document, tracker, false);
 
         // Attempt under lock if we failed to add.
         if (!success) {
             LOGGER.debug("Trying again under lock");
             // If we failed then try under lock to make sure we get a new writer.
-            addDocumentUnderLock(document);
+            addDocumentUnderLock(document, tracker);
         }
     }
 
-    private void addDocumentUnderLock(final IndexDocument document) {
+    private void addDocumentUnderLock(final IndexDocument document, final PendingStreamTracker tracker) {
         boolean success = false;
         lock.lock();
         try {
             for (int attempt = 0; !success && attempt < MAX_ATTEMPTS; attempt++) {
-                success = addDocument(document, false);
+                success = addDocument(document, tracker, false);
                 if (!success) {
                     // If we weren't successful then try adding a shard.
                     addActiveShard(indexShardKey);
@@ -112,7 +124,7 @@ public class ActiveShards {
             // One final try that will throw an index exception if needed.
             if (!success) {
                 try {
-                    addDocument(document, true);
+                    addDocument(document, tracker, true);
                 } catch (final IndexException e) {
                     throw e;
                 } catch (final RuntimeException e) {
@@ -125,6 +137,7 @@ public class ActiveShards {
     }
 
     private boolean addDocument(final IndexDocument document,
+                                final PendingStreamTracker tracker,
                                 final boolean throwException) {
         final List<IndexShard> indexShards = getIndexShards();
         final int offset = sequence.getAndIncrement();
@@ -132,13 +145,13 @@ public class ActiveShards {
 
         for (int i = rem; i < indexShards.size(); i++) {
             final IndexShard indexShard = indexShards.get(i);
-            if (addDocument(document, indexShard, throwException)) {
+            if (addDocument(document, tracker, indexShard, throwException)) {
                 return true;
             }
         }
         for (int i = 0; i < rem; i++) {
             final IndexShard indexShard = indexShards.get(i);
-            if (addDocument(document, indexShard, throwException)) {
+            if (addDocument(document, tracker, indexShard, throwException)) {
                 return true;
             }
         }
@@ -146,16 +159,28 @@ public class ActiveShards {
     }
 
     private boolean addDocument(final IndexDocument document,
+                                final PendingStreamTracker tracker,
                                 final IndexShard indexShard,
                                 final boolean throwException) {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
             try {
+                if (tracker != null) {
+                    // Recorded first, so that there is no time when the shard holds documents of the
+                    // stream that nothing knows of.
+                    tracker.beforeAdd(indexShard.getId());
+                }
                 indexShardWriter.addDocument(document);
+                if (tracker != null) {
+                    tracker.added(indexShard.getId());
+                }
                 return true;
 
             } catch (final IndexException | UncheckedIOException e) {
                 LOGGER.trace(e::getMessage, e);
+                if (tracker != null) {
+                    tracker.addFailed(indexShard.getId());
+                }
 
                 removeActiveShard(indexShard);
                 indexShardWriterCache.close(indexShardWriter);
@@ -235,7 +260,20 @@ public class ActiveShards {
                 "getExistingShards(), found {} un-filtered shards, maxDocsPerShard: {}",
                 NullSafe.getOrElse(indexShardResultPage, ResultPage::size, 0),
                 maxDocsPerShard));
-        for (final IndexShard indexShard : indexShardResultPage.getValues()) {
+
+        // A closed shard on a shared volume belongs to no node, so use one that has room, whichever node
+        // wrote it, before creating another. Otherwise every restart and scale-up would add shards. The
+        // shard only becomes this node's when its lease is claimed on opening it, which another node may
+        // do first.
+        final Map<Long, IndexShard> candidates = new LinkedHashMap<>();
+        indexShardResultPage.getValues().forEach(indexShard -> candidates.put(indexShard.getId(), indexShard));
+        final Set<Long> ownShardIds = Set.copyOf(candidates.keySet());
+        NullSafe.list(indexShardDao.findUnleasedShardsOnSharedVolumes(
+                        indexShardKey.getIndexUuid(),
+                        indexShardKey.getPartition().getLabel()))
+                .forEach(indexShard -> candidates.putIfAbsent(indexShard.getId(), indexShard));
+
+        for (final IndexShard indexShard : candidates.values()) {
             // Look for non deleted, non-full, non-corrupt index shards.
             final IndexShardStatus status = indexShard.getStatus();
             final boolean isVolumeFull = indexShard.getVolume().getCapacityInfo().isFull();
@@ -250,7 +288,14 @@ public class ActiveShards {
                 LOGGER.debug(e::getMessage, e);
             }
 
-            if (status != null
+            // Take no more of the shards other nodes wrote than are needed to make up the number wanted.
+            // Every shard in the list gets opened, so taking them all would have one node hold every
+            // closed shard of the partition and leave the other nodes to create new ones.
+            final boolean wanted = ownShardIds.contains(indexShard.getId())
+                                   || indexShards.size() < shardsPerPartition;
+
+            if (wanted
+                && status != null
                 && REQUIRED_SHARD_STATES.contains(status)
                 && indexShard.getDocumentCount() < maxDocsPerShard
                 && !isVolumeFull

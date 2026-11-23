@@ -254,8 +254,11 @@ public class MenuController extends Controller implements Menu.Handler {
                         currentMenu = subMenu;
                         setCurrentItem(menuItem);
 
-                        final Rect dialog = new Rect(menu.getElement());
-                        final Rect selection = new Rect(element);
+                        // Measured exactly (not to the whole pixel, as getAbsoluteTop is): rows
+                        // are at fractional positions at any text size but Small, and the submenu's
+                        // first row is to be level with its item
+                        final Rect dialog = ElementUtil.getBoundingClientRectPlusWindowScroll(menu.getElement());
+                        final Rect selection = ElementUtil.getBoundingClientRectPlusWindowScroll(element);
                         Rect relativeRect = Rect.min(dialog, selection);
                         relativeRect = relativeRect.growX(HORIZONTAL_PADDING);
                         relativeRect = relativeRect.growY(VERTICAL_PADDING);

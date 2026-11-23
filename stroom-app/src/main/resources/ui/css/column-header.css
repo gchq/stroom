@@ -31,7 +31,8 @@
 
 .column-header__label {
 	display: inline;
-	height: 16px;
+	/* 16px at medium, growing with the text size (a fixed height cut large text off) */
+	height: calc(16px * var(--text-scale, 1));
 	padding: 0px;
 	padding-right: 5px;
 	font-weight: 500;

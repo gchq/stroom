@@ -26,6 +26,9 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
@@ -40,8 +43,15 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 @AutoLogged
 class IndexVolumeResourceImpl implements IndexVolumeResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeResourceImpl.class);
 
     private final Provider<IndexVolumeService> indexVolumeServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
@@ -66,7 +76,9 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
 
     @Override
     public ValidationResult validate(final IndexVolume indexVolume) {
-        if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
+        if (indexVolume.isShared()) {
+            return validateSharedVolume(indexVolume);
+        } else if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
             return indexVolumeServiceProvider.get().validate(indexVolume);
         } else {
             return nodeServiceProvider.get().remoteRestResult(
@@ -80,6 +92,90 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
                     builder ->
                             builder.post(Entity.json(indexVolume)));
         }
+    }
+
+    // A shared volume has no node, so the rules are checked on this node and then every other node is asked
+    // whether it can use the path. A node that lacks the mount would otherwise write its shards to a local
+    // directory that no other node can read.
+    private ValidationResult validateSharedVolume(final IndexVolume indexVolume) {
+        final IndexVolumeService indexVolumeService = indexVolumeServiceProvider.get();
+        final ValidationResult localResult = indexVolumeService.validate(indexVolume);
+        if ((!localResult.isOk() && !localResult.isWarning()) || !isPathOrTypeChanged(indexVolume)) {
+            return localResult;
+        }
+
+        final String thisNodeName = nodeInfoProvider.get().getThisNodeName();
+        final List<String> failures = new ArrayList<>();
+        final List<String> unreachableNodes = new ArrayList<>();
+        for (final String nodeName : nodeServiceProvider.get().getEnabledNodesByPriority()) {
+            if (!Objects.equals(nodeName, thisNodeName)) {
+                try {
+                    final ValidationResult nodeResult = nodeServiceProvider.get().remoteRestResult(
+                            nodeName,
+                            ValidationResult.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    IndexVolumeResource.BASE_PATH,
+                                    IndexVolumeResource.VALIDATE_PATH_SUB_PATH),
+                            () -> indexVolumeService.validatePath(indexVolume),
+                            builder -> builder.post(Entity.json(indexVolume)));
+                    if (nodeResult == null) {
+                        unreachableNodes.add(nodeName);
+                    } else if (!nodeResult.isOk()) {
+                        failures.add("Node '" + nodeName + "': " + nodeResult.getMessage());
+                    }
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Unable to check the path of a shared index volume on node {}: {}",
+                            nodeName, LogUtil.exceptionMessage(e)), e);
+                    unreachableNodes.add(nodeName);
+                }
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            return ValidationResult.error(
+                    "Every node must be able to use the path of a shared volume, but these cannot:\n"
+                    + String.join("\n", failures));
+        } else if (!unreachableNodes.isEmpty()) {
+            final String unreachableMessage = LogUtil.message("""
+                            The path could not be checked on node{} [{}] because {} could not be reached.
+                            Only continue if the path is the same shared mount on {}.
+                            Click OK to mark the volume as shared anyway.""",
+                    unreachableNodes.size() > 1
+                            ? "s"
+                            : "",
+                    unreachableNodes.stream()
+                            .map(nodeName -> "'" + nodeName + "'")
+                            .collect(Collectors.joining(", ")),
+                    unreachableNodes.size() > 1
+                            ? "they"
+                            : "it",
+                    unreachableNodes.size() > 1
+                            ? "those nodes"
+                            : "that node");
+            return ValidationResult.warning(localResult.isWarning()
+                    ? localResult.getMessage() + "\n\n" + unreachableMessage
+                    : unreachableMessage);
+        } else {
+            return localResult;
+        }
+    }
+
+    // The other nodes only need to be asked when the volume is new, is being marked as shared or is being
+    // given another path.
+    private boolean isPathOrTypeChanged(final IndexVolume indexVolume) {
+        if (indexVolume.getId() == null) {
+            return true;
+        }
+        final IndexVolume existing = indexVolumeServiceProvider.get().read(indexVolume.getId());
+        return existing == null
+               || !existing.isShared()
+               || !Objects.equals(existing.getPath(), indexVolume.getPath());
+    }
+
+    @Override
+    public ValidationResult validatePath(final IndexVolume indexVolume) {
+        return indexVolumeServiceProvider.get().validatePath(indexVolume);
     }
 
     @Override

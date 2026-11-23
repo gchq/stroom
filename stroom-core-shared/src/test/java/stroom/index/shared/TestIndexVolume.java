@@ -16,6 +16,7 @@
 
 package stroom.index.shared;
 
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.util.json.JsonUtil;
 
@@ -52,6 +53,61 @@ class TestIndexVolume {
         final IndexVolume indexVolume = JsonUtil.readValue(TEST_JSON, IndexVolume.class);
         Assertions.assertThat(indexVolume)
                 .isNotNull();
+    }
+
+    @Test
+    void testVolumeType_absentMeansLocal() {
+        // JSON written before volumes had a type has no volumeType, and such volumes are local.
+        final IndexVolume indexVolume = JsonUtil.readValue(TEST_JSON, IndexVolume.class);
+
+        Assertions.assertThat(indexVolume.getVolumeType())
+                .isEqualTo(VolumeType.LOCAL);
+        Assertions.assertThat(indexVolume.isShared())
+                .isFalse();
+        Assertions.assertThat(indexVolume.getIdentifier())
+                .isEqualTo("node1:sdfg");
+    }
+
+    @Test
+    void testVolumeType_builderDefaultsToLocal() {
+        Assertions.assertThat(IndexVolume.builder().build().getVolumeType())
+                .isEqualTo(VolumeType.LOCAL);
+        Assertions.assertThat(IndexVolume.builder().volumeType(null).build().getVolumeType())
+                .isEqualTo(VolumeType.LOCAL);
+    }
+
+    @Test
+    void testVolumeType_sharedSurvivesJson() {
+        final IndexVolume indexVolume = IndexVolume
+                .builder()
+                .path("/mnt/share/index")
+                .volumeType(VolumeType.SHARED)
+                .build();
+
+        final IndexVolume readBack = JsonUtil.readValue(JsonUtil.writeValueAsString(indexVolume), IndexVolume.class);
+
+        Assertions.assertThat(readBack.getVolumeType())
+                .isEqualTo(VolumeType.SHARED);
+        Assertions.assertThat(readBack.isShared())
+                .isTrue();
+        Assertions.assertThat(readBack)
+                .isEqualTo(indexVolume);
+        Assertions.assertThat(readBack.copy().build().getVolumeType())
+                .isEqualTo(VolumeType.SHARED);
+        // A shared volume has no node to name.
+        Assertions.assertThat(readBack.getIdentifier())
+                .isEqualTo("/mnt/share/index");
+    }
+
+    @Test
+    void testVolumeType_primitiveValues() {
+        // These values are stored in the database so must not change.
+        Assertions.assertThat(VolumeType.LOCAL.getPrimitiveValue())
+                .isEqualTo((byte) 0);
+        Assertions.assertThat(VolumeType.SHARED.getPrimitiveValue())
+                .isEqualTo((byte) 1);
+        Assertions.assertThat(VolumeType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue((byte) 1))
+                .isEqualTo(VolumeType.SHARED);
     }
 
     @Test

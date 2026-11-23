@@ -97,6 +97,14 @@ final class JoinClauses {
         return fromQuery != null;
     }
 
+    /// Finds whether any join line parsed so far has a time window, as in `within 10m after`.
+    ///
+    /// @return True if a join has a time window.
+    boolean hasWindowedJoin() {
+        return joins.stream().anyMatch(join -> join.window != null)
+               || (pendingJoin != null && pendingJoin.window != null);
+    }
+
     /// Gets the hidden columns that the where conditions on joined rows test, once where is placed.
     ///
     /// @return The fields they hold by column name.

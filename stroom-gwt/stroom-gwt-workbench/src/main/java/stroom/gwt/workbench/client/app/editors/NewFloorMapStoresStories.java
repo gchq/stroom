@@ -107,6 +107,16 @@ public final class NewFloorMapStoresStories {
                     play.expect(play.spy(ON_COMPLETE)).toHaveBeenCalledWith("true");
                     DocEditors.expectNoProblems(play);
                 })
+                // Choose Facts Store left open (the screenshot and the dialog measurement show it)
+                .story("ChooseFactsStoreOpen", context -> render(context, RestReply.json(DOC)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = dialog(play);
+                    play.fireEvent().mouseDown(dialog.querySelectorAll(".drop-down").nth(0), EventInit.create());
+                    final Play picker = screen.within(screen.findByText("Choose Facts Store", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    picker.findByText("office-facts");
+                })
                 // A save that fails resets the dialog: it stays open with OK enabled, so OK can be
                 // tried again
                 .story("SaveFails", context -> render(context, RestReply.error(500, "Disk full")))

@@ -89,6 +89,8 @@ public class FieldValuePicker extends Component {
     /// Makes an empty picker.
     public FieldValuePicker() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        filter.addFilteredGrid(list);
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
 
         final DataGridSelectionEventManager<FieldValueCount> selectionEventManager =
@@ -198,7 +200,8 @@ public class FieldValuePicker extends Component {
         scope.setTitle("");
         showMessage(null);
         list.setRowData(0, values);
-        list.setRowCount(0);
+        // Not known, so the list doesn't say it has none while the values are fetched
+        list.setRowCount(0, false);
     }
 
     /// Sets the filter's text, without the filter change callback being told.

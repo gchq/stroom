@@ -27,3 +27,18 @@
 .floor-map-grid__line--minor {
     stroke: var(--floormap-grid__minor-stroke);
 }
+
+/* In forced colours (Windows High Contrast) the grid is drawn in the system's colours: an SVG's
+   fill and stroke from the theme's variables would otherwise stay, leaving a dark theme's dark
+   grid under the scale bar and captions, which are in the system's text colour. The lines are
+   GrayText, the minor ones still faded in by their stroke-opacity */
+@media (forced-colors: active) {
+    .floor-map-grid__background {
+        fill: Canvas;
+    }
+
+    .floor-map-grid__line--major,
+    .floor-map-grid__line--minor {
+        stroke: GrayText;
+    }
+}

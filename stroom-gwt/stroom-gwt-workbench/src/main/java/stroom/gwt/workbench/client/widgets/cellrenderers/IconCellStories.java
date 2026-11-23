@@ -92,7 +92,7 @@ public final class IconCellStories {
 
     private static Widget clickableIcons(final StoryContext context) {
         final InlineLabel clicked = new InlineLabel(CellRendererWidgets.NO_ACTION);
-        clicked.getElement().getStyle().setProperty("fontSize", "12px");
+        clicked.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         final Spy onClick = context.fn(ON_CLICK);
 
         final CellWidget<CellIcon> info = pressable(CellIcon.of(SvgImage.INFO, "View info"), () -> {

@@ -84,11 +84,14 @@
 }
 
 /* A box that clips (e.g. a form, which scrolls) has room inside for the focus ring round a control
-   at its edge, and reaches as far outside to keep its contents where they were */
+   at its edge, and reaches as far outside to keep its contents where they were. A control focused
+   at the edge of one that scrolls is scrolled into view with that room round it, not flush with the
+   edge, where its ring was cut off */
 .focus-ring-room,
 .form:not(.form-padding) {
     padding: var(--focus-ring__room);
     margin: calc(-1 * var(--focus-ring__room));
+    scroll-padding: var(--focus-ring__room);
 }
 
 .focus-ring-room.max,
@@ -110,7 +113,7 @@
 
 /* A dialog's least size, and a part of a form that does not apply (from components.css) */
 .default-min-sizes {
-    min-width: 200px;
+    min-width: calc(200px * var(--text-scale));
     min-height: 200px;
 }
 

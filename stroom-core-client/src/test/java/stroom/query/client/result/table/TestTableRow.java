@@ -55,6 +55,13 @@ class TestTableRow {
                 .addCase(
                         " prefix [link1](b){c} and [link2](e){f} and [link3](g){h} suffix ",
                         " prefix link1 and link2 and link3 suffix ")
+                // Regression: what follows a link whose text or address has characters that are
+                // encoded (?, =, &, space) was lost, as the link was skipped by its encoded length
+                .addCase("[link1](a?b=c&d=e){c} suffix", "link1 suffix")
+                .addCase("[link 1](b){c}<tab> suffix", "link 1 suffix")
+                .addCase(
+                        "[Open](data?id=1001&partNo=1){data} [Source](data?id=1003&partNo=1){data}",
+                        "Open Source")
                 // A link with no text is shown with a name made from its address, not dropped
                 .addCase("[](https://example.com/a?b=c)", "example.com/a")
                 .addCase(" prefix [](https://example.com/a){browser} suffix ", " prefix example.com/a suffix ")

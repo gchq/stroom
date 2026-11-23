@@ -22,6 +22,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.HasFiltered;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -38,7 +39,7 @@ import java.util.function.Consumer;
 /// The documents whose permissions can be changed (the Document Permissions tab's list): a striped
 /// list of a page of them, the one with the focus chosen, which Enter or a double click opens; and
 /// Filter, Edit and Batch Edit, whose enabled states its owner sets.
-public class DocumentList extends Component {
+public class DocumentList extends Component implements HasFiltered {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -62,6 +63,9 @@ public class DocumentList extends Component {
     };
     private Runnable onBatchEdit = () -> {
     };
+    // What narrows the documents, either of which makes an empty list say "No matches"
+    private boolean quickFiltered;
+    private boolean expressionFiltered;
 
     /// Makes an empty list.
     public DocumentList() {
@@ -132,6 +136,25 @@ public class DocumentList extends Component {
     /// @param onBatchEdit Run when Batch Edit is pressed.
     public void setOnBatchEdit(final Runnable onBatchEdit) {
         this.onBatchEdit = onBatchEdit;
+    }
+
+    /// Says whether the quick filter above the list is set, so that with no documents it says "No
+    /// matches".
+    ///
+    /// @param filtered Whether the quick filter is set.
+    @Override
+    public void setFiltered(final boolean filtered) {
+        quickFiltered = filtered;
+        resultList.setFiltered(quickFiltered || expressionFiltered);
+    }
+
+    /// Says whether the Filter dialog's expression narrows the documents, so that with none it says
+    /// "No matches".
+    ///
+    /// @param filtered Whether the expression has any conditions.
+    public void setExpressionFiltered(final boolean filtered) {
+        expressionFiltered = filtered;
+        resultList.setFiltered(quickFiltered || expressionFiltered);
     }
 
 

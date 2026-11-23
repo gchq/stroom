@@ -42,3 +42,18 @@
     box-shadow: var(--focus-shadow);
     border-radius: .25rem;
 }
+
+/* In forced colours (e.g. Windows high contrast) a link button looked like the text around it, as
+   the colour that marked it was replaced. There it is the system's link: LinkText, underlined (or
+   GrayText when disabled). Important, as callers colour their link buttons */
+@media (forced-colors: active) {
+    .link-button {
+        color: LinkText !important;
+        text-decoration: underline !important;
+    }
+
+    .link-button:is(:disabled, [aria-disabled="true"]) {
+        color: GrayText !important;
+        text-decoration: none !important;
+    }
+}

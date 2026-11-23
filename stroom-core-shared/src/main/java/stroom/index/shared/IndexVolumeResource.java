@@ -46,6 +46,7 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
     String BASE_PATH = "/index/volume" + ResourcePaths.V2;
     String RESCAN_SUB_PATH = "/rescan";
     String VALIDATE_SUB_PATH = "/validate";
+    String VALIDATE_PATH_SUB_PATH = "/validatePath";
 
     @POST
     @Path("find")
@@ -60,6 +61,18 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
             summary = "Validates an index volume",
             operationId = "validateIndexVolume")
     ValidationResult validate(@Parameter(description = "request", required = true) IndexVolume request);
+
+    /// Checks that the node receiving the request can use the path of a volume. Used to check the path of
+    /// a shared volume on every node.
+    ///
+    /// @param request The volume whose path is to be checked.
+    /// @return Ok if the node can write to the path, otherwise an error.
+    @POST
+    @Path(VALIDATE_PATH_SUB_PATH)
+    @Operation(
+            summary = "Validates that the node called can use the path of an index volume",
+            operationId = "validateIndexVolumePath")
+    ValidationResult validatePath(@Parameter(description = "request", required = true) IndexVolume request);
 
     @POST
     @Operation(

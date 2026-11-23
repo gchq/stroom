@@ -13,5 +13,5 @@
 }
 
 .analytic-email-destination__button {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }

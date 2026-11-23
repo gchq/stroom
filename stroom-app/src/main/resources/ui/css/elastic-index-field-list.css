@@ -31,7 +31,7 @@
 }
 
 .elastic-index-field-list__filter {
-    width: 250px;
+    width: calc(250px * var(--text-scale));
     flex-shrink: 0;
 }
 

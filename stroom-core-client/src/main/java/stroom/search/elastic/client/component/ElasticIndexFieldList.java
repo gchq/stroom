@@ -122,6 +122,8 @@ public class ElasticIndexFieldList extends Component {
     /// Makes an empty list.
     public ElasticIndexFieldList() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        nameFilter.addFilteredGrid(dataGrid);
         removeTitle = remove.getTitle();
         dataGrid.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         // The list is read from the index, so the pager's own refresh isn't needed: Refresh reads it

@@ -279,6 +279,19 @@ public final class FloorMapMapTabStories {
                     play.expect(play.getByText("Group").closest(ROW)).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
+                // New Group left open (the screenshot and the dialog measurement show it)
+                .story("NewGroupOpen", FloorMapMapTabStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    eventsShown(play);
+                    play.click(play.getByText("Groups", TAB_LABEL));
+                    play.findByText("Engineers");
+                    play.click(play.getByRole("button", "New Group"));
+                    final Play dialog = screen.within(screen.findByText("New Group", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText("0 members selected of 6 entities"))
+                            .toBeInTheDocument());
+                })
                 // A floor map the user may only view: its groups can't be added, edited or deleted,
                 // nor a tracked person added to one (they once followed no read-only state). A
                 // group's eye still highlights it, as that changes only the view

@@ -113,7 +113,7 @@ public final class DocumentTickTreeStories {
         final Style checkedStyle = checked.getElement().getStyle();
         checkedStyle.setProperty("padding", "4px");
         checkedStyle.setProperty("borderTop", "1px solid #555");
-        checkedStyle.setProperty("fontSize", "12px");
+        checkedStyle.setProperty("fontSize", "var(--font-size-11)");
 
         // Story-only adapter: the tree has no change event for its ticks (Stroom reads
         // getSelectedSet() when the dialog is closed), so read them after each click or key press

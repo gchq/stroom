@@ -125,6 +125,9 @@ public final class FieldEndStories {
         final ValueSpinner spinner = new ValueSpinner();
         spinner.setMax(Long.MAX_VALUE);
         spinner.setValue(1234567890123456789L);
+        // Narrow, so that its longest value overflows it at every text size: the default width
+        // holds it once the text scale is measured
+        spinner.addStyleName("value-spinner--narrow");
         panel.add(named(spinner, "Spinner", "value-spinner"));
         return panel;
     }
