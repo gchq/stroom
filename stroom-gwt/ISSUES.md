@@ -453,7 +453,8 @@ with the `+`).
 **Fixed in Stroom (gchq/stroom#6059, 19 November 2026); the visualisations still to declare their
 keys.** A visualisation's settings can now declare its keys in a `selection` section
 (`[{"key": "series", "label": "Series", "type": "TEXT"}, ...]`, read into `VisSelectionKey`), and
-`VisSelectionModel` offers those, or `name` and `value` if it declares none. The selection handler
+`VisSelectionModel` offers those, or `name` and `value` if it has no `selection` section (an empty
+one, `[]`, says that nothing can be selected in it, so it offers none). The selection handler
 editor's current selection lists every pane's keys, without values, while nothing is selected in it
 (stories `SelectionHandlerOffersVisKeys`, `SelectionHandlerOffersUndeclaredVisKeys` and
 `SelectionHandlerFollowsVisSettings`). A dashboard visualisation pane's keys are set as soon as

@@ -47,10 +47,16 @@ class TestVisSelectionModel {
     }
 
     @Test
-    void testNoDeclaredKeys() {
-        // A visualisation that declares none keeps name and value, as before keys were declared
+    void testUndeclaredKeys() {
+        // A visualisation that doesn't declare its keys keeps name and value, as before keys were
+        // declared
         assertThat(VisSelectionModel.columnRefsOf(null)).isEqualTo(NAME_AND_VALUE);
-        assertThat(VisSelectionModel.columnRefsOf(List.of())).isEqualTo(NAME_AND_VALUE);
+    }
+
+    @Test
+    void testNoKeys() {
+        // A visualisation in which nothing can be selected declares that it has no keys
+        assertThat(VisSelectionModel.columnRefsOf(List.of())).isEmpty();
     }
 
     @Test
@@ -60,7 +66,7 @@ class TestVisSelectionModel {
                 new VisSelectionKey(null, "Series", "TEXT"),
                 new VisSelectionKey("  ", null, null),
                 null)))
-                .isEqualTo(NAME_AND_VALUE);
+                .isEmpty();
     }
 
     @Test

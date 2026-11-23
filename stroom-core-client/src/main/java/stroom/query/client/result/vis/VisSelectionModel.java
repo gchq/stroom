@@ -68,7 +68,8 @@ public class VisSelectionModel
     /// The keys a visualisation's selections have, as columns, e.g. for a text pane to read its
     /// stream id from or a selection handler to insert.
     ///
-    /// @return The keys the visualisation declares, or `name` and `value` if it declares none.
+    /// @return The keys the visualisation declares (none if nothing can be selected in it), or `name`
+    ///         and `value` if it doesn't declare them.
     @Override
     public List<ColumnRef> getColumnRefs() {
         return keys;
@@ -85,23 +86,25 @@ public class VisSelectionModel
     /// section (see [VisSelectionKey]). An entry without a key is left out.
     ///
     /// @param visSettings The visualisation's settings, may be null.
-    /// @return Its selection keys, in the order declared; empty if it declares none.
+    /// @return Its selection keys, in the order declared (empty if it declares that nothing can be
+    ///         selected in it), or null if it has no `selection` section.
     public static List<VisSelectionKey> parseSelectionKeys(final JSONObject visSettings) {
-        final List<VisSelectionKey> selectionKeys = new ArrayList<>();
         final JSONArray array = visSettings == null
                 ? null
                 : JSONUtil.getArray(visSettings.get("selection"));
-        if (array != null) {
-            for (int i = 0; i < array.size(); i++) {
-                final JSONObject json = JSONUtil.getObject(array.get(i));
-                final String key = json == null
-                        ? null
-                        : JSONUtil.getString(json.get("key"));
-                if (key != null) {
-                    selectionKeys.add(new VisSelectionKey(key,
-                            JSONUtil.getString(json.get("label")),
-                            JSONUtil.getString(json.get("type"))));
-                }
+        if (array == null) {
+            return null;
+        }
+        final List<VisSelectionKey> selectionKeys = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            final JSONObject json = JSONUtil.getObject(array.get(i));
+            final String key = json == null
+                    ? null
+                    : JSONUtil.getString(json.get("key"));
+            if (key != null) {
+                selectionKeys.add(new VisSelectionKey(key,
+                        JSONUtil.getString(json.get("label")),
+                        JSONUtil.getString(json.get("type"))));
             }
         }
         return selectionKeys;
@@ -112,11 +115,16 @@ public class VisSelectionModel
     /// Keys that are blank or have spaces around them are left out, as no selection the
     /// visualisation sends under them could be named in a parameter.
     ///
-    /// @param selectionKeys The keys from its settings, empty or null if it declares none.
-    /// @return The columns, or `name` and `value` if it declares no keys.
+    /// @param selectionKeys The keys from its settings: empty if nothing can be selected in it, or
+    ///                      null if it doesn't declare them.
+    /// @return The columns, or `name` and `value` if it doesn't declare its keys, as all
+    ///         visualisations were taken to have before keys were declared.
     public static List<ColumnRef> columnRefsOf(final List<VisSelectionKey> selectionKeys) {
+        if (selectionKeys == null) {
+            return UNDECLARED_KEYS;
+        }
         final List<ColumnRef> columnRefs = new ArrayList<>();
-        for (final VisSelectionKey selectionKey : NullSafe.list(selectionKeys)) {
+        for (final VisSelectionKey selectionKey : selectionKeys) {
             final String key = NullSafe.get(selectionKey, VisSelectionKey::getKey);
             if (NullSafe.isNonBlankString(key) && key.equals(key.trim())) {
                 final ColumnRef columnRef = new ColumnRef(key, key);
@@ -125,9 +133,7 @@ public class VisSelectionModel
                 }
             }
         }
-        return columnRefs.isEmpty()
-                ? UNDECLARED_KEYS
-                : Collections.unmodifiableList(columnRefs);
+        return Collections.unmodifiableList(columnRefs);
     }
 
     /// Takes what is selected in the visualisation (its frame's selection callback), telling the

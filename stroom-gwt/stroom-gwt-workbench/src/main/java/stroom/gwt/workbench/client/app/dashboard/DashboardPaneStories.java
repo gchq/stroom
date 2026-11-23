@@ -120,6 +120,11 @@ public final class DashboardPaneStories {
             + "{\\\"key\\\": \\\"x\\\", \\\"label\\\": \\\"X\\\", \\\"type\\\": \\\"DATE_TIME\\\"}, "
             + "{\\\"key\\\": \\\"y\\\", \\\"label\\\": \\\"Y\\\", \\\"type\\\": \\\"NUMBER\\\"}]}\"}";
 
+    // A visualisation in which nothing can be selected, which says it has no selection keys
+    private static final String VISUALISATION_WITHOUT_SELECTION = "{\"type\": \"Visualisation\", "
+            + "\"uuid\": \"vis-1\", \"name\": \"Bar\", \"functionName\": \"stub\", "
+            + "\"settings\": \"{\\\"selection\\\": []}\"}";
+
     // A favourite saved by the stories' 'My Fav'
     private static final String MY_FAV = "{\"id\": 100, \"name\": \"My Fav\", \"favourite\": true, "
                                          + "\"componentId\": \"q1\", \"dashboardUuid\": \"dash-3\", \"query\": "
@@ -258,6 +263,13 @@ public final class DashboardPaneStories {
                 .withPlay(play -> expectOfferedSelectionKeys(play,
                         List.of("name", "value"),
                         List.of("series")))
+                // A visualisation in which nothing can be selected offers no keys, not name and value
+                .story("SelectionHandlerOffersNoVisKeys", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_VIS_DASHBOARD, routes -> selectionKeyRoutes(routes,
+                                VISUALISATION_WITHOUT_SELECTION)))
+                .withPlay(play -> expectOfferedSelectionKeys(play,
+                        List.of(),
+                        List.of("name", "value")))
                 // Choosing no visualisation in the Chart's settings drops the keys its last one
                 // declared, for name and value
                 .story("SelectionHandlerFollowsVisSettings", DashboardSupport.story(
@@ -1324,12 +1336,18 @@ public final class DashboardPaneStories {
         play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
         play.click(settings.findAllByTitle("New Selection Handler").nth(0));
         final Play handler = DashboardPlays.dialog(screen, "Add New Selection Handler");
+        // The current selection lists the table's keys too, once it is shown
+        play.waitFor(() -> play.expect(handler.findAllByText(TextMatch.startingWith("${component.t1.selection."))
+                .nth(0)).toBeInTheDocument());
         for (final String key : offered) {
             play.waitFor(() -> play.expect(handler.getByText("${component.v1.selection." + key + "}"))
                     .toBeInTheDocument());
         }
+        // A key the Chart doesn't have can be shown until its visualisation is fetched (until then
+        // it is taken to have name and value), so the play waits for it to go
         for (final String key : notOffered) {
-            play.expect(handler.queryByText("${component.v1.selection." + key + "}")).toBeNull();
+            play.waitFor(() -> play.expect(handler.queryByText("${component.v1.selection." + key + "}"))
+                    .toBeNull());
         }
         DashboardPlays.expectNoProblems(play);
     }
