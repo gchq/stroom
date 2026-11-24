@@ -62,6 +62,9 @@ import java.util.regex.Pattern;
 ///   - user: Initiator.Id, user.name
 ///   - host: HostName
 ///   ```
+///   The keys: `user`, `person` (`person id`), `target person` (`target person id`), `target user`, `host`,
+///   `application` (`process`), `object`, `element` (`event detail`), `action`, `event type` (`event code`), and,
+///   for `compare_activity`'s categories and location, `category` and `country`.
 ///
 /// The docs are given most general first, as [AgentInstructions.Standing#applyingTo] gives them.
 public final class InstructionRules {
@@ -102,6 +105,10 @@ public final class InstructionRules {
     public static final String ACTION_FIELD = "action";
     /// The field holding the source's own code for the type of event (e.g. a vendor's event id).
     public static final String EVENT_TYPE_FIELD = "event type";
+    /// The field holding the source's own category of what an event reached (e.g. a proxy's URL category).
+    public static final String CATEGORY_FIELD = "category";
+    /// The field holding the country an event came from, as a code (e.g. where a sign-in came from).
+    public static final String COUNTRY_FIELD = "country";
 
     /// What each stage may be called in a doc.
     static final Map<String, String> STAGES = Map.ofEntries(
@@ -154,7 +161,9 @@ public final class InstructionRules {
             Map.entry("event detail", ELEMENT_FIELD),
             Map.entry("action", ACTION_FIELD),
             Map.entry("event type", EVENT_TYPE_FIELD),
-            Map.entry("event code", EVENT_TYPE_FIELD));
+            Map.entry("event code", EVENT_TYPE_FIELD),
+            Map.entry("category", CATEGORY_FIELD),
+            Map.entry("country", COUNTRY_FIELD));
     private static final Pattern FIELDS_HEADING = Pattern.compile("^#{1,6}\\s*fields\\s*$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern REQUIRED_HEADING = Pattern.compile("^#{1,6}\\s*required imports\\s*$",

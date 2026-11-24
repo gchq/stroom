@@ -129,11 +129,16 @@ class TestInstructionRules {
                          + "case.\n"),
                 doc("/Indexes/Proxy", "## Fields\n- `User`: SrcUser\n- event type: `Vendor.EventId`\n- person id: "
                                       + "user.id\n- target person: user.target.id\n- Target user: "
-                                      + "user.target.name\n")));
+                                      + "user.target.name\n- category: url.category\n- Country: "
+                                      + "source.geo.country_iso_code, Country\n")));
 
         assertThat(fields).containsOnlyKeys(InstructionRules.USER_FIELD, InstructionRules.HOST_FIELD,
                 InstructionRules.EVENT_TYPE_FIELD, InstructionRules.PERSON_FIELD,
-                InstructionRules.TARGET_PERSON_FIELD, InstructionRules.TARGET_USER_FIELD);
+                InstructionRules.TARGET_PERSON_FIELD, InstructionRules.TARGET_USER_FIELD,
+                InstructionRules.CATEGORY_FIELD, InstructionRules.COUNTRY_FIELD);
+        assertThat(fields.get(InstructionRules.CATEGORY_FIELD).fields()).containsExactly("url.category");
+        assertThat(fields.get(InstructionRules.COUNTRY_FIELD).fields()).containsExactly(
+                "source.geo.country_iso_code", "Country");
         assertThat(fields.get(InstructionRules.TARGET_PERSON_FIELD).fields()).containsExactly("user.target.id");
         assertThat(fields.get(InstructionRules.TARGET_USER_FIELD).fields()).containsExactly("user.target.name");
         assertThat(fields.get(InstructionRules.PERSON_FIELD).fields()).containsExactly("user.id");
@@ -149,8 +154,8 @@ class TestInstructionRules {
 
         assertThat(InstructionRules.problems(text)).singleElement().asString()
                 .startsWith("'## Fields' line '- colour: Red' names none the tools know (action, application, "
-                            + "element, event code, event detail, event type, host, object, person, person id, "
-                            + "process, target person, target person id, target user, user)");
+                            + "category, country, element, event code, event detail, event type, host, object, "
+                            + "person, person id, process, target person, target person id, target user, user)");
         assertThat(InstructionRules.fieldProblems(text, Set.of("Initiator.Id", "HostName")))
                 .containsExactly("'## Fields' line for user names no field the data sources where the doc applies "
                                  + "have (Initiator.ID)");
