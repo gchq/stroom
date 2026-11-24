@@ -89,6 +89,42 @@ class TestCheckSkillTool {
                 .contains("no_steps");
     }
 
+    @Test
+    void aDraftOfASavedSkillIsCheckedAgainstItsOwnDocSoItsSavedVersionIsNoNearDuplicate() {
+        final String changed = TestSkillDoc.TIMELINE.replace("A table in the chat.", "A timeline in the chat.");
+
+        run(Map.of("markdown", changed));
+
+        // The doc being edited is given, so its saved version of the skill is left out of the near-duplicates.
+        Mockito.verify(facts).forSkill(Mockito.argThat(skill -> "User activity timeline".equals(skill.name())),
+                Mockito.eq(SKILLS), Mockito.eq(false), Mockito.any());
+    }
+
+    @Test
+    void aDraftOfASavedSkillIsCheckedAgainstTheDocOfTheFolderGiven() {
+        final DocRef elsewhere = new DocRef(DocumentationDoc.TYPE, "elsewhere", SkillDoc.DOC_NAME);
+        final DocRef other = new DocRef(ExplorerConstants.FOLDER_TYPE, "otherFolder", "Other");
+        final SkillDoc.Skill skill = SkillDoc.parse(TestSkillDoc.TIMELINE).skills().getFirst();
+        Mockito.when(catalogue.readable(Mockito.any())).thenReturn(List.of(
+                new Listed(SKILLS, HUNTS, "/Hunts", skill, -1),
+                new Listed(elsewhere, other, "/Other", skill, -1)));
+        Mockito.when(documentAccess.findFolder("/Other")).thenReturn(Optional.of(other));
+
+        run(Map.of("markdown", TestSkillDoc.TIMELINE, "folder", "/Other"));
+        run(Map.of("markdown", TestSkillDoc.TIMELINE));
+
+        // In the folder given; with two of its name and no folder, neither is known to be the one being edited.
+        Mockito.verify(facts).forSkill(Mockito.any(), Mockito.eq(elsewhere), Mockito.eq(false), Mockito.any());
+        Mockito.verify(facts).forSkill(Mockito.any(), Mockito.isNull(), Mockito.eq(false), Mockito.any());
+    }
+
+    @Test
+    void aNewDraftIsCheckedAsInNoDoc() {
+        run(Map.of("markdown", "# Firewall denies\n\nCounts denied connections.\n"));
+
+        Mockito.verify(facts).forSkill(Mockito.any(), Mockito.isNull(), Mockito.eq(false), Mockito.any());
+    }
+
     private String run(final Map<String, Object> arguments) {
         return tool.execute(new ToolCall("c1", CheckSkillTool.NAME, JsonUtil.writeValueAsString(arguments)),
                 ToolCalls.outsideChat()).text();

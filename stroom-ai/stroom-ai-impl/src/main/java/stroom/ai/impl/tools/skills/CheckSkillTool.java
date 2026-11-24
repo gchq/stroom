@@ -91,7 +91,8 @@ public class CheckSkillTool extends AbstractBuiltInTool {
                              + "used it.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "A saved skill's name.")
-                        .addStringProperty(FOLDER_ARG, "The folder of its skills doc, where two share a name.")
+                        .addStringProperty(FOLDER_ARG, "The folder of its skills doc, where two share a name; "
+                                                       + "with markdown, the folder the draft is for.")
                         .addStringProperty(DOC_ARG, "A Documentation doc (UUID or path) to check every skill of.")
                         .addStringProperty(MARKDOWN_ARG, "A draft skill to check instead, from its '# Name' "
                                                          + "heading.")
@@ -132,6 +133,22 @@ public class CheckSkillTool extends AbstractBuiltInTool {
         return ToolResult.text(sb.toString().stripTrailing());
     }
 
+    // The skills the user can read of a name (or its slug), in the folder given if one is found.
+    private List<Listed> named(final ToolCall request, final ToolCallContext context, final String name) {
+        final String folder = NullSafe.trim(stringArg(request, FOLDER_ARG));
+        final DocRef wantedFolder = NullSafe.isBlankString(folder)
+                ? null
+                : documentAccess.findFolder(folder).orElse(null);
+        final List<DocRef> contextFolders = context.session().chatId().isPresent()
+                ? catalogue.contextFolders(context.session().chatId().getAsInt())
+                : List.of();
+        return catalogue.readable(contextFolders).stream()
+                .filter(skill -> skill.skill().name().equalsIgnoreCase(name)
+                                 || SkillDoc.slug(skill.skill().name()).equals(SkillDoc.slug(name)))
+                .filter(skill -> wantedFolder == null || skill.folder().equals(wantedFolder))
+                .toList();
+    }
+
     @Override
     public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final String markdown = rawArg(request, MARKDOWN_ARG);
@@ -141,7 +158,16 @@ public class CheckSkillTool extends AbstractBuiltInTool {
                 return ToolResult.text("Error: give one skill, from its '# Name' heading.");
             }
             final Skill skill = skills.getFirst();
-            final List<Finding> findings = SkillChecks.check(skill, null, facts.forSkill(skill, null, false,
+            // A draft of a saved skill is checked as of the doc being edited, so its saved version there isn't a
+            // near-duplicate of it.
+            final List<DocRef> docs = named(request, context, skill.name()).stream()
+                    .map(Listed::doc)
+                    .distinct()
+                    .toList();
+            final DocRef edited = docs.size() == 1
+                    ? docs.getFirst()
+                    : null;
+            final List<Finding> findings = SkillChecks.check(skill, null, facts.forSkill(skill, edited, false,
                     context.session()));
             return ToolResult.text("Draft skill '" + skill.name() + "':\n" + SkillChecks.describe(findings));
         }
@@ -153,19 +179,7 @@ public class CheckSkillTool extends AbstractBuiltInTool {
         if (NullSafe.isBlankString(name)) {
             return ToolResult.text("Error: give a saved skill's name, a doc, or a draft's markdown.");
         }
-        final String folder = NullSafe.trim(stringArg(request, FOLDER_ARG));
-        final DocRef wantedFolder = NullSafe.isBlankString(folder)
-                ? null
-                : documentAccess.findFolder(folder).orElse(null);
-        final List<DocRef> contextFolders = context.session().chatId().isPresent()
-                ? catalogue.contextFolders(context.session().chatId().getAsInt())
-                : List.of();
-        final Listed listed = catalogue.readable(contextFolders).stream()
-                .filter(skill -> skill.skill().name().equalsIgnoreCase(name)
-                                 || SkillDoc.slug(skill.skill().name()).equals(SkillDoc.slug(name)))
-                .filter(skill -> wantedFolder == null || skill.folder().equals(wantedFolder))
-                .findFirst()
-                .orElse(null);
+        final Listed listed = named(request, context, name).stream().findFirst().orElse(null);
         if (listed == null) {
             return ToolResult.text("No skill named '" + name + "' that you can read. Find it with "
                                    + FindSkillsTool.NAME + ".");
