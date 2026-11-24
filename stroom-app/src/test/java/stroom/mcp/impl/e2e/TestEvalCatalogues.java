@@ -94,8 +94,8 @@ class TestEvalCatalogues {
                 }
             }
         }
-        // Every case but the ten question cases (62 to 64, 71 to 75, 77 and 78) builds a translation.
-        assertThat(built).isEqualTo(EvalCases.IDS.size() - 10);
+        // Every case but the 14 question cases (62 to 64, 71 to 75, 77 to 82) builds a translation.
+        assertThat(built).isEqualTo(EvalCases.IDS.size() - 14);
     }
 
     @Test
