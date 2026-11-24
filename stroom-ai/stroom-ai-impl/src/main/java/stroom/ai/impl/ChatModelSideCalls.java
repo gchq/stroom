@@ -20,6 +20,8 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.NullSafe;
 
@@ -37,23 +39,31 @@ import jakarta.inject.Singleton;
 /// A chat's side calls ([ModelSideCalls]): to the run's configured model, as step and compaction summaries are
 /// ([ModelStreamer#callUnseen]), so a stop is seen while the model answers, and their tokens added to the run's
 /// usage, as a summary's are.
+///
+/// Each call runs as the user whose run it is, whichever thread makes it: a tool may make its side calls on worker
+/// threads of its own (an activity timeline's characterisation classifies its batches in parallel), which carry no
+/// user, and reading the model's API key needs one (seen in chat 195: every batch failed Stroom's security check).
 @Singleton
 class ChatModelSideCalls implements ModelSideCalls.ForChat {
 
     private final AiService aiService;
     private final ModelStreamer modelStreamer;
     private final Provider<AiChatRunManager> runManagerProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
-    /// @param aiService          Gives the run's model as one that streams.
-    /// @param modelStreamer      Calls the model unseen, as summaries are.
-    /// @param runManagerProvider Adds the calls' tokens to the run's usage.
+    /// @param aiService               Gives the run's model as one that streams.
+    /// @param modelStreamer           Calls the model unseen, as summaries are.
+    /// @param runManagerProvider      Adds the calls' tokens to the run's usage.
+    /// @param securityContextProvider Runs each call as the run's user.
     @Inject
     ChatModelSideCalls(final AiService aiService,
                        final ModelStreamer modelStreamer,
-                       final Provider<AiChatRunManager> runManagerProvider) {
+                       final Provider<AiChatRunManager> runManagerProvider,
+                       final Provider<SecurityContext> securityContextProvider) {
         this.aiService = aiService;
         this.modelStreamer = modelStreamer;
         this.runManagerProvider = runManagerProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -61,6 +71,9 @@ class ChatModelSideCalls implements ModelSideCalls.ForChat {
         if (run == null || run.getChatModel() == null) {
             return ModelSideCalls.NONE;
         }
+        // The run's user, from the tool's own thread: a call made on another thread is made as them.
+        final SecurityContext securityContext = securityContextProvider.get();
+        final UserIdentity user = securityContext.getUserIdentity();
         return new ModelSideCalls() {
             @Override
             public boolean available() {
@@ -75,7 +88,9 @@ class ChatModelSideCalls implements ModelSideCalls.ForChat {
 
             @Override
             public Answer ask(final Question question) {
-                return call(chatId, run, question);
+                return user == null
+                        ? call(chatId, run, question)
+                        : securityContext.asUserResult(user, () -> call(chatId, run, question));
             }
         };
     }
