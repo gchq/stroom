@@ -1,16 +1,28 @@
 name: Is the curious viewer unusual compared with their team (a question, nothing built)
 kind: question
-capabilities: [compare, elasticsearch]
-# NOT YET IN EvalCases.IDS: see 79. The known answer: P10003 (Finance) looks up 30 to 60 records a working day in June
-# 2026 in the cloud audit, where Finance peers make a few; peers are found from each person's Organisation, read from
-# one of their events' Event XML. The trap: grouping peers by anything else (the index has no Organisation field).
+capabilities: [compare, elasticsearch, insider]
+# The insider-risk dataset's cloud audit events from 2 February to 30 June 2026 in one Elasticsearch index "Insider
+# events", with their Events XML in a stream in Stroom (streams: true), which is the only place each person's
+# Organisation is. The known answer: P10003 (Finance) looks up 30 to 60 records a working day from 2026-06-01, where
+# her Finance peers make a few. The answer: compare_activity with peers, found from each person's Organisation read
+# from one of their events. The trap: grouping peers by anything else (the index has no Organisation field).
+# Skipped without an Elasticsearch node.
 elastic_index:
-  generate: {kind: insider_dataset, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
-             sources: [cloud, endpoint]}
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-06-30',
+             sources: [cloud], streams: true}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
 request: >
-  Is Priya Raman (person id P10003) unusual compared with her team in June 2026?
+  Is Priya Raman (person id P10003) unusual compared with her team in June 2026? Use the "Insider events" index.
 user_knows: >
-  The person id is in user.id on every index; a person's team is the Organisation on their events.
+  The "Insider events" Elasticsearch index holds every source's events: PersonId is the person's id, the same in
+  every source (UserName differs by source); Destination is the site a web request reached, Category the proxy's
+  category of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
+  Times are Sydney time (Australia/Sydney).
+  A person's team is the Organisation on their events.
 expected:
   tools_used: [compare_activity]
   answer:
@@ -24,8 +36,11 @@ expected:
 reference:
   compare_activity:
     person: P10003
+    personField: PersonId
+    sources: [Insider events]
     windowFrom: '2026-06-01'
     windowTo: '2026-06-27'
     baselineFrom: '2026-02-02'
     unit: week
+    location: false
     timeZone: Australia/Sydney

@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -229,6 +230,84 @@ class TestEvalCases {
                 .toList();
         assertThat(tasks).isNotEmpty().isEqualTo(((Map<String, Object>) EvalCases.load(
                 "80_insider_working_on_a_day").get("expected")).get("activities"));
+    }
+
+    @Test
+    void theCompareCasesFindingsAreTheGeneratorsKnownAnswer() {
+        final Map<String, Object> known = InsiderDataset.generate(new InsiderDataset.Options(InsiderDataset.SEED, 12,
+                0.15, List.of(new InsiderDataset.Period(LocalDate.of(2026, 2, 2), LocalDate.of(2026, 2, 2)))))
+                .knownAnswer();
+        final Map<String, Map<String, Object>> plants = new LinkedHashMap<>();
+        ((List<Map<String, Object>>) known.get("plants")).forEach(plant -> plants.put(String.valueOf(plant.get(
+                "person_id")), plant));
+        final Map<String, Map<String, Object>> decoys = new LinkedHashMap<>();
+        ((List<Map<String, Object>>) known.get("decoys")).forEach(decoy -> decoys.put(String.valueOf(decoy.get(
+                "kind")), decoy));
+        final String pipeline = String.valueOf(decoys.get("source-wide pipeline change").get("from"));
+
+        // 83: the leaver's job-site browsing starts the change; the pipeline change is not hers.
+        final Map<String, Object> leaver = EvalCases.load("83_compare_leaver_before_leaving");
+        final Map<String, Object> leaverPlant = plants.get(InsiderDataset.LEAVER);
+        assertThat(matcher(leaver, "must_include", 0)).containsEntry("near", leaverPlant.get("from"));
+        assertThat(matcher(leaver, "must_include", 1)).containsEntry("feature", "category:"
+                                                                                 + InsiderDataset.JOB_CATEGORY);
+        assertThat(matcher(leaver, "must_not_include", 0)).containsEntry("near", pipeline);
+        assertThat(String.valueOf(leaver.get("request"))).contains("25 September 2026");
+        assertThat(((Map<String, Object>) leaverPlant.get("facts")).get("leaving")).isEqualTo("2026-09-25");
+        final List<Map<String, String>> leaverEvents = EvalCases.table((Map<String, Object>) leaver.get(
+                "elastic_index")).records().stream()
+                .filter(event -> InsiderDataset.LEAVER.equals(event.get("PersonId")))
+                .toList();
+        assertThat(leaverEvents).anySatisfy(event -> assertThat(event.get("Category"))
+                .isEqualTo(InsiderDataset.JOB_CATEGORY));
+        assertThat(leaverEvents).anySatisfy(event -> assertThat(event.get("Site")).isEqualTo("sites/legal"));
+
+        // 84: the viewer's look-ups from the plant's start, above her peers of the plant's Organisation, read from
+        // the events' XML in Stroom (one event a record).
+        final Map<String, Object> viewer = EvalCases.load("84_compare_viewer_against_team");
+        final Map<String, Object> viewerPlant = plants.get(InsiderDataset.VIEWER);
+        assertThat(matcher(viewer, "must_include", 0)).containsEntry("evidence_contains", "Organisation '"
+                + ((Map<String, Object>) viewerPlant.get("facts")).get("peers") + "'");
+        assertThat(matcher(viewer, "must_include", 1)).containsEntry("near", viewerPlant.get("from"));
+        final Map<String, Object> generate = (Map<String, Object>) ((Map<String, Object>) viewer.get("elastic_index"))
+                .get("generate");
+        assertThat(EvalQuestionRecords.storesInsiderStreams(generate)).isTrue();
+        final List<String> xml = EvalQuestionRecords.insiderEventXml(generate);
+        final List<Map<String, String>> viewerRecords = EvalCases.table((Map<String, Object>) viewer.get(
+                "elastic_index")).records();
+        assertThat(xml).hasSameSizeAs(viewerRecords);
+        assertThat(xml.getFirst()).contains("<Organisation>");
+        assertThat(xml.getFirst()).contains(viewerRecords.getFirst().get("PersonId"));
+
+        // 85: a new country while on leave, as planted.
+        final Map<String, Object> compromised = EvalCases.load("85_compare_compromised_in_april");
+        final Map<String, Object> facts = (Map<String, Object>) plants.get(InsiderDataset.COMPROMISED).get("facts");
+        assertThat(matcher(compromised, "must_include", 0)).containsEntry("window", facts.get("country"));
+        final List<String> leave = (List<String>) facts.get("leave");
+        assertThat((List<String>) ((Map<String, Object>) ((Map<String, Object>) compromised.get("reference"))
+                .get("compare_activity")).get("leave")).containsExactly(leave.get(0) + ".." + leave.get(1));
+        assertThat(EvalCases.table((Map<String, Object>) compromised.get("elastic_index")).records())
+                .anySatisfy(event -> {
+                    assertThat(event.get("PersonId")).isEqualTo(InsiderDataset.COMPROMISED);
+                    assertThat(event.get("Country")).isEqualTo(facts.get("country"));
+                });
+
+        // 86: the migration's days and the pipeline change aren't the person's.
+        final Map<String, Object> decoy = EvalCases.load("86_compare_decoys_not_flagged");
+        final Map<String, Object> migration = decoys.get("approved migration");
+        assertThat(matcher(decoy, "must_not_include", 0)).containsEntry("window_in", List.of(migration.get("from"),
+                migration.get("to")));
+        assertThat(matcher(decoy, "must_not_include", 1)).containsEntry("near", pipeline);
+        assertThat((List<String>) ((Map<String, Object>) ((Map<String, Object>) decoy.get("reference"))
+                .get("compare_activity")).get("exceptions")).containsExactly(migration.get("from") + ".."
+                                                                              + migration.get("to") + ": "
+                                                                              + migration.get("exception"));
+    }
+
+    // One of a compare case's finding matchers.
+    private static Map<String, Object> matcher(final Map<String, Object> evalCase, final String list, final int at) {
+        return (Map<String, Object>) ((List<?>) ((Map<String, Object>) ((Map<String, Object>) evalCase.get(
+                "expected")).get("findings")).get(list)).get(at);
     }
 
     // The case's events (its Lucene or Elastic index's) in the week, that the filter keeps.

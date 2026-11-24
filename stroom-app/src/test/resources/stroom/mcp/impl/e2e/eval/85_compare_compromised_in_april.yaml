@@ -1,18 +1,27 @@
 name: Anything odd about the compromised account in April (a question, nothing built)
 kind: question
-capabilities: [compare, elasticsearch]
-# NOT YET IN EvalCases.IDS: see 79. The known answer: P10004 is on leave 2026-04-06 to 2026-04-17; their cloud account
-# signs in from Romania (RO) at night on 2026-04-08, 09, 13 and 14, and the VPN from RO on 2026-04-09. The traps:
-# missing the leave (it is in the request, not the data), and calling it the person's doing (an account compromise
-# looks alike: both explanations stay open).
+capabilities: [compare, elasticsearch, insider]
+# The insider-risk dataset's cloud audit and VPN events from 2 February to 30 April 2026 in one Elasticsearch index
+# "Insider events". The known answer: P10004 is on leave 2026-04-06 to 2026-04-17; their cloud account signs in from
+# Romania (RO) at night on 2026-04-08, 09, 13 and 14, and the VPN from RO on 2026-04-09. The traps: missing the leave
+# (it is in the request, not the data), and calling it the person's doing (a compromised account looks alike: both
+# explanations stay open). Skipped without an Elasticsearch node.
 elastic_index:
-  generate: {kind: insider_dataset, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-04-30',
              sources: [cloud, vpn]}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
 request: >
   Tom Bakker (person id P10004) was on leave from 6 to 17 April 2026. Is there anything odd about his activity in
-  April?
+  April? Use the "Insider events" index.
 user_knows: >
-  The person id is in user.id; sign-ins and VPN logins hold the country in source.geo.country_iso_code.
+  The "Insider events" Elasticsearch index holds every source's events: PersonId is the person's id, the same in
+  every source (UserName differs by source); Destination is the site a web request reached, Category the proxy's
+  category of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
+  Times are Sydney time (Australia/Sydney).
 expected:
   tools_used: [compare_activity]
   answer:
@@ -27,10 +36,13 @@ expected:
 reference:
   compare_activity:
     person: P10004
+    personField: PersonId
+    sources: [Insider events]
     windowFrom: '2026-04-06'
     windowTo: '2026-04-20'
     baselineFrom: '2026-02-02'
     unit: week
     leave: ['2026-04-06..2026-04-17']
+    countryField: Country
     peers: false
     timeZone: Australia/Sydney
