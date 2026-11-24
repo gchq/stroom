@@ -171,11 +171,11 @@ public class TimelineFields {
     /// @param found  The field found.
     /// @param folder The index's folder, e.g. `/Indexes`, or null if not known.
     /// @return E.g. "To make user.name the user field here, add `- user: user.name` under `## Fields` in an AGENTS
-    ///         doc in /Indexes."
+    ///         doc in /Indexes (with propose_instructions)."
     static String suggestion(final String what, final Found found, final String folder) {
         return "To make " + found.field() + " the " + what + " field here, add `- " + what + ": " + found.field()
                + "` under `## Fields` in an AGENTS doc in " + NullSafe.nonBlankStringElse(folder,
-                "the index's folder") + ".";
+                "the index's folder") + " (with propose_instructions).";
     }
 
     /// @param path An event-logging path, e.g. `EventSource/User/Id`.

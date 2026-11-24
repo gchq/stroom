@@ -105,13 +105,15 @@ class TestTimelineFields {
             assertThat(found.origin()).isEqualTo(Origin.CONVENTION);
             assertThat(found.from()).isEqualTo("the field convention (stroom-flat)");
             assertThat(found.suggestion()).isEqualTo("To make UserId the user field here, add `- user: UserId` "
-                                                     + "under `## Fields` in an AGENTS doc in /Indexes/Proxy.");
+                                                     + "under `## Fields` in an AGENTS doc in /Indexes/Proxy (with "
+                                                     + "propose_instructions).");
         });
         assertThat(fields.find(SESSION, PROXY, InstructionRules.HOST_FIELD, List.of(), Set.of("host.name")::contains))
                 .hasValue(new Found("host.name", Origin.CONVENTION, "ecs", "To make host.name the host field here, "
                                                                            + "add `- host: host.name` under `## "
                                                                            + "Fields` in an AGENTS doc in "
-                                                                           + "/Indexes/Proxy."));
+                                                                           + "/Indexes/Proxy (with "
+                                                                           + "propose_instructions)."));
     }
 
     @Test

@@ -249,7 +249,8 @@ class TestActivityTimelineAnySource {
                 .containsEntry("user_field_from", "the index's documentation");
         assertThat(result).containsEntry("fields_lines_to_offer", List.of("To make UserId the user field here, add "
                                                                           + "`- user: UserId` under `## Fields` in "
-                                                                          + "an AGENTS doc in /Indexes."));
+                                                                          + "an AGENTS doc in /Indexes (with "
+                                                                          + "propose_instructions)."));
     }
 
     @Test
