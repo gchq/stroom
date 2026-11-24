@@ -1733,10 +1733,15 @@ identities, and holds it as Stroom reference data)
 * **Indexed for aggregates**: `compare_activity` aggregates in the index, so it needs the person id as an index
   field; where it is only in the Event XML, the timeline still works (it reads the XML), and the comparison says so
   and falls back to the user field.
-* **Peers by `EventSource/User/UserDetails/Organisation`** (user, 2026-11-24), which processing decorates with the
-  person: grouped by it in the same aggregate (as an index field), no lookup. It is the peer group by default; a
-  skill or AGENTS doc may name another `UserDetails` element (`Unit`, `Group`, `Role`) for finer groups.
-  `Nationality` and like elements are never a peer group or a feature.
+* **Peers by `EventSource/User/UserDetails/Organisation`** (user, 2026-11-24), which processing decorates in the
+  Event XML only, not the index, so it can't be grouped by in an aggregate. Peers are found in two steps: the
+  people active in the window, from the index (one aggregate by the person or user field); then one event of each
+  read back (`fetch_events`, its XML) for its `Organisation`, capped (about 200 people, asked past it), the map of
+  person to organisation kept in the workspace and reused. The group's features are then aggregated in the index
+  for those people (`IN` their ids), and each day's median taken in code. Where a site has the membership in
+  reference data, its map (named in the skill or AGENTS doc) replaces the sampling. A skill or AGENTS doc may name
+  another `UserDetails` element (`Unit`, `Group`, `Role`) for finer groups; `Nationality` and like elements are
+  never a peer group or a feature.
 * **The rest of the context from reference data**: what isn't on events (start and leaving dates, leave, approved
   exceptions, sensitive assets, a team's members where not decorated). Gap: the agent can list reference data maps
   (`find_reference_data`) but not read a value by key; a read-only lookup by map, keys and effective time (Stroom's
