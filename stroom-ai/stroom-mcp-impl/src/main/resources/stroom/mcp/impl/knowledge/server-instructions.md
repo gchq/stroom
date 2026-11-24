@@ -14,7 +14,8 @@ Reference stream yet is stepped only once that table is processed (Stroom rememb
 Events sent on to ArcSight: CEF output
 (draft_cef_mapping). A pipeline to evaluate (how well an existing one works): evaluate_pipeline, then the report from
 its outline, shown to the user and saved only if they want it kept. A pipeline to fix or change: a new version of it
-(copy_pipeline; a promoted one is never changed in place). Data not
+(copy_pipeline; a promoted one is never changed in place; a translation's is offered by catalogue_event_types,
+after survey_feed). Data not
 being processed, or processed slowly (a pipeline, a feed or a stream), or processing's health and priorities:
 explain_processing, which finds what stops it and changes nothing. When what the user wants fits more than one, ask
 which.
