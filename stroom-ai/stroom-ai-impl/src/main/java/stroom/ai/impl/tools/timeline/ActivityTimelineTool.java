@@ -160,6 +160,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActivityTimelineTool.class);
 
     static final String NAME = "activity_timeline";
+    /// What a source's note says where a lone user's other written forms were read.
+    static final String NO_EVENT_AS_GIVEN = "no event as given";
     static final String ENTITY_ARG = "entity";
     static final String SOURCES_ARG = "sources";
     static final String TIME_FROM_ARG = "timeFrom";
@@ -237,7 +239,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// The events of an automatic source probed first: whether the user has any there, and which of its fields
     /// holds the EventDetail element.
     static final int PROBE_EVENTS = 200;
-    /// The most events read for the close variants of a user found as given.
+    /// The most events read for the other written forms of a user found as given, offered but not read.
     static final int VARIANT_EVENTS = 20;
     /// The most fields fetched by the probe.
     static final int PROBE_FIELDS = 100;
@@ -456,7 +458,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(ENTITY_ARG, "The user (or entity), as the sources hold it, e.g. "
-                                                       + "jsmith.")
+                                                       + "jsmith. Alone, its other written forms (CORP\\jsmith, "
+                                                       + "JSmith) are read only in a source holding none of it "
+                                                       + "as given; elsewhere they are offered, not read: give them "
+                                                       + "in logonIds if the same person's.")
                         .addStringProperty(PERSON_ARG, "Optional: a person id, read in each index by its person "
                                                        + "field (personField, AGENTS ## Fields 'person:', ECS "
                                                        + "user.id); an index without one falls back to entity and "
@@ -564,7 +569,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
         final XmlOutcome xml = readXml(context, config, sources, read);
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
-                xml.xml(), plan.overrides());
+                xml.xml(), plan.overrides(), TimelineResult.otherFormsText(entity, plan.notes()));
         final TimelineClassification.Result classification = TimelineClassification.classify(read.events(),
                 sources, read.extras(), plan.fields(), xml.xml(), codes, plan.overrides());
 
@@ -836,7 +841,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 sources.add(one.source());
                 kept.add(one.spec());
                 notes.add(new SourceNote(one.source().name(), one.source().doc().getName(), one.source().userField(),
-                        "the call (roles given)", null, null, one.source().by()));
+                        "the call (roles given)", null, null, one.source().by(), List.of(), List.of()));
                 continue;
             }
             final Automatic automatic = one.automatic();
@@ -845,7 +850,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         who.person() == null
                                 ? "no field holding the user was found (give sources [{index, user}], or a ## Fields "
                                   + "line in the AGENTS doc where it is)"
-                                : automatic.leftOut(), null));
+                                : automatic.leftOut(), null, List.of(), List.of()));
                 continue;
             }
             final Probed probed = probe(context, automatic, who, period, deadline);
@@ -861,14 +866,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                     ? none
                                     : none + "; close variants in its index: " + String.join(", ", variants)
                                       + " (not merged: give them in " + LOGON_IDS_ARG + " if they are the same "
-                                      + "person's)", automatic.by()));
+                                      + "person's)", automatic.by(), List.of(), List.of()));
                     noneOfTheirs.add(automatic);
                     continue;
                 }
                 sources.add(automatic.source(automatic.transforms(), spanFields(one.spec(), automatic.mapping())));
                 kept.add(one.spec());
                 notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
-                        automatic.user().from(), null, null, automatic.by()));
+                        automatic.user().from(), null, null, automatic.by(), List.of(), List.of()));
                 fields.put(sources.size() - 1, automatic.fields(null));
                 continue;
             }
@@ -889,10 +894,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                             ? null
                             : String.join(", ", probed.transforms().stream()
                                     .map(transform -> transform.name().toLowerCase(Locale.ROOT)).toList())
-                              + (probed.variants().isEmpty()
-                                    ? " (the user wasn't found as given)"
-                                    : " (the index also writes the user as " + String.join(", ",
-                                            probed.variants()) + ": read together)"), null, automatic.by()));
+                              + (probed.fallback()
+                                    ? " (" + NO_EVENT_AS_GIVEN + ")"
+                                    : ""), null, automatic.by(), probed.readAs(), probed.otherForms()));
         }
         if (sources.isEmpty()) {
             final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
@@ -1067,33 +1071,42 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     }
 
     // The first of the user's events in an automatic source, with its keyword fields: whether there are any (with
-    // the source's transforms, else, for text, without the domain and in lower case), and which field holds the
-    // EventDetail element where none was named. Null if the user has none there.
+    // the source's transforms, else, for one user given alone as text and only where nothing matched as given, with
+    // the domain and case set aside), and which field holds the EventDetail element where none was named. Null if
+    // the user has none there. Other written forms are never read where the form given matched: CORP\jsmith beside
+    // jsmith may be the same person, but OTHERDOM\jsmith may not, and logon ids are taken as normalised.
     private Probed probe(final ToolCallContext context,
                          final Automatic automatic,
                          final Who who,
                          final Period period,
                          final Instant deadline) {
+        final String userField = automatic.user().field();
         final List<String> fields = new ArrayList<>(automatic.mapping().values().stream()
                 .filter(field -> KEYWORD_TYPES.contains(field.nativeType()))
                 .map(ElasticEql.Field::name)
-                .filter(name -> !name.equals(automatic.user().field()))
+                .filter(name -> !name.equals(userField))
                 .sorted()
                 .limit(PROBE_FIELDS)
                 .toList());
         final List<List<Transform>> tries = new ArrayList<>();
         tries.add(automatic.transforms());
-        final JoinKeys.Kind kind = JoinKeys.kind(automatic.mapping().get(automatic.user().field()).nativeType());
+        final JoinKeys.Kind kind = JoinKeys.kind(automatic.mapping().get(userField).nativeType());
         // One user given alone is tried again without its domain and in lower case; a person's accounts aren't
         // (their close variants are offered instead, never merged unasked).
         if (automatic.transforms().isEmpty() && kind == JoinKeys.Kind.TEXT && who.single()) {
             tries.add(PersonScope.variantTransforms());
         }
-        for (final List<Transform> transforms : tries) {
+        for (int i = 0; i < tries.size(); i++) {
+            final List<Transform> transforms = tries.get(i);
+            final boolean fallback = i > 0;
             final Source source = automatic.source(transforms, List.of());
+            final List<String> fetched = new ArrayList<>(fields);
+            if (fallback) {
+                fetched.add(userField);
+            }
             final List<Map<String, String>> rows;
             try {
-                rows = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(), fields,
+                rows = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(), fetched,
                         PROBE_EVENTS, deadline, context.stopped());
             } catch (final PermissionException e) {
                 throw new WorkspaceException("You can't use Elastic Index '" + automatic.doc().getName() + "'.");
@@ -1102,23 +1115,31 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 final String element = automatic.element() != null
                         ? automatic.element()
                         : elementField(rows, fields);
-                if (transforms.isEmpty() && tries.size() > 1) {
-                    // Found as given: read with its close variants too where the index also writes the user so
-                    // (eval case 77: the logons' CORP\jsmith beside the endpoint's jsmith, their locks and unlocks
-                    // otherwise missed, so idleness never ended a session).
-                    final List<String> variants = heldVariants(context, automatic, period, deadline);
-                    if (!variants.isEmpty()) {
-                        return new Probed(tries.get(1), element, variants);
-                    }
+                if (fallback) {
+                    return new Probed(transforms, element, true, held(rows, userField), List.of());
                 }
-                return new Probed(transforms, element, List.of());
+                // Found as given: the user's other written forms the index also holds are offered, never read
+                // (eval case 77: the logons' CORP\jsmith beside the endpoint's jsmith in one index).
+                return new Probed(transforms, element, false, List.of(), tries.size() > 1
+                        ? heldVariants(context, automatic, period, deadline)
+                        : List.of());
             }
         }
         return null;
     }
 
+    // The user field's values in a probe's events, in the order held, each once: the forms the user was read as.
+    private static List<String> held(final List<Map<String, String>> rows, final String userField) {
+        return rows.stream()
+                .map(row -> row.get(userField))
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .toList();
+    }
+
     // The values of an automatic source's user field, other than the one user as given, that are close variants of
-    // it (the domain added or removed, another case), as the index holds them; empty for none.
+    // it (the domain added or removed, another case), as the index holds them: offered, never read unasked (another
+    // domain's account may be someone else's); empty for none.
     private List<String> heldVariants(final ToolCallContext context,
                                       final Automatic automatic,
                                       final Period period,
@@ -1407,7 +1428,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                       final Read read,
                                                       final Map<Integer, Fields> fields,
                                                       final Map<String, String> xml,
-                                                      final Map<Integer, Map<String, RoleOverride>> overrides) {
+                                                      final Map<Integer, Map<String, RoleOverride>> overrides,
+                                                      final String otherForms) {
         final Map<Integer, Map<String, CodeRole>> out = new LinkedHashMap<>();
         final Map<Integer, Map<String, Integer>> counts = new LinkedHashMap<>();
         for (final Event event : read.events()) {
@@ -1451,8 +1473,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     .anyMatch(code -> kept.containsKey(code) || given.keySet().stream()
                             .anyMatch(type -> type.equalsIgnoreCase(code)));
             if (!anyRole) {
-                throw new WorkspaceException(EventCodes.unclassified(sources.get(source.getKey()).name(),
-                        fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls()));
+                final String refusal = EventCodes.unclassified(sources.get(source.getKey()).name(),
+                        fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls());
+                throw new WorkspaceException(otherForms == null
+                        ? refusal
+                        : refusal + "\n" + otherForms);
             }
             out.put(source.getKey(), kept);
         }
@@ -1610,9 +1635,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("Give " + ENTITY_ARG + " (the user whose timeline to build), " + PERSON_ARG
                                          + " (a person id) or " + LOGON_IDS_ARG + ".");
         }
+        final String entity = stringArg(request, ENTITY_ARG);
         return new Who(NullSafe.isBlankString(person)
                 ? null
-                : person.strip(), logons);
+                : person.strip(), logons, NullSafe.isBlankString(entity)
+                ? null
+                : entity.strip());
     }
 
     private static View view(final ToolCall request) {
@@ -2177,9 +2205,15 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // What a probe found: the transforms the user was found with, the element field, and the close variants of the
-    // user the index also holds, read with them (none where it was read as given, or found only so).
-    private record Probed(List<Transform> transforms, String element, List<String> variants) {
+    // What a probe found: the transforms the user was found with, the element field, and, where nothing matched as
+    // given and the user's other written forms were read (fallback), the forms its first events hold (empty
+    // otherwise); and, where the one user was found as given, the other written forms the index also holds, offered
+    // but not read (empty for none).
+    private record Probed(List<Transform> transforms,
+                          String element,
+                          boolean fallback,
+                          List<String> readAs,
+                          List<String> otherForms) {
 
     }
 
@@ -2187,13 +2221,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // Whose timeline: a person id (or null), and the logon ids.
-    private record Who(String person, List<String> logons) {
+    // Whose timeline: a person id (or null), the logon ids, and the entity given (or null).
+    private record Who(String person, List<String> logons, String entity) {
 
-        // How the result names them.
+        // How the result names them: the person id, else the entity given (its other written forms in logonIds
+        // are its own accounts, each counted), else the logon ids.
         String label() {
-            return person != null
-                    ? person
+            if (person != null) {
+                return person;
+            }
+            return entity != null
+                    ? entity
                     : String.join(", ", logons);
         }
 

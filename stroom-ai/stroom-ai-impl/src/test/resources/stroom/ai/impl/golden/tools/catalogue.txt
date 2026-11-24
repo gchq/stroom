@@ -185,7 +185,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "type" : "array"
     },
     "entity" : {
-      "description" : "The user (or entity), as the sources hold it, e.g. jsmith.",
+      "description" : "The user (or entity), as the sources hold it, e.g. jsmith. Alone, its other written forms (CORP\\jsmith, JSmith) are read only in a source holding none of it as given; elsewhere they are offered, not read: give them in logonIds if the same person's.",
       "type" : "string"
     },
     "idleCap" : {

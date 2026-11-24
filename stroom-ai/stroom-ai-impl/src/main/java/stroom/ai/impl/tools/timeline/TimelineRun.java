@@ -127,8 +127,12 @@ record TimelineRun(String entity,
     /// @param transform A transform tried as none found the user, or null.
     /// @param leftOut   Why it was left out, or null if it was read.
     /// @param by        Whether its user field holds the person id or the logon id, or null if neither was found.
+    /// @param readAs    Where nothing matched the one user as given, so their other written forms were read (the
+    ///                  domain and case set aside): the forms the source's first events hold; empty otherwise.
+    /// @param otherForms Where the one user was found as given: the other written forms the index also holds,
+    ///                   offered but not read (another domain's account may be someone else's); empty otherwise.
     record SourceNote(String name, String index, String userField, String userFrom, String transform,
-                      String leftOut, PersonScope.By by) {
+                      String leftOut, PersonScope.By by, List<String> readAs, List<String> otherForms) {
 
     }
 

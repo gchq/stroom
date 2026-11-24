@@ -337,10 +337,63 @@ class TestActivityTimelineAnySource {
         final Map<String, Object> result = json(mcp(), arguments);
 
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
-        assertThat(source).containsEntry("events", 2L).containsEntry("user_transform",
-                "strip_domain, lowercase (the user wasn't found as given)");
+        assertThat(source).containsEntry("events", 2L)
+                .containsEntry("user_transform", "strip_domain, lowercase (no event as given)")
+                .containsEntry("user_read_as", List.of("CORP\\PAT"));
         // No model over this client: the codes are left as they are, actions of their own kind.
         assertThat(source).containsEntry("classified_by", Map.of("not classified", 2L));
+    }
+
+    @Test
+    void aLoneUserFoundAsGivenIsReadOnlyAsGivenNotWithAnotherDomainsAccount() {
+        // OTHERDOM\pat may be someone else: the other written forms are read only where the form given matches
+        // nothing in a source.
+        code("09:00", "pat", "A-101");
+        code("09:05", "pat", "A-101");
+        code("09:10", "OTHERDOM\\pat", "A-101");
+        final Map<String, Object> arguments = arguments(Map.of("sources", List.of(Map.of("index", "Codes", "user",
+                "user"))));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("events", 2L).doesNotContainKey("user_transform")
+                .doesNotContainKey("user_read_as")
+                .containsEntry("user_other_forms_not_read", List.of("OTHERDOM\\pat"));
+        // Offered, for the user to say whether it is the same person's.
+        assertThat(result).containsEntry("other_forms", "Other written forms of pat, not read: Codes: "
+                                                        + "OTHERDOM\\pat. Give them in logonIds (with pat) if they "
+                                                        + "are the same person's.");
+    }
+
+    @Test
+    void anotherWrittenFormGivenInLogonIdsIsRead() {
+        code("09:00", "pat", "A-101");
+        code("09:05", "pat", "A-101");
+        code("09:10", "OTHERDOM\\pat", "A-101");
+        final Map<String, Object> arguments = arguments(Map.of("logonIds", List.of("OTHERDOM\\pat"), "sources",
+                List.of(Map.of("index", "Codes", "user", "user"))));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("events", 3L).doesNotContainKey("user_other_forms_not_read")
+                .containsEntry("accounts", Map.of("pat", 2L, "OTHERDOM\\pat", 1L));
+        // Still the timeline of the entity given, its other form one of its accounts.
+        assertThat(result).doesNotContainKey("other_forms").containsEntry("entity", "pat");
+    }
+
+    @Test
+    void eachSourceNamesTheFormsOfALoneUserItRead() {
+        week();
+        code("09:00", "CORP\\pat", "A-101");
+        final Map<String, Object> arguments = arguments(Map.of("sources", List.of(Map.of("index", "Events", "host",
+                "HostName"), Map.of("index", "Codes", "user", "user"))));
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments, false)), chat(new Questions(Map.of()), ModelSideCalls.NONE)).text();
+
+        assertThat(text).contains("User read as: Events: pat; Codes: CORP\\pat (no event as given).");
     }
 
     @Test
