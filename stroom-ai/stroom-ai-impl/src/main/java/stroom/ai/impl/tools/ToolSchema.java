@@ -31,7 +31,8 @@ public sealed interface ToolSchema permits ToolSchema.ObjectSchema,
         ToolSchema.StringSchema,
         ToolSchema.IntegerSchema,
         ToolSchema.BooleanSchema,
-        ToolSchema.EnumSchema {
+        ToolSchema.EnumSchema,
+        ToolSchema.AnyOfSchema {
 
     /// @return What the value is, in general and chat-only parts, or null.
     ToolDescription about();
@@ -306,6 +307,37 @@ public sealed interface ToolSchema permits ToolSchema.ObjectSchema,
         @Override
         public EnumSchema withoutChatOnlyParts() {
             return new EnumSchema(general(about), values);
+        }
+    }
+
+    /// A value of any of several forms (JSON Schema's `anyOf`), e.g. a source given as an index's name or as an
+    /// object: it fits if it fits one of them.
+    ///
+    /// @param about What it is, or null.
+    /// @param anyOf The forms it may take, two or more, in order.
+    record AnyOfSchema(ToolDescription about, List<ToolSchema> anyOf) implements ToolSchema {
+
+        /// @param about What it is, or null.
+        /// @param anyOf The forms it may take, two or more, in order.
+        public AnyOfSchema {
+            anyOf = List.copyOf(anyOf);
+            if (anyOf.size() < 2) {
+                throw new IllegalArgumentException("anyOf needs two or more forms");
+            }
+        }
+
+        /// @param about What it is, or null.
+        /// @param anyOf The forms it may take, two or more, in order.
+        /// @return The schema.
+        public static AnyOfSchema of(final String about, final ToolSchema... anyOf) {
+            return new AnyOfSchema(about == null
+                    ? null
+                    : ToolDescription.of(about), List.of(anyOf));
+        }
+
+        @Override
+        public AnyOfSchema withoutChatOnlyParts() {
+            return new AnyOfSchema(general(about), anyOf.stream().map(ToolSchema::withoutChatOnlyParts).toList());
         }
     }
 }

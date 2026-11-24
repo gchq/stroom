@@ -202,6 +202,31 @@ class TestSkillChecks {
     }
 
     @Test
+    void aValueOfAnyOfSeveralFormsFitsIfItFitsOne() {
+        // As activity_timeline's sources: an index's name, or a source object.
+        final ToolSchema sources = ObjectSchema.builder()
+                .addProperty("sources", ArraySchema.builder()
+                        .items(ToolSchema.AnyOfSchema.of(null, new ToolSchema.StringSchema(null),
+                                ObjectSchema.builder()
+                                        .addStringProperty("index", "The index.")
+                                        .addStringProperty("user", "Its user field.")
+                                        .required("index")
+                                        .build()))
+                        .build())
+                .build();
+        final List<String> out = new ArrayList<>();
+
+        SkillChecks.schema(Map.of("sources", List.of("Endpoint", Map.of("index", "Proxy", "user", "UserId"),
+                "{index}")), sources, "", out);
+        assertThat(out).isEmpty();
+
+        // A number is neither; an object of its kind says what of it doesn't fit.
+        SkillChecks.schema(Map.of("sources", List.of(3, Map.of("user", "UserId", "usr", "x"))), sources, "", out);
+        assertThat(out).containsExactly("'sources[0]' should be text or an object",
+                "'sources[1].usr' isn't a parameter", "'sources[1].index' is required");
+    }
+
+    @Test
     void missingDataSourcesAndFieldsAreFound() {
         final List<Finding> findings = check(skill("""
                 ## Steps

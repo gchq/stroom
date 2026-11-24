@@ -27,6 +27,7 @@ import stroom.ai.shared.AiToolCategory;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.model.chat.request.json.JsonAnyOfSchema;
 import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonStringSchema;
@@ -100,6 +101,37 @@ class TestLangChain4jTools {
         assertThat(specification).isEqualTo(expected);
         assertThat(specification.parameters().properties().keySet())
                 .containsExactly("path", "limit", "all", "mode", "items", "tags", "namespaces");
+    }
+
+    @Test
+    void aValueOfAnyOfSeveralFormsBecomesLangchain4jsAnyOf() {
+        final ToolSchema schema = ArraySchema.builder()
+                .items(ToolSchema.AnyOfSchema.of("A source.", StringSchema.builder().description("A name.").build(),
+                        ObjectSchema.builder().addStringProperty("index", "The index.").required("index").build()))
+                .description("The sources.")
+                .build();
+
+        assertThat(LangChain4jTools.schemaElement(schema)).isEqualTo(JsonArraySchema.builder()
+                .items(JsonAnyOfSchema.builder()
+                        .description("A source.")
+                        .anyOf(JsonStringSchema.builder().description("A name.").build(),
+                                JsonObjectSchema.builder().addStringProperty("index", "The index.").required("index")
+                                        .build())
+                        .build())
+                .description("The sources.")
+                .build());
+    }
+
+    @Test
+    void aValueOfAnyOfSeveralFormsKeepsOnlyTheirGeneralPartsOutsideAChat() {
+        final ToolSchema.AnyOfSchema schema = new ToolSchema.AnyOfSchema(ToolDescription.builder().general("A source")
+                .chatOnly(" (as the chat lists it)").general(".").build(), List.of(StringSchema.builder().build(),
+                ObjectSchema.builder().build()));
+
+        assertThat(schema.withoutChatOnlyParts().description()).isEqualTo("A source.");
+        assertThat(schema.description()).isEqualTo("A source (as the chat lists it).");
+        assertThatThrownBy(() -> ToolSchema.AnyOfSchema.of(null, StringSchema.builder().build()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

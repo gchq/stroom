@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.skills;
 
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.ToolSchema.AnyOfSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.BooleanSchema;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
@@ -313,7 +314,60 @@ final class SkillChecks {
                     out.add(at + " should be one of " + String.join(", ", enumSchema.values()));
                 }
             }
+            case final AnyOfSchema anyOf -> anyOf(value, anyOf, path, at, out);
         }
+    }
+
+    // A value of any of several forms fits if it fits one. Where none fits, the first form of its kind (an object
+    // for an object) says what of it doesn't; else it should be one of the forms.
+    private static void anyOf(final Object value,
+                              final AnyOfSchema anyOf,
+                              final String path,
+                              final String at,
+                              final List<String> out) {
+        List<String> ofItsKind = null;
+        for (final ToolSchema form : anyOf.anyOf()) {
+            final List<String> misfits = new ArrayList<>();
+            schema(value, form, path, misfits);
+            if (misfits.isEmpty()) {
+                return;
+            }
+            if (ofItsKind == null && ofKind(value, form)) {
+                ofItsKind = misfits;
+            }
+        }
+        if (ofItsKind != null) {
+            out.addAll(ofItsKind);
+        } else {
+            out.add(at + " should be " + String.join(" or ", anyOf.anyOf().stream()
+                    .map(SkillChecks::kind)
+                    .toList()));
+        }
+    }
+
+    // True if the value is of the form's kind (an object for an object, a list for a list), whatever it holds.
+    private static boolean ofKind(final Object value, final ToolSchema form) {
+        return switch (form) {
+            case final ObjectSchema ignored -> value instanceof Map<?, ?>;
+            case final ArraySchema ignored -> value instanceof List<?>;
+            case final AnyOfSchema nested -> nested.anyOf().stream().anyMatch(inner -> ofKind(value, inner));
+            default -> false;
+        };
+    }
+
+    // What a form is, as a message says it.
+    private static String kind(final ToolSchema form) {
+        return switch (form) {
+            case final ObjectSchema ignored -> "an object";
+            case final ArraySchema ignored -> "a list";
+            case final StringSchema ignored -> "text";
+            case final IntegerSchema ignored -> "a whole number";
+            case final BooleanSchema ignored -> "true or false";
+            case final EnumSchema enumSchema -> "one of " + String.join(", ", enumSchema.values());
+            case final AnyOfSchema nested -> String.join(" or ", nested.anyOf().stream()
+                    .map(SkillChecks::kind)
+                    .toList());
+        };
     }
 
     private static void dataSources(final ExampleCall call, final Facts facts, final List<Finding> findings) {

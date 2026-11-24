@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.AnyOfSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
@@ -371,6 +372,14 @@ public class ToolCallGuard {
                         List.copyOf(notes));
     }
 
+    // True for a list or object argument, or one that may be either.
+    private static boolean structured(final ToolSchema property) {
+        return property instanceof ArraySchema
+               || property instanceof ObjectSchema
+               || (property instanceof final AnyOfSchema anyOf && anyOf.anyOf().stream()
+                .anyMatch(ToolCallGuard::structured));
+    }
+
     /// Unfolds arguments a model wrote inside another's text. Seen (a small model, the table tool): eval given as
     /// the text `[{"as": "t", ...}], "limit": 5, "path": "/outputs/topics.md"}`, the rest of the call after the
     /// list, so the tool was refused for no path, again and again. Only a list or object argument is unfolded, and
@@ -384,8 +393,7 @@ public class ToolCallGuard {
         final List<String> unfolded = new ArrayList<>();
         for (final String name : List.copyOf(arguments.keySet())) {
             final ToolSchema property = properties.get(name);
-            if (!(property instanceof ArraySchema || property instanceof ObjectSchema)
-                || !(arguments.get(name) instanceof final String text)) {
+            if (!structured(property) || !(arguments.get(name) instanceof final String text)) {
                 continue;
             }
             final String stripped = text.strip();

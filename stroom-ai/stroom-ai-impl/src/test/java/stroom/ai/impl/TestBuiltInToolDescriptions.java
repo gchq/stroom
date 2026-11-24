@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.ToolSchema.AnyOfSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.query.api.token.Token;
@@ -253,6 +254,10 @@ class TestBuiltInToolDescriptions {
             });
         } else if (schema instanceof final ArraySchema array && array.items() != null) {
             addSchema(texts, where + "[]", array.items());
+        } else if (schema instanceof final AnyOfSchema anyOf) {
+            for (int i = 0; i < anyOf.anyOf().size(); i++) {
+                addSchema(texts, where + "|" + i, anyOf.anyOf().get(i));
+            }
         }
     }
 

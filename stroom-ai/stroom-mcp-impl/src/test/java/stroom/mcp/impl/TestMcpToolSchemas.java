@@ -1,0 +1,55 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl;
+
+import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.ToolSchema.AnyOfSchema;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolSchema.StringSchema;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// A tool's schema as an MCP client is given it, as JSON Schema.
+class TestMcpToolSchemas {
+
+    @Test
+    void aValueOfAnyOfSeveralFormsIsJsonSchemasAnyOf() {
+        final ToolSchema schema = ArraySchema.builder()
+                .items(AnyOfSchema.of("A source.", StringSchema.builder().description("A name.").build(),
+                        ObjectSchema.builder().addStringProperty("index", "The index.").required("index").build()))
+                .description("The sources.")
+                .build();
+
+        assertThat(McpToolSchemas.toJsonSchema(schema)).isEqualTo(Map.of(
+                "type", "array",
+                "description", "The sources.",
+                "items", Map.of(
+                        "description", "A source.",
+                        "anyOf", List.of(
+                                Map.of("type", "string", "description", "A name."),
+                                Map.of("type", "object",
+                                        "properties", Map.of("index", Map.of("type", "string",
+                                                "description", "The index.")),
+                                        "required", List.of("index"))))));
+    }
+}

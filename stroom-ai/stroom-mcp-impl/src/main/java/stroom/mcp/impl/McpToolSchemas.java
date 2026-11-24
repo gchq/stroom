@@ -19,6 +19,7 @@ package stroom.mcp.impl;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.ToolSchema.AnyOfSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.BooleanSchema;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
@@ -101,6 +102,9 @@ final class McpToolSchemas {
                 json.put("type", "string");
                 json.put("enum", enumSchema.values());
             }
+            case final AnyOfSchema anyOf -> json.put("anyOf", anyOf.anyOf().stream()
+                    .map(McpToolSchemas::toJsonSchema)
+                    .toList());
         }
         final String description = schema.description();
         if (description != null && !description.isBlank()) {

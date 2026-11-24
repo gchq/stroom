@@ -227,74 +227,147 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
     "sources" : {
       "description" : "Optional: the sources (index names alone will do), \"all\", or \"ask\" (as omitted: the user is asked which).",
       "items" : {
-        "description" : "One source: an Elastic Index, and optionally the fields that hold each thing and its roles.",
-        "properties" : {
-          "actionField" : {
-            "description" : "Optional: the field holding the element's Action.",
-            "type" : "string"
-          },
-          "elementField" : {
-            "description" : "Optional: the field holding the EventDetail element, for events whose Events XML is gone (default: found).",
-            "type" : "string"
-          },
-          "eventTypeField" : {
-            "description" : "Optional: the field holding the source's own event code.",
-            "type" : "string"
-          },
-          "host" : {
-            "description" : "The field holding the host (optional).",
-            "type" : "string"
-          },
-          "index" : {
-            "description" : "The Elastic Index doc's uuid or name.",
-            "type" : "string"
-          },
-          "name" : {
-            "description" : "A short name for it in the result (default the index's).",
-            "type" : "string"
-          },
-          "object" : {
-            "description" : "The field holding what an event touched: a file, a URL, a subject.",
-            "type" : "string"
-          },
-          "pairs" : {
-            "description" : "Optional: the source's own pairs (e.g. one the user confirmed).",
-            "items" : {
-              "description" : "Two event types bounding spans: an end closes the latest open start of the same key.",
-              "properties" : {
-                "by" : {
-                  "description" : "Optional: the key path under the element both hold, e.g. ProcessId (default the host alone).",
-                  "type" : "string"
-                },
-                "end" : {
-                  "description" : "The end's type.",
-                  "type" : "string"
-                },
-                "label" : {
-                  "description" : "Optional: the key path whose value labels the span.",
-                  "type" : "string"
-                },
-                "start" : {
-                  "description" : "The start's type: a TypeId, or an element and Action, e.g. Process/Execute.",
-                  "type" : "string"
-                }
-              },
-              "required" : [ "start", "end" ],
-              "type" : "object"
+        "anyOf" : [ {
+          "description" : "An Elastic Index's name or uuid.",
+          "type" : "string"
+        }, {
+          "description" : "One source: an Elastic Index, and optionally the fields that hold each thing and its roles.",
+          "properties" : {
+            "actionField" : {
+              "description" : "Optional: the field holding the element's Action.",
+              "type" : "string"
             },
-            "type" : "array"
-          },
-          "process" : {
-            "description" : "The field holding the application (process).",
-            "type" : "string"
-          },
-          "roles" : {
-            "description" : "Optional: the source's roles, which override classifying its events (e.g. for window focus, which the schema has no element for); each given only where the source holds such events.",
-            "properties" : {
-              "actions" : {
-                "description" : "The kinds of action it holds.",
-                "items" : {
-                  "description" : "A kind of action and what its events look like.",
+            "elementField" : {
+              "description" : "Optional: the field holding the EventDetail element, for events whose Events XML is gone (default: found).",
+              "type" : "string"
+            },
+            "eventTypeField" : {
+              "description" : "Optional: the field holding the source's own event code.",
+              "type" : "string"
+            },
+            "host" : {
+              "description" : "The field holding the host (optional).",
+              "type" : "string"
+            },
+            "index" : {
+              "description" : "The Elastic Index doc's uuid or name.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "A short name for it in the result (default the index's).",
+              "type" : "string"
+            },
+            "object" : {
+              "description" : "The field holding what an event touched: a file, a URL, a subject.",
+              "type" : "string"
+            },
+            "pairs" : {
+              "description" : "Optional: the source's own pairs (e.g. one the user confirmed).",
+              "items" : {
+                "description" : "Two event types bounding spans: an end closes the latest open start of the same key.",
+                "properties" : {
+                  "by" : {
+                    "description" : "Optional: the key path under the element both hold, e.g. ProcessId (default the host alone).",
+                    "type" : "string"
+                  },
+                  "end" : {
+                    "description" : "The end's type.",
+                    "type" : "string"
+                  },
+                  "label" : {
+                    "description" : "Optional: the key path whose value labels the span.",
+                    "type" : "string"
+                  },
+                  "start" : {
+                    "description" : "The start's type: a TypeId, or an element and Action, e.g. Process/Execute.",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "start", "end" ],
+                "type" : "object"
+              },
+              "type" : "array"
+            },
+            "process" : {
+              "description" : "The field holding the application (process).",
+              "type" : "string"
+            },
+            "roles" : {
+              "description" : "Optional: the source's roles, which override classifying its events (e.g. for window focus, which the schema has no element for); each given only where the source holds such events.",
+              "properties" : {
+                "actions" : {
+                  "description" : "The kinds of action it holds.",
+                  "items" : {
+                    "description" : "A kind of action and what its events look like.",
+                    "properties" : {
+                      "any_of" : {
+                        "description" : "One holds.",
+                        "items" : {
+                          "description" : "One condition, as a sequence's steps take it.",
+                          "properties" : {
+                            "caseInsensitive" : {
+                              "description" : "True to match text whatever its case.",
+                              "type" : "boolean"
+                            },
+                            "condition" : {
+                              "description" : "The condition (default EQUALS).",
+                              "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                              "type" : "string"
+                            },
+                            "field" : {
+                              "description" : "The index's field.",
+                              "type" : "string"
+                            },
+                            "value" : {
+                              "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                              "type" : "string"
+                            }
+                          },
+                          "required" : [ "field" ],
+                          "type" : "object"
+                        },
+                        "type" : "array"
+                      },
+                      "kind" : {
+                        "description" : "The action's label, e.g. 'clipboard copy', 'file copy', 'web access'.",
+                        "type" : "string"
+                      },
+                      "where" : {
+                        "description" : "All hold.",
+                        "items" : {
+                          "description" : "One condition, as a sequence's steps take it.",
+                          "properties" : {
+                            "caseInsensitive" : {
+                              "description" : "True to match text whatever its case.",
+                              "type" : "boolean"
+                            },
+                            "condition" : {
+                              "description" : "The condition (default EQUALS).",
+                              "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                              "type" : "string"
+                            },
+                            "field" : {
+                              "description" : "The index's field.",
+                              "type" : "string"
+                            },
+                            "value" : {
+                              "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                              "type" : "string"
+                            }
+                          },
+                          "required" : [ "field" ],
+                          "type" : "object"
+                        },
+                        "type" : "array"
+                      }
+                    },
+                    "required" : [ "kind" ],
+                    "type" : "object"
+                  },
+                  "type" : "array"
+                },
+                "close" : {
+                  "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
                   "properties" : {
                     "any_of" : {
                       "description" : "One holds.",
@@ -323,10 +396,6 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
                         "type" : "object"
                       },
                       "type" : "array"
-                    },
-                    "kind" : {
-                      "description" : "The action's label, e.g. 'clipboard copy', 'file copy', 'web access'.",
-                      "type" : "string"
                     },
                     "where" : {
                       "description" : "All hold.",
@@ -357,370 +426,306 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
                       "type" : "array"
                     }
                   },
-                  "required" : [ "kind" ],
+                  "required" : [ ],
                   "type" : "object"
                 },
-                "type" : "array"
-              },
-              "close" : {
-                "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
-                "properties" : {
-                  "any_of" : {
-                    "description" : "One holds.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
+                "focus" : {
+                  "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
+                  "properties" : {
+                    "any_of" : {
+                      "description" : "One holds.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
                         },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
+                        "required" : [ "field" ],
+                        "type" : "object"
                       },
-                      "required" : [ "field" ],
-                      "type" : "object"
+                      "type" : "array"
                     },
-                    "type" : "array"
+                    "where" : {
+                      "description" : "All hold.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
+                        },
+                        "required" : [ "field" ],
+                        "type" : "object"
+                      },
+                      "type" : "array"
+                    }
                   },
-                  "where" : {
-                    "description" : "All hold.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
-                        },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
-                      },
-                      "required" : [ "field" ],
-                      "type" : "object"
-                    },
-                    "type" : "array"
-                  }
+                  "required" : [ ],
+                  "type" : "object"
                 },
-                "required" : [ ],
-                "type" : "object"
-              },
-              "focus" : {
-                "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
-                "properties" : {
-                  "any_of" : {
-                    "description" : "One holds.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
+                "idle_end" : {
+                  "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
+                  "properties" : {
+                    "any_of" : {
+                      "description" : "One holds.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
                         },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
+                        "required" : [ "field" ],
+                        "type" : "object"
                       },
-                      "required" : [ "field" ],
-                      "type" : "object"
+                      "type" : "array"
                     },
-                    "type" : "array"
+                    "where" : {
+                      "description" : "All hold.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
+                        },
+                        "required" : [ "field" ],
+                        "type" : "object"
+                      },
+                      "type" : "array"
+                    }
                   },
-                  "where" : {
-                    "description" : "All hold.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
-                        },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
-                      },
-                      "required" : [ "field" ],
-                      "type" : "object"
-                    },
-                    "type" : "array"
-                  }
+                  "required" : [ ],
+                  "type" : "object"
                 },
-                "required" : [ ],
-                "type" : "object"
-              },
-              "idle_end" : {
-                "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
-                "properties" : {
-                  "any_of" : {
-                    "description" : "One holds.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
+                "idle_start" : {
+                  "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
+                  "properties" : {
+                    "any_of" : {
+                      "description" : "One holds.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
                         },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
+                        "required" : [ "field" ],
+                        "type" : "object"
                       },
-                      "required" : [ "field" ],
-                      "type" : "object"
+                      "type" : "array"
                     },
-                    "type" : "array"
+                    "where" : {
+                      "description" : "All hold.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
+                        },
+                        "required" : [ "field" ],
+                        "type" : "object"
+                      },
+                      "type" : "array"
+                    }
                   },
-                  "where" : {
-                    "description" : "All hold.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
-                        },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
-                      },
-                      "required" : [ "field" ],
-                      "type" : "object"
-                    },
-                    "type" : "array"
-                  }
+                  "required" : [ ],
+                  "type" : "object"
                 },
-                "required" : [ ],
-                "type" : "object"
-              },
-              "idle_start" : {
-                "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
-                "properties" : {
-                  "any_of" : {
-                    "description" : "One holds.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
+                "open" : {
+                  "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
+                  "properties" : {
+                    "any_of" : {
+                      "description" : "One holds.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
                         },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
+                        "required" : [ "field" ],
+                        "type" : "object"
                       },
-                      "required" : [ "field" ],
-                      "type" : "object"
+                      "type" : "array"
                     },
-                    "type" : "array"
+                    "where" : {
+                      "description" : "All hold.",
+                      "items" : {
+                        "description" : "One condition, as a sequence's steps take it.",
+                        "properties" : {
+                          "caseInsensitive" : {
+                            "description" : "True to match text whatever its case.",
+                            "type" : "boolean"
+                          },
+                          "condition" : {
+                            "description" : "The condition (default EQUALS).",
+                            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                            "type" : "string"
+                          },
+                          "field" : {
+                            "description" : "The index's field.",
+                            "type" : "string"
+                          },
+                          "value" : {
+                            "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
+                            "type" : "string"
+                          }
+                        },
+                        "required" : [ "field" ],
+                        "type" : "object"
+                      },
+                      "type" : "array"
+                    }
                   },
-                  "where" : {
-                    "description" : "All hold.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
-                        },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
-                      },
-                      "required" : [ "field" ],
-                      "type" : "object"
-                    },
-                    "type" : "array"
-                  }
-                },
-                "required" : [ ],
-                "type" : "object"
+                  "required" : [ ],
+                  "type" : "object"
+                }
               },
-              "open" : {
-                "description" : "What the role's events look like in this source: conditions all of which hold (where), and of which at least one holds (any_of).",
-                "properties" : {
-                  "any_of" : {
-                    "description" : "One holds.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
-                        },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
-                      },
-                      "required" : [ "field" ],
-                      "type" : "object"
-                    },
-                    "type" : "array"
-                  },
-                  "where" : {
-                    "description" : "All hold.",
-                    "items" : {
-                      "description" : "One condition, as a sequence's steps take it.",
-                      "properties" : {
-                        "caseInsensitive" : {
-                          "description" : "True to match text whatever its case.",
-                          "type" : "boolean"
-                        },
-                        "condition" : {
-                          "description" : "The condition (default EQUALS).",
-                          "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
-                          "type" : "string"
-                        },
-                        "field" : {
-                          "description" : "The index's field.",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards.",
-                          "type" : "string"
-                        }
-                      },
-                      "required" : [ "field" ],
-                      "type" : "object"
-                    },
-                    "type" : "array"
-                  }
-                },
-                "required" : [ ],
-                "type" : "object"
-              }
+              "required" : [ ],
+              "type" : "object"
             },
-            "required" : [ ],
-            "type" : "object"
-          },
-          "spanBy" : {
-            "description" : "Optional: keys (an index field, or a key path such as Data[SessionId]) whose values bound spans, from the first to the last event sharing one, e.g. destination.domain (session ids are found).",
-            "items" : {
+            "spanBy" : {
+              "description" : "Optional: keys (an index field, or a key path such as Data[SessionId]) whose values bound spans, from the first to the last event sharing one, e.g. destination.domain (session ids are found).",
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "text" : {
+              "description" : "The field holding free text (a message, an AI chat prompt), for characterise.",
               "type" : "string"
             },
-            "type" : "array"
-          },
-          "text" : {
-            "description" : "The field holding free text (a message, an AI chat prompt), for characterise.",
-            "type" : "string"
-          },
-          "title" : {
-            "description" : "The field holding the window title.",
-            "type" : "string"
-          },
-          "transform" : {
-            "description" : "Optional: what is done to the user field's values and the entity before they are compared, where sources write users differently (strip_domain, lowercase).",
-            "items" : {
-              "enum" : [ "lowercase", "strip_domain", "file_name" ],
+            "title" : {
+              "description" : "The field holding the window title.",
               "type" : "string"
             },
-            "type" : "array"
+            "transform" : {
+              "description" : "Optional: what is done to the user field's values and the entity before they are compared, where sources write users differently (strip_domain, lowercase).",
+              "items" : {
+                "enum" : [ "lowercase", "strip_domain", "file_name" ],
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "typeRoles" : {
+              "description" : "Optional: the user's corrections, an event type's role: {\"<type>\": \"active|idle|focus|open|close|action|ignore\"}.",
+              "properties" : { },
+              "required" : [ ],
+              "type" : "object"
+            },
+            "user" : {
+              "description" : "The field holding the user (default: found, see userField).",
+              "type" : "string"
+            },
+            "window" : {
+              "description" : "The field holding a window's id, pairing its open and close (default the application).",
+              "type" : "string"
+            }
           },
-          "typeRoles" : {
-            "description" : "Optional: the user's corrections, an event type's role: {\"<type>\": \"active|idle|focus|open|close|action|ignore\"}.",
-            "properties" : { },
-            "required" : [ ],
-            "type" : "object"
-          },
-          "user" : {
-            "description" : "The field holding the user (default: found, see userField).",
-            "type" : "string"
-          },
-          "window" : {
-            "description" : "The field holding a window's id, pairing its open and close (default the application).",
-            "type" : "string"
-          }
-        },
-        "required" : [ "index" ],
-        "type" : "object"
+          "required" : [ "index" ],
+          "type" : "object"
+        } ]
       },
       "type" : "array"
     },

@@ -474,7 +474,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                                       + "merged."))
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the field holding the person id (a "
                                                              + "skill's), before the other ways.")
-                        .addProperty(SOURCES_ARG, ArraySchema.builder().items(source)
+                        .addProperty(SOURCES_ARG, ArraySchema.builder().items(ToolSchema.AnyOfSchema.of(null,
+                                        new ToolSchema.StringSchema(ToolDescription.of("An Elastic Index's name "
+                                                                                       + "or uuid.")), source))
                                 .description("Optional: the sources (index names alone will do), \"all\", or "
                                              + "\"ask\" (as omitted: the user is asked which).").build())
                         .addStringProperty(USER_FIELD_ARG, "Optional: the field holding the user in every source "

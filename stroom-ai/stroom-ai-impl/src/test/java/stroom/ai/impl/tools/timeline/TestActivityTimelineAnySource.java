@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolCalls;
+import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.documents.DocumentAccess;
@@ -201,6 +202,18 @@ class TestActivityTimelineAnySource {
         // The XML of the user's events alone was read, by stream and event id.
         Mockito.verify(eventXml).read(Mockito.any(), Mockito.eq(Map.of(STREAM, List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L,
                 8L, 9L, 10L, 11L))), Mockito.anyInt(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void theSchemaTakesASourceAsAnIndexsNameOrAnObject() {
+        final ToolSchema sources = tool.definition().parameters().properties().get("sources");
+
+        assertThat(sources).isInstanceOfSatisfying(ToolSchema.ArraySchema.class, array -> assertThat(array.items())
+                .isInstanceOfSatisfying(ToolSchema.AnyOfSchema.class, anyOf -> {
+                    assertThat(anyOf.anyOf().getFirst()).isInstanceOf(ToolSchema.StringSchema.class);
+                    assertThat(anyOf.anyOf().get(1)).isInstanceOfSatisfying(ToolSchema.ObjectSchema.class,
+                            object -> assertThat(object.properties()).containsKeys("index", "user", "roles"));
+                }));
     }
 
     @Test

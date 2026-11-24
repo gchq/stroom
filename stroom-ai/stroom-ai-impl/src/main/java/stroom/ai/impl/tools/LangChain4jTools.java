@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.tools.ToolSchema.AnyOfSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.BooleanSchema;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
@@ -30,6 +31,7 @@ import stroom.util.shared.NullSafe;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.model.chat.request.json.JsonAnyOfSchema;
 import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonBooleanSchema;
 import dev.langchain4j.model.chat.request.json.JsonEnumSchema;
@@ -85,6 +87,10 @@ public final class LangChain4jTools {
             case final EnumSchema enumSchema -> JsonEnumSchema.builder()
                     .enumValues(enumSchema.values())
                     .description(enumSchema.description())
+                    .build();
+            case final AnyOfSchema anyOf -> JsonAnyOfSchema.builder()
+                    .description(anyOf.description())
+                    .anyOf(anyOf.anyOf().stream().map(LangChain4jTools::schemaElement).toList())
                     .build();
         };
     }
