@@ -1726,13 +1726,11 @@ The same features find an insider and a compromised account, so findings keep bo
 **Context, from reference data** (user, 2026-11-24: the site's reference environment already resolves a person's
 identities, and holds it as Stroom reference data)
 
-* **The person id is on the events** (user, 2026-11-24): processing decorates each event with it, in the index or
-  the Event XML, so the tools work per person by filtering on that field, with no expansion to accounts at query
-  time. Its field per index comes from the skill, then the AGENTS doc's `## Fields`, then convention, as the user
-  field does; `activity_timeline`, `compare_activity` and `sequence_query` take a person field beside the user field.
-* **Indexed for aggregates**: `compare_activity` aggregates in the index, so it needs the person id as an index
-  field; where it is only in the Event XML, the timeline still works (it reads the XML), and the comparison says so
-  and falls back to the user field.
+* **The person id is an index field** (user, 2026-11-24): processing decorates each event with it, and it is
+  indexed, so the tools work per person by filtering and aggregating on it in the index, with no expansion to
+  accounts. Its field per index comes from the skill, then the AGENTS doc's `## Fields`, then convention, as the
+  user field does; `activity_timeline`, `compare_activity` and `sequence_query` take a person field beside the user
+  field. An index without it falls back to its user field, and the result says so.
 * **Peers by `EventSource/User/UserDetails/Organisation`** (user, 2026-11-24), which processing decorates in the
   Event XML only, not the index, so it can't be grouped by in an aggregate. Peers are found in two steps: the
   people active in the window, from the index (one aggregate by the person or user field); then one event of each
