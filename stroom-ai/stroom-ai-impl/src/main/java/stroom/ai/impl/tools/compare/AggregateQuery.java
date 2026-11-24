@@ -102,7 +102,9 @@ record AggregateQuery(Source source,
         /// The latest time (an ISO instant, UTC).
         MAX_TIME,
         /// One document's `StreamId:EventId`.
-        ONE_EVENT
+        ONE_EVENT,
+        /// The centroid of a geo point field, `POINT (longitude latitude)` (ES|QL only).
+        CENTROID
     }
 
 

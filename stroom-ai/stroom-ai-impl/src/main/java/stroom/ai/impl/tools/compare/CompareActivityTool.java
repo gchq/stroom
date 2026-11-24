@@ -73,6 +73,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -115,6 +116,13 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String CATEGORY_LIST_ARG = "categoryList";
     static final String CATEGORY_CORRECTIONS_ARG = "categoryCorrections";
     static final String CATEGORIES_FILE = "categories.csv";
+    static final String ACCESS_FIELD_ARG = "accessField";
+    static final String COUNTRY_FIELD_ARG = "countryField";
+    static final String LOCATION_ARG = "location";
+    /// The end of a field holding a country code, as the ECS geo fields are named (`source.geo.country_iso_code`).
+    static final String COUNTRY_SUFFIX = ".geo.country_iso_code";
+    /// The end of a geo point field, as the ECS geo fields are named (`source.geo.location`).
+    static final String POINT_SUFFIX = ".geo.location";
     static final String PEER_ELEMENT_ARG = "peerElement";
     /// The most findings the result gives; the rest are in the findings file.
     static final int MAX_FINDINGS = 20;
@@ -290,6 +298,16 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         .addProperty(CATEGORY_LIST_ARG, stringArraySchema("The site's own categories, each "
                                                                           + "value=category (from the AGENTS doc "
                                                                           + "or skill): override the rest."))
+                        .addStringProperty(ACCESS_FIELD_ARG, "Optional: a field of the resources people reach "
+                                                             + "(shares, repositories, sites, record types): the "
+                                                             + "baseline's people and resources are clustered, and "
+                                                             + "the window's access outside the person's cluster "
+                                                             + "found.")
+                        .addBooleanProperty(LOCATION_ARG, "Look for new countries, impossible travel and activity "
+                                                          + "abroad on leave, from the index's geo fields (default "
+                                                          + "true where it has them).")
+                        .addStringProperty(COUNTRY_FIELD_ARG, "Optional: the country field, where it isn't a "
+                                                              + "*.geo.country_iso_code field.")
                         .addProperty(CATEGORY_CORRECTIONS_ARG, stringArraySchema("Corrections of categories "
                                                                                  + "inferred, each "
                                                                                  + "value=category: kept for "
@@ -328,6 +346,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final String element = peerElement(stringArg(request, PEER_ELEMENT_ARG));
         final boolean peers = booleanArg(request, PEERS_ARG, true);
         final boolean categories = booleanArg(request, CATEGORIES_ARG, false);
+        final boolean location = booleanArg(request, LOCATION_ARG, true);
         final Map<String, String> siteList = pairs(stringListArg(request, CATEGORY_LIST_ARG), CATEGORY_LIST_ARG);
         final Map<String, String> corrections = pairs(stringListArg(request, CATEGORY_CORRECTIONS_ARG),
                 CATEGORY_CORRECTIONS_ARG);
@@ -346,6 +365,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         context.progress().report("Aggregating " + planned.size() + " source(s) for " + periods.describe());
         final List<AggregateQuery> queries = new ArrayList<>();
         final List<int[]> at = new ArrayList<>();
+        final List<Map<String, Integer>> offsetsBySource = new ArrayList<>();
         for (final Planned source : planned.stream().filter(Planned::usable).toList()) {
             final int start = queries.size();
             queries.add(ActivityProfiles.daily(source.source(), source.scope(), source.fields(), from, to));
@@ -354,9 +374,24 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             for (final String field : source.fields().breadth()) {
                 queries.add(ActivityProfiles.seen(source.source(), source.scope(), field, from, to));
             }
+            final Map<String, Integer> offsets = new LinkedHashMap<>();
             if (categories && !source.fields().breadth().isEmpty()) {
+                offsets.put(CATEGORIES_ARG, queries.size() - start);
                 queries.add(categoryQuery(source, from, to));
             }
+            if (source.accessField() != null) {
+                offsets.put(ACCESS_FIELD_ARG, queries.size() - start);
+                queries.add(ActivityAccess.graph(source.source(), source.scope().field(), source.accessField(), from,
+                        periods.baselineTo().atStartOfDay(zone.zone()).toInstant()));
+                queries.add(ActivityAccess.window(source.source(), source.scope(), source.accessField(),
+                        periods.windowFrom().atStartOfDay(zone.zone()).toInstant(), to));
+            }
+            if (location && source.countryField() != null) {
+                offsets.put(LOCATION_ARG, queries.size() - start);
+                queries.add(ActivityLocation.hourly(source.source(), source.scope(), source.countryField(),
+                        source.pointField(), from, to));
+            }
+            offsetsBySource.add(offsets);
             final boolean peersHere = peers && source.hasEventIds();
             if (peersHere) {
                 queries.add(ActivityProfiles.active(source.source(), source.scope().field(), from, to,
@@ -428,8 +463,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 if (source.fields().breadth().isEmpty()) {
                     notes.add(source.source().name() + ": no breadth field whose values to put in categories.");
                 } else {
-                    extra = categorised(context, workspace, source, own.get(3 + source.fields().breadth().size()),
-                            siteList, corrections, folder, notes);
+                    extra = categorised(context, workspace, source,
+                            own.get(offsetsBySource.get(index).get(CATEGORIES_ARG)), siteList, corrections, folder,
+                            notes);
                 }
             }
             data.add(new SourceData(source.source().name(), source.label(), source.fields(),
@@ -461,7 +497,33 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         ActivityProfiles.peersDaily(peerTables.get(i)))));
             }
         }
-        final List<Scored> scored = data.stream().map(source -> ActivityScoring.score(spec, source)).toList();
+        final List<Scored> scored = new ArrayList<>();
+        for (int i = 0; i < data.size(); i++) {
+            final Scored one = ActivityScoring.score(spec, data.get(i));
+            final List<ActivityScoring.Finding> more = new ArrayList<>(one.findings());
+            final Planned source = usable.get(i);
+            final Map<String, Integer> offsets = offsetsBySource.get(i);
+            final List<Table> own = tables.subList(at.get(i)[0], at.get(i)[0] + at.get(i)[1]);
+            if (offsets.containsKey(ACCESS_FIELD_ARG)) {
+                final ActivityAccess.Compared access = ActivityAccess.compare(source.source().name(),
+                        source.accessField(), source.scope().values(), own.get(offsets.get(ACCESS_FIELD_ARG)),
+                        own.get(offsets.get(ACCESS_FIELD_ARG) + 1), periods.windowFrom() + " to "
+                                                                    + periods.windowTo().minusDays(1));
+                access.finding().ifPresent(more::add);
+                notes.addAll(access.notes());
+            }
+            if (offsets.containsKey(LOCATION_ARG)) {
+                final ActivityLocation.Located located = ActivityLocation.locate(source.source().name(), spec,
+                        own.get(offsets.get(LOCATION_ARG)), source.pointField() != null);
+                more.addAll(located.findings());
+                notes.addAll(located.notes());
+            } else if (location) {
+                notes.add(source.source().name() + ": location isn't available: it has no geo fields.");
+            }
+            more.sort(Comparator.comparingDouble(ActivityScoring.Finding::score).reversed());
+            scored.add(new Scored(one.source(), more, one.status(), one.features(), one.months(), one.notes(),
+                    one.values()));
+        }
         final CompareResult.Run run = new CompareResult.Run(person, logonIds, periods, unit, zone, planned, scored,
                 notes, queriesRun, folder, element);
         final CompareResult.Files files = CompareResult.write(workspace, run);
@@ -505,6 +567,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final List<String> sums = NullSafe.list(stringListArg(request, SUM_FIELDS_ARG));
         final List<String> breadth = NullSafe.list(stringListArg(request, BREADTH_FIELDS_ARG));
         final String categoryField = stringArg(request, CATEGORY_FIELD_ARG);
+        final String accessField = stringArg(request, ACCESS_FIELD_ARG);
+        final String countryField = stringArg(request, COUNTRY_FIELD_ARG);
         final List<Planned> planned = new ArrayList<>();
         for (final DocRef doc : docs) {
             final Optional<QueryField> time = dataSourceAccess.timeField(doc);
@@ -534,6 +598,11 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                           + scope.field().from() + ")", hasIds, null,
                     categoryField != null && fields.containsKey(categoryField)
                             ? categoryField
+                            : null, accessField != null && fields.containsKey(accessField)
+                            ? accessField
+                            : null, countryField(countryField, fields), elastic
+                            ? fields.keySet().stream().filter(name -> name.endsWith(POINT_SUFFIX)).sorted()
+                                    .findFirst().orElse(null)
                             : null));
         }
         if (planned.stream().noneMatch(Planned::usable)) {
@@ -625,6 +694,21 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         ActivityCategories.daily(byDay, categories).forEach((category, daily) ->
                 extra.put(ActivityScoring.CATEGORY + category, daily));
         return extra;
+    }
+
+    // The country field given, else a *.geo.country_iso_code field the index has (source.* first, as sign-ins
+    // record where they came from there).
+    private static String countryField(final String given, final Map<String, QueryField> fields) {
+        if (given != null) {
+            return fields.containsKey(given)
+                    ? given
+                    : null;
+        }
+        return fields.keySet().stream()
+                .filter(name -> name.endsWith(COUNTRY_SUFFIX))
+                .min(Comparator.comparing((String name) -> !name.startsWith("source."))
+                        .thenComparing(name -> name))
+                .orElse(null);
     }
 
     private static Map<String, String> pairs(final List<String> values, final String arg) {
@@ -915,6 +999,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param hasEventIds   True if it has StreamId and EventId fields.
     /// @param leftOut       Why it can't be read, or null.
     /// @param categoryField The index's category field, or null.
+    /// @param accessField   The field of the resources people reach, or null.
+    /// @param countryField  The country field, or null.
+    /// @param pointField    The geo point field (Elastic only), or null.
     record Planned(DocRef doc,
                    Source source,
                    Scope scope,
@@ -922,13 +1009,16 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                    String label,
                    boolean hasEventIds,
                    String leftOut,
-                   String categoryField) {
+                   String categoryField,
+                   String accessField,
+                   String countryField,
+                   String pointField) {
 
         /// @param doc The index.
         /// @param why Why it can't be read.
         /// @return It, left out.
         static Planned leftOut(final DocRef doc, final String why) {
-            return new Planned(doc, null, null, null, null, false, why, null);
+            return new Planned(doc, null, null, null, null, false, why, null, null, null, null);
         }
 
         /// @return True if it can be read.

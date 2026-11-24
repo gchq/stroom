@@ -144,6 +144,15 @@ final class InMemoryAggregates implements AggregateRunner {
                     .map(event -> event.get("StreamId") + ":" + event.get("EventId"))
                     .min(String::compareTo)
                     .orElse("");
+            case CENTROID -> {
+                final double[] sum = new double[2];
+                events.forEach(event -> {
+                    final double[] point = (double[]) event.get(metric.field());
+                    sum[0] += point[0];
+                    sum[1] += point[1];
+                });
+                yield "POINT (" + sum[0] / events.size() + " " + sum[1] / events.size() + ")";
+            }
         };
     }
 }

@@ -91,6 +91,7 @@ final class AggregateText {
                 case MIN_TIME -> "MIN(" + time + ")";
                 case MAX_TIME -> "MAX(" + time + ")";
                 case ONE_EVENT -> "MIN(" + ONE_EVENT_KEY + ")";
+                case CENTROID -> "ST_CENTROID_AGG(" + esqlName(metric.field()) + ")";
             });
         }
         final List<String> by = new ArrayList<>();
@@ -152,6 +153,8 @@ final class AggregateText {
                 case MAX_TIME -> "max(" + time + ")";
                 case ONE_EVENT -> "any(concat(" + stroomQlName(EqlSequenceResults.STREAM_ID) + ", \":\", "
                                   + stroomQlName(EqlSequenceResults.EVENT_ID) + "))";
+                case CENTROID -> throw new IllegalArgumentException("A centroid needs ES|QL: "
+                                                                    + metric.field());
             };
             selected.add(aggregation + " as " + metricName(metric));
         }

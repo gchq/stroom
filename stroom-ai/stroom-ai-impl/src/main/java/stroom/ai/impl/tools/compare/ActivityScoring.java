@@ -1133,7 +1133,11 @@ final class ActivityScoring {
         /// The hour-of-week rhythm.
         RHYTHM,
         /// Against the peers.
-        PEERS
+        PEERS,
+        /// Access outside the person's cluster.
+        ACCESS,
+        /// Where the activity came from.
+        LOCATION
     }
 
 
