@@ -86,7 +86,7 @@ public final class SequenceSteps {
             throw new WorkspaceException("until is one step: an object with index, where and by.");
         }
         final GivenStep until = givenStep(map, "The until step", notes);
-        if (until.missing() || until.runs() > 1 || !until.fields().isEmpty() || until.keysOnly()) {
+        if (until.missing() || until.runs() > 1 || !until.fields().isEmpty() || until.keysOnly() || until.target()) {
             throw new WorkspaceException("The until step takes index, where and by only.");
         }
         return until;
@@ -127,7 +127,24 @@ public final class SequenceSteps {
         }
         return new GivenStep(index, filters, anyOf, names(map.get(SequenceQueryTool.BY_KEY), what,
                 SequenceQueryTool.BY_KEY, notes), missing, runs, fields, keysOnly,
-                transforms(map.get(SequenceQueryTool.TRANSFORM_KEY), what));
+                transforms(map.get(SequenceQueryTool.TRANSFORM_KEY), what), target(map.get(SequenceQueryTool
+                .ROLE_KEY), what));
+    }
+
+    // True for a step of acts done to the person (role target), false for their own (actor, the default).
+    private static boolean target(final Object given, final String what) {
+        if (given == null || String.valueOf(given).isBlank()) {
+            return false;
+        }
+        final String role = String.valueOf(given).strip().toLowerCase(Locale.ROOT);
+        if (SequenceQueryTool.TARGET_ROLE.equals(role)) {
+            return true;
+        } else if (SequenceQueryTool.ACTOR_ROLE.equals(role)) {
+            return false;
+        }
+        throw new WorkspaceException(what + "'s " + SequenceQueryTool.ROLE_KEY + " is '" + given + "': give "
+                                     + SequenceQueryTool.ACTOR_ROLE + " (the person's own acts, the default) or "
+                                     + SequenceQueryTool.TARGET_ROLE + " (acts done to them).");
     }
 
     // The join-field transforms a step names, in order.

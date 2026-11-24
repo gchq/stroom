@@ -166,7 +166,8 @@ class TestSequenceQueryTool {
                     QueryField.createIpV4Address("ip"), QueryField.createId("StreamId"), QueryField.createId("EventId"))
                     : List.of(QueryField.createDate("@timestamp"), QueryField.createKeyword("SubjectUserName"),
                             QueryField.createKeyword("Computer"), QueryField.createKeyword("Image"),
-                            QueryField.createId("StreamId"), QueryField.createId("EventId")));
+                            QueryField.createKeyword("TargetUserName"), QueryField.createId("StreamId"),
+                            QueryField.createId("EventId")));
         });
         Mockito.when(queryService.validateQuery(Mockito.anyString()))
                 .thenReturn(new ValidateExpressionResult(true, "ok", false));
@@ -283,6 +284,57 @@ class TestSequenceQueryTool {
         assertThat(run(chat(UserQuestions.NONE), args)).contains("Restricted to the person:\n- Devices: by person "
                                                                  + "id, user in (P1)\n- Sysmon: by logon id, "
                                                                  + "SubjectUserName in (alice, CORP\\alice)");
+    }
+
+    @Test
+    void aStepOfActsDoneToThePersonIsRestrictedByItsDocsTargetFieldTheirOwnLeftOut() {
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(SYSMON))).thenReturn(Map.of(
+                InstructionRules.TARGET_USER_FIELD, new FieldRule(List.of("TargetUserName"), "/")));
+        final Map<String, Object> args = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));
+        final Map<String, Object> second = new LinkedHashMap<>(steps.get(1));
+        second.put("role", "target");
+        steps.set(1, second);
+        args.put("steps", steps);
+        args.put("logonIds", List.of("alice"));
+        args.put("userField", List.of("user", "SubjectUserName"));
+
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
+
+        // Their own copy, then something done to their account by another account.
+        assertThat(request().query()).isEqualTo("""
+                sequence with maxspan=2m
+                  [any where action : "copy" and user in ("alice")] by user, host
+                  [any where Image like~ "*powershell.exe" and TargetUserName in ("alice") and not SubjectUserName \
+                in ("alice")] by SubjectUserName, Computer""");
+        assertThat((List<Map<String, Object>>) json.get("scope")).extracting(scope -> scope.get("index"),
+                scope -> scope.get("role"), scope -> scope.get("field")).containsExactly(
+                org.assertj.core.groups.Tuple.tuple("Devices", null, "user"),
+                org.assertj.core.groups.Tuple.tuple("Sysmon", "target", "TargetUserName"));
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("- Sysmon (target steps): done to them, by target "
+                                                                 + "logon id (TargetUserName from the AGENTS doc's "
+                                                                 + "## Fields (/); their own acts by "
+                                                                 + "SubjectUserName left out)");
+    }
+
+    @Test
+    void aTargetStepNeedsAPersonATargetFieldAndAKnownRole() {
+        final Map<String, Object> args = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));
+        final Map<String, Object> second = new LinkedHashMap<>(steps.get(1));
+        second.put("role", "target");
+        steps.set(1, second);
+        args.put("steps", steps);
+
+        assertThat(run(mcp(), args)).startsWith("Error: ").contains("role=target", "give person or logonIds");
+        args.put("logonIds", List.of("alice"));
+        args.put("userField", List.of("user", "SubjectUserName"));
+        assertThat(run(mcp(), args)).startsWith("Error: ").contains("Sysmon", "acts done to the person",
+                "'target user:'");
+        second.put("role", "victim");
+        steps.set(1, second);
+        assertThat(run(mcp(), args)).startsWith("Error: ").contains("Step 2's role is 'victim'");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
     }
 
     @Test

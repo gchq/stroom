@@ -136,6 +136,9 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     static final String LENGTH_KEY = "length";
     static final String KEYS_ONLY_KEY = "keysOnly";
     static final String TRANSFORM_KEY = "transform";
+    static final String ROLE_KEY = "role";
+    static final String ACTOR_ROLE = "actor";
+    static final String TARGET_ROLE = "target";
     static final String ENGINE_ARG = "engine";
     static final String PERSON_ARG = "person";
     static final String LOGON_IDS_ARG = "logonIds";
@@ -334,6 +337,12 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                                      + "(CORP\\jsmith and jsmith@corp are jsmith), file_name (a path's last part). "
                                      + "Elastic Indexes only (the stream engine).")
                         .build())
+                .addEnumProperty(ROLE_KEY, List.of(ACTOR_ROLE, TARGET_ROLE), "With person or logonIds: actor (the "
+                                                                             + "default) for their own acts; target "
+                                                                             + "for acts done to them, by its doc's "
+                                                                             + "target field (AGENTS 'target "
+                                                                             + "person:', ECS user.target.id), "
+                                                                             + "their own left out.")
                 .required(INDEX_KEY, BY_KEY)
                 .build();
         final ObjectSchema until = ObjectSchema.builder()
@@ -469,19 +478,67 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         final String person = stringArg(request, PERSON_ARG);
         final List<String> logonIds = stringListArg(request, LOGON_IDS_ARG);
         if (NullSafe.isBlankString(person) && logonIds.isEmpty()) {
+            if (given.stream().anyMatch(GivenStep::target)) {
+                throw new WorkspaceException("A step with " + ROLE_KEY + "=" + TARGET_ROLE + " is of acts done to "
+                                             + "one person: give " + PERSON_ARG + " or " + LOGON_IDS_ARG + ".");
+            }
             return runSteps(request, context, given, givenUntil, fieldNotes);
         }
         // One person's sequences: each step restricted to them in its doc, by person id or by logon id.
         final Map<String, Scope> scopes = new LinkedHashMap<>();
+        final Map<String, PersonScope.Target> targets = new LinkedHashMap<>();
         final List<GivenStep> scoped = new ArrayList<>();
         for (final GivenStep step : given) {
-            scoped.add(scoped(request, context, step, person, logonIds, scopes));
+            scoped.add(step.target()
+                    ? targeted(request, context, step, person, logonIds, scopes, targets)
+                    : scoped(request, context, step, person, logonIds, scopes));
         }
         final GivenStep scopedUntil = givenUntil == null
                 ? null
                 : scoped(request, context, givenUntil, person, logonIds, scopes);
         final ToolResult result = runSteps(request, context, scoped, scopedUntil, fieldNotes);
-        return withScopes(result, scopes);
+        return withScopes(result, scopes, targets);
+    }
+
+    // A step of acts done to the person: an IN condition on its doc's target person field, else its target user
+    // field holding any of the logon ids; their own acts on themselves left out (NOT_IN on the field they are read
+    // by as the actor, where the doc has one). Keys only, a step can't be: it has no events done to anyone.
+    private GivenStep targeted(final ToolCall request,
+                               final ToolCallContext context,
+                               final GivenStep step,
+                               final String person,
+                               final List<String> logonIds,
+                               final Map<String, Scope> scopes,
+                               final Map<String, PersonScope.Target> targets) {
+        if (step.keysOnly()) {
+            throw new WorkspaceException("A keysOnly step says which entities count, so it can't be " + ROLE_KEY
+                                         + "=" + TARGET_ROLE + ".");
+        }
+        final DocRef doc = dataSource(step.index());
+        final PersonScope.Target target = targets.computeIfAbsent(doc.getName(), name -> {
+            final Set<String> names = new LinkedHashSet<>();
+            EsqlQueryTool.fields(queryServiceProvider.get(), doc).forEach(field -> names.add(field.getFldName()));
+            final Scope actor = scopes.containsKey(name)
+                    ? scopes.get(name)
+                    : PersonScope.resolve(timelineFields, context.session(), doc, person, logonIds,
+                            stringListArg(request, PERSON_FIELD_ARG), stringListArg(request, USER_FIELD_ARG),
+                            names::contains);
+            final PersonScope.Target found = PersonScope.target(timelineFields, context.session(), doc, person,
+                    logonIds, List.of(), List.of(), actor, names::contains);
+            if (!found.usable()) {
+                throw new WorkspaceException(DataSourceAccess.describe(doc) + " can't be restricted to acts done to "
+                                             + "the person: " + found.leftOut() + ".");
+            }
+            return found;
+        });
+        final List<Filter> filters = new ArrayList<>(NullSafe.list(step.filters()));
+        filters.add(new Filter(target.field().field(), Condition.IN, String.join(",", target.values()), false));
+        if (target.actorField() != null) {
+            filters.add(new Filter(target.actorField(), Condition.IN, String.join(",", target.actorValues()),
+                    false, true, false));
+        }
+        return new GivenStep(step.index(), filters, step.anyOf(), step.by(), step.missing(), step.runs(),
+                step.fields(), step.keysOnly(), step.transforms(), true);
     }
 
     // A step restricted to the person: an IN condition on its doc's person field, else its user field holding any
@@ -517,8 +574,10 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     }
 
     // The result, saying by what each doc was restricted to the person.
-    private static ToolResult withScopes(final ToolResult result, final Map<String, Scope> scopes) {
-        if (result.isError() || scopes.isEmpty()) {
+    private static ToolResult withScopes(final ToolResult result,
+                                         final Map<String, Scope> scopes,
+                                         final Map<String, PersonScope.Target> targets) {
+        if (result.isError() || (scopes.isEmpty() && targets.isEmpty())) {
             return result;
         }
         final List<Map<String, Object>> listed = new ArrayList<>();
@@ -533,6 +592,14 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
             sb.append("\n- ").append(entry.getKey()).append(": ").append(scope.by().label()).append(", ")
                     .append(scope.field().field()).append(" in (").append(String.join(", ", scope.values()))
                     .append(")");
+        }
+        for (final Map.Entry<String, PersonScope.Target> entry : targets.entrySet()) {
+            final PersonScope.Target target = entry.getValue();
+            listed.add(Map.of("index", entry.getKey(), "role", TARGET_ROLE, "by", target.describe(), "field",
+                    target.field().field(), "field_from", target.field().from(), "values", target.values()));
+            sb.append("\n- ").append(entry.getKey()).append(" (").append(TARGET_ROLE).append(" steps): ")
+                    .append(target.describe()).append(", ").append(target.field().field()).append(" in (")
+                    .append(String.join(", ", target.values())).append(")");
         }
         if (byLogon) {
             sb.append("\n").append(PersonScope.OTHER_ACCOUNTS);
@@ -1624,6 +1691,8 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     /// @param fields     Fields to show.
     /// @param keysOnly   True if it is read as keys (an entity condition at any time), not events in time.
     /// @param transforms What is done to its join fields' values before they are compared.
+    /// @param target     True if, for one person's sequences, the step is of acts done to them (by its doc's target
+    ///                   field), not their own.
     record GivenStep(String index,
                              List<Filter> filters,
                              List<Filter> anyOf,
@@ -1632,13 +1701,37 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                              int runs,
                              List<String> fields,
                              boolean keysOnly,
-                             List<Transform> transforms) {
+                             List<Transform> transforms,
+                             boolean target) {
 
         /// Copies the list.
         GivenStep {
             transforms = transforms == null
                     ? List.of()
                     : List.copyOf(transforms);
+        }
+
+        /// The person's own acts (the actor role).
+        ///
+        /// @param index      The doc's uuid or name.
+        /// @param filters    Its conditions.
+        /// @param anyOf      Conditions of which one must hold.
+        /// @param by         Its join fields.
+        /// @param missing    True for an event that must not happen.
+        /// @param runs       How many times in a row.
+        /// @param fields     Fields to show.
+        /// @param keysOnly   True if it is read as keys.
+        /// @param transforms What is done to its join fields' values.
+        GivenStep(final String index,
+                  final List<Filter> filters,
+                  final List<Filter> anyOf,
+                  final List<String> by,
+                  final boolean missing,
+                  final int runs,
+                  final List<String> fields,
+                  final boolean keysOnly,
+                  final List<Transform> transforms) {
+            this(index, filters, anyOf, by, missing, runs, fields, keysOnly, transforms, false);
         }
 
         /// @return True if only the stream engine can run the step.
