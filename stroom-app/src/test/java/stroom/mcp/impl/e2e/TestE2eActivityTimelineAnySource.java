@@ -40,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -132,9 +133,10 @@ class TestE2eActivityTimelineAnySource extends AbstractE2eTest {
         // Each planted browsing block is one period, by host and site, from its first request to its last.
         final String spans = read(timelineFolder("pnguyen") + "spans.csv");
         for (final List<String> period : periods) {
-            assertThat(spans).contains("," + period.get(2).replace(".000Z", "Z") + ","
-                                       + period.get(3).replace(".000Z", "Z") + "," + period.get(1) + ","
-                                       + period.get(0) + ",activity,");
+            assertThat(spans).containsPattern("," + Pattern.quote(period.get(2).replace(".000Z", "Z") + ","
+                                              + period.get(3).replace(".000Z", "Z") + ",") + "[^,]*"
+                                              + Pattern.quote(period.get(1)) + ",[^,]*,"
+                                              + Pattern.quote(period.get(0) + ",activity,"));
         }
         // The user and the time are the index's: the XML's own (CORP\PNGUYEN, 2001) are never the timeline's.
         final String events = read(timelineFolder("pnguyen") + "events.csv");
@@ -167,10 +169,15 @@ class TestE2eActivityTimelineAnySource extends AbstractE2eTest {
         // Both levels written; the view's charts given.
         final Map<String, Object> view = (Map<String, Object>) result.get("view");
         assertThat((List<Map<String, Object>>) view.get("gantt_charts")).hasSize(2);
-        assertThat(read(timelineFolder("mlee") + "spans.csv")).contains(",locked,ws-mlee,pair,")
-                .contains(",notepad.exe,ws-mlee,pair,").contains(",putty.exe,ws-mlee,pair,");
+        // Each span's label leads with what happened, its action column saying it whole, by the source's own type
+        // names (its TypeIds) where it has them.
+        assertThat(read(timelineFolder("mlee") + "spans.csv"))
+                .contains(",locked,logon-screenlock to logon-screenunlock,ws-mlee,pair,")
+                .contains(",proc-start · notepad.exe,proc-start to proc-end,ws-mlee,pair,")
+                .contains(",proc-start · putty.exe,proc-start to proc-end,ws-mlee,pair,")
+                .contains(",Tun-Ascend · network,Tun-Ascend to Tun-Recede,ws-mlee,pair,");
         assertThat(read(timelineFolder("mlee") + "activities.csv").lines().findFirst().orElseThrow())
-                .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,lanes,evidence");
+                .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,actions,lanes,evidence");
     }
 
     // ------------------------------------------------------------------------------------------------

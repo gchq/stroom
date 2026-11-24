@@ -161,6 +161,38 @@ class TestE2eActivityTimeline extends AbstractE2eTest {
     }
 
     @Test
+    void withNoRolesGivenTheEventTypesAreClassifiedAndTheFocusSessionsAreThePlans() {
+        // Eval case 77 as a model calls it: no roles, only the fields (Haiku got no focus session at all, its active
+        // time by window title). The event types are classified once by the client's model; a focus is the focus
+        // sessions', never part of an inferred pair.
+        final McpTestClient sampling = clients.sampling(admin, true, TestE2eActivityTimeline::codesStandIn);
+        final Map<String, Object> source = new LinkedHashMap<>();
+        source.put("index", index.getUuid());
+        source.put("name", "User activity");
+        source.put("user", "UserName");
+        source.put("transform", List.of("strip_domain"));
+        source.put("host", "Host");
+        source.put("process", "Process");
+        source.put("title", "WindowTitle");
+        source.put("window", "WindowId");
+        source.put("object", "Object");
+        source.put("text", "Text");
+        source.put("eventTypeField", "EventType");
+        final Map<String, Object> arguments = new LinkedHashMap<>(timeline(Map.of()));
+        arguments.put("sources", List.of(source));
+
+        final Map<String, Object> result = sampling.json("activity_timeline", arguments);
+        dump("activity_timeline, no roles", result);
+
+        final List<List<Object>> sessions = (List<List<Object>>) expected.get("sessions");
+        assertThat(result).containsEntry("session_count", sessions.size());
+        assertThat(rows(result.get("rows"))).isEqualTo(rows(expected.get("by_application")));
+        assertThat((List<Map<String, Object>>) result.get("pairs"))
+                .noneSatisfy(pair -> assertThat(String.valueOf(pair.get("start")) + pair.get("end"))
+                        .containsIgnoringCase("focus"));
+    }
+
+    @Test
     void overAClientThatDoesntSampleOnlyTheStrongLinksAreMadeSayingSo() {
         final Map<String, Object> result = plainClient.json("activity_timeline", timeline(Map.of(
                 "characterise", true)));
@@ -178,7 +210,7 @@ class TestE2eActivityTimeline extends AbstractE2eTest {
                 .anyMatch(artifact -> artifact.startsWith("Supplier Contract 2026")));
         assertThat(activities).allSatisfy(activity -> assertThat(activity).containsEntry("label_is", "inferred"));
         assertThat(read(plainClient, FOLDER + "activities.csv").lines().findFirst().orElseThrow())
-                .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,lanes,evidence");
+                .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,actions,lanes,evidence");
     }
 
     @Test
@@ -211,6 +243,26 @@ class TestE2eActivityTimeline extends AbstractE2eTest {
     }
 
     // ------------------------------------------------------------------------------------------------
+
+    // The stand-in for the client's model classifying the index's event types as a model would.
+    private static String codesStandIn(final CreateMessageRequest request) {
+        if (!String.valueOf(request.systemPrompt()).contains("event codes")) {
+            return standIn(request);
+        }
+        final Map<String, Object> roles = new LinkedHashMap<>();
+        roles.put("focus", Map.of("role", "focus"));
+        roles.put("open", Map.of("role", "open"));
+        roles.put("close", Map.of("role", "close"));
+        roles.put("lock", Map.of("role", "idle"));
+        roles.put("unlock", Map.of("role", "active"));
+        roles.put("clipboard", Map.of("role", "action", "kind", "clipboard copy"));
+        roles.put("save", Map.of("role", "action", "kind", "file save"));
+        roles.put("removable_copy", Map.of("role", "action", "kind", "removable copy"));
+        roles.put("web", Map.of("role", "action", "kind", "web access"));
+        roles.put("prompt", Map.of("role", "action", "kind", "AI prompt"));
+        roles.put("message", Map.of("role", "action", "kind", "message"));
+        return JsonUtil.writeValueAsString(roles, false);
+    }
 
     // The stand-in for the client's model: the proposal's items to its activity, lunch not work, the rest unclear.
     private static String standIn(final CreateMessageRequest request) {

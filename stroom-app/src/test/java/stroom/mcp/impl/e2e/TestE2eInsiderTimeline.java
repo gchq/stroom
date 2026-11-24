@@ -23,6 +23,7 @@ import stroom.mcp.impl.e2e.InsiderDataset.Source;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,7 +65,7 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
         assertThat(result).doesNotContainKey("other_accounts");
         // The proxy's events are Network events: their periods are labelled by the destination.
         final String spans = read("/outputs/timelines/" + InsiderDataset.LEAVER + "/spans.csv");
-        assertThat(spans).contains("," + InsiderDataset.PERSONAL_CLOUD + ",");
+        assertThat(spans).contains(" · " + InsiderDataset.PERSONAL_CLOUD + ",");
         assertThat(spans).doesNotContain(",network,");
     }
 
@@ -127,23 +128,27 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
         assertThat(pairs).anySatisfy(pair -> assertThat(pair).containsEntry("start", "focus.in")
                 .containsEntry("end", "focus.out").containsEntry("by", "Data[WindowHandle]"));
         final String folder = "/outputs/timelines/" + InsiderDataset.LEAVER + "/";
-        final List<List<String>> spans = read(folder + "spans.csv").lines().skip(1)
-                .map(line -> List.of(line.split(",", -1))).toList();
+        final List<Map<String, String>> spans = rows(read(folder + "spans.csv"));
         final String activities = read(folder + "activities.csv");
         // The VPN sessions are spans on the gateway's lane: the three of the week (a Friday, two evenings).
-        assertThat(spans).filteredOn(row -> "pair".equals(row.get(5)) && row.get(4).startsWith("ns-gw"))
+        assertThat(spans).filteredOn(row -> "pair".equals(row.get("kind")) && row.get("lane").startsWith("ns-gw"))
                 .hasSize(3);
-        // Focus pairs placed in activities and rolled up with them, by their own ids.
-        final List<List<String>> placedFocus = spans.stream()
-                .filter(row -> "pair".equals(row.get(5)) && row.get(11).contains("focus.in")
-                               && !row.get(6).isEmpty())
+        // Focus pairs placed in activities and rolled up with them, by their own ids; each says what happened.
+        final List<Map<String, String>> placedFocus = spans.stream()
+                .filter(row -> "pair".equals(row.get("kind")) && row.get("how").contains("focus.in")
+                               && !row.get("activity").isEmpty())
                 .toList();
         assertThat(placedFocus).isNotEmpty();
-        assertThat(placedFocus).anySatisfy(row -> assertThat(activities).contains(row.get(0)));
-        // The proxy's periods by their destination.
+        assertThat(placedFocus).anySatisfy(row -> assertThat(activities).contains(row.get("span")));
+        assertThat(placedFocus).allSatisfy(row -> {
+            assertThat(row.get("action")).isEqualTo("focus.in to focus.out");
+            assertThat(row.get("label")).startsWith("focus.in · ");
+        });
+        // The proxy's periods by their destination, led by what was done there.
         assertThat(spans).anySatisfy(row -> {
-            assertThat(row.get(5)).isEqualTo("activity");
-            assertThat(row.get(3)).isEqualTo(InsiderDataset.PERSONAL_CLOUD);
+            assertThat(row.get("kind")).isEqualTo("activity");
+            assertThat(row.get("label")).endsWith(InsiderDataset.PERSONAL_CLOUD);
+            assertThat(row.get("action")).isNotEmpty();
         });
     }
 
@@ -244,5 +249,44 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
             }
             start = last + 1;
         }
+    }
+
+    // A table's rows by its header's column names; a quoted value (one holding a comma) read whole.
+    private static List<Map<String, String>> rows(final String csv) {
+        final List<List<String>> lines = csv.lines().map(TestE2eInsiderTimeline::cells).toList();
+        final List<String> header = lines.getFirst();
+        final List<Map<String, String>> rows = new ArrayList<>();
+        for (final List<String> line : lines.subList(1, lines.size())) {
+            final Map<String, String> row = new LinkedHashMap<>();
+            for (int i = 0; i < header.size(); i++) {
+                row.put(header.get(i), i < line.size()
+                        ? line.get(i)
+                        : "");
+            }
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private static List<String> cells(final String line) {
+        final List<String> cells = new ArrayList<>();
+        final StringBuilder cell = new StringBuilder();
+        boolean quoted = false;
+        for (int i = 0; i < line.length(); i++) {
+            final char c = line.charAt(i);
+            if (c == '"' && quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                cell.append('"');
+                i++;
+            } else if (c == '"') {
+                quoted = !quoted;
+            } else if (c == ',' && !quoted) {
+                cells.add(cell.toString());
+                cell.setLength(0);
+            } else {
+                cell.append(c);
+            }
+        }
+        cells.add(cell.toString());
+        return cells;
     }
 }

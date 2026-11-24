@@ -18,6 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.timeline.TimelineDashboardConfig;
 import stroom.ai.impl.tools.timeline.TimelineDataConnection;
 import stroom.ai.impl.vis.ChartCheck;
@@ -76,9 +78,12 @@ import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.ElasticTestNode;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.test.AbstractAiIntegrationTest;
+import stroom.test.ConfigMapperSpy;
+import stroom.util.config.AbstractConfigUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.UserRef;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -98,6 +103,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -147,6 +153,8 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
     private DashboardService dashboardService;
     @Inject
     private QueryService queryService;
+    @Inject
+    private ConfigMapperSpy configMapperSpy;
 
     private FakeModelServer model;
     private UserRef user;
@@ -166,12 +174,49 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        configMapperSpy.setConfigValueMappers(Map.of());
         if (model != null) {
             model.close();
         }
         if (node != null && indexName != null) {
             node.deleteIndices(indexName);
         }
+    }
+
+    @Test
+    void theLooseItemsAreClassifiedInParallelBatchesAsTheUser() {
+        // A batch an item, so the batches run in parallel on worker threads, where reading the model's API key by
+        // name needs the user (chat 195: every batch failed "Attempt to elevate permissions without a current
+        // user").
+        configMapperSpy.setConfigValueMapper(AiConfig.class, config -> {
+            final PropertyPath path = Objects.requireNonNullElse(config.getBasePath(),
+                    PropertyPath.fromParts("stroom", "ai"));
+            return AbstractConfigUtil.mutateTree(config, path, Map.of(path.merge("workspace"),
+                    new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, null, null, null,
+                            null, null, 4, null, null, null, null, null, null, null, 1, null, null)));
+        });
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        model.answeringSideRequests(TestAskStroomAiActivityTimeline::modelAnswer)
+                .callTool("activate_timelines", "{}")
+                .callTool("activity_timeline", JsonUtil.writeValueAsString(timeline(), false))
+                .answer("Here is what jsmith was working on.");
+
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
+                AskStroomAiConfig.builder().modelRef(modelRef).build(), null,
+                "What was jsmith working on last week?", AiAgentMode.AGENT)));
+        final List<AiChatMessage> messages = asUser(user, () -> answered(chat.getId()));
+
+        final ToolResultRecord timeline = result(messages, "activity_timeline");
+        assertThat(timeline.error()).as(timeline.text()).isFalse();
+        assertThat(timeline.text()).doesNotContain("couldn't be classified", "without a current user",
+                        "not classified as the calls failed")
+                .contains("sent to the model in");
+        final long classifyCalls = model.sideRequests().stream()
+                .filter(request -> JsonUtil.writeValueAsString(request, false)
+                        .contains("You classify a user's activity records"))
+                .count();
+        assertThat(classifyCalls).as("one call a batch").isGreaterThan(1);
     }
 
     @Test
@@ -196,7 +241,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         final ToolResultRecord timeline = result(messages, "activity_timeline");
         assertThat(timeline.error()).as(timeline.text()).isFalse();
         assertThat(timeline.text()).startsWith("Activity timeline of jsmith")
-                .contains("classified by the model in", "call(s) outside this conversation")
+                .contains("sent to the model in", "call(s) outside this conversation")
                 .contains("\"Q3 finance proposal\"")
                 .doesNotContain(MESSAGE);
         final ToolResultRecord chart = result(messages, "gantt_chart");
@@ -294,12 +339,23 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         final VisComponentSettings chart = (VisComponentSettings) component(saved, "vis").getSettings();
         assertThat(query.getDataSource()).isEqualTo(dataConnection);
         assertThat(chart.getVisualisation()).isEqualTo(visualisation);
+        // The chart draws its own table, unfiltered (chat 195: drawn from the filtered one, a click narrowed it).
+        assertThat(chart.getTableId()).isEqualTo(TimelineDashboardConfig.CHART_TABLE_ID);
+        final TableComponentSettings chartTable = (TableComponentSettings) saved.getComponents().stream()
+                .filter(component -> TimelineDashboardConfig.CHART_TABLE_ID.equals(component.getId()))
+                .findFirst().orElseThrow().getSettings();
+        assertThat(chartTable.getSelectionFilter()).isNullOrEmpty();
+        assertThat(table.getSelectionFilter()).isNotEmpty();
         final TableSettings tableSettings = TableSettings.builder()
                 .columns(table.getColumns())
                 .maxResults(table.getMaxResults())
                 .build();
+        final TableSettings chartSettings = TableSettings.builder()
+                .columns(chartTable.getColumns())
+                .maxResults(chartTable.getMaxResults())
+                .build();
         final DashboardSearchResponse response = asUser(user, () -> dashboardSearch(saved, query, tableSettings,
-                chart));
+                chart, chartSettings));
         final TableResult rows = results(response, TableResult.class);
         assertThat(rows.getTotalResults()).isEqualTo((long) spans);
         final List<String> columns = TimelineDataConnection.columns(TimelineDataConnection.SPANS).stream()
@@ -307,12 +363,16 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         final int start = columns.indexOf("start");
         assertThat(rows.getRows()).allSatisfy(row -> assertThat(row.getValues().get(start))
                 .matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
-        // The chart has a bar per span, its start and end dates, then label and lane.
+        // The chart has a bar per span, its start and end dates, then label and lane; its tooltip says what
+        // happened and how many events.
         final VisResult bars = results(response, VisResult.class);
         final Map<String, Object> data = JsonUtil.readValue(bars.getJsonData(), Map.class);
         assertThat((List<?>) data.get("values")).hasSize(spans);
         assertThat(((List<?>) data.get("types")).subList(0, 4)).isEqualTo(List.of("DATE_TIME", "DATE_TIME", "TEXT",
                 "TEXT"));
+        assertThat(JsonUtil.writeValueAsString(data.get("values"), false)).contains(" event(s)");
+        assertThat(JsonUtil.readValue(chart.getJson(), Map.class)).containsEntry("detail",
+                TimelineDashboardConfig.DETAIL).containsKey("yAxisName");
         // The chart's check passes on the table's rows as the dashboard gives them.
         final List<List<String>> sample = rows.getRows().stream().map(Row::getValues).toList();
         final ChartCheck.Result check = ChartCheck.check(ChartKind.TIMELINE,
@@ -340,7 +400,8 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
     private DashboardSearchResponse dashboardSearch(final DashboardConfig config,
                                                     final QueryComponentSettings query,
                                                     final TableSettings table,
-                                                    final VisComponentSettings chart) {
+                                                    final VisComponentSettings chart,
+                                                    final TableSettings chartTable) {
         final DashboardSearchRequest request = DashboardSearchRequest.builder()
                 .searchRequestSource(SearchRequestSource.builder().sourceType(SourceType.API).build())
                 .search(Search.builder()
@@ -360,7 +421,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
                                 .componentId(TimelineDashboardConfig.CHART_ID)
                                 .visualisation(chart.getVisualisation())
                                 .json(chart.getJson())
-                                .tableSettings(table)
+                                .tableSettings(chartTable)
                                 .requestedRange(new OffsetRange(0L, 10_000L))
                                 .fetch(Fetch.ALL)
                                 .build()))
@@ -553,7 +614,8 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
                 .orElseThrow(() -> new AssertionError("No result of " + tool));
     }
 
-    // A model doc pointing at the fake model server, with tools turned on.
+    // A model doc pointing at the fake model server, with tools turned on; its API key is read by name (the stored
+    // secret need not exist: reading it is what needs the user).
     private DocRef fakeModel() {
         final DocRef ref = modelStore.createDocument("Fake model");
         final OpenAIModelDoc doc = modelStore.readDocument(ref).copy()
