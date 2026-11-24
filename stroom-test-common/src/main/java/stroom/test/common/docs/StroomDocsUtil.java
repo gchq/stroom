@@ -236,6 +236,7 @@ public class StroomDocsUtil {
                         .enableClasspath()
                         .enableNonSystemModules()
                         .enableClassInfo()
+                        .ignoreClassVisibility()     // Include non-public classes, e.g. XSLT functions
                         .enableMethodInfo()
                         .enableFieldInfo()
                         .enableAnnotationInfo()      // Scan classes, methods, fields, annotations
