@@ -59,7 +59,7 @@ class TestEvalCatalogues {
         for (final String id : EvalCases.IDS) {
             final Map<String, Object> evalCase = EvalCases.load(id);
             final Map<String, Object> catalogue = EvalCatalogues.reference(evalCase);
-            if (EvalCases.isQuestion(evalCase)) {
+            if (!EvalCases.isDrafted(evalCase)) {
                 assertThat(catalogue).as(id).isNull();
                 continue;
             }
@@ -94,8 +94,9 @@ class TestEvalCatalogues {
                 }
             }
         }
-        // Every case but the 19 question cases (62 to 64, 71 to 75, 77 to 87) builds a translation.
-        assertThat(built).isEqualTo(EvalCases.IDS.size() - 19);
+        // Every case but the 19 question cases (62 to 64, 71 to 75, 77 to 87), the 9 skill cases (88 to 96) and the
+        // hand-written one (97, its translation read back from the pipeline) drafts a translation.
+        assertThat(built).isEqualTo(EvalCases.IDS.size() - 29);
     }
 
     @Test
@@ -171,7 +172,7 @@ class TestEvalCatalogues {
         int read = 0;
         for (final String id : EvalCases.IDS) {
             final Map<String, Object> evalCase = EvalCases.load(id);
-            if (EvalCases.isQuestion(evalCase)) {
+            if (!EvalCases.isDrafted(evalCase)) {
                 continue;
             }
             final Map<String, Object> reference = (Map<String, Object>) evalCase.get("reference");
@@ -202,7 +203,7 @@ class TestEvalCatalogues {
         for (final String id : EvalCases.IDS) {
             final Map<String, Object> evalCase = EvalCases.load(id);
             final Map<String, Object> reference = (Map<String, Object>) evalCase.get("reference");
-            if (EvalCases.isQuestion(evalCase) || AWAITING_GENERATOR.contains(id)
+            if (!EvalCases.isDrafted(evalCase) || AWAITING_GENERATOR.contains(id)
                 || (reference.get("splitter") != null && !(reference.get("splitter") instanceof Map<?, ?>))
                 || reference.get("converter") != null) {
                 continue;

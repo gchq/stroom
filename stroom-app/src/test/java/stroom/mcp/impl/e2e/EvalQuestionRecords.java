@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /// A question's records too many to keep in a CSV resource (a `lucene_index`'s or `data_connections` entry's
@@ -39,6 +40,49 @@ final class EvalQuestionRecords {
 
     private EvalQuestionRecords() {
         // Static only.
+    }
+
+    /// A row of `aggregated/activity-timeline/any-source.csv` as its source wrote the event: the user as written there
+    /// (`XmlUser`), a wrong time (the index's is the event's), its element, Action, TypeId, the key under the element
+    /// (a process's id and command) and what it touched.
+    ///
+    /// @param record The row.
+    /// @return Its Events XML event.
+    static String anySourceEventXml(final Map<String, String> record) {
+        final String element = record.get("Element");
+        final StringBuilder sb = new StringBuilder("<Event><EventTime><TimeCreated>2001-01-01T00:00:00.000Z"
+                                                   + "</TimeCreated></EventTime><EventSource><System><Name>"
+                                                   + record.get("Source") + "</Name><Environment>Test</Environment>"
+                                                   + "</System><Generator>e2e</Generator><Device><HostName>"
+                                                   + record.get("Host").toUpperCase(Locale.ROOT)
+                                                   + ".CORP</HostName></Device><User><Id>"
+                                                   + escapeText(record.get("XmlUser")) + "</Id></User></EventSource>"
+                                                   + "<EventDetail><TypeId>" + record.get("TypeId") + "</TypeId><")
+                .append(element).append('>');
+        if (!record.get("Action").isEmpty()) {
+            sb.append("<Action>").append(record.get("Action")).append("</Action>");
+        }
+        final String path = record.get("KeyPath");
+        final String value = record.get("KeyValue");
+        if ("Process".equals(element)) {
+            final String[] parts = value.split("\\|", 2);
+            sb.append("<Command>").append(escapeText(parts[1])).append("</Command><ProcessId>").append(parts[0])
+                    .append("</ProcessId>");
+        } else if (!path.isEmpty()) {
+            final String[] names = path.split("/");
+            for (final String name : names) {
+                sb.append('<').append(name).append('>');
+            }
+            sb.append(escapeText(value));
+            for (int i = names.length - 1; i >= 0; i--) {
+                sb.append("</").append(names[i]).append('>');
+            }
+        }
+        return sb.append("</").append(element).append("></EventDetail></Event>").toString();
+    }
+
+    private static String escapeText(final String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;");
     }
 
     /// Makes a question's records.

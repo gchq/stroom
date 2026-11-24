@@ -76,7 +76,7 @@ class TestE2eActivityTimelineAnySource extends AbstractE2eTest {
         indexName = ElasticTestNode.createIndexName("any-source");
         final List<Map<String, String>> records = EvalCases.records(DATA);
         final List<String> events = new ArrayList<>();
-        records.forEach(record -> events.add(eventXml(record)));
+        records.forEach(record -> events.add(EvalQuestionRecords.anySourceEventXml(record)));
         final long stream = storeEvents("ANY-SOURCE-" + indexName.toUpperCase(Locale.ROOT), events);
 
         final ObjectNode body = JsonUtil.getMapper().createObjectNode();
@@ -184,45 +184,6 @@ class TestE2eActivityTimelineAnySource extends AbstractE2eTest {
 
     private static String timelineFolder(final String user) {
         return "/outputs/timelines/" + user + "/";
-    }
-
-    // A row's event as its source wrote it: the user as written there, a wrong time, its element, Action, TypeId, the
-    // key under the element (a process's id and command) and what it touched.
-    private static String eventXml(final Map<String, String> record) {
-        final String element = record.get("Element");
-        final StringBuilder sb = new StringBuilder("<Event><EventTime><TimeCreated>2001-01-01T00:00:00.000Z"
-                                                   + "</TimeCreated></EventTime><EventSource><System><Name>"
-                                                   + record.get("Source") + "</Name><Environment>Test</Environment>"
-                                                   + "</System><Generator>e2e</Generator><Device><HostName>"
-                                                   + record.get("Host").toUpperCase(Locale.ROOT)
-                                                   + ".CORP</HostName></Device><User><Id>"
-                                                   + escape(record.get("XmlUser")) + "</Id></User></EventSource>"
-                                                   + "<EventDetail><TypeId>" + record.get("TypeId") + "</TypeId><")
-                .append(element).append('>');
-        if (!record.get("Action").isEmpty()) {
-            sb.append("<Action>").append(record.get("Action")).append("</Action>");
-        }
-        final String path = record.get("KeyPath");
-        final String value = record.get("KeyValue");
-        if ("Process".equals(element)) {
-            final String[] parts = value.split("\\|", 2);
-            sb.append("<Command>").append(escape(parts[1])).append("</Command><ProcessId>").append(parts[0])
-                    .append("</ProcessId>");
-        } else if (!path.isEmpty()) {
-            final String[] names = path.split("/");
-            for (final String name : names) {
-                sb.append('<').append(name).append('>');
-            }
-            sb.append(escape(value));
-            for (int i = names.length - 1; i >= 0; i--) {
-                sb.append("</").append(names[i]).append('>');
-            }
-        }
-        return sb.append("</").append(element).append("></EventDetail></Event>").toString();
-    }
-
-    private static String escape(final String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;");
     }
 
     private Map<String, Object> timeline(final String user, final Map<String, Object> more) {

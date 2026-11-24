@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,6 +44,57 @@ class TestEvalCases {
     private static final String PAST_THE_LIMIT = "75_stroomql_join_exports_past_the_row_limit";
     // run_stroomql's default row limit (AiWorkspaceConfig).
     private static final int MAX_QUERY_ROWS = 10_000;
+
+    @Test
+    void recentRecordsMoveByWholeDaysSoTheLatestIsYesterday() {
+        final List<Map<String, String>> records = List.of(
+                Map.of("EventTime", "2026-11-17T08:40:03.000Z", "UserId", "jsmith"),
+                Map.of("EventTime", "2026-11-20T23:59:59.000Z", "UserId", "bob"),
+                Map.of("EventTime", "", "UserId", "nobody"));
+
+        final List<Map<String, String>> moved = EvalCases.recent(records, Map.of("EventTime", "date", "UserId",
+                "text"), LocalDate.parse("2026-11-24"));
+
+        assertThat(moved).extracting(record -> record.get("EventTime")).containsExactly("2026-11-21T08:40:03.000Z",
+                "2026-11-24T23:59:59.000Z", "");
+        assertThat(moved).extracting(record -> record.get("UserId")).containsExactly("jsmith", "bob", "nobody");
+        assertThat(EvalCases.table(Map.of("name", "Logons", "events", "questions/skill-logons.csv", "recent", true,
+                "fields", Map.of("EventTime", "date", "UserId", "text", "Outcome", "text", "Host", "text")))
+                .records().stream().map(record -> record.get("EventTime").substring(0, 10)).max(String::compareTo))
+                .contains(LocalDate.now(ZoneOffset.UTC).minusDays(1).toString());
+    }
+
+    @Test
+    void theSkillCasesRunInTheChatAndTheHandWrittenCaseStartsFromItsPipeline() {
+        final List<String> skills = EvalCases.IDS.stream().filter(id -> EvalCases.isSkill(EvalCases.load(id)))
+                .toList();
+        final Map<String, Object> handWritten = EvalCases.load("97_json_hand_written_add_source_ip");
+
+        assertThat(skills).hasSize(9).allSatisfy(id -> assertThat(id).matches("(8[89]|9[0-6])_skill_.*"));
+        for (final String id : skills) {
+            final Map<String, Object> evalCase = EvalCases.load(id);
+            assertThat(evalCase).as(id).containsKeys("request", "expected", "reference");
+            assertThat(EvalCases.isDrafted(evalCase)).as(id).isFalse();
+            assertThat(EvalCases.maps(EvalCases.map(evalCase.get("reference")).get("calls"))).as(id).isNotEmpty();
+        }
+        assertThat(EvalCases.handWritten(handWritten)).containsEntry("feed", "EVAL-97")
+                .containsEntry("pipeline", "EVAL-97-Events").containsKey("sample");
+        assertThat(EvalCases.isDrafted(handWritten)).isFalse();
+        assertThat(EvalCases.isDrafted(EvalCases.load("01_csv_vpn"))).isTrue();
+        assertThat(EvalCases.handWritten(EvalCases.load("01_csv_vpn"))).isNull();
+    }
+
+    @Test
+    void aCasesLuceneIndexesAreOneOrAList() {
+        final Map<String, Object> one = Map.of("name", "Logons");
+        final Map<String, Object> two = Map.of("name", "VPN");
+
+        assertThat(EvalCases.luceneIndexes(Map.of("lucene_index", one))).containsExactly(one);
+        assertThat(EvalCases.luceneIndexes(Map.of("lucene_index", List.of(one, two)))).containsExactly(one, two);
+        assertThat(EvalCases.luceneIndexes(Map.of())).isEmpty();
+        assertThat(EvalCases.luceneIndexes(EvalCases.load("92_skill_add_vpn_source")))
+                .extracting(spec -> spec.get("name")).containsExactly("Logons", "VPN");
+    }
 
     @Test
     void aQuestionsTablesAreItsRecordsWithEachColumnsType() {

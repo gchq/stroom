@@ -33,6 +33,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.feed.shared.FeedDoc;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -748,6 +749,34 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return documentation(notes.getFirst().getUuid());
     }
 
+    /// The catalogue promotion wrote back: the source notes in the folder given or the nearest one above it holding
+    /// some (as promotion places them beside the group's pipeline, or at the feed's base).
+    ///
+    /// @param folderPath A promoted pipeline's folder, e.g. `System/Eval Feeds/Messaging/Events/V1.1`.
+    /// @return The catalogue (the notes' JSON block), or null when no folder up the path holds source notes.
+    Map<String, Object> catalogueNear(final String folderPath) {
+        String path = folderPath;
+        while (path != null && path.contains("/")) {
+            final Optional<ExplorerNode> folder = findFolder(path);
+            if (folder.isPresent()) {
+                final Optional<ExplorerNode> notes = securityContext.asProcessingUserResult(() -> explorerNodeService
+                                .getChildren(folder.get().getDocRef()))
+                        .stream()
+                        .filter(node -> DocumentationDoc.TYPE.equals(node.getType())
+                                        && node.getName().endsWith(" source notes"))
+                        .findFirst();
+                if (notes.isPresent()) {
+                    final Matcher block = NOTES_BLOCK.matcher(documentation(notes.get().getUuid()));
+                    return block.find()
+                            ? JsonUtil.readValue(block.group(1), Map.class)
+                            : null;
+                }
+            }
+            path = path.substring(0, path.lastIndexOf('/'));
+        }
+        return null;
+    }
+
     /// @param build The build.
     /// @return Its catalogue's event types, by TypeId.
     Map<String, Map<String, Object>> eventTypesOf(final String build) {
@@ -1337,6 +1366,50 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         });
     }
 
+    /// A feed and its translation as an environment made them by hand, never through the tools: the feed (in a folder
+    /// of its own), its records stored as a Raw Events stream, an XSLT and a child of a translation template running
+    /// it (with any further properties), and a processor filter reading the feed's raw data; stepped once, so a
+    /// translation that doesn't run fails here. E.g. [TestE2eStartFromExistingPipeline]'s, and eval case 97's
+    /// (`setup: {hand_written: ...}`).
+    ///
+    /// @param folder     The folder's Explorer path, e.g. `System/Feeds/HandVpn`.
+    /// @param feed       The feed's name.
+    /// @param xslt       The translation's XSLT.
+    /// @param name       The pipeline's and the XSLT's name.
+    /// @param template   The translation template's name, e.g. `Event Data (JSON)`.
+    /// @param properties Further properties of the pipeline, e.g. the JSON parser's `addRootObject`.
+    /// @param streamType The stream type the processor filter reads, e.g. `Raw Events`.
+    /// @param sample     The feed's records.
+    /// @return The feed's raw stream, the pipeline and its XSLT.
+    HandWritten handWritten(final String folder,
+                            final String feed,
+                            final String xslt,
+                            final String name,
+                            final String template,
+                            final List<PipelineProperty> properties,
+                            final String streamType,
+                            final String sample) {
+        final ExplorerNode node = folder(folder);
+        create(FeedDoc.TYPE, feed, node);
+        final long raw = storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), sample)));
+        final ExplorerNode xsltNode = create(XsltDoc.TYPE, name, node);
+        editXslt(xsltNode.getUuid(), doc -> doc.copy().data(xslt).build());
+        final ExplorerNode pipeline = create(PipelineDoc.TYPE, name, node);
+        final String templateUuid = templateUuid("translation", template);
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        data.addProperty(property("translationFilter", "xslt", xsltNode.getDocRef()));
+        properties.forEach(data::addProperty);
+        asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(pipeline.getDocRef()).copy()
+                .parentPipeline(new DocRef(PipelineDoc.TYPE, templateUuid))
+                .pipelineData(data.build())
+                .description("Written by hand")
+                .build()));
+        feedFilter(feed, streamType, pipeline.getUuid());
+        assertThat(stepSample(pipeline.getUuid(), List.of(raw)).get("verdict")).as("the hand-written pipeline works")
+                .isEqualTo("clean");
+        return new HandWritten(raw, pipeline.getUuid(), xsltNode.getUuid());
+    }
+
     /// A pipeline property naming a document, as Stroom keeps it.
     ///
     /// @param element  An element.
@@ -1857,6 +1930,15 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                      String xsltUuid,
                      String docUuid,
                      long events) {
+
+    }
+
+    /// A feed's translation written by hand ([#handWritten]).
+    ///
+    /// @param raw      The feed's raw stream.
+    /// @param pipeline The pipeline's UUID.
+    /// @param xslt     Its XSLT's UUID.
+    record HandWritten(long raw, String pipeline, String xslt) {
 
     }
 }

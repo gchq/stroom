@@ -20,6 +20,8 @@ import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.util.json.JsonUtil;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -98,6 +100,12 @@ final class EvalScore {
 
     // The tool whose calls on a file an answer call wrote may give its rows.
     private static final String TABLE_TOOL = "table";
+    // A skill case's: the tool that reads skills, a problem check_skill reports, and a skill's sections.
+    private static final String FIND_SKILLS = "find_skills";
+    private static final String CHECK_PROBLEM = "Problem (";
+    private static final String STEPS = "steps";
+    private static final String DESCRIPTION = "description";
+    private static final int NOTE_CHARS = 240;
 
     private static final String EVT = "event-logging:3";
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
@@ -542,7 +550,8 @@ final class EvalScore {
     }
 
     // expected.type_ids: the events' TypeIds (the catch-all's Unknown events left out of the pattern and the count)
-    // are of the `pattern` (`verb_object` or `any`), at least `min_distinct` distinct; none is one of `forbidden`;
+    // are of the `pattern` (`verb_object` or `any`), `exactly` these if given, at least `min_distinct` distinct; none
+    // is one of `forbidden`;
     // and each of `same`'s groups, records told by their Data ([#matches]), share one TypeId. Whether they are.
     private boolean scoreTypeIds(final Map<String, Object> expected, final List<Element> read) {
         final Map<String, Object> spec = maps(expected.get("type_ids"));
@@ -568,6 +577,11 @@ final class EvalScore {
         } else if (!ANY.equals(pattern)) {
             throw new IllegalArgumentException("type_ids.pattern " + pattern + " is neither " + VERB_OBJECT
                                                + " nor " + ANY);
+        }
+        final List<String> exactly = strings(spec.get("exactly"));
+        if (!exactly.isEmpty() && !catalogued.equals(new TreeSet<>(exactly))) {
+            held = false;
+            problems.add("TypeIds " + catalogued + ", expected exactly " + new TreeSet<>(exactly));
         }
         if (spec.get("min_distinct") instanceof final Number least && catalogued.size() < least.intValue()) {
             held = false;
@@ -1348,6 +1362,330 @@ final class EvalScore {
         scoreWording(maps(expected.get("findings")), calls, reply);
     }
 
+    /// Scores what a hand-written case's build did besides its Events ([AbstractEvalTest#scoreHandWritten]):
+    ///
+    /// * `expected.route.calls_in_order`: the tools called hold these in this order (others may come between);
+    ///   `forbidden_calls`: none of these was called (e.g. a translation drafted from scratch);
+    /// * `expected.catalogue.origin`: the catalogue's origin, as `catalogue_event_types` lists it, starts so;
+    /// * `expected.promoted.pipeline`: the copy is named so; `original_unchanged`: the original's XSLT is as the
+    ///   setup wrote it.
+    ///
+    /// @param evalCase          The case.
+    /// @param made              The tools called, in order.
+    /// @param origin            The catalogue's origin as last listed, or null if it never was.
+    /// @param copyName          The copy's name, or null if no copy was made.
+    /// @param originalUnchanged Whether the original's XSLT is as the setup wrote it.
+    void scoreHandWritten(final Map<String, Object> evalCase,
+                          final List<String> made,
+                          final String origin,
+                          final String copyName,
+                          final boolean originalUnchanged) {
+        final Map<String, Object> expected = maps(evalCase.get("expected"));
+        final Map<String, Object> route = maps(expected.get("route"));
+        final List<String> inOrder = strings(route.get("calls_in_order"));
+        int next = 0;
+        for (final String tool : made) {
+            if (next < inOrder.size() && inOrder.get(next).equals(tool)) {
+                next++;
+            }
+        }
+        check("route in order", next == inOrder.size(), "the calls didn't hold " + inOrder + " in order: from "
+                                                        + (next < inOrder.size()
+                ? inOrder.get(next)
+                : "") + " on was missing (made: " + made + ")");
+        for (final String forbidden : strings(route.get("forbidden_calls"))) {
+            check("didn't call " + forbidden, !made.contains(forbidden), forbidden + " was called");
+        }
+        if (maps(expected.get("catalogue")).get("origin") instanceof final String wanted) {
+            check("catalogue origin", origin != null && origin.startsWith(wanted), "the catalogue's origin is "
+                                                                                   + origin + ", expected '"
+                                                                                   + wanted + "...'");
+        }
+        final Map<String, Object> promoted = maps(expected.get("promoted"));
+        if (promoted.get("pipeline") instanceof final String name) {
+            check("copy named " + name, name.equals(copyName), "the copy is named " + copyName + ", expected "
+                                                                + name);
+        }
+        if (Boolean.TRUE.equals(promoted.get("original_unchanged"))) {
+            check("original unchanged", originalUnchanged, "the original's XSLT was changed");
+        }
+    }
+
+    /// Scores a copy's Events against the original's: each record's the same, the paths given aside.
+    ///
+    /// @param except    The paths the copy may add, below Event.
+    /// @param differing The records (from 0) whose Events differ otherwise.
+    void sameAsSetup(final List<String> except, final List<Integer> differing) {
+        check("same as the setup except " + except, differing.isEmpty(), "the Events of record(s) " + differing
+                                                                         + " differ from the original's beyond "
+                                                                         + except);
+    }
+
+    /// Scores a skill case's run (a case of kind `skill`, [EvalCases#isSkill]) from the chat: every check given must
+    /// hold, and the chat's run must not have failed.
+    ///
+    /// * `expected.tools_used`: each tool was called and the call accepted; `tools_not_used`: none of these was
+    ///   called at all (e.g. a broken skill's steps not run against a missing index);
+    /// * `expected.find_skills`: an accepted `find_skills` call read the skill by `name` (its name or its command's,
+    ///   any case), with `arguments` holding each of these values (any case); `not_chosen`: no call read any of these
+    ///   skills;
+    /// * `expected.calls_with`: each a `tool` and what its arguments must hold, `contains` (any case): some call of
+    ///   it holds them all, e.g. the skill's steps followed with the values bound;
+    /// * `expected.proposal`: of the last proposal (the 'Review and apply' button a `propose_skill` call offered):
+    ///   `folder`, where its skills doc is or is to be made (an Explorer path, with or without `/` or `System/`);
+    ///   `skill`, the skill it proposes, by name; `parameters`, each a name (or a list of names, any one of them)
+    ///   it lists; `not_parameters`, names it doesn't; `defaults`, a parameter's default by name (`a|b` for either
+    ///   name); `steps_call`, tools its steps' example calls call; `steps_contain`, text in its `## Steps`;
+    ///   `section_contains`, text by section (e.g. `event chains`); `check_problems`, how many problems
+    ///   `check_skill` finds in it; `changed_sections`, the sections (`description` for its first paragraph) that
+    ///   must differ from the skill before it, with `may_change` those that may, every other section and every
+    ///   other skill of the doc unchanged; `history_change_contains`, text in its latest history entry's change;
+    /// * `expected.no_proposal`: true when nothing may be proposed (e.g. a user who can't change the skills doc);
+    /// * `expected.answer_must_say_all_of`, `answer_must_say_one_of` and `answer_must_not_say`: what the agent told
+    ///   the user, as a question's are checked ([#scoreQuestion(Map, List)]).
+    ///
+    /// @param evalCase The case.
+    /// @param run      What happened in the chat.
+    void scoreSkill(final Map<String, Object> evalCase, final SkillRun run) {
+        question = true;
+        final Map<String, Object> expected = maps(evalCase.get("expected"));
+        for (final String error : run.errors()) {
+            questionCheck("chat ran", false, "the chat's run failed: " + error);
+        }
+        // A call refused (e.g. its tool group not on yet: "call it again") isn't a use; any attempt is, for a tool
+        // that mustn't be used.
+        final Set<String> called = new LinkedHashSet<>();
+        final Set<String> tried = new LinkedHashSet<>();
+        run.calls().forEach(call -> {
+            tried.add(call.tool());
+            if (!call.error()) {
+                called.add(call.tool());
+            }
+        });
+        note(run.calls().size() + " call(s): " + tried + "; " + run.proposals().size() + " proposal(s)");
+        for (final SkillCall call : run.calls()) {
+            note(call.tool() + (call.error()
+                    ? " (failed)"
+                    : "") + ": " + firstWords(call.text()));
+        }
+        run.proposals().forEach(proposal -> note("check_skill: " + firstWords(proposal.checked())));
+        for (final String tool : strings(expected.get("tools_used"))) {
+            questionCheck("used " + tool, called.contains(tool), tool + " was not used (used: " + called + ")");
+        }
+        for (final String tool : strings(expected.get("tools_not_used"))) {
+            questionCheck("didn't use " + tool, !tried.contains(tool), tool + " was used");
+        }
+        scoreFindSkills(expected, run.calls());
+        for (final Object item : listOf(expected.get("calls_with"))) {
+            final Map<String, Object> wanted = maps(item);
+            final String tool = String.valueOf(wanted.get("tool"));
+            final List<String> contains = strings(wanted.get("contains"));
+            final boolean found = run.calls().stream()
+                    .filter(call -> tool.equals(call.tool()) && !call.error())
+                    .anyMatch(call -> holdsAll(call.arguments(), contains));
+            questionCheck(tool + " with " + contains, found, "no accepted " + tool + " call's arguments hold all of "
+                                                              + contains);
+        }
+        if (Boolean.TRUE.equals(expected.get("no_proposal"))) {
+            questionCheck("no proposal", run.proposals().isEmpty(), run.proposals().size() + " proposal(s) made");
+        }
+        final Map<String, Object> proposal = maps(expected.get("proposal"));
+        if (!proposal.isEmpty()) {
+            if (run.proposals().isEmpty()) {
+                questionCheck("proposal", false, "nothing was proposed");
+            } else {
+                scoreProposal(proposal, run.proposals().getLast());
+            }
+        }
+        final List<ToolUse> uses = run.calls().stream()
+                .map(call -> new ToolUse(call.tool(), call.error(), Map.of(), call.text()))
+                .toList();
+        scoreWording(expected, uses, run.reply());
+    }
+
+    // The start of a tool's result, for the notes.
+    private static String firstWords(final String text) {
+        final String value = String.valueOf(text).replaceAll("\\s+", " ").strip();
+        return value.length() > NOTE_CHARS
+                ? value.substring(0, NOTE_CHARS) + "…"
+                : value;
+    }
+
+    // The find_skills calls: the skill read by name with the arguments wanted, and none of the distractors.
+    private void scoreFindSkills(final Map<String, Object> expected, final List<SkillCall> calls) {
+        final List<SkillCall> reads = calls.stream()
+                .filter(call -> FIND_SKILLS.equals(call.tool()) && !call.error()
+                                && call.arguments().get("name") != null)
+                .toList();
+        final Map<String, Object> wanted = maps(expected.get(FIND_SKILLS));
+        if (wanted.get("name") instanceof final String name) {
+            final List<SkillCall> named = reads.stream()
+                    .filter(call -> sameSkill(name, String.valueOf(call.arguments().get("name"))))
+                    .toList();
+            questionCheck("read " + name, !named.isEmpty(), "no find_skills call read '" + name + "' by name (read: "
+                                                           + reads.stream().map(call -> call.arguments().get("name"))
+                                                                   .toList() + ")");
+            final Map<String, Object> arguments = maps(wanted.get("arguments"));
+            if (!named.isEmpty() && !arguments.isEmpty()) {
+                final boolean bound = named.stream().anyMatch(call -> arguments.entrySet().stream()
+                        .allMatch(entry -> String.valueOf(maps(call.arguments().get("arguments"))
+                                        .get(entry.getKey())).equalsIgnoreCase(String.valueOf(entry.getValue()))));
+                questionCheck("read with " + arguments, bound, "no find_skills call of '" + name + "' had the "
+                                                               + "arguments " + arguments);
+            }
+        }
+        for (final String distractor : strings(expected.get("not_chosen"))) {
+            questionCheck("didn't read " + distractor, reads.stream()
+                    .noneMatch(call -> sameSkill(distractor, String.valueOf(call.arguments().get("name")))),
+                    "find_skills read '" + distractor + "'");
+        }
+    }
+
+    // The last proposal against what the case expects of it.
+    private void scoreProposal(final Map<String, Object> expected, final SkillProposal proposal) {
+        if (expected.get("folder") instanceof final String folder) {
+            questionCheck("proposal folder", explorerPath(folder).equalsIgnoreCase(explorerPath(proposal.folder())),
+                    "the proposal is for folder " + proposal.folder() + ", expected " + folder);
+        }
+        final String name = String.valueOf(expected.get("skill"));
+        final SkillDoc after = SkillDoc.parse(proposal.after());
+        final SkillDoc.Skill skill = after.skills().stream()
+                .filter(found -> found.name().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+        questionCheck("proposes " + name, skill != null, "the proposal holds no skill '" + name + "' (it holds "
+                                                        + after.skills().stream().map(SkillDoc.Skill::name).toList()
+                                                        + ")");
+        if (skill == null) {
+            return;
+        }
+        final List<String> parameters = skill.parameters().stream()
+                .map(parameter -> parameter.name().toLowerCase(Locale.ROOT))
+                .toList();
+        for (final Object item : listOf(expected.get("parameters"))) {
+            final List<String> names = strings(item instanceof List<?> ? item : List.of(item));
+            questionCheck("parameter " + names, names.stream().anyMatch(one -> parameters.contains(
+                    one.toLowerCase(Locale.ROOT))), "no parameter " + names + " (its parameters: " + parameters + ")");
+        }
+        for (final String unwanted : strings(expected.get("not_parameters"))) {
+            questionCheck("no parameter " + unwanted, !parameters.contains(unwanted.toLowerCase(Locale.ROOT)),
+                    "'" + unwanted + "' is a parameter, which the work defines");
+        }
+        for (final Map.Entry<String, Object> entry : maps(expected.get("defaults")).entrySet()) {
+            final List<String> names = List.of(entry.getKey().toLowerCase(Locale.ROOT).split("\\|"));
+            final SkillDoc.Parameter parameter = skill.parameters().stream()
+                    .filter(found -> names.contains(found.name().toLowerCase(Locale.ROOT)))
+                    .findFirst()
+                    .orElse(null);
+            final String given = parameter == null
+                    ? null
+                    : parameter.defaultValue();
+            questionCheck("default " + entry.getKey(), String.valueOf(entry.getValue()).equalsIgnoreCase(
+                    String.valueOf(given)), "the default of " + entry.getKey() + " is " + given + ", expected "
+                                            + entry.getValue());
+        }
+        final Set<String> stepTools = new LinkedHashSet<>();
+        skill.calls().forEach(call -> stepTools.add(call.tool()));
+        for (final String tool : strings(expected.get("steps_call"))) {
+            questionCheck("a step calls " + tool, stepTools.contains(tool), "no step's example call calls " + tool
+                                                                           + " (they call " + stepTools + ")");
+        }
+        final String steps = section(skill, STEPS);
+        for (final String text : strings(expected.get("steps_contain"))) {
+            questionCheck("steps hold " + text, steps.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT)),
+                    "its steps don't hold '" + text + "'");
+        }
+        for (final Map.Entry<String, Object> entry : maps(expected.get("section_contains")).entrySet()) {
+            final String text = section(skill, entry.getKey());
+            for (final String wanted : strings(entry.getValue())) {
+                questionCheck(entry.getKey() + " holds " + wanted, text.toLowerCase(Locale.ROOT).contains(
+                        wanted.toLowerCase(Locale.ROOT)), "its " + entry.getKey() + " doesn't hold '" + wanted + "'");
+            }
+        }
+        if (expected.get("check_problems") instanceof final Number problems) {
+            final List<String> found = proposal.checked().lines()
+                    .filter(line -> line.contains(CHECK_PROBLEM))
+                    .map(String::strip)
+                    .toList();
+            questionCheck("check_skill problems", found.size() == problems.intValue(), "check_skill found "
+                                                                                     + found.size() + " problem(s), "
+                                                                                     + "expected " + problems + ": "
+                                                                                     + found);
+        }
+        if (expected.get("changed_sections") instanceof final List<?> changed) {
+            scoreChangedOnly(name, strings(changed), strings(expected.get("may_change")), proposal, after, skill);
+        }
+        if (expected.get("history_change_contains") instanceof final String text) {
+            final String change = after.latestEntry().map(SkillDoc.HistoryEntry::change).orElse("");
+            questionCheck("history says " + text, change.toLowerCase(Locale.ROOT).contains(text.toLowerCase(
+                    Locale.ROOT)), "the latest history entry's change is '" + change + "'");
+        }
+    }
+
+    // A modification touches only what was asked: the sections it must change differ, those it may change aside;
+    // every other section of the skill, and every other skill of the doc, is as it was.
+    private void scoreChangedOnly(final String name,
+                                  final List<String> changed,
+                                  final List<String> mayChange,
+                                  final SkillProposal proposal,
+                                  final SkillDoc after,
+                                  final SkillDoc.Skill skill) {
+        final SkillDoc before = SkillDoc.parse(proposal.before());
+        final SkillDoc.Skill old = before.skill(name).orElse(null);
+        questionCheck("modifies " + name, old != null, "the doc had no skill '" + name + "' before the proposal");
+        if (old == null) {
+            return;
+        }
+        final Set<String> sections = new TreeSet<>(old.sections().keySet());
+        sections.addAll(skill.sections().keySet());
+        sections.add(DESCRIPTION);
+        for (final String section : sections) {
+            final boolean same = normalised(section(old, section)).equals(normalised(section(skill, section)));
+            if (changed.contains(section)) {
+                questionCheck("changed " + section, !same, "its " + section + " wasn't changed");
+            } else if (!mayChange.contains(section)) {
+                questionCheck("kept " + section, same, "its " + section + " was changed, which wasn't asked");
+            }
+        }
+        for (final SkillDoc.Skill other : before.skills()) {
+            if (!other.name().equalsIgnoreCase(name)) {
+                questionCheck("kept skill " + other.name(), after.skill(other.name()).map(SkillDoc.Skill::text)
+                        .map(EvalScore::normalised)
+                        .filter(normalised(other.text())::equals)
+                        .isPresent(), "the skill '" + other.name() + "' was changed or removed");
+            }
+        }
+    }
+
+    // A section of a skill by its heading (any case); `description` its first paragraph.
+    private static String section(final SkillDoc.Skill skill, final String heading) {
+        final String key = heading.toLowerCase(Locale.ROOT);
+        return DESCRIPTION.equals(key)
+                ? Objects.requireNonNullElse(skill.description(), "")
+                : Objects.requireNonNullElse(skill.sections().get(key), "");
+    }
+
+    private static String normalised(final String text) {
+        return text.strip().replaceAll("\\s+", " ");
+    }
+
+    // A path as a case or the explorer gives it, without the root: Hunts/Leavers.
+    private static String explorerPath(final String path) {
+        return String.valueOf(path).strip().replaceFirst("^/+", "").replaceFirst("^System(/|$)", "")
+                .replaceFirst("/+$", "");
+    }
+
+    // A skill named by its name or its command's (any case).
+    private static boolean sameSkill(final String name, final String given) {
+        return SkillDoc.slug(name).equals(SkillDoc.slug(given));
+    }
+
+    // A call's arguments hold each text (any case), as JSON.
+    private static boolean holdsAll(final Map<String, Object> arguments, final List<String> texts) {
+        final String json = JsonUtil.writeValueAsString(arguments, false).toLowerCase(Locale.ROOT);
+        return texts.stream().allMatch(text -> json.contains(text.toLowerCase(Locale.ROOT)));
+    }
+
     // The answer call's findings against the case's matchers.
     private void scoreFindings(final Map<String, Object> expected, final ToolUse call) {
         if (expected.isEmpty()) {
@@ -1994,5 +2332,44 @@ final class EvalScore {
     /// @param snapshot Its pipeline, XSLT and index as the setup left them, by name, each as text to compare.
     record Before(String group, String pipeline, String index, Map<String, String> snapshot) {
 
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// A tool call in a skill case's chat.
+    ///
+    /// @param tool      The tool.
+    /// @param arguments Its arguments.
+    /// @param error     True if it failed or wasn't run.
+    /// @param text      What the model was given of its result.
+    record SkillCall(String tool, Map<String, Object> arguments, boolean error, String text) {
+
+    }
+
+    /// A proposal in a skill case's chat: a 'Review and apply' button a `propose_skill` call offered.
+    ///
+    /// @param action  The button's action (`apply_documentation_change`, or `create_instructions` for a new doc).
+    /// @param folder  The Explorer path of the folder its skills doc is in, or is to be made in.
+    /// @param before  The doc's text before it (empty for a new doc).
+    /// @param after   The doc's text it proposes.
+    /// @param checked What `check_skill` said of each skill it adds or changes.
+    record SkillProposal(String action, String folder, String before, String after, String checked) {
+
+    }
+
+    /// What happened in a skill case's chat, from the request on.
+    ///
+    /// @param calls     The tool calls, in order.
+    /// @param reply     The model's replies, joined.
+    /// @param proposals The proposals, in order.
+    /// @param errors    The run's errors, if it failed.
+    record SkillRun(List<SkillCall> calls, String reply, List<SkillProposal> proposals, List<String> errors) {
+
+        /// Copies the lists.
+        SkillRun {
+            calls = List.copyOf(calls);
+            proposals = List.copyOf(proposals);
+            errors = List.copyOf(errors);
+        }
     }
 }

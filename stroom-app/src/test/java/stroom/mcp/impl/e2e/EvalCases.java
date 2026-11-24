@@ -24,6 +24,11 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -69,7 +74,11 @@ final class EvalCases {
             "79_insider_leaver_week_timeline", "80_insider_working_on_a_day", "81_insider_vpn_session_at_night",
             "82_insider_archive_then_personal_cloud_upload", "83_compare_leaver_before_leaving",
             "84_compare_viewer_against_team", "85_compare_compromised_in_april", "86_compare_decoys_not_flagged",
-            "87_compare_done_to_leaver_before_leaving");
+            "87_compare_done_to_leaver_before_leaving", "88_skill_save_from_investigation",
+            "89_skill_run_among_distractors", "90_skill_broken_reported_before_running",
+            "91_skill_timeline_from_template", "92_skill_add_vpn_source", "93_skill_default_fourteen_days",
+            "94_skill_timeline_learns_pair_editor", "95_skill_timeline_learns_pair_viewer",
+            "96_skill_undo_last_change", "97_json_hand_written_add_source_ip");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");
@@ -108,6 +117,72 @@ final class EvalCases {
     /// @return True for a question.
     static boolean isQuestion(final Map<String, Object> evalCase) {
         return "question".equals(evalCase.get("kind"));
+    }
+
+    /// Whether a case is a chat about skills (`kind: skill`): run in Stroom's own chat ([stroom.ai.impl.EvalChat]),
+    /// where `propose_skill` offers its 'Review and apply' button, after its setup ([AbstractEvalTest#setUpSkill]):
+    /// a question's data, the skills docs, the user who chats and the chat's earlier turns. Scored on the calls made,
+    /// the proposals and what the agent told the user ([EvalScore#scoreSkill]).
+    ///
+    /// @param evalCase The case.
+    /// @return True for a skill case.
+    static boolean isSkill(final Map<String, Object> evalCase) {
+        return "skill".equals(evalCase.get("kind"));
+    }
+
+    /// Whether a case's reference drafts a translation from its sample: every case but a question, a skill case and
+    /// a hand-written one (which reads the translation back from the pipeline written by hand).
+    ///
+    /// @param evalCase The case.
+    /// @return True for a case whose reference drafts its translation.
+    static boolean isDrafted(final Map<String, Object> evalCase) {
+        return !isQuestion(evalCase) && !isSkill(evalCase) && handWritten(evalCase) == null;
+    }
+
+    /// A hand-written case's setup (`setup: {hand_written: ...}`): a feed whose translation was written by hand in
+    /// Stroom and never by the tools ([AbstractEvalTest#setUpHandWritten]), for a build that starts from it.
+    ///
+    /// @param evalCase The case.
+    /// @return The setup's spec, or null for a case that has none.
+    static Map<String, Object> handWritten(final Map<String, Object> evalCase) {
+        return map(evalCase.get("setup")).get("hand_written") instanceof final Map<?, ?> spec
+                ? (Map<String, Object>) spec
+                : null;
+    }
+
+    /// The Lucene indexes of a question's or skill case's data (`lucene_index`: one, or a list of them).
+    ///
+    /// @param evalCase The case.
+    /// @return Each index's spec, none if it has none.
+    static List<Map<String, Object>> luceneIndexes(final Map<String, Object> evalCase) {
+        final Object given = evalCase.get("lucene_index");
+        return given instanceof final Map<?, ?> one
+                ? List.of((Map<String, Object>) one)
+                : maps(given);
+    }
+
+    /// @param value A list of strings in a case, or null.
+    /// @return Its items as text, none for null.
+    static List<String> strings(final Object value) {
+        return value instanceof final List<?> list
+                ? list.stream().map(String::valueOf).toList()
+                : List.of();
+    }
+
+    /// @param value A list of maps in a case, or null.
+    /// @return Its maps, none for null.
+    static List<Map<String, Object>> maps(final Object value) {
+        return value instanceof final List<?> list
+                ? list.stream().filter(Map.class::isInstance).map(item -> (Map<String, Object>) item).toList()
+                : List.of();
+    }
+
+    /// @param value A map in a case, or null.
+    /// @return It, empty for null.
+    static Map<String, Object> map(final Object value) {
+        return value instanceof final Map<?, ?> given
+                ? (Map<String, Object>) given
+                : Map.of();
     }
 
     /// The case a case starts from (`setup: {from_case: 56}`): built with its reference solution and promoted before
@@ -263,7 +338,9 @@ final class EvalCases {
     /// The question's data that isn't the proxy uploads ([EvalProxyUploads]): a table of records the case gives
     /// (`events` of its `lucene_index` or `elastic_index`, `csv` of a `data_connections` entry), with each column's
     /// type (`fields`, or a data connection's `columns`): `text`, `long` or `date` (ISO 8601). Records too many to
-    /// keep in a resource are made by a generator instead (`generate`, [EvalQuestionRecords#generate]).
+    /// keep in a resource are made by a generator instead (`generate`, [EvalQuestionRecords#generate]). With `recent:
+    /// true` the records are moved by whole days so that the latest falls on the day before today (UTC), their times
+    /// of day kept, for a case whose questions run back from now (a skill's "the last 7 days").
     ///
     /// @param spec The `lucene_index`, `elastic_index` or `data_connections` entry.
     /// @return Its records, or null for an `elastic_index` of the proxy uploads, which has no `events`.
@@ -278,9 +355,12 @@ final class EvalCases {
         final Map<String, String> types = new LinkedHashMap<>();
         ((Map<String, Object>) spec.getOrDefault("fields", spec.getOrDefault("columns", Map.of())))
                 .forEach((column, type) -> types.put(column, String.valueOf(type)));
-        final List<Map<String, String>> records = resource != null
+        final List<Map<String, String>> read = resource != null
                 ? records(String.valueOf(resource))
                 : EvalQuestionRecords.generate((Map<String, Object>) generate);
+        final List<Map<String, String>> records = Boolean.TRUE.equals(spec.get("recent"))
+                ? recent(read, types, LocalDate.now(ZoneOffset.UTC).minusDays(1))
+                : read;
         for (final String column : records.isEmpty()
                 ? List.<String>of()
                 : records.getFirst().keySet()) {
@@ -291,6 +371,43 @@ final class EvalCases {
             }
         }
         return new QuestionTable(String.valueOf(spec.get("name")), types, records);
+    }
+
+    /// Records moved by whole days so that the latest of their dates (the `date` columns') falls on a day, each
+    /// value's time of day kept.
+    ///
+    /// @param records The records.
+    /// @param types   Each column's type.
+    /// @param day     The day the latest is to fall on.
+    /// @return The records, moved.
+    static List<Map<String, String>> recent(final List<Map<String, String>> records,
+                                            final Map<String, String> types,
+                                            final LocalDate day) {
+        final List<String> dates = types.entrySet().stream()
+                .filter(entry -> "date".equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+        final LocalDate latest = records.stream()
+                .flatMap(record -> dates.stream().map(record::get))
+                .filter(value -> value != null && !value.isEmpty())
+                .map(value -> Instant.parse(value).atOffset(ZoneOffset.UTC).toLocalDate())
+                .max(LocalDate::compareTo)
+                .orElse(day);
+        final long days = ChronoUnit.DAYS.between(latest, day);
+        final List<Map<String, String>> moved = new ArrayList<>();
+        for (final Map<String, String> record : records) {
+            final Map<String, String> copy = new LinkedHashMap<>(record);
+            for (final String column : dates) {
+                final String value = copy.get(column);
+                if (value != null && !value.isEmpty()) {
+                    copy.put(column, DateTimeFormatter.ISO_INSTANT.format(Instant.parse(value)
+                            .plus(days, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS)).replaceFirst(
+                            "(T\\d{2}:\\d{2}:\\d{2})Z$", "$1.000Z"));
+                }
+            }
+            moved.add(copy);
+        }
+        return moved;
     }
 
     // So many lines of a test resource next to the e2e tests, from a line, each ending in a new line.

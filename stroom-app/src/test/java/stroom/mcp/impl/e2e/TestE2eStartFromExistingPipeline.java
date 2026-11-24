@@ -16,18 +16,10 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.McpTestClient;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
@@ -72,9 +64,6 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
             "EventSource/Client/IPAddress", "field", "src_ip")));
     private static final Map<String, Object> DESTINATIONS = Map.of("XSLT", "Feeds/HandVpn", "Pipeline",
             "Feeds/HandVpn", "Documentation", "Feeds/HandVpn");
-
-    @Inject
-    private PipelineStore pipelineStore;
 
     @Test
     void aHandWrittenPipelineIsInductedChangedAndPromotedAsItsNextVersion() {
@@ -184,33 +173,13 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
         assertThat(folderOf(copyPipeline)).startsWith(FOLDER);
     }
 
-    // The feed and its translation as an environment made them by hand, never through the tools: the feed, its
-    // records, an XSLT and a child of the JSON translation template running it, and the processor filter reading
-    // the feed's raw data.
+    // The feed and its translation as an environment made them by hand, never through the tools.
     private HandWritten handWritten() {
-        final ExplorerNode folder = folder(FOLDER);
-        create(FeedDoc.TYPE, FEED, folder);
-        final long raw = storeParts(FEED, List.of(Map.entry(Map.of("Feed", FEED), SAMPLE)));
-        final ExplorerNode xslt = create(XsltDoc.TYPE, ORIGINAL, folder);
-        editXslt(xslt.getUuid(), doc -> doc.copy().data(XSLT).build());
-        final ExplorerNode pipeline = create(PipelineDoc.TYPE, ORIGINAL, folder);
-        final String template = templateUuid("translation", "Event Data (JSON)");
-        final PipelineDataBuilder data = new PipelineDataBuilder();
-        data.addProperty(property("translationFilter", "xslt", xslt.getDocRef()));
-        data.addProperty(PipelineProperty.builder()
+        return handWritten(FOLDER, FEED, XSLT, ORIGINAL, "Event Data (JSON)", List.of(PipelineProperty.builder()
                 .element("jsonParser")
                 .name("addRootObject")
                 .value(new PipelinePropertyValue(false))
-                .build());
-        asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(pipeline.getDocRef()).copy()
-                .parentPipeline(new DocRef(PipelineDoc.TYPE, template))
-                .pipelineData(data.build())
-                .description("Written by hand")
-                .build()));
-        feedFilter(FEED, "Raw Events", pipeline.getUuid());
-        assertThat(stepSample(pipeline.getUuid(), List.of(raw)).get("verdict")).as("the hand-written pipeline works")
-                .isEqualTo("clean");
-        return new HandWritten(raw, pipeline.getUuid(), xslt.getUuid());
+                .build()), "Raw Events", SAMPLE);
     }
 
     // Each record's Events from a pipeline, canonical, with the source IP (EventSource/Client) taken out.
@@ -228,14 +197,5 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
             }
         }
         return out;
-    }
-
-    /// The hand-written translation.
-    ///
-    /// @param raw      The feed's raw stream.
-    /// @param pipeline The pipeline.
-    /// @param xslt     Its XSLT.
-    private record HandWritten(long raw, String pipeline, String xslt) {
-
     }
 }

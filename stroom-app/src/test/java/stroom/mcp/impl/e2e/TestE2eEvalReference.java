@@ -46,6 +46,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// the answer scored against the one the case gives, worked out by `esql/proxy-uploads-generator.py` or by brute
 /// force ([TestEvalCases]). A question on Elasticsearch is skipped without an Elasticsearch node.
 ///
+/// A skill case (`kind: skill`, cases 88 to 96) runs in Stroom's own chat, where skills live: its setup (its data, its
+/// skills docs, the user who chats, the chat's earlier turns) made, then its request asked of a scripted model making
+/// the reference's calls ([AbstractEvalTest#runSkillReference]), and scored as an agent's chat is
+/// ([EvalScore#scoreSkill]).
+///
+/// A hand-written case (`setup: {hand_written: ...}`, case 97) has its feed's translation written by hand in Stroom
+/// first, then its reference route from it ([AbstractEvalTest#runHandWrittenReference]).
+///
 /// `create_index_doc` adds the fields of the plan drafted for the index in the session, so nothing else sets them;
 /// the processor filters aren't deleted after each case, as each case starts from an empty Stroom.
 class TestE2eEvalReference extends AbstractEvalTest {
@@ -65,6 +73,10 @@ class TestE2eEvalReference extends AbstractEvalTest {
         try {
             if (EvalCases.isQuestion(evalCase)) {
                 runQuestionReference(evalCase, score);
+            } else if (EvalCases.isSkill(evalCase)) {
+                runSkillReference(evalCase, score);
+            } else if (EvalCases.handWritten(evalCase) != null) {
+                runHandWrittenReference(evalCase, score, "eval-" + tag);
             } else {
                 final Setup setup = setUp(evalCase, tag, feed);
                 runReference(evalCase, score, "eval-" + tag, feed, setup);

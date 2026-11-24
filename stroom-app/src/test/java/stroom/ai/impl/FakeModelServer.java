@@ -41,7 +41,10 @@ import java.util.function.Function;
 /// offers tools (the agent's turns) gets the next of the replies it is given (an answer, or a call of a tool),
 /// streamed as server-sent events; any other request (e.g. naming the chat, or suggesting follow-ups) is answered
 /// with a short answer of its own, so that it doesn't take the agent's replies. Every request is recorded.
-final class FakeModelServer implements AutoCloseable {
+///
+/// Its agent turns may instead be answered by a function of each request ([#answeringAgentTurns]), e.g. a real model
+/// reached another way, so that a chat runs through the same wire format with a model that decides for itself.
+public final class FakeModelServer implements AutoCloseable {
 
     private static final String DEFAULT_ANSWER = "Done.";
     static final String SIDE_ANSWER = "Acme logons";
@@ -51,6 +54,7 @@ final class FakeModelServer implements AutoCloseable {
     private final List<Map<String, Object>> agentRequests = Collections.synchronizedList(new ArrayList<>());
     private final List<Map<String, Object>> sideRequests = Collections.synchronizedList(new ArrayList<>());
     private volatile Function<Map<String, Object>, String> sideAnswers = request -> null;
+    private volatile Function<Map<String, Object>, Reply> agentTurns;
 
     private FakeModelServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -60,12 +64,12 @@ final class FakeModelServer implements AutoCloseable {
 
     /// @return A server, started.
     /// @throws IOException if it can't be started.
-    static FakeModelServer start() throws IOException {
+    public static FakeModelServer start() throws IOException {
         return new FakeModelServer();
     }
 
     /// @return The base URL to give the model client.
-    String baseUrl() {
+    public String baseUrl() {
         return "http://127.0.0.1:" + server.getAddress().getPort() + "/v1";
     }
 
@@ -73,7 +77,7 @@ final class FakeModelServer implements AutoCloseable {
     ///
     /// @param text The answer.
     /// @return This server.
-    FakeModelServer answer(final String text) {
+    public FakeModelServer answer(final String text) {
         replies.add(Map.of("answer", text));
         return this;
     }
@@ -83,7 +87,7 @@ final class FakeModelServer implements AutoCloseable {
     /// @param name          The tool.
     /// @param argumentsJson Its arguments, as JSON.
     /// @return This server.
-    FakeModelServer callTool(final String name, final String argumentsJson) {
+    public FakeModelServer callTool(final String name, final String argumentsJson) {
         replies.add(Map.of("tool", name, "arguments", argumentsJson));
         return this;
     }
@@ -98,8 +102,18 @@ final class FakeModelServer implements AutoCloseable {
         return this;
     }
 
+    /// Answers every agent turn (a request that offers tools) with the function's reply to it, in place of the
+    /// scripted replies: e.g. a real model's choice, given the request's messages and tools.
+    ///
+    /// @param turns Each agent turn's reply, given its request's body.
+    /// @return This server.
+    public FakeModelServer answeringAgentTurns(final Function<Map<String, Object>, Reply> turns) {
+        this.agentTurns = turns;
+        return this;
+    }
+
     /// @return The body of every request that offered tools (the agent's turns), in order.
-    List<Map<String, Object>> agentRequests() {
+    public List<Map<String, Object>> agentRequests() {
         synchronized (agentRequests) {
             return List.copyOf(agentRequests);
         }
@@ -120,7 +134,11 @@ final class FakeModelServer implements AutoCloseable {
             final Map<String, Object> request = JsonUtil.readValue(body, Map.class);
             final boolean agentTurn = request.get("tools") instanceof final List<?> tools && !tools.isEmpty();
             final Map<String, Object> reply;
-            if (agentTurn) {
+            final Function<Map<String, Object>, Reply> turns = agentTurns;
+            if (agentTurn && turns != null) {
+                agentRequests.add(request);
+                reply = turns.apply(request).toMap();
+            } else if (agentTurn) {
                 agentRequests.add(request);
                 reply = replies.isEmpty()
                         ? Map.of("answer", DEFAULT_ANSWER)
@@ -218,5 +236,36 @@ final class FakeModelServer implements AutoCloseable {
     @Override
     public void close() {
         server.stop(0);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An agent turn's reply: an answer, or a call of a tool.
+    ///
+    /// @param answer        The answer, or null for a call.
+    /// @param tool          The tool called, or null for an answer.
+    /// @param argumentsJson The call's arguments, as JSON, or null for an answer.
+    public record Reply(String answer, String tool, String argumentsJson) {
+
+        /// @param text The answer.
+        /// @return The reply.
+        public static Reply answered(final String text) {
+            return new Reply(text, null, null);
+        }
+
+        /// @param tool          The tool.
+        /// @param argumentsJson Its arguments, as JSON.
+        /// @return The reply.
+        public static Reply called(final String tool, final String argumentsJson) {
+            return new Reply(null, tool, argumentsJson);
+        }
+
+        private Map<String, Object> toMap() {
+            return tool != null
+                    ? Map.of("tool", tool, "arguments", Objects.requireNonNullElse(argumentsJson, "{}"))
+                    : Map.of("answer", Objects.requireNonNullElse(answer, DEFAULT_ANSWER));
+        }
     }
 }

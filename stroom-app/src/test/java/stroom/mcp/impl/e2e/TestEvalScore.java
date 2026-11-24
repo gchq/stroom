@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.skills.SkillDoc;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -43,6 +45,38 @@ class TestEvalScore {
                                                                + "<Description>Denied</Description><Network><Deny>"
                                                                + "<Source><Device><IPAddress>10.0.0.1</IPAddress>"
                                                                + "</Device></Source></Deny></Network>");
+
+    private static final String SKILL = """
+            # Failed logons by host
+
+            Counts a user's failed logons over a period, by host.
+
+            ## When to use
+            - "how many failed logons did jsmith have?"
+            - "failed logons by host for a user"
+
+            ## Parameters
+            - user (required): the account.
+            - days (default 7): how many days back.
+
+            ## Steps
+            1. Count them:
+               ```json
+               {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and EventTime \
+            > now() - {days}d select count()"}}
+               ```
+
+            ## Output
+            A table in the chat.
+            """;
+    private static final String OTHER = """
+            # Logon times of day
+
+            Shows the hours a user logs on at.
+
+            ## Steps
+            1. Look at them.
+            """;
 
     @Test
     void eventsHoldingWhatTheCaseExpectsAreStage1() {
@@ -891,6 +925,177 @@ class TestEvalScore {
     }
 
     // Case 56's records translated as Haiku's build in eval run 1 translated them (its rules' typed entries).
+    @Test
+    void aSkillProposalWithItsParametersStepsAndNoProblemsPasses() {
+        final Map<String, Object> evalCase = skillCase(Map.of("tools_used", List.of("propose_skill"),
+                "proposal", Map.of("folder", "/Hunts", "skill", "Failed logons by host",
+                        "parameters", List.of(List.of("account", "user"), "days"),
+                        "not_parameters", List.of("index"), "defaults", Map.of("days|period", 7),
+                        "steps_call", List.of("run_stroomql"), "steps_contain", List.of("from logons"),
+                        "check_problems", 0)));
+        final EvalScore score = new EvalScore("88");
+
+        score.scoreSkill(evalCase, run(List.of(call("propose_skill", Map.of("folder", "/Hunts"), false)),
+                proposal("System/Hunts", "", skillDoc(SKILL), "Draft skill 'Failed logons by host': No problems "
+                                                              + "or suggestions.")));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+    }
+
+    @Test
+    void aSkillProposalMissesWhatTheCaseExpectsOfIt() {
+        final Map<String, Object> evalCase = skillCase(Map.of("proposal", Map.of("folder", "/Leavers",
+                "skill", "Failed logons by host", "parameters", List.of("host"), "not_parameters", List.of("days"),
+                "defaults", Map.of("days", 14), "steps_call", List.of("activity_timeline"), "check_problems", 0)));
+        final EvalScore score = new EvalScore("88");
+
+        score.scoreSkill(evalCase, run(List.of(), proposal("System/Hunts", "", skillDoc(SKILL),
+                "- Problem (missing_data_source): Step 1's example call's query is from 'Logons'")));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the proposal is for folder System/Hunts, expected /Leavers",
+                "no parameter [host]", "'days' is a parameter", "the default of days is 7, expected 14",
+                "no step's example call calls activity_timeline", "check_skill found 1 problem(s)");
+    }
+
+    @Test
+    void nothingProposedFailsAProposalCaseAndPassesANoProposalCase() {
+        final EvalScore wanted = new EvalScore("88");
+        final EvalScore unwanted = new EvalScore("95");
+
+        wanted.scoreSkill(skillCase(Map.of("proposal", Map.of("skill", "Failed logons by host"))), run(List.of()));
+        unwanted.scoreSkill(skillCase(Map.of("no_proposal", true, "tools_not_used", List.of("propose_skill"))),
+                run(List.of(call("activity_timeline", Map.of(), false))));
+
+        assertThat(wanted.summary()).contains("nothing was proposed");
+        assertThat(unwanted.passed()).as(unwanted.summary()).isTrue();
+    }
+
+    @Test
+    void aModificationMayChangeOnlyTheSectionsItWasAskedTo() {
+        final String fourteen = SKILL.replace("days (default 7)", "days (default 14)");
+        final Map<String, Object> evalCase = skillCase(Map.of("proposal", Map.of("skill", "Failed logons by host",
+                "changed_sections", List.of("parameters"), "defaults", Map.of("days", 14))));
+        final EvalScore only = new EvalScore("93");
+        final EvalScore more = new EvalScore("93");
+        final EvalScore none = new EvalScore("93");
+
+        only.scoreSkill(evalCase, run(List.of(), proposal("Hunts", skillDoc(SKILL, OTHER), skillDoc(fourteen,
+                OTHER), "")));
+        more.scoreSkill(evalCase, run(List.of(), proposal("Hunts", skillDoc(SKILL, OTHER), skillDoc(fourteen
+                .replace("by host.", "by host, for audits."), OTHER.replace("hours", "times")), "")));
+        none.scoreSkill(skillCase(Map.of("proposal", Map.of("skill", "Failed logons by host",
+                "changed_sections", List.of("parameters")))), run(List.of(), proposal("Hunts", skillDoc(SKILL),
+                skillDoc(SKILL), "")));
+
+        assertThat(only.passed()).as(only.summary()).isTrue();
+        assertThat(more.summary()).contains("its description was changed, which wasn't asked",
+                "the skill 'Logon times of day' was changed or removed");
+        assertThat(none.summary()).contains("its parameters wasn't changed");
+    }
+
+    @Test
+    void aSkillReadByNameWithItsArgumentsCountsOnlyAcceptedCalls() {
+        final Map<String, Object> evalCase = skillCase(Map.of("tools_used", List.of("find_skills"),
+                "find_skills", Map.of("name", "Failed logons by host", "arguments", Map.of("user", "bob")),
+                "not_chosen", List.of("Logon times of day"),
+                "calls_with", List.of(Map.of("tool", "run_stroomql", "contains", List.of("bob", "Logons")))));
+        final EvalScore refused = new EvalScore("89");
+        final EvalScore read = new EvalScore("89");
+        final EvalScore distracted = new EvalScore("89");
+
+        refused.scoreSkill(evalCase, run(List.of(call("find_skills", Map.of("name", "failed-logons-by-host",
+                "arguments", Map.of("user", "bob")), true))));
+        read.scoreSkill(evalCase, run(List.of(call("find_skills", Map.of("name", "failed-logons-by-host",
+                        "arguments", Map.of("user", "Bob")), false),
+                call("run_stroomql", Map.of("query", "from Logons where UserId = 'bob'"), false))));
+        distracted.scoreSkill(evalCase, run(List.of(call("find_skills", Map.of("name", "Logon times of day"),
+                false), call("run_stroomql", Map.of("query", "from Logons where UserId = 'alice'"), false))));
+
+        assertThat(refused.summary()).contains("find_skills was not used",
+                "no find_skills call read 'Failed logons by host' by name");
+        assertThat(read.passed()).as(read.summary()).isTrue();
+        assertThat(distracted.summary()).contains("find_skills read 'Logon times of day'",
+                "no accepted run_stroomql call's arguments hold all of [bob, Logons]");
+    }
+
+    @Test
+    void aSkillCaseChecksWhatTheAgentToldTheUserAndThatTheChatRan() {
+        final Map<String, Object> evalCase = skillCase(Map.of("answer_must_say_all_of", List.of("Logons-V2"),
+                "answer_must_say_one_of", List.of("missing", "renamed"), "answer_must_not_say", List.of("ws-01")));
+        final EvalScore told = new EvalScore("90");
+        final EvalScore ran = new EvalScore("90");
+
+        told.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(), "The index Logons is missing: use Logons-V2.",
+                List.of(), List.of()));
+        ran.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(), "3 on ws-01.", List.of(), List.of("timed out")));
+
+        assertThat(told.passed()).as(told.summary()).isTrue();
+        assertThat(ran.summary()).contains("the chat's run failed: timed out", "the reply says none of [Logons-V2]",
+                "the reply says 'ws-01'");
+    }
+
+    @Test
+    void aHandWrittenCasesRouteCopyAndOriginalAreScored() {
+        final Map<String, Object> evalCase = Map.of("expected", Map.of(
+                "route", Map.of("calls_in_order", List.of("survey_feed", "copy_pipeline", "promote_build"),
+                        "forbidden_calls", List.of("draft_translation_mapping")),
+                "catalogue", Map.of("origin", "4 event types from 'EVAL-97-Events'"),
+                "promoted", Map.of("pipeline", "EVAL-97-Events-V1.1", "original_unchanged", true)));
+        final EvalScore followed = new EvalScore("97");
+        final EvalScore drafted = new EvalScore("97");
+
+        followed.scoreHandWritten(evalCase, List.of("start_build", "survey_feed", "copy_pipeline",
+                "build_translation_xslt", "promote_build"), "4 event types from 'EVAL-97-Events' (read back)",
+                "EVAL-97-Events-V1.1", true);
+        followed.sameAsSetup(List.of("EventSource/Client/IPAddress"), List.of());
+        drafted.scoreHandWritten(evalCase, List.of("survey_feed", "draft_translation_mapping", "promote_build"),
+                null, null, false);
+        drafted.sameAsSetup(List.of("EventSource/Client/IPAddress"), List.of(3));
+
+        assertThat(followed.summary()).doesNotContain("\n  - ");
+        assertThat(drafted.summary()).contains("from copy_pipeline on was missing", "draft_translation_mapping was "
+                                                                                   + "called",
+                "the catalogue's origin is null", "the copy is named null", "the original's XSLT was changed",
+                "the Events of record(s) [3] differ");
+    }
+
+    // A skill case expecting so.
+    private static Map<String, Object> skillCase(final Map<String, Object> expected) {
+        return Map.of("kind", "skill", "expected", expected);
+    }
+
+    private static EvalScore.SkillRun run(final List<EvalScore.SkillCall> calls,
+                                          final EvalScore.SkillProposal... proposals) {
+        return new EvalScore.SkillRun(calls, "Done.", List.of(proposals), List.of());
+    }
+
+    private static EvalScore.SkillCall call(final String tool, final Map<String, Object> arguments,
+                                            final boolean error) {
+        return new EvalScore.SkillCall(tool, arguments, error, error
+                ? "Not run: call it again"
+                : "ok");
+    }
+
+    private static EvalScore.SkillProposal proposal(final String folder,
+                                                    final String before,
+                                                    final String after,
+                                                    final String checked) {
+        return new EvalScore.SkillProposal("apply_documentation_change", folder, before, after, checked);
+    }
+
+    // A skills doc holding the skills, with a history entry each.
+    private static String skillDoc(final String... skills) {
+        String text = "";
+        int version = 1;
+        for (final String skill : skills) {
+            text = SkillDoc.parse(text).withSkill(skill, new SkillDoc.HistoryEntry(version, "2026-11-25", "admin",
+                    SkillDoc.HOW_AGENT, SkillDoc.parse(skill).skills().getFirst().name(), "v" + version, null));
+            version++;
+        }
+        return text;
+    }
+
     private static List<String> run1Events() {
         return List.of(
                 event("", "<TypeId>View-MailItems</TypeId><View><Object><Id>5a6f815d</Id></Object>"

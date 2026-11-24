@@ -16,10 +16,20 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.EvalChat;
+import stroom.ai.impl.FakeModelServer;
+import stroom.ai.impl.UserActionRecord;
+import stroom.ai.impl.UserActions;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiToolAccess;
+import stroom.ai.shared.AiUserActionResult;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dataconnection.impl.DataConnectionStore;
 import stroom.dataconnection.shared.CsvSettings;
@@ -28,7 +38,9 @@ import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.dataconnection.shared.DataConnectionType;
 import stroom.docref.DocRef;
+import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFieldService;
@@ -42,6 +54,8 @@ import stroom.mcp.impl.McpTestClient;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
@@ -54,15 +68,20 @@ import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.ElasticTestNode;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.FieldValue;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.UserRef;
 
 import com.google.inject.Injector;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
+import org.w3c.dom.Element;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -70,8 +89,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -149,6 +171,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace",
             "json_layout", "json_fields", "xml_fields", "pairs", "extract", "nil_values", "for_each");
 
+    // An elastic_index's events_xml: its records' Events XML stored, as the any-source records' sources wrote them.
+    private static final String ANY_SOURCE_XML = "any_source";
     // The streams a question's proxy uploads are in.
     private static final int QUESTION_STREAMS = 10;
     // The fields that say which event a question's record is.
@@ -162,6 +186,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final Pattern STROOMQL_RESULTS = Pattern.compile("The results are in (\\S+\\.md)\\.");
     // run_stroomql's note when its rows reached the most a query may return (RunStroomQlTool.limitNote).
     private static final Pattern STROOMQL_CAPPED = Pattern.compile("It returned \\d+ rows, the most allowed");
+    // A skill case's placeholders in a scripted call's arguments: a folder's skills doc, and a value from a result.
+    private static final Pattern SKILLS_PLACEHOLDER = Pattern.compile("<SKILLS (\\S+)>");
+    private static final Pattern RESULT_PLACEHOLDER = Pattern.compile("<result:(.+)>");
 
     // The forms the user answered in the case's own build: each its message and the answer's content.
     private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
@@ -185,6 +212,14 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private SecurityContext securityContext;
     @Inject
     private DataConnectionStore dataConnectionStore;
+    @Inject
+    private DocumentationStore documentationStore;
+    @Inject
+    private DocumentPermissionService documentPermissionService;
+    @Inject
+    private ExplorerNodeService explorerNodeService;
+    @Inject
+    private SkillCatalogue skillCatalogue;
 
     // A filter made disabled (a reference pipeline's) is enabled, as the user would in Stroom.
     @Override
@@ -289,14 +324,19 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (evalCase.get("agents") instanceof final String agents && !agents.isBlank()) {
             docs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(templateFolder(), "AGENTS", agents)));
         }
-        if (evalCase.get("lucene_index") instanceof final Map<?, ?> spec) {
-            questionLuceneIndex(EvalCases.table((Map<String, Object>) spec));
+        final List<DocRef> sources = new ArrayList<>();
+        if (elastic != null) {
+            sources.add(elastic.doc());
+            sources.add(elastic.cluster());
+        }
+        for (final Map<String, Object> spec : EvalCases.luceneIndexes(evalCase)) {
+            sources.add(questionLuceneIndex(EvalCases.table(spec)));
         }
         for (final Map<String, Object> spec : (List<Map<String, Object>>) evalCase.getOrDefault("data_connections",
                 List.of())) {
-            questionDataConnection(EvalCases.table(spec));
+            sources.add(questionDataConnection(EvalCases.table(spec)));
         }
-        return new QuestionData(elastic, docs.stream()
+        return new QuestionData(elastic, sources, docs.stream()
                 .<Runnable>map(doc -> () -> delete(doc))
                 .toList());
     }
@@ -305,7 +345,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// (`events` and `fields`, [EvalCases#table]), else the proxy uploads ([EvalProxyUploads]), in an Elasticsearch
     /// index of their own, in streams in Stroom, behind an Elastic Index doc of the case's name beside the standard
     /// templates. An `insider_events` case with `streams: true` has its records' Events XML in that stream
-    /// ([EvalQuestionRecords#insiderEventXml]). Skips the case without an Elasticsearch node
+    /// ([EvalQuestionRecords#insiderEventXml]); one with `events_xml: any_source` the Events XML its sources wrote of
+    /// each record of the any-source data ([EvalQuestionRecords#anySourceEventXml]). Skips the case without an
+    /// Elasticsearch node
     /// ([ElasticTestNode#getOrSkip]).
     ///
     /// @param evalCase The case.
@@ -319,12 +361,20 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final Map<String, Object> generate = (Map<String, Object>) spec.get("generate");
         // An insider-risk case whose events' XML is read (e.g. peers' Organisation): stored as one Events stream,
         // its events in the records' order, as the index's EventIds number them.
-        final List<Long> streams = EvalQuestionRecords.storesInsiderStreams(generate)
-                ? List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT),
-                        EvalQuestionRecords.insiderEventXml(generate)))
-                : questionStreams(indexName, table == null
-                        ? QUESTION_STREAMS
-                        : 1);
+        final List<Long> streams;
+        if (EvalQuestionRecords.storesInsiderStreams(generate)) {
+            streams = List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT),
+                    EvalQuestionRecords.insiderEventXml(generate)));
+        } else if (ANY_SOURCE_XML.equals(spec.get("events_xml")) && table != null) {
+            // The any-source records' Events XML, one stream, an event a record in order (the index's EventIds).
+            streams = List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT), table.records().stream()
+                    .map(EvalQuestionRecords::anySourceEventXml)
+                    .toList()));
+        } else {
+            streams = questionStreams(indexName, table == null
+                    ? QUESTION_STREAMS
+                    : 1);
+        }
         final String timeField;
         if (table == null) {
             EvalProxyUploads.seed(node, indexName, streams);
@@ -342,7 +392,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 .indexName(indexName)
                 .timeField(timeField)
                 .build()));
-        return new QuestionIndex(node, indexName, created.getDocRef());
+        return new QuestionIndex(node, indexName, created.getDocRef(), cluster);
     }
 
     /// A question's reference answer: each tool call of its `reference` (a tool's name, its arguments; e.g.
@@ -405,6 +455,487 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         return new EvalScore.ToolUse(tool, false, result.structuredContent() instanceof final Map<?, ?> map
                 ? (Map<String, Object>) map
                 : Map.of(), text);
+    }
+
+    /// A skill case's pre-state ([EvalCases#isSkill]): its data, as a question's ([#questionData]); its folders
+    /// (`folders`, each an Explorer path such as `/Hunts`); its skills docs (`skills_docs`, each a `folder` and its
+    /// `skills`, the Markdown of each, saved as a SKILLS doc with a history entry a skill, as `propose_skill` would
+    /// have left it); the user who chats (`user`: the administrator, unless it names another, e.g. `{name: analyst,
+    /// edit_skills: false}`: a user with every tool, View on the case's data, Use on its models, and View only on the
+    /// skills docs and their folders); a chat of theirs on a scripted model ([FakeModelServer]); and the case's earlier
+    /// turns (`chat`, each an `ask`, the `calls` the scripted model makes, its `answer`, and with `apply: true` the
+    /// user applying the turn's proposal and saving it), asked in that chat, so the turn the case scores has them as
+    /// its history, as a user's chat would.
+    ///
+    /// @param evalCase The case.
+    /// @return What the setup left; [SkillSetup#close] it once the case is done.
+    SkillSetup setUpSkill(final Map<String, Object> evalCase) {
+        final QuestionData data = questionData(evalCase);
+        for (final String path : EvalCases.strings(evalCase.get("folders"))) {
+            folder(explorerPath(path));
+        }
+        // The skills docs and their folders.
+        final List<DocRef> skillsDocs = new ArrayList<>();
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("skills_docs"))) {
+            String text = "";
+            int version = 1;
+            for (final String skill : EvalCases.strings(spec.get("skills"))) {
+                final String name = SkillDoc.parse(skill).skills().getFirst().name();
+                text = SkillDoc.parse(text).withSkill(skill, new SkillDoc.HistoryEntry(version++, "2026-11-20",
+                        "admin", SkillDoc.HOW_AGENT, name, "Created", null));
+            }
+            final ExplorerNode folder = folder(explorerPath((String) spec.get("folder")));
+            skillsDocs.add(folder.getDocRef());
+            skillsDocs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(folder, SkillDoc.DOC_NAME, text)));
+        }
+        final UserRef user = skillUser(evalCase, data, skillsDocs);
+        skillCatalogue.clearCache();
+        final FakeModelServer scripted = startModelServer();
+        final EvalChat chats = injector.getInstance(EvalChat.class);
+        final SkillSetup setup = new SkillSetup(data, user, chats, scripted, chats.model(admin, user,
+                "Eval scripted model", scripted.baseUrl()), chats.create(user));
+        for (final Map<String, Object> turn : EvalCases.maps(evalCase.get("chat"))) {
+            final List<AiChatMessage> messages = scriptedTurn(setup, (String) turn.get("ask"), turn);
+            if (Boolean.TRUE.equals(turn.get("apply"))) {
+                final List<EvalChat.Proposal> proposals = EvalChat.proposals(messages);
+                if (proposals.isEmpty()) {
+                    throw new AssertionError("The setup's turn '" + turn.get("ask") + "' proposed nothing: "
+                                             + EvalChat.calls(messages));
+                }
+                applyAndSave(setup, proposals.getLast());
+            }
+        }
+        return setup;
+    }
+
+    /// A skill case run with its reference solution: its setup ([#setUpSkill]), then the request asked in the chat,
+    /// the scripted model making the reference's `calls` (an argument's `<SKILLS /Hunts>` is that folder's skills
+    /// doc's UUID, `<result:regex>` the regular expression's first group in the latest result that matches it) and
+    /// giving its `answer`, every form answered with the reference's `forms`; scored as an agent's run is
+    /// ([#scoreSkill]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    void runSkillReference(final Map<String, Object> evalCase, final EvalScore score) {
+        try (final SkillSetup setup = setUpSkill(evalCase)) {
+            final Map<String, Object> reference = EvalCases.map(evalCase.get("reference"));
+            final List<AiChatMessage> messages = scriptedTurn(setup, (String) evalCase.get("request"), reference);
+            scoreSkill(evalCase, score, setup, messages);
+        }
+    }
+
+    /// Scores a skill case's run from the chat's messages since the request ([EvalScore#scoreSkill]): its calls,
+    /// the model's replies, and each proposal with the skills doc's text before it and the proposed skill as
+    /// `check_skill` checks it.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param setup    The case's setup.
+    /// @param messages The messages since the request (every turn of it).
+    void scoreSkill(final Map<String, Object> evalCase,
+                    final EvalScore score,
+                    final SkillSetup setup,
+                    final List<AiChatMessage> messages) {
+        final List<EvalScore.SkillCall> calls = new ArrayList<>();
+        for (final EvalChat.Call call : EvalChat.calls(messages)) {
+            dump(call.tool() + " " + call.argumentsJson(), call.text());
+            calls.add(new EvalScore.SkillCall(call.tool(), call.arguments(), call.error(), call.text()));
+        }
+        final List<EvalScore.SkillProposal> proposals = new ArrayList<>();
+        for (final EvalChat.Proposal proposal : EvalChat.proposals(messages)) {
+            proposals.add(skillProposal(proposal));
+        }
+        score.scoreSkill(evalCase, new EvalScore.SkillRun(calls, String.join("\n\n", EvalChat.replies(messages)),
+                proposals, EvalChat.errors(messages)));
+    }
+
+    /// The user applies a proposal and saves the doc, as they would with its button and then Stroom's Save.
+    ///
+    /// @param setup    The case's setup.
+    /// @param proposal The proposal.
+    void applyAndSave(final SkillSetup setup, final EvalChat.Proposal proposal) {
+        final AiUserActionResult applied = setup.chats().apply(setup.user(), setup.chat().getId(), proposal);
+        if (!applied.isDone()) {
+            throw new AssertionError("The proposal wasn't applied: " + applied.getMessage());
+        }
+        if (UserActions.APPLY_DOCUMENTATION_CHANGE.equals(proposal.action().action())) {
+            // Applied to the doc's editor, unsaved: the user saves it.
+            final DocRef doc = proposal.action().doc();
+            asUser(setup.user(), () -> documentationStore.writeDocument(documentationStore.readDocument(doc)
+                    .copy()
+                    .data(proposal.action().request())
+                    .build()));
+        }
+        skillCatalogue.clearCache();
+    }
+
+    /// A model server for a skill case's chat, scripted by default.
+    ///
+    /// @return It, started.
+    static FakeModelServer startModelServer() {
+        try {
+            return FakeModelServer.start();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /// @param path An Explorer path as a case gives it, e.g. `/Hunts`.
+    /// @return It from the root, as [#folder] takes it, e.g. `System/Hunts`.
+    static String explorerPath(final String path) {
+        final String stripped = path.strip().replaceFirst("^/+", "");
+        return stripped.startsWith("System/") || "System".equals(stripped)
+                ? stripped
+                : "System/" + stripped;
+    }
+
+    // A turn of the chat on the scripted model: the question asked, the turn's calls made in order with their
+    // placeholders worked out from the chat so far, then its answer; every form answered with the turn's forms.
+    private List<AiChatMessage> scriptedTurn(final SkillSetup setup,
+                                             final String question,
+                                             final Map<String, Object> turn) {
+        final Deque<Map<String, Object>> calls = new ArrayDeque<>(EvalCases.maps(turn.get("calls")));
+        final String answer = Objects.requireNonNullElse((String) turn.get("answer"), "Done.");
+        // A call whose placeholder can't be worked out ends the turn, said in its answer and failed after it.
+        final List<String> failed = new ArrayList<>();
+        setup.scripted().answeringAgentTurns(request -> {
+            final Map<String, Object> call = calls.poll();
+            if (call == null) {
+                return FakeModelServer.Reply.answered(answer);
+            }
+            try {
+                final List<EvalChat.Call> made = EvalChat.calls(setup.chats().messages(setup.user(),
+                        setup.chat().getId()));
+                return FakeModelServer.Reply.called((String) call.get("tool"), JsonUtil.writeValueAsString(
+                        resolved(call.get("arguments"), made), false));
+            } catch (final RuntimeException | AssertionError e) {
+                failed.add(call.get("tool") + ": " + e.getMessage());
+                calls.clear();
+                return FakeModelServer.Reply.answered("The scripted call failed: " + e.getMessage());
+            }
+        });
+        final Map<String, String> forms = new LinkedHashMap<>();
+        EvalCases.map(turn.get("forms")).forEach((field, value) -> forms.put(field, String.valueOf(value)));
+        final List<AiChatMessage> messages = setup.chats().ask(setup.user(), setup.chat(), setup.scriptedModel(),
+                question, form -> scriptedForm(form, forms), Duration.ofMinutes(5));
+        if (!failed.isEmpty()) {
+            throw new AssertionError("The scripted turn '" + question + "' failed: " + failed);
+        }
+        if (!calls.isEmpty()) {
+            throw new AssertionError("The scripted turn '" + question + "' ended with calls unmade: " + calls);
+        }
+        return messages;
+    }
+
+    // A form answered from a scripted turn's answers: the fields it has, each with its answer or what it proposes.
+    private static Map<String, String> scriptedForm(final EvalChat.Form form, final Map<String, String> answers) {
+        final Map<String, String> content = new LinkedHashMap<>();
+        if (form.schema() != null && form.schema().get("properties") instanceof final Map<?, ?> fields) {
+            for (final Map.Entry<?, ?> field : fields.entrySet()) {
+                final String name = String.valueOf(field.getKey());
+                if (answers.containsKey(name)) {
+                    content.put(name, answers.get(name));
+                } else if (field.getValue() instanceof final Map<?, ?> definition
+                           && definition.get("default") != null) {
+                    content.put(name, String.valueOf(definition.get("default")));
+                }
+            }
+        }
+        return content;
+    }
+
+    // An argument with its placeholders worked out: <SKILLS /Hunts>, a folder's skills doc's UUID;
+    // <result:regex>, the expression's first group in the latest result that matches it.
+    private Object resolved(final Object value, final List<EvalChat.Call> made) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            map.forEach((key, item) -> out.put(String.valueOf(key), resolved(item, made)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            return list.stream().map(item -> resolved(item, made)).toList();
+        }
+        if (!(value instanceof final String text)) {
+            return value;
+        }
+        final Matcher skills = SKILLS_PLACEHOLDER.matcher(text);
+        if (skills.matches()) {
+            return skillsDocUuid(skills.group(1));
+        }
+        final Matcher result = RESULT_PLACEHOLDER.matcher(text);
+        if (result.matches()) {
+            final Pattern pattern = Pattern.compile(result.group(1));
+            for (final EvalChat.Call call : made.reversed()) {
+                final Matcher found = pattern.matcher(NullSafe.string(call.text()));
+                if (found.find()) {
+                    return found.group(1);
+                }
+            }
+            throw new AssertionError("No result so far matches /" + result.group(1) + "/");
+        }
+        return text;
+    }
+
+    // The UUID of the SKILLS doc in a folder.
+    private String skillsDocUuid(final String folder) {
+        return documentsIn(explorerPath(folder), DocumentationDoc.TYPE, SkillDoc.DOC_NAME).stream()
+                .findFirst()
+                .map(ExplorerNode::getUuid)
+                .orElseThrow(() -> new AssertionError("No " + SkillDoc.DOC_NAME + " doc in " + folder));
+    }
+
+    // The user a skill case chats as: the administrator, or the user it names, with every tool, Use on its data, and
+    // View (never Edit) on its skills docs and their folders.
+    private UserRef skillUser(final Map<String, Object> evalCase,
+                              final QuestionData data,
+                              final List<DocRef> skillsDocs) {
+        final Map<String, Object> spec = EvalCases.map(evalCase.get("user"));
+        if (spec.get("name") == null) {
+            return admin;
+        }
+        final UserRef user = user(String.valueOf(spec.get("name")), Set.of());
+        toolPolicy("Eval " + spec.get("name"), AiToolAccess.READ_WRITE, user);
+        asUser(admin, () -> {
+            // View (which holds Use): an analyst sees the indexes they search.
+            for (final DocRef doc : data.docs()) {
+                documentPermissionService.setPermission(doc, user, DocumentPermission.VIEW);
+            }
+            for (final DocRef doc : skillsDocs) {
+                documentPermissionService.setPermission(doc, user, DocumentPermission.VIEW);
+            }
+        });
+        return user;
+    }
+
+    // A skills doc's proposal as it is scored: where it goes, the doc's text before and after, and the proposed
+    // skill as check_skill finds it (each skill of the new text that differs from the text before).
+    private EvalScore.SkillProposal skillProposal(final EvalChat.Proposal proposal) {
+        final UserActionRecord action = proposal.action();
+        final boolean create = UserActions.CREATE_INSTRUCTIONS.equals(action.action());
+        final String folder;
+        final String before;
+        if (create) {
+            folder = action.doc() == null
+                    ? null
+                    : folderOf(action.doc().getUuid()) + "/" + nameOf(action.doc().getUuid());
+            before = "";
+        } else {
+            folder = folderOf(action.doc().getUuid());
+            before = action.codeChange() != null && action.codeChange().baseCode() != null
+                    ? action.codeChange().baseCode()
+                    : documentation(action.doc().getUuid());
+        }
+        final String after = NullSafe.string(action.request());
+        final SkillDoc old = SkillDoc.parse(before);
+        final List<String> checked = new ArrayList<>();
+        for (final SkillDoc.Skill skill : SkillDoc.parse(after).skills()) {
+            final boolean same = old.skill(skill.name()).map(SkillDoc.Skill::text).filter(skill.text()::equals)
+                    .isPresent();
+            if (!same) {
+                checked.add(McpTestClient.text(client.call("check_skill", args("markdown", skill.text()))));
+            }
+        }
+        return new EvalScore.SkillProposal(action.action(), folder, before, after, String.join("\n\n", checked));
+    }
+
+    // A document's name, as the explorer has it.
+    private String nameOf(final String uuid) {
+        return securityContext.asProcessingUserResult(() -> explorerNodeService.getNodeByUuid(uuid)
+                .map(ExplorerNode::getName)
+                .orElseThrow(() -> new AssertionError("No explorer node for " + uuid)));
+    }
+
+    /// A hand-written case's pre-state (`setup: {hand_written: ...}`, [EvalCases#handWritten]): the case's feed and
+    /// its translation as an environment made them by hand, never through the tools ([#handWritten]): in `folder`,
+    /// the `feed`, its `sample` stored, the `xslt` (a test resource next to the e2e tests) in a `pipeline` of that
+    /// name, a child of the translation `template` with any further `properties` (each its `element`, `name` and
+    /// `value`), and the processor filter reading its `processor_filter`'s `stream_type`.
+    ///
+    /// @param evalCase The case.
+    /// @return What the setup made.
+    HandWritten setUpHandWritten(final Map<String, Object> evalCase) {
+        final Map<String, Object> spec = EvalCases.handWritten(evalCase);
+        final List<PipelineProperty> properties = new ArrayList<>();
+        for (final Map<String, Object> property : EvalCases.maps(spec.get("properties"))) {
+            final Object value = property.get("value");
+            properties.add(PipelineProperty.builder()
+                    .element((String) property.get("element"))
+                    .name((String) property.get("name"))
+                    .value(value instanceof final Boolean flag
+                            ? new PipelinePropertyValue(flag)
+                            : new PipelinePropertyValue(String.valueOf(value)))
+                    .build());
+        }
+        return handWritten(explorerPath((String) spec.get("folder")), (String) spec.get("feed"),
+                textResource((String) spec.get("xslt")), (String) spec.get("pipeline"), (String) spec.get("template"),
+                properties, String.valueOf(EvalCases.map(spec.get("processor_filter")).getOrDefault("stream_type",
+                        StreamTypeNames.RAW_EVENTS)), (String) spec.get("sample"));
+    }
+
+    /// A hand-written case run with its reference solution: its setup ([#setUpHandWritten]), then the reference's
+    /// `calls` made in turn as an agent following the build's `next` would, each agreed to (`answer`: the choice
+    /// picked in its form; `confirm: true`: the catalogue confirmed as the user does in its form); an argument's
+    /// `<original>` is the hand-written pipeline's UUID, `<raw>` the feed's raw stream, `<copy>` and `<copy xslt>`
+    /// the copy's pipeline and XSLT once `copy_pipeline` made them. Scored as an agent's build is
+    /// ([#scoreHandWritten]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build's name.
+    void runHandWrittenReference(final Map<String, Object> evalCase, final EvalScore score, final String build) {
+        final HandWritten original = setUpHandWritten(evalCase);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("<original>", original.pipeline());
+        values.put("<raw>", original.raw());
+        final List<String> made = new ArrayList<>();
+        Map<String, Object> listing = null;
+        for (final Map<String, Object> call : EvalCases.maps(EvalCases.map(evalCase.get("reference"))
+                .get("calls"))) {
+            final String tool = (String) call.get("tool");
+            final Map<String, Object> arguments = (Map<String, Object>) substituted(call.get("arguments"), values);
+            final Map<String, Object> result;
+            if (call.get("answer") instanceof final String answer) {
+                client.answeringWith(choosing(answer));
+            }
+            try {
+                result = Boolean.TRUE.equals(call.get("confirm"))
+                        ? CatalogueSteps.confirmedCatalogue(client, build)
+                        : agreed(tool, arguments);
+            } finally {
+                client.answeringWith(McpTestClient::agree);
+            }
+            dump(tool, result);
+            made.add(tool);
+            if ("copy_pipeline".equals(tool)) {
+                values.put("<copy>", uuidOf(result));
+                values.put("<copy xslt>", copiedXslt(result));
+            }
+            if (CATALOGUE.equals(tool) && result.get("origin") != null) {
+                listing = result;
+            }
+        }
+        scoreHandWritten(evalCase, score, build, original, (String) values.get("<copy>"), made, listing);
+    }
+
+    /// Scores a hand-written case's build from Stroom and the calls made, whoever made them
+    /// ([EvalScore#scoreHandWritten]): the route (`expected.route`: `calls_in_order`, a subsequence of the calls;
+    /// `forbidden_calls`, none of them); the copy's Events for each of the feed's records, stepped
+    /// (`records_in_sample` of them), scored as a build's are ([EvalScore#scoreEvents]) and, with
+    /// `same_as_setup_except`, each record's Events the original's with those paths taken out; the catalogue
+    /// (`expected.catalogue`, [EvalScore#scoreCatalogue], and its `origin`: the start of the catalogue listing's
+    /// origin, e.g. `4 event types from 'EVAL-97-Events'`); and the promotion (`expected.promoted`: the copy named
+    /// `pipeline`, and with `original_unchanged`, the original's XSLT as the setup wrote it).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build.
+    /// @param original What the setup made.
+    /// @param copy     The copy's pipeline UUID (the last `copy_pipeline` call's), or null if none was made.
+    /// @param made     The tools called, in order.
+    /// @param listing  The last `catalogue_event_types` answer that gave the catalogue's origin, or null.
+    void scoreHandWritten(final Map<String, Object> evalCase,
+                          final EvalScore score,
+                          final String build,
+                          final HandWritten original,
+                          final String copy,
+                          final List<String> made,
+                          final Map<String, Object> listing) {
+        final Map<String, Object> expected = EvalCases.map(evalCase.get("expected"));
+        final Map<String, Object> spec = EvalCases.handWritten(evalCase);
+        final String originalXslt = textResource((String) spec.get("xslt"));
+        score.scoreHandWritten(evalCase, made, listing == null
+                ? null
+                : String.valueOf(listing.get("origin")), copy == null
+                ? null
+                : nameOf(copy), readXslt(original.xslt()).getData().equals(originalXslt));
+        if (copy == null) {
+            return;
+        }
+        final int records = ((Number) expected.getOrDefault("records_in_sample", 1)).intValue();
+        final List<String> except = EvalCases.strings(expected.get("same_as_setup_except"));
+        final List<String> outputs = new ArrayList<>();
+        final List<Boolean> validity = new ArrayList<>();
+        final List<Integer> differing = new ArrayList<>();
+        for (int record = 0; record < records; record++) {
+            final String output = translationOutput(copy, original.raw(), record);
+            outputs.add(output);
+            final Map<String, Object> checked = json("check_events", args("events_xml", output));
+            validity.add(checked.get("schema") instanceof final Map<?, ?> schema
+                         && Boolean.TRUE.equals(schema.get("valid")));
+            if (expected.containsKey("same_as_setup_except")
+                && !eventsWithout(output, except).equals(eventsOf(original.pipeline(), original.raw(),
+                    List.of(record)))) {
+                differing.add(record);
+            }
+        }
+        score.scoreEvents(evalCase, outputs, validity, null);
+        score.indexed(true);
+        if (expected.containsKey("same_as_setup_except")) {
+            score.sameAsSetup(except, differing);
+        }
+        // The build's source notes, or once promoted, those promotion wrote back beside the copy.
+        Map<String, Object> catalogue;
+        try {
+            catalogue = catalogueOf(build);
+        } catch (final AssertionError e) {
+            catalogue = catalogueNear(folderOf(copy));
+        }
+        score.scoreCatalogue(evalCase, catalogue, null);
+    }
+
+    // An argument with the hand-written case's values put in for their placeholders.
+    private static Object substituted(final Object value, final Map<String, Object> values) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            map.forEach((key, item) -> out.put(String.valueOf(key), substituted(item, values)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            return list.stream().map(item -> substituted(item, values)).toList();
+        }
+        if (value instanceof final String text && values.containsKey(text)) {
+            return values.get(text);
+        }
+        return value;
+    }
+
+    // The copy's XSLT, from copy_pipeline's answer.
+    private static String copiedXslt(final Map<String, Object> copied) {
+        return ((List<Map<String, Object>>) copied.getOrDefault("copied_documents", List.of())).stream()
+                .filter(doc -> "XSLT".equals(doc.get("type")))
+                .map(doc -> (String) doc.get("uuid"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("copy_pipeline copied no XSLT: " + copied));
+    }
+
+    // One record's Events, canonical, each with the paths taken out (and any element they leave empty).
+    private static List<String> eventsWithout(final String output, final List<String> paths) {
+        final List<String> out = new ArrayList<>();
+        for (final Element event : children(parse(output).getDocumentElement(), "Event")) {
+            for (final String path : paths) {
+                at(event, path).ifPresent(found -> {
+                    Element current = found;
+                    while (current != event && current.getParentNode() instanceof final Element parent) {
+                        parent.removeChild(current);
+                        if (hasElements(parent) || !parent.getTextContent().isBlank()) {
+                            break;
+                        }
+                        current = parent;
+                    }
+                });
+            }
+            out.add(canonical(event));
+        }
+        return out;
+    }
+
+    private static boolean hasElements(final Element element) {
+        for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+            if (element.getChildNodes().item(i) instanceof Element) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// The setup group's pipeline, XSLT and index, as they are now: each as text, to compare with what the setup
@@ -1288,7 +1819,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
 
     // A question's records in a Lucene index of the table's name, a field a column (text as keywords), each record
     // an event of one stream, flushed so searches see them.
-    private void questionLuceneIndex(final EvalCases.QuestionTable table) {
+    private DocRef questionLuceneIndex(final EvalCases.QuestionTable table) {
         final ExplorerNode created = create(LuceneIndexDoc.TYPE, table.name(), templateFolder());
         final LuceneIndexField streamId = LuceneIndexField.createIdField(STREAM_ID);
         final LuceneIndexField eventId = LuceneIndexField.createIdField(EVENT_ID);
@@ -1328,10 +1859,11 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
         });
         flushIndexShards();
+        return created.getDocRef();
     }
 
     // A question's CSV records in a data connection of the table's name, a column each with its type.
-    private void questionDataConnection(final EvalCases.QuestionTable table) {
+    private DocRef questionDataConnection(final EvalCases.QuestionTable table) {
         final ExplorerNode created = create(DataConnectionDoc.TYPE, table.name(), templateFolder());
         final List<DataColumn> columns = new ArrayList<>();
         table.types().forEach((column, type) -> columns.add(new DataColumn(column, columnType(type))));
@@ -1345,6 +1877,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                         .data(csv.toString())
                         .build())
                 .build()));
+        return created.getDocRef();
     }
 
     // A question's column type as a Lucene field's.
@@ -1485,19 +2018,23 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param node      The Elasticsearch node holding it.
     /// @param indexName Its name there.
     /// @param doc       Its Elastic Index doc.
-    record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc) {
+    /// @param cluster   The Elastic Cluster doc it is on.
+    record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc, DocRef cluster) {
 
     }
 
     /// A question's data in Stroom ([#questionData]).
     ///
     /// @param elastic  Its Elasticsearch index, or null if it has none.
+    /// @param docs     The documents its data is read through: its indexes (and the Elastic Cluster), its data
+    ///                 connections.
     /// @param removals Removes each document left beside the indexes that would apply to the next case (its AGENTS
     ///                 doc).
-    record QuestionData(QuestionIndex elastic, List<Runnable> removals) {
+    record QuestionData(QuestionIndex elastic, List<DocRef> docs, List<Runnable> removals) {
 
-        /// Copies the list.
+        /// Copies the lists.
         QuestionData {
+            docs = List.copyOf(docs);
             removals = List.copyOf(removals);
         }
 
@@ -1507,6 +2044,29 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             if (elastic != null) {
                 elastic.node().deleteIndices(elastic.indexName());
             }
+        }
+    }
+
+    /// What a skill case's setup left ([#setUpSkill]).
+    ///
+    /// @param data          Its data.
+    /// @param user          The user who chats.
+    /// @param chats         Runs and reads the chat.
+    /// @param scripted      The scripted model's server, for the setup's turns and a reference's.
+    /// @param scriptedModel The model doc of the scripted model.
+    /// @param chat          The chat, holding the setup's turns.
+    record SkillSetup(QuestionData data,
+                      UserRef user,
+                      EvalChat chats,
+                      FakeModelServer scripted,
+                      DocRef scriptedModel,
+                      AiChat chat) implements AutoCloseable {
+
+        /// Stops the scripted model and removes the data Stroom doesn't remove between cases.
+        @Override
+        public void close() {
+            scripted.close();
+            data.remove();
         }
     }
 }
