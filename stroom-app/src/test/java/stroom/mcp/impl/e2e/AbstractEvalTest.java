@@ -293,7 +293,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// A question's Elasticsearch data, indexed before the user asks (`elastic_index`): the case's records
     /// (`events` and `fields`, [EvalCases#table]), else the proxy uploads ([EvalProxyUploads]), in an Elasticsearch
     /// index of their own, in streams in Stroom, behind an Elastic Index doc of the case's name beside the standard
-    /// templates. Skips the case without an Elasticsearch node ([ElasticTestNode#getOrSkip]).
+    /// templates. An `insider_events` case with `streams: true` has its records' Events XML in that stream
+    /// ([EvalQuestionRecords#insiderEventXml]). Skips the case without an Elasticsearch node
+    /// ([ElasticTestNode#getOrSkip]).
     ///
     /// @param evalCase The case.
     /// @return The Elastic Index doc, and the index to remove once the case is done.
@@ -303,9 +305,15 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final EvalCases.QuestionTable table = EvalCases.table(spec);
         final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
                 .split("_", 2)[0]);
-        final List<Long> streams = questionStreams(indexName, table == null
-                ? QUESTION_STREAMS
-                : 1);
+        final Map<String, Object> generate = (Map<String, Object>) spec.get("generate");
+        // An insider-risk case whose events' XML is read (e.g. peers' Organisation): stored as one Events stream,
+        // its events in the records' order, as the index's EventIds number them.
+        final List<Long> streams = EvalQuestionRecords.storesInsiderStreams(generate)
+                ? List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT),
+                        EvalQuestionRecords.insiderEventXml(generate)))
+                : questionStreams(indexName, table == null
+                        ? QUESTION_STREAMS
+                        : 1);
         final String timeField;
         if (table == null) {
             EvalProxyUploads.seed(node, indexName, streams);

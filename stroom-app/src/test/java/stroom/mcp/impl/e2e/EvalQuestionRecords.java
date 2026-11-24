@@ -54,7 +54,8 @@ final class EvalQuestionRecords {
     ///             * `insider_events`: the insider-risk dataset ([InsiderDataset]) from its `seed`, with `background`
     ///               people (default 5) and `scale` of the routine actions (default 0.3), its days `from` to `to`
     ///               (inclusive, in the dataset's zone), the `sources` named (default all), every source's events
-    ///               in one table, by time ([InsiderRecords#flat]).
+    ///               in one table, by time ([InsiderRecords#flat]); with `streams: true`, their Events XML is stored
+    ///               in a stream the index's StreamId and EventId lead to ([#insiderEventXml]).
     /// @return The records, each its values by column.
     static List<Map<String, String>> generate(final Map<String, Object> spec) {
         final String kind = String.valueOf(spec.get("kind"));
@@ -71,8 +72,29 @@ final class EvalQuestionRecords {
         return ((Number) spec.get("users")).intValue();
     }
 
-    @SuppressWarnings("unchecked")
     private static List<Map<String, String>> insiderEvents(final Map<String, Object> spec) {
+        return insiderActs(spec).stream().map(InsiderRecords::flat).toList();
+    }
+
+    /// The Events XML of an `insider_events` question's records, in their order (the record at place `i` is event
+    /// `i + 1` of a stream holding them), for a case whose index's StreamId and EventId must lead to its events'
+    /// XML (`streams: true`): e.g. peers' `Organisation`, which is only in the XML.
+    ///
+    /// @param spec The `generate`, of kind `insider_events`.
+    /// @return Each record's event, as [InsiderRecords#eventXml] writes it.
+    static List<String> insiderEventXml(final Map<String, Object> spec) {
+        return insiderActs(spec).stream().map(InsiderRecords::eventXml).toList();
+    }
+
+    /// @param spec A question's `generate`.
+    /// @return True if it is `insider_events` with `streams: true`: its records' Events XML is stored in Stroom.
+    static boolean storesInsiderStreams(final Map<String, Object> spec) {
+        return spec != null && "insider_events".equals(String.valueOf(spec.get("kind")))
+               && Boolean.TRUE.equals(spec.get("streams"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<InsiderDataset.Act> insiderActs(final Map<String, Object> spec) {
         final InsiderDataset dataset = InsiderDataset.generate(new InsiderDataset.Options(((Number) spec.get("seed"))
                 .longValue(), ((Number) spec.getOrDefault("background", 5)).intValue(), ((Number) spec.getOrDefault(
                 "scale", 0.3)).doubleValue(), List.of(new InsiderDataset.Period(LocalDate.parse(String.valueOf(
@@ -80,7 +102,6 @@ final class EvalQuestionRecords {
         final List<String> sources = (List<String>) spec.getOrDefault("sources", List.of());
         return dataset.acts().stream()
                 .filter(act -> sources.isEmpty() || sources.contains(act.source().key()))
-                .map(InsiderRecords::flat)
                 .toList();
     }
 
