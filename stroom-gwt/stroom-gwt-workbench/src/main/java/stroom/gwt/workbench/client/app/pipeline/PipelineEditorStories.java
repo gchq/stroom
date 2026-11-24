@@ -1034,6 +1034,28 @@ public final class PipelineEditorStories {
                     play.expect(picker).toHaveFocus();
                     expectNoProblems(play);
                 })
+                // Saving only the documentation saves the pipeline. Only its structure counted, so Save
+                // opened the picker with nothing in it
+                .story("SaveDocumentationOnly", PipelineEditorStories::renderWithPlugins)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    play.click(play.getByText("Documentation", StroomDom.LINK_TAB_LABEL));
+                    // There is none, so it opens in the editor
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_editor")).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.keyboard("Typed documentation");
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/pipeline/v1/" + UUID)
+                                    .withBodyContaining("Typed documentation").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
+                    expectNoProblems(play);
+                })
                 // Saving with another dirty document (code edited while stepping) opens the picker;
                 // OK saves both
                 .story("MultiDocumentSave", PipelineEditorStories::renderWithPlugins)

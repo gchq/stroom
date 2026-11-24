@@ -51,6 +51,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A pipeline's editor: its Data (for a user who may view data), Structure, Processors and Active
@@ -232,10 +233,10 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
     }
 
     /// @return The documents with changes that aren't saved: those edited while stepping, and the
-    /// pipeline if its structure has changed.
+    /// pipeline if it has itself, e.g. its structure or documentation.
     public List<DocRef> getDirtyDocs() {
         final List<DocRef> dirtyDocs = stepping.getDirtyDocs();
-        if (pipelineStructure.isDirty()) {
+        if (!context(Contexts.READ_ONLY) && getDocument() != null && !Objects.equals(getDocument(), write())) {
             dirtyDocs.add(getDocRef());
         }
         return dirtyDocs;
