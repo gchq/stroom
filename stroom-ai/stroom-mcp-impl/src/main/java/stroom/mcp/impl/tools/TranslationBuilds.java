@@ -771,7 +771,7 @@ class TranslationBuilds {
     }
 
     /// The repeated group the build's catalogue of event types reads as its records (a reading's `for_each`), by the
-    /// catalogue's own lookup ([CatalogueEventTypesTool#keptElseLatest]): the reading given to an earlier
+    /// catalogue's own lookup ([CatalogueReading#keptElseLatest]): the reading given to an earlier
     /// catalogue_event_types call (kept in the source notes' confirmation), else the build's latest mapping's
     /// ([#latestMapping]).
     ///
@@ -797,7 +797,7 @@ class TranslationBuilds {
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No source notes read from build {}: {}", build, e.getMessage()));
         }
-        return CatalogueEventTypesTool.keptElseLatest(build, kept, () -> latestMapping(context, build))
+        return CatalogueReading.keptElseLatest(build, kept, () -> latestMapping(context, build))
                 .flatMap(TranslationBuilds::forEachOf);
     }
 

@@ -33,23 +33,13 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheck;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
 import stroom.ai.impl.tools.catalogue.CatalogueDiff;
-import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.catalogue.CatalogueSeed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation;
 import stroom.ai.impl.tools.catalogue.EventMeaning;
 import stroom.ai.impl.tools.catalogue.EventType;
-import stroom.ai.impl.tools.catalogue.TypeIds;
-import stroom.ai.impl.tools.draft.DraftMapping;
-import stroom.ai.impl.tools.draft.LocalCheck;
-import stroom.ai.impl.tools.draft.PairMatches;
 import stroom.ai.impl.tools.draft.SourceNotes;
-import stroom.ai.impl.tools.generation.Extraction;
-import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
-import stroom.ai.impl.tools.sample.SplitterSpec;
-import stroom.ai.impl.tools.sample.SurveyDoc;
-import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -74,7 +64,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongSupplier;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /// `catalogue_event_types` (replacing classify_kinds; stroom-ai/DESIGN.md, Event type catalogue): the source's
@@ -137,15 +126,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
     private static final String BUILD_ARG = "build";
     private static final String SOURCE_ARG = "source";
-    private static final String STREAM_IDS_ARG = "stream_ids";
+    static final String STREAM_IDS_ARG = "stream_ids";
     private static final String SPLITTER_ARG = "splitter";
-    private static final String READING_ARG = "reading";
+    static final String READING_ARG = "reading";
     private static final String PROPOSALS_ARG = "proposals";
     private static final String CONFIRM_ARG = "confirm";
-    private static final String CATCH_ALL_ARG = "catch_all";
-    private static final String TRANSLATION = "translation";
+    static final String CATCH_ALL_ARG = "catch_all";
+    static final String TRANSLATION = "translation";
     private static final String REVIEWED_ARG = "reviewed";
-    private static final String EXPLAIN_ARG = "explain";
+    static final String EXPLAIN_ARG = "explain";
     private static final String ANSWERED_ARG = "answered";
     private static final String START_FROM_ARG = "start_from";
     /// The question put to the user when a pipeline already translates what the build is to.
@@ -158,7 +147,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final List<String> CATCH_ALL_NAMES = List.of("unknown", "uncatalogued records",
             "uncatalogued");
     private static final String AMENDMENTS = "amendments";
-    private static final String STATUS = "status";
+    static final String STATUS = "status";
     private static final String HINT = "hint";
     private static final String TABLE = "table";
     private static final String HIGH = "high";
@@ -178,24 +167,16 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                                   + "from what you know of the source; the rest stay as Data. Never "
                                                   + "put a value in an element that means something else (e.g. a "
                                                   + "setting's value in a Description). ";
-    private static final String STREAMS = "streams";
+    static final String STREAMS = "streams";
     // What the proposals changed since the set was shown (the user's amendments, from the form or the chat), kept
     // until the set is confirmed: the amended event types are worth a look when it is shown again.
     private static final String CHANGES = "changes";
     // How long a shown set stays in view for its form: past it, the set is shown again before the form.
     private static final long SHOWN_FRESH_MS = 90_000;
-    private static final int MAX_SAMPLE_STREAMS = 5;
     // The most of the build's own sample streams named in the refusal to catalogue before a survey.
     private static final int MOST_SURVEY_STREAMS = 20;
     private static final String LISTING_FOLDER = "/outputs/catalogue/";
     private static final Pattern PLAIN = Pattern.compile("[^A-Za-z0-9._-]");
-    // The keys of a translation mapping that say how a record is read (not how it is translated): what the conditions
-    // are evaluated over.
-    private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace", "json_layout",
-            "json_fields", "xml_fields", "pairs", "extract", "nil_values", "for_each");
-    // A rule for a reading parsed as a mapping, which needs one: never evaluated.
-    private static final Map<String, Object> READING_RULE = Map.of("name", "reading", "fields",
-            List.of(Map.of("path", "EventDetail/TypeId", "value", "Reading")));
 
     private final RecordSourceNotesTool notes;
     private final SampleStreamTexts sampleStreamTexts;
@@ -204,6 +185,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private final TranslationBuilds builds;
     private final LongSupplier clock;
     private final Provider<BuildRecords> buildRecords;
+    private final CatalogueReading recordReading;
+    private final CatalogueCatchAll catchAllForms;
     private Provider<CatalogueNotes> catalogueNotesProvider;
     private Provider<ExistingTranslations> existingProvider;
 
@@ -241,6 +224,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         this.plan = plan;
         this.builds = builds;
         this.clock = clock;
+        this.recordReading = new CatalogueReading(sampleStreamTexts, plan, builds);
+        this.catchAllForms = new CatalogueCatchAll(notes);
     }
 
     /// Where the build's catalogue is kept across versions (set by injection; none in tests that make the tool
@@ -309,7 +294,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                         .addProperty(READING_ARG, TranslationArgs.object("For a source with no mapping yet: how "
                                                                          + "its records are read, as a mapping's "
                                                                          + "reading keys (" + String.join(", ",
-                                READING_KEYS) + ")."))
+                                CatalogueReading.READING_KEYS) + ")."))
                         .addProperty(PROPOSALS_ARG, ArraySchema.builder()
                                 .description("Changes to the catalogue: {op: add|change|remove, type_id, ...the "
                                              + "event type's keys: title, description, event_detail, action, "
@@ -401,7 +386,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                 NullSafe.nonBlankStringElse(ToolText.str(notesNow.getOrDefault("source", "")), build));
         final Calling calling = new Calling(call, context, build, source, notesNow, current(build, notesNow));
         final List<Map<?, ?>> proposals = RecordSourceNotesTool.objects(call, PROPOSALS_ARG);
-        final List<String> explain = explainArg(call);
+        final List<String> explain = CatalogueExplanations.explainArg(call);
         if (!explain.isEmpty() && (!proposals.isEmpty() || isTrue(argsMap(call).get(CONFIRM_ARG)))) {
             throw new ToolRefusal(EXPLAIN_ARG + "= changes nothing, so it is given alone, without proposals or "
                                   + "confirm: explain first, answer the user in the chat, then call again.");
@@ -614,7 +599,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
 
     private Map<String, Object> listed(final Calling calling) {
-        final Records read = read(calling);
+        final CatalogueReading.Records read = read(calling);
         final Catalogue none = new Catalogue(List.of(), Catalogue.CatchAll.PROPOSED, calling.catalogue().scope());
         final CatalogueCheckResult asIs = CatalogueCheck.check(none, read.sample(), null);
         final List<EventType> seed = seed(read, calling.catalogue().scope().sourceTypeField());
@@ -647,7 +632,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     // apart by the build's source type field, which no event type is recognised by (the group's module passes other
     // source types over already): then the seed is derived as the draft derives its rules, by the field naming what
     // happened, chosen among the records' other fields ([KindFields]), an event type a value.
-    private static List<EventType> seed(final Records read, final String sourceTypeField) {
+    private static List<EventType> seed(final CatalogueReading.Records read, final String sourceTypeField) {
         final List<EventType> drafted = CatalogueSeed.fromDraft(read.draft());
         final boolean bySourceType = sourceTypeField != null && drafted.stream()
                 .flatMap(type -> type.recognisedBy().stream())
@@ -689,7 +674,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
 
     private Map<String, Object> proposed(final Calling calling, final List<Map<?, ?>> proposals) {
-        final Records read = read(calling);
+        final CatalogueReading.Records read = read(calling);
         final CatalogueProposals.Applied proposed = CatalogueProposals.apply(calling.catalogue(), proposals);
         final CatalogueProposals.Applied applied = new CatalogueProposals.Applied(withLeaves(proposed.catalogue(),
                 notes.schemaOrNull(calling.context(), calling.build())), proposed.refused());
@@ -841,8 +826,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return catalogue.withEventTypes(types);
     }
 
+    // The scope's records, read as processing will ([CatalogueReading#read]).
+    private CatalogueReading.Records read(final Calling calling) {
+        return recordReading.read(calling, rawArg(calling.call(), SPLITTER_ARG));
+    }
+
     // The catalogue's check over the scope's records.
-    private CatalogueCheckResult check(final Calling calling, final Catalogue catalogue, final Records read) {
+    private CatalogueCheckResult check(final Calling calling,
+                                       final Catalogue catalogue,
+                                       final CatalogueReading.Records read) {
         final EventSchema schema = notes.schemaOrNull(calling.context(), calling.build());
         // What the draft writes: for every event (not an event type's Data, its user Authenticate's), and by its own
         // rules, which the translation's rules start from.
@@ -880,9 +872,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
 
 
     private Map<String, Object> confirmed(final Calling calling) {
-        final Catalogue catalogue = withCatchAllTranslation(calling);
+        final Catalogue catalogue = catchAllForms.withCatchAllTranslation(calling);
         final Map<String, Object> confirming = confirming(calling.notesNow());
-        final Records read = read(calling);
+        final CatalogueReading.Records read = read(calling);
         final CatalogueCheckResult check = check(calling, catalogue, read);
         if (check.refused()) {
             throw new ToolRefusal(notConfirmable(check));
@@ -903,7 +895,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         final boolean catchAll = set.isEmpty();
         final String shown = catchAll
-                ? catchAllShown(check, catalogue)
+                ? CatalogueCatchAll.catchAllShown(check, catalogue)
                 : shownSet(calling, set, check, confirming);
         final String digest = Consent.reviewId(binding(shown, set, check));
         if (digest.equals(amendedDigest(confirming))) {
@@ -931,18 +923,19 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         asked(calling, catalogue, confirming, digest);
         final Catalogue now;
         if (catchAll) {
-            final Consent.Request request = catchAllRequest(check, catalogue, catchAllReason(calling));
+            final Consent.Request request = CatalogueCatchAll.catchAllRequest(check, catalogue,
+                    catchAllForms.catchAllReason(calling));
             try {
                 consent.require(calling.call(), calling.context(), request.boundTo(shown));
             } catch (final Consent.SentInstead e) {
                 throw new ToolRefusal(sentInstead(calling.build(), request.summary(), e.sent()));
             } catch (final ToolRefusal e) {
                 if (Consent.notAgreed(request.summary(), NAME, false).equals(e.getMessage())) {
-                    throw new ToolRefusal(catchAllDeclined(calling.build(), catalogue, check));
+                    throw new ToolRefusal(CatalogueCatchAll.catchAllDeclined(calling.build(), catalogue, check));
                 }
                 throw e;
             }
-            now = catalogue.withCatchAllConfirmedByUser(catchAllReason(calling));
+            now = catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling));
         } else {
             final String accept = "Accept all " + set.size() + " event type" + (set.size() == 1
                     ? ""
@@ -1011,7 +1004,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             return out;
         }
         final String shown = next.isEmpty()
-                ? catchAllShown(check, now)
+                ? CatalogueCatchAll.catchAllShown(check, now)
                 : shownSet(calling, next, check, confirming);
         final Map<String, Object> result;
         if (calling.context().userQuestions().canAsk()) {
@@ -1052,7 +1045,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         result.put("check", check.toJson());
         result.put(HINT, (catchAllSettled
                 ? "No sampled record is uncatalogued, so the catch-all stands as proposed (records no event type "
-                  + "recognises, should any come, kept as " + translatedAs(catalogue.catchAll().translation())
+                  + "recognises, should any come, kept as "
+                  + CatalogueCatchAll.translatedAs(catalogue.catchAll().translation())
                   + "), with no form: don't ask the user about it. "
                 : "")
                          + "Every event type and the catch-all are confirmed: the catalogue is in the build's source "
@@ -1087,7 +1081,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         result.put("catalogue", compact(catalogue));
         final String what = set.isEmpty()
                 ? "the catch-all for the uncatalogued records (the " + check.uncatalogued().records() + " records "
-                  + "no event type recognises, kept as " + translatedAs(catalogue.catchAll().translation()) + ")"
+                  + "no event type recognises, kept as "
+                  + CatalogueCatchAll.translatedAs(catalogue.catchAll().translation()) + ")"
                 : "the " + set.size() + " " + confidenceOf(set) + "-confidence event type(s)" + (HIGH.equals(
                         confidenceOf(set))
                         ? " (this summary; every row in the source notes)"
@@ -1127,7 +1122,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             return result;
         }
         final Catalogue now = set.isEmpty()
-                ? catalogue.withCatchAllConfirmedByUser(catchAllReason(calling))
+                ? catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling))
                 : catalogue.confirmedByUser(typeIds(set));
         return afterConfirming(calling, now, check, set.isEmpty()
                 ? List.of()
@@ -1222,127 +1217,6 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Map<String, Object> marks = new LinkedHashMap<>(confirming);
         marks.put(SHOWN, mark);
         notes.recordCatalogue(calling.context(), calling.build(), calling.source(), catalogue, marks);
-    }
-
-    // The catch-all's confirmation: the uncatalogued records translated as Unknown (or as the event the user said),
-    // their fields kept as Data.
-    private static Consent.Request catchAllRequest(final CatalogueCheckResult check,
-                                                   final Catalogue catalogue,
-                                                   final String reason) {
-        final Map<String, Object> details = new LinkedHashMap<>();
-        details.put("uncatalogued records", check.uncatalogued().records() + " in the sample, of "
-                                            + check.uncatalogued().shapes().size() + " shape(s), in the chat");
-        final Catalogue.CatchAll.Translation own = catalogue.catchAll().translation();
-        if (reason != null && own == null) {
-            details.put("why", reason);
-        }
-        return Consent.Request.confirmation(NAME, "Keep the uncatalogued records (those no event type recognises) "
-                                                  + "as " + translatedAs(own) + ", their fields kept as Data",
-                details);
-    }
-
-    // What the catch-all writes, in words: Unknown events, or the event the user said.
-    private static String translatedAs(final Catalogue.CatchAll.Translation own) {
-        if (own == null || NullSafe.isBlankString(own.eventDetail())) {
-            return "Unknown events";
-        }
-        return own.typeId() + " events (" + own.eventDetail() + (NullSafe.isBlankString(own.action())
-                ? ""
-                : ", action " + own.action()) + ")";
-    }
-
-    // What the user is shown of the catch-all: the uncatalogued records' count and shapes.
-    private static String catchAllShown(final CatalogueCheckResult check, final Catalogue catalogue) {
-        final List<String> lines = new ArrayList<>(List.of("**Uncatalogued records**: " + check.uncatalogued().records()
-                                                            + " of the sample's records no event type recognises, "
-                                                            + "translated as "
-                                                            + translatedAs(catalogue.catchAll().translation())
-                                                            + ", their fields kept as Data."));
-        final List<String> shapes = CatalogueTables.uncataloguedShapes(check);
-        if (!shapes.isEmpty()) {
-            lines.add("");
-            shapes.forEach(shape -> lines.add("- " + shape));
-        }
-        return String.join("\n", lines);
-    }
-
-    // The user declined the catch-all in its form: they want something else for the uncatalogued records, which
-    // the agent asks them in the chat (seen in a Haiku run: told only "The user did not agree to ...", the agent
-    // drafted without build= and saved a translation whose catch-all was never confirmed).
-    private static String catchAllDeclined(final String build,
-                                           final Catalogue catalogue,
-                                           final CatalogueCheckResult check) {
-        return "The user declined the catch-all: they don't want the " + check.uncatalogued().records()
-               + " uncatalogued records (those no event type recognises) translated as "
-               + translatedAs(catalogue.catchAll().translation()) + ". Nothing is confirmed, and the "
-               + "translation can't be drafted or built until it is. Ask the user in the chat what those records "
-               + "should become, then call " + NAME + " build=" + build + " again with their answer: event types "
-               + "that recognise them (proposals, op: add; drop: true for records they say to drop), or another "
-               + "event for them all (confirm=true catch_all={translation: {type_id, event_detail, action, "
-               + "description}}). The catch-all is then put to them again in its form, the only place it is "
-               + "confirmed.";
-    }
-
-    // The catalogue with the catch-all's translation the call gives (the event the user said in the chat the
-    // uncatalogued records should be): the catch-all theirs to confirm again where it changes it. Refused where the
-    // translation can't be written.
-    private Catalogue withCatchAllTranslation(final Calling calling) {
-        final Catalogue catalogue = calling.catalogue();
-        final Map<String, Object> given = JsonValues.map(argsMap(calling.call()).get(CATCH_ALL_ARG));
-        final Map<String, Object> translation = given == null
-                ? null
-                : JsonValues.map(given.get(TRANSLATION));
-        if (translation == null) {
-            return catalogue;
-        }
-        final Catalogue.CatchAll.Translation own = new Catalogue.CatchAll.Translation(
-                givenText(translation.get("type_id")), givenText(translation.get("event_detail")),
-                givenText(translation.get("action")), givenText(translation.get("description")));
-        final List<String> problems = new ArrayList<>();
-        final String typeIdProblem = TypeIds.problem(own.typeId());
-        if (typeIdProblem != null) {
-            problems.add("type_id: " + typeIdProblem);
-        }
-        if (NullSafe.isBlankString(own.eventDetail())) {
-            problems.add("event_detail: give the action element the records are written under");
-        } else {
-            final EventSchema schema = notes.schemaOrNull(calling.context(), calling.build());
-            if (schema != null) {
-                if (!schema.hasPath("EventDetail/" + own.eventDetail())) {
-                    problems.add("event_detail: EventDetail/" + own.eventDetail() + " is not an action element");
-                } else {
-                    problems.addAll(EventMeaning.parts(schema, "the catch-all", own.eventDetail(), null,
-                            own.action()).problems());
-                }
-            }
-        }
-        if (!problems.isEmpty()) {
-            throw new ToolRefusal("The catch-all's translation can't be written: " + String.join("; ", problems)
-                                  + ". Nothing was changed.");
-        }
-        if (own.equals(catalogue.catchAll().translation())) {
-            return catalogue;
-        }
-        return catalogue.withCatchAll(new Catalogue.CatchAll(EventType.PROPOSED, catalogue.catchAll().allowUnknown(),
-                own));
-    }
-
-    // A text argument as given, stripped; null when it is not given or blank.
-    private static String givenText(final Object value) {
-        return value instanceof final String text && !text.isBlank()
-                ? text.strip()
-                : null;
-    }
-
-    private String catchAllReason(final Calling calling) {
-        final Map<String, Object> given = JsonValues.map(argsMap(calling.call()).get(CATCH_ALL_ARG));
-        // Not ToolText.str: a catch_all without allow_unknown (its translation alone) gave the reason "None".
-        final String reason = given == null
-                ? null
-                : givenText(given.get("allow_unknown"));
-        return NullSafe.isBlankString(reason)
-                ? calling.catalogue().catchAll().allowUnknown()
-                : reason;
     }
 
     // Why the catalogue can't be put to the user as it is: overlaps, event types that may be several (the seed's),
@@ -1484,16 +1358,16 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private Map<String, Object> explained(final Calling calling, final List<String> wanted) {
         final Catalogue catalogue = calling.catalogue();
         final List<EventType> pending = nextSet(catalogue);
-        final Records read = read(calling);
+        final CatalogueReading.Records read = read(calling);
         final CatalogueCheckResult check = check(calling, catalogue, read);
         final List<EventType> types = new ArrayList<>();
         final List<CatalogueSummary.Group> groups = new ArrayList<>();
         boolean uncatalogued = false;
         final List<String> unknown = new ArrayList<>();
         for (final String name : wanted) {
-            final EventType type = eventType(catalogue, name);
+            final EventType type = CatalogueExplanations.eventType(catalogue, name);
             final Optional<CatalogueSummary.Group> group = type == null
-                    ? group(pending, catalogue, check, name)
+                    ? CatalogueExplanations.group(pending, catalogue, check, name)
                     : Optional.empty();
             if (type != null) {
                 if (!types.contains(type)) {
@@ -1508,7 +1382,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             }
         }
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal(unknownNames(catalogue, check, unknown));
+            throw new ToolRefusal(CatalogueExplanations.unknownNames(catalogue, check, unknown));
         }
         final List<EventType> explainedTypes = types.subList(0, Math.min(MOST_EXPLAINED, types.size()));
         final Map<String, List<CatalogueCheck.Example>> examples = CatalogueCheck.examples(read.sample(),
@@ -1518,8 +1392,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         read.said(result);
         if (!explainedTypes.isEmpty()) {
             result.put("event_types", explainedTypes.stream()
-                    .map(type -> explainedType(type, check, examples.getOrDefault(type.typeId(), List.of()),
-                            pending.contains(type)))
+                    .map(type -> CatalogueExplanations.explainedType(type, check,
+                            examples.getOrDefault(type.typeId(), List.of()), pending.contains(type)))
                     .toList());
         }
         if (types.size() > explainedTypes.size()) {
@@ -1530,12 +1404,14 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     .toList()));
         }
         if (!groups.isEmpty()) {
-            result.put("groups", groups.stream().map(group -> explainedGroup(group, check)).toList());
+            result.put("groups", groups.stream()
+                    .map(group -> CatalogueExplanations.explainedGroup(group, check))
+                    .toList());
         }
         if (uncatalogued) {
             final Map<String, Object> rest = new LinkedHashMap<>();
-            rest.put("translated_as", translatedAs(catalogue.catchAll().translation()) + ", their fields kept as "
-                                      + "Data");
+            rest.put("translated_as", CatalogueCatchAll.translatedAs(catalogue.catchAll().translation())
+                                      + ", their fields kept as Data");
             rest.putAll(JsonValues.mapOrEmpty(check.toJson().get("uncatalogued")));
             result.put("uncatalogued_records", rest);
         }
@@ -1557,335 +1433,6 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         result.put("next", next(calling.build(), then, "puts the set to the user again, for their answer in its "
                                                        + "form"));
         return result;
-    }
-
-    // An event type explained: what it means, how it is recognised and translated, its records and a few of them.
-    private static Map<String, Object> explainedType(final EventType type,
-                                                     final CatalogueCheckResult check,
-                                                     final List<CatalogueCheck.Example> examples,
-                                                     final boolean beingConfirmed) {
-        final Map<String, Object> out = new LinkedHashMap<>();
-        out.put("type_id", type.typeId());
-        out.put("title", type.title());
-        out.put("description", NullSafe.isBlankString(type.description())
-                ? "none of its own: its records' Description comes only from a message they hold"
-                : type.description());
-        out.put("recognised_by", CatalogueTables.recognisedBy(type));
-        out.put("translated_as", CatalogueTables.translatedAs(type) + CatalogueTables.placedAs(type));
-        final CatalogueCheckResult.Count count = check.counts().get(type.typeId());
-        out.put("records", count == null
-                ? 0
-                : count.records());
-        out.put("confidence", type.confidence());
-        if (type.doubt() != null) {
-            out.put("doubt", type.doubt());
-        }
-        if (NullSafe.isNonBlankString(type.oneTypeBecause())) {
-            out.put("one_type_because", type.oneTypeBecause());
-        }
-        out.put(STATUS, type.status() + (beingConfirmed
-                ? ", in the set put to the user"
-                : ""));
-        out.put("examples", examples.isEmpty()
-                ? "no record of it in the sample"
-                : examples.stream().map(CatalogueCheck.Example::toJson).toList());
-        return out;
-    }
-
-    // A group of the summary explained: its event types, each with how it is recognised and its records.
-    private static Map<String, Object> explainedGroup(final CatalogueSummary.Group group,
-                                                      final CatalogueCheckResult check) {
-        final Map<String, Object> out = new LinkedHashMap<>();
-        out.put("group", group.whatHappened());
-        out.put("event_types", group.types().size());
-        out.put("records", group.records());
-        final List<Map<String, Object>> members = new ArrayList<>();
-        for (final EventType type : group.types()) {
-            final Map<String, Object> member = new LinkedHashMap<>();
-            member.put("type_id", type.typeId());
-            member.put("title", type.title());
-            member.put("recognised_by", CatalogueTables.recognisedBy(type));
-            final CatalogueCheckResult.Count count = check.counts().get(type.typeId());
-            member.put("records", count == null
-                    ? 0
-                    : count.records());
-            members.add(member);
-        }
-        out.put("members", members);
-        out.put("more", "explain=<a TypeId> gives one's meaning and example records");
-        return out;
-    }
-
-    // The event type a name is the TypeId of, ignoring case; null when none is.
-    private static EventType eventType(final Catalogue catalogue, final String name) {
-        return catalogue.eventTypes().stream()
-                .filter(type -> type.typeId() != null && type.typeId().equalsIgnoreCase(name.strip()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    // The group of the summary a name is the action element of, ignoring case: the set put to the user's, else the
-    // whole catalogue's.
-    private static Optional<CatalogueSummary.Group> group(final List<EventType> pending,
-                                                          final Catalogue catalogue,
-                                                          final CatalogueCheckResult check,
-                                                          final String name) {
-        for (final List<EventType> types : List.of(pending, catalogue.eventTypes())) {
-            final Optional<CatalogueSummary.Group> found = CatalogueSummary.groups(types, check).stream()
-                    .filter(group -> group.whatHappened().equalsIgnoreCase(name.strip()))
-                    .findFirst();
-            if (found.isPresent()) {
-                return found;
-            }
-        }
-        return Optional.empty();
-    }
-
-    // Why names explain= was given aren't in the catalogue, with the nearest TypeIds and groups to each.
-    private static String unknownNames(final Catalogue catalogue,
-                                       final CatalogueCheckResult check,
-                                       final List<String> unknown) {
-        final Map<String, String> byLower = new LinkedHashMap<>();
-        catalogue.eventTypes().forEach(type -> {
-            if (type.typeId() != null) {
-                byLower.putIfAbsent(type.typeId().toLowerCase(Locale.ROOT), type.typeId());
-            }
-        });
-        CatalogueSummary.groups(catalogue.eventTypes(), check).forEach(group -> byLower.putIfAbsent(
-                group.whatHappened().toLowerCase(Locale.ROOT), group.whatHappened()));
-        final List<String> said = new ArrayList<>();
-        for (final String name : unknown) {
-            final List<String> nearest = CloseMatches.closeMatches(name.strip().toLowerCase(Locale.ROOT),
-                    byLower.keySet(), CloseMatches.DEFAULT_COUNT, 0).stream().map(byLower::get).toList();
-            said.add("'" + name + "'" + (nearest.isEmpty()
-                    ? ""
-                    : " (nearest: " + String.join(", ", nearest) + ")"));
-        }
-        return "No event type or group " + String.join("; ", said) + " in the catalogue. " + EXPLAIN_ARG + " takes "
-               + "TypeIds, action elements (a group of the summary) or Unknown (the uncatalogued records). Nothing "
-               + "was changed.";
-    }
-
-    // The names explain= gives: a list, or one text (several split at commas); empty when not given.
-    private static List<String> explainArg(final ToolCall call) {
-        final Object given = argsMap(call).get(EXPLAIN_ARG);
-        final List<String> names = given instanceof final List<?> list
-                ? list.stream().map(ToolText::str).toList()
-                : given == null
-                        ? List.of()
-                        : List.of(ToolText.str(given).split(","));
-        return names.stream().map(String::strip).filter(name -> !name.isEmpty()).distinct().toList();
-    }
-
-
-    // --------------------------------------------------------------------------------
-    // Reading the records
-
-
-    // The scope's records, read as processing will: the build's sample streams (or those given, or those the
-    // catalogue was last checked against), only the scope's source types, with the build's saved Data Splitter
-    // unless one is given, and as the build's latest mapping reads them ([#readingOf]).
-    private Records read(final Calling calling) {
-        List<Long> streams = StartOnboardingTool.streamIds(calling.call(), STREAM_IDS_ARG);
-        if (streams.isEmpty()) {
-            final List<Object> kept = JsonValues.listOrEmpty(confirming(calling.notesNow()).get(STREAMS));
-            streams = kept.stream().map(id -> (long) Double.parseDouble(String.valueOf(id))).toList();
-        }
-        if (streams.isEmpty()) {
-            streams = plan.rawSampleStreams(calling.build(), MAX_SAMPLE_STREAMS);
-        }
-        if (streams.isEmpty()) {
-            // A build on an existing feed, with no samples of its own: the streams its survey read.
-            final Set<Long> surveyed = new LinkedHashSet<>();
-            builds.surveyStatesInBuild(calling.build()).forEach(state -> surveyed.addAll(SurveyDoc.streams(state)));
-            streams = surveyed.stream().limit(MAX_SAMPLE_STREAMS).toList();
-        }
-        if (streams.isEmpty()) {
-            throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");
-        }
-        final SampleStreamTexts.Texts texts = sampleStreamTexts.read(streams);
-        final Optional<SourceTypeScope> scope = builds.scope(calling.build());
-        final SampleStreamTexts.Scoped scoped = scope.map(found -> sampleStreamTexts.scoped(texts, found))
-                .orElse(null);
-        final Map<String, String> samples = scoped == null
-                ? texts.texts()
-                : scoped.texts().texts();
-        SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(calling.call(), SPLITTER_ARG));
-        String readWith = null;
-        if (splitter == null) {
-            // The build's saved Data Splitter, where it has one (seen in chat 163: called without splitter, the
-            // records read with a spec inferred afresh each time).
-            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(calling.build(), null);
-            if (saved.isPresent()) {
-                splitter = SplitterSpec.ofConverter(saved.get().getValue());
-                readWith = saved.get().getKey();
-            }
-        }
-        final List<Object> sampleTexts = List.copyOf(samples.values());
-        // The pair regexes run once a text for the whole call: the draft's pairs, the check's records and those
-        // listed with their held fields are each read from the same texts (seen in eval case 36 on Haiku: 60 pair
-        // regexes over 1,000 records three times, some 70% of a call).
-        final PairMatches matches = PairMatches.create();
-        final Map<String, Object> draft = DraftMapping.draft(sampleTexts, calling.source(), null, null, null, null,
-                splitter, null, matches);
-        final Map<String, Object> mapping = NullSafe.map(JsonValues.map(draft.get("mapping")));
-        final Optional<Map<String, Object>> reading = readingOf(calling, mapping);
-        final List<Map<String, Object>> raw = DraftMapping.records(samples, splitter).records();
-        final String variantField = variantField(draft, raw);
-        final CatalogueSample sample = CatalogueSample.read(reading
-                .map(CatalogueEventTypesTool::parsedReading)
-                .orElseGet(() -> reading(mapping)), sampleTexts, splitter == null
-                ? inferred(draft)
-                : splitter, LocalCheck.JSON_PARSER_CUT, variantField, matches);
-        final Map<String, Object> given = argsMap(calling.call()).get(READING_ARG) == null
-                ? null
-                : reading.orElse(null);
-        return new Records(streams, readWith, draft, sample, scoped == null
-                ? null
-                : scoped.said(), HeldKindRecords.unpacked(raw, reading.orElse(mapping), matches), given);
-    }
-
-    // How the records are read for the check, as the build will read them: the reading given (over the draft's own),
-    // else the one an earlier call gave, else the build's latest mapping's (the one last sent for its translation,
-    // else its draft this session, else the one kept with its XSLT) ([#keptElseLatest]); empty for the draft's own.
-    // Seen in the reference eval: fields an extraction, pairs or held JSON gave were refused as "no record has the
-    // field", the records read only as a fresh draft reads them.
-    private Optional<Map<String, Object>> readingOf(final Calling calling, final Map<String, Object> draftMapping) {
-        final Object given = argsMap(calling.call()).get(READING_ARG);
-        if (given != null) {
-            if (!(given instanceof final Map<?, ?> keys)) {
-                throw new ToolRefusal(READING_ARG + " is an object of a mapping's reading keys (" + String.join(", ",
-                        READING_KEYS) + ")");
-            }
-            final List<String> others = keys.keySet().stream()
-                    .map(String::valueOf)
-                    .filter(key -> !READING_KEYS.contains(key))
-                    .toList();
-            if (!others.isEmpty()) {
-                throw new ToolRefusal(READING_ARG + " takes only how a record is read (" + String.join(", ",
-                        READING_KEYS) + "), not " + String.join(", ", others));
-            }
-            final Map<String, Object> reading = readingKeys(draftMapping);
-            keys.forEach((key, value) -> reading.put(String.valueOf(key), value));
-            try {
-                parsedReading(reading);
-            } catch (final IllegalArgumentException e) {
-                throw new ToolRefusal(READING_ARG + " can't be read: " + e.getMessage());
-            }
-            return Optional.of(reading);
-        }
-        return keptElseLatest(calling.build(), JsonValues.map(confirming(calling.notesNow()).get(READING)),
-                () -> builds.latestMapping(calling.context(), calling.build()));
-    }
-
-    /// How the build's catalogue reads its records when a call gives no reading: the reading an earlier call gave
-    /// (kept in the source notes' confirmation), else the build's latest mapping's reading keys; empty for the
-    /// draft's own. The reading given wins: it is the one the catalogue was told to read by, where a draft made
-    /// before it may still read whole records (seen in eval case 69: the catalogue told to read each item of a
-    /// batch, the calls after it read whole batches as an earlier draft did). One lookup, for catalogue_event_types
-    /// and the draft that follows the catalogue ([TranslationBuilds#catalogueForEach]).
-    ///
-    /// @param build  The build, for the log.
-    /// @param kept   The reading an earlier call gave, or null.
-    /// @param latest The build's latest mapping ([TranslationBuilds#latestMapping]), asked for only when no reading
-    ///               was kept.
-    /// @return The reading; empty when neither can be read.
-    static Optional<Map<String, Object>> keptElseLatest(final String build,
-                                                        final Map<String, Object> kept,
-                                                        final Supplier<Optional<Map<String, Object>>> latest) {
-        if (kept != null) {
-            try {
-                parsedReading(kept);
-                return Optional.of(kept);
-            } catch (final IllegalArgumentException e) {
-                LOGGER.debug(() -> LogUtil.message("The reading kept for {} can't be read: {}", build,
-                        e.getMessage()));
-            }
-        }
-        final Optional<Map<String, Object>> mapping = latest.get();
-        if (mapping.isPresent()) {
-            final Map<String, Object> reading = readingKeys(mapping.get());
-            try {
-                parsedReading(reading);
-                return Optional.of(reading);
-            } catch (final IllegalArgumentException e) {
-                LOGGER.debug(() -> LogUtil.message("The latest mapping of {} can't be read, so the draft's reading is "
-                                                   + "used: {}", build, e.getMessage()));
-            }
-        }
-        return Optional.empty();
-    }
-
-    // A mapping's reading keys alone.
-    private static Map<String, Object> readingKeys(final Map<String, Object> mapping) {
-        final Map<String, Object> reading = new LinkedHashMap<>();
-        READING_KEYS.forEach(key -> {
-            if (mapping.get(key) != null) {
-                reading.put(key, mapping.get(key));
-            }
-        });
-        return reading;
-    }
-
-    // A reading as the mapping the conditions are evaluated by (its pairs read as extractions, as the translation
-    // reads them).
-    private static TranslationMapping parsedReading(final Map<String, Object> reading) {
-        final Map<String, Object> json = new LinkedHashMap<>(reading);
-        json.putIfAbsent("input", "data_splitter");
-        json.put("events", List.of(READING_RULE));
-        return TranslationMapping.parse(json);
-    }
-
-    // The Data Splitter the draft inferred for the records (a data_splitter input given none), or null.
-    @SuppressWarnings("unchecked")
-    private static SplitterSpec inferred(final Map<String, Object> draft) {
-        if (draft.get("splitter") instanceof final Map<?, ?> spec) {
-            try {
-                return SplitterSpec.fromMap((Map<String, ?>) spec);
-            } catch (final IllegalArgumentException e) {
-                LOGGER.debug(() -> LogUtil.message("The draft's Data Splitter can't be read back: {}",
-                        e.getMessage()));
-            }
-        }
-        return null;
-    }
-
-    // A mapping the conditions are evaluated by: how the draft reads a record (its input, held fields, nil values
-    // and extractions), its rules aside.
-    private static TranslationMapping reading(final Map<String, Object> mapping) {
-        final List<Extraction> extractions = new ArrayList<>();
-        for (final Map<String, Object> entry : JsonValues.maps(mapping.get("extract"))) {
-            try {
-                extractions.add(Extraction.fromJson(entry));
-            } catch (final RuntimeException e) {
-                LOGGER.debug(() -> LogUtil.message("An extraction of the draft can't be read: {}", e.getMessage()));
-            }
-        }
-        final String input = NullSafe.nonBlankStringElse(ToolText.str(mapping.getOrDefault("input", "")),
-                "data_splitter");
-        return CatalogueSample.reading(input, text(mapping.get("record")), text(mapping.get("xml_namespace")),
-                JsonValues.strings(mapping.get("json_fields")), JsonValues.strings(mapping.get("xml_fields")),
-                JsonValues.strings(mapping.get("nil_values")), extractions);
-    }
-
-    // The field a record's line format (its variant) is written in, when the records are in several; else none.
-    @SuppressWarnings("unchecked")
-    private static String variantField(final Map<String, Object> draft, final List<Map<String, Object>> records) {
-        if (draft.get("splitter") instanceof final Map<?, ?> spec) {
-            try {
-                final SplitterSpec read = SplitterSpec.fromMap((Map<String, ?>) spec);
-                return NullSafe.isEmptyCollection(read.parts())
-                        ? null
-                        : read.variantField();
-            } catch (final IllegalArgumentException e) {
-                // The build's saved converter, whose spec the draft can't read back: its variant field where the
-                // records have it.
-                return records.stream().anyMatch(record -> record.containsKey(SplitterSpec.VARIANT))
-                        ? SplitterSpec.VARIANT
-                        : null;
-            }
-        }
-        return null;
     }
 
 
@@ -1925,7 +1472,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return next;
     }
 
-    private static Map<String, Object> confirming(final Map<String, Object> notesNow) {
+    /// The confirmation in progress, as the build's source notes hold it: a copy, empty when there is none.
+    ///
+    /// @param notesNow The build's source notes as they are.
+    /// @return The confirmation in progress.
+    static Map<String, Object> confirming(final Map<String, Object> notesNow) {
         return new LinkedHashMap<>(NullSafe.map(JsonValues.map(notesNow.get(RecordSourceNotesTool.CONFIRMING))));
     }
 
@@ -1960,7 +1511,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     }
 
     // The confirmation's marks with the streams read, and the reading given (kept for the calls after it).
-    private static Map<String, Object> withStreams(final Map<String, Object> confirming, final Records read) {
+    private static Map<String, Object> withStreams(final Map<String, Object> confirming,
+                                                   final CatalogueReading.Records read) {
         final Map<String, Object> out = new LinkedHashMap<>(confirming);
         out.put(STREAMS, read.streams());
         if (read.given() != null) {
@@ -1991,7 +1543,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         return Boolean.TRUE.equals(given) || "true".equalsIgnoreCase(String.valueOf(given));
     }
 
-    private static String text(final Object value) {
+    /// A value as text.
+    ///
+    /// @param value The value, or null.
+    /// @return It as text; null when it is null or blank.
+    static String text(final Object value) {
         return value == null || ToolText.str(value).isBlank()
                 ? null
                 : ToolText.str(value);
@@ -2009,44 +1565,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     /// @param source    The source's name.
     /// @param notesNow  The build's source notes as they are.
     /// @param catalogue The catalogue so far, its scope the build's.
-    private record Calling(ToolCall call,
+    record Calling(ToolCall call,
                            ToolCallContext context,
                            String build,
                            String source,
                            Map<String, Object> notesNow,
                            Catalogue catalogue) {
 
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// The scope's records, as read for a call.
-    ///
-    /// @param streams         The sample streams read.
-    /// @param readWith        The name of the build's saved Data Splitter they were read with, or null.
-    /// @param draft           The draft made from them (its reading and its rules, the seed's).
-    /// @param sample          The records as processing reads them, for the check.
-    /// @param scopeSaid       What the scope left out, or null without one.
-    /// @param evidenceRecords The records as the draft reads them, the fields inside held values among them.
-    /// @param given           The reading the call gave, or null.
-    private record Records(List<Long> streams,
-                           String readWith,
-                           Map<String, Object> draft,
-                           CatalogueSample sample,
-                           Map<String, Object> scopeSaid,
-                           List<Map<String, Object>> evidenceRecords,
-                           Map<String, Object> given) {
-
-        // What was read, said in a result.
-        private void said(final Map<String, Object> result) {
-            if (readWith != null) {
-                result.put("read_with", "the build's Data Splitter '" + readWith + "'");
-            }
-            if (scopeSaid != null) {
-                result.put("scope", scopeSaid);
-            }
-        }
     }
 }
