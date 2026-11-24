@@ -303,7 +303,10 @@ run of 22 October 2026 (1,538 stories).
   #5796. Fails every time. Fix: the story should expect the type in the secret, unless the
   credential is meant to carry it too (then `CredentialEditorController` should set it).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
-  full run, with 8 workers, and passes when run alone.
+  full run, with 8 workers, and passes when run alone. Seen again 23 November 2026 with 3 workers under a load
+  average of about 20, with `TwoLinksInACell`: `HyperlinksByKeyboard` opened the cell's first link
+  rather than its second (`showData` got `1001:4`, not `1002:4`), and `TwoLinksInACell` failed its
+  `toHaveFocus()`; both passed when `App/Editors/QueryEditor` was run again on its own.
 * **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (13 open: `Embedded`, below, is fixed, and master's
   `7ad091e2e6` and later fixed the `target-size` stories, `ImpactAbort`, `PauseButtonReportsUp` and `KeyStore`; the 13
   open ones fail on master `9ddf5f0b07` too, so they don't come from the remove_gwtp branch), and fail the
@@ -1270,30 +1273,30 @@ shows one), and the app itself.
 | Item | Now |
 |---|---|
 | A list keeps the old object selected after an edit | **Fixed** (6 November 2026): it was worse than reported, a second notification edit added a duplicate row; see "A list's selection kept a stale row" under Fixed |
-| Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs |
+| Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs; the light theme's two **Fixed** (23 November 2026), as the entry below |
 | `TraceOverviewChart` draws its fixed text and ARIA as HTML | Still open |
-| The floor map Layers drag never forgets `dragFromIndex` after a drop | Still open (`FloorMapLayers.java:498-511`) |
-| No story hovers or drags on the floor map canvas but Set Scale | Still open |
+| The floor map Layers drag never forgets `dragFromIndex` after a drop | **Fixed** (23 November 2026), as the entry below |
+| No story hovers or drags on the floor map canvas but Set Scale | **Fixed** (24 November 2026): `FloorMapMap` `ClusterTooltip` and `FloorMapEditorTab` `DragReadout` |
 | A sized `PopupType.POPUP` sets an inline width and height | **Fixed**: `--popup__width` and `--popup__height` with `popup--sized-*` classes (`PopupUtil.java:159-168`, `popup.css`) |
-| A dialog's New shows its busy spinner on Cancel | Still so (`DialogFrame.java:138-142`, on purpose) |
+| A dialog's New shows its busy spinner on Cancel | **Fixed** (19 November 2026): the pressed button shows it (`DialogFrame`), as the entry below |
 | The API key dialog and the start-up activity chooser can't hear a failed config fetch | Still open (`UiConfigCache.java:129-132`) |
-| Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; Chat History, the floor map's Track and the credential picker's empty OK and Cancel don't |
-| Solr fields mark the document changed on key down | Still open |
+| Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; **Fixed** (24 November 2026): Chat History had one already (`App/AI/AskStroomAiDialog` `OpenFromHistory`); `FloorMapMap` `ClusterTrack`, and `CredentialPickerDialog` `OkWithNothingChosen` and `Cancel`. Choose Annotation shown a second time still has none |
+| Solr fields mark the document changed on key down | **Fixed** (23 November 2026): they tell of a change on key up and when left; nor is it changed by any other key, as it was because what isn't set (e.g. no ZooKeeper hosts) was written back as a blank (`SolrIndexEditor` `TypingMarksChanged`) |
 | Wave 12's screens with no story | In part: the data generator's Execution grids have checks; the traces store's Settings tab and the permissions filter's help don't |
 | Classes wave 12 left un-BEM'd | **Done**: none of them is named anywhere |
-| Others still read `READ_ONLY` once | Still open (`QueryEditorController`, `StreamingProcessingController`, `DuplicateManagementListController`, `PathwayEditorController`; Solr's expression editor and pipeline) |
-| Templates given `SafeHtml.asString()` for a `title` | Still open: `ExplorerCell.java:150`, so a name with an apostrophe shows `&#39;` in its tooltip; the others weren't traced |
+| Others still read `READ_ONLY` once | **Checked, kept** (23 November 2026): it only changes just before the document is read (`DocumentPlugin`: opening, and Save As), which is when these read it, so nothing shows. Open: the Processors list makes its columns once (`ProcessorListController.setAllowUpdate`), so after Save As from a read-only pipeline its Enabled ticks and priorities can't be changed until it is opened again |
+| Templates given `SafeHtml.asString()` for a `title` | **Fixed** (23 November 2026): the explorer's (`ExplorerTree` `TooltipIsTheName`) and a table column heading's (`TestColumnHeaderHtmlUtil`), the only two found |
 | Server Tasks as a tree is 20px wider than its pane | **Fixed** (`TreeRowHandler.java:68`, `ServerTasksScreenStories`), as the entry under Fixed |
-| The 22px tick box column clips its box | Still open (the box is 20px now, not 16px); seeing the clip needs a render |
+| The 22px tick box column clips its box | **Fixed** (23 November 2026), as the entry below |
 | Ask Stroom AI's dock type offers only Dialog and Dock | Still so; nothing handles Tab or Float, so it looks deliberate |
-| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Still open |
-| Elastic's rerank suffix tooltip `$\{BaseField.score\}` | Still in the template; what shows needs the app |
-| The dashboard table filter dialog's focus on open | Needs a run; no story checks it (`ColumnFilterTabsController`, was `TableFilterPresenter`) |
-| `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | Still open |
-| Debug logging in `DocumentationTabController` | In part: the `GWT.log` calls are left; the commented code is gone |
-| `XPathFilterEditor`'s default condition | Still so, harmless |
+| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Solr's **Fixed** (23 November 2026), a single-line box; Plan B's **Fixed** (19 November 2026): `BucketGranularity` has display names |
+| Elastic's rerank suffix tooltip `$\{BaseField.score\}` | **Gone** (checked 19 November 2026): the rerank settings moved, and the tooltip went with them |
+| The dashboard table filter dialog's focus on open | **Fixed** (19 November 2026): `ColumnFilterEditorController` is a `Focus`; `TableFilterFocusesItsEditor` |
+| `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | **Fixed** (19 November 2026), each as its entry below |
+| Debug logging in `DocumentationTabController` | Fixed (20 November 2026): the `GWT.log` calls and the commented code are gone |
+| `XPathFilterEditor`'s default condition | **Fixed** (23 November 2026), as the entry below |
 | `CombinedParser.getMode()`'s guess for a None converter | Still so, and the entry is wrong that it has no effect: `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives a Data Splitter the XML range mode |
-| `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Still open |
+| `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Fixed (20 November 2026) |
 
 **Fixed** (6 November 2026): ~~Reported (30 October 2026, found fixing the processor profile periods' Remove): lists that
 replace a row after an edit may keep the old object selected, as `MultiSelectionModelImpl` matches
@@ -1466,12 +1469,18 @@ to delete them by hand.~~
   unused since before wave 7 (wave 7 deleted `stroom.query.client.ExpressionUiHandlers`, its
   twin). Delete it once removals are allowed.~~ **Deleted** (checked 30 October 2026: no
   `ExpressionUiHandlers` is left).
-* The floor map's Layers panel can reorder its layers wrongly after a drag (found 26 October 2026, in
+* ~~The floor map's Layers panel can reorder its layers wrongly after a drag (found 26 October 2026, in
   wave 7's audit; master has it too). A drop that moves a layer rebuilds the list before the
   dragged row's `dragend`, so its handler, which forgets the row dragged (`dragFromIndex`), never
   runs; a later drop of something dragged in from elsewhere then moves that layer again. The fix is
   to forget it in the drop handler (`FloorMapLayers.buildRow`). Not fixed yet: the workbench has
-  no way to fire HTML drag and drop events (with a `DataTransfer`) for its regression story.
+  no way to fire HTML drag and drop events (with a `DataTransfer`) for its regression story.~~
+  **Fixed** (23 November 2026): the drop handler forgets the layer dragged before it moves it. The
+  plays can fire HTML drag and drop now (`play.fireEvent().dragStart`, `dragOver`, `drop`,
+  `dragLeave`, `dragEnd`, each a `DragEvent` with a new `DataTransfer`; `TestFireEvent`), and
+  `App/Editors/FloorMapEditor` `LayerDragThenDropFromElsewhere` drags the desk layer below the gate,
+  then drops below the desk with nothing dragged from the list, and checks the order is kept (the
+  second drop moved the gate layer down again before the fix).
 * ~~The floor map follows no read-only state (found 26 October 2026, in wave 7's audit; master has it
   too): nothing under `stroom.floormap.client` watches `Contexts.READ_ONLY`, and `FloorMapLayers`
   has no `onReadOnlyChange`, so a floor map the user can only view can still have its layers
@@ -1526,9 +1535,13 @@ to delete them by hand.~~
 * ~~`CharacterNavigatorPresenter` is given a `SourceProgressBar` it never shows (found 25 October
   2026 in wave 3's audit): it is only ever hidden, and the code that would show it is commented
   out.~~ Gone in wave 4: the `CharacterNavigatorController` that replaces it has no progress bar.
-* A dialog's New button (`DialogFrame` with New, OK and Cancel; was `CreateOkCancelContent`) shows
+* ~~A dialog's New button (`DialogFrame` with New, OK and Cancel; was `CreateOkCancelContent`) shows
   its busy spinner on Cancel, not on itself, while the screen handles it (found 24 October 2026 in wave 3; as it was in
-  `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.
+  `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.~~ **Fixed**
+  (19 November 2026): the pressed button shows it, and is the one cleared when the screen keeps the
+  dialog open. Play: `Widgets/Dialogs/Dialog` `CreateOkCancel` (failed before; New is worked on for a
+  second, then the dialog stays open). Left: a dialog that hides keeps its pressed button spinning,
+  as OK always has; harmless unless a frame is ever shown again.
 * ~~Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
   `pager-button` (`components.css`; nothing has either class). Delete them once removals are
   allowed.~~ **Deleted** (checked 30 October 2026: neither is named anywhere).
@@ -1555,10 +1568,10 @@ to delete them by hand.~~
   and `emailTextBox` and `passwordPolicyMessage` in `change-password.css`. Give them BEM names in
   one pass, as the five pages share the two files.~~ **Done** (checked 30 October 2026: no class
   has those names; both sheets are BEM, the policy message `change-password__policy`).
-* A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
+* ~~A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
   (found 27 October 2026, in wave 12; as on master), before the typed character is in the field, so
-  the change the user sees isn't the one compared; a paste with the mouse marks nothing. Use the
-  fields' value change (or input) events, with a story typing one character and checking Save.
+  the change the user sees isn't the one compared; a paste with the mouse marks nothing.~~ **Fixed**
+  (23 November 2026): `SolrIndexEditor` `TypingMarksChanged`.
 * Wave 12's screens with no story or no check (found 27 October 2026, in its audit): a Traces
   store's Settings tab (now `PlanBSettingsController` with its state type locked, which dropped its
   doubled form padding: no screenshot shows it); the data generator's Execution tab's grids (a
@@ -1606,15 +1619,35 @@ to delete them by hand.~~
   "passed")~~ Fixed: such a check stops the run before any story runs (`unknownCheckIds`);
   `--skip-real-input` skips the checks and that test (the runner's own tests use it).
 
-* Server Tasks as a tree (`App/Main/ServerTasksScreen` `TaskTree`): the grid is 20px wider than its
+* ~~Server Tasks as a tree (`App/Main/ServerTasksScreen` `TaskTree`): the grid is 20px wider than its
   pane, so the last column's resize handle starts off screen; the tree's expander column is 45px
-  (6px flat) and the widths aren't fitted again.
-* A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
-  so the box is clipped flush left rather than centred.
+  (6px flat) and the widths aren't fitted again.~~ **Fixed** (25 October 2026; struck through 23
+  November 2026): see "a tree grid's columns ran past its edge" above.
+* ~~A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
+  so the box is clipped flush left rather than centred.~~ **Fixed** (23 November 2026). Measured:
+  since the tick box and its grid cell became one block (`e80ac67f3b`, 19 October 2026) the cell's
+  box is an icon's size (16px), so it was no longer clipped, and at compact density (the
+  workbench's) it fitted with 3px either side; but at Default density the cell's side padding put it
+  5.6px from the left and against the right edge. `GridHtml` now marks a tick box column's cells
+  and header `data-grid__cell--tick-box` and `data-grid__header-cell--tick-box`: a column under
+  twice CHECKBOX_COL (so not a 66px Enabled column, whose box stays under its left-aligned header)
+  whose cell or header draws only a tick box (not one with other content, e.g. a column values
+  filter's value). The width tested is the column's declared one, not its width now, so a user's
+  resize doesn't mark some rows and not others (code review, 23 November 2026). `data-grid.css`
+  centres their boxes without the side padding, so the header's select-all box lines up with the
+  rows'. `TestGridHtml`; `Widgets/Cell Renderers/TickBoxCell`
+  `BoxFitsItsColumn` checks a row's box and the header's are whole and centred to a pixel at
+  compact and Default density (it failed at Default before), and `WideColumnKeepsItsBoxLeft` that
+  an Enabled column's box stays at the left.
 
-* In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
+* ~~In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
-  the suite's default, passes them.
+  the suite's default, passes them.~~ **Fixed** (23 November 2026): both failed axe's colour
+  contrast on the calendar's days of the months before and after, drawn in the disabled text
+  colour (#6e6e6e), which is 4.5:1 on white but not on a light dialog with the transparency option
+  (white at 80% over the page's shade, about #ebebeb). Those days can be read and clicked, so they
+  are the muted text colour now (`calendar.css`), as other secondary text is. Both pass in the light
+  theme.
 
 * ~~After editing a processor profile's period, Remove does nothing until another row is chosen: the
   edit replaces the row with an unequal copy, but the selection keeps the old one, which
@@ -1654,41 +1687,220 @@ to delete them by hand.~~
   and second groups.~~ Fixed in wave 4: `TimePicker.setHourVisible` hides the hour's form group.
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
   defaults to Dialog while the config default is Dock.
-* Solr's ZooKeeper Path is a single value shown in a multi-line text area.
+* ~~Solr's ZooKeeper Path is a single value shown in a multi-line text area.~~ **Fixed** (23 November
+  2026): it is a text box.
 * ~~Plan B's Bucket Granularity list shows the enum names in capitals (HOUR, DAY, WEEK), as
   `BucketGranularity` has no display names.~~ **Fixed** (19 November 2026): it has display names
   (Hour, Day, Week); stored documents keep the enum names. Play: `App/Editors/PlanBEditor` `Trace`
   (failed before).
-* The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
+* ~~The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
   (`$\{BaseField.score\}`), not UiBinder's `{{`, so it may show the backslashes
-  (`ElasticIndexSettings.ui.xml`).
+  (`ElasticIndexSettings.ui.xml`).~~ **Gone** (checked 19 November 2026): the rerank settings moved
+  to each field's settings (#5976, `ElasticFieldSettings.ui.xml`), whose help has no braces.
 * Found in wave 8's audit (26 October 2026; master has each):
-  * A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
+  * ~~A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
     `TableFilterPresenter.focus()` focused the selected tab's layer, which wasn't a `Focus`. Its
     replacement, `ColumnFilterTabsController.focus()`, shows its tabs through `ControllerLayer`,
-    which is a `Focus` now: to check whether that fixed it.
-  * `ColumnFilterEditorController` decides whether the filter changed with `filter == null &&
+    which is a `Focus` now: to check whether that fixed it.~~ **Fixed** (19 November 2026): it
+    hadn't. `ControllerLayer` passes the focus on to its controller only if that is a `Focus`, and
+    `ColumnFilterEditorController` wasn't, so the tab's first tab stop took it, not the Ace editor.
+    It is a `Focus` now, focusing its editor (as its own dialog, the query editor's, always did).
+    Play: `App/Editors/DashboardEditor` `TableFilterFocusesItsEditor` (failed before; it also
+    reopens the dialog, which is kept for the table and opens on the tab it was left on, here
+    Include Exclude, whose Include box is focused). Left: `ContentFocus`, which `ControllerLayer`
+    uses for content that isn't a `Focus`, focuses the first tab stop, which an Ace editor's input
+    isn't; any other tab whose main field is a code editor needs its controller to be a `Focus`
+    too, or `ContentFocus` to find the editor.
+  * ~~`ColumnFilterEditorController` decides whether the filter changed with `filter == null &&
     column.getFilter() != null`, which can't be true (`getColumnFilter` never gives null) and
     compares the wrong filter (the include/exclude one); it works only because the other branch
-    covers it.
-  * The time preferences don't make the dialog changed when the time zone Id, the offset or the
-    Custom Format text is edited (`TimePreferences`, lines 101-112).
-  * Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
+    covers it.~~ **Fixed** (19 November 2026): `!Objects.equals(filter, column.getColumnFilter())`,
+    as `ColumnFilterTabsController` has; the same result as the branch that worked, so no story
+    can show a difference (`App/Editors/QueryEditor` `ColumnFilterMenu` still sets a filter).
+    The code review of 23 November 2026 found two older faults in `getColumnFilter` behind it,
+    both on master too: clearing a filter's text and pressing OK kept the old filter (an empty
+    editor gave back a copy of the column's own filter, so nothing had changed), and OK with nothing
+    entered for a column with no filter gave it an empty filter, so the query or dashboard was
+    marked changed. **Fixed** (23 November 2026): no text and no filter before gives null, and
+    otherwise the text is always set, a blank one becoming no filter. Plays, both failing before:
+    `App/Editors/QueryEditor` `ColumnFilterOkUnchanged` (Save stays disabled) and
+    `App/Editors/DashboardEditor` `TableFilterCleared` (the cleared filter doesn't come back). The
+    query editor can't show the clearing: its columns' filters come from the search's reply, which
+    in the workbench is fixed, so a filter set in a play is gone after the next result.
+  * ~~The time preferences don't make the dialog changed when the time zone Id, the offset or the
+    Custom Format text is edited (`TimePreferences`, lines 101-112).~~ **Re-scoped and fixed**
+    (19 November 2026). The dialog has no changed state of its own: OK always saved these fields (it
+    writes every field), and a change only applies the preferences to the screens before OK. These
+    three didn't, unlike the format and the kind of time zone, so their effect showed only after OK.
+    Now the time zone Id reports when chosen, and the offsets and the custom format when committed
+    (an arrow, Enter or leaving the field); the format isn't reported while typed, so a half-typed
+    or blank one is never applied. Play: `App/Main/TimePreferences` `EveryFieldReportsItsChange`
+    (failed before). Cancel's revert of what was applied is unchanged, and is covered with the
+    dialog's stories (`App/Main/AppShell`).
+    Also guarded (23 November 2026, from the code review): Cancel sets a flag that stops any later
+    change being applied, as a custom format or offset typed but not committed still has the focus
+    as Escape closes the dialog, and its blur would apply it again after Cancel's revert. Not seen:
+    `App/Main/AppShell` `EscapeUndoesCustomFormat` passes with or without the guard, as the
+    workbench's Chromium fires no blur when the dialog goes; the guard is for browsers that do.
+    **Open decision** (code review, 23 November 2026): a custom format is applied to the screens as
+    it's committed (leaving the field or Enter), before OK, with no check that it's a valid
+    pattern, so a broken one shows on every open screen until it's corrected or the dialog is
+    cancelled. **Decided** (23 November 2026, the user's decision): keep the preview, but only for a
+    valid pattern; an invalid one shows the field's error and blocks OK.
+    **Fixed** (23 November 2026): `JavaDateTimePattern` checks a pattern as Java's
+    `DateTimeFormatter.ofPattern` reads it (its test agrees with `java.time` for every letter and
+    count and 400,000 random patterns, including the padded number followed by another that Java
+    fails on with a `ClassCastException`). The custom format box is given it, so a format that
+    can't be read is said under the field when it is left, OK and Set As Default refuse, and
+    `TimePreferences` writes the format before it in its place, so no other change previews it
+    either. From the code review (23 November 2026): the fields of a tab not showing are looked at
+    too (`UserPreferencesEditorController` is a `RefusesInvalidInput`); padding narrower than its
+    field (`pdd`), which Java accepts and then can't format any date with, is refused; and choosing a
+    standard format clears the error. A play for that found that a saved custom format never ticked
+    Custom, so one that can't be used was neither said nor refused: `SelectionBox` keeps a value that
+    isn't in its list, and the tick looked for it having none. Now the tick is whether the format is
+    a standard one (`SavedCustomFormat`). `InvalidInputs` and `LayerContainer` said that hidden tabs are
+    looked in, which is so only of layers that stay on the page; no other tabbed dialog has a checked
+    field in a tab. From the second review (23 November 2026): ticking Custom again while its text
+    can't be used keeps the standard format shown meanwhile; the list is empty while Custom is ticked,
+    so choosing the format it last showed leaves Custom; a padded time zone is accepted if the padding
+    is wide enough for any zone; and a table column's Format dialog has the same check (`ColumnFormat`:
+    the server failed on such a format; `App/Editors/QueryEditor` `FormatInvalidCustom`). Plays: `App/Main/TimePreferences`
+    `InvalidCustomFormatNotReported`, `StandardFormatClearsError`, `SameStandardFormatLeavesCustom`,
+    `InvalidCustomFormatTickedAgain` and `SavedInvalidCustomFormat`, and
+    `App/Main/AppShell` `InvalidCustomFormatRefusesOk` and `InvalidCustomFormatInHiddenTab`.
+  * ~~Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
     aren't listed and its progress isn't fetched until the rule is opened again
-    (`AnalyticProcessingController.setProcessType`).
-  * An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
-    paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).
+    (`AnalyticProcessingController.setProcessType`).~~ **Fixed** (19 November 2026): showing the
+    Table Builder panel lists the nodes and fetches the progress (`TableBuilderProcessingController.show`),
+    as the other types fetch theirs; its settings are read only when the rule has them
+    (`readSettings`), as a rule switched to it has none. Play: `App/Editors/AnalyticRuleEditor`
+    `SwitchToTableBuilderLoadsIt` (failed before). As the nodes are now listed each time the panel
+    is shown, the node box keeps the node already chosen if it is still listed (it went back to the
+    first, so a rule switched away and back would have saved the wrong node; play
+    `SwitchAwayAndBackKeepsTheNode`, which fails with the old `setNodes`). Opening a scheduled or
+    streaming rule no longer fetches its schedules or filters twice. Left: every story fixture for a
+    scheduled rule answers the progress request, so a needless one wouldn't fail a story.
+  * ~~An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
+    paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).~~
+    **Gone** (checked 19 November 2026): the recipients are edited in the notification dialog,
+    whose OK reads the fields, so a pasted address is kept and the rule is changed; the key up
+    only re-shows the destination. Guarded by `App/Editors/AnalyticRuleEditor`
+    `PastedRecipientIsKept` (an `input` event with no keys, then OK; passes without a change).
   * ~~The query result's source pane declares a stepping button that nothing shows
     (`QueryTextPane.ui.xml`, `steppingButton`); it was never shown before either. To go with the
     other removals.~~ **Deleted** (checked 30 October 2026: `QueryTextPane` has no stepping button).
-  * Debug logging and commented-out code carried into the new controllers:
+  * ~~Debug logging and commented-out code carried into the new controllers:
     `DocumentationTabController.updateEditState` (`GWT.log`), `updatePreview` (a comment naming the gone
     `iFramePresenter`). To go with the other removals. (`AnalyticEmailDestinationController`'s old
-    `EditorPresenter` code went in wave 16.)
-* `XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
-  the controller overwrites it.
-* `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
-  has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
+    `EditorPresenter` code went in wave 16.)~~ **Fixed** (20 November 2026): the `GWT.log` calls and
+    their import are gone, and `updateEditState`'s comment says what it does; the commented-out code
+    had already gone.
+    Left: other controllers still log plain debug lines to the dev console, e.g.
+    `QueryResultTableController` ("setData", "setDataInternal"), `SearchModel` and `QueryModel`
+    ("SearchModel - stop()" and the like), `DataViewerController` ("Setting active tab to …"),
+    `AnnotationEditorController` ("currentValue: …") and `MessageSupport` ("Received selection from
+    vis"). `GWT.log` does nothing in a production compile, so it costs only noise in development.
+    **Decided** (23 November 2026, the user's decision): all client logging goes through
+    `stroom.util.client.Console` (74 `GWT.log` calls in 37 files, and `java.util.logging` in
+    `DashboardBodyController` and `RestDispatcher`), with a checkstyle rule refusing `GWT.log`.
+    Nothing calls `Console.setLevel`, so a production build prints every `Console` debug line:
+    production is to default to WARN, development to DEBUG, with a URL parameter to turn it up.
+    **Fixed** (23 November 2026): all of it goes through `Console`, now
+    `stroom.widget.util.client.Console` (in `stroom-core-client-widget`, which logs too), and
+    checkstyle's `GwtLog` refuses `GWT.log`. Errors that were reduced to their message are logged
+    with their stack, and lines that were only noise are gone. The parameter is `consoleLevel`, as
+    GWT's own logging reads `logLevel` and fails on a level it doesn't know. `App` no longer logs
+    the page's query string (a password reset link's token) nor `RestDispatcher` a request's body
+    or query string (a password), as anyone can turn the level up. `RestError` named the wrong
+    exception when a reply couldn't be read as text. Tests: `TestConsole`.
+    From the code review (23 November 2026): `GWT.isProdMode()` is true of all compiled JavaScript,
+    so development is now Super Dev Mode (the `superdevmode` property), and draft compiles and the
+    workbench log as production does; warnings and errors use the console's own levels; a dashboard
+    link's parameters and every link clicked are no longer logged; and a reply's handler that fails
+    is logged with its stack, not the reply. Checkstyle's `BrowserConsole` refuses the browser's
+    console in JSNI, and a selection made in a visualisation is logged without its contents.
+    From the second review (23 November 2026): what is typed in a code editor, a link's type and a
+    reply's JSON error (which quotes the reply) aren't logged either, nor a whole document on Save As;
+    checkstyle also refuses `GWT::log`, the console's other methods and `java.util.logging` in client
+    packages (`ClientLogging`). **Kept:** the floor map's warnings name its objects, as they say which
+    can't be placed.
+    Also found: `DocumentationTabController.updateEditState` runs on every `setText` and
+    `setReadOnly`, so a re-read (e.g. after Save) or a read-only change closes an edit in progress
+    and shows the preview, and a blank document opens the editor when it becomes editable. It
+    predates the controller. **Decided** (23 November 2026, the user's decision): Save keeps the editor
+    open; only Edit and Preview, or the document becoming read only, change the mode.
+    **Fixed** (23 November 2026): `setText` chooses the mode only the first time, and `setReadOnly`
+    changes it only to the preview, or to the editor for blank documentation that has become
+    editable. Play: `App/Editors/DocumentationEditor` `SaveKeepsEditing` (failed before).
+    Second review (23 November 2026; older, and every document editor's): what was typed between Save
+    and the server's reply was lost, as `DocumentPlugin.save` read the reply into the editor and nothing
+    stops typing meanwhile. **Decided** (23 November 2026, the user's decision): the reply leaves what
+    has changed since it was sent. **Fixed** (23 November 2026): if the tabs would write something else
+    than was sent, the reply becomes the document they are written over, and they aren't read again
+    (`DocumentEditorHost.readSaved`, `TabbedController.keepChanges`), so the document stays dirty;
+    Data Receipt Rules, which saves itself, too. Plays: `App/Editors/DocumentationEditor`
+    `SaveKeepsNewerText` and `App/Main/DataReceiptRulesScreen` `SaveKeepsNewerRule`; `TestDocumentPlugin`.
+    From its code review (23 November 2026): tabs that only show what is read (e.g. the assets and the
+    effective words) are read again even then; changes are looked for again after the assets or facts
+    are saved; and what was written is never a live list (a Solr index's fields, a script's
+    dependencies, a table's columns moved by dragging), whose later changes were missed. The review
+    also found, older: a script's dependencies added to some it has didn't make it dirty; a Solr
+    index's retention expression didn't alone, as `SolrIndexDoc.equals` left it out; and saving only a
+    pipeline's documentation opened the picker with nothing in it (`PipelineEditor`
+    `SaveDocumentationOnly`). `TabbedController` has no unit test, as `LinkTabPanel` can't be loaded
+    without a browser.
+    From the second review (24 November 2026): tabs that write but keep the document (a Solr or Elastic
+    index's fields, an Elastic cluster's and a floor map's settings, a pipeline's structure) are given
+    the one saved (`HasSavedDocument`), and a floor map's Map and Editor are read again, which keeps what
+    they have staged (`SolrIndexEditor` `KeptChangesUseTheSavedIndex`); text that isn't set is written
+    as it was read (`UnsetText`), so looking at a document's Documentation isn't a change; code edited
+    while stepping, assets and facts changed during a save mark the document dirty; statistics data
+    sources, which save themselves, keep what is typed too and refuse invalid input; and Save All asks
+    nothing about a pipeline with nothing to save (`PipelineEditor` `SaveAllWithNothingChanged`).
+    **Open:** what is typed during a Save As is still lost, as the tabs also need the new document's
+    reference.
+    **Fixed** (24 November 2026; older): saving again before the first save's reply sent the version it
+    replaces, which the server refuses ("has been modified by another user", `DBPersistence.write`). It
+    now waits for the first, and is sent then if there is more to save (`SaveQueue`; every document
+    editor, statistics data sources and Data Receipt Rules). Likewise a save tried again once its assets
+    or a floor map's facts couldn't be saved, which the message asks for: the document is now the one
+    saved (`PostSave`, `DocumentEditorHost.setSaved`). A statistics data source that couldn't be saved,
+    or fetched to be, said nothing, and now does. `PipelineEditor` `SaveAgainWhileSaving`,
+    `DataReceiptRulesScreen` `SaveAgainWhileSaving`, `TestSaveQueue`, `TestDocumentPlugin`,
+    `TestStatisticsPlugin`. From its code review (24 November 2026): code edited while stepping waits
+    too, as does a Save As (a save's late reply showed the original again in the copy's tab); a waiting
+    save is dropped once its tab is closed; a fault during a save lets it be saved again; a Save As that
+    couldn't be loaded says so; and a Data Connection's workbook, stored by a save during which something
+    was typed, isn't uploaded again by the next (`DataConnectionEditor` `ExcelSavedWhileTyping`).
+    **Open:** an asset's text typed during a save is still lost, as the assets are fetched again once it
+    is saved.
+* ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
+  the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
+  `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides
+  whether to show them from `MatchType.isNeedsValue()` rather than its own list of the four
+  conditions that take a value. Opening the dialog always reads the filter's condition, so what
+  shows is the same and no story can show a difference; `App/Main/StepFilterDialog` still passes.
+  Found by the code review (23 November 2026; older): a filter saved without a condition (its
+  `matchType` missing) couldn't be listed (`XPathList`'s Condition column) or written by OK
+  (`XPathFilterEditorController.write`), both failing on the null, so Change Step Filters didn't
+  open. **Fixed**: the list shows no condition, and Edit shows a new filter's, Exists, which OK
+  writes. `App/Main/StepFilterDialog` `FilterWithNoCondition` (failed before).
+  Also (code review, 23 November 2026; older): OK failed in the same way on a filter with no search
+  type (saved before there were search types), which Edit now shows as an XPath filter if it has a
+  path (other than All text's), keeping it; and stepping on the server failed on a filter with no
+  condition beside one that applies (`SAXEventRecorder` read the null condition), which now skips
+  it, as `SteppingFilterSettings.isFilterApplied` already ignored it (`TestPersistedFilterEvaluator`
+  `testXPathWithNoCondition`, failed before). `FilterWithNoCondition` covers the search type too.
+* **Fixed** (24 November 2026, found announcing the explorer's loading): once fetching the explorer's
+  tree had failed (e.g. the network dropped) it was never fetched again, whatever the user did, until
+  the page was reloaded: `ExplorerTreeController` noted that it was fetching and cleared that only when
+  a fetch succeeded. Every tree of documents, on master too. `App/Main/AppShell`
+  `FetchAgainAfterFailure`.
+* `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter. The parser
+  built is always a Data Splitter (`ParserFactoryPoolImpl`), but the guess isn't without effect:
+  `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives
+  a Data Splitter the XML range mode (corrected 23 November 2026, as the table above says).
 * ~~The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
   been selected" (`FindAnnotationList`).~~ **Fixed** (30 October 2026): the chooser
@@ -1705,11 +1917,26 @@ to delete them by hand.~~
   stale 30 October 2026): secrets are replace-only. Editing existing credentials shows no secret
   form ("The secret is set but cannot be shown. Use Replace Secret to set a new one.", with help
   saying so), OK checks only the name, type and expiry, and the list's Replace Secret sets a new one.
-* Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
+* ~~Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
   pipeline's `elastic_index.svg`) embed a `<style>` block with page-wide class names (`.st0` to
   `.st7`), and `OpenAI.svg` has a `<title>` "OpenAI icon", so a tree row reads "OpenAI icon My
   Model". No other icon uses those class names today, so nothing is recoloured, but any that did
-  would be. Found when the document write cycles couldn't match those rows by name.
+  would be. Found when the document write cycles couldn't match those rows by name.~~
+  **Fixed** (20 November 2026): the raw icons give each path its colour as a `fill` attribute in
+  place of the `.st0` to `.st7` classes, and `OpenAI.svg` and the pipeline's `hadoop.svg` (found
+  by the new test) have no `<title>`; `GenerateSvgImages` remade them and `SvgImage`. Their colours
+  are unchanged. After the code review (23 November 2026): the `<metadata>` editors leave in six
+  more icons (`field`, `function`, `fields/expression` and the pipeline's `hadoop`, `id` and
+  `xml_search`) added "image/svg+xml", and Hadoop's "Hadoop logo" again, to the text beside them,
+  so those blocks are gone (Hadoop's licence note is kept as an XML comment, which adds no text).
+  `TestSvgImage` fails if any icon has a `<title>`, `<desc>`, `<metadata>` or `<style>`, in any
+  case and with or without a namespace prefix such as `svg:`. The pipeline's `elastic_index`
+  cloud was `#FFF`, which `GenerateSvgImages` doesn't map, so it stayed white in high contrast; it
+  is `#FFFFFF`, so becomes the theme's icon white. `SvgImageTools`' colour report reads colours
+  given as `fill="#…"` attributes as well as in `style`, so the swatches list those icons too.
+  `GenerateSvgImages` copies every file in `raw-images`, so it kept putting back the eleven
+  `xsdbrowser` PNGs deleted by hand in wave 46; their sources in `raw-images/xsdbrowser/` are
+  deleted too (23 November 2026, at the user's approval; nothing names them).
 * ~~Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
   leaves a blank page: the app is never shown and only a reload offers the terms again
   (`SplashPresenter`, `CurrentUser.showSplash`).~~ **Fixed** (30 October 2026): once the warning

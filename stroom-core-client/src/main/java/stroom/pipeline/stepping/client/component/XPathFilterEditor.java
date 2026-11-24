@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping.client.component;
 
+import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.widget.component.client.Component;
@@ -59,7 +60,8 @@ public class XPathFilterEditor extends Component {
         searchType.addValueChangeHandler(this::onSearchTypeChange);
         matchType.addValueChangeHandler(this::onMatchTypeChange);
         matchType.addItems(MatchType.values());
-        matchType.setValue(MatchType.EQUALS);
+        // The same as a new filter's, until a filter is read
+        setMatchType(XPathFilter.DEFAULT_MATCH_TYPE);
 
         searchType.addItems(SearchType.values());
         searchType.setValue(SearchType.ALL);
@@ -134,10 +136,7 @@ public class XPathFilterEditor extends Component {
     }
 
     private void changeVisibility(final MatchType matchType) {
-        final boolean visible = matchType == MatchType.CONTAINS ||
-                                matchType == MatchType.EQUALS ||
-                                matchType == MatchType.NOT_EQUALS ||
-                                matchType == MatchType.NOT_CONTAINS;
+        final boolean visible = matchType != null && matchType.isNeedsValue();
         valueContainer.setVisible(visible);
         ignoreCaseContainer.setVisible(visible);
     }

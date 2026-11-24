@@ -73,7 +73,6 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.Clipboard;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
@@ -588,7 +587,6 @@ public class AnnotationEditorController extends Controller implements Focus {
                         text.append(" removed their assignment");
                     } else {
                         text.append(" unassigned ");
-                        GWT.log("currentValue: " + entry.getPreviousValue());
                         quote(text, entry.getPreviousValue().asUiValue());
                     }
                     text.append("\n");

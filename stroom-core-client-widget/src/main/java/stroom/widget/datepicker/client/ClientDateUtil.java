@@ -16,7 +16,7 @@
 
 package stroom.widget.datepicker.client;
 
-import com.google.gwt.core.client.GWT;
+import stroom.widget.util.client.Console;
 
 public final class ClientDateUtil {
 
@@ -50,7 +50,7 @@ public final class ClientDateUtil {
                     millis = (long) res;
                 }
             } catch (final RuntimeException e) {
-                GWT.log(e.getMessage());
+                Console.debug(e::getMessage, e);
             }
         }
 

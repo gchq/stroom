@@ -33,6 +33,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.spinner.client.LoadStatus;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.KeyBinding;
@@ -95,6 +96,9 @@ public class ExplorerTree extends Component implements Focus {
     // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed"
     @UiField
     Element liveRegion;
+
+    @UiField
+    LoadStatus loadStatus;
 
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final String expanderClassName;
@@ -576,6 +580,20 @@ public class ExplorerTree extends Component implements Focus {
         Scheduler.get().scheduleDeferred(() ->
                 ExplorerItemKeyEvent.fire(ExplorerTree.this, action, this::announce));
         return true;
+    }
+
+    /// Says that the tree's nodes are being fetched, which screen readers are told if it takes a while.
+    void startLoading() {
+        loadStatus.start();
+    }
+
+    /// Says that the tree's nodes have been fetched, or couldn't be.
+    ///
+    /// @param loaded Whether they have been. If not, the error shown says so.
+    void finishLoading(final boolean loaded) {
+        loadStatus.finish(() -> loaded
+                ? "Documents loaded"
+                : "");
     }
 
     // Says something to screen reader users, emptying the region first so a repeat is said again

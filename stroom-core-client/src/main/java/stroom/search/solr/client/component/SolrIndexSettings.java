@@ -30,6 +30,7 @@ import stroom.widget.tickbox.client.TickBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class SolrIndexSettings extends Component {
     @UiField
     TextArea zkHosts;
     @UiField
-    TextArea zkPath;
+    TextBox zkPath;
     @UiField
     TextBox timeField;
     @UiField
@@ -75,12 +76,12 @@ public class SolrIndexSettings extends Component {
         instanceType.addItem(InstanceType.SINGLE_NOOE);
         instanceType.addItem(InstanceType.SOLR_CLOUD);
 
-        // The text fields tell of a change as a key goes down
-        collection.addKeyDownHandler(e -> onChange.run());
-        solrUrls.addKeyDownHandler(e -> onChange.run());
-        zkHosts.addKeyDownHandler(e -> onChange.run());
-        zkPath.addKeyDownHandler(e -> onChange.run());
-        timeField.addKeyDownHandler(e -> onChange.run());
+        // The text fields tell of a change once a key has changed the text, or when they are left (e.g.
+        // after a paste with the mouse)
+        for (final TextBoxBase field : List.of(collection, solrUrls, zkHosts, zkPath, timeField)) {
+            field.addKeyUpHandler(e -> onChange.run());
+            field.addValueChangeHandler(e -> onChange.run());
+        }
         instanceType.addValueChangeHandler(e -> {
             updateEnabledState();
             onChange.run();
@@ -117,9 +118,9 @@ public class SolrIndexSettings extends Component {
         updateEnabledState();
     }
 
-    /// @return The Solr URLs, one per line.
+    /// @return The Solr URLs, one per line, without blank lines.
     public List<String> getSolrUrls() {
-        return Arrays.stream(solrUrls.getText().split("\n")).collect(Collectors.toList());
+        return getLines(solrUrls);
     }
 
     /// @param solrUrls The Solr URLs, shown one per line, or `null` for none.
@@ -142,9 +143,15 @@ public class SolrIndexSettings extends Component {
         updateEnabledState();
     }
 
-    /// @return The ZooKeeper hosts, one per line.
+    /// @return The ZooKeeper hosts, one per line, without blank lines.
     public List<String> getZkHosts() {
-        return Arrays.stream(zkHosts.getText().split("\n")).collect(Collectors.toList());
+        return getLines(zkHosts);
+    }
+
+    private static List<String> getLines(final TextArea textArea) {
+        return Arrays.stream(textArea.getText().split("\n"))
+                .filter(line -> !line.isBlank())
+                .collect(Collectors.toList());
     }
 
     /// @param zkHosts The ZooKeeper hosts, shown one per line, or `null` for none.

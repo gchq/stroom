@@ -17,8 +17,10 @@
 package stroom.search.elastic.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.HasSavedDocument;
 import stroom.search.elastic.client.component.ElasticIndexFieldList.FieldAction;
 import stroom.search.elastic.client.model.ElasticFieldListModel;
 import stroom.search.elastic.client.model.ElasticFieldListModel.SortColumn;
@@ -58,7 +60,7 @@ import java.util.stream.Collectors;
 /// selected field's Info ([ElasticFieldInfoController]) and Settings
 /// ([ElasticFieldSettingsController]) panels. Every change is to the index as edited, which is then
 /// changed; nothing is sent to the server until it is saved.
-public class ElasticIndexFieldListController extends Controller {
+public class ElasticIndexFieldListController extends Controller implements HasSavedDocument<ElasticIndexDoc> {
 
     /// The panel showing how the field is mapped and statistics of its values.
     static final TabData INFO_TAB = new TabDataImpl("Info");
@@ -182,6 +184,11 @@ public class ElasticIndexFieldListController extends Controller {
         refreshRows();
         showSelectedField();
         updateActions();
+    }
+
+    @Override
+    public void setSavedDocument(final ElasticIndexDoc written, final ElasticIndexDoc saved) {
+        this.document = saved;
     }
 
     /// Writes the fields' settings into a copy of an index.
@@ -389,6 +396,7 @@ public class ElasticIndexFieldListController extends Controller {
                 ? currentDocSupplier.get()
                 : NullSafe.get(document, this::write);
         if (currentDoc != null) {
+            view.setFetchFailed(false);
             restFactory
                     .create(ELASTIC_INDEX_RESOURCE)
                     .method(resource -> resource.fetchFields(currentDoc))
@@ -398,6 +406,10 @@ public class ElasticIndexFieldListController extends Controller {
                         refreshRows();
                         showSelectedField();
                         updateActions();
+                    })
+                    .onFailure(error -> {
+                        view.setFetchFailed(true);
+                        new DefaultErrorHandler(this, null).onError(error);
                     })
                     .owner(this)
                     .taskMonitorFactory(view.getTaskMonitor())

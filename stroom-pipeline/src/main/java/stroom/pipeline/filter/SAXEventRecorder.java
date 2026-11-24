@@ -166,6 +166,11 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             // Compile the XPath filters.
             xPathFilters = new HashSet<>();
             for (final XPathFilter xPathFilter : settings.getFilters()) {
+                // A filter saved without a condition (its matchType missing) does nothing, as
+                // SteppingFilterSettings.isFilterApplied has it, rather than failing on the null
+                if (xPathFilter.getMatchType() == null) {
+                    continue;
+                }
                 try {
                     // Only add filters that check for uniqueness or that have
                     // had a valid value specified.
@@ -240,6 +245,11 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         final Set<CompiledXPathFilter> compiled = new HashSet<>();
         if (filters != null) {
             for (final XPathFilter xPathFilter : filters) {
+                // A filter saved without a condition (its matchType missing) does nothing, as
+                // SteppingFilterSettings.isFilterApplied has it, rather than failing on the null
+                if (xPathFilter.getMatchType() == null) {
+                    continue;
+                }
                 try {
                     // Only compile filters that check uniqueness/existence or have a value specified.
                     if (!xPathFilter.getMatchType().isNeedsValue() || xPathFilter.getValue() != null) {

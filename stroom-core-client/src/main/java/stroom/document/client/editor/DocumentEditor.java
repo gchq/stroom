@@ -31,7 +31,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -129,7 +128,8 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
                     return documentation;
                 },
                 (documentation, docRef, doc) -> documentation.setText(description.apply(doc)),
-                (documentation, doc) -> withDescription.apply(doc, documentation.getText()));
+                (documentation, doc) -> withDescription.apply(doc,
+                        UnsetText.asRead(documentation.getText(), description.apply(doc))));
         setCommonTab(CommonDocLinkTab.DOCUMENTATION, tab);
     }
 
@@ -162,14 +162,14 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     }
 
     /// @return What to run once the document is saved, before it is read again, e.g. to save its
-    /// assets: given the saved document and what to run when it is done; or null for nothing.
-    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+    /// assets; or null for nothing.
+    public PostSave<D> getPostSaveCallback() {
         return null;
     }
 
     /// @return What to run once a copy of the document is saved (Save As), before the copy is read,
-    /// as [#getPostSaveCallback()]; or null for nothing.
-    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+    /// or null for nothing.
+    public PostSave<D> getPostSaveAsCallback() {
         return null;
     }
 
@@ -177,6 +177,19 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     void afterRead() {
         saveAsButton.setEnabled(true);
         setDirty(false);
+    }
+
+    /// Called once the document is saved and read again: what goes with it (e.g. its assets, or code
+    /// edited while stepping) may have been changed while it was being saved.
+    final void refreshAssociatedDirty() {
+        if (!context(Contexts.READ_ONLY) && hasAssociatedDirty()) {
+            setDirty(true);
+        }
+    }
+
+    @Override
+    void afterKeepChanges() {
+        onChange();
     }
 
     private void setDirty(final boolean dirty) {

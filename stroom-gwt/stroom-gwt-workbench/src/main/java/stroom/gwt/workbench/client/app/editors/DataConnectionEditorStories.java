@@ -97,6 +97,7 @@ public final class DataConnectionEditorStories {
             [{"name": "team", "type": "TEXT"}, {"name": "size", "type": "LONG"}]""";
 
     private static final String TEST_CONNECTION = "/dataConnection/v1/testConnection";
+    private static final String UPDATE = "/dataConnection/v1/dc-1";
     private static final String DETECT_COLUMNS = "/dataConnection/v1/detectColumns";
 
     // A FormGroup gives its control the group's identity as its id
@@ -315,6 +316,34 @@ public final class DataConnectionEditorStories {
                     play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     DocEditors.expectNoProblems(play);
                 })
+                // A workbook stored by a save isn't uploaded again by the next, though something was typed
+                // while it was being saved: the server has deleted the upload, so refused it
+                .story("ExcelSavedWhileTyping", context -> render(context, EXCEL_DOC, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("No workbook has been uploaded.")).toBeVisible());
+                    play.upload(play.querySelector(EXCEL_WORKBOOK + " " + StroomDom.FILE_INPUT),
+                            "teams.xlsx", "x", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                    play.waitFor(() -> play.expect(play.getByText("teams.xlsx (uploaded; stored when you save)"))
+                            .toBeVisible());
+                    final Query save = play.getByRole("button", "Save");
+                    play.click(save);
+                    final Query timeField = play.getByLabelText("Time Column (optional)");
+                    play.type(timeField, "Typed");
+                    play.tab();
+                    play.waitFor(4000, () -> play.expect(
+                            play.queryByText("teams.xlsx (uploaded; stored when you save)")).toBeNull());
+                    play.expect(timeField).toHaveValue("Typed");
+                    play.expect(save).not().toHaveAttribute("aria-disabled");
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE)
+                                    .withBody("what was typed, with the workbook's name and no upload",
+                                            body -> body.contains("Typed") && body.contains("teams.xlsx")
+                                                    && !body.contains("res-1"))
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // A file dialog cancelled clears the input, a change with no file: nothing is read
                 // or uploaded, and nothing is said
                 .story("CancelledFileChoice", context -> render(context, EXCEL_DOC, false))
@@ -375,7 +404,13 @@ public final class DataConnectionEditorStories {
                                  final boolean readOnly,
                                  final String savedCredential) {
         final RestFixtures fixtures = DocEditors.permissionRoutes(RestFixtures.builder())
-                .get("/dataConnection/v1/dc-1", RestReply.json(docJson))
+                .get(UPDATE, RestReply.json(docJson))
+                // A save, which stores an upload and forgets it, and then takes a while
+                .put(UPDATE, request -> RestReply.json(request.getBody()
+                                .replaceAll("\"uploadKey\" *: *\\{[^}]*\\} *,?", ""))
+                        .delayed(request.getBody().contains("res-1")
+                                ? 2500
+                                : 0))
                 .post("/credentials/findCredentials", RestReply.json(CREDENTIALS))
                 .post("/credentials/getByName", RestReply.json(savedCredential))
                 .post(TEST_CONNECTION, RestReply.json("{\"ok\": true, \"message\": \"Connected to MySQL 8.4.\"}"))

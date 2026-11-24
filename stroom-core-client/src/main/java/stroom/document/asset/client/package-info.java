@@ -55,13 +55,14 @@
  * overriding the respective callback methods.</p>
  * <pre>
  * &#64;Override
- * public BiConsumer&lt;MyDoc, Consumer&lt;MyDoc&gt;&gt; getPostSaveCallback() {
+ * public PostSave&lt;MyDoc&gt; getPostSaveCallback() {
  *     return assetsTab::onSave;
  * }
  *
  * &#64;Override
- * public BiConsumer&lt;MyDoc, Consumer&lt;MyDoc&gt;&gt; getPostSaveAsCallback() {
- *     return assetsTab::onSaveAs;
+ * public PostSave&lt;MyDoc&gt; getPostSaveAsCallback() {
+ *     return (copy, callback, failed) -&gt;
+ *             assetsTab.onSaveAs(getDocument(), copy, callback, failed);
  * }
  * </pre>
  *

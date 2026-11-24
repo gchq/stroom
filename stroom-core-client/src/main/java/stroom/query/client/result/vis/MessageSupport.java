@@ -21,10 +21,10 @@ import stroom.query.client.result.vis.PostMessage.FrameListener;
 import stroom.query.client.result.vis.VisTooltipPlacement.Direction;
 import stroom.util.client.JSONUtil;
 import stroom.widget.hyperlink.client.LinkValue;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Callback;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNull;
@@ -136,7 +136,8 @@ public class MessageSupport implements FrameListener {
 
         } else if ("select".equals(functionName)) {
             final JSONValue selection = message.get("selection");
-            GWT.log("Received selection from vis: " + selection.toString());
+            // Not what is selected, which is users' data
+            Console.debug("Received selection from vis");
 
             if (onSelection != null) {
                 onSelection.accept(VisComponentSelection.create(selection));

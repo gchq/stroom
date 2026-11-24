@@ -1522,7 +1522,7 @@ final class Dom {
     /// @param target     The element.
     /// @param type       The event type, e.g. `mousedown`.
     /// @param eventClass The event's constructor, e.g. `MouseEvent`; `Event` if the browser
-    ///                   doesn't have it.
+    ///                   doesn't have it. A `DragEvent` is given a new `DataTransfer`.
     /// @param bubbles    True if the event bubbles.
     /// @param cancelable True if the event can be cancelled.
     /// @param clientX    The x coordinate, for mouse and pointer events.
@@ -1563,6 +1563,10 @@ final class Dom {
             init.pointerId = 1;
             init.pointerType = 'mouse';
             init.isPrimary = true;
+        }
+        if (eventClass === 'DragEvent' && win.DataTransfer) {
+            // A drag's data and effects, empty, as a drag the browser starts has
+            init.dataTransfer = new win.DataTransfer();
         }
         if (key !== null) {
             init.key = key;

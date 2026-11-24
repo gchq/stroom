@@ -17,6 +17,7 @@
 package stroom.floormap.client.component;
 
 import stroom.docref.DocRef;
+import stroom.document.client.editor.HasSavedDocument;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.floormap.client.query.FloorMapQueryBuilder;
 import stroom.floormap.shared.FloorMapDoc;
@@ -48,7 +49,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// - The two generated reads (the histogram and Show All queries).
 ///
 /// Read only as its document is.
-public class FloorMapSettingsController extends Controller {
+public class FloorMapSettingsController extends Controller implements HasSavedDocument<FloorMapDoc> {
 
     private final FloorMapSettings view;
     private final DocSelectionController eventsStore;
@@ -168,6 +169,11 @@ public class FloorMapSettingsController extends Controller {
         return doc != null
                 ? doc.getValueFormat()
                 : ValueFormat.JSON;
+    }
+
+    @Override
+    public void setSavedDocument(final FloorMapDoc written, final FloorMapDoc saved) {
+        this.doc = saved;
     }
 
     /// Writes the settings shown into a copy of a floor map.

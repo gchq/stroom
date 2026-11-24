@@ -78,7 +78,10 @@ public class XPathList extends Component {
         final Column<XPathFilter, String> conditionColumn = new Column<XPathFilter, String>(new TextCell()) {
             @Override
             public String getValue(final XPathFilter filter) {
-                return filter.getMatchType().getDisplayValue();
+                // A filter saved without a condition shows none, rather than failing to draw
+                return filter.getMatchType() == null
+                        ? ""
+                        : filter.getMatchType().getDisplayValue();
             }
         };
         dataGrid.addResizableColumn(conditionColumn, "Condition", 80);

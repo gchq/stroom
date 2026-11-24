@@ -122,7 +122,8 @@ public class ScriptDependencyListController extends Controller {
         scripts = new ArrayList<>();
         if (document != null) {
             if (document.getDependencies() != null) {
-                scripts = document.getDependencies();
+                // A copy, as editing changes the list, which would change the document read with it
+                scripts = new ArrayList<>(document.getDependencies());
             }
         }
         refresh();
@@ -131,7 +132,13 @@ public class ScriptDependencyListController extends Controller {
     /// @param document The script's document.
     /// @return A copy of it with the dependencies shown.
     public ScriptDoc write(final ScriptDoc document) {
-        return document.copy().dependencies(scripts).build();
+        // A copy, as editing changes the list, which would change what was written with it. None is
+        // written as it was read
+        return document.copy()
+                .dependencies(scripts.isEmpty() && document.getDependencies() == null
+                        ? null
+                        : new ArrayList<>(scripts))
+                .build();
     }
 
     private void refresh() {

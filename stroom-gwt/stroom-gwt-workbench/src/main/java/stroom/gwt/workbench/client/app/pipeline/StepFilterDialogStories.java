@@ -141,6 +141,32 @@ public final class StepFilterDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // A filter saved without a condition or a search type (from before there were search
+                // types) is listed with no condition, and Edit shows it as an XPath filter, keeping its
+                // path, with a new filter's condition, Exists, which OK writes. Listing it and OK failed
+                // on the missing condition, and OK on the missing search type
+                .story("FilterWithNoCondition", context -> render(context, Map.of("xsltFilter",
+                        new SteppingFilterSettings(null, null, List.of(
+                                new XPathFilter("//record", null, null, null, null, null))))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE);
+                    final Play xpathList = screen.within(screen.querySelector("#steppingConditions"));
+                    play.waitFor(() -> play.expect(xpathList.getByText("//record")).toBeInTheDocument());
+                    play.click(xpathList.getByText("//record"));
+                    play.click(screen.getByTitle("Edit Selected XPath Filter"));
+                    final Play edit = dialog(screen, "Edit XPath Filter");
+                    play.waitFor(() -> play.expect(edit.getByText("Exists")).toBeInTheDocument());
+                    play.expect(edit.getByDisplayValue("//record")).toBeVisible();
+                    play.click(edit.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(xpathList.getByText("Exists")).toBeInTheDocument());
+                    play.expect(xpathList.getByText("//record")).toBeInTheDocument();
+                    play.click(dialog(screen, "Change Step Filters").getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ON_APPLY)).toHaveBeenCalledWith(
+                            "xsltFilter: 1 filter(s) EXISTS"));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // The elements are a list (listbox) that has the focus when the dialog opens, the
                 // first element chosen; the arrows choose the element whose filters are shown
                 .story("ElementsByKeyboard", StepFilterDialogStories::render)
@@ -210,7 +236,9 @@ public final class StepFilterDialogStories {
                 final StringBuilder sb = new StringBuilder(elementId).append(": ").append(filters.size())
                         .append(" filter(s)");
                 for (final XPathFilter filter : filters) {
-                    sb.append(' ').append(filter.getMatchType().name());
+                    sb.append(' ').append(filter.getMatchType() == null
+                            ? "NONE"
+                            : filter.getMatchType().name());
                 }
                 descriptions.add(sb.toString());
             }
@@ -219,6 +247,13 @@ public final class StepFilterDialogStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, new HashMap<>());
+    }
+
+    /// The Change Step Filters dialog for two elements, the first chosen.
+    ///
+    /// @param settings Each element's filters at first, by element id.
+    private static Widget render(final StoryContext context, final Map<String, SteppingFilterSettings> settings) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
@@ -228,7 +263,7 @@ public final class StepFilterDialogStories {
                 new PipelineElement("xsltFilter", "XSLTFilter"),
                 new PipelineElement("xmlWriter", "XMLWriter"));
         harness.afterStartUp(() -> harness.own(injector.getSteppingFilterEditorController())
-                .show(elements, elements.get(0), new HashMap<>(), settings -> onApply.call(describe(settings))));
+                .show(elements, elements.get(0), new HashMap<>(settings), applied -> onApply.call(describe(applied))));
         return harness.asWidget();
     }
 }

@@ -36,7 +36,7 @@
         <form:FormGroup identity="solrIndexSettingsZKPath" label="ZooKeeper Path"
                         helpText="Optional ZooKeeper chroot path where the Solr configuration is held, e.g. /solr. Leave blank if Solr uses the ZooKeeper root. Only used when the instance type is Solr Cloud and 'Use ZK' is ticked."
                         screenReaderText="ZooKeeper chroot path, e.g. /solr.">
-            <form:TextArea ui:field="zkPath" addStyleNames="text-field--wide"/>
+            <form:TextBox ui:field="zkPath" addStyleNames="text-field--wide"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsTimeField" label="Main Time Field Name"
                         helpText="Name of the date field used to apply the query time range. Default is EventTime."

@@ -727,6 +727,7 @@ does:
 | `play.fireEvent().keyDown(play.body(), EventInit.create().key("u"))` | `fireEvent.keyDown(document.body, {key: 'u'})` |
 | `EventInit.create().atCentreOf(q)`, `.relativeTo(q, dx, dy)` | `{clientX: ..., clientY: ...}` |
 | `play.fireEvent().change(q, value)` | `fireEvent.change(el, {target: {value}})` |
+| `play.fireEvent().dragStart(q)`, `.dragOver(q, init)`, `.drop(q, init)`, `.dragLeave(q)`, `.dragEnd(q)` | `fireEvent.dragStart(el, {dataTransfer})` etc.: each a `DragEvent` with a new, empty `DataTransfer` (HTML drag and drop; `App/Editors/FloorMapEditor` `LayerDragThenDropFromElsewhere`) |
 | `play.sleep(n)` | `await new Promise(r => setTimeout(r, n))` |
 
 Notes:

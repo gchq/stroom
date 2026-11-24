@@ -146,8 +146,9 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (node.getDisplayValue() != null) {
                 // Add text
-                final SafeHtml text = SafeHtmlUtils.fromString(node.getDisplayValue());
-                content.append(template.text(getCellClassName() + "__text", text.asString(), text));
+                content.append(template.text(getCellClassName() + "__text",
+                        node.getDisplayValue(),
+                        SafeHtmlUtils.fromString(node.getDisplayValue())));
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it

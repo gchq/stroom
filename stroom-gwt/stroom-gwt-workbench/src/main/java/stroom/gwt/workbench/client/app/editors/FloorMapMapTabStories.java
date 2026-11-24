@@ -33,6 +33,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -131,6 +132,10 @@ public final class FloorMapMapTabStories {
 
     // The Tracking panel's grid (its id is made unique with a suffix)
     private static final String TRACKING_GRID = "[id^=\"floormap-tracking-grid\"]";
+
+    // What the pointer is over on the canvas
+    private static final String HOVER_TOOLTIP = ".floor-map-canvas__hover-tooltip";
+    private static final String HOVER_TOOLTIP_VISIBLE = "floor-map-canvas__hover-tooltip--visible";
 
     // A cluster's glyph on the canvas (FloorMapJsonKeys.CLUSTER_PREFIX)
     private static final String CLUSTER_GLYPH = "[id^=\"__cluster_\"]";
@@ -338,6 +343,48 @@ public final class FloorMapMapTabStories {
                     play.expect(dialog.queryByText("dave")).toBeNull();
                     DocEditors.expectNoProblems(play);
                 })
+                // Track in a cluster's dialog tracks the member chosen, in the Tracking panel too, and
+                // closes the dialog; it is enabled once one is chosen
+                .story("ClusterTrack", FloorMapMapTabStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    eventsShown(play);
+                    play.waitFor(() -> play.expect(play.querySelector(CLUSTER_GLYPH)).toBeInTheDocument());
+                    play.click(play.querySelector(CLUSTER_GLYPH));
+                    final Query title = screen.findByText(TextMatch.endingWith("in this cluster"),
+                            StroomDom.DIALOG_TITLE);
+                    final Play dialog = screen.within(title.closest(StroomDom.DIALOG));
+                    final Query track = dialog.getByRole("button", "Track this entity");
+                    play.expect(track).toHaveAttribute("aria-disabled", "true");
+                    play.click(dialog.getByText("carol"));
+                    play.waitFor(() -> play.expect(track).not().toHaveAttribute("aria-disabled"));
+                    play.click(track);
+                    play.waitFor(() -> play.expect(screen.queryByText(TextMatch.endingWith("in this cluster"),
+                            StroomDom.DIALOG_TITLE)).toBeNull());
+                    final Play tracking = play.within(play.querySelector(TRACKING_GRID));
+                    play.waitFor(() -> play.expect(tracking.getByText("carol").closest(ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    DocEditors.expectNoProblems(play);
+                })
+                // Pointing at a cluster names its members in a tooltip, within the canvas, and pointing
+                // away from it hides the tooltip
+                .story("ClusterTooltip", FloorMapMapTabStories::render)
+                .withPlay(play -> {
+                    eventsShown(play);
+                    play.waitFor(() -> play.expect(play.querySelector(CLUSTER_GLYPH)).toBeInTheDocument());
+                    play.hover(play.querySelector(CLUSTER_GLYPH));
+                    final Query tooltip = play.querySelector(HOVER_TOOLTIP);
+                    play.waitFor(() -> play.expect(tooltip).toHaveClass(HOVER_TOOLTIP_VISIBLE));
+                    for (final String member : List.of("alice", "bob", "carol")) {
+                        play.expect(tooltip).toHaveTextContent(TextMatch.containing(member));
+                    }
+                    play.expect("the tooltip is within the canvas", () -> isWithin(
+                            tooltip.element().get(), play.querySelector(".floor-map-canvas").element().get()))
+                            .toEqual(true);
+                    play.fireEvent().mouseOut(play.querySelector(".floor-map-canvas"));
+                    play.waitFor(() -> play.expect(tooltip).not().toHaveClass(HOVER_TOOLTIP_VISIBLE));
+                    DocEditors.expectNoProblems(play);
+                })
                 // Pressing an object on the map selects it in the Tracking panel (showing the facts,
                 // as the desk is one) and tracks it
                 .story("SelectObject", FloorMapMapTabStories::render)
@@ -406,6 +453,14 @@ public final class FloorMapMapTabStories {
                 .route(QueryFixtures.SEARCH.withJsonBodyContaining(
                         "{\"searchRequestSource\": {\"componentName\": \"factsHistoryTable\"}}"), RestReply.json(facts))
                 .build();
+    }
+
+    // Whether an element is inside another
+    private static boolean isWithin(final Element inner, final Element outer) {
+        return inner.getAbsoluteLeft() >= outer.getAbsoluteLeft()
+               && inner.getAbsoluteTop() >= outer.getAbsoluteTop()
+               && inner.getAbsoluteRight() <= outer.getAbsoluteRight()
+               && inner.getAbsoluteBottom() <= outer.getAbsoluteBottom();
     }
 
     // Waits for the events query's people to reach the Tracking panel

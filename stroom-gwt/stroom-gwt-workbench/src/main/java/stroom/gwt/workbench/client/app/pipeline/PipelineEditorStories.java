@@ -38,6 +38,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.component.PipelineEditor;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
@@ -271,12 +272,25 @@ public final class PipelineEditorStories {
             {"type": "XSLT", "uuid": "x1", "name": "My XSLT", "data": "ORIGINAL XSLT CODE"}""";
 
     // Stepping, with the xslt element's code in 'My XSLT' (loaded and saved by its plugin)
+    // The plugin of the last story rendered with plugins (renderWithPlugins), for its play
+    private static PipelinePlugin pipelinePlugin;
     private static final RestFixtures MULTI_SAVE_FIXTURES = fixtures(DOC, STREAMS, NO_ROWS,
             StoryDocumentPlugins.documentRoutes(RestFixtures.builder()
                             .post(LAYERS_PATH, RestReply.json(LAYERS))
                             .post("/stepping/v1/findElementDoc", RestReply.json(
                                     "{\"type\": \"XSLT\", \"uuid\": \"x1\", \"name\": \"My XSLT\"}")),
                     XSLT_PATH, XSLT));
+    // A save that takes a while and gives the pipeline a new version, as the server does
+    private static final int SLOW_SAVE_MILLIS = 3000;
+    private static final String SAVED_VERSION = "v2";
+    private static final RestFixtures SLOW_SAVE_FIXTURES = RestFixtures.builder()
+            .put("/pipeline/v1/" + UUID, request -> RestReply.json(
+                            request.getBody().replace("\"v1\"", "\"" + SAVED_VERSION + "\""))
+                    .delayed(request.getBody().contains("\"v1\"")
+                            ? SLOW_SAVE_MILLIS
+                            : 0))
+            .addAll(MULTI_SAVE_FIXTURES)
+            .build();
     private static final RestFixtures INHERIT_FIXTURES = fixtures(INHERIT_DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder()
                     .route(RequestMatcher.post(LAYERS_PATH).withJsonBodyContaining("{\"uuid\": \"parent2\"}"),
@@ -1034,6 +1048,76 @@ public final class PipelineEditorStories {
                     play.expect(picker).toHaveFocus();
                     expectNoProblems(play);
                 })
+                // Saving only the documentation saves the pipeline. Only its structure counted, so Save
+                // opened the picker with nothing in it
+                .story("SaveDocumentationOnly", PipelineEditorStories::renderWithPlugins)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    play.click(play.getByText("Documentation", StroomDom.LINK_TAB_LABEL));
+                    // There is none, so it opens in the editor
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_editor")).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.keyboard("Typed documentation");
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/pipeline/v1/" + UUID)
+                                    .withBodyContaining("Typed documentation").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
+                    expectNoProblems(play);
+                })
+                // Saving again before the first save has finished waits for it, then saves what was typed
+                // since over the version saved. It sent the version it replaced, which the server refuses
+                // as if another user had changed the pipeline
+                .story("SaveAgainWhileSaving", context -> renderWithPlugins(context, SLOW_SAVE_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    play.click(play.getByText("Documentation", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_editor")).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.keyboard("First");
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.click(play.querySelector(".ace_content"));
+                    play.keyboard("Second");
+                    play.click(save);
+                    play.waitFor(SLOW_SAVE_MILLIS + 2000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(RequestMatcher.put("/pipeline/v1/" + UUID)
+                                    .withBody("the second edit over the version saved", body ->
+                                            body.contains("Second") && body.contains("\"" + SAVED_VERSION + "\""))
+                                    .toSpyMatcher()));
+                    // Never over the version the first save replaces
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put("/pipeline/v1/" + UUID)
+                                    .withBody("the second edit over the first version", body ->
+                                            body.contains("Second") && body.contains("\"v1\""))
+                                    .toSpyMatcher());
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
+                    expectNoProblems(play);
+                })
+                // Saving all with nothing to save asks nothing: it opened the picker with nothing in it
+                .story("SaveAllWithNothingChanged", PipelineEditorStories::renderWithPlugins)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    // No documentation, so looking at it isn't a change
+                    play.click(play.getByText("Documentation", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_editor")).toBeVisible());
+                    // As the Save All shortcut does, of every plugin
+                    play.run("save all", () -> pipelinePlugin.save());
+                    play.sleep(500);
+                    play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
+                    expectNoProblems(play);
+                })
                 // Saving with another dirty document (code edited while stepping) opens the picker;
                 // OK saves both
                 .story("MultiDocumentSave", PipelineEditorStories::renderWithPlugins)
@@ -1379,8 +1463,9 @@ public final class PipelineEditorStories {
                 .realAlerts()
                 .build();
         harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        pipelinePlugin = injector.getPipelinePlugin();
         StoryDocumentPlugins.register(harness, injector.getDocumentPluginEventManager(),
-                        injector.getPipelinePlugin(), injector.getXsltPlugin())
+                        pipelinePlugin, injector.getXsltPlugin())
                 .showOpenedTabs();
         harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), DOC_REF, true));
         return harness.asWidget();

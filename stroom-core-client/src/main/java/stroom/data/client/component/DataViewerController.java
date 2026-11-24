@@ -57,6 +57,7 @@ import stroom.widget.progress.client.SourceProgressBar;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 import stroom.widget.text.client.HtmlPane;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.HtmlTableBuilder;
@@ -461,7 +462,7 @@ public class DataViewerController
     private void dumpRangeInfo(final FetchDataResult result) {
         if (result.getSourceLocation() != null) {
             final DataRange dataRange = result.getSourceLocation().getDataRange();
-            GWT.log("DataRange "
+            Console.debug(() -> "DataRange "
                     + " charFrom " + dataRange.getCharOffsetFrom()
                     + " charTo " + dataRange.getCharOffsetTo()
                     + " chars " + result.getTotalCharacterCount()
@@ -976,7 +977,7 @@ public class DataViewerController
     }
 
     private void setActiveTab(final TabData tab, final String streamType) {
-        GWT.log("Setting active tab to " + tab.getLabel());
+        Console.debug(() -> "Setting active tab to " + tab.getLabel());
         dataView.selectTab(tab);
         currentTabName = tab.getLabel();
         updateEditorDisplay();

@@ -55,6 +55,7 @@ import stroom.widget.component.client.LayerContainer;
 import stroom.widget.component.client.LayerController;
 import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
 import stroom.widget.preferences.client.CurrentPreferences;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -291,7 +292,7 @@ public class QueryResultVisController
                         setDataInternal(result);
                     }
                 } catch (final Exception e) {
-                    GWT.log(e.getMessage());
+                    Console.error(e::getMessage, e);
                 }
                 getRefreshButton().setRefreshing(searchModel.isSearching());
             }
@@ -357,7 +358,7 @@ public class QueryResultVisController
                 updateStatusMessage();
             }
         } catch (final RuntimeException e) {
-            GWT.log(e.getMessage(), e);
+            Console.error(e::getMessage, e);
         }
     }
 
@@ -476,7 +477,7 @@ public class QueryResultVisController
             settings = parseSettings(function.getVisualisationDoc());
         } catch (final RuntimeException e) {
             // Loading it to draw says its settings can't be read
-            GWT.log(e.getMessage(), e);
+            Console.error(e::getMessage, e);
         }
         possibleSettings = settings;
         if (visSelectionModel != null) {

@@ -21,8 +21,6 @@ import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Day;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Month;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Weekday;
 
-import com.google.gwt.core.client.GWT;
-
 public class DateTimeConstants {
 
     public static final int DAYS_IN_WEEK = 7;
@@ -42,7 +40,6 @@ public class DateTimeConstants {
         languages = new String[IntlDateTimeFormat.getLanguageCount()];
         for (int i = 0; i < languages.length; i++) {
             languages[i] = IntlDateTimeFormat.getLanguage(i);
-            GWT.log(languages[i]);
         }
 
         // The sample dates are midnight UTC, so are formatted in UTC: in the browser's own time
