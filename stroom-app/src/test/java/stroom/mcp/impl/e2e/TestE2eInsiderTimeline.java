@@ -33,8 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// `activity_timeline` on the insider-risk dataset's reduced form ([AbstractInsiderE2eTest]) over `/mcp`, on a real
 /// Stroom and Elasticsearch: a person read by their person id in every source, though their logon ids differ by
 /// source; the fallback by logon id, each account counted, with close variants offered but never merged; the first
-/// and last events where the period has none; and the leaver's evening of 2026-09-15: proxy periods labelled by
-/// their destination.
+/// and last events where the period has none; and the leaver's week of 2026-09-14: the VPN's sessions (a pair keyed
+/// only by a session id), a window's focus to its loss (a vendor's pair) placed in activities, and the proxy's periods
+/// labelled by their destination.
 @SuppressWarnings("unchecked")
 class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
 
@@ -104,6 +105,43 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
             assertThat((String) range.get("first")).startsWith("2025-11-0");
             // The reduced form's last day of the leaver's.
             assertThat((String) range.get("last")).startsWith("2026-09-1");
+        });
+    }
+
+    @Test
+    void theLeaversWeekHasVpnSessionsWindowFocusPairsInActivitiesAndProxyPeriodsByDestination() {
+        final Map<String, Object> arguments = timeline(Map.of("person", InsiderDataset.LEAVER, "view", "both"),
+                "2026-09-14T00:00:00+10:00", "2026-09-19T00:00:00+10:00");
+
+        final Map<String, Object> result = json("activity_timeline", arguments);
+        dump("activity_timeline, the leaver's week", result);
+
+        final List<Map<String, Object>> pairs = (List<Map<String, Object>>) result.get("pairs");
+        // The VPN's sessions: a vendor's pair keyed only by a session id in Data, inferred.
+        assertThat(pairs).anySatisfy(pair -> assertThat(pair).containsEntry("start", "vpn.login")
+                .containsEntry("end", "vpn.logout").containsEntry("by", "Data[SessionId]")
+                .containsEntry("origin", "inferred").containsEntry("unpaired_starts", 0));
+        // A window's focus to its loss, by its handle in Data.
+        assertThat(pairs).anySatisfy(pair -> assertThat(pair).containsEntry("start", "focus.in")
+                .containsEntry("end", "focus.out").containsEntry("by", "Data[WindowHandle]"));
+        final String folder = "/outputs/timelines/" + InsiderDataset.LEAVER + "/";
+        final List<List<String>> spans = read(folder + "spans.csv").lines().skip(1)
+                .map(line -> List.of(line.split(",", -1))).toList();
+        final String activities = read(folder + "activities.csv");
+        // The VPN sessions are spans on the gateway's lane: the three of the week (a Friday, two evenings).
+        assertThat(spans).filteredOn(row -> "pair".equals(row.get(5)) && row.get(4).startsWith("ns-gw"))
+                .hasSize(3);
+        // Focus pairs placed in activities and rolled up with them, by their own ids.
+        final List<List<String>> placedFocus = spans.stream()
+                .filter(row -> "pair".equals(row.get(5)) && row.get(11).contains("focus.in")
+                               && !row.get(6).isEmpty())
+                .toList();
+        assertThat(placedFocus).isNotEmpty();
+        assertThat(placedFocus).anySatisfy(row -> assertThat(activities).contains(row.get(0)));
+        // The proxy's periods by their destination.
+        assertThat(spans).anySatisfy(row -> {
+            assertThat(row.get(5)).isEqualTo("activity");
+            assertThat(row.get(3)).isEqualTo(InsiderDataset.PERSONAL_CLOUD);
         });
     }
 

@@ -74,6 +74,10 @@ final class InsiderDataset {
     static final LocalDate ROLE_CHANGE_DAY = LocalDate.of(2026, 3, 2);
     /// The day the role-change person's new host first appears (month 11).
     static final LocalDate NEW_HOST_DAY = LocalDate.of(2026, 9, 14);
+    /// The days the leaver archives files and uploads them to personal cloud (once more on two of them, in the
+    /// evening).
+    static final Set<LocalDate> UPLOAD_DAYS = Set.of(LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 15),
+            LocalDate.of(2026, 9, 17), LocalDate.of(2026, 9, 22));
     /// The personal cloud domain the leaver uploads to.
     static final String PERSONAL_CLOUD = "mydrive.personal-cloud.example";
     static final String PERSONAL_CLOUD_CATEGORY = "Personal Cloud Storage";
@@ -315,7 +319,7 @@ final class InsiderDataset {
                                     || day.getDayOfWeek() == DayOfWeek.SUNDAY;
             if (weekend) {
                 if (random.random() < 0.04 || oneOffWeekend()) {
-                    workBlock(minutes(10 * 60 + random.randint(0, 120)), random.randint(20, 60), true);
+                    workBlock(minutes(10 * 60 + random.randint(0, 120)), random.randint(20, 60), true, false);
                 }
                 return;
             }
@@ -349,7 +353,10 @@ final class InsiderDataset {
             tasksBetween(start + 1, lunch);
             endpoint(minutes(lunch), "lock", Map.of());
             endpoint(minutes(lunch + lunchLength), "unlock", Map.of());
-            tasksBetween(lunch + lunchLength + 1, end);
+            // On an upload day the leaver's tasks stop early, for the archive and the upload before logging off.
+            tasksBetween(lunch + lunchLength + 1, LEAVER.equals(person.id()) && UPLOAD_DAYS.contains(day)
+                    ? end - 45
+                    : end);
             plantsAtEnd(end);
             closeAll(minutes(end) - MINUTE);
             endpoint(minutes(end), "logoff", Map.of());
@@ -423,7 +430,8 @@ final class InsiderDataset {
                     at = back + 1;
                     continue;
                 }
-                actOn(task, minutes(at) + random.randint(0, 50) * 1_000L);
+                // Within the minute's first half, so an action's look-up is back before the next action.
+                actOn(task, minutes(at) + random.randint(0, 30) * 1_000L);
                 at += Math.max(1, (int) Math.round(random.randint(2, 6) / options.scale()));
             }
         }
@@ -440,7 +448,7 @@ final class InsiderDataset {
                 focus(Task.BROWSER, "Search - Chrome", time);
                 web(time + 5_000, random.choice(task.domains()), task.category(), random.randint(400, 4_000),
                         false);
-                focus(task.application(), task.title(random, day), time + 40_000);
+                focus(task.application(), task.title(random, day), time + 20_000);
             }
             if (task.files().size() > 0 && random.random() < 0.05) {
                 cloud(time + 2_000, "download", Map.of("file", random.choice(task.files()), "site",
@@ -455,18 +463,24 @@ final class InsiderDataset {
             }
         }
 
-        // A short block of work outside the usual hours (a weekend, an evening).
-        private void workBlock(final long startMs, final int length, final boolean vpn) {
+        // A short block of work outside the usual hours (a weekend, an evening), the leaver's archive and upload at
+        // its end where asked.
+        private void workBlock(final long startMs, final int length, final boolean vpn, final boolean upload) {
             final String session = vpn
                     ? vpnLogin(startMs - MINUTE, "AU", homeIp())
                     : null;
             endpoint(startMs, "logon", Map.of());
             final int from = minuteOf(startMs) + 1;
             workOn(random.choice(catalogue()), from, from + length);
-            closeAll(startMs + (length + 1L) * MINUTE);
-            endpoint(startMs + (length + 2L) * MINUTE, "logoff", Map.of());
+            long end = startMs + (length + 1L) * MINUTE;
+            if (upload) {
+                exfiltrate(end);
+                end += 15L * MINUTE;
+            }
+            closeAll(end);
+            endpoint(end + MINUTE, "logoff", Map.of());
             if (session != null) {
-                vpnLogout(startMs + (length + 3L) * MINUTE, session);
+                vpnLogout(end + 2L * MINUTE, session);
             }
         }
 
@@ -526,8 +540,7 @@ final class InsiderDataset {
                 return;
             }
             final long at = minutes(end - 40);
-            if (Set.of(LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 15), LocalDate.of(2026, 9, 17),
-                    LocalDate.of(2026, 9, 22)).contains(day)) {
+            if (UPLOAD_DAYS.contains(day)) {
                 exfiltrate(at);
             }
             if (!day.isBefore(LocalDate.of(2026, 9, 8)) && !day.isAfter(LocalDate.of(2026, 9, 19))
@@ -569,8 +582,7 @@ final class InsiderDataset {
                     .contains(day)) {
                 // Out of hours, over the VPN.
                 final long at = minutes(20 * 60 + random.randint(0, 60));
-                workBlock(at, random.randint(60, 100), true);
-                exfiltrate(at + 30L * MINUTE);
+                workBlock(at, random.randint(60, 100), true, true);
             }
             if (ADMIN.equals(person.id()) && Set.of(LocalDate.of(2026, 8, 18), LocalDate.of(2026, 8, 25),
                     LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 3)).contains(day)) {
@@ -603,9 +615,10 @@ final class InsiderDataset {
             final int length = random.randint(70, 130);
             privileged(at + MINUTE, length, "srv-db-01.corp.example");
             if (last) {
-                endpoint(at + 40L * MINUTE, "proc.start", Map.of("pid", "6602", "command",
+                // Before midnight: the session starts by 23:30.
+                endpoint(at + 20L * MINUTE, "proc.start", Map.of("pid", "6602", "command",
                         "C:\\Tools\\" + NEW_TOOL + " -all -out \\\\srv-db-01\\c$\\temp\\d.bin", "admin", "true"));
-                endpoint(at + 75L * MINUTE, "proc.stop", Map.of("pid", "6602", "command",
+                endpoint(at + 55L * MINUTE, "proc.stop", Map.of("pid", "6602", "command",
                         "C:\\Tools\\" + NEW_TOOL, "admin", "true"));
                 endpoint(at + (length - 5L) * MINUTE, "log.clear", Map.of("log", "Security", "admin", "true"));
             }
