@@ -1,0 +1,45 @@
+name: A leaver's activity timeline over a week, by their person id across sources (a question, nothing built)
+kind: question
+capabilities: [timeline, elasticsearch, insider]
+# The insider-risk dataset (InsiderDataset, generated in Java: kind insider_events), the week of 14 September 2026 of
+# the 6 scenario people and 5 background people, every source's events in one Elasticsearch index "Insider events":
+# an endpoint agent (logons, locks, processes, window focus, files, an archive, USB), a web proxy, a VPN, a cloud
+# audit log and privileged sessions. Each event has the person's id (PersonId, decorated by processing) and the
+# account as each source writes it, so UserName differs by source (dwhitfield on the endpoint, dana.whitfield
+# elsewhere). The planted behaviour that week (the known answer): job-site browsing, bulk downloads from sites outside
+# her usual, an archive then an upload to personal cloud (mydrive.personal-cloud.example) on 15 and 17 September,
+# both in the day and in the evening over the VPN. The traps: reading the timeline by one logon id and missing a
+# source; calling the evening uploads normal; stating intent rather than indicators. activity_timeline by the person
+# id answers it (result entity P10001). Skipped without an Elasticsearch node.
+elastic_index:
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 5, scale: 0.3, from: '2026-09-14', to: '2026-09-18'}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
+request: >
+  Build an activity timeline for Dana Whitfield, person id P10001, for the week starting Monday 14 September 2026
+  (Sydney time), from the "Insider events" Elasticsearch index. She leaves on 25 September 2026. What stands out,
+  and when?
+user_knows: >
+  PersonId is the person's id, the same in every source; UserName is the account as each source holds it, which
+  differs by source. Source names the product (endpoint, proxy, vpn, cloud, pam). EventTime is when it happened,
+  HostName the host, EventDetail and Action the event-logging element and Action, EventCode the source's own type,
+  Destination a web site or target host, Category the proxy's site category, BytesOut the bytes uploaded. Times are
+  in Australia/Sydney. Her leaving date is 25 September 2026; she has no approved exceptions.
+expected:
+  tools_used: [activity_timeline]
+  answer:
+    tool: activity_timeline
+    result: {entity: P10001}
+  indicators: [personal cloud uploads on 15 and 17 September, evening activity over the VPN on 15 and 17 September,
+               an archive shortly before each upload, job-site browsing, downloads from sites outside her usual]
+reference:
+  activity_timeline:
+    person: P10001
+    personField: PersonId
+    timeFrom: '2026-09-14T00:00:00+10:00'
+    timeTo: '2026-09-19T00:00:00+10:00'
+    timeZone: Australia/Sydney
+    sources: [{index: Insider events, host: HostName, actionField: Action}]

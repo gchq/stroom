@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// A case that starts from another (`setup`, [AbstractEvalTest#setUp]) has that case's reference run and promoted
 /// first, then its own reference build on top, scored with what it changed of the setup's build.
 ///
-/// A question (`kind: question`, cases 62 to 64, 71 to 75, 77 and 78) builds nothing: its data is put in Stroom (an
+/// A question (`kind: question`, cases 62 to 64, 71 to 75 and 77 to 82) builds nothing: its data is put in Stroom (an
 /// Elasticsearch index, a Lucene index, Data Connections) and its reference tool calls are made, e.g. ES|QL with
 /// esql_query, a join with run_stroomql, a sequence with sequence_query, a user's timeline with activity_timeline
 /// ([AbstractEvalTest#runQuestionReference]),

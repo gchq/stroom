@@ -51,16 +51,37 @@ final class EvalQuestionRecords {
     ///             * `hr_users`: `users` users (as `staff_activity` names them), each in a department drawn from
     ///               `departments` (each department's name and its weight), each `Active`. Columns `Username`,
     ///               `Department`, `Status`.
+    ///             * `insider_events`: the insider-risk dataset ([InsiderDataset]) from its `seed`, with `background`
+    ///               people (default 5) and `scale` of the routine actions (default 0.3), its days `from` to `to`
+    ///               (inclusive, in the dataset's zone), the `sources` named (default all), every source's events
+    ///               in one table, by time ([InsiderRecords#flat]).
     /// @return The records, each its values by column.
     static List<Map<String, String>> generate(final Map<String, Object> spec) {
         final String kind = String.valueOf(spec.get("kind"));
         final SeededRandom random = new SeededRandom(((Number) spec.get("seed")).longValue());
-        final int users = ((Number) spec.get("users")).intValue();
         return switch (kind) {
-            case "staff_activity" -> staffActivity(spec, random, users);
-            case "hr_users" -> hrUsers(spec, random, users);
+            case "staff_activity" -> staffActivity(spec, random, users(spec));
+            case "hr_users" -> hrUsers(spec, random, users(spec));
+            case "insider_events" -> insiderEvents(spec);
             default -> throw new IllegalArgumentException("No question records generator " + kind);
         };
+    }
+
+    private static int users(final Map<String, Object> spec) {
+        return ((Number) spec.get("users")).intValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, String>> insiderEvents(final Map<String, Object> spec) {
+        final InsiderDataset dataset = InsiderDataset.generate(new InsiderDataset.Options(((Number) spec.get("seed"))
+                .longValue(), ((Number) spec.getOrDefault("background", 5)).intValue(), ((Number) spec.getOrDefault(
+                "scale", 0.3)).doubleValue(), List.of(new InsiderDataset.Period(LocalDate.parse(String.valueOf(
+                spec.get("from"))), LocalDate.parse(String.valueOf(spec.get("to")))))));
+        final List<String> sources = (List<String>) spec.getOrDefault("sources", List.of());
+        return dataset.acts().stream()
+                .filter(act -> sources.isEmpty() || sources.contains(act.source().key()))
+                .map(InsiderRecords::flat)
+                .toList();
     }
 
     /// @param number A user's number, from 1.

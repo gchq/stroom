@@ -1,0 +1,36 @@
+name: Whether a person used the VPN on one night, and the session's times (a question, nothing built)
+kind: question
+capabilities: [elasticsearch, esql, insider]
+# Case 79's index (the insider-risk dataset's week of 14 September 2026). Dana Whitfield (P10001) connected over the
+# VPN on the evening of Thursday 17 September 2026 (the known answer's vpn_nights), not in the day (she works over
+# the VPN on Fridays). The answer is the session's id with its login and logout, an accepted esql_query call's rows
+# (worked out from the generator by TestEvalCases). The traps: UTC dates (the evening is the same day in UTC), the
+# VPN account (dana.whitfield) not the endpoint's (dwhitfield), and a Friday session counted as the night's.
+# Skipped without an Elasticsearch node.
+elastic_index:
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 5, scale: 0.3, from: '2026-09-14', to: '2026-09-18'}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
+request: >
+  Did Dana Whitfield (person id P10001) use a VPN session on the night of Thursday 17 September 2026, Sydney time
+  (from 6 pm to midnight)? Use the "Insider events" Elasticsearch index, and give each session's id, when it started
+  and when it ended.
+user_knows: >
+  Source is vpn for the VPN's events; EventCode vpn.login starts a session and vpn.logout ends it; SessionId is the
+  VPN's session id. PersonId is the person's id. Times are in Australia/Sydney, ten hours ahead of UTC in September.
+expected:
+  tools_used: [esql_query]
+  answer:
+    ordered: true
+    rows:
+      - ['2026-09-17T10:05:00.000Z', '2026-09-17T11:40:00.000Z', '71300001']
+reference:
+  esql_query:
+    pipeline: >-
+      | WHERE PersonId == "P10001" AND Source == "vpn"
+          AND EventTime >= TO_DATETIME("2026-09-17T08:00:00.000Z") AND EventTime < TO_DATETIME("2026-09-17T14:00:00.000Z")
+      | STATS started = MIN(EventTime), ended = MAX(EventTime) BY SessionId
+      | SORT started

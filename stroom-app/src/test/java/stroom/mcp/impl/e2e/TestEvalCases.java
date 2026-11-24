@@ -170,6 +170,67 @@ class TestEvalCases {
         }
     }
 
+    @Test
+    void theInsiderCasesAnswersAreTheGeneratorsEvents() {
+        final List<Map<String, String>> week = EvalCases.table((Map<String, Object>) EvalCases.load(
+                "79_insider_leaver_week_timeline").get("elastic_index")).records();
+        // The same records for the cases that share the week.
+        for (final String id : List.of("80_insider_working_on_a_day", "81_insider_vpn_session_at_night")) {
+            assertThat(EvalCases.table((Map<String, Object>) EvalCases.load(id).get("elastic_index")).records())
+                    .as(id).isEqualTo(week);
+        }
+        assertThat(week).extracting(record -> record.get("PersonId")).contains(InsiderDataset.LEAVER,
+                InsiderDataset.DRIFT);
+
+        // 81: the leaver's VPN sessions between 18:00 and midnight on the 17th, Sydney time.
+        final Instant nightFrom = Instant.parse("2026-09-17T08:00:00Z");
+        final Instant nightTo = Instant.parse("2026-09-17T14:00:00Z");
+        final Map<String, List<String>> sessions = new LinkedHashMap<>();
+        week.stream()
+                .filter(event -> InsiderDataset.LEAVER.equals(event.get("PersonId"))
+                                 && "vpn".equals(event.get("Source")) && !time(event).isBefore(nightFrom)
+                                 && time(event).isBefore(nightTo))
+                .forEach(event -> sessions.computeIfAbsent(event.get("SessionId"), id -> new ArrayList<>())
+                        .add(event.get("EventTime")));
+        final List<List<Object>> vpnRows = new ArrayList<>();
+        sessions.forEach((session, times) -> vpnRows.add(List.of(times.stream().min(String::compareTo)
+                .orElseThrow(), times.stream().max(String::compareTo).orElseThrow(), session)));
+        assertThat(vpnRows).isNotEmpty().isEqualTo(expectedRows(EvalCases.load("81_insider_vpn_session_at_night")));
+
+        // 82: each archive then an upload of over 10 MB to personal cloud by the same person within the hour, an
+        // event in one sequence at most (EQL's rule: the latest archive before the upload).
+        final Map<String, Object> uploads = EvalCases.load("82_insider_archive_then_personal_cloud_upload");
+        final List<Map<String, String>> events = EvalCases.table((Map<String, Object>) uploads.get("elastic_index"))
+                .records();
+        final List<List<Object>> sequences = new ArrayList<>();
+        Map<String, String> archive = null;
+        for (final Map<String, String> event : events) {
+            if ("file.archive".equals(event.get("EventCode"))) {
+                archive = event;
+            } else if (archive != null && InsiderDataset.PERSONAL_CLOUD_CATEGORY.equals(event.get("Category"))
+                       && Long.parseLong(event.getOrDefault("BytesOut", "0")) > 10_000_000
+                       && archive.get("PersonId").equals(event.get("PersonId"))
+                       && Duration.between(time(archive), time(event)).compareTo(Duration.ofHours(1)) <= 0) {
+                sequences.add(List.of(event.get("PersonId"), archive.get("EventTime"), event.get("EventTime")));
+                archive = null;
+            }
+        }
+        assertThat(sequences).hasSize(6).isEqualTo(expectedRows(uploads));
+
+        // 80: the drift person's tasks that day, as the known answer has them.
+        final InsiderDataset dataset = InsiderDataset.generate(new InsiderDataset.Options(InsiderDataset.SEED, 5,
+                0.3, List.of(new InsiderDataset.Period(java.time.LocalDate.of(2026, 9, 16),
+                java.time.LocalDate.of(2026, 9, 16)))));
+        final List<String> tasks = ((Map<String, List<Map<String, Object>>>) ((Map<String, Object>) dataset
+                .knownAnswer().get("tasks")).get(InsiderDataset.DRIFT)).get("2026-09-16").stream()
+                .map(task -> String.valueOf(task.get("task")))
+                .distinct()
+                .sorted()
+                .toList();
+        assertThat(tasks).isNotEmpty().isEqualTo(((Map<String, Object>) EvalCases.load(
+                "80_insider_working_on_a_day").get("expected")).get("activities"));
+    }
+
     // The case's events (its Lucene or Elastic index's) in the week, that the filter keeps.
     private static List<Map<String, String>> week(final Map<String, Object> evalCase,
                                                   final Predicate<Map<String, String>> filter) {

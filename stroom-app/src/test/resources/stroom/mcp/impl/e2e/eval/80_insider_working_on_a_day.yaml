@@ -1,0 +1,37 @@
+name: What a person was working on one day, from every source by their person id (a question, nothing built)
+kind: question
+capabilities: [timeline, elasticsearch, characterise, insider]
+# Case 79's index (the insider-risk dataset's week of 14 September 2026). Sam Okafor (P10006) is an engineer whose
+# day has drifted later over the year (the known answer's drift plant). The tasks the generator planted for him on
+# Wednesday 16 September 2026 are listed in activities (worked out from the generator by TestEvalCases): what the
+# answer should name, in its own words. The traps: one logon id only (the endpoint's sdokafor-style account differs
+# from the proxy's), reading the late start as absence, naming applications rather than the work.
+# Skipped without an Elasticsearch node.
+elastic_index:
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 5, scale: 0.3, from: '2026-09-14', to: '2026-09-18'}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
+request: >
+  What was Sam Okafor (person id P10006) working on on Wednesday 16 September 2026, Sydney time? Use the "Insider
+  events" Elasticsearch index.
+user_knows: >
+  PersonId is the person's id, the same in every source; UserName differs by source. Times are in
+  Australia/Sydney. WindowTitle is a window's title, Object a file, URL or record, Destination a web site.
+expected:
+  tools_used: [activity_timeline]
+  answer:
+    tool: activity_timeline
+    result: {entity: P10006}
+  activities: [Build fix, Code review, Design doc]
+reference:
+  activity_timeline:
+    person: P10006
+    personField: PersonId
+    timeFrom: '2026-09-16T00:00:00+10:00'
+    timeTo: '2026-09-17T00:00:00+10:00'
+    timeZone: Australia/Sydney
+    view: activities
+    sources: [{index: Insider events, host: HostName, actionField: Action}]

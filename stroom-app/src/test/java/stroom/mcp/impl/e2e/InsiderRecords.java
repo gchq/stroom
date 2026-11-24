@@ -51,6 +51,13 @@ final class InsiderRecords {
     static final String DEV_FOLDER = "insider-dataset";
     /// The sample whose header the proxy's CSV takes.
     static final String NETSKOPE_SAMPLE = "netskope-stress/netskope_stress_one_part.csv";
+    /// The columns of [#flat], each with its type as an eval case's `fields` give it.
+    static final Map<String, String> FLAT_COLUMNS = linked("EventTime", "date", "Source", "text", "PersonId",
+            "text", "UserName", "text", "Account", "text", "HostName", "text", "EventDetail", "text", "Action",
+            "text", "EventCode", "text", "Process", "text", "WindowTitle", "text", "WindowId", "text", "Object",
+            "text", "Destination", "text", "Category", "text", "BytesOut", "long", "SessionId", "text", "Country",
+            "text", "Site", "text");
+
     /// The fields every source's documents have, by their Elasticsearch type.
     private static final Map<String, String> COMMON = linked(
             "@timestamp", "date",
@@ -81,6 +88,8 @@ final class InsiderRecords {
             Locale.ENGLISH).withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter DELINEA_SYSTEM_TIME = DateTimeFormatter.ofPattern(
             "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'").withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter FLAT_TIME = DateTimeFormatter.ofPattern(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter AZURE = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
             .withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter NETSKOPE_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -196,6 +205,55 @@ final class InsiderRecords {
             user = user.substring(0, at);
         }
         return user.toLowerCase(Locale.ROOT);
+    }
+
+    /// An event as one flat record of every source's (an eval question's one index): its time, source, person id,
+    /// account (as written and normalised), host, EventDetail element and Action, code, and what it touched.
+    ///
+    /// @param act An event.
+    /// @return Its values by column ([#FLAT_COLUMNS]), those it has only; `EventTime` in UTC to the millisecond.
+    static Map<String, String> flat(final Act act) {
+        final Map<String, String> record = new LinkedHashMap<>();
+        record.put("EventTime", FLAT_TIME.format(Instant.ofEpochMilli(act.time())));
+        record.put("Source", act.source().key());
+        record.put("PersonId", act.personId());
+        record.put("UserName", normalised(act.account()));
+        record.put("Account", act.account());
+        putText(record, "HostName", act.host());
+        record.put("EventDetail", element(act.type()));
+        record.put("Action", action(act));
+        record.put("EventCode", act.type());
+        putText(record, "Process", act.field("application") != null
+                ? act.field("application")
+                : baseName(act.field("command")));
+        putText(record, "WindowTitle", act.field("title"));
+        putText(record, "WindowId", act.field("window"));
+        putText(record, "Object", firstOf(act.field("url"), act.field("name"), act.field("file"),
+                act.field("record"), act.field("secret"), act.field("device"), act.field("log")));
+        putText(record, "Destination", firstOf(act.field("domain"), act.field("target")));
+        putText(record, "Category", act.field("category"));
+        putText(record, "BytesOut", act.field("bytes_out"));
+        putText(record, "SessionId", act.field("session"));
+        putText(record, "Country", act.field("country"));
+        putText(record, "Site", act.field("site"));
+        return record;
+    }
+
+    /// @param type An event's type.
+    /// @return The EventDetail element it is written as.
+    static String element(final String type) {
+        return switch (type) {
+            case "logon", "logoff", "lock", "unlock", "signin", "vpn.login", "vpn.logout", "pam.session.start",
+                 "pam.session.end" -> "Authenticate";
+            case "proc.start", "proc.stop" -> "Process";
+            case "file.write" -> "Update";
+            case "file.archive", "usb.insert" -> "Create";
+            case "usb.copy" -> "Copy";
+            case "log.clear" -> "Delete";
+            case "web" -> "Network";
+            case "download" -> "Export";
+            default -> "View";
+        };
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -599,6 +657,21 @@ final class InsiderRecords {
         }
         final String first = command.split(" -")[0].strip();
         return first.substring(first.lastIndexOf('\\') + 1);
+    }
+
+    private static void putText(final Map<String, String> record, final String column, final String value) {
+        if (value != null) {
+            record.put(column, value);
+        }
+    }
+
+    private static String firstOf(final String... values) {
+        for (final String value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static void put(final Map<String, Object> doc, final String field, final String value) {
