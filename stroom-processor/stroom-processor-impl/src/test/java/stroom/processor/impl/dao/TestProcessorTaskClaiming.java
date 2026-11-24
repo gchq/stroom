@@ -16,13 +16,21 @@
 
 package stroom.processor.impl.dao;
 
+import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.impl.ProcessorFilterCache;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -42,6 +50,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestProcessorTaskClaiming extends AbstractProcessorTest {
 
     private static final Instant SEED_TIME = Instant.ofEpochMilli(1_000);
+
+    @Inject
+    private ProcessorFilterCache processorFilterCache;
 
     @Test
     void claimTakesTheOldestWaitingTasksStraightToProcessing() {
@@ -70,6 +81,37 @@ class TestProcessorTaskClaiming extends AbstractProcessorTest {
         assertThat(getTaskStatus(alreadyRunning)).isEqualTo(TaskStatus.PROCESSING);
         assertThat(getTaskNodeId(alreadyRunning)).isEqualTo(processorNodeCache.getOrCreate(NODE2));
         assertThat(getTaskStatus(otherFiltersTask)).isEqualTo(TaskStatus.CREATED);
+    }
+
+    @Test
+    void claimDoesNotTakeASecondConnectionWhenTheFilterIsNotCached() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = createProcessorFilter(processor);
+        createTasks(filter, 3);
+        // Make the claim a cache miss, so the filter has to be loaded from the database.
+        processorFilterCache.clear();
+
+        final Logger logger = (Logger) LoggerFactory.getLogger(JooqUtil.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        final List<ProcessorTask> claimed;
+        try {
+            claimed = processorTaskDao.claimTasks(filter.getId(), NODE1, 3);
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+
+        // JooqUtil swallows a nested use of a data source, so its log is the only evidence of one.
+        assertThat(appender.list)
+                .filteredOn(event -> event.getLevel() == Level.ERROR)
+                .extracting(ILoggingEvent::getFormattedMessage)
+                .describedAs("the filter must not be loaded while the claim's connection is held")
+                .noneMatch(message -> message.contains("already in use"));
+        assertThat(claimed)
+                .hasSize(3)
+                .allSatisfy(task -> assertThat(task.getProcessorFilter()).isNotNull());
     }
 
     @Test
