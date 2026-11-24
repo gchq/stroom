@@ -910,9 +910,12 @@ class TestSequenceQueryTool {
 
     @Test
     void theDescriptionLeadsWithTheOrderedQuestionsItAnswers() {
-        // Seen in acceptance runs on a small model: ordered questions answered by joining esql_query results.
-        final String lead = "Use for any 'X, then Y, by the same user/host, within N' question, in one data source "
-                            + "or across several, rather than joining the results of separate queries";
+        // Seen in acceptance runs on a small model: ordered questions answered by joining esql_query results; and
+        // in eval case 82 on Haiku and Sonnet, "did anyone archive files and then upload ... within an hour" (no
+        // "by the same user" said) paired by hand.
+        final String lead = "Use for any 'X, then Y, within N' question ('did anyone X and then Y within an hour?': "
+                            + "the same person, user or host doing both), in one data source or across several, "
+                            + "rather than joining the results of separate queries";
 
         assertThat(tool.definition().description()).startsWith(lead + " (esql_query, search_events, run_stroomql) "
                                                                + "by hand.");

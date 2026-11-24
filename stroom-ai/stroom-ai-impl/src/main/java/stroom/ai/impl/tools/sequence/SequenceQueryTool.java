@@ -359,8 +359,9 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Use for any 'X, then Y, by the same user/host, within N' question, in one data "
-                                 + "source or across several, rather than joining the results of separate queries")
+                        .general("Use for any 'X, then Y, within N' question ('did anyone X and then Y within an "
+                                 + "hour?': the same person, user or host doing both), in one data source or across "
+                                 + "several, rather than joining the results of separate queries")
                         .chatOnly(" (esql_query, search_events, run_stroomql)")
                         .general(" by hand. The engine follows the data sources: on Elastic Index docs on one "
                                  + "cluster, one EQL sequence in Elasticsearch, with everything below; on any other "
