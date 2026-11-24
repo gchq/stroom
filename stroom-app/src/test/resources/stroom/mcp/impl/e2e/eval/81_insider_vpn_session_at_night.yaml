@@ -25,8 +25,12 @@ expected:
   tools_used: [esql_query]
   answer:
     ordered: true
+    # The session in one row (its start, end and id), or as its two events (each with the session's id).
     rows:
       - ['2026-09-17T10:05:00.000Z', '2026-09-17T11:40:00.000Z', '71300001']
+    rows_any_of:
+      - [['2026-09-17T10:05:00.000Z', '2026-09-17T11:40:00.000Z', '71300001']]
+      - [['2026-09-17T10:05:00.000Z', '71300001'], ['2026-09-17T11:40:00.000Z', '71300001']]
 reference:
   esql_query:
     pipeline: >-

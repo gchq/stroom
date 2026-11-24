@@ -32,6 +32,8 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1181,6 +1183,25 @@ final class EvalScore {
         return stage1 && indexed && problems.isEmpty() && missingTypes.isEmpty() && missingPaths.isEmpty();
     }
 
+    // The rows an answer expects: its rows, or of its rows_any_of (several ways to give a right answer, e.g. a
+    // session's start and end in one row or as its two events) the first an accepted call matches, else the first.
+    private static List<List<Object>> wantedRows(final Map<String, Object> answer,
+                                                 final List<ToolUse> accepted,
+                                                 final Map<ToolUse, ToolUse> tabled,
+                                                 final boolean ordered,
+                                                 final double tolerance) {
+        if (!(answer.get("rows_any_of") instanceof final List<?> ways) || ways.isEmpty()) {
+            return rows(answer.get("rows"));
+        }
+        for (final Object way : ways) {
+            final List<List<Object>> rows = rows(way);
+            if (accepted.stream().anyMatch(call -> rowsMismatch(rows, call, tabled, ordered, tolerance) == null)) {
+                return rows;
+            }
+        }
+        return rows(ways.getFirst());
+    }
+
     /// Scores a question's answer (a case of kind `question`, [EvalCases#isQuestion]) from the tool calls made:
     ///
     /// * `expected.tools_used`: each tool was called at least once;
@@ -1252,13 +1273,13 @@ final class EvalScore {
             note(tool + ": " + capped + " of " + accepted.size() + " accepted call(s) cut at the row limit");
         }
         ToolUse answerCall = accepted.getLast();
-        final List<List<Object>> wanted = rows(answer.get("rows"));
+        final double tolerance = answer.get("tolerance") instanceof final Number number
+                ? number.doubleValue()
+                : 0.001;
+        final boolean ordered = Boolean.TRUE.equals(answer.get("ordered"));
+        final Map<ToolUse, ToolUse> tabled = tabled(calls, tool);
+        final List<List<Object>> wanted = wantedRows(answer, accepted, tabled, ordered, tolerance);
         if (!wanted.isEmpty()) {
-            final double tolerance = answer.get("tolerance") instanceof final Number number
-                    ? number.doubleValue()
-                    : 0.001;
-            final boolean ordered = Boolean.TRUE.equals(answer.get("ordered"));
-            final Map<ToolUse, ToolUse> tabled = tabled(calls, tool);
             final ToolUse matching = accepted.stream()
                     .filter(call -> rowsMismatch(wanted, call, tabled, ordered, tolerance) == null)
                     .findFirst()
@@ -1579,7 +1600,21 @@ final class EvalScore {
         final String expected = String.valueOf(want);
         final String actual = String.valueOf(value);
         return expected.equals(actual)
-               || (DAY.matcher(expected).matches() && actual.startsWith(expected));
+               || (DAY.matcher(expected).matches() && actual.startsWith(expected))
+               || sameInstant(expected, actual);
+    }
+
+    // Whether two ISO 8601 times with offsets are the same instant, as a time given in the user's zone
+    // (2026-09-17T20:05:00.000+10:00) is the expected UTC one (2026-09-17T10:05:00.000Z).
+    private static boolean sameInstant(final String expected, final String actual) {
+        if (expected.length() < 20 || actual.length() < 20 || !DAY.matcher(expected.substring(0, 10)).matches()) {
+            return false;
+        }
+        try {
+            return OffsetDateTime.parse(expected).toInstant().equals(OffsetDateTime.parse(actual).toInstant());
+        } catch (final DateTimeParseException e) {
+            return false;
+        }
     }
 
     private static Double parse(final Object value) {

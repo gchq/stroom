@@ -1107,6 +1107,27 @@ class TestEvalScore {
     }
 
     @Test
+    void anAnswerMayTakeAnyOfItsFormsWithTimesInAnyZone() {
+        final Map<String, Object> evalCase = Map.of("kind", "question", "expected", Map.of(
+                "tools_used", List.of("esql_query"),
+                "answer", Map.of("ordered", true, "rows_any_of", List.of(
+                        List.of(List.of("2026-09-17T10:05:00.000Z", "2026-09-17T11:40:00.000Z", "S1")),
+                        List.of(List.of("2026-09-17T10:05:00.000Z", "S1"), List.of("2026-09-17T11:40:00.000Z",
+                                "S1"))))));
+        final EvalScore asEvents = new EvalScore("q");
+        final EvalScore wrong = new EvalScore("q");
+
+        asEvents.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000+10:00", "S1", "Connect"),
+                List.of("2026-09-17T21:40:00.000+10:00", "S1", "Disconnect"))), "ok")));
+        wrong.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000Z", "S1", "Connect"))), "ok")));
+
+        assertThat(asEvents.passed()).as(asEvents.summary()).isTrue();
+        assertThat(wrong.passed()).as(wrong.summary()).isFalse();
+    }
+
+    @Test
     void aQuestionAnsweredWithTheExpectedRowsPasses() {
         final EvalScore score = new EvalScore("q");
 

@@ -194,6 +194,9 @@ public class EsqlQueryTool extends AbstractWorkspaceTool {
                         .general(". Not for ordered sequences (X then Y within N, in one doc or across several): "
                                  + "joins of STATS results get them wrong")
                         .chatOnly("; use sequence_query")
+                        .general(". Not for one person's activity: what they did and when, or how it differs from "
+                                 + "their own baseline or their peers'")
+                        .chatOnly("; use activity_timeline or compare_activity")
                         .general(". Give pipeline: the commands after FROM (written for you), e.g. '| WHERE "
                                  + "event.action == \"allowed\" | STATS total = SUM(bytes) BY user.name | SORT total "
                                  + "DESC | LIMIT 10'. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, "
@@ -212,11 +215,12 @@ public class EsqlQueryTool extends AbstractWorkspaceTool {
                         .general(" and dashboards: when the user needs figures that match those exactly, use a "
                                  + "Stroom search")
                         .chatOnly(" (run_stroomql)")
-                        .general(". In RLIKE, @ matches any string: escape it, or use LIKE for simple "
+                        .general(". FIRST and LAST are reserved: name columns e.g. first_seen and last_seen. In "
+                                 + "RLIKE, @ matches any string: escape it, or use LIKE for simple "
                                  + "patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: first "
                                  + "seen, MIN(@timestamp) BY user, value; spraying or scans, COUNT_DISTINCT(target) "
-                                 + "BY source; baseline vs recent, one STATS with COUNT(*) WHERE @timestamp < x per "
-                                 + "period; a cold-start guard, WHERE on a history count.")
+                                 + "BY source; an index's baseline vs recent, one STATS with COUNT(*) WHERE @timestamp < x "
+                                 + "per period; a cold-start guard, WHERE on a history count.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
                 .parameters(ObjectSchema.builder()
