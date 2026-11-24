@@ -30,6 +30,7 @@ import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.quickfilter.client.QuickFilter;
 import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.spinner.client.LoadStatus;
 import stroom.widget.spinner.client.SmallBusySpinner;
 import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Html;
@@ -88,6 +89,8 @@ public class ElasticFieldInfo extends Component {
     @UiField
     SmallBusySpinner spinner;
     @UiField
+    LoadStatus loadStatus;
+    @UiField
     Label loading;
     @UiField
     SelectionBox<Boolean> mode;
@@ -118,6 +121,7 @@ public class ElasticFieldInfo extends Component {
     private final SelectionBox<Integer> topValuesCount = new SelectionBox<>();
     private final QuickFilter topValuesFilter = new QuickFilter();
     private final SmallBusySpinner topValuesSpinner = new SmallBusySpinner();
+    private final LoadStatus topValuesLoadStatus = new LoadStatus();
     private final Label topValuesError = new Label();
     private final FlowPanel topValuesList = new FlowPanel();
     private long topValuesTotalDocs;
@@ -138,6 +142,10 @@ public class ElasticFieldInfo extends Component {
     /// Makes an empty panel.
     public ElasticFieldInfo() {
         initWidget(BINDER.createAndBindUi(this));
+        topValuesLoadStatus.setText("Loading values");
+        topValuesLoadStatus.follow(topValuesSpinner, () -> topValuesError.isVisible()
+                ? topValuesError.getText()
+                : "Values loaded");
         fromTime.setOptional(true);
         toTime.setOptional(true);
         sampleSize.setDisplayValueFunction(size -> ElasticFieldStatsSupport.formatCount(size.longValue()));
@@ -194,6 +202,7 @@ public class ElasticFieldInfo extends Component {
         topValuesControls.add(topValuesCount);
         topValuesControls.add(topValuesFilter);
         topValuesControls.add(topValuesSpinner);
+        topValuesControls.add(topValuesLoadStatus);
         topValuesControls.add(topValuesError);
     }
 
@@ -250,11 +259,29 @@ public class ElasticFieldInfo extends Component {
         mappingEntries.setVisible(NullSafe.hasItems(entries));
     }
 
+    // What screen readers are told once the statistics have been fetched, or couldn't be
+    private String getLoadResult() {
+        if (loading.isVisible()) {
+            // Another field's have been asked for since
+            return "";
+        }
+        if (errorPanel.isVisible()) {
+            return errorText.getText();
+        }
+        return statsMessage.isVisible()
+                ? statsMessage.getText()
+                : "Statistics loaded";
+    }
+
     /// @param loading Whether statistics are being fetched, which clears those shown.
     public void setLoading(final boolean loading) {
         this.loading.setVisible(loading);
+        // Not told by the spinner, which shows the most common values' loading too
         if (loading) {
             clearStats();
+            loadStatus.start();
+        } else {
+            loadStatus.finish(this::getLoadResult);
         }
     }
 

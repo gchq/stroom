@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.component;
+package stroom.widget.spinner.client;
 
-/// Decides when the explorer's tree tells a screen reader that it is loading, and that it has loaded.
+/// Decides when [LoadStatus] tells a screen reader that something is loading, and that it has loaded.
 ///
 /// Loading is announced only once it has gone on for a while, so that quick loads say nothing, and its
-/// finishing only when its loading was. The tree runs the delay: it starts it when [#start()] says so,
+/// finishing only when its loading was. The status runs the delay: it starts it when [#start()] says so,
 /// and asks [#delayElapsed()] when it is up.
 final class LoadAnnouncements {
 
     private boolean loading;
     private boolean announced;
 
-    /// The tree has started loading.
+    /// It has started loading.
     ///
     /// @return Whether to start the delay: not if it was loading already.
     boolean start() {
@@ -37,15 +37,15 @@ final class LoadAnnouncements {
         return true;
     }
 
-    /// @return Whether the tree is loading and that hasn't been announced, so the delay is to run, e.g.
-    /// again once the tree is back on the page.
+    /// @return Whether it is loading and that hasn't been announced, so the delay is to run, e.g.
+    /// again once it is back on the page.
     boolean isWaiting() {
         return loading && !announced;
     }
 
     /// The delay is up.
     ///
-    /// @return Whether to announce that the tree is loading: not if it has finished.
+    /// @return Whether to announce that it is loading: not if it has finished.
     boolean delayElapsed() {
         if (!isWaiting()) {
             return false;
@@ -54,7 +54,7 @@ final class LoadAnnouncements {
         return true;
     }
 
-    /// The tree has finished loading, or failed to.
+    /// It has finished loading, or failed to.
     ///
     /// @return Whether its loading was announced, so its finishing is to be.
     boolean finish() {

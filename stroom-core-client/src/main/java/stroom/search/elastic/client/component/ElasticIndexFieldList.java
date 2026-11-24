@@ -30,6 +30,7 @@ import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.spinner.client.LoadStatus;
 import stroom.widget.spinner.client.SmallBusySpinner;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
@@ -75,6 +76,8 @@ public class ElasticIndexFieldList extends Component {
     @UiField
     SmallBusySpinner spinner;
     @UiField
+    LoadStatus loadStatus;
+    @UiField
     PagerPanel pager;
     @UiField
     ToolbarButton addVirtualField;
@@ -99,6 +102,7 @@ public class ElasticIndexFieldList extends Component {
     @UiField
     Label noSelection;
 
+    private boolean fetchFailed;
     private final MultiSelectionModelImpl<ElasticFieldRow> selectionModel;
     private final String removeTitle;
     private Consumer<FieldAction> onAction = action -> {
@@ -122,6 +126,10 @@ public class ElasticIndexFieldList extends Component {
     /// Makes an empty list.
     public ElasticIndexFieldList() {
         initWidget(BINDER.createAndBindUi(this));
+        // If they couldn't be fetched, the error shown says so
+        loadStatus.follow(spinner, () -> fetchFailed
+                ? ""
+                : "Fields loaded");
         // With no rows, the list says "No matches" while the filter is set
         nameFilter.addFilteredGrid(dataGrid);
         removeTitle = remove.getTitle();
@@ -350,6 +358,11 @@ public class ElasticIndexFieldList extends Component {
     /// Clears the name filter, without the filter change callback being told.
     public void clearNameFilter() {
         nameFilter.setText("", false);
+    }
+
+    /// @param fetchFailed Whether the fields couldn't be read from the index, which an error says.
+    public void setFetchFailed(final boolean fetchFailed) {
+        this.fetchFailed = fetchFailed;
     }
 
     /// @return The task monitor that spins while the fields are read from the index.

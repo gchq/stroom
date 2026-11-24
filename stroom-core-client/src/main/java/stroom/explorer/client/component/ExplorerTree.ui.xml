@@ -1,15 +1,17 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!--
   The explorer's tree (explorer-tree.css): the grid, on its tree profile, filling the panel, then the
-  live region that tells screen reader users why an item's key did nothing, and that it is loading. The explorer's cells
+  live regions that tell screen reader users that it is loading, and why an item's key did nothing. The explorer's cells
   draw their own padding, and a long name scrolls the tree sideways
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:HTMLPanel styleName="max explorer-tree">
         <dg:DataGrid ui:field="tree" addStyleNames="explorer-tree__grid" profile="TREE" cellPadding="false"
                      fitWidth="true" hasContextMenu="false"/>
+        <spinner:LoadStatus ui:field="loadStatus" text="Loading documents"/>
         <div ui:field="liveRegion" class="sr-only" role="status" aria-live="polite"></div>
     </g:HTMLPanel>
 </ui:UiBinder>

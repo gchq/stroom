@@ -87,7 +87,6 @@ Write what was heard in the last column: `OK`, or the words that were wrong, mis
 Don't record these again; they are open in [`A11Y.md`](A11Y.md):
 
 * Ask Stroom AI's loading and its answers.
-* The field value picker's and the Elastic index fields' loading.
 * A trace's operation list: its rows aren't a list for the keyboard.
 
 ## Afterwards

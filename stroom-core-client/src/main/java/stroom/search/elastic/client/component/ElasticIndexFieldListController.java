@@ -17,6 +17,7 @@
 package stroom.search.elastic.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.editor.HasSavedDocument;
@@ -395,6 +396,7 @@ public class ElasticIndexFieldListController extends Controller implements HasSa
                 ? currentDocSupplier.get()
                 : NullSafe.get(document, this::write);
         if (currentDoc != null) {
+            view.setFetchFailed(false);
             restFactory
                     .create(ELASTIC_INDEX_RESOURCE)
                     .method(resource -> resource.fetchFields(currentDoc))
@@ -404,6 +406,10 @@ public class ElasticIndexFieldListController extends Controller implements HasSa
                         refreshRows();
                         showSelectedField();
                         updateActions();
+                    })
+                    .onFailure(error -> {
+                        view.setFetchFailed(true);
+                        new DefaultErrorHandler(this, null).onError(error);
                     })
                     .owner(this)
                     .taskMonitorFactory(view.getTaskMonitor())

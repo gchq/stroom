@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.component;
+package stroom.widget.spinner.client;
 
 import org.junit.jupiter.api.Test;
 

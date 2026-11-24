@@ -435,6 +435,47 @@ public final class ElasticIndexEditorStories {
                                     .toSpyMatcher());
                     DocEditors.expectNoProblems(play);
                 })
+                // Screen readers are told that a slow refresh is loading, then that it has loaded
+                .story("SlowRefreshAnnounced", context -> render(context, false, routes -> routes.post(
+                        "/elasticIndex/v1/fields", RestReply.json("[]").delayed(2500))))
+                .withPlay(play -> {
+                    openFields(play);
+                    play.click(play.getByRole("button", "Refresh Fields From Index Mapping"));
+                    final Query status = play.querySelector(".elastic-index-field-list__filters [role='status']");
+                    play.waitFor(2000, () -> play.expect(status).toHaveTextContent("Loading fields"));
+                    play.waitFor(3000, () -> play.expect(status).toHaveTextContent("Fields loaded"));
+                    DocEditors.expectNoProblems(play);
+                })
+                // and not that it has if it couldn't be, which the error says
+                .story("SlowRefreshFailure", context -> render(context, false, routes -> routes.post(
+                        "/elasticIndex/v1/fields",
+                        RestReply.error(500, "Elasticsearch unavailable").delayed(2500))))
+                .withPlay(play -> {
+                    openFields(play);
+                    play.click(play.getByRole("button", "Refresh Fields From Index Mapping"));
+                    final Query status = play.querySelector(".elastic-index-field-list__filters [role='status']");
+                    play.waitFor(2000, () -> play.expect(status).toHaveTextContent("Loading fields"));
+                    play.waitFor(3000, () -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalled());
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(""));
+                    play.sleep(200);
+                    play.expect(status).toHaveTextContent("");
+                })
+                // Screen readers are told that slow statistics are loading, then why they couldn't be, or
+                // that they are loaded
+                .story("SlowStatisticsAnnounced", context -> render(context, false, NO_ROUTES,
+                        RestReply.error(500, "Elasticsearch unavailable").delayed(2500),
+                        RestReply.json(FIELD_STATS).delayed(2500)))
+                .withPlay(play -> {
+                    openFields(play);
+                    selectField(play, "UserId");
+                    final Query status = play.querySelector(".elastic-field-info__heading [role='status']");
+                    play.waitFor(2500, () -> play.expect(status).toHaveTextContent("Loading statistics"));
+                    play.waitFor(3000, () -> play.expect(status)
+                            .toHaveTextContent(TextMatch.startingWith("Unable to fetch statistics")));
+                    play.click(play.getByRole("button", StroomDom.button("Retry")));
+                    play.waitFor(2500, () -> play.expect(status).toHaveTextContent("Loading statistics"));
+                    play.waitFor(3000, () -> play.expect(status).toHaveTextContent("Statistics loaded"));
+                })
                 // Edit changes a group's name in its dialog
                 .story("EditGroup", context -> render(context, false))
                 .withPlay(play -> {

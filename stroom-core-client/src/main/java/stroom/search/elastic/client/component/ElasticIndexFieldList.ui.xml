@@ -24,6 +24,7 @@
                                 addStyleNames="elastic-index-field-list__filter"
                                 title="Show only fields of the ticked types. Tick none to show all types."/>
                 <spinner:SmallBusySpinner ui:field="spinner"/>
+                <spinner:LoadStatus ui:field="loadStatus" text="Loading fields"/>
             </g:FlowPanel>
             <g:SimplePanel styleName="dock-max">
                 <dg:PagerPanel ui:field="pager" toolbarName="Field actions">

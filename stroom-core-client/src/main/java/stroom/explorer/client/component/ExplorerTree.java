@@ -33,6 +33,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.PopupPosition;
+import stroom.widget.spinner.client.LoadStatus;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.KeyBinding;
@@ -53,7 +54,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -89,26 +89,16 @@ public class ExplorerTree extends Component implements Focus {
             .build();
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // How long the tree loads before screen readers are told, as a tab does (AbstractTabBar)
-    private static final int LOAD_DELAY_MILLIS = 1000;
     private static final Action[] ITEM_KEY_ACTIONS = {Action.EXPLORER_RENAME, Action.EXPLORER_INFO};
 
     @UiField
     DataGrid<ExplorerNode> tree;
-    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed", and that
-    // the tree is loading
+    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed"
     @UiField
     Element liveRegion;
 
-    private final LoadAnnouncements loadAnnouncements = new LoadAnnouncements();
-    private final Timer loadDelay = new Timer() {
-        @Override
-        public void run() {
-            if (loadAnnouncements.delayElapsed()) {
-                announce("Loading documents");
-            }
-        }
-    };
+    @UiField
+    LoadStatus loadStatus;
 
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final String expanderClassName;
@@ -594,35 +584,16 @@ public class ExplorerTree extends Component implements Focus {
 
     /// Says that the tree's nodes are being fetched, which screen readers are told if it takes a while.
     void startLoading() {
-        if (loadAnnouncements.start()) {
-            loadDelay.schedule(LOAD_DELAY_MILLIS);
-        }
+        loadStatus.start();
     }
 
     /// Says that the tree's nodes have been fetched, or couldn't be.
     ///
     /// @param loaded Whether they have been. If not, the error shown says so.
     void finishLoading(final boolean loaded) {
-        loadDelay.cancel();
-        if (loadAnnouncements.finish()) {
-            announce(loaded
-                    ? "Documents loaded"
-                    : "");
-        }
-    }
-
-    @Override
-    protected void onLoad() {
-        super.onLoad();
-        if (loadAnnouncements.isWaiting()) {
-            loadDelay.schedule(LOAD_DELAY_MILLIS);
-        }
-    }
-
-    @Override
-    protected void onUnload() {
-        loadDelay.cancel();
-        super.onUnload();
+        loadStatus.finish(() -> loaded
+                ? "Documents loaded"
+                : "");
     }
 
     // Says something to screen reader users, emptying the region first so a repeat is said again
